@@ -17,10 +17,16 @@ HWND window;
 
 const wchar_t* const winclass = L"Espanso";
 
+keypress_callback keypressCallback;
+
+void register_keypress_callback(keypress_callback callback) {
+    keypressCallback = callback;
+}
+
 /*
  * Message handler procedure for the Worker window
  */
-LRESULT CALLBACK workerWindowProcedure(HWND window, unsigned int msg, WPARAM wp, LPARAM lp)
+LRESULT CALLBACK window_worker_procedure(HWND window, unsigned int msg, WPARAM wp, LPARAM lp)
 {
     switch (msg)
     {
@@ -46,7 +52,7 @@ LRESULT CALLBACK workerWindowProcedure(HWND window, unsigned int msg, WPARAM wp,
             // Request the Raw input data
             if (GetRawInputData((HRAWINPUT)lp, RID_INPUT, lpb.data(), &dwSize,
                                 sizeof(RAWINPUTHEADER)) != dwSize) {
-                std::cerr << "GetRawInputData does not return correct size!" << std::endl;
+                return 0;
             }
 
             // Convert the input data
@@ -86,8 +92,8 @@ LRESULT CALLBACK workerWindowProcedure(HWND window, unsigned int msg, WPARAM wp,
 
                     // If a result is available, invoke the callback
                     if (result >= 1) {
-                        std::cout << buffer[0] << " " << buffer[1] << " res=" << result <<  " vk=" << raw->data.keyboard.VKey << " rsc=" << raw->data.keyboard.MakeCode << std::endl;
-                        std::cout << static_cast<char>(buffer[0]) << std::endl;
+                        //std::cout << buffer[0] << " " << buffer[1] << " res=" << result <<  " vk=" << raw->data.keyboard.VKey << " rsc=" << raw->data.keyboard.MakeCode << std::endl;
+                        keypressCallback(reinterpret_cast<int32_t*>(buffer.data()), buffer.size());
                     }
                 }
             }
@@ -99,7 +105,7 @@ LRESULT CALLBACK workerWindowProcedure(HWND window, unsigned int msg, WPARAM wp,
     }
 }
 
-void initialize() {
+int32_t initialize() {
     // Initialize the default keyboard layout
     currentKeyboardLayout = GetKeyboardLayout(0);
 
@@ -109,7 +115,7 @@ void initialize() {
     WNDCLASSEX wndclass = {
             sizeof(WNDCLASSEX),				// cbSize: Size of this structure
             0,								// style: Class styles
-            workerWindowProcedure,			// lpfnWndProc: Pointer to the window procedure
+            window_worker_procedure,		// lpfnWndProc: Pointer to the window procedure
             0,								// cbClsExtra: Number of extra bytes to allocate following the window-class structure
             0,								// cbWndExtra: The number of extra bytes to allocate following the window instance.
             GetModuleHandle(0),				// hInstance: A handle to the instance that contains the window procedure for the class.
@@ -148,12 +154,14 @@ void initialize() {
         Rid[0].hwndTarget = window;
 
         if (RegisterRawInputDevices(Rid, 1, sizeof(Rid[0])) == FALSE) {  // Something went wrong, error.
-            // TODO: error callback
+            return -1;
         }
     }else{
         // Something went wrong, error.
-        // TODO: error callback
+        return -1;
     }
+
+    return 1;
 }
 
 void eventloop() {
@@ -165,8 +173,8 @@ void eventloop() {
         // Enter the Event loop
         MSG msg;
         while (GetMessage(&msg, 0, 0, 0))  DispatchMessage(&msg);
-    }else{  // Something went wrong, error
-        // TODO: error callback
     }
+
+    // Something went wrong, this should have been an infinite loop.
 }
 
