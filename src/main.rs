@@ -1,26 +1,25 @@
-extern fn keypress_callback(raw_buffer: *const i32, len: i32) {
-    unsafe {
-        let buffer = std::slice::from_raw_parts(raw_buffer, len as usize);
-        println!("{}", std::char::from_u32(buffer[0] as u32).unwrap());
-    }
-}
+use std::thread::sleep;
+use std::time::Duration;
+use crate::keyboard::KeyboardBackend;
+use std::sync::mpsc;
 
-#[link(name="winbridge", kind="static")]
-extern {
-    fn initialize();
-    fn eventloop();
-    fn register_keypress_callback(cb: extern fn(*const i32, i32));
-}
+mod keyboard;
 
 fn main() {
     println!("Hello, world from Rust!");
 
-    // calling the function from foo library
-    unsafe {
-        initialize();
+    let (sender, receiver) = mpsc::channel();
 
-        register_keypress_callback(keypress_callback);
+    let keyboard = keyboard::get_backend(sender);
+    keyboard.initialize();
+    keyboard.start();
 
-        eventloop();
-    };
+    loop {
+        match receiver.recv() {
+            Ok(c) => {
+                println!("Yeah {}",c);
+            },
+            Err(_) => panic!("Worker threads disconnected before the solution was found!"),
+        }
+    }
 }

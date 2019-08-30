@@ -18,9 +18,11 @@ HWND window;
 const wchar_t* const winclass = L"Espanso";
 
 keypress_callback keypressCallback;
+void * backend_instance;
 
-void register_keypress_callback(keypress_callback callback) {
+void register_keypress_callback(void * self, keypress_callback callback) {
     keypressCallback = callback;
+    backend_instance = self;
 }
 
 /*
@@ -93,7 +95,7 @@ LRESULT CALLBACK window_worker_procedure(HWND window, unsigned int msg, WPARAM w
                     // If a result is available, invoke the callback
                     if (result >= 1) {
                         //std::cout << buffer[0] << " " << buffer[1] << " res=" << result <<  " vk=" << raw->data.keyboard.VKey << " rsc=" << raw->data.keyboard.MakeCode << std::endl;
-                        keypressCallback(reinterpret_cast<int32_t*>(buffer.data()), buffer.size());
+                        keypressCallback(backend_instance, reinterpret_cast<int32_t*>(buffer.data()), buffer.size());
                     }
                 }
             }
@@ -105,7 +107,7 @@ LRESULT CALLBACK window_worker_procedure(HWND window, unsigned int msg, WPARAM w
     }
 }
 
-int32_t initialize() {
+int32_t initialize_window() {
     // Initialize the default keyboard layout
     currentKeyboardLayout = GetKeyboardLayout(0);
 
