@@ -3,5 +3,12 @@ name = "espanso"
 version = "0.1.0"
 authors = ["Federico Terzi <federicoterzi96@gmail.com>"]
 edition = "2018"
+build="build.rs"
+
+[target.'cfg(windows)'.dependencies]
+winapi = { version = "0.3", features = ["winuser"] }
 
 [dependencies]
+
+[build-dependencies]
+cmake = "0.1.31"
