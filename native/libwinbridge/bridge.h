@@ -3,9 +3,14 @@
 
 #include <stdio.h>
 
-extern "C" void testcall(float value)
-{
-    printf("Hello, world from C! Value passed: %f\n",value);
-}
+/*
+ * Initialize the Windows worker's parameters
+ */
+extern "C" void initialize();
+
+/*
+ * Start the event loop indefinitely. Blocking call.
+ */
+extern "C" void eventloop();
 
 #endif //ESPANSO_BRIDGE_H
