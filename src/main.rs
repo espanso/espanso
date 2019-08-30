@@ -1,25 +1,22 @@
 use std::thread::sleep;
 use std::time::Duration;
-use crate::keyboard::KeyboardBackend;
 use std::sync::mpsc;
+use crate::keyboard::KeyboardInterceptor;
+use crate::keyboard::KeyboardSender;
+use crate::matcher::Matcher;
 
 mod keyboard;
+mod matcher;
 
 fn main() {
     println!("Hello, world from Rust!");
 
     let (sender, receiver) = mpsc::channel();
 
-    let keyboard = keyboard::get_backend(sender);
-    keyboard.initialize();
-    keyboard.start();
+    let (interceptor, sender) = keyboard::get_backend(sender);
+    interceptor.initialize();
+    interceptor.start();
 
-    loop {
-        match receiver.recv() {
-            Ok(c) => {
-                println!("Yeah {}",c);
-            },
-            Err(_) => panic!("Worker threads disconnected before the solution was found!"),
-        }
-    }
+    let matcher = Matcher{receiver};
+    matcher.watch();
 }
