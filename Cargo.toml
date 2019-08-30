@@ -6,6 +6,7 @@ edition = "2018"
 build="build.rs"
 
 [dependencies]
+widestring = "0.4.0"
 
 [build-dependencies]
 cmake = "0.1.31"

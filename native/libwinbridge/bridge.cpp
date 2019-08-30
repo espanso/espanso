@@ -18,11 +18,11 @@ HWND window;
 const wchar_t* const winclass = L"Espanso";
 
 keypress_callback keypressCallback;
-void * backend_instance;
+void * interceptor_instance;
 
 void register_keypress_callback(void * self, keypress_callback callback) {
     keypressCallback = callback;
-    backend_instance = self;
+    interceptor_instance = self;
 }
 
 /*
@@ -95,7 +95,7 @@ LRESULT CALLBACK window_worker_procedure(HWND window, unsigned int msg, WPARAM w
                     // If a result is available, invoke the callback
                     if (result >= 1) {
                         //std::cout << buffer[0] << " " << buffer[1] << " res=" << result <<  " vk=" << raw->data.keyboard.VKey << " rsc=" << raw->data.keyboard.MakeCode << std::endl;
-                        keypressCallback(backend_instance, reinterpret_cast<int32_t*>(buffer.data()), buffer.size());
+                        keypressCallback(interceptor_instance, reinterpret_cast<int32_t*>(buffer.data()), buffer.size());
                     }
                 }
             }
@@ -180,3 +180,24 @@ void eventloop() {
     // Something went wrong, this should have been an infinite loop.
 }
 
+/*
+ * Type the given string simulating keyboard presses.
+ */
+void send_string(const wchar_t * string) {
+    std::wstring msg = string;
+
+    std::vector<INPUT> vec;
+    for (auto ch : msg)
+    {
+    	INPUT input = { 0 };
+    	input.type = INPUT_KEYBOARD;
+    	input.ki.dwFlags = KEYEVENTF_UNICODE;
+    	input.ki.wScan = ch;
+    	vec.push_back(input);
+
+    	input.ki.dwFlags |= KEYEVENTF_KEYUP;
+    	vec.push_back(input);
+    }
+
+    SendInput(vec.size(), vec.data(), sizeof(INPUT));
+}

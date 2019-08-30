@@ -11,7 +11,7 @@
 typedef void (*keypress_callback)(void * self, int32_t *buffer, int32_t len);
 
 extern keypress_callback keypressCallback;
-extern void * backend_instance;
+extern void * interceptor_instance;
 
 /*
  * Register the callback that will be called when a keypress was made
@@ -28,5 +28,10 @@ extern "C" int32_t initialize_window();
  * Start the event loop indefinitely. Blocking call.
  */
 extern "C" void eventloop();
+
+/*
+ * Type the given string by simulating Key Presses
+ */
+extern "C" void send_string(const wchar_t * string);
 
 #endif //ESPANSO_BRIDGE_H
