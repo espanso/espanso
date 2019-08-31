@@ -12,7 +12,7 @@ impl <'a> Engine<'a> {
 }
 
 impl <'a> MatchReceiver for Engine<'a>{
-    fn on_match(&self, m: Match) {
+    fn on_match(&self, m: &Match) {
         self.sender.delete_string(m.trigger.len() as i32);
         self.sender.send_string(m.result.as_str());
     }

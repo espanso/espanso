@@ -1,6 +1,7 @@
 use std::sync::mpsc;
 use crate::keyboard::KeyboardInterceptor;
 use crate::matcher::Matcher;
+use crate::matcher::Match;
 use crate::matcher::scrolling::ScrollingMatcher;
 use crate::engine::Engine;
 
@@ -21,6 +22,8 @@ fn main() {
 
     let engine = Engine::new(&sender);
 
-    let matcher = ScrollingMatcher::new(&engine);
+    let matches = vec![Match{trigger:"e'".to_owned(), result: "è".to_owned()}, Match{trigger:":lol".to_owned(), result: "😂".to_owned()}];
+
+    let mut matcher = ScrollingMatcher::new(&matches, &engine);
     matcher.watch(&rxc);
 }
