@@ -8,12 +8,12 @@ pub struct Match {
 }
 
 pub trait MatchReceiver {
-    fn on_match(&self, m: Match);
+    fn on_match(&self, m: &Match);
 }
 
 pub trait Matcher {
-    fn handle_char(&self, c: char);
-    fn watch(&self, receiver: &Receiver<char>) {
+    fn handle_char(&mut self, c: char);
+    fn watch(&mut self, receiver: &Receiver<char>) {
         loop {
             match receiver.recv() {
                 Ok(c) => {
