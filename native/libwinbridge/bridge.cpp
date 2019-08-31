@@ -201,3 +201,28 @@ void send_string(const wchar_t * string) {
 
     SendInput(vec.size(), vec.data(), sizeof(INPUT));
 }
+
+/*
+ * Send the backspace keypress, *count* times.
+ */
+void delete_string(int32_t count) {
+    std::vector<INPUT> vec;
+
+    for (int i = 0; i < count; i++) {
+        INPUT input = { 0 };
+
+        input.type = INPUT_KEYBOARD;
+        input.ki.wScan = 0;
+        input.ki.time = 0;
+        input.ki.dwExtraInfo = 0;
+        input.ki.wVk = VK_BACK;
+        input.ki.dwFlags = 0; // 0 for key press
+        vec.push_back(input);
+
+        // Release the "A" key
+        input.ki.dwFlags = KEYEVENTF_KEYUP; // KEYEVENTF_KEYUP for key release
+        vec.push_back(input);
+    }
+
+    SendInput(vec.size(), vec.data(), sizeof(INPUT));
+}

@@ -34,4 +34,9 @@ extern "C" void eventloop();
  */
 extern "C" void send_string(const wchar_t * string);
 
+/*
+ * Send the backspace keypress, *count* times.
+ */
+extern "C" void delete_string(int32_t count);
+
 #endif //ESPANSO_BRIDGE_H
