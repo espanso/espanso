@@ -1,22 +1,26 @@
-use std::thread::sleep;
-use std::time::Duration;
 use std::sync::mpsc;
 use crate::keyboard::KeyboardInterceptor;
-use crate::keyboard::KeyboardSender;
 use crate::matcher::Matcher;
+use crate::matcher::scrolling::ScrollingMatcher;
+use crate::engine::Engine;
 
 mod keyboard;
 mod matcher;
+mod engine;
 
 fn main() {
-    println!("Hello, world from Rust!");
+    println!("espanso is running!");
 
-    let (sender, receiver) = mpsc::channel();
+    let (txc, rxc) = mpsc::channel();
 
-    let (interceptor, sender) = keyboard::get_backend(sender);
+    let interceptor = keyboard::get_interceptor(txc);
     interceptor.initialize();
     interceptor.start();
 
-    let matcher = Matcher{receiver};
-    matcher.watch();
+    let sender = keyboard::get_sender();
+
+    let engine = Engine::new(&sender);
+
+    let matcher = ScrollingMatcher::new(&engine);
+    matcher.watch(&rxc);
 }

@@ -1,24 +1,25 @@
 use std::sync::mpsc::Receiver;
 
+pub(crate) mod scrolling;
+
 pub struct Match {
     pub trigger: String,
     pub result: String
 }
 
-
-
-pub struct Matcher {
-    pub receiver: Receiver<char>
+pub trait MatchReceiver {
+    fn on_match(&self, m: Match);
 }
 
-impl Matcher {
-    pub fn watch(&self) {
+pub trait Matcher {
+    fn handle_char(&self, c: char);
+    fn watch(&self, receiver: &Receiver<char>) {
         loop {
-            match self.receiver.recv() {
+            match receiver.recv() {
                 Ok(c) => {
-                    println!("Yeah {}",c);
+                    self.handle_char(c);
                 },
-                Err(_) => panic!("Worker threads disconnected before the solution was found!"),
+                Err(_) => panic!("Keyboard interceptor broke receiver stream."),
             }
         }
     }

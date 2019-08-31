@@ -1,6 +1,6 @@
 use std::thread;
 use std::sync::mpsc;
-use widestring::{WideString, WideStr};
+use widestring::{U16CString};
 
 #[repr(C)]
 pub struct WindowsKeyboardInterceptor {
@@ -29,9 +29,21 @@ pub struct WindowsKeyboardSender {
 
 impl super::KeyboardSender for WindowsKeyboardSender {
     fn send_string(&self, s: &str) {
-        let s = WideString::from(s.to_owned());
+        let res = U16CString::from_str(s);
+        match res {
+            Ok(s) => {
+                unsafe {
+                    send_string(s.as_ptr());
+                }
+            }
+            Err(e) => println!("Error while sending string: {}", e.to_string())
+        }
+
+    }
+
+    fn delete_string(&self, count: i32) {
         unsafe {
-            send_string(s.as_ptr());
+            delete_string(count)
         }
     }
 }
@@ -49,10 +61,12 @@ extern fn keypress_callback(_self: *mut WindowsKeyboardInterceptor, raw_buffer: 
     }
 }
 
+#[allow(improper_ctypes)]
 #[link(name="winbridge", kind="static")]
 extern {
     fn register_keypress_callback(s: *const WindowsKeyboardInterceptor, cb: extern fn(_self: *mut WindowsKeyboardInterceptor, *const i32, i32));
     fn initialize_window();
     fn eventloop();
     fn send_string(string: *const u16);
+    fn delete_string(count: i32);
 }
