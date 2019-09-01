@@ -2,11 +2,11 @@ use crate::matcher::{Match, MatchReceiver};
 use crate::keyboard::KeyboardSender;
 
 pub struct Engine<'a>{
-    sender: &'a KeyboardSender
+    sender: &'a dyn KeyboardSender
 }
 
 impl <'a> Engine<'a> {
-    pub fn new(sender: &'a KeyboardSender) -> Engine<'a> {
+    pub fn new(sender: &'a dyn KeyboardSender) -> Engine<'a> {
         Engine{sender}
     }
 }

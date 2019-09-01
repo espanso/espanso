@@ -25,6 +25,12 @@ impl super::KeyboardInterceptor for LinuxKeyboardInterceptor {
     }
 }
 
+impl Drop for LinuxKeyboardInterceptor {
+    fn drop(&mut self) {
+        unsafe { cleanup(); }
+    }
+}
+
 pub struct LinuxKeyboardSender {
 }
 

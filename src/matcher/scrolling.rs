@@ -2,7 +2,7 @@ use crate::matcher::{Match, MatchReceiver};
 
 pub struct ScrollingMatcher<'a>{
     matches: &'a Vec<Match>,
-    receiver: &'a MatchReceiver,
+    receiver: &'a dyn MatchReceiver,
     current_set: Vec<MatchEntry<'a>>
 }
 
@@ -27,16 +27,16 @@ impl <'a> super::Matcher for ScrollingMatcher<'a> {
         self.current_set = old_matches;
         self.current_set.append(&mut new_matches);
 
-        let mut foundMatch = None;
+        let mut found_match = None;
 
         for entry in self.current_set.iter_mut() {
             if entry.remaining.len() == 0 {
-                foundMatch = Some(entry._match);
+                found_match = Some(entry._match);
                 break;
             }
         }
 
-        if let Some(_match) = foundMatch {
+        if let Some(_match) = found_match {
             self.current_set.clear();
             self.receiver.on_match(_match);
         }
@@ -44,7 +44,7 @@ impl <'a> super::Matcher for ScrollingMatcher<'a> {
 }
 
 impl <'a> ScrollingMatcher<'a> {
-    pub fn new(matches:&'a Vec<Match>, receiver: &'a MatchReceiver) -> ScrollingMatcher<'a> {
+    pub fn new(matches:&'a Vec<Match>, receiver: &'a dyn MatchReceiver) -> ScrollingMatcher<'a> {
         let current_set = Vec::new();
         ScrollingMatcher{ matches, receiver, current_set }
     }
