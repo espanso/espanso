@@ -196,11 +196,11 @@ void event_callback(XPointer p, XRecordInterceptData *hook)
 }
 
 void send_string(const char * string) {
-    xdo_enter_text_window(xdo_context, CURRENTWINDOW, string, 0);
+    xdo_enter_text_window(xdo_context, CURRENTWINDOW, string, 8000);
 }
 
 void delete_string(int32_t count) {
     for (int i = 0; i<count; i++) {
-        xdo_send_keysequence_window(xdo_context, CURRENTWINDOW, "BackSpace", 0);
+        xdo_send_keysequence_window(xdo_context, CURRENTWINDOW, "BackSpace", 8000);
     }
 }
