@@ -1,10 +1,12 @@
 use std::sync::mpsc::Receiver;
+use serde::{Serialize, Deserialize};
 
 pub(crate) mod scrolling;
 
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Match {
     pub trigger: String,
-    pub result: String
+    pub replace: String
 }
 
 pub trait MatchReceiver {
