@@ -196,7 +196,7 @@ void event_callback(XPointer p, XRecordInterceptData *hook)
 }
 
 void send_string(const char * string) {
-    xdo_enter_text_window(xdo_context, CURRENTWINDOW, string, 8000);
+    xdo_enter_text_window(xdo_context, CURRENTWINDOW, string, 12000);
 }
 
 void delete_string(int32_t count) {
