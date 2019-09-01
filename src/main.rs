@@ -24,7 +24,7 @@ fn main() {
 
     let matches = vec![Match{trigger:"e'".to_owned(), result: "è".to_owned()},
                        Match{trigger:":lol".to_owned(), result: "😂".to_owned()},
-                       Match{trigger:":lll".to_owned(), result: "yo".to_owned()},
+                       Match{trigger:":lll".to_owned(), result: "hello".to_owned()},
     ];
 
     let mut matcher = ScrollingMatcher::new(&matches, &engine);
