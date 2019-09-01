@@ -1,5 +1,6 @@
 #include "bridge.h"
 
+#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <array>
@@ -12,6 +13,9 @@
 #include <X11/extensions/record.h>
 #include <X11/extensions/XTest.h>
 #include <X11/XKBlib.h>
+extern "C" {  // Needed to avoid C++ compiler name mangling
+    #include <xdo.h>
+}
 
 /*
 This code uses the X11 Record Extension to receive keyboard
@@ -46,6 +50,8 @@ Display *ctrl_disp = NULL;
 XRecordRange  *record_range;
 XRecordContext context;
 
+xdo_t * xdo_context;
+
 // Callback invoked when a new key event occur.
 void event_callback (XPointer, XRecordInterceptData*);
 
@@ -59,6 +65,8 @@ void register_keypress_callback(void * self, KeypressCallback callback) {
 
 
 int32_t initialize() {
+    setlocale(LC_ALL, "");
+
     /*
     Open the connections to the X server.
     RE recommends to open 2 connections to the X server:
@@ -107,6 +115,8 @@ int32_t initialize() {
     if (!context) {
         return -5;
     }
+
+    xdo_context = xdo_new(NULL);
 }
 
 int32_t eventloop() {
@@ -123,6 +133,7 @@ void cleanup() {
     XFree (record_range);
     XCloseDisplay(data_disp);
     XCloseDisplay(ctrl_disp);
+    xdo_free(xdo_context);
 }
 
 void event_callback(XPointer p, XRecordInterceptData *hook)
@@ -182,4 +193,14 @@ void event_callback(XPointer p, XRecordInterceptData *hook)
     }
 
     XRecordFreeData(hook);
+}
+
+void send_string(const char * string) {
+    xdo_enter_text_window(xdo_context, CURRENTWINDOW, string, 0);
+}
+
+void delete_string(int32_t count) {
+    for (int i = 0; i<count; i++) {
+        xdo_send_keysequence_window(xdo_context, CURRENTWINDOW, "BackSpace", 0);
+    }
 }

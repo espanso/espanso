@@ -1,5 +1,7 @@
 use std::thread;
 use std::sync::mpsc;
+use std::os::raw::c_char;
+use std::ffi::CString;
 
 #[repr(C)]
 pub struct LinuxKeyboardInterceptor {
@@ -28,12 +30,15 @@ pub struct LinuxKeyboardSender {
 
 impl super::KeyboardSender for LinuxKeyboardSender {
     fn send_string(&self, s: &str) {
-        println!("{}", s);
-
+        let res = CString::new(s);
+        match res {
+            Ok(cstr) => unsafe { send_string(cstr.as_ptr()); }
+            Err(e) => panic!(e.to_string())
+        }
     }
 
     fn delete_string(&self, count: i32) {
-
+        unsafe {delete_string(count)}
     }
 }
 
@@ -60,4 +65,6 @@ extern {
     fn initialize();
     fn eventloop();
     fn cleanup();
+    fn send_string(string: *const c_char);
+    fn delete_string(count: i32);
 }
