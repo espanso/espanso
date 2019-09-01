@@ -180,7 +180,7 @@ void event_callback(XPointer p, XRecordInterceptData *hook)
 
     switch (event_type) {
         case KeyRelease:
-            printf ("%d %d KeyPress: \t%s\t%s\n", key_code, res, XKeysymToString(XkbKeycodeToKeysym(ctrl_disp, key_code, 0, 0)), buffer.data());
+            //printf ("%d %d KeyPress: \t%s\t%s\n", key_code, res, XKeysymToString(XkbKeycodeToKeysym(ctrl_disp, key_code, 0, 0)), buffer.data());
             if (res > 0) {  // Send only printable chars, todo: change
                 keypress_callback(interceptor_instance, buffer.data(), buffer.size());
             }
