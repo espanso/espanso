@@ -32,4 +32,14 @@ extern void * interceptor_instance;
  */
 extern "C" void register_keypress_callback(void *self, KeypressCallback callback);
 
+/*
+ * Type the given string by simulating Key Presses
+ */
+extern "C" void send_string(const char * string);
+
+/*
+ * Send the backspace keypress, *count* times.
+ */
+extern "C" void delete_string(int32_t count);
+
 #endif //ESPANSO_BRIDGE_H
