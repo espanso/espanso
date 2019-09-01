@@ -27,7 +27,6 @@ impl <'a> super::Matcher for ScrollingMatcher<'a> {
         self.current_set = old_matches;
         self.current_set.append(&mut new_matches);
 
-        let mut found = false;
         let mut foundMatch = None;
 
         for entry in self.current_set.iter_mut() {
