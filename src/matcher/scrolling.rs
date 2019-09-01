@@ -23,7 +23,7 @@ impl <'a> super::Matcher for ScrollingMatcher<'a> {
             .filter(|&x| x.remaining.chars().nth(0).unwrap() == c)
             .map(|x | MatchEntry{remaining: &x.remaining[1..], _match: &x._match})
             .collect();
-
+        
         self.current_set = old_matches;
         self.current_set.append(&mut new_matches);
 

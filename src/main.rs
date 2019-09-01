@@ -4,13 +4,16 @@ use crate::matcher::Matcher;
 use crate::matcher::Match;
 use crate::matcher::scrolling::ScrollingMatcher;
 use crate::engine::Engine;
+use crate::config::Configs;
+use std::path::Path;
 
 mod keyboard;
 mod matcher;
 mod engine;
+mod config;
 
 fn main() {
-    println!("espanso is running!");
+    let configs = Configs::load(Path::new("/home/freddy/.espanso"));
 
     let (txc, rxc) = mpsc::channel();
 
@@ -22,12 +25,8 @@ fn main() {
 
     let engine = Engine::new(&sender);
 
-    let matches = vec![Match{trigger:"e'".to_owned(), result: "è".to_owned()},
-                        Match{trigger:"e/".to_owned(), result: "é".to_owned()},
-                       Match{trigger:":lol".to_owned(), result: "😂".to_owned()},
-                       Match{trigger:":llol".to_owned(), result: "😂😂😂😂😂".to_owned()},
-    ];
+    println!("espanso is running!");
 
-    let mut matcher = ScrollingMatcher::new(&matches, &engine);
+    let mut matcher = ScrollingMatcher::new(&configs.matches, &engine);
     matcher.watch(&rxc);
 }
