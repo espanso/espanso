@@ -1,11 +1,9 @@
 use std::sync::mpsc;
 use crate::keyboard::KeyboardInterceptor;
 use crate::matcher::Matcher;
-use crate::matcher::Match;
 use crate::matcher::scrolling::ScrollingMatcher;
 use crate::engine::Engine;
 use crate::config::Configs;
-use std::path::Path;
 
 mod keyboard;
 mod matcher;
