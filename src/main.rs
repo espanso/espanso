@@ -13,7 +13,7 @@ mod engine;
 mod config;
 
 fn main() {
-    let configs = Configs::load(Path::new("/home/freddy/.espanso"));
+    let configs = Configs::load_default();
 
     let (txc, rxc) = mpsc::channel();
 
