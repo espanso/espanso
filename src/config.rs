@@ -14,7 +14,7 @@ pub struct Configs {
 
 impl Configs {
     pub fn load(path: &Path) -> Configs {
-        let mut file_res = File::open(path);
+        let file_res = File::open(path);
         if let Ok(mut file) = file_res {
             let mut contents = String::new();
             file.read_to_string(&mut contents)
@@ -35,7 +35,7 @@ impl Configs {
 
             // If config file does not exist, create one from template
             if !default_file.exists() {
-                fs::write(&default_file, default_config_file_content)
+                fs::write(&default_file, DEFAULT_CONFIG_FILE_CONTENT)
                     .expect("Unable to write default config file");
             }
 
@@ -47,7 +47,7 @@ impl Configs {
 }
 
 // TODO: add documentation link
-const default_config_file_content : &str = r###"# espanso configuration file
+const DEFAULT_CONFIG_FILE_CONTENT : &str = r###"# espanso configuration file
 # This is the default configuration file, change it as you like it
 # You can refer to the official documentation:
 
