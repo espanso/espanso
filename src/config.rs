@@ -7,6 +7,9 @@ use std::fs::File;
 use std::io::Read;
 use serde::{Serialize, Deserialize};
 
+// TODO: add documentation link
+const DEFAULT_CONFIG_FILE_CONTENT : &str = include_str!("res/config.yaml");
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Configs {
     pub matches: Vec<Match>
@@ -45,54 +48,3 @@ impl Configs {
         }
     }
 }
-
-// TODO: add documentation link
-const DEFAULT_CONFIG_FILE_CONTENT : &str = r###"# espanso configuration file
-# This is the default configuration file, change it as you like it
-# You can refer to the official documentation:
-
-# Matches are the substitution rules, when you type the "trigger" string
-# it gets replaced by the "replace" string.
-matches:
-  # Default
-  - trigger: ":espanso"
-    replace: "Hi there!"
-
-  # Emojis
-  - trigger: ":lol"
-    replace: "😂"
-  - trigger: ":llol"
-    replace: "😂😂😂😂"
-  - trigger: ":sad"
-    replace: "☹"
-  - trigger: ":ssad"
-    replace: "☹☹☹☹"
-
-  # Accented letters
-  - trigger: "e'"
-    replace: "è"
-  - trigger: "e/"
-    replace: "é"
-  - trigger: "a'"
-    replace: "à"
-  - trigger: "i'"
-    replace: "ì"
-  - trigger: "o'"
-    replace: "ò"
-  - trigger: "u'"
-    replace: "ù"
-
-  # Capital accented letters
-  - trigger: "E'"
-    replace: "È"
-  - trigger: "E/"
-    replace: "É"
-  - trigger: "A'"
-    replace: "À"
-  - trigger: "I'"
-    replace: "Ì"
-  - trigger: "O'"
-    replace: "Ò"
-  - trigger: "U'"
-    replace: "Ù"
-"###;
