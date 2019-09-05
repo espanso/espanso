@@ -1,6 +1,5 @@
 use crate::matcher::{Match, MatchReceiver};
 use std::cell::RefCell;
-use std::thread::current;
 
 pub struct ScrollingMatcher<'a, R> where R: MatchReceiver{
     matches: Vec<Match>,

@@ -10,6 +10,9 @@ BOOL checkAccessibility()
     return AXIsProcessTrustedWithOptions((__bridge CFDictionaryRef)opts);
 }
 
+KeypressCallback keypress_callback;
+void * interceptor_instance;
+
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
 {
     if (checkAccessibility()) {
@@ -22,6 +25,9 @@ BOOL checkAccessibility()
     [NSEvent addGlobalMonitorForEventsMatchingMask:(NSEventMaskKeyDown | NSEventMaskFlagsChanged)
             handler:^(NSEvent *event){
         if (event.type == NSEventTypeKeyDown) {
+            const char * chars = [event.characters UTF8String];
+            int len = event.characters.length;
+            keypress_callback(interceptor_instance, chars, len);
             NSLog(@"keydown: %@, %d", event.characters, event.keyCode);
         }else{
             NSLog(@"keydown: %d", event.keyCode);
