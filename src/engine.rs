@@ -1,13 +1,15 @@
 use crate::matcher::{Match, MatchReceiver};
 use crate::keyboard::KeyboardSender;
+use crate::config::Configs;
 
 pub struct Engine<S> where S: KeyboardSender {
-    sender: S
+    sender: S,
+    configs: Configs,
 }
 
 impl <S> Engine<S> where S: KeyboardSender{
-    pub fn new(sender: S) -> Engine<S> where S: KeyboardSender {
-        Engine{sender}
+    pub fn new(sender: S, configs: Configs) -> Engine<S> where S: KeyboardSender {
+        Engine{sender, configs }
     }
 }
 
