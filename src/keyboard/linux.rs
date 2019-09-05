@@ -2,10 +2,11 @@ use std::thread;
 use std::sync::mpsc;
 use std::os::raw::c_char;
 use std::ffi::CString;
+use crate::keyboard::KeyEvent;
 
 #[repr(C)]
 pub struct LinuxKeyboardInterceptor {
-    pub sender: mpsc::Sender<char>
+    pub sender: mpsc::Sender<KeyEvent>
 }
 
 impl super::KeyboardInterceptor for LinuxKeyboardInterceptor {

@@ -1,10 +1,11 @@
 use std::thread;
 use std::sync::mpsc;
 use widestring::{U16CString};
+use crate::keyboard::KeyEvent;
 
 #[repr(C)]
 pub struct WindowsKeyboardInterceptor {
-    pub sender: mpsc::Sender<char>
+    pub sender: mpsc::Sender<KeyEvent>
 }
 
 impl super::KeyboardInterceptor for WindowsKeyboardInterceptor {

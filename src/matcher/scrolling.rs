@@ -1,5 +1,6 @@
 use crate::matcher::{Match, MatchReceiver};
 use std::cell::RefCell;
+use crate::keyboard::KeyModifier;
 
 pub struct ScrollingMatcher<'a, R> where R: MatchReceiver{
     matches: Vec<Match>,
@@ -43,6 +44,10 @@ impl <'a, R> super::Matcher<'a> for ScrollingMatcher<'a, R> where R: MatchReceiv
             (*current_set).clear();
             self.receiver.on_match(_match);
         }
+    }
+
+    fn handle_modifier(&'a self, m: KeyModifier) {
+
     }
 }
 
