@@ -17,11 +17,11 @@ HWND window;
 
 const wchar_t* const winclass = L"Espanso";
 
-keypress_callback keypressCallback;
+KeypressCallback keypress_callback;
 void * interceptor_instance;
 
-void register_keypress_callback(void * self, keypress_callback callback) {
-    keypressCallback = callback;
+void register_keypress_callback(void * self, KeypressCallback callback) {
+    keypress_callback = callback;
     interceptor_instance = self;
 }
 
@@ -92,10 +92,14 @@ LRESULT CALLBACK window_worker_procedure(HWND window, unsigned int msg, WPARAM w
                     std::array<WCHAR, 4> buffer;
                     int result = ToUnicodeEx(raw->data.keyboard.VKey, raw->data.keyboard.MakeCode, lpKeyState.data(), buffer.data(), buffer.size(), 0, currentKeyboardLayout);
 
-                    // If a result is available, invoke the callback
-                    if (result >= 1) {
-                        //std::cout << buffer[0] << " " << buffer[1] << " res=" << result <<  " vk=" << raw->data.keyboard.VKey << " rsc=" << raw->data.keyboard.MakeCode << std::endl;
-                        keypressCallback(interceptor_instance, reinterpret_cast<int32_t*>(buffer.data()), buffer.size());
+                    //std::cout << result << " " << buffer[0] << " " << raw->data.keyboard.VKey << std::endl;
+
+                    // We need to call the callback in two different ways based on the type of key
+                    // The only modifier we use that has a result > 0 is the BACKSPACE, so we have to consider it.
+                    if (result >= 1 && raw->data.keyboard.VKey != VK_BACK) {
+                        keypress_callback(interceptor_instance, reinterpret_cast<int32_t*>(buffer.data()), buffer.size(), 0, raw->data.keyboard.VKey);
+                    }else{
+                        keypress_callback(interceptor_instance, nullptr, 0, 1, raw->data.keyboard.VKey);
                     }
                 }
             }
