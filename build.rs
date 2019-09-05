@@ -41,6 +41,7 @@ fn print_config() {
 
 #[cfg(target_os = "macos")]
 fn print_config() {
+    println!("cargo:rustc-link-lib=dylib=c++");
     println!("cargo:rustc-link-lib=static=macbridge");
     println!("cargo:rustc-link-lib=framework=Cocoa");
 }
