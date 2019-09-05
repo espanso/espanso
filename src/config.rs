@@ -7,7 +7,6 @@ use std::fs::File;
 use std::io::Read;
 use serde::{Serialize, Deserialize};
 use crate::keyboard::KeyModifier;
-use crate::keyboard::KeyModifier::*;
 
 // TODO: add documentation link
 const DEFAULT_CONFIG_FILE_CONTENT : &str = include_str!("res/config.yaml");
@@ -18,6 +17,10 @@ fn default_toggle_interval() -> u32 {
     230
 }
 
+fn default_backspace_limit() -> i32 {
+    3
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Configs {
     #[serde(default)]
@@ -25,6 +28,9 @@ pub struct Configs {
 
     #[serde(default = "default_toggle_interval")]
     pub toggle_interval: u32,
+
+    #[serde(default = "default_backspace_limit")]
+    pub backspace_limit: i32,
 
     pub matches: Vec<Match>
 }
