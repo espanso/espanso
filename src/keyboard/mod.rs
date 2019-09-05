@@ -14,6 +14,21 @@ pub trait KeyboardInterceptor {
     fn start(&self);
 }
 
+#[derive(Debug)]
+pub enum KeyModifier {
+    CTRL,
+    SHIFT,
+    ALT,
+    META,
+    BACKSPACE,
+}
+
+#[derive(Debug)]
+pub enum KeyEvent {
+    Char(char),
+    Modifier(KeyModifier)
+}
+
 pub trait KeyboardSender {
     fn send_string(&self, s: &str);
     fn delete_string(&self, count: i32);
@@ -22,7 +37,7 @@ pub trait KeyboardSender {
 // WINDOWS IMPLEMENTATIONS
 
 #[cfg(target_os = "windows")]
-pub fn get_interceptor(sender: mpsc::Sender<char>) -> impl KeyboardInterceptor {
+pub fn get_interceptor(sender: mpsc::Sender<KeyEvent>) -> impl KeyboardInterceptor {
     windows::WindowsKeyboardInterceptor {sender}
 }
 
@@ -34,7 +49,7 @@ pub fn get_sender() -> impl KeyboardSender {
 // LINUX IMPLEMENTATIONS
 
 #[cfg(target_os = "linux")]
-pub fn get_interceptor(sender: mpsc::Sender<char>) -> impl KeyboardInterceptor {
+pub fn get_interceptor(sender: mpsc::Sender<KeyEvent>) -> impl KeyboardInterceptor {
     linux::LinuxKeyboardInterceptor {sender}
 }
 
@@ -45,7 +60,7 @@ pub fn get_sender() -> impl KeyboardSender {
 
 // MAC IMPLEMENTATION
 #[cfg(target_os = "macos")]
-pub fn get_interceptor(sender: mpsc::Sender<char>) -> impl KeyboardInterceptor {
+pub fn get_interceptor(sender: mpsc::Sender<KeyEvent>) -> impl KeyboardInterceptor {
     macos::MacKeyboardInterceptor {sender}
 }
 

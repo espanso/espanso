@@ -12,7 +12,19 @@ const DEFAULT_CONFIG_FILE_CONTENT : &str = include_str!("res/config.yaml");
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Configs {
+    #[serde(default)]
+    pub backspace_enabled: bool,
+
     pub matches: Vec<Match>
+}
+
+impl Default for Configs {
+    fn default() -> Self {
+        Configs {
+            backspace_enabled: false,
+            matches: Vec::new()
+        }
+    }
 }
 
 impl Configs {
