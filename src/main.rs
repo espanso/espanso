@@ -13,15 +13,16 @@ mod config;
 
 fn main() {
     let configs = Configs::load_default();
+    println!("{:#?}", configs);
 
     let (txc, rxc) = mpsc::channel();
 
     let sender = keyboard::get_sender();
 
-    let engine = Engine::new(sender);
+    let engine = Engine::new(sender, configs.clone());
 
     thread::spawn(move || {
-        let matcher = ScrollingMatcher::new(configs.matches.to_vec(), engine);
+        let matcher = ScrollingMatcher::new(configs.clone(), engine);
         matcher.watch(rxc);
     });
 

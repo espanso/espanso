@@ -8,19 +8,26 @@ mod linux;
 mod macos;
 
 use std::sync::mpsc;
+use serde::{Serialize, Deserialize};
 
 pub trait KeyboardInterceptor {
     fn initialize(&self);
     fn start(&self);
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum KeyModifier {
     CTRL,
     SHIFT,
     ALT,
     META,
     BACKSPACE,
+}
+
+impl Default for KeyModifier {
+    fn default() -> Self {
+        KeyModifier::ALT
+    }
 }
 
 #[derive(Debug)]

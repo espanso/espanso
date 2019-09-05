@@ -6,25 +6,27 @@ use crate::matcher::Match;
 use std::fs::File;
 use std::io::Read;
 use serde::{Serialize, Deserialize};
+use crate::keyboard::KeyModifier;
+use crate::keyboard::KeyModifier::*;
 
 // TODO: add documentation link
 const DEFAULT_CONFIG_FILE_CONTENT : &str = include_str!("res/config.yaml");
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Configs {
-    #[serde(default)]
-    pub backspace_enabled: bool,
+// Default values for primitives
 
-    pub matches: Vec<Match>
+fn default_toggle_interval() -> u32 {
+    230
 }
 
-impl Default for Configs {
-    fn default() -> Self {
-        Configs {
-            backspace_enabled: false,
-            matches: Vec::new()
-        }
-    }
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct Configs {
+    #[serde(default)]
+    pub toggle_key: KeyModifier,
+
+    #[serde(default = "default_toggle_interval")]
+    pub toggle_interval: u32,
+
+    pub matches: Vec<Match>
 }
 
 impl Configs {
