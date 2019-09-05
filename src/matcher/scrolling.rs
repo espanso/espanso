@@ -9,7 +9,8 @@ pub struct ScrollingMatcher<'a, R> where R: MatchReceiver{
     configs: Configs,
     receiver: R,
     current_set: RefCell<Vec<MatchEntry<'a>>>,
-    toggle_press_time: RefCell<SystemTime>
+    toggle_press_time: RefCell<SystemTime>,
+    is_enabled: RefCell<bool>,
 }
 
 struct MatchEntry<'a> {
@@ -19,6 +20,11 @@ struct MatchEntry<'a> {
 
 impl <'a, R> super::Matcher<'a> for ScrollingMatcher<'a, R> where R: MatchReceiver+Send{
     fn handle_char(&'a self, c: char) {
+        // if not enabled, avoid any processing
+        if !*(self.is_enabled.borrow()) {
+            return;
+        }
+
         let mut current_set = self.current_set.borrow_mut();
 
         let new_matches: Vec<MatchEntry> = self.configs.matches.iter()
@@ -57,7 +63,14 @@ impl <'a, R> super::Matcher<'a> for ScrollingMatcher<'a, R> where R: MatchReceiv
             let mut toggle_press_time = self.toggle_press_time.borrow_mut();
             if let Ok(elapsed) = toggle_press_time.elapsed() {
                 if elapsed.as_millis() < self.configs.toggle_interval as u128 {
-                    println!("Disable! {}", elapsed.as_millis());
+                    let mut is_enabled = self.is_enabled.borrow_mut();
+                    *is_enabled = !(*is_enabled);
+
+                    if !*is_enabled {
+                        self.current_set.borrow_mut().clear();
+                    }
+
+                    println!("Enabled {}", *is_enabled);
                 }
             }
 
@@ -70,6 +83,13 @@ impl <'a, R> ScrollingMatcher<'a, R> where R: MatchReceiver {
     pub fn new(configs: Configs, receiver: R) -> ScrollingMatcher<'a, R> {
         let current_set = RefCell::new(Vec::new());
         let toggle_press_time = RefCell::new(SystemTime::now());
-        ScrollingMatcher{ configs, receiver, current_set, toggle_press_time }
+
+        ScrollingMatcher{
+            configs,
+            receiver,
+            current_set,
+            toggle_press_time,
+            is_enabled: RefCell::new(true)
+        }
     }
 }
