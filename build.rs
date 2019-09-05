@@ -14,6 +14,11 @@ fn get_config() -> PathBuf {
     Config::new("native/liblinuxbridge").build()
 }
 
+#[cfg(target_os = "macos")]
+fn get_config() -> PathBuf {
+    Config::new("native/libmacbridge").build()
+}
+
 /*
     OS CUSTOM CARGO CONFIG LINES
     Note: this is where linked libraries should be specified.
@@ -32,6 +37,12 @@ fn print_config() {
     println!("cargo:rustc-link-lib=dylib=X11");
     println!("cargo:rustc-link-lib=dylib=Xtst");
     println!("cargo:rustc-link-lib=dylib=xdo");
+}
+
+#[cfg(target_os = "macos")]
+fn print_config() {
+    println!("cargo:rustc-link-lib=static=macbridge");
+    println!("cargo:rustc-link-lib=framework=Cocoa");
 }
 
 fn main()

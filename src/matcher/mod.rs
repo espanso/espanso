@@ -3,7 +3,7 @@ use serde::{Serialize, Deserialize};
 
 pub(crate) mod scrolling;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Match {
     pub trigger: String,
     pub replace: String
@@ -13,9 +13,9 @@ pub trait MatchReceiver {
     fn on_match(&self, m: &Match);
 }
 
-pub trait Matcher {
-    fn handle_char(&mut self, c: char);
-    fn watch(&mut self, receiver: &Receiver<char>) {
+pub trait Matcher<'a>: Send {
+    fn handle_char(&'a self, c: char);
+    fn watch(&'a self, receiver: Receiver<char>) {
         loop {
             match receiver.recv() {
                 Ok(c) => {

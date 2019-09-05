@@ -18,7 +18,7 @@ impl super::KeyboardInterceptor for LinuxKeyboardInterceptor {
     fn start(&self) {
         thread::spawn(|| {
             unsafe {
-                initialize();
+                initialize();  // TODO: check initialization return codes
                 eventloop();
             }
         });
