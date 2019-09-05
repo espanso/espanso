@@ -1,4 +1,3 @@
-use std::thread;
 use std::sync::mpsc;
 use widestring::{U16CString};
 use crate::keyboard::{KeyEvent, KeyModifier};
