@@ -10,6 +10,7 @@ widestring = "0.4.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.8"
 dirs = "2.0.2"
+clap = "2.33.0"
 
 [build-dependencies]
 cmake = "0.1.31"
