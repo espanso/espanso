@@ -29,18 +29,34 @@ void send_string(const char * string) {
     char * stringCopy = strdup(string);
     dispatch_async(dispatch_get_main_queue(), ^(void) {
         // Convert the c string to a UniChar array as required by the CGEventKeyboardSetUnicodeString method
-        NSString *nsString = [NSString stringWithUTF8String:stringCopy];
-        CFStringRef cfString = (__bridge CFStringRef) nsString;
+        NSString *nsString = [NSString stringWithUTF8String:stringCopy];CFStringRef cfString = (__bridge CFStringRef) nsString;
         std::vector <UniChar> buffer(nsString.length);
         CFStringGetCharacters(cfString, CFRangeMake(0, nsString.length), buffer.data());
 
         free(stringCopy);
 
         // Send the event
-        CGEventRef e = CGEventCreateKeyboardEvent(NULL, 0x31, true);
-        CGEventKeyboardSetUnicodeString(e, buffer.size(), buffer.data());
-        CGEventPost(kCGHIDEventTap, e);
-        CFRelease(e);
+
+        // Because of a bug ( or undocumented limit ) of the CGEventKeyboardSetUnicodeString method
+        // the string gets truncated after 20 characters, so we need to send multiple events.
+
+        int i = 0;
+        while (i < buffer.size()) {
+            int chunk_size = 20;
+            if ((i+chunk_size) >  buffer.size()) {
+                chunk_size = buffer.size() - i;
+            }
+
+            UniChar * offset_buffer = buffer.data() + i;
+            CGEventRef e = CGEventCreateKeyboardEvent(NULL, 0x31, true);
+            CGEventKeyboardSetUnicodeString(e, chunk_size, offset_buffer);
+            CGEventPost(kCGHIDEventTap, e);
+            CFRelease(e);
+
+            usleep(2000);
+
+            i += chunk_size;
+        }
     });
 }
 
