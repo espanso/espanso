@@ -223,10 +223,28 @@ void delete_string(int32_t count) {
         input.ki.dwFlags = 0; // 0 for key press
         vec.push_back(input);
 
-        // Release the "A" key
         input.ki.dwFlags = KEYEVENTF_KEYUP; // KEYEVENTF_KEYUP for key release
         vec.push_back(input);
     }
+
+    SendInput(vec.size(), vec.data(), sizeof(INPUT));
+}
+
+void send_vkey(int32_t vk) {
+    std::vector<INPUT> vec;
+
+    INPUT input = { 0 };
+
+    input.type = INPUT_KEYBOARD;
+    input.ki.wScan = 0;
+    input.ki.time = 0;
+    input.ki.dwExtraInfo = 0;
+    input.ki.wVk = vk;
+    input.ki.dwFlags = 0; // 0 for key press
+    vec.push_back(input);
+
+    input.ki.dwFlags = KEYEVENTF_KEYUP; // KEYEVENTF_KEYUP for key release
+    vec.push_back(input);
 
     SendInput(vec.size(), vec.data(), sizeof(INPUT));
 }

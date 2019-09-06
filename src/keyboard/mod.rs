@@ -38,6 +38,7 @@ pub enum KeyEvent {
 
 pub trait KeyboardSender {
     fn send_string(&self, s: &str);
+    fn send_enter(&self);
     fn delete_string(&self, count: i32);
 }
 
