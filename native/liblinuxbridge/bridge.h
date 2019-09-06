@@ -22,7 +22,7 @@ extern "C" void cleanup();
  * Called when a new keypress is made, the first argument is an char array,
  * while the second is the size of the array.
  */
-typedef void (*KeypressCallback)(void * self, char *buffer, int32_t len);
+typedef void (*KeypressCallback)(void * self, const char *buffer, int32_t len, int32_t is_modifier, int32_t key_code);
 
 extern KeypressCallback keypress_callback;
 extern void * interceptor_instance;
