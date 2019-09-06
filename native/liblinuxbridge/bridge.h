@@ -42,4 +42,14 @@ extern "C" void send_string(const char * string);
  */
 extern "C" void delete_string(int32_t count);
 
+/*
+ * Trigger normal paste ( Pressing CTRL+V )
+ */
+extern "C" void trigger_paste();
+
+/*
+ * Trigger terminal paste ( Pressing CTRL+SHIFT+V )
+ */
+extern "C" void trigger_terminal_paste();
+
 #endif //ESPANSO_BRIDGE_H

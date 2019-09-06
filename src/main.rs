@@ -1,10 +1,11 @@
-use std::sync::mpsc;
+use std::sync::{mpsc, Arc};
 use crate::keyboard::KeyboardInterceptor;
 use crate::matcher::Matcher;
 use crate::matcher::scrolling::ScrollingMatcher;
 use crate::engine::Engine;
 use crate::config::Configs;
 use crate::ui::UIManager;
+use crate::clipboard::ClipboardManager;
 use std::thread;
 use clap::{App, Arg};
 use std::path::Path;
@@ -14,6 +15,7 @@ mod matcher;
 mod engine;
 mod config;
 mod ui;
+mod clipboard;
 
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
@@ -54,11 +56,16 @@ fn espanso_main(configs: Configs) {
     let ui_manager = ui::get_uimanager();
     ui_manager.notify("Hello guys");
 
+    let clipboard_manager = clipboard::get_manager();
+    let clipboard_manager_arc = Arc::new(clipboard_manager);
+
     let (txc, rxc) = mpsc::channel();
 
     let sender = keyboard::get_sender();
 
-    let engine = Engine::new(sender, configs.clone());
+    let engine = Engine::new(sender,
+                             Arc::clone(&clipboard_manager_arc),
+                             configs.clone());
 
     thread::spawn(move || {
         let matcher = ScrollingMatcher::new(configs.clone(), engine);

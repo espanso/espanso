@@ -47,6 +47,12 @@ impl super::KeyboardSender for LinuxKeyboardSender {
         // On linux this is not needed, so NOOP
     }
 
+    fn trigger_paste(&self) {
+        unsafe { trigger_paste(); }
+
+        // TODO: detect when in terminal and use trigger_terminal_paste() instead
+    }
+
     fn delete_string(&self, count: i32) {
         unsafe {delete_string(count)}
     }
@@ -94,4 +100,6 @@ extern {
     fn cleanup();
     fn send_string(string: *const c_char);
     fn delete_string(count: i32);
+    fn trigger_paste();
+    fn trigger_terminal_paste();
 }
