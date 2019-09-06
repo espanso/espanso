@@ -4,6 +4,7 @@ use crate::matcher::Matcher;
 use crate::matcher::scrolling::ScrollingMatcher;
 use crate::engine::Engine;
 use crate::config::Configs;
+use crate::ui::UIManager;
 use std::thread;
 use clap::{App, Arg};
 use std::path::Path;
@@ -50,7 +51,8 @@ fn main() {
 }
 
 fn espanso_main(configs: Configs) {
-    let ui_manager = UIManager::new();
+    let ui_manager = ui::get_uimanager();
+    ui_manager.notify("Hello guys");
 
     let (txc, rxc) = mpsc::channel();
 

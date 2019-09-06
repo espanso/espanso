@@ -10,16 +10,20 @@ mod macos;
 pub trait UIManager {
     fn initialize(&self);
     fn notify(&self, message: &str);
-
-    fn new() -> impl UIManager {
-        let manager = get_uimanager();
-        manager.initialize();
-        manager
-    }
 }
 
 // MAC IMPLEMENTATION
 #[cfg(target_os = "macos")]
-fn get_uimanager() -> impl UIManager {
-    macos::MacUIManager{}
+pub fn get_uimanager() -> impl UIManager {
+    let manager = macos::MacUIManager{};
+    manager.initialize();
+    manager
+}
+
+// LINUX IMPLEMENTATION
+#[cfg(target_os = "linux")]
+pub fn get_uimanager() -> impl UIManager {
+    let manager = linux::LinuxUIManager{};
+    manager.initialize();
+    manager
 }
