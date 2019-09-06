@@ -180,14 +180,13 @@ void event_callback(XPointer p, XRecordInterceptData *hook)
 
     switch (event_type) {
         case KeyRelease:
-            //printf ("%d %d KeyPress: \t%s\t%s\n", key_code, res, XKeysymToString(XkbKeycodeToKeysym(ctrl_disp, key_code, 0, 0)), buffer.data());
-            if (res > 0) {  // Send only printable chars, todo: change
-                keypress_callback(interceptor_instance, buffer.data(), buffer.size());
+            //printf ("%d %d %s\n", key_code, res, buffer.data());
+            if (res > 0 && key_code != 22) {  // Printable character, but not backspace
+                keypress_callback(interceptor_instance, buffer.data(), buffer.size(), 0, key_code);
+            }else{ // Modifier key
+                keypress_callback(interceptor_instance, NULL, 0, 1, key_code);
             }
             break;
-//        case KeyPress:
-//            printf ("%d %d KeyPress: \t%s\t%s\t%d\n", keycode, res, XKeysymToString(XkbKeycodeToKeysym(ctrl_disp, keycode, 0, 0)), buff, buff[0]);
-//            break;
         default:
             break;
     }

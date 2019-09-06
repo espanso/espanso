@@ -54,10 +54,10 @@ impl super::KeyboardSender for LinuxKeyboardSender {
 
 // Native bridge code
 
-extern fn keypress_callback(_self: *mut LinuxKeyboardInterceptor, raw_buffer: *const u8, len: i32) {
+extern fn keypress_callback(_self: *mut LinuxKeyboardInterceptor, raw_buffer: *const u8, len: i32,
+                            is_modifier: i32, key_code: i32) {
     unsafe {
-        //if is_modifier == 0 {  // Char event
-        if true {  // Char event
+        if is_modifier == 0 {  // Char event
             // Convert the received buffer to a character
             let buffer = std::slice::from_raw_parts(raw_buffer, len as usize);
             let r = String::from_utf8_lossy(buffer).chars().nth(0);
@@ -67,13 +67,12 @@ extern fn keypress_callback(_self: *mut LinuxKeyboardInterceptor, raw_buffer: *c
                 (*_self).sender.send(KeyEvent::Char(c)).unwrap();
             }
         }else{  // Modifier event
-            let key_code = 3;
             let modifier: Option<KeyModifier> = match key_code {
-                0x37 => Some(META),
-                0x38 => Some(SHIFT),
-                0x3A => Some(ALT),
-                0x3B => Some(CTRL),
-                0x33 => Some(BACKSPACE),
+                133 => Some(META),
+                50 => Some(SHIFT),
+                64 => Some(ALT),
+                37 => Some(CTRL),
+                22 => Some(BACKSPACE),
                 _ => None,
             };
 
@@ -87,7 +86,9 @@ extern fn keypress_callback(_self: *mut LinuxKeyboardInterceptor, raw_buffer: *c
 #[allow(improper_ctypes)]
 #[link(name="linuxbridge", kind="static")]
 extern {
-    fn register_keypress_callback(s: *const LinuxKeyboardInterceptor, cb: extern fn(_self: *mut LinuxKeyboardInterceptor, *const u8, i32));
+    fn register_keypress_callback(s: *const LinuxKeyboardInterceptor,
+                                  cb: extern fn(_self: *mut LinuxKeyboardInterceptor, *const u8,
+                                                i32, i32, i32));
     fn initialize();
     fn eventloop();
     fn cleanup();
