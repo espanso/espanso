@@ -40,6 +40,13 @@ impl super::KeyboardSender for WindowsKeyboardSender {
 
     }
 
+    fn send_enter(&self) {
+        unsafe {
+            // Send the VK_RETURN key press
+            send_vkey(0x0D);
+        }
+    }
+
     fn delete_string(&self, count: i32) {
         unsafe {
             delete_string(count)
@@ -87,5 +94,6 @@ extern {
     fn initialize_window();
     fn eventloop();
     fn send_string(string: *const u16);
+    fn send_vkey(vk: i32);
     fn delete_string(count: i32);
 }

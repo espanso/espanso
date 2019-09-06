@@ -16,6 +16,16 @@ impl <S> Engine<S> where S: KeyboardSender{
 impl <S> MatchReceiver for Engine<S> where S: KeyboardSender{
     fn on_match(&self, m: &Match) {
         self.sender.delete_string(m.trigger.len() as i32);
-        self.sender.send_string(m.replace.as_str());
+
+        // To handle newlines, substitute each "\n" char with an Enter key press.
+        let splits = m.replace.lines();
+
+        for (i, split) in splits.enumerate() {
+            if i > 0 {
+                self.sender.send_enter();
+            }
+
+            self.sender.send_string(split);
+        }
     }
 }
