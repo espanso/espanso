@@ -12,6 +12,7 @@ mod keyboard;
 mod matcher;
 mod engine;
 mod config;
+mod ui;
 
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
@@ -49,6 +50,8 @@ fn main() {
 }
 
 fn espanso_main(configs: Configs) {
+    let ui_manager = UIManager::new();
+
     let (txc, rxc) = mpsc::channel();
 
     let sender = keyboard::get_sender();

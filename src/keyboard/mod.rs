@@ -15,6 +15,12 @@ pub trait KeyboardInterceptor {
     fn start(&self);
 }
 
+pub trait KeyboardSender {
+    fn send_string(&self, s: &str);
+    fn send_enter(&self);
+    fn delete_string(&self, count: i32);
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum KeyModifier {
     CTRL,
@@ -34,12 +40,6 @@ impl Default for KeyModifier {
 pub enum KeyEvent {
     Char(char),
     Modifier(KeyModifier)
-}
-
-pub trait KeyboardSender {
-    fn send_string(&self, s: &str);
-    fn send_enter(&self);
-    fn delete_string(&self, count: i32);
 }
 
 // WINDOWS IMPLEMENTATIONS
