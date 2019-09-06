@@ -63,3 +63,21 @@ void delete_string(int32_t count) {
         }
     });
 }
+
+void send_vkey(int32_t vk) {
+    dispatch_async(dispatch_get_main_queue(), ^(void) {
+        CGEventRef keydown;
+        keydown = CGEventCreateKeyboardEvent(NULL, vk, true);
+        CGEventPost(kCGHIDEventTap, keydown);
+        CFRelease(keydown);
+
+        usleep(2000);
+
+        CGEventRef keyup;
+        keyup = CGEventCreateKeyboardEvent(NULL, vk, false);
+        CGEventPost(kCGHIDEventTap, keyup);
+        CFRelease(keyup);
+
+        usleep(2000);
+    });
+}

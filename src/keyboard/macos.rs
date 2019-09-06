@@ -34,6 +34,13 @@ impl super::KeyboardSender for MacKeyboardSender {
         }
     }
 
+    fn send_enter(&self) {
+        unsafe {
+            // Send the kVK_Return key press
+            send_vkey(0x24);
+        }
+    }
+
     fn delete_string(&self, count: i32) {
         unsafe {delete_string(count)}
     }
@@ -79,5 +86,6 @@ extern {
     fn initialize();
     fn eventloop();
     fn send_string(string: *const c_char);
+    fn send_vkey(vk: i32);
     fn delete_string(count: i32);
 }

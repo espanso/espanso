@@ -35,6 +35,11 @@ void register_keypress_callback(void *self, KeypressCallback callback);
 void send_string(const char * string);
 
 /*
+ * Send the Virtual Key press
+ */
+void send_vkey(int32_t vk);
+
+/*
  * Send the backspace keypress, *count* times.
  */
 extern "C" void delete_string(int32_t count);
