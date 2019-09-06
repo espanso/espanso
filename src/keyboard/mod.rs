@@ -18,6 +18,7 @@ pub trait KeyboardInterceptor {
 pub trait KeyboardSender {
     fn send_string(&self, s: &str);
     fn send_enter(&self);
+    fn trigger_paste(&self);
     fn delete_string(&self, count: i32);
 }
 

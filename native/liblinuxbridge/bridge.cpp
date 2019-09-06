@@ -203,3 +203,11 @@ void delete_string(int32_t count) {
         xdo_send_keysequence_window(xdo_context, CURRENTWINDOW, "BackSpace", 8000);
     }
 }
+
+void trigger_paste() {
+    xdo_send_keysequence_window(xdo_context, CURRENTWINDOW, "Control_L+v", 8000);
+}
+
+void trigger_terminal_paste() {
+    xdo_send_keysequence_window(xdo_context, CURRENTWINDOW, "Control_L+Shift+v", 8000);
+}
