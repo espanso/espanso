@@ -32,7 +32,21 @@ pub struct Configs {
     #[serde(default = "default_backspace_limit")]
     pub backspace_limit: i32,
 
+    #[serde(default)]
+    pub backend: BackendType,
+
     pub matches: Vec<Match>
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum BackendType {
+    Inject,
+    Clipboard
+}
+impl Default for BackendType {
+    fn default() -> Self {
+        BackendType::Inject
+    }
 }
 
 impl Configs {
