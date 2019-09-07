@@ -60,8 +60,6 @@ fn espanso_main(config_set: ConfigSet) {
     ui_manager.notify("Hello guys");
 
     let system_manager = system::get_manager();
-    println!("{}", system_manager.get_current_window_title().unwrap());
-    println!("{}", system_manager.get_current_window_class().unwrap());
 
     let clipboard_manager = clipboard::get_manager();
     let clipboard_manager_arc = Arc::new(clipboard_manager);

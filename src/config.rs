@@ -7,6 +7,7 @@ use std::fs::{File, create_dir_all};
 use std::io::Read;
 use serde::{Serialize, Deserialize};
 use crate::keyboard::KeyModifier;
+use std::collections::HashSet;
 
 // TODO: add documentation link
 const DEFAULT_CONFIG_FILE_CONTENT : &str = include_str!("res/config.yaml");
@@ -15,6 +16,7 @@ const DEFAULT_CONFIG_FILE_NAME : &str = "default.yaml";
 
 
 // Default values for primitives
+fn default_name() -> String{ "default".to_owned() }
 fn default_toggle_interval() -> u32 {
     230
 }
@@ -24,6 +26,9 @@ fn default_backspace_limit() -> i32 {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Configs {
+    #[serde(default = "default_name")]
+    pub name: String,
+
     #[serde(default)]
     pub toggle_key: KeyModifier,
 
@@ -73,7 +78,7 @@ pub struct ConfigSet {
     specific: Vec<Configs>,
 }
 
-impl ConfigSet {
+impl ConfigSet { // TODO: tests
     pub fn load(dir_path: &Path) -> ConfigSet {
         if !dir_path.is_dir() {
             panic!("Invalid config directory");
@@ -84,6 +89,9 @@ impl ConfigSet {
 
         let mut specific = Vec::new();
 
+        // Used to make sure no duplicates are present
+        let mut name_set = HashSet::new();
+
         for entry in fs::read_dir(dir_path)
             .expect("Cannot read espanso config directory!") {
 
@@ -91,7 +99,22 @@ impl ConfigSet {
             if let Ok(entry) = entry {
                 let path = entry.path();
 
+                // Skip the default one, already loaded
+                if path.file_name().unwrap_or("".as_ref()) == "default.yaml" {
+                    continue;
+                }
+
                 let config = Configs::load_config(path.as_path());
+
+                if config.name == "default" {
+                    panic!(format!("Error while parsing {} : please a name", path.to_str().unwrap()))
+                }
+
+                if name_set.contains(&config.name) {
+                    panic!(format!("Error while parsing {} : the specified name is already used, please specify another one",  path.to_str().unwrap()))
+                }
+
+                name_set.insert(config.name.clone());
                 specific.push(config);
             }
         }
