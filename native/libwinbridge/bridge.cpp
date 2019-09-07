@@ -273,3 +273,133 @@ int32_t get_active_window_executable(wchar_t * buffer, int32_t size) {
 
     return res;
 }
+
+// UI
+
+const wchar_t* const notification_winclass = L"EspansoNotification";
+HWND nw;
+HBITMAP g_espanso_icon = NULL;
+
+/*
+ * Message handler procedure for the notification window
+ */
+LRESULT CALLBACK notification_worker_procedure(HWND window, unsigned int msg, WPARAM wp, LPARAM lp)
+{
+	HDC hdcStatic = NULL;
+
+	switch (msg)
+	{
+	case WM_CREATE:
+		g_espanso_icon = (HBITMAP)LoadImage(NULL, L"C:\\Users\\fredd\\Documents\\espanso.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+		break;
+	case WM_DESTROY:
+		std::cout << "\ndestroying window\n";
+		PostQuitMessage(0);
+		DeleteObject(g_espanso_icon);
+		return 0L;
+	case WM_PAINT:
+	{
+		BITMAP bm;
+		PAINTSTRUCT ps;
+
+		HDC hdc = BeginPaint(window, &ps);
+
+		HDC hdcMem = CreateCompatibleDC(hdc);
+		HBITMAP hbmOld = (HBITMAP) SelectObject(hdcMem, g_espanso_icon);
+
+		GetObject(g_espanso_icon, sizeof(bm), &bm);
+
+		BitBlt(hdc, 10, 10, 80, 80, hdcMem, 0, 0, SRCCOPY);
+
+		SelectObject(hdcMem, hbmOld);
+		DeleteDC(hdcMem);
+
+		EndPaint(window, &ps);
+	}
+	break;
+	case WM_CTLCOLORSTATIC:
+
+		hdcStatic = (HDC)wp;
+		SetTextColor(hdcStatic, RGB(0, 0, 0));
+		SetBkMode(hdcStatic, TRANSPARENT);
+
+		return (LRESULT)GetStockObject(NULL_BRUSH);
+	default:
+		return DefWindowProc(window, msg, wp, lp);
+	}
+}
+
+int32_t show_notification(wchar_t * message, wchar_t * icon_path) {
+    g_espanso_icon = (HBITMAP)LoadImage(NULL, icon_path, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+
+    SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE);
+
+    // Docs: https://docs.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-wndclassexa
+    WNDCLASSEX wndclass = {
+            sizeof(WNDCLASSEX),				// cbSize: Size of this structure
+            0,								// style: Class styles
+            notification_worker_procedure,	// lpfnWndProc: Pointer to the window procedure
+            0,								// cbClsExtra: Number of extra bytes to allocate following the window-class structure
+            0,								// cbWndExtra: The number of extra bytes to allocate following the window instance.
+            GetModuleHandle(0),				// hInstance: A handle to the instance that contains the window procedure for the class.
+            NULL,							// hIcon: A handle to the class icon.
+            LoadCursor(0,IDC_ARROW),	    // hCursor: A handle to the class cursor.
+            NULL,							// hbrBackground: A handle to the class background brush.
+            NULL,							// lpszMenuName: Pointer to a null-terminated character string that specifies the resource name of the class menu
+            notification_winclass,			// lpszClassName: A pointer to a null-terminated string or is an atom.
+            NULL							// hIconSm: A handle to a small icon that is associated with the window class.
+    };
+
+    if (RegisterClassEx(&wndclass))
+    {
+        // Docs: https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-createwindowexw
+        nw = CreateWindowEx(
+                WS_EX_TOOLWINDOW,						// dwExStyle: The extended window style of the window being created.
+                notification_winclass, 					// lpClassName: A null-terminated string or a class atom created by a previous call to the RegisterClass
+                L"Espanso Notification",				// lpWindowName: The window name.
+                WS_POPUPWINDOW,							// dwStyle: The style of the window being created.
+                CW_USEDEFAULT,							// X: The initial horizontal position of the window.
+                CW_USEDEFAULT,							// Y: The initial vertical position of the window.
+                300,									// nWidth: The width, in device units, of the window.
+                100,									// nHeight: The height, in device units, of the window.
+                NULL,									// hWndParent:  handle to the parent or owner window of the window being created.
+                NULL,									// hMenu: A handle to a menu, or specifies a child-window identifier, depending on the window style.
+                GetModuleHandle(0),						// hInstance: A handle to the instance of the module to be associated with the window.
+                NULL									// lpParam: Pointer to a value to be passed to the window
+        );
+
+        if (nw)
+        {
+
+            static HWND hwnd_st_u, hwnd_ed_u;
+            int x, w, y, h;
+            y = 40; h = 30;
+            x = 100; w = 180;
+            hwnd_st_u = CreateWindowEx(0, L"static", L"ST_U",
+                                     WS_CHILD | WS_VISIBLE | WS_TABSTOP | SS_CENTER,
+                                     x, y, w, h,
+                                     nw, (HMENU)(501),
+                                     (HINSTANCE)GetWindowLong(nw, GWLP_HINSTANCE), NULL);
+
+            SetWindowText(hwnd_st_u, message);
+
+            int posX = GetSystemMetrics(SM_CXSCREEN) - 350;
+            int posY = GetSystemMetrics(SM_CYSCREEN) - 200;
+
+            SetWindowPos(window, HWND_TOP, posX, posY, 0, 0, SWP_NOSIZE);
+
+            // Hide the window
+            ShowWindow(nw, SW_SHOW);
+
+            // Enter the Event loop
+            MSG msg;
+            while (GetMessage(&msg, 0, 0, 0))  DispatchMessage(&msg);
+        }
+    }
+    else {
+        // Something went wrong, error.
+        return -1;
+    }
+
+    return 1;
+}

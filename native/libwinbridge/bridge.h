@@ -54,4 +54,8 @@ extern "C" int32_t get_active_window_name(wchar_t * buffer, int32_t size);
  */
 extern "C" int32_t get_active_window_executable(wchar_t * buffer, int32_t size);
 
+// UI
+
+extern "C" int32_t show_notification(wchar_t * message, wchar_t * icon_path);
+
 #endif //ESPANSO_BRIDGE_H
