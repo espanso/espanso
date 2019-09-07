@@ -1,9 +1,11 @@
-use std::thread;
+use std::{thread};
 use std::sync::mpsc;
-use std::os::raw::c_char;
+use std::os::raw::{c_char, c_void};
 use std::ffi::CString;
 use crate::keyboard::{KeyEvent, KeyModifier};
 use crate::keyboard::KeyModifier::*;
+
+use crate::bridge::linux::*;
 
 #[repr(C)]
 pub struct LinuxKeyboardInterceptor {
@@ -13,7 +15,8 @@ pub struct LinuxKeyboardInterceptor {
 impl super::KeyboardInterceptor for LinuxKeyboardInterceptor {
     fn initialize(&self) {
         unsafe {
-            register_keypress_callback(self,keypress_callback);
+            let self_ptr = self as *const LinuxKeyboardInterceptor as *const c_void;
+            register_keypress_callback( self_ptr,keypress_callback);
             initialize();  // TODO: check initialization return codes
         }
     }
@@ -60,9 +63,11 @@ impl super::KeyboardSender for LinuxKeyboardSender {
 
 // Native bridge code
 
-extern fn keypress_callback(_self: *mut LinuxKeyboardInterceptor, raw_buffer: *const u8, len: i32,
+extern fn keypress_callback(_self: *mut c_void, raw_buffer: *const u8, len: i32,
                             is_modifier: i32, key_code: i32) {
     unsafe {
+        let _self = _self as *mut LinuxKeyboardInterceptor;
+
         if is_modifier == 0 {  // Char event
             // Convert the received buffer to a character
             let buffer = std::slice::from_raw_parts(raw_buffer, len as usize);
@@ -87,19 +92,4 @@ extern fn keypress_callback(_self: *mut LinuxKeyboardInterceptor, raw_buffer: *c
             }
         }
     }
-}
-
-#[allow(improper_ctypes)]
-#[link(name="linuxbridge", kind="static")]
-extern {
-    fn register_keypress_callback(s: *const LinuxKeyboardInterceptor,
-                                  cb: extern fn(_self: *mut LinuxKeyboardInterceptor, *const u8,
-                                                i32, i32, i32));
-    fn initialize();
-    fn eventloop();
-    fn cleanup();
-    fn send_string(string: *const c_char);
-    fn delete_string(count: i32);
-    fn trigger_paste();
-    fn trigger_terminal_paste();
 }

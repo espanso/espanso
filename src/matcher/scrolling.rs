@@ -1,13 +1,13 @@
 use crate::matcher::{Match, MatchReceiver};
 use std::cell::RefCell;
 use crate::keyboard::KeyModifier;
-use crate::config::Configs;
+use crate::config::ConfigSet;
 use crate::keyboard::KeyModifier::BACKSPACE;
 use std::time::SystemTime;
 use std::collections::VecDeque;
 
 pub struct ScrollingMatcher<'a, R> where R: MatchReceiver{
-    configs: Configs,
+    config_set: ConfigSet,
     receiver: R,
     current_set_queue: RefCell<VecDeque<Vec<MatchEntry<'a>>>>,
     toggle_press_time: RefCell<SystemTime>,
@@ -28,7 +28,7 @@ impl <'a, R> super::Matcher<'a> for ScrollingMatcher<'a, R> where R: MatchReceiv
 
         let mut current_set_queue = self.current_set_queue.borrow_mut();
 
-        let new_matches: Vec<MatchEntry> = self.configs.matches.iter()
+        let new_matches: Vec<MatchEntry> = self.config_set.matches().iter()
             .filter(|&x| x.trigger.chars().nth(0).unwrap() == c)
             .map(|x | MatchEntry{start: 1, _match: &x})
             .collect();
@@ -60,7 +60,7 @@ impl <'a, R> super::Matcher<'a> for ScrollingMatcher<'a, R> where R: MatchReceiv
 
         current_set_queue.push_back(combined_matches);
 
-        if current_set_queue.len() as i32 > (self.configs.backspace_limit + 1) {
+        if current_set_queue.len() as i32 > (self.config_set.backspace_limit() + 1) {
             current_set_queue.pop_front();
         }
 
@@ -73,10 +73,10 @@ impl <'a, R> super::Matcher<'a> for ScrollingMatcher<'a, R> where R: MatchReceiv
     }
 
     fn handle_modifier(&'a self, m: KeyModifier) {
-        if m == self.configs.toggle_key {
+        if m == *self.config_set.toggle_key() {
             let mut toggle_press_time = self.toggle_press_time.borrow_mut();
             if let Ok(elapsed) = toggle_press_time.elapsed() {
-                if elapsed.as_millis() < self.configs.toggle_interval as u128 {
+                if elapsed.as_millis() < self.config_set.toggle_interval() as u128 {
                     let mut is_enabled = self.is_enabled.borrow_mut();
                     *is_enabled = !(*is_enabled);
 
@@ -99,12 +99,12 @@ impl <'a, R> super::Matcher<'a> for ScrollingMatcher<'a, R> where R: MatchReceiv
     }
 }
 impl <'a, R> ScrollingMatcher<'a, R> where R: MatchReceiver {
-    pub fn new(configs: Configs, receiver: R) -> ScrollingMatcher<'a, R> {
+    pub fn new(config_set: ConfigSet, receiver: R) -> ScrollingMatcher<'a, R> {
         let current_set_queue = RefCell::new(VecDeque::new());
         let toggle_press_time = RefCell::new(SystemTime::now());
 
         ScrollingMatcher{
-            configs,
+            config_set,
             receiver,
             current_set_queue,
             toggle_press_time,

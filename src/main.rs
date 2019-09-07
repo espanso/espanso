@@ -3,18 +3,21 @@ use crate::keyboard::KeyboardInterceptor;
 use crate::matcher::Matcher;
 use crate::matcher::scrolling::ScrollingMatcher;
 use crate::engine::Engine;
-use crate::config::Configs;
+use crate::config::{Configs, ConfigSet};
 use crate::ui::UIManager;
 use crate::clipboard::ClipboardManager;
+use crate::system::SystemManager;
 use std::thread;
 use clap::{App, Arg};
 use std::path::Path;
 
-mod keyboard;
-mod matcher;
+mod ui;
+mod bridge;
 mod engine;
 mod config;
-mod ui;
+mod system;
+mod matcher;
+mod keyboard;
 mod clipboard;
 
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
@@ -28,7 +31,7 @@ fn main() {
             .short("c")
             .long("config")
             .value_name("FILE")
-            .help("Sets a custom config file. If not specified, reads the default $HOME/.espanso file, creating it if not present.")
+            .help("Sets a custom config directory. If not specified, reads the default $HOME/.espanso/default.yaml file, creating it if not present.")
             .takes_value(true))
         .arg(Arg::with_name("dump")
             .long("dump")
@@ -39,22 +42,26 @@ fn main() {
             .help("Sets the level of verbosity"))
         .get_matches();
 
-    let configs = match matches.value_of("config") {
-        None => {Configs::load_default()},
-        Some(path) => {Configs::load(Path::new(path))},
+    let config_set = match matches.value_of("config") {
+        None => {ConfigSet::load_default()},
+        Some(path) => {ConfigSet::load(Path::new(path))},
     };
 
     if matches.is_present("dump") {
-        println!("{:#?}", configs);
+        println!("{:#?}", config_set);
         return;
     }
 
-    espanso_main(configs);
+    espanso_main(config_set);
 }
 
-fn espanso_main(configs: Configs) {
+fn espanso_main(config_set: ConfigSet) {
     let ui_manager = ui::get_uimanager();
     ui_manager.notify("Hello guys");
+
+    let system_manager = system::get_manager();
+    println!("{}", system_manager.get_current_window_title().unwrap());
+    println!("{}", system_manager.get_current_window_class().unwrap());
 
     let clipboard_manager = clipboard::get_manager();
     let clipboard_manager_arc = Arc::new(clipboard_manager);
@@ -65,10 +72,10 @@ fn espanso_main(configs: Configs) {
 
     let engine = Engine::new(sender,
                              Arc::clone(&clipboard_manager_arc),
-                             configs.clone());
+                             config_set.clone());
 
     thread::spawn(move || {
-        let matcher = ScrollingMatcher::new(configs.clone(), engine);
+        let matcher = ScrollingMatcher::new(config_set.clone(), engine);
         matcher.watch(rxc);
     });
 
