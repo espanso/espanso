@@ -10,12 +10,13 @@ use crate::keyboard::KeyModifier;
 use crate::system::SystemManager;
 use std::collections::HashSet;
 use regex::Regex;
+use std::process::exit;
+use log::{debug, info, warn, error};
 
 // TODO: add documentation link
 const DEFAULT_CONFIG_FILE_CONTENT : &str = include_str!("res/config.yaml");
 
 const DEFAULT_CONFIG_FILE_NAME : &str = "default.yaml";
-
 
 // Default values for primitives
 fn default_name() -> String{ "default".to_owned() }
@@ -85,7 +86,8 @@ pub struct ConfigSet {
 impl ConfigSet { // TODO: tests
     pub fn load(dir_path: &Path) -> ConfigSet {
         if !dir_path.is_dir() {
-            panic!("Invalid config directory");
+            error!("Invalid config directory");
+            exit(2);
         }
 
         let default_file = dir_path.join(DEFAULT_CONFIG_FILE_NAME);
@@ -111,11 +113,13 @@ impl ConfigSet { // TODO: tests
                 let config = Configs::load_config(path.as_path());
 
                 if config.name == "default" {
-                    panic!(format!("Error while parsing {} : please a name", path.to_str().unwrap()))
+                    error!("Error while parsing {}, please specify a 'name' field", path.to_str().unwrap_or(""));
+                    continue;
                 }
 
                 if name_set.contains(&config.name) {
-                    panic!(format!("Error while parsing {} : the specified name is already used, please specify another one",  path.to_str().unwrap()))
+                    error!("Error while parsing {} : the specified name is already used, please use another one",  path.to_str().unwrap_or(""));
+                    continue;
                 }
 
                 name_set.insert(config.name.clone());
@@ -150,15 +154,14 @@ impl ConfigSet { // TODO: tests
             }
         }
 
-        panic!("Could not generate default position for config file");
+        error!("Could not generate default position for config file");
+        exit(1);
     }
 }
 
 pub trait ConfigManager {
-    fn toggle_key(&self) -> &KeyModifier;
-    fn toggle_interval(&self) -> u32;
-    fn backspace_limit(&self) -> i32;
-    fn backend(&self) -> &BackendType;
+    fn active_config(&self) -> &Configs;
+    fn default_config(&self) -> &Configs;
     fn matches(&self) -> &Vec<Match>;
 }
 
@@ -181,7 +184,7 @@ impl <S: SystemManager> RuntimeConfigManager<S> {
                     if let Ok(regex) = res {
                         Some(regex)
                     }else{
-                        // TODO: log invalid regex error
+                        warn!("Invalid regex in 'filter_title' field of configuration {}, ignoring it...", config.name);
                         None
                     }
                 }
@@ -196,7 +199,7 @@ impl <S: SystemManager> RuntimeConfigManager<S> {
     }
 }
 
-impl <S: SystemManager> RuntimeConfigManager<S> {
+impl <S: SystemManager> ConfigManager for RuntimeConfigManager<S> {
     fn active_config(&self) -> &Configs {
         // TODO: optimize performance by avoiding some of these checks if no Configs use the filters
 
@@ -206,6 +209,9 @@ impl <S: SystemManager> RuntimeConfigManager<S> {
             for (i, regex) in self.title_regexps.iter().enumerate() {
                 if let Some(regex) = regex {
                     if regex.is_match(&title) {
+                        debug!("Matched 'filter_title' for '{}' config, using custom settings.",
+                               self.set.specific[i].name);
+
                         return &self.set.specific[i]
                     }
                 }
@@ -213,25 +219,12 @@ impl <S: SystemManager> RuntimeConfigManager<S> {
         }
 
         // No matches, return the default mapping
+        debug!("No matches for custom configs, using default settings.");
         &self.set.default
     }
-}
 
-impl <S: SystemManager> ConfigManager for RuntimeConfigManager<S> {
-    fn toggle_key(&self) -> &KeyModifier {
-        &self.active_config().toggle_key
-    }
-
-    fn toggle_interval(&self) -> u32 {
-        self.active_config().toggle_interval
-    }
-
-    fn backspace_limit(&self) -> i32 {
-        self.active_config().backspace_limit
-    }
-
-    fn backend(&self) -> &BackendType {
-        &self.active_config().backend
+    fn default_config(&self) -> &Configs {
+        &self.set.default
     }
 
     fn matches(&self) -> &Vec<Match> {

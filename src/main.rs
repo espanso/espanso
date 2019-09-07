@@ -9,6 +9,8 @@ use std::thread;
 use clap::{App, Arg};
 use std::path::Path;
 use std::sync::mpsc::Receiver;
+use log::{info, LevelFilter};
+use simplelog::{CombinedLogger, TermLogger, TerminalMode};
 
 mod ui;
 mod bridge;
@@ -41,9 +43,31 @@ fn main() {
             .help("Sets the level of verbosity"))
         .get_matches();
 
+
+    // Setup logging
+    let log_level = match matches.occurrences_of("v") {
+        0 => LevelFilter::Warn,
+        1 => LevelFilter::Info,
+        2 | _ => LevelFilter::Debug,
+    };
+    CombinedLogger::init(
+        vec![
+            TermLogger::new(log_level, simplelog::Config::default(), TerminalMode::Mixed).unwrap(),
+            //WriteLogger::new(LevelFilter::Info, Config::default(), File::create("my_rust_binary.log").unwrap()),
+        ]
+    ).unwrap();
+
+    info!("espanso is starting...");
+
     let config_set = match matches.value_of("config") {
-        None => {ConfigSet::load_default()},
-        Some(path) => {ConfigSet::load(Path::new(path))},
+        None => {
+            info!("loading configuration from default location...");
+            ConfigSet::load_default()
+        },
+        Some(path) => {
+            info!("loading configuration from custom location: {}", path);
+            ConfigSet::load(Path::new(path))
+        },
     };
 
     if matches.is_present("dump") {

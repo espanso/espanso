@@ -60,7 +60,7 @@ impl <'a, R: MatchReceiver, M: ConfigManager> super::Matcher for ScrollingMatche
 
         current_set_queue.push_back(combined_matches);
 
-        if current_set_queue.len() as i32 > (self.config_manager.backspace_limit() + 1) {
+        if current_set_queue.len() as i32 > (self.config_manager.default_config().backspace_limit + 1) {
             current_set_queue.pop_front();
         }
 
@@ -73,10 +73,12 @@ impl <'a, R: MatchReceiver, M: ConfigManager> super::Matcher for ScrollingMatche
     }
 
     fn handle_modifier(&self, m: KeyModifier) {
-        if m == *self.config_manager.toggle_key() {
+        let config = self.config_manager.default_config();
+
+        if m == config.toggle_key {
             let mut toggle_press_time = self.toggle_press_time.borrow_mut();
             if let Ok(elapsed) = toggle_press_time.elapsed() {
-                if elapsed.as_millis() < self.config_manager.toggle_interval() as u128 {
+                if elapsed.as_millis() < config.toggle_interval as u128 {
                     let mut is_enabled = self.is_enabled.borrow_mut();
                     *is_enabled = !(*is_enabled);
 
