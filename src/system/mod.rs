@@ -21,3 +21,11 @@ pub fn get_manager() -> impl SystemManager {
     manager.initialize();
     manager
 }
+
+// WINDOWS IMPLEMENTATION
+#[cfg(target_os = "windows")]
+pub fn get_manager() -> impl SystemManager {
+    let manager = windows::WindowsSystemManager{};
+    manager.initialize();
+    manager
+}

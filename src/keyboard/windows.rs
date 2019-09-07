@@ -1,7 +1,9 @@
 use std::sync::mpsc;
+use std::os::raw::{c_void};
 use widestring::{U16CString};
 use crate::keyboard::{KeyEvent, KeyModifier};
 use crate::keyboard::KeyModifier::*;
+use crate::bridge::windows::*;
 
 #[repr(C)]
 pub struct WindowsKeyboardInterceptor {
@@ -11,7 +13,8 @@ pub struct WindowsKeyboardInterceptor {
 impl super::KeyboardInterceptor for WindowsKeyboardInterceptor {
     fn initialize(&self) {
         unsafe {
-            register_keypress_callback(self,keypress_callback);
+            let self_ptr = self as *const WindowsKeyboardInterceptor as *const c_void;
+            register_keypress_callback(self_ptr,keypress_callback);
             initialize_window();
         }
     }
@@ -47,6 +50,10 @@ impl super::KeyboardSender for WindowsKeyboardSender {
         }
     }
 
+    fn trigger_paste(&self) {
+        unimplemented!()
+    }
+
     fn delete_string(&self, count: i32) {
         unsafe {
             delete_string(count)
@@ -56,9 +63,11 @@ impl super::KeyboardSender for WindowsKeyboardSender {
 
 // Native bridge code
 
-extern fn keypress_callback(_self: *mut WindowsKeyboardInterceptor, raw_buffer: *const i32, len: i32,
+extern fn keypress_callback(_self: *mut c_void, raw_buffer: *const i32, len: i32,
                             is_modifier: i32, key_code: i32) {
     unsafe {
+        let _self = _self as *mut WindowsKeyboardInterceptor;
+
         if is_modifier == 0 {  // Char event
             // Convert the received buffer to a character
             let buffer = std::slice::from_raw_parts(raw_buffer, len as usize);
@@ -83,17 +92,4 @@ extern fn keypress_callback(_self: *mut WindowsKeyboardInterceptor, raw_buffer: 
             }
         }
     }
-}
-
-#[allow(improper_ctypes)]
-#[link(name="winbridge", kind="static")]
-extern {
-    fn register_keypress_callback(s: *const WindowsKeyboardInterceptor,
-                                  cb: extern fn(_self: *mut WindowsKeyboardInterceptor, *const i32,
-                                                i32, i32, i32));
-    fn initialize_window();
-    fn eventloop();
-    fn send_string(string: *const u16);
-    fn send_vkey(vk: i32);
-    fn delete_string(count: i32);
 }

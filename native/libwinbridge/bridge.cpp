@@ -248,3 +248,28 @@ void send_vkey(int32_t vk) {
 
     SendInput(vec.size(), vec.data(), sizeof(INPUT));
 }
+
+// SYSTEM
+
+int32_t get_active_window_name(wchar_t * buffer, int32_t size) {
+    HWND hwnd = GetForegroundWindow();
+
+    return GetWindowText(hwnd, buffer, size);
+}
+
+int32_t get_active_window_executable(wchar_t * buffer, int32_t size) {
+    HWND hwnd = GetForegroundWindow();
+
+    // Extract the window PID
+    DWORD windowPid;
+    GetWindowThreadProcessId(hwnd, &windowPid);
+
+    DWORD dsize = (DWORD) size;
+
+    // Extract the process executable file path
+    HANDLE process = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, windowPid);
+    int res = QueryFullProcessImageNameW(process, 0, buffer, &dsize);
+    CloseHandle(process);
+
+    return res;
+}

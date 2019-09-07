@@ -27,3 +27,11 @@ pub fn get_uimanager() -> impl UIManager {
     manager.initialize();
     manager
 }
+
+// WINDOWS IMPLEMENTATION
+#[cfg(target_os = "windows")]
+pub fn get_uimanager() -> impl UIManager {
+    let manager = windows::WindowsUIManager{};
+    manager.initialize();
+    manager
+}

@@ -20,3 +20,11 @@ pub fn get_manager() -> impl ClipboardManager {
     manager.initialize();
     manager
 }
+
+// WINDOWS IMPLEMENTATION
+#[cfg(target_os = "windows")]
+pub fn get_manager() -> impl ClipboardManager {
+    let manager = windows::WindowsClipboardManager{};
+    manager.initialize();
+    manager
+}
