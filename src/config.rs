@@ -203,9 +203,13 @@ impl <S: SystemManager> ConfigManager for RuntimeConfigManager<S> {
     fn active_config(&self) -> &Configs {
         // TODO: optimize performance by avoiding some of these checks if no Configs use the filters
 
+        debug!("Requested config for window:");
+
         let active_title = self.system_manager.get_current_window_title();
 
         if let Some(title) = active_title {
+            debug!("=> Title: '{}'", title);
+
             for (i, regex) in self.title_regexps.iter().enumerate() {
                 if let Some(regex) = regex {
                     if regex.is_match(&title) {
@@ -216,6 +220,24 @@ impl <S: SystemManager> ConfigManager for RuntimeConfigManager<S> {
                     }
                 }
             }
+        }
+
+        let active_executable = self.system_manager.get_current_window_executable();
+
+        if let Some(executable) = active_executable {
+            debug!("=> Executable: '{}'", executable);
+
+            // TODO
+            /*for (i, regex) in self.title_regexps.iter().enumerate() {
+                if let Some(regex) = regex {
+                    if regex.is_match(&title) {
+                        debug!("Matched 'filter_title' for '{}' config, using custom settings.",
+                               self.set.specific[i].name);
+
+                        return &self.set.specific[i]
+                    }
+                }
+            }*/
         }
 
         // No matches, return the default mapping

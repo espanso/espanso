@@ -3,7 +3,6 @@ use std::os::raw::{c_void};
 use std::ffi::CString;
 use crate::keyboard::{KeyEvent, KeyModifier};
 use crate::keyboard::KeyModifier::*;
-
 use crate::bridge::linux::*;
 
 #[repr(C)]

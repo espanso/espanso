@@ -44,4 +44,14 @@ extern "C" void send_vkey(int32_t vk);
  */
 extern "C" void delete_string(int32_t count);
 
+/*
+ * Return the active windows's title
+ */
+extern "C" int32_t get_active_window_name(wchar_t * buffer, int32_t size);
+
+/*
+ * Return the active windows's executable path
+ */
+extern "C" int32_t get_active_window_executable(wchar_t * buffer, int32_t size);
+
 #endif //ESPANSO_BRIDGE_H
