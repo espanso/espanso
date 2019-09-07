@@ -18,9 +18,11 @@ impl <'a, S: KeyboardSender, C: ClipboardManager, M: ConfigManager> Engine<'a, S
 
 impl <'a, S: KeyboardSender, C: ClipboardManager, M: ConfigManager> MatchReceiver for Engine<'a, S, C, M>{
     fn on_match(&self, m: &Match) {
+        let config = self.config_manager.default_config();
+
         self.sender.delete_string(m.trigger.len() as i32);
 
-        match self.config_manager.backend() {
+        match config.backend {
             BackendType::Inject => {
                 // Send the expected string. On linux, newlines are managed automatically
                 // while on windows and macos, we need to emulate a Enter key press.
