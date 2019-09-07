@@ -67,6 +67,7 @@ impl Configs {
     }
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ConfigSet {
     default: Configs,
     specific: Vec<Configs>,
@@ -78,17 +79,21 @@ impl ConfigSet {
             panic!("Invalid config directory");
         }
 
-        let default_file = espanso_dir.join(DEFAULT_CONFIG_FILE_NAME);
-        let default = Configs::load_config(default_file);
+        let default_file = dir_path.join(DEFAULT_CONFIG_FILE_NAME);
+        let default = Configs::load_config(default_file.as_path());
 
         let mut specific = Vec::new();
 
-        for entry in fs::read_dir(dir_path)? {
-            let entry = entry?;
-            let path = entry.path();
+        for entry in fs::read_dir(dir_path)
+            .expect("Cannot read espanso config directory!") {
 
-            let config = Configs::load_config(path.as_path());
-            specific.push(config);
+            let entry = entry;
+            if let Ok(entry) = entry {
+                let path = entry.path();
+
+                let config = Configs::load_config(path.as_path());
+                specific.push(config);
+            }
         }
 
         ConfigSet {
@@ -103,7 +108,7 @@ impl ConfigSet {
             let espanso_dir = home_dir.join(".espanso");
 
             // Create the espanso dir if id doesn't exist
-            let res = create_dir_all(espanso_dir);
+            let res = create_dir_all(espanso_dir.as_path());
 
             if let Ok(_) = res {
                 let default_file = espanso_dir.join(DEFAULT_CONFIG_FILE_NAME);
@@ -119,5 +124,25 @@ impl ConfigSet {
         }
 
         panic!("Could not generate default position for config file");
+    }
+
+    pub fn toggle_key(&self) -> &KeyModifier {
+        &self.default.toggle_key
+    }
+
+    pub fn toggle_interval(&self) -> u32 {
+        self.default.toggle_interval
+    }
+
+    pub fn backspace_limit(&self) -> i32 {
+        self.default.backspace_limit
+    }
+
+    pub fn backend(&self) -> &BackendType {
+        &BackendType::Inject // TODO make dynamic based on system current active app
+    }
+
+    pub fn matches(&self) -> &Vec<Match> {
+        &self.default.matches
     }
 }

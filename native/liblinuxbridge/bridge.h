@@ -52,4 +52,17 @@ extern "C" void trigger_paste();
  */
 extern "C" void trigger_terminal_paste();
 
+
+// SYSTEM MODULE
+
+/*
+ * Return the active windows's WM_NAME
+ */
+extern "C" int32_t get_active_window_name(char * buffer, int32_t size);
+
+/*
+ * Return the active windows's WM_CLASS
+ */
+extern "C" int32_t get_active_window_class(char * buffer, int32_t size);
+
 #endif //ESPANSO_BRIDGE_H

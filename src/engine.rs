@@ -1,6 +1,6 @@
 use crate::matcher::{Match, MatchReceiver};
 use crate::keyboard::KeyboardSender;
-use crate::config::Configs;
+use crate::config::ConfigSet;
 use crate::config::BackendType;
 use crate::clipboard::ClipboardManager;
 use std::sync::Arc;
@@ -8,12 +8,12 @@ use std::sync::Arc;
 pub struct Engine<S, C> where S: KeyboardSender, C: ClipboardManager {
     sender: S,
     clipboard_manager: Arc<C>,
-    configs: Configs,
+    config_set: ConfigSet,
 }
 
 impl <S, C> Engine<S, C> where S: KeyboardSender, C: ClipboardManager{
-    pub fn new(sender: S, clipboard_manager: Arc<C>, configs: Configs) -> Engine<S, C> where S: KeyboardSender, C: ClipboardManager {
-        Engine{sender, clipboard_manager, configs }
+    pub fn new(sender: S, clipboard_manager: Arc<C>, config_set: ConfigSet) -> Engine<S, C> where S: KeyboardSender, C: ClipboardManager {
+        Engine{sender, clipboard_manager, config_set }
     }
 }
 
@@ -21,7 +21,7 @@ impl <S, C> MatchReceiver for Engine<S, C> where S: KeyboardSender, C: Clipboard
     fn on_match(&self, m: &Match) {
         self.sender.delete_string(m.trigger.len() as i32);
 
-        match self.configs.backend {
+        match self.config_set.backend() {
             BackendType::Inject => {
                 // Send the expected string. On linux, newlines are managed automatically
                 // while on windows and macos, we need to emulate a Enter key press.

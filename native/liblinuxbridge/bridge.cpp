@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <array>
+#include <string.h>
+
 #include <X11/Xlibint.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
@@ -13,6 +15,7 @@
 #include <X11/extensions/record.h>
 #include <X11/extensions/XTest.h>
 #include <X11/XKBlib.h>
+#include <X11/Xatom.h>
 extern "C" {  // Needed to avoid C++ compiler name mangling
     #include <xdo.h>
 }
@@ -210,4 +213,105 @@ void trigger_paste() {
 
 void trigger_terminal_paste() {
     xdo_send_keysequence_window(xdo_context, CURRENTWINDOW, "Control_L+Shift+v", 8000);
+}
+
+// SYSTEM MODULE
+
+// Function taken from the wmlib tool source code
+char *get_property(Display *disp, Window win,
+                          Atom xa_prop_type, char *prop_name, unsigned long *size)
+{
+    unsigned long ret_nitems, ret_bytes_after, tmp_size;
+    Atom xa_prop_name, xa_ret_type;
+    unsigned char *ret_prop;
+    int ret_format;
+    char *ret;
+    int size_in_byte;
+
+    xa_prop_name = XInternAtom(disp, prop_name, False);
+
+    if (XGetWindowProperty(disp, win, xa_prop_name, 0, 4096 / 4, False,
+                           xa_prop_type, &xa_ret_type, &ret_format, &ret_nitems,
+                           &ret_bytes_after, &ret_prop) != Success)
+        return NULL;
+
+    if (xa_ret_type != xa_prop_type)
+    {
+        XFree(ret_prop);
+        return NULL;
+    }
+
+    switch(ret_format) {
+        case 8:	size_in_byte = sizeof(char); break;
+        case 16:	size_in_byte = sizeof(short); break;
+        case 32:	size_in_byte = sizeof(long); break;
+    }
+
+    tmp_size = size_in_byte * ret_nitems;
+    ret = (char*) malloc(tmp_size + 1);
+    memcpy(ret, ret_prop, tmp_size);
+    ret[tmp_size] = '\0';
+
+    if (size) *size = tmp_size;
+
+    XFree(ret_prop);
+    return ret;
+}
+
+// Function taken from Window Management Library for Ruby
+char *xwm_get_win_title(Display *disp, Window win)
+{
+    char *wname = (char*)get_property(disp,win, XA_STRING, "WM_NAME", NULL);
+    char *nwname = (char*)get_property(disp,win, XInternAtom(disp,
+                                                             "UTF8_STRING", False), "_NET_WM_NAME", NULL);
+
+    return nwname ? nwname : (wname ? wname : NULL);
+}
+
+int32_t get_active_window_name(char * buffer, int32_t size) {
+    Display *disp = XOpenDisplay(NULL);
+
+    if (!disp) {
+        return -1;
+    }
+
+    // Get the active window
+    Window win;
+    int revert_to_return;
+    XGetInputFocus(disp, &win, &revert_to_return);
+
+    char * title = xwm_get_win_title(disp, win);
+
+    snprintf(buffer, size, "%s", title);
+
+    XFree(title);
+
+    XCloseDisplay(disp);
+
+    return 1;
+}
+
+int32_t get_active_window_class(char * buffer, int32_t size) {
+    Display *disp = XOpenDisplay(NULL);
+
+    if (!disp) {
+        return -1;
+    }
+
+    // Get the active window
+    Window win;
+    int revert_to_return;
+    XGetInputFocus(disp, &win, &revert_to_return);
+
+    XClassHint hint;
+
+    if (XGetClassHint(disp, win, &hint)) {
+        snprintf(buffer, size, "%s", hint.res_class);
+        XFree(hint.res_name);
+        XFree(hint.res_class);
+    }
+
+    XCloseDisplay(disp);
+
+    return 1;
 }
