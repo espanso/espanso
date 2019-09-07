@@ -7,6 +7,7 @@ use std::fs::{File, create_dir_all};
 use std::io::Read;
 use serde::{Serialize, Deserialize};
 use crate::keyboard::KeyModifier;
+use crate::system::SystemManager;
 use std::collections::HashSet;
 
 // TODO: add documentation link
@@ -148,24 +149,49 @@ impl ConfigSet { // TODO: tests
 
         panic!("Could not generate default position for config file");
     }
+}
 
-    pub fn toggle_key(&self) -> &KeyModifier {
-        &self.default.toggle_key
+pub trait ConfigManager {
+    fn toggle_key(&self) -> &KeyModifier;
+    fn toggle_interval(&self) -> u32;
+    fn backspace_limit(&self) -> i32;
+    fn backend(&self) -> &BackendType;
+    fn matches(&self) -> &Vec<Match>;
+}
+
+pub struct RuntimeConfigManager<S: SystemManager> {
+    set: ConfigSet,
+
+    system_manager: S
+}
+
+impl <S: SystemManager> RuntimeConfigManager<S> {
+    pub fn new(set: ConfigSet, system_manager: S) -> RuntimeConfigManager<S> {
+        RuntimeConfigManager {
+            set,
+            system_manager
+        }
+    }
+}
+
+impl <S: SystemManager> ConfigManager for RuntimeConfigManager<S> {
+    fn toggle_key(&self) -> &KeyModifier {
+        &self.set.default.toggle_key
     }
 
-    pub fn toggle_interval(&self) -> u32 {
-        self.default.toggle_interval
+    fn toggle_interval(&self) -> u32 {
+        self.set.default.toggle_interval
     }
 
-    pub fn backspace_limit(&self) -> i32 {
-        self.default.backspace_limit
+    fn backspace_limit(&self) -> i32 {
+        self.set.default.backspace_limit
     }
 
-    pub fn backend(&self) -> &BackendType {
+    fn backend(&self) -> &BackendType {
         &BackendType::Inject // TODO make dynamic based on system current active app
     }
 
-    pub fn matches(&self) -> &Vec<Match> {
-        &self.default.matches
+    fn matches(&self) -> &Vec<Match> {
+        &self.set.default.matches
     }
 }

@@ -1,15 +1,14 @@
-use std::sync::{mpsc, Arc};
-use crate::keyboard::KeyboardInterceptor;
+use std::sync::{mpsc};
+use crate::keyboard::{KeyboardInterceptor, KeyEvent};
 use crate::matcher::Matcher;
 use crate::matcher::scrolling::ScrollingMatcher;
 use crate::engine::Engine;
-use crate::config::{Configs, ConfigSet};
+use crate::config::{ConfigSet, RuntimeConfigManager};
 use crate::ui::UIManager;
-use crate::clipboard::ClipboardManager;
-use crate::system::SystemManager;
 use std::thread;
 use clap::{App, Arg};
 use std::path::Path;
+use std::sync::mpsc::Receiver;
 
 mod ui;
 mod bridge;
@@ -56,28 +55,32 @@ fn main() {
 }
 
 fn espanso_main(config_set: ConfigSet) {
-    let ui_manager = ui::get_uimanager();
-    ui_manager.notify("Hello guys");
-
-    let system_manager = system::get_manager();
-
-    let clipboard_manager = clipboard::get_manager();
-    let clipboard_manager_arc = Arc::new(clipboard_manager);
-
     let (txc, rxc) = mpsc::channel();
 
-    let sender = keyboard::get_sender();
-
-    let engine = Engine::new(sender,
-                             Arc::clone(&clipboard_manager_arc),
-                             config_set.clone());
-
     thread::spawn(move || {
-        let matcher = ScrollingMatcher::new(config_set.clone(), engine);
-        matcher.watch(rxc);
+        espanso_background(rxc, config_set);
     });
 
     let interceptor = keyboard::get_interceptor(txc);
     interceptor.initialize();
     interceptor.start();
+}
+
+fn espanso_background(rxc: Receiver<KeyEvent>, config_set: ConfigSet) {
+    let system_manager = system::get_manager();
+    let config_manager = RuntimeConfigManager::new(config_set, system_manager);
+
+    let ui_manager = ui::get_uimanager();
+    ui_manager.notify("Hello guys");
+
+    let clipboard_manager = clipboard::get_manager();
+
+    let sender = keyboard::get_sender();
+
+    let engine = Engine::new(sender,
+                             &clipboard_manager,
+                             &config_manager);
+
+    let matcher = ScrollingMatcher::new(&config_manager, engine);
+    matcher.watch(rxc);
 }
