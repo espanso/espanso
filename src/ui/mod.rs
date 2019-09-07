@@ -8,7 +8,6 @@ mod linux;
 mod macos;
 
 pub trait UIManager {
-    fn initialize(&self);
     fn notify(&self, message: &str);
 }
 
@@ -31,7 +30,5 @@ pub fn get_uimanager() -> impl UIManager {
 // WINDOWS IMPLEMENTATION
 #[cfg(target_os = "windows")]
 pub fn get_uimanager() -> impl UIManager {
-    let manager = windows::WindowsUIManager{};
-    manager.initialize();
-    manager
+    windows::WindowsUIManager::new()
 }
