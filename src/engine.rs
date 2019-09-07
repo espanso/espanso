@@ -1,6 +1,7 @@
 use crate::matcher::{Match, MatchReceiver};
 use crate::keyboard::KeyboardSender;
 use crate::config::Configs;
+use crate::config::BackendType;
 use crate::clipboard::ClipboardManager;
 use std::sync::Arc;
 
@@ -20,24 +21,30 @@ impl <S, C> MatchReceiver for Engine<S, C> where S: KeyboardSender, C: Clipboard
     fn on_match(&self, m: &Match) {
         self.sender.delete_string(m.trigger.len() as i32);
 
-        // Send the expected string. On linux, newlines are managed automatically
-        // while on windows and macos, we need to emulate a Enter key press.
+        match self.configs.backend {
+            BackendType::Inject => {
+                // Send the expected string. On linux, newlines are managed automatically
+                // while on windows and macos, we need to emulate a Enter key press.
 
-        if cfg!(target_os = "linux") {
-            self.clipboard_manager.set_clipboard(m.replace.as_str());
-            self.sender.trigger_paste();
-            //self.sender.send_string(m.replace.as_str());
-        }else{
-            // To handle newlines, substitute each "\n" char with an Enter key press.
-            let splits = m.replace.lines();
+                if cfg!(target_os = "linux") {
+                    self.sender.send_string(m.replace.as_str());
+                }else{
+                    // To handle newlines, substitute each "\n" char with an Enter key press.
+                    let splits = m.replace.lines();
 
-            for (i, split) in splits.enumerate() {
-                if i > 0 {
-                    self.sender.send_enter();
+                    for (i, split) in splits.enumerate() {
+                        if i > 0 {
+                            self.sender.send_enter();
+                        }
+
+                        self.sender.send_string(split);
+                    }
                 }
-
-                self.sender.send_string(split);
-            }
+            },
+            BackendType::Clipboard => {
+                self.clipboard_manager.set_clipboard(m.replace.as_str());
+                self.sender.trigger_paste();
+            },
         }
     }
 }
