@@ -1,6 +1,5 @@
-use std::{thread};
 use std::sync::mpsc;
-use std::os::raw::{c_char, c_void};
+use std::os::raw::{c_void};
 use std::ffi::CString;
 use crate::keyboard::{KeyEvent, KeyModifier};
 use crate::keyboard::KeyModifier::*;

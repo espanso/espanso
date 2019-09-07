@@ -1,5 +1,5 @@
-use std::process::{Command, ExitStatus, Stdio};
-use std::io::{Write, Read};
+use std::process::{Command, Stdio};
+use std::io::{Write};
 
 pub struct LinuxClipboardManager {
 
@@ -26,24 +26,20 @@ impl super::ClipboardManager for LinuxClipboardManager {
     }
 
     fn set_clipboard(&self, payload: &str) {
-        let mut res = Command::new("xclip")
+        let res = Command::new("xclip")
             .args(&["-sel", "clip"])
             .stdin(Stdio::piped())
             .spawn();
 
         if let Ok(mut child) = res {
-            let mut stdin = child.stdin.as_mut();
+            let stdin = child.stdin.as_mut();
 
-            if let Some(mut output) = stdin {
-                output.write_all(payload.as_bytes());
+            if let Some(output) = stdin {
+                let res = output.write_all(payload.as_bytes());
 
-//                let status = child.wait();
-//
-//                if let Ok(status) = status {
-//                    if !status.success() {
-//                        //TODO: log error
-//                    }
-//                }
+                if let Err(_) = res {
+                    // TODO: log error
+                }
             }
         }
     }

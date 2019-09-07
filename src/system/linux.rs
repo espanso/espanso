@@ -53,6 +53,8 @@ impl super::SystemManager for LinuxSystemManager {
     }
 }
 
+unsafe impl Send for LinuxSystemManager {}
+
 impl LinuxSystemManager {
 
 }

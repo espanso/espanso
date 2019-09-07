@@ -14,10 +14,10 @@ pub trait MatchReceiver {
     fn on_match(&self, m: &Match);
 }
 
-pub trait Matcher<'a>: Send {
-    fn handle_char(&'a self, c: char);
-    fn handle_modifier(&'a self, m: KeyModifier);
-    fn watch(&'a self, receiver: Receiver<KeyEvent>) {
+pub trait Matcher {
+    fn handle_char(&self, c: char);
+    fn handle_modifier(&self, m: KeyModifier);
+    fn watch(&self, receiver: Receiver<KeyEvent>) {
         loop {
             match receiver.recv() {
                 Ok(event) => {
