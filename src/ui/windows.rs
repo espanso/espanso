@@ -1,5 +1,5 @@
 use std::process::Command;
-use crate::bridge::windows::{show_notification, close_notification, initialize_notification};
+use crate::bridge::windows::{show_notification, close_notification, initialize_ui};
 use widestring::U16CString;
 use std::{fs, thread, time};
 use log::{info, debug};
@@ -69,7 +69,7 @@ impl WindowsUIManager {
 
         thread::spawn(move || {
             unsafe {
-                initialize_notification(icon_file_c.as_ptr());
+                initialize_ui(icon_file_c.as_ptr());
             }
         });
 

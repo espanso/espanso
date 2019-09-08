@@ -59,7 +59,7 @@ extern "C" int32_t get_active_window_executable(wchar_t * buffer, int32_t size);
 /*
  * Initialize the notification window.
  */
-extern "C" int32_t initialize_notification(wchar_t * icon_path);
+extern "C" int32_t initialize_ui(wchar_t * icon_path);
 
 /*
  * Show a window containing the notification.
