@@ -5,7 +5,7 @@ use crate::matcher::scrolling::ScrollingMatcher;
 use crate::engine::Engine;
 use crate::config::{ConfigSet, RuntimeConfigManager};
 use crate::ui::UIManager;
-use std::thread;
+use std::{thread, time};
 use clap::{App, Arg};
 use std::path::Path;
 use std::sync::mpsc::Receiver;
@@ -96,6 +96,8 @@ fn espanso_background(rxc: Receiver<KeyEvent>, config_set: ConfigSet) {
 
     let ui_manager = ui::get_uimanager();
     ui_manager.notify("Hello guys");
+    thread::sleep(time::Duration::from_millis(600));
+    ui_manager.notify("There");
 
     let clipboard_manager = clipboard::get_manager();
 
