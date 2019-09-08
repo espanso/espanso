@@ -86,7 +86,7 @@ impl <'a, R: MatchReceiver, M: ConfigManager> super::Matcher for ScrollingMatche
                         self.current_set_queue.borrow_mut().clear();
                     }
 
-                    println!("Enabled {}", *is_enabled);
+                    self.receiver.on_toggle(*is_enabled);
                 }
             }
 

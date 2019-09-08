@@ -95,9 +95,6 @@ fn espanso_background(rxc: Receiver<KeyEvent>, config_set: ConfigSet) {
     let config_manager = RuntimeConfigManager::new(config_set, system_manager);
 
     let ui_manager = ui::get_uimanager();
-    ui_manager.notify("Hello guys");
-    thread::sleep(time::Duration::from_millis(600));
-    ui_manager.notify("There");
 
     let clipboard_manager = clipboard::get_manager();
 
@@ -105,7 +102,9 @@ fn espanso_background(rxc: Receiver<KeyEvent>, config_set: ConfigSet) {
 
     let engine = Engine::new(sender,
                              &clipboard_manager,
-                             &config_manager);
+                             &config_manager,
+                             &ui_manager
+    );
 
     let matcher = ScrollingMatcher::new(&config_manager, engine);
     matcher.watch(rxc);

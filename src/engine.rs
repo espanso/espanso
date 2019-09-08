@@ -3,20 +3,27 @@ use crate::keyboard::KeyboardSender;
 use crate::config::ConfigManager;
 use crate::config::BackendType;
 use crate::clipboard::ClipboardManager;
+use log::{info};
+use crate::ui::UIManager;
 
-pub struct Engine<'a, S: KeyboardSender, C: ClipboardManager, M: ConfigManager> {
+pub struct Engine<'a, S: KeyboardSender, C: ClipboardManager, M: ConfigManager,
+                  U: UIManager> {
     sender: S,
     clipboard_manager: &'a C,
     config_manager: &'a M,
+    ui_manager: &'a U,
 }
 
-impl <'a, S: KeyboardSender, C: ClipboardManager, M: ConfigManager> Engine<'a, S, C, M> {
-    pub fn new<'b>(sender: S, clipboard_manager: &'b C, config_manager: &'b M) -> Engine<'b, S, C, M> {
-        Engine{sender, clipboard_manager, config_manager }
+impl <'a, S: KeyboardSender, C: ClipboardManager, M: ConfigManager, U: UIManager>
+    Engine<'a, S, C, M, U> {
+    pub fn new<'b>(sender: S, clipboard_manager: &'b C, config_manager: &'b M, ui_manager: &'b U) -> Engine<'b, S, C, M, U> {
+        Engine{sender, clipboard_manager, config_manager, ui_manager }
     }
 }
 
-impl <'a, S: KeyboardSender, C: ClipboardManager, M: ConfigManager> MatchReceiver for Engine<'a, S, C, M>{
+impl <'a, S: KeyboardSender, C: ClipboardManager, M: ConfigManager, U: UIManager>
+    MatchReceiver for Engine<'a, S, C, M, U>{
+
     fn on_match(&self, m: &Match) {
         let config = self.config_manager.default_config();
 
@@ -47,5 +54,17 @@ impl <'a, S: KeyboardSender, C: ClipboardManager, M: ConfigManager> MatchReceive
                 self.sender.trigger_paste();
             },
         }
+    }
+
+    fn on_toggle(&self, status: bool) {
+        let message = if status {
+            "espanso enabled"
+        }else{
+            "espanso disabled"
+        };
+
+        info!("Toggled: {}", message);
+
+        self.ui_manager.notify(message);
     }
 }

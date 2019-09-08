@@ -1,5 +1,5 @@
 use std::process::Command;
-use crate::bridge::windows::{show_notification, close_notification};
+use crate::bridge::windows::{show_notification, close_notification, initialize_notification};
 use widestring::U16CString;
 use std::{fs, thread, time};
 use log::{info, debug};
@@ -41,15 +41,10 @@ impl super::UIManager for WindowsUIManager {
         });
 
         // Create and show a window notification
-        let message = message.to_owned();
-        let icon_file = self.icon_file.clone();
-        thread::spawn( move || {
-            unsafe {
-                let message = U16CString::from_str(message).unwrap();
-                let icon_file = U16CString::from_str(&icon_file).unwrap();
-                show_notification(message.as_ptr(), icon_file.as_ptr());
-            }
-        });
+        unsafe {
+            let message = U16CString::from_str(message).unwrap();
+            show_notification(message.as_ptr());
+        }
 
     }
 }
@@ -70,6 +65,14 @@ impl WindowsUIManager {
         info!("Extracted cached icon to: {}", icon_file);
 
         let id = Arc::new(Mutex::new(0));
+        let icon_file_c = U16CString::from_str(&icon_file).unwrap();
+
+        thread::spawn(move || {
+            unsafe {
+                initialize_notification(icon_file_c.as_ptr());
+            }
+        });
+
         WindowsUIManager {
             icon_file,
             id
