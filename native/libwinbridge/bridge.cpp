@@ -331,12 +331,7 @@ LRESULT CALLBACK notification_worker_procedure(HWND window, unsigned int msg, WP
 	}
 }
 
-int32_t show_notification(wchar_t * message, wchar_t * icon_path) {
-    if (nw != NULL) {
-        SetWindowText(hwnd_st_u, L"                                                 ");
-        SetWindowText(hwnd_st_u, message);
-    }
-
+int32_t initialize_notification(wchar_t * icon_path) {
     g_espanso_icon = (HBITMAP)LoadImage(NULL, icon_path, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
 
     SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE);
@@ -381,12 +376,12 @@ int32_t show_notification(wchar_t * message, wchar_t * icon_path) {
             y = 40; h = 30;
             x = 100; w = 180;
             hwnd_st_u = CreateWindowEx(0, L"static", L"ST_U",
-                                     WS_CHILD | WS_VISIBLE | WS_TABSTOP | SS_CENTER,
-                                     x, y, w, h,
-                                     nw, (HMENU)(501),
-                                     (HINSTANCE)GetWindowLong(nw, GWLP_HINSTANCE), NULL);
+                                       WS_CHILD | WS_VISIBLE | WS_TABSTOP | SS_CENTER,
+                                       x, y, w, h,
+                                       nw, (HMENU)(501),
+                                       (HINSTANCE)GetWindowLong(nw, GWLP_HINSTANCE), NULL);
 
-            SetWindowText(hwnd_st_u, message);
+            SetWindowText(hwnd_st_u, L"Loading...");
 
             int posX = GetSystemMetrics(SM_CXSCREEN) - 350;
             int posY = GetSystemMetrics(SM_CYSCREEN) - 200;
@@ -394,7 +389,7 @@ int32_t show_notification(wchar_t * message, wchar_t * icon_path) {
             SetWindowPos(nw, HWND_TOP, posX, posY, 0, 0, SWP_NOSIZE);
 
             // Hide the window
-            ShowWindow(nw, SW_SHOW);
+            ShowWindow(nw, SW_HIDE);
 
             // Enter the Event loop
             MSG msg;
@@ -403,13 +398,26 @@ int32_t show_notification(wchar_t * message, wchar_t * icon_path) {
     }
     else {
         // Something went wrong, error.
-        return -1;
+        return GetLastError();
     }
 
     return 1;
 }
 
+int32_t show_notification(wchar_t * message) {
+    if (nw != NULL) {
+        SetWindowText(hwnd_st_u, L"                                                 ");
+        SetWindowText(hwnd_st_u, message);
+
+        // Show the window
+        ShowWindow(nw, SW_SHOW);
+        return 1;
+    }
+
+    return -1;
+}
+
 void close_notification() {
-    SendMessage(nw, WM_CLOSE, 0, 0);
-    nw = NULL;
+    // Hide the window
+    ShowWindow(nw, SW_HIDE);
 }
