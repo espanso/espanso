@@ -331,7 +331,7 @@ LRESULT CALLBACK notification_worker_procedure(HWND window, unsigned int msg, WP
 	}
 }
 
-int32_t initialize_notification(wchar_t * icon_path) {
+int32_t initialize_ui(wchar_t * icon_path) {
     g_espanso_icon = (HBITMAP)LoadImage(NULL, icon_path, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
 
     SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE);

@@ -8,7 +8,7 @@ extern {
     pub fn get_active_window_executable(buffer: *mut u16, size: i32) -> i32;
 
     // UI
-    pub fn initialize_notification(icon_path: *const u16) -> i32;
+    pub fn initialize_ui(icon_path: *const u16) -> i32;
     pub fn show_notification(message: *const u16) -> i32;
     pub fn close_notification();
 
