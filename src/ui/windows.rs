@@ -1,23 +1,56 @@
 use std::process::Command;
-use crate::bridge::windows::show_notification;
+use crate::bridge::windows::{show_notification, close_notification};
 use widestring::U16CString;
-use std::fs;
-use log::{info};
+use std::{fs, thread, time};
+use log::{info, debug};
+use std::sync::Mutex;
+use std::sync::Arc;
 
 const ICON_BINARY : &'static [u8] = include_bytes!("../res/win/espanso.bmp");
 
 pub struct WindowsUIManager {
     icon_file: String,
+    id: Arc<Mutex<i32>>
 }
 
 impl super::UIManager for WindowsUIManager {
     fn notify(&self, message: &str) {
-        unsafe {
-            let message = U16CString::from_str(message).unwrap();
-            let icon_file = U16CString::from_str(&self.icon_file).unwrap();
-            let res = show_notification(message.as_ptr(), icon_file.as_ptr());
-            info!("{}", res);
-        }
+        let current_id: i32 = {
+            let mut id = self.id.lock().unwrap();
+            *id += 1;
+            *id
+        };
+
+        // Setup a timeout to close the notification
+        let id = Arc::clone(&self.id);
+        thread::spawn(move || {
+            for i in 1..10 {
+                let duration = time::Duration::from_millis(200);
+                thread::sleep(duration);
+
+                let new_id = id.lock().unwrap();
+                if *new_id != current_id {
+                    debug!("Cancelling notification close event with id {}", current_id);
+                    return;
+                }
+            }
+
+            unsafe {
+                close_notification();
+            }
+        });
+
+        // Create and show a window notification
+        let message = message.to_owned();
+        let icon_file = self.icon_file.clone();
+        thread::spawn( move || {
+            unsafe {
+                let message = U16CString::from_str(message).unwrap();
+                let icon_file = U16CString::from_str(&icon_file).unwrap();
+                show_notification(message.as_ptr(), icon_file.as_ptr());
+            }
+        });
+
     }
 }
 
@@ -36,8 +69,10 @@ impl WindowsUIManager {
 
         info!("Extracted cached icon to: {}", icon_file);
 
+        let id = Arc::new(Mutex::new(0));
         WindowsUIManager {
-            icon_file
+            icon_file,
+            id
         }
     }
 }

@@ -277,7 +277,8 @@ int32_t get_active_window_executable(wchar_t * buffer, int32_t size) {
 // UI
 
 const wchar_t* const notification_winclass = L"EspansoNotification";
-HWND nw;
+HWND nw = NULL;
+HWND hwnd_st_u = NULL;
 HBITMAP g_espanso_icon = NULL;
 
 /*
@@ -321,7 +322,8 @@ LRESULT CALLBACK notification_worker_procedure(HWND window, unsigned int msg, WP
 
 		hdcStatic = (HDC)wp;
 		SetTextColor(hdcStatic, RGB(0, 0, 0));
-		SetBkMode(hdcStatic, TRANSPARENT);
+		SetBkColor(hdcStatic, RGB(255, 255, 255));
+		//SetBkMode(hdcStatic, OPAQUE);
 
 		return (LRESULT)GetStockObject(NULL_BRUSH);
 	default:
@@ -330,6 +332,11 @@ LRESULT CALLBACK notification_worker_procedure(HWND window, unsigned int msg, WP
 }
 
 int32_t show_notification(wchar_t * message, wchar_t * icon_path) {
+    if (nw != NULL) {
+        SetWindowText(hwnd_st_u, L"                                                 ");
+        SetWindowText(hwnd_st_u, message);
+    }
+
     g_espanso_icon = (HBITMAP)LoadImage(NULL, icon_path, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
 
     SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE);
@@ -370,8 +377,6 @@ int32_t show_notification(wchar_t * message, wchar_t * icon_path) {
 
         if (nw)
         {
-
-            static HWND hwnd_st_u, hwnd_ed_u;
             int x, w, y, h;
             y = 40; h = 30;
             x = 100; w = 180;
@@ -386,7 +391,7 @@ int32_t show_notification(wchar_t * message, wchar_t * icon_path) {
             int posX = GetSystemMetrics(SM_CXSCREEN) - 350;
             int posY = GetSystemMetrics(SM_CYSCREEN) - 200;
 
-            SetWindowPos(window, HWND_TOP, posX, posY, 0, 0, SWP_NOSIZE);
+            SetWindowPos(nw, HWND_TOP, posX, posY, 0, 0, SWP_NOSIZE);
 
             // Hide the window
             ShowWindow(nw, SW_SHOW);
@@ -402,4 +407,9 @@ int32_t show_notification(wchar_t * message, wchar_t * icon_path) {
     }
 
     return 1;
+}
+
+void close_notification() {
+    SendMessage(nw, WM_CLOSE, 0, 0);
+    nw = NULL;
 }

@@ -9,6 +9,7 @@ extern {
 
     // UI
     pub fn show_notification(message: *const u16, icon_path: *const u16) -> i32;
+    pub fn close_notification();
 
     // KEYBOARD
     pub fn register_keypress_callback(s: *const c_void,

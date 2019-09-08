@@ -56,6 +56,15 @@ extern "C" int32_t get_active_window_executable(wchar_t * buffer, int32_t size);
 
 // UI
 
+/*
+ * Show a window containing the notification.
+ */
 extern "C" int32_t show_notification(wchar_t * message, wchar_t * icon_path);
+
+/*
+ * Close the notification if present
+ */
+extern "C" void close_notification();
+
 
 #endif //ESPANSO_BRIDGE_H
