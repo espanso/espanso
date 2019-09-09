@@ -26,6 +26,7 @@ fn default_filter_title() -> String{ "".to_owned() }
 fn default_filter_class() -> String{ "".to_owned() }
 fn default_filter_exec() -> String{ "".to_owned() }
 fn default_disable() -> bool{ false }
+fn default_config_caching_interval() -> i32 { 800 }
 fn default_toggle_interval() -> u32 { 230 }
 fn default_backspace_limit() -> i32 { 3 }
 fn default_matches() -> Vec<Match> { Vec::new() }
@@ -46,6 +47,9 @@ pub struct Configs {
 
     #[serde(default = "default_disable")]
     pub disabled: bool,
+
+    #[serde(default = "default_config_caching_interval")]
+    pub config_caching_interval: i32,
 
     #[serde(default)]
     pub toggle_key: KeyModifier,
@@ -325,7 +329,7 @@ impl <'a, S: SystemManager> ConfigManager<'a> for RuntimeConfigManager<'a, S> {
         if let Ok(elapsed) = (*last_config_update).elapsed() {
             *last_config_update = SystemTime::now();
 
-            if elapsed.as_millis() < 800 {  // TODO: make config option
+            if elapsed.as_millis() < self.set.default.config_caching_interval as u128 {
                 let last_config = self.last_config.borrow();
                 if let Some(cached_config) = *last_config {
                     debug!("Using cached config");
