@@ -20,4 +20,5 @@ extern {
     pub fn send_string(string: *const c_char);
     pub fn send_vkey(vk: i32);
     pub fn delete_string(count: i32);
+    pub fn trigger_paste();
 }

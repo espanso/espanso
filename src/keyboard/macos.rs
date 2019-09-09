@@ -44,7 +44,9 @@ impl super::KeyboardSender for MacKeyboardSender {
     }
 
     fn trigger_paste(&self) {
-        unimplemented!()
+        unsafe {
+            trigger_paste();
+        }
     }
 
     fn delete_string(&self, count: i32) {

@@ -44,6 +44,11 @@ void send_vkey(int32_t vk);
  */
 void delete_string(int32_t count);
 
+/*
+ * Trigger normal paste ( Pressing CMD+V )
+ */
+void trigger_paste();
+
 // SYSTEM
 
 /*
