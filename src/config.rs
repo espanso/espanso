@@ -240,6 +240,24 @@ impl <S: SystemManager> ConfigManager for RuntimeConfigManager<S> {
             }*/
         }
 
+        let active_calss = self.system_manager.get_current_window_class();
+
+        if let Some(class) = active_calss {
+            debug!("=> Class: '{}'", class);
+
+            // TODO
+            /*for (i, regex) in self.title_regexps.iter().enumerate() {
+                if let Some(regex) = regex {
+                    if regex.is_match(&title) {
+                        debug!("Matched 'filter_title' for '{}' config, using custom settings.",
+                               self.set.specific[i].name);
+
+                        return &self.set.specific[i]
+                    }
+                }
+            }*/
+        }
+
         // No matches, return the default mapping
         debug!("No matches for custom configs, using default settings.");
         &self.set.default
