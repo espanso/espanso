@@ -21,6 +21,8 @@ const DEFAULT_CONFIG_FILE_NAME : &str = "default.yaml";
 // Default values for primitives
 fn default_name() -> String{ "default".to_owned() }
 fn default_filter_title() -> String{ "".to_owned() }
+fn default_filter_class() -> String{ "".to_owned() }
+fn default_filter_exec() -> String{ "".to_owned() }
 fn default_disable() -> bool{ false }
 fn default_toggle_interval() -> u32 { 230 }
 fn default_backspace_limit() -> i32 { 3 }
@@ -33,6 +35,12 @@ pub struct Configs {
 
     #[serde(default = "default_filter_title")]
     pub filter_title: String,
+
+    #[serde(default = "default_filter_class")]
+    pub filter_class: String,
+
+    #[serde(default = "default_filter_exec")]
+    pub filter_exec: String,
 
     #[serde(default = "default_disable")]
     pub disabled: bool,
@@ -172,6 +180,8 @@ pub trait ConfigManager {
 pub struct RuntimeConfigManager<S: SystemManager> {
     set: ConfigSet,
     title_regexps: Vec<Option<Regex>>,
+    class_regexps: Vec<Option<Regex>>,
+    exec_regexps: Vec<Option<Regex>>,
 
     system_manager: S
 }
@@ -195,9 +205,43 @@ impl <S: SystemManager> RuntimeConfigManager<S> {
             }
         ).collect();
 
+        let class_regexps = set.specific.iter().map(
+            |config| {
+                if config.filter_class.is_empty() {
+                    None
+                }else{
+                    let res = Regex::new(&config.filter_class);
+                    if let Ok(regex) = res {
+                        Some(regex)
+                    }else{
+                        warn!("Invalid regex in 'filter_class' field of configuration {}, ignoring it...", config.name);
+                        None
+                    }
+                }
+            }
+        ).collect();
+
+        let exec_regexps = set.specific.iter().map(
+            |config| {
+                if config.filter_exec.is_empty() {
+                    None
+                }else{
+                    let res = Regex::new(&config.filter_exec);
+                    if let Ok(regex) = res {
+                        Some(regex)
+                    }else{
+                        warn!("Invalid regex in 'filter_exec' field of configuration {}, ignoring it...", config.name);
+                        None
+                    }
+                }
+            }
+        ).collect();
+
         RuntimeConfigManager {
             set,
             title_regexps,
+            class_regexps,
+            exec_regexps,
             system_manager
         }
     }
@@ -231,35 +275,33 @@ impl <S: SystemManager> ConfigManager for RuntimeConfigManager<S> {
         if let Some(executable) = active_executable {
             debug!("=> Executable: '{}'", executable);
 
-            // TODO
-            /*for (i, regex) in self.title_regexps.iter().enumerate() {
+            for (i, regex) in self.exec_regexps.iter().enumerate() {
                 if let Some(regex) = regex {
-                    if regex.is_match(&title) {
-                        debug!("Matched 'filter_title' for '{}' config, using custom settings.",
+                    if regex.is_match(&executable) {
+                        debug!("Matched 'filter_exec' for '{}' config, using custom settings.",
                                self.set.specific[i].name);
 
                         return &self.set.specific[i]
                     }
                 }
-            }*/
+            }
         }
 
-        let active_calss = self.system_manager.get_current_window_class();
+        let active_class = self.system_manager.get_current_window_class();
 
-        if let Some(class) = active_calss {
+        if let Some(class) = active_class {
             debug!("=> Class: '{}'", class);
 
-            // TODO
-            /*for (i, regex) in self.title_regexps.iter().enumerate() {
+            for (i, regex) in self.class_regexps.iter().enumerate() {
                 if let Some(regex) = regex {
-                    if regex.is_match(&title) {
-                        debug!("Matched 'filter_title' for '{}' config, using custom settings.",
+                    if regex.is_match(&class) {
+                        debug!("Matched 'filter_class' for '{}' config, using custom settings.",
                                self.set.specific[i].name);
 
                         return &self.set.specific[i]
                     }
                 }
-            }*/
+            }
         }
 
         // No matches, return the default mapping
