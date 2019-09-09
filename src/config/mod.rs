@@ -66,6 +66,37 @@ pub struct Configs {
     pub matches: Vec<Match>
 }
 
+// Macro used to validate config fields
+#[macro_export]
+macro_rules! validate_field {
+    ($result:expr, $field:expr, $def_value:expr) => {
+        if $field != $def_value {
+            let field_name = stringify!($field);
+            let field_name = &field_name[5..];  // Remove the 'self.' prefix
+            error!("Validation error, parameter '{}' is reserved and can be only used in the default.yaml config file", field_name);
+            $result = false;
+        }
+    };
+}
+
+impl Configs {
+    /*
+     * Validate the Config instance.
+     * It makes sure that app-specific config instances do not define
+     * attributes reserved to the default config.
+     */
+    fn validate_config(&self) -> bool {
+        let mut result = true;
+
+        validate_field!(result, self.config_caching_interval, default_config_caching_interval());
+        validate_field!(result, self.toggle_key, KeyModifier::default());
+        validate_field!(result, self.toggle_interval, default_toggle_interval());
+        validate_field!(result, self.backspace_limit, default_backspace_limit());
+
+        result
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum BackendType {
     Inject,
@@ -84,10 +115,16 @@ impl Configs {
             let mut contents = String::new();
             file.read_to_string(&mut contents)
                 .expect("Unable to read config file");
-            let config: Configs = serde_yaml::from_str(&contents)
-                .expect("Unable to parse config file, invalid YAML syntax");
 
-            config
+            let config_res = serde_yaml::from_str(&contents);
+
+            match config_res {
+                Ok(config) => config,
+                Err(e) => {
+                    error!("Error parsing YAML file {}, invalid syntax: {}", path.to_str().unwrap_or(""), e);
+                    exit(2);
+                }
+            }
         }else{
             panic!("Config file not found...")
         }
@@ -129,14 +166,19 @@ pub fn load(dir_path: &Path) -> ConfigSet {
 
             let config = Configs::load_config(path.as_path());
 
+            if !config.validate_config() {
+                error!("Error while parsing {}, please remove reserved parameters", path.to_str().unwrap_or(""));
+                exit(3);
+            }
+
             if config.name == "default" {
                 error!("Error while parsing {}, please specify a 'name' field", path.to_str().unwrap_or(""));
-                continue;
+                exit(4);
             }
 
             if name_set.contains(&config.name) {
                 error!("Error while parsing {} : the specified name is already used, please use another one",  path.to_str().unwrap_or(""));
-                continue;
+                exit(5);
             }
 
             name_set.insert(config.name.clone());
