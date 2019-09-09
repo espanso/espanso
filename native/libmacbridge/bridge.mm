@@ -29,7 +29,8 @@ void send_string(const char * string) {
     char * stringCopy = strdup(string);
     dispatch_async(dispatch_get_main_queue(), ^(void) {
         // Convert the c string to a UniChar array as required by the CGEventKeyboardSetUnicodeString method
-        NSString *nsString = [NSString stringWithUTF8String:stringCopy];CFStringRef cfString = (__bridge CFStringRef) nsString;
+        NSString *nsString = [NSString stringWithUTF8String:stringCopy];
+        CFStringRef cfString = (__bridge CFStringRef) nsString;
         std::vector <UniChar> buffer(nsString.length);
         CFStringGetCharacters(cfString, CFRangeMake(0, nsString.length), buffer.data());
 
@@ -105,15 +106,19 @@ int32_t get_active_app_bundle(char * buffer, int32_t size) {
 
     snprintf(buffer, size, "%s", path);
 
+    [bundlePath release];
+
     return 1;
 }
 
 int32_t get_active_app_identifier(char * buffer, int32_t size) {
     NSRunningApplication *frontApp = [[NSWorkspace sharedWorkspace] frontmostApplication];
-    NSString *bundlePath = frontApp.bundleIdentifier;
-    const char * path = [bundlePath UTF8String];
+    NSString *bundleId = frontApp.bundleIdentifier;
+    const char * bundle = [bundleId UTF8String];
 
-    snprintf(buffer, size, "%s", path);
+    snprintf(buffer, size, "%s", bundle);
+
+    [bundleId release];
 
     return 1;
 }
