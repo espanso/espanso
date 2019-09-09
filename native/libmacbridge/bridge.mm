@@ -122,3 +122,29 @@ int32_t get_active_app_identifier(char * buffer, int32_t size) {
 
     return 1;
 }
+
+int32_t get_clipboard(char * buffer, int32_t size) {
+    NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
+    for (id element in pasteboard.pasteboardItems) {
+        NSString *string = [element stringForType: NSPasteboardTypeString];
+        if (string != NULL) {
+            const char * text = [string UTF8String];
+            snprintf(buffer, size, "%s", text);
+
+            [string release];
+
+            return 1;
+        }
+    }
+
+    return -1;
+}
+
+int32_t set_clipboard(char * text) {
+    NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
+    NSArray *array = @[NSPasteboardTypeString];
+    [pasteboard declareTypes:array owner:nil];
+
+    NSString *nsText = [NSString stringWithUTF8String:text];
+    [pasteboard setString:nsText forType:NSPasteboardTypeString];
+}
