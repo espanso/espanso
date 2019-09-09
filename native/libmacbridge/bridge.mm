@@ -99,6 +99,38 @@ void send_vkey(int32_t vk) {
     });
 }
 
+void trigger_paste() {
+    dispatch_async(dispatch_get_main_queue(), ^(void) {
+        CGEventRef keydown;
+        keydown = CGEventCreateKeyboardEvent(NULL, 0x37, true);  // CMD
+        CGEventPost(kCGHIDEventTap, keydown);
+        CFRelease(keydown);
+
+        usleep(2000);
+
+        CGEventRef keydown2;
+        keydown2 = CGEventCreateKeyboardEvent(NULL, 0x09, true);  // V key
+        CGEventPost(kCGHIDEventTap, keydown2);
+        CFRelease(keydown2);
+
+        usleep(2000);
+
+        CGEventRef keyup;
+        keyup = CGEventCreateKeyboardEvent(NULL, 0x09, false);
+        CGEventPost(kCGHIDEventTap, keyup);
+        CFRelease(keyup);
+
+        usleep(2000);
+
+        CGEventRef keyup2;
+        keyup2 = CGEventCreateKeyboardEvent(NULL, 0x37, false);  // CMD
+        CGEventPost(kCGHIDEventTap, keyup2);
+        CFRelease(keyup2);
+
+        usleep(2000);
+    });
+}
+
 int32_t get_active_app_bundle(char * buffer, int32_t size) {
     NSRunningApplication *frontApp = [[NSWorkspace sharedWorkspace] frontmostApplication];
     NSString *bundlePath = [frontApp bundleURL].path;
