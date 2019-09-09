@@ -25,7 +25,11 @@ impl <'a, S: KeyboardSender, C: ClipboardManager, M: ConfigManager, U: UIManager
     MatchReceiver for Engine<'a, S, C, M, U>{
 
     fn on_match(&self, m: &Match) {
-        let config = self.config_manager.default_config();
+        let config = self.config_manager.active_config();
+
+        if config.disabled {
+            return;
+        }
 
         self.sender.delete_string(m.trigger.len() as i32);
 

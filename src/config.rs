@@ -21,6 +21,7 @@ const DEFAULT_CONFIG_FILE_NAME : &str = "default.yaml";
 // Default values for primitives
 fn default_name() -> String{ "default".to_owned() }
 fn default_filter_title() -> String{ "".to_owned() }
+fn default_disable() -> bool{ false }
 fn default_toggle_interval() -> u32 { 230 }
 fn default_backspace_limit() -> i32 { 3 }
 fn default_matches() -> Vec<Match> { Vec::new() }
@@ -32,6 +33,9 @@ pub struct Configs {
 
     #[serde(default = "default_filter_title")]
     pub filter_title: String,
+
+    #[serde(default = "default_disable")]
+    pub disabled: bool,
 
     #[serde(default)]
     pub toggle_key: KeyModifier,
