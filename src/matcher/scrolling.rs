@@ -6,7 +6,7 @@ use crate::keyboard::KeyModifier::BACKSPACE;
 use std::time::SystemTime;
 use std::collections::VecDeque;
 
-pub struct ScrollingMatcher<'a, R: MatchReceiver, M: ConfigManager> {
+pub struct ScrollingMatcher<'a, R: MatchReceiver, M: ConfigManager<'a>> {
     config_manager: &'a M,
     receiver: R,
     current_set_queue: RefCell<VecDeque<Vec<MatchEntry<'a>>>>,
@@ -19,7 +19,7 @@ struct MatchEntry<'a> {
     _match: &'a Match
 }
 
-impl <'a, R: MatchReceiver, M: ConfigManager> super::Matcher for ScrollingMatcher<'a, R, M> where{
+impl <'a, R: MatchReceiver, M: ConfigManager<'a>> super::Matcher for ScrollingMatcher<'a, R, M> where{
     fn handle_char(&self, c: char) {
         // if not enabled, avoid any processing
         if !*(self.is_enabled.borrow()) {
@@ -100,7 +100,7 @@ impl <'a, R: MatchReceiver, M: ConfigManager> super::Matcher for ScrollingMatche
         }
     }
 }
-impl <'a, R: MatchReceiver, M: ConfigManager> ScrollingMatcher<'a, R, M> {
+impl <'a, R: MatchReceiver, M: ConfigManager<'a>> ScrollingMatcher<'a, R, M> {
     pub fn new(config_manager: &'a M, receiver: R) -> ScrollingMatcher<'a, R, M> {
         let current_set_queue = RefCell::new(VecDeque::new());
         let toggle_press_time = RefCell::new(SystemTime::now());

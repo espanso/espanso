@@ -6,7 +6,7 @@ use crate::clipboard::ClipboardManager;
 use log::{info};
 use crate::ui::UIManager;
 
-pub struct Engine<'a, S: KeyboardSender, C: ClipboardManager, M: ConfigManager,
+pub struct Engine<'a, S: KeyboardSender, C: ClipboardManager, M: ConfigManager<'a>,
                   U: UIManager> {
     sender: S,
     clipboard_manager: &'a C,
@@ -14,14 +14,14 @@ pub struct Engine<'a, S: KeyboardSender, C: ClipboardManager, M: ConfigManager,
     ui_manager: &'a U,
 }
 
-impl <'a, S: KeyboardSender, C: ClipboardManager, M: ConfigManager, U: UIManager>
+impl <'a, S: KeyboardSender, C: ClipboardManager, M: ConfigManager<'a>, U: UIManager>
     Engine<'a, S, C, M, U> {
-    pub fn new<'b>(sender: S, clipboard_manager: &'b C, config_manager: &'b M, ui_manager: &'b U) -> Engine<'b, S, C, M, U> {
+    pub fn new(sender: S, clipboard_manager: &'a C, config_manager: &'a M, ui_manager: &'a U) -> Engine<'a, S, C, M, U> {
         Engine{sender, clipboard_manager, config_manager, ui_manager }
     }
 }
 
-impl <'a, S: KeyboardSender, C: ClipboardManager, M: ConfigManager, U: UIManager>
+impl <'a, S: KeyboardSender, C: ClipboardManager, M: ConfigManager<'a>, U: UIManager>
     MatchReceiver for Engine<'a, S, C, M, U>{
 
     fn on_match(&self, m: &Match) {

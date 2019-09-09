@@ -12,6 +12,8 @@ use std::collections::HashSet;
 use regex::Regex;
 use std::process::exit;
 use log::{debug, info, warn, error};
+use std::cell::RefCell;
+use std::time::SystemTime;
 
 // TODO: add documentation link
 const DEFAULT_CONFIG_FILE_CONTENT : &str = include_str!("res/config.yaml");
@@ -171,23 +173,27 @@ impl ConfigSet { // TODO: tests
     }
 }
 
-pub trait ConfigManager {
-    fn active_config(&self) -> &Configs;
-    fn default_config(&self) -> &Configs;
-    fn matches(&self) -> &Vec<Match>;
+pub trait ConfigManager<'a> {
+    fn active_config(&'a self) -> &'a Configs;
+    fn default_config(&'a self) -> &'a Configs;
+    fn matches(&'a self) -> &'a Vec<Match>;
 }
 
-pub struct RuntimeConfigManager<S: SystemManager> {
+pub struct RuntimeConfigManager<'a, S: SystemManager> {
     set: ConfigSet,
     title_regexps: Vec<Option<Regex>>,
     class_regexps: Vec<Option<Regex>>,
     exec_regexps: Vec<Option<Regex>>,
 
-    system_manager: S
+    system_manager: S,
+
+    // Cache
+    last_config_update: RefCell<SystemTime>,
+    last_config: RefCell<Option<&'a Configs>>
 }
 
-impl <S: SystemManager> RuntimeConfigManager<S> {
-    pub fn new(set: ConfigSet, system_manager: S) -> RuntimeConfigManager<S> {
+impl <'a, S: SystemManager> RuntimeConfigManager<'a, S> {
+    pub fn new<'b>(set: ConfigSet, system_manager: S) -> RuntimeConfigManager<'b, S> {
         // Compile all the regexps
         let title_regexps = set.specific.iter().map(
             |config| {
@@ -237,18 +243,21 @@ impl <S: SystemManager> RuntimeConfigManager<S> {
             }
         ).collect();
 
+        let last_config_update = RefCell::new(SystemTime::now());
+        let last_config = RefCell::new(None);
+
         RuntimeConfigManager {
             set,
             title_regexps,
             class_regexps,
             exec_regexps,
-            system_manager
+            system_manager,
+            last_config_update,
+            last_config
         }
     }
-}
 
-impl <S: SystemManager> ConfigManager for RuntimeConfigManager<S> {
-    fn active_config(&self) -> &Configs {
+    fn calculate_active_config(&'a self) -> &'a Configs {
         // TODO: optimize performance by avoiding some of these checks if no Configs use the filters
 
         debug!("Requested config for window:");
@@ -308,12 +317,36 @@ impl <S: SystemManager> ConfigManager for RuntimeConfigManager<S> {
         debug!("No matches for custom configs, using default settings.");
         &self.set.default
     }
+}
 
-    fn default_config(&self) -> &Configs {
+impl <'a, S: SystemManager> ConfigManager<'a> for RuntimeConfigManager<'a, S> {
+    fn active_config(&'a self) -> &'a Configs {
+        let mut last_config_update = self.last_config_update.borrow_mut();
+        if let Ok(elapsed) = (*last_config_update).elapsed() {
+            *last_config_update = SystemTime::now();
+
+            if elapsed.as_millis() < 800 {  // TODO: make config option
+                let last_config = self.last_config.borrow();
+                if let Some(cached_config) = *last_config {
+                    debug!("Using cached config");
+                    return cached_config;
+                }
+            }
+        }
+
+        let config = self.calculate_active_config();
+
+        let mut last_config = self.last_config.borrow_mut();
+        *last_config = Some(config);
+
+        config
+    }
+
+    fn default_config(&'a self) -> &'a Configs {
         &self.set.default
     }
 
-    fn matches(&self) -> &Vec<Match> {
+    fn matches(&'a self) -> &'a Vec<Match> {
         &self.active_config().matches
     }
 }
