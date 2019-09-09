@@ -56,8 +56,17 @@ int32_t get_active_app_bundle(char * buffer, int32_t size);
  */
 int32_t get_active_app_identifier(char * buffer, int32_t size);
 
+// CLIPBOARD
+
+/*
+ * Return the clipboard text
+ */
+int32_t get_clipboard(char * buffer, int32_t size);
+
+/*
+ * Set the clipboard text
+ */
+int32_t set_clipboard(char * text);
+
 };
-
-
-
 #endif //ESPANSO_BRIDGE_H

@@ -3,6 +3,7 @@ use crate::keyboard::{KeyboardInterceptor, KeyEvent};
 use crate::matcher::Matcher;
 use crate::matcher::scrolling::ScrollingMatcher;
 use crate::engine::Engine;
+use crate::clipboard::ClipboardManager;
 use crate::config::{ConfigSet, RuntimeConfigManager};
 use crate::ui::UIManager;
 use std::{thread, time};
