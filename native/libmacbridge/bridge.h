@@ -42,7 +42,19 @@ void send_vkey(int32_t vk);
 /*
  * Send the backspace keypress, *count* times.
  */
-extern "C" void delete_string(int32_t count);
+void delete_string(int32_t count);
+
+// SYSTEM
+
+/*
+ * Return the active NSRunningApplication path
+ */
+int32_t get_active_app_bundle(char * buffer, int32_t size);
+
+/*
+ * Return the active NSRunningApplication bundle identifier
+ */
+int32_t get_active_app_identifier(char * buffer, int32_t size);
 
 };
 

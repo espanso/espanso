@@ -97,3 +97,23 @@ void send_vkey(int32_t vk) {
         usleep(2000);
     });
 }
+
+int32_t get_active_app_bundle(char * buffer, int32_t size) {
+    NSRunningApplication *frontApp = [[NSWorkspace sharedWorkspace] frontmostApplication];
+    NSString *bundlePath = [frontApp bundleURL].path;
+    const char * path = [bundlePath UTF8String];
+
+    snprintf(buffer, size, "%s", path);
+
+    return 1;
+}
+
+int32_t get_active_app_identifier(char * buffer, int32_t size) {
+    NSRunningApplication *frontApp = [[NSWorkspace sharedWorkspace] frontmostApplication];
+    NSString *bundlePath = frontApp.bundleIdentifier;
+    const char * path = [bundlePath UTF8String];
+
+    snprintf(buffer, size, "%s", path);
+
+    return 1;
+}
