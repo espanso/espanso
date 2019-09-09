@@ -1,8 +1,9 @@
 use std::sync::mpsc;
-use std::os::raw::c_char;
+use std::os::raw::{c_char, c_void};
 use std::ffi::CString;
 use crate::keyboard::{KeyEvent, KeyModifier};
 use crate::keyboard::KeyModifier::*;
+use crate::bridge::macos::*;
 
 #[repr(C)]
 pub struct MacKeyboardInterceptor {
@@ -12,7 +13,8 @@ pub struct MacKeyboardInterceptor {
 impl super::KeyboardInterceptor for MacKeyboardInterceptor {
     fn initialize(&self) {
         unsafe {
-            register_keypress_callback(self,keypress_callback);
+            let self_ptr = self as *const MacKeyboardInterceptor as *const c_void;
+            register_keypress_callback(self_ptr,keypress_callback);
             initialize();
         }  // TODO: check initialization return codes
     }
@@ -41,6 +43,10 @@ impl super::KeyboardSender for MacKeyboardSender {
         }
     }
 
+    fn trigger_paste(&self) {
+        unimplemented!()
+    }
+
     fn delete_string(&self, count: i32) {
         unsafe {delete_string(count)}
     }
@@ -48,9 +54,11 @@ impl super::KeyboardSender for MacKeyboardSender {
 
 // Native bridge code
 
-extern fn keypress_callback(_self: *mut MacKeyboardInterceptor, raw_buffer: *const u8, len: i32,
+extern fn keypress_callback(_self: *mut c_void, raw_buffer: *const u8, len: i32,
                             is_modifier: i32, key_code: i32) {
     unsafe {
+        let _self = _self as *mut MacKeyboardInterceptor;
+
         if is_modifier == 0 {  // Char event
             // Convert the received buffer to a character
             let buffer = std::slice::from_raw_parts(raw_buffer, len as usize);
@@ -75,17 +83,4 @@ extern fn keypress_callback(_self: *mut MacKeyboardInterceptor, raw_buffer: *con
             }
         }
     }
-}
-
-#[allow(improper_ctypes)]
-#[link(name="macbridge", kind="static")]
-extern {
-    fn register_keypress_callback(s: *const MacKeyboardInterceptor,
-                                  cb: extern fn(_self: *mut MacKeyboardInterceptor, *const u8,
-                                                i32, i32, i32));
-    fn initialize();
-    fn eventloop();
-    fn send_string(string: *const c_char);
-    fn send_vkey(vk: i32);
-    fn delete_string(count: i32);
 }

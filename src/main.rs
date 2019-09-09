@@ -95,6 +95,7 @@ fn espanso_background(rxc: Receiver<KeyEvent>, config_set: ConfigSet) {
     let config_manager = RuntimeConfigManager::new(config_set, system_manager);
 
     let ui_manager = ui::get_uimanager();
+    ui_manager.notify("espanso is running!");
 
     let clipboard_manager = clipboard::get_manager();
 

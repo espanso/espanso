@@ -22,10 +22,12 @@
     
     NSString *title = @"Title";
     NSString *desc = @"Description";
+    double delay = 1.5;
     
-    if ([args count] > 2) {
+    if ([args count] > 3) {
         title = args[1];
         desc = args[2];
+        delay = [args[3] doubleValue];
     }
     
     NSUserNotification *notification = [[NSUserNotification alloc] init];
@@ -34,6 +36,8 @@
     notification.soundName = nil;
     
     [[NSUserNotificationCenter defaultUserNotificationCenter] deliverNotification:notification];
+    
+    [[NSUserNotificationCenter defaultUserNotificationCenter] performSelector:@selector(removeDeliveredNotification:) withObject:notification afterDelay:delay];
     
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 3 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
         NSRunningApplication *app = [NSRunningApplication currentApplication];

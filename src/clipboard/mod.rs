@@ -8,10 +8,11 @@ mod linux;
 mod macos;
 
 pub trait ClipboardManager {
-    fn initialize(&self);
     fn get_clipboard(&self) -> Option<String>;
     fn set_clipboard(&self, payload: &str);
 }
+
+// TODO: change windows and linux implementations to avoid initialize() call and use constructor instead
 
 // LINUX IMPLEMENTATION
 #[cfg(target_os = "linux")]
@@ -27,4 +28,10 @@ pub fn get_manager() -> impl ClipboardManager {
     let manager = windows::WindowsClipboardManager{};
     manager.initialize();
     manager
+}
+
+// MAC IMPLEMENTATION
+#[cfg(target_os = "macos")]
+pub fn get_manager() -> impl ClipboardManager {
+    macos::MacClipboardManager::new()
 }
