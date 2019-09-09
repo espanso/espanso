@@ -6,10 +6,6 @@ pub struct WindowsSystemManager {
 }
 
 impl super::SystemManager for WindowsSystemManager {
-    fn initialize(&self) {
-
-    }
-
     fn get_current_window_title(&self) -> Option<String> {
         unsafe {
             let mut buffer : [u16; 100] = [0; 100];

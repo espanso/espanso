@@ -8,10 +8,6 @@ pub struct LinuxSystemManager {
 }
 
 impl super::SystemManager for LinuxSystemManager {
-    fn initialize(&self) {
-
-    }
-
     fn get_current_window_title(&self) -> Option<String> {
         unsafe {
             let mut buffer : [c_char; 100] = [0; 100];

@@ -8,11 +8,12 @@ mod linux;
 mod macos;
 
 pub trait SystemManager {
-    fn initialize(&self);
     fn get_current_window_title(&self) -> Option<String>;
     fn get_current_window_class(&self) -> Option<String>;
     fn get_current_window_executable(&self) -> Option<String>;
 }
+
+// TODO: change windows and linux implementations to avoid initialize() call and use constructor instead
 
 // LINUX IMPLEMENTATION
 #[cfg(target_os = "linux")]
@@ -28,4 +29,10 @@ pub fn get_manager() -> impl SystemManager {
     let manager = windows::WindowsSystemManager{};
     manager.initialize();
     manager
+}
+
+// MAC IMPLEMENTATION
+#[cfg(target_os = "macos")]
+pub fn get_manager() -> impl SystemManager {
+    macos::MacSystemManager::new()
 }

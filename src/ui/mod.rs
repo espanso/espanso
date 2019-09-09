@@ -14,9 +14,7 @@ pub trait UIManager {
 // MAC IMPLEMENTATION
 #[cfg(target_os = "macos")]
 pub fn get_uimanager() -> impl UIManager {
-    let manager = macos::MacUIManager{};
-    manager.initialize();
-    manager
+    macos::MacUIManager::new()
 }
 
 // LINUX IMPLEMENTATION
