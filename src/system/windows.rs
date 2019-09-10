@@ -5,6 +5,12 @@ pub struct WindowsSystemManager {
 
 }
 
+impl WindowsSystemManager {
+    pub fn new() -> WindowsSystemManager {
+        WindowsSystemManager{}
+    }
+}
+
 impl super::SystemManager for WindowsSystemManager {
     fn get_current_window_title(&self) -> Option<String> {
         unsafe {
@@ -41,10 +47,4 @@ impl super::SystemManager for WindowsSystemManager {
 
         None
     }
-}
-
-unsafe impl Send for WindowsSystemManager {}
-
-impl WindowsSystemManager {
-
 }
