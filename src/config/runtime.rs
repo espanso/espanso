@@ -177,3 +177,121 @@ impl <'a, S: SystemManager> super::ConfigManager<'a> for RuntimeConfigManager<'a
         &self.active_config().matches
     }
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io::Write;
+    use tempfile::{NamedTempFile, TempDir};
+    use crate::config::{DEFAULT_CONFIG_FILE_NAME, DEFAULT_CONFIG_FILE_CONTENT};
+    use std::fs;
+    use std::path::PathBuf;
+    use crate::config::tests::{create_temp_espanso_directory, create_temp_file_in_dir};
+
+    struct DummySystemManager {}
+    impl SystemManager for DummySystemManager {
+        fn get_current_window_title(&self) -> Option<String> {
+            Some("title".to_owned())
+        }
+        fn get_current_window_class(&self) -> Option<String> {
+            Some("class".to_owned())
+        }
+        fn get_current_window_executable(&self) -> Option<String> {
+            Some("exec".to_owned())
+        }
+    }
+    impl DummySystemManager {
+        pub fn new() -> DummySystemManager {
+            DummySystemManager{}
+        }
+    }
+
+    #[test]
+    fn test_runtime_constructor_regex_load_correctly() {
+        let tmp_dir = create_temp_espanso_directory();
+
+        let specific_path = create_temp_file_in_dir(&tmp_dir, "specific.yaml", r###"
+        name: myname1
+        filter_exec: "Title"
+        "###);
+
+        let specific_path2 = create_temp_file_in_dir(&tmp_dir, "specific2.yaml", r###"
+        name: myname2
+        filter_title: "Yeah"
+        filter_class: "Car"
+        "###);
+
+        let specific_path3 = create_temp_file_in_dir(&tmp_dir, "specific3.yaml", r###"
+        name: myname3
+        filter_title: "Nice"
+        "###);
+
+        let config_set = ConfigSet::load(tmp_dir.path());
+        assert!(config_set.is_ok());
+
+        let dummy_system_manager = DummySystemManager::new();
+
+        let config_manager = RuntimeConfigManager::new(config_set.unwrap(), dummy_system_manager);
+
+        assert_eq!(config_manager.exec_regexps.len(), 3);
+        assert_eq!(config_manager.title_regexps.len(), 3);
+        assert_eq!(config_manager.class_regexps.len(), 3);
+
+        assert!(config_manager.class_regexps[0].is_none());
+        assert!(config_manager.class_regexps[1].is_some());
+        assert!(config_manager.class_regexps[2].is_none());
+
+        assert!(config_manager.title_regexps[0].is_none());
+        assert!(config_manager.title_regexps[1].is_some());
+        assert!(config_manager.title_regexps[2].is_some());
+
+        assert!(config_manager.exec_regexps[0].is_some());
+        assert!(config_manager.exec_regexps[1].is_none());
+        assert!(config_manager.exec_regexps[2].is_none());
+    }
+
+    #[test]
+    fn test_runtime_constructor_malformed_regexes_are_ignored() {
+        let tmp_dir = create_temp_espanso_directory();
+
+        let specific_path = create_temp_file_in_dir(&tmp_dir, "specific.yaml", r###"
+        name: myname1
+        filter_exec: "[`-_]"
+        "###);
+
+        let specific_path2 = create_temp_file_in_dir(&tmp_dir, "specific2.yaml", r###"
+        name: myname2
+        filter_title: "[`-_]"
+        filter_class: "Car"
+        "###);
+
+        let specific_path3 = create_temp_file_in_dir(&tmp_dir, "specific3.yaml", r###"
+        name: myname3
+        filter_title: "Nice"
+        "###);
+
+        let config_set = ConfigSet::load(tmp_dir.path());
+        assert!(config_set.is_ok());
+
+        let dummy_system_manager = DummySystemManager::new();
+
+        let config_manager = RuntimeConfigManager::new(config_set.unwrap(), dummy_system_manager);
+
+        assert_eq!(config_manager.exec_regexps.len(), 3);
+        assert_eq!(config_manager.title_regexps.len(), 3);
+        assert_eq!(config_manager.class_regexps.len(), 3);
+
+        assert!(config_manager.class_regexps[0].is_none());
+        assert!(config_manager.class_regexps[1].is_some());
+        assert!(config_manager.class_regexps[2].is_none());
+
+        assert!(config_manager.title_regexps[0].is_none());
+        assert!(config_manager.title_regexps[1].is_none());
+        assert!(config_manager.title_regexps[2].is_some());
+
+        assert!(config_manager.exec_regexps[0].is_none());
+        assert!(config_manager.exec_regexps[1].is_none());
+        assert!(config_manager.exec_regexps[2].is_none());
+    }
+}

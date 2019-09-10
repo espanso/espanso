@@ -187,6 +187,8 @@ impl ConfigSet {
                     return Err(ConfigLoadError::NameDuplicate(path.to_owned()));
                 }
 
+                // TODO: check if it contains at least a filter, and warn the user about the problem
+
                 name_set.insert(config.name.clone());
                 specific.push(config);
             }
@@ -479,26 +481,36 @@ mod tests {
         assert_eq!(config_set.unwrap_err(), ConfigLoadError::MissingName(specific_path_copy))
     }
 
-    #[test]
-    fn test_config_set_specific_file_duplicate_name() {
+    pub fn create_temp_espanso_directory() -> TempDir {
         let tmp_dir = TempDir::new().expect("unable to create temp directory");
         let default_path = tmp_dir.path().join(DEFAULT_CONFIG_FILE_NAME);
         fs::write(default_path, DEFAULT_CONFIG_FILE_CONTENT);
 
-        let specific_path = tmp_dir.path().join("specific.yaml");
+        tmp_dir
+    }
+
+    pub fn create_temp_file_in_dir(tmp_dir: &TempDir, name: &str, content: &str) -> PathBuf {
+        let specific_path = tmp_dir.path().join(name);
         let specific_path_copy = specific_path.clone();
-        fs::write(specific_path, r###"
+        fs::write(specific_path, content);
+
+        specific_path_copy
+    }
+
+    #[test]
+    fn test_config_set_specific_file_duplicate_name() {
+        let tmp_dir = create_temp_espanso_directory();
+
+        let specific_path = create_temp_file_in_dir(&tmp_dir, "specific.yaml", r###"
         name: specific1
         "###);
 
-        let specific_path2 = tmp_dir.path().join("specific2.yaml");
-        let specific_path_copy2 = specific_path2.clone();
-        fs::write(specific_path2, r###"
+        let specific_path2 = create_temp_file_in_dir(&tmp_dir, "specific2.yaml", r###"
         name: specific1
         "###);
 
         let config_set = ConfigSet::load(tmp_dir.path());
         assert!(config_set.is_err());
-        assert_eq!(config_set.unwrap_err(), ConfigLoadError::NameDuplicate(specific_path_copy2))
+        assert_eq!(config_set.unwrap_err(), ConfigLoadError::NameDuplicate(specific_path2))
     }
 }
