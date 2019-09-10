@@ -11,8 +11,9 @@ use std::{thread, time};
 use clap::{App, Arg};
 use std::path::Path;
 use std::sync::mpsc::Receiver;
-use log::{info, LevelFilter};
+use log::{info, error, LevelFilter};
 use simplelog::{CombinedLogger, TermLogger, TerminalMode};
+use std::process::exit;
 
 mod ui;
 mod bridge;
@@ -70,7 +71,10 @@ fn main() {
             info!("loading configuration from custom location: {}", path);
             ConfigSet::load(Path::new(path))
         },
-    };
+    }.unwrap_or_else(|e| {
+        error!("{}", e);
+        exit(1);
+    });
 
     if matches.is_present("dump") {
         println!("{:#?}", config_set);

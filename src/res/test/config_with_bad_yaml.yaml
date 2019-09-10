@@ -1,0 +1,12 @@
+backend: Clipboard
+
+definitely a bad yaml
+
+matches:
+  # Default
+  - trigger: ":espanso"
+    replace: "Hi there!"
+
+  # Emojis
+  - trigger: ":lol"
+    replace: "😂"

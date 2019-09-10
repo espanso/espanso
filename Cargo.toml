@@ -16,5 +16,8 @@ log = "0.4.8"
 simplelog = "0.7.1"
 zip = "0.5.3"
 
+[dev-dependencies]
+tempfile = "3.1.0"
+
 [build-dependencies]
 cmake = "0.1.31"
