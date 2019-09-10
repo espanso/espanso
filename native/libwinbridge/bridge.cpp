@@ -290,9 +290,6 @@ LRESULT CALLBACK notification_worker_procedure(HWND window, unsigned int msg, WP
 
 	switch (msg)
 	{
-	case WM_CREATE:
-		g_espanso_icon = (HBITMAP)LoadImage(NULL, L"C:\\Users\\fredd\\Documents\\espanso.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
-		break;
 	case WM_DESTROY:
 		std::cout << "\ndestroying window\n";
 		PostQuitMessage(0);
