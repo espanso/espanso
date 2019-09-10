@@ -5,11 +5,13 @@ pub struct WindowsClipboardManager {
 
 }
 
-impl super::ClipboardManager for WindowsClipboardManager {
-    fn initialize(&self) {
-        // TODO: check if xclip is present and log an error otherwise.
+impl WindowsClipboardManager {
+    pub fn new() -> WindowsClipboardManager {
+        WindowsClipboardManager{}
     }
+}
 
+impl super::ClipboardManager for WindowsClipboardManager {
     fn get_clipboard(&self) -> Option<String>  {
         unimplemented!();
     }
@@ -17,8 +19,4 @@ impl super::ClipboardManager for WindowsClipboardManager {
     fn set_clipboard(&self, payload: &str) {
         unimplemented!();
     }
-}
-
-impl WindowsClipboardManager {
-
 }

@@ -26,9 +26,7 @@ pub fn get_manager() -> impl SystemManager {
 // WINDOWS IMPLEMENTATION
 #[cfg(target_os = "windows")]
 pub fn get_manager() -> impl SystemManager {
-    let manager = windows::WindowsSystemManager{};
-    manager.initialize();
-    manager
+    windows::WindowsSystemManager::new()
 }
 
 // MAC IMPLEMENTATION

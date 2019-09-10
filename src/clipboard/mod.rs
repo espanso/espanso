@@ -25,9 +25,7 @@ pub fn get_manager() -> impl ClipboardManager {
 // WINDOWS IMPLEMENTATION
 #[cfg(target_os = "windows")]
 pub fn get_manager() -> impl ClipboardManager {
-    let manager = windows::WindowsClipboardManager{};
-    manager.initialize();
-    manager
+    windows::WindowsClipboardManager::new()
 }
 
 // MAC IMPLEMENTATION
