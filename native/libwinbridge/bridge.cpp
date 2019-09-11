@@ -7,6 +7,8 @@
 #define UNICODE
 
 #include <Windows.h>
+#include <strsafe.h>
+#include <shellapi.h>
 
 // How many milliseconds must pass between keystrokes to refresh the keyboard layout
 const long refreshKeyboardLayoutInterval = 2000;
@@ -275,11 +277,21 @@ int32_t get_active_window_executable(wchar_t * buffer, int32_t size) {
 }
 
 // UI
+#define APPWM_ICONNOTIFY (WM_APP + 1)
 
 const wchar_t* const notification_winclass = L"EspansoNotification";
 HWND nw = NULL;
 HWND hwnd_st_u = NULL;
-HBITMAP g_espanso_icon = NULL;
+HBITMAP g_espanso_bmp = NULL;
+HICON g_espanso_ico = NULL;
+
+MenuItemCallback menu_item_callback = NULL;
+void * ui_manager_instance;
+
+void register_menu_item_callback(void *self, MenuItemCallback callback) {
+    menu_item_callback = callback;
+    ui_manager_instance = self;
+}
 
 /*
  * Message handler procedure for the notification window
@@ -293,8 +305,49 @@ LRESULT CALLBACK notification_worker_procedure(HWND window, unsigned int msg, WP
 	case WM_DESTROY:
 		std::cout << "\ndestroying window\n";
 		PostQuitMessage(0);
-		DeleteObject(g_espanso_icon);
+		DeleteObject(g_espanso_bmp);
 		return 0L;
+	case WM_MENUSELECT:
+	{
+		HMENU hmenu = (HMENU)lp;
+		UINT  idItem = (UINT)LOWORD(wp);
+		UINT  flags = (UINT)HIWORD(wp);
+
+		if (flags & MF_CHECKED) {
+			// TODO: callback
+		}
+
+		break;
+	}
+	case APPWM_ICONNOTIFY:
+	{
+		switch (lp)
+		{
+		case WM_LBUTTONUP:
+		case WM_RBUTTONUP:
+			HMENU hPopupMenu = CreatePopupMenu();
+
+			// Create the menu
+
+            int32_t count;
+            MenuItem items[100];
+
+            // Load the items
+            menu_item_callback(ui_manager_instance, items, &count);
+
+            for (int i = 0; i<count; i++) {
+                if (items[i].type == 1) {
+                    InsertMenu(hPopupMenu, 0, MF_BYPOSITION | MF_STRING, items[i].id, items[i].name);
+                }
+            }
+
+			POINT pt;
+			GetCursorPos(&pt);
+			SetForegroundWindow(nw);
+			TrackPopupMenu(hPopupMenu, TPM_BOTTOMALIGN | TPM_LEFTALIGN, pt.x, pt.y, 0, nw, NULL);
+			break;
+		}
+	}
 	case WM_PAINT:
 	{
 		BITMAP bm;
@@ -303,9 +356,9 @@ LRESULT CALLBACK notification_worker_procedure(HWND window, unsigned int msg, WP
 		HDC hdc = BeginPaint(window, &ps);
 
 		HDC hdcMem = CreateCompatibleDC(hdc);
-		HBITMAP hbmOld = (HBITMAP) SelectObject(hdcMem, g_espanso_icon);
+		HBITMAP hbmOld = (HBITMAP) SelectObject(hdcMem, g_espanso_bmp);
 
-		GetObject(g_espanso_icon, sizeof(bm), &bm);
+		GetObject(g_espanso_bmp, sizeof(bm), &bm);
 
 		BitBlt(hdc, 10, 10, 80, 80, hdcMem, 0, 0, SRCCOPY);
 
@@ -328,8 +381,9 @@ LRESULT CALLBACK notification_worker_procedure(HWND window, unsigned int msg, WP
 	}
 }
 
-int32_t initialize_ui(wchar_t * icon_path) {
-    g_espanso_icon = (HBITMAP)LoadImage(NULL, icon_path, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+int32_t initialize_ui(wchar_t * ico_path, wchar_t * bmp_path) {
+    g_espanso_bmp = (HBITMAP)LoadImage(NULL, bmp_path, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+    g_espanso_ico = (HICON)LoadImage(NULL, ico_path, IMAGE_ICON, 0, 0, LR_DEFAULTCOLOR | LR_SHARED | LR_DEFAULTSIZE | LR_LOADFROMFILE);
 
     SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE);
 
@@ -353,7 +407,7 @@ int32_t initialize_ui(wchar_t * icon_path) {
     {
         // Docs: https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-createwindowexw
         nw = CreateWindowEx(
-                WS_EX_TOOLWINDOW,						// dwExStyle: The extended window style of the window being created.
+                WS_EX_TOOLWINDOW | WS_EX_TOPMOST,		// dwExStyle: The extended window style of the window being created.
                 notification_winclass, 					// lpClassName: A null-terminated string or a class atom created by a previous call to the RegisterClass
                 L"Espanso Notification",				// lpWindowName: The window name.
                 WS_POPUPWINDOW,							// dwStyle: The style of the window being created.
@@ -388,6 +442,23 @@ int32_t initialize_ui(wchar_t * icon_path) {
             // Hide the window
             ShowWindow(nw, SW_HIDE);
 
+            // Setup the icon in the notification space
+
+            SendMessage(nw, WM_SETICON, ICON_BIG, (LPARAM)g_espanso_ico);
+            SendMessage(nw, WM_SETICON, ICON_SMALL, (LPARAM)g_espanso_ico);
+            //Notification
+            NOTIFYICONDATA nid = {};
+            nid.cbSize = sizeof(nid);
+            nid.hWnd = nw;
+            nid.uID = 1;
+            nid.uFlags = NIF_ICON | NIF_TIP | NIF_MESSAGE;
+            nid.uCallbackMessage = APPWM_ICONNOTIFY;
+            nid.hIcon = g_espanso_ico;
+            StringCchCopy(nid.szTip, ARRAYSIZE(nid.szTip), L"espanso");
+
+            // Show the notification.
+            Shell_NotifyIcon(NIM_ADD, &nid);
+
             // Enter the Event loop
             MSG msg;
             while (GetMessage(&msg, 0, 0, 0))  DispatchMessage(&msg);
@@ -403,7 +474,7 @@ int32_t initialize_ui(wchar_t * icon_path) {
 
 int32_t show_notification(wchar_t * message) {
     if (nw != NULL) {
-        SetWindowText(hwnd_st_u, L"                                                 ");
+        SetWindowText(hwnd_st_u, L"                                                 ");  // Clear the previous text
         SetWindowText(hwnd_st_u, message);
 
         // Show the window
