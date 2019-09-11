@@ -187,23 +187,42 @@ mod tests {
     use crate::config::{DEFAULT_CONFIG_FILE_NAME, DEFAULT_CONFIG_FILE_CONTENT};
     use std::fs;
     use std::path::PathBuf;
+    use crate::config::ConfigManager;
     use crate::config::tests::{create_temp_espanso_directory, create_temp_file_in_dir};
 
-    struct DummySystemManager {}
+    struct DummySystemManager {
+        title: RefCell<String>,
+        class: RefCell<String>,
+        exec: RefCell<String>,
+    }
     impl SystemManager for DummySystemManager {
         fn get_current_window_title(&self) -> Option<String> {
-            Some("title".to_owned())
+            Some(self.title.borrow().clone())
         }
         fn get_current_window_class(&self) -> Option<String> {
-            Some("class".to_owned())
+            Some(self.class.borrow().clone())
         }
         fn get_current_window_executable(&self) -> Option<String> {
-            Some("exec".to_owned())
+            Some(self.exec.borrow().clone())
         }
     }
     impl DummySystemManager {
+        pub fn new_custom(title: &str, class: &str, exec: &str) -> DummySystemManager {
+            DummySystemManager{
+                title: RefCell::new(title.to_owned()),
+                class: RefCell::new(class.to_owned()),
+                exec: RefCell::new(exec.to_owned())
+            }
+        }
+
         pub fn new() -> DummySystemManager {
-            DummySystemManager{}
+            DummySystemManager::new_custom("title", "class", "exec")
+        }
+
+        pub fn change(&self, title: &str, class: &str, exec: &str) {
+            *self.title.borrow_mut() = title.to_owned();
+            *self.class.borrow_mut() = class.to_owned();
+            *self.exec.borrow_mut() = exec.to_owned();
         }
     }
 
@@ -293,5 +312,124 @@ mod tests {
         assert!(config_manager.exec_regexps[0].is_none());
         assert!(config_manager.exec_regexps[1].is_none());
         assert!(config_manager.exec_regexps[2].is_none());
+    }
+
+    #[test]
+    fn test_runtime_calculate_active_config_specific_title_match() {
+        let tmp_dir = create_temp_espanso_directory();
+
+        let specific_path = create_temp_file_in_dir(&tmp_dir, "specific.yaml", r###"
+        name: chrome
+        filter_title: "Chrome"
+        "###);
+
+        let config_set = ConfigSet::load(tmp_dir.path());
+        assert!(config_set.is_ok());
+
+        let dummy_system_manager = DummySystemManager::new_custom("Google Chrome", "Chrome", "C:\\Path\\chrome.exe");
+
+        let config_manager = RuntimeConfigManager::new(config_set.unwrap(), dummy_system_manager);
+
+        assert_eq!(config_manager.calculate_active_config().name, "chrome");
+    }
+
+    fn test_runtime_calculate_active_config_specific_class_match() {
+        let tmp_dir = create_temp_espanso_directory();
+
+        let specific_path = create_temp_file_in_dir(&tmp_dir, "specific.yaml", r###"
+        name: chrome
+        filter_class: "Chrome"
+        "###);
+
+        let config_set = ConfigSet::load(tmp_dir.path());
+        assert!(config_set.is_ok());
+
+        let dummy_system_manager = DummySystemManager::new_custom("Google Chrome", "Chrome", "C:\\Path\\chrome.exe");
+
+        let config_manager = RuntimeConfigManager::new(config_set.unwrap(), dummy_system_manager);
+
+        assert_eq!(config_manager.calculate_active_config().name, "chrome");
+    }
+
+    fn test_runtime_calculate_active_config_specific_exec_match() {
+        let tmp_dir = create_temp_espanso_directory();
+
+        let specific_path = create_temp_file_in_dir(&tmp_dir, "specific.yaml", r###"
+        name: chrome
+        filter_exec: "chrome.exe"
+        "###);
+
+        let config_set = ConfigSet::load(tmp_dir.path());
+        assert!(config_set.is_ok());
+
+        let dummy_system_manager = DummySystemManager::new_custom("Google Chrome", "Chrome", "C:\\Path\\chrome.exe");
+
+        let config_manager = RuntimeConfigManager::new(config_set.unwrap(), dummy_system_manager);
+
+        assert_eq!(config_manager.calculate_active_config().name, "chrome");
+    }
+
+    fn test_runtime_calculate_active_config_specific_multi_filter_match() {
+        let tmp_dir = create_temp_espanso_directory();
+
+        let specific_path = create_temp_file_in_dir(&tmp_dir, "specific.yaml", r###"
+        name: chrome
+        filter_class: Browser
+        filter_exec: "firefox.exe"
+        "###);
+
+        let config_set = ConfigSet::load(tmp_dir.path());
+        assert!(config_set.is_ok());
+
+        let dummy_system_manager = DummySystemManager::new_custom("Google Chrome", "Browser", "C:\\Path\\chrome.exe");
+
+        let config_manager = RuntimeConfigManager::new(config_set.unwrap(), dummy_system_manager);
+
+        assert_eq!(config_manager.calculate_active_config().name, "chrome");
+    }
+
+    #[test]
+    fn test_runtime_calculate_active_config_no_match() {
+        let tmp_dir = create_temp_espanso_directory();
+
+        let specific_path = create_temp_file_in_dir(&tmp_dir, "specific.yaml", r###"
+        name: firefox
+        filter_title: "Firefox"
+        "###);
+
+        let config_set = ConfigSet::load(tmp_dir.path());
+        assert!(config_set.is_ok());
+
+        let dummy_system_manager = DummySystemManager::new_custom("Google Chrome", "Chrome", "C:\\Path\\chrome.exe");
+
+        let config_manager = RuntimeConfigManager::new(config_set.unwrap(), dummy_system_manager);
+
+        assert_eq!(config_manager.calculate_active_config().name, "default");
+    }
+
+    #[test]
+    fn test_runtime_active_config_cache() {
+        let tmp_dir = create_temp_espanso_directory();
+
+        let specific_path = create_temp_file_in_dir(&tmp_dir, "specific.yaml", r###"
+        name: firefox
+        filter_title: "Firefox"
+        "###);
+
+        let config_set = ConfigSet::load(tmp_dir.path());
+        assert!(config_set.is_ok());
+
+        let dummy_system_manager = DummySystemManager::new_custom("Google Chrome", "Chrome", "C:\\Path\\chrome.exe");
+
+        let config_manager = RuntimeConfigManager::new(config_set.unwrap(), dummy_system_manager);
+
+        assert_eq!(config_manager.active_config().name, "default");
+        assert_eq!(config_manager.calculate_active_config().name, "default");
+
+        config_manager.system_manager.change("Firefox", "Browser", "C\\Path\\firefox.exe");
+
+        // Active config should have changed, but not cached one
+        assert_eq!(config_manager.calculate_active_config().name, "firefox");
+        assert_eq!(config_manager.active_config().name, "default");
     }
 }
