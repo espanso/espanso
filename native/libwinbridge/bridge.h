@@ -59,7 +59,26 @@ extern "C" int32_t get_active_window_executable(wchar_t * buffer, int32_t size);
 /*
  * Initialize the notification window.
  */
-extern "C" int32_t initialize_ui(wchar_t * icon_path);
+extern "C" int32_t initialize_ui(wchar_t * ico_path, wchar_t * bmp_path);
+
+// CONTEXT MENU
+
+typedef struct {
+    int32_t id;
+    int32_t type;
+    wchar_t name[100];
+} MenuItem;
+
+/*
+ * Called when the context menu is created.
+ */
+typedef void (*MenuItemCallback)(void * self, MenuItem * items, int32_t * item_count);
+
+extern MenuItemCallback menu_item_callback;
+extern void * ui_manager_instance;
+extern "C" void register_menu_item_callback(void *self, MenuItemCallback callback);
+
+// NOTIFICATION
 
 /*
  * Show a window containing the notification.
