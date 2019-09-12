@@ -1,5 +1,5 @@
 use std::process::Command;
-use crate::bridge::windows::{show_notification, close_notification, WindowsMenuItem};
+use crate::bridge::windows::{show_notification, close_notification, WindowsMenuItem, show_context_menu};
 use widestring::U16CString;
 use std::{fs, thread, time};
 use log::{info, debug};
@@ -7,6 +7,7 @@ use std::sync::Mutex;
 use std::sync::Arc;
 use std::fs::create_dir_all;
 use std::os::raw::c_void;
+use crate::ui::{MenuItem, MenuItemType};
 
 const BMP_BINARY : &'static [u8] = include_bytes!("../res/win/espanso.bmp");
 const ICO_BINARY : &'static [u8] = include_bytes!("../res/win/espanso.ico");
@@ -49,6 +50,33 @@ impl super::UIManager for WindowsUIManager {
         }
 
     }
+
+    fn show_menu(&self, menu: Vec<MenuItem>) {
+        let mut raw_menu = Vec::new();
+
+        for item in menu.iter() {
+            let text = U16CString::from_str(item.item_name.clone()).unwrap_or_default();
+            let mut str_buff : [u16; 100] = [0; 100];
+            unsafe {
+                std::ptr::copy(text.as_ptr(), str_buff.as_mut_ptr(), text.len());
+            }
+
+            let menu_type = match item.item_type {
+                MenuItemType::Button => {1},
+                MenuItemType::Separator => {2},
+            };
+
+            let raw_item = WindowsMenuItem {
+                item_id: item.item_id,
+                item_type: menu_type,
+                item_name: str_buff,
+            };
+
+            raw_menu.push(raw_item);
+        }
+
+        unsafe { show_context_menu(raw_menu.as_ptr(), raw_menu.len() as i32); }
+    }
 }
 
 impl WindowsUIManager {
@@ -60,27 +88,5 @@ impl WindowsUIManager {
         };
 
         manager
-    }
-}
-
-// NATIVE
-
-extern fn menu_item_callback(_self: *mut c_void, items: *mut WindowsMenuItem, count: *mut i32) {
-    unsafe {
-        let _self = _self as *mut WindowsUIManager;
-
-        let str = U16CString::from_str("Test").unwrap_or_default();
-        let mut str_buff : [u16; 100] = [0; 100];
-        std::ptr::copy(str.as_ptr(), str_buff.as_mut_ptr(), str.len());
-        let item = WindowsMenuItem {
-            item_id: 1,
-            item_type: 1,
-            item_name: str_buff,
-        };
-
-        let items = unsafe { std::slice::from_raw_parts_mut(items, 100) };
-
-        items[0] = item;
-        *count = 1;
     }
 }

@@ -24,13 +24,14 @@ HKL currentKeyboardLayout;
 HWND window;
 const wchar_t* const winclass = L"Espanso";
 
-KeypressCallback keypress_callback;
+
 
 // UI
 
 #define APPWM_ICON_CLICK (WM_APP + 1)
 #define APPWM_NOTIFICATION_POPUP (WM_APP + 2)
 #define APPWM_NOTIFICATION_CLOSE (WM_APP + 3)
+#define APPWM_SHOW_CONTEXT_MENU (WM_APP + 4)
 
 const wchar_t* const notification_winclass = L"EspansoNotification";
 HWND nw = NULL;
@@ -38,16 +39,22 @@ HWND hwnd_st_u = NULL;
 HBITMAP g_espanso_bmp = NULL;
 HICON g_espanso_ico = NULL;
 
-MenuItemCallback menu_item_callback = NULL;
+// Callbacks
 
-// Callback registration
-
-void register_menu_item_callback(MenuItemCallback callback) {
-    menu_item_callback = callback;
-}
+KeypressCallback keypress_callback = NULL;
+IconClickCallback icon_click_callback = NULL;
+ContextMenuClickCallback context_menu_click_callback = NULL;
 
 void register_keypress_callback(KeypressCallback callback) {
     keypress_callback = callback;
+}
+
+void register_icon_click_callback(IconClickCallback callback) {
+    icon_click_callback = callback;
+}
+
+void register_context_menu_click_callback(ContextMenuClickCallback callback) {
+    context_menu_click_callback = callback;
 }
 
 /*
@@ -65,21 +72,20 @@ LRESULT CALLBACK window_procedure(HWND window, unsigned int msg, WPARAM wp, LPAR
             DeleteObject(g_espanso_bmp);
             DeleteObject(g_espanso_ico);
             return 0L;
-        case WM_MENUSELECT:  // Click on the tray icon context menu
+        case WM_COMMAND:  // Click on the tray icon context menu
         {
-            HMENU hmenu = (HMENU)lp;
             UINT  idItem = (UINT)LOWORD(wp);
             UINT  flags = (UINT)HIWORD(wp);
 
-            if (flags & MF_CHECKED) {
-                // TODO: callback
+            if (flags == 0) {
+                context_menu_click_callback(manager_instance, (int32_t)idItem);
             }
 
             break;
         }
         case APPWM_NOTIFICATION_POPUP:  // Request to show a notification
         {
-            std::unique_ptr<wchar_t> ptr(reinterpret_cast<wchar_t*>(wp));
+            std::unique_ptr<wchar_t[]> ptr(reinterpret_cast<wchar_t*>(wp));
 
             SetWindowText(hwnd_st_u, L"                                                 ");  // Clear the previous text
             SetWindowText(hwnd_st_u, ptr.get());
@@ -94,32 +100,36 @@ LRESULT CALLBACK window_procedure(HWND window, unsigned int msg, WPARAM wp, LPAR
             ShowWindow(nw, SW_HIDE);
             break;
         }
+        case APPWM_SHOW_CONTEXT_MENU:  // Request to show context menu
+        {
+            HMENU hPopupMenu = CreatePopupMenu();
+
+            // Create the menu
+
+            int32_t count = static_cast<int32_t>(lp);
+            std::unique_ptr<MenuItem[]> items(reinterpret_cast<MenuItem*>(wp));
+
+            for (int i = 0; i<count; i++) {
+                if (items[i].type == 1) {
+                    InsertMenu(hPopupMenu, i, MF_BYPOSITION | MF_STRING, items[i].id, items[i].name);
+                }else{
+                    InsertMenu(hPopupMenu, i, MF_BYPOSITION | MF_SEPARATOR, items[i].id, NULL);
+                }
+            }
+
+            POINT pt;
+            GetCursorPos(&pt);
+            SetForegroundWindow(nw);
+            TrackPopupMenu(hPopupMenu, TPM_BOTTOMALIGN | TPM_LEFTALIGN, pt.x, pt.y, 0, nw, NULL);
+            break;
+        }
         case APPWM_ICON_CLICK:  // Click on the tray icon
         {
             switch (lp)
             {
             case WM_LBUTTONUP:
             case WM_RBUTTONUP:
-                HMENU hPopupMenu = CreatePopupMenu();
-
-                // Create the menu
-
-                int32_t count;
-                MenuItem items[100];
-
-                // Load the items
-                menu_item_callback(manager_instance, items, &count);
-
-                for (int i = 0; i<count; i++) {
-                    if (items[i].type == 1) {
-                        InsertMenu(hPopupMenu, 0, MF_BYPOSITION | MF_STRING, items[i].id, items[i].name);
-                    }
-                }
-
-                POINT pt;
-                GetCursorPos(&pt);
-                SetForegroundWindow(nw);
-                TrackPopupMenu(hPopupMenu, TPM_BOTTOMALIGN | TPM_LEFTALIGN, pt.x, pt.y, 0, nw, NULL);
+                icon_click_callback(manager_instance);
                 break;
             }
         }
@@ -489,4 +499,16 @@ void close_notification() {
     if (nw != NULL) {
         PostMessage(nw, APPWM_NOTIFICATION_CLOSE, 0, 0);
     }
+}
+
+int32_t show_context_menu(MenuItem * items, int32_t count) {
+    if (nw != NULL) {
+        MenuItem * items_buffer = new MenuItem[count];
+        memcpy(items_buffer, items, sizeof(MenuItem)*count);
+
+        PostMessage(nw, APPWM_SHOW_CONTEXT_MENU, reinterpret_cast<WPARAM>(items_buffer), static_cast<LPARAM>(count));
+        return 1;
+    }
+
+    return -1;
 }

@@ -4,8 +4,14 @@ use serde::{Serialize, Deserialize};
 
 #[derive(Debug)]
 pub enum Event {
-    Action,
+    Action(ActionEvent),
     Key(KeyEvent)
+}
+
+#[derive(Debug)]
+pub enum ActionEvent {
+    IconClick,
+    ContextMenuClick(i32)
 }
 
 #[derive(Debug)]
@@ -36,5 +42,5 @@ pub trait KeyEventReceiver {
 }
 
 pub trait ActionEventReceiver {
-    fn on_action_event(&self, e: Event); // TODO: Action event
+    fn on_action_event(&self, e: ActionEvent); // TODO: Action event
 }

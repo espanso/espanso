@@ -4,8 +4,9 @@ use crate::config::ConfigManager;
 use crate::config::BackendType;
 use crate::clipboard::ClipboardManager;
 use log::{info};
-use crate::ui::UIManager;
-use crate::event::{ActionEventReceiver, Event};
+use crate::ui::{UIManager, MenuItem, MenuItemType};
+use crate::event::{ActionEventReceiver, Event, ActionEvent};
+use std::cell::RefCell;
 
 pub struct Engine<'a, S: KeyboardSender, C: ClipboardManager, M: ConfigManager<'a>,
                   U: UIManager> {
@@ -13,12 +14,44 @@ pub struct Engine<'a, S: KeyboardSender, C: ClipboardManager, M: ConfigManager<'
     clipboard_manager: &'a C,
     config_manager: &'a M,
     ui_manager: &'a U,
+    enabled: RefCell<bool>,
 }
 
 impl <'a, S: KeyboardSender, C: ClipboardManager, M: ConfigManager<'a>, U: UIManager>
     Engine<'a, S, C, M, U> {
     pub fn new(sender: S, clipboard_manager: &'a C, config_manager: &'a M, ui_manager: &'a U) -> Engine<'a, S, C, M, U> {
-        Engine{sender, clipboard_manager, config_manager, ui_manager }
+        let enabled = RefCell::new(true);
+        Engine{sender, clipboard_manager, config_manager, ui_manager, enabled }
+    }
+
+    fn build_menu(&self) -> Vec<MenuItem> {
+        let mut menu = Vec::new();
+
+        let enabled = self.enabled.borrow();
+        let toggle_text = if *enabled {
+            "Disable"
+        }else{
+            "Enable"
+        }.to_owned();
+        menu.push(MenuItem{
+            item_type: MenuItemType::Button,
+            item_name: toggle_text,
+            item_id: 2,
+        });
+
+        menu.push(MenuItem{
+            item_type: MenuItemType::Separator,
+            item_name: "".to_owned(),
+            item_id: 999,
+        });
+
+        menu.push(MenuItem{
+            item_type: MenuItemType::Button,
+            item_name: "Exit".to_owned(),
+            item_id: 1,
+        });
+
+        menu
     }
 }
 
@@ -70,6 +103,9 @@ impl <'a, S: KeyboardSender, C: ClipboardManager, M: ConfigManager<'a>, U: UIMan
 
         info!("Toggled: {}", message);
 
+        let mut enabled_ref = self.enabled.borrow_mut();
+        *enabled_ref = status;
+
         self.ui_manager.notify(message);
     }
 }
@@ -77,7 +113,14 @@ impl <'a, S: KeyboardSender, C: ClipboardManager, M: ConfigManager<'a>, U: UIMan
 impl <'a, S: KeyboardSender, C: ClipboardManager,
     M: ConfigManager<'a>, U: UIManager> ActionEventReceiver for Engine<'a, S, C, M, U>{
 
-    fn on_action_event(&self, e: Event) {
-        unimplemented!()
+    fn on_action_event(&self, e: ActionEvent) {
+        match e {
+            ActionEvent::IconClick => {
+                self.ui_manager.show_menu(self.build_menu());
+            },
+            ActionEvent::ContextMenuClick(id) => {
+                println!("{}", id);
+            }
+        }
     }
 }

@@ -60,6 +60,13 @@ extern "C" int32_t get_active_window_executable(wchar_t * buffer, int32_t size);
 
 // UI
 
+/*
+ * Called when the tray icon is clicked
+ */
+typedef void (*IconClickCallback)(void * self);
+extern IconClickCallback icon_click_callback;
+extern "C" void register_icon_click_callback(IconClickCallback callback);
+
 // CONTEXT MENU
 
 typedef struct {
@@ -68,13 +75,14 @@ typedef struct {
     wchar_t name[100];
 } MenuItem;
 
-/*
- * Called when the context menu is created.
- */
-typedef void (*MenuItemCallback)(void * self, MenuItem * items, int32_t * item_count);
+extern "C" int32_t show_context_menu(MenuItem * items, int32_t count);
 
-extern MenuItemCallback menu_item_callback;
-extern "C" void register_menu_item_callback(MenuItemCallback callback);
+/*
+ * Called when the context menu is clicked
+ */
+typedef void (*ContextMenuClickCallback)(void * self, int32_t id);
+extern ContextMenuClickCallback context_menu_click_callback;
+extern "C" void register_context_menu_click_callback(ContextMenuClickCallback callback);
 
 // NOTIFICATION
 
