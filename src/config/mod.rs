@@ -6,7 +6,7 @@ use crate::matcher::Match;
 use std::fs::{File, create_dir_all};
 use std::io::Read;
 use serde::{Serialize, Deserialize};
-use crate::keyboard::KeyModifier;
+use crate::event::KeyModifier;
 use crate::system::SystemManager;
 use std::collections::HashSet;
 use std::process::exit;

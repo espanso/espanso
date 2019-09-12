@@ -1,5 +1,4 @@
-use std::sync::{mpsc};
-use crate::keyboard::{KeyboardInterceptor, KeyEvent};
+use std::sync::{mpsc, Arc};
 use crate::matcher::Matcher;
 use crate::matcher::scrolling::ScrollingMatcher;
 use crate::engine::Engine;
@@ -7,6 +6,9 @@ use crate::clipboard::ClipboardManager;
 use crate::config::ConfigSet;
 use crate::config::runtime::RuntimeConfigManager;
 use crate::ui::UIManager;
+use crate::context::Context;
+use crate::event::*;
+use crate::event::manager::{EventManager, DefaultEventManager};
 use std::{thread, time};
 use clap::{App, Arg};
 use std::path::Path;
@@ -16,10 +18,12 @@ use simplelog::{CombinedLogger, TermLogger, TerminalMode};
 use std::process::exit;
 
 mod ui;
+mod event;
 mod bridge;
 mod engine;
 mod config;
 mod system;
+mod context;
 mod matcher;
 mod keyboard;
 mod clipboard;
@@ -85,18 +89,18 @@ fn main() {
 }
 
 fn espanso_main(config_set: ConfigSet) {
-    let (txc, rxc) = mpsc::channel();
+    let (send_channel, receive_channel) = mpsc::channel();
+
+    let context = context::new(send_channel);
 
     thread::spawn(move || {
-        espanso_background(rxc, config_set);
+        espanso_background(receive_channel, config_set);
     });
 
-    let interceptor = keyboard::get_interceptor(txc);
-    interceptor.initialize();
-    interceptor.start();
+    context.eventloop();
 }
 
-fn espanso_background(rxc: Receiver<KeyEvent>, config_set: ConfigSet) {
+fn espanso_background(receive_channel: Receiver<Event>, config_set: ConfigSet) {
     let system_manager = system::get_manager();
     let config_manager = RuntimeConfigManager::new(config_set, system_manager);
 
@@ -105,14 +109,22 @@ fn espanso_background(rxc: Receiver<KeyEvent>, config_set: ConfigSet) {
 
     let clipboard_manager = clipboard::get_manager();
 
-    let sender = keyboard::get_sender();
+    let sender = keyboard::get_sender();  // TODO: rename manager
 
+    // TODO: change sender to move to reference
     let engine = Engine::new(sender,
                              &clipboard_manager,
                              &config_manager,
                              &ui_manager
     );
 
-    let matcher = ScrollingMatcher::new(&config_manager, engine);
-    matcher.watch(rxc);
+    let matcher = ScrollingMatcher::new(&config_manager, &engine);
+
+    let event_manager = DefaultEventManager::new(
+        receive_channel,
+        &matcher,
+        &engine,
+    );
+
+    event_manager.eventloop();
 }
