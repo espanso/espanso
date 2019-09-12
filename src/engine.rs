@@ -5,6 +5,7 @@ use crate::config::BackendType;
 use crate::clipboard::ClipboardManager;
 use log::{info};
 use crate::ui::UIManager;
+use crate::event::{ActionEventReceiver, Event};
 
 pub struct Engine<'a, S: KeyboardSender, C: ClipboardManager, M: ConfigManager<'a>,
                   U: UIManager> {
@@ -70,5 +71,13 @@ impl <'a, S: KeyboardSender, C: ClipboardManager, M: ConfigManager<'a>, U: UIMan
         info!("Toggled: {}", message);
 
         self.ui_manager.notify(message);
+    }
+}
+
+impl <'a, S: KeyboardSender, C: ClipboardManager,
+    M: ConfigManager<'a>, U: UIManager> ActionEventReceiver for Engine<'a, S, C, M, U>{
+
+    fn on_action_event(&self, e: Event) {
+        unimplemented!()
     }
 }

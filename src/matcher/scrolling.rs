@@ -1,14 +1,14 @@
 use crate::matcher::{Match, MatchReceiver};
 use std::cell::RefCell;
-use crate::keyboard::KeyModifier;
+use crate::event::KeyModifier;
 use crate::config::ConfigManager;
-use crate::keyboard::KeyModifier::BACKSPACE;
+use crate::event::KeyModifier::BACKSPACE;
 use std::time::SystemTime;
 use std::collections::VecDeque;
 
 pub struct ScrollingMatcher<'a, R: MatchReceiver, M: ConfigManager<'a>> {
     config_manager: &'a M,
-    receiver: R,
+    receiver: &'a R,
     current_set_queue: RefCell<VecDeque<Vec<MatchEntry<'a>>>>,
     toggle_press_time: RefCell<SystemTime>,
     is_enabled: RefCell<bool>,
@@ -101,7 +101,7 @@ impl <'a, R: MatchReceiver, M: ConfigManager<'a>> super::Matcher for ScrollingMa
     }
 }
 impl <'a, R: MatchReceiver, M: ConfigManager<'a>> ScrollingMatcher<'a, R, M> {
-    pub fn new(config_manager: &'a M, receiver: R) -> ScrollingMatcher<'a, R, M> {
+    pub fn new(config_manager: &'a M, receiver: &'a R) -> ScrollingMatcher<'a, R, M> {
         let current_set_queue = RefCell::new(VecDeque::new());
         let toggle_press_time = RefCell::new(SystemTime::now());
 

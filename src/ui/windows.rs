@@ -1,5 +1,5 @@
 use std::process::Command;
-use crate::bridge::windows::{show_notification, close_notification, initialize_ui, WindowsMenuItem, register_menu_item_callback};
+use crate::bridge::windows::{show_notification, close_notification, WindowsMenuItem};
 use widestring::U16CString;
 use std::{fs, thread, time};
 use log::{info, debug};
@@ -53,56 +53,11 @@ impl super::UIManager for WindowsUIManager {
 
 impl WindowsUIManager {
     pub fn new() -> WindowsUIManager {
-        let data_dir = dirs::data_dir().expect("Can't obtain data_dir(), terminating.");
-
-        let espanso_dir = data_dir.join("espanso");
-
-        let res = create_dir_all(&espanso_dir);
-
-        info!("Initializing Espanso resources in {}", espanso_dir.as_path().display());
-
-        let espanso_bmp_image = espanso_dir.join("espansoicon.bmp");
-        if espanso_bmp_image.exists() {
-            info!("BMP already initialized, skipping.");
-        }else {
-            fs::write(&espanso_bmp_image, BMP_BINARY)
-                .expect("Unable to write windows bmp file");
-
-            info!("Extracted bmp icon to: {}", espanso_bmp_image.to_str().unwrap_or("error"));
-        }
-
-        let espanso_ico_image = espanso_dir.join("espanso.ico");
-        if espanso_ico_image.exists() {
-            info!("ICO already initialized, skipping.");
-        }else {
-            fs::write(&espanso_ico_image, ICO_BINARY)
-                .expect("Unable to write windows ico file");
-
-            info!("Extracted 'ico' icon to: {}", espanso_ico_image.to_str().unwrap_or("error"));
-        }
-
-        let bmp_icon = espanso_bmp_image.to_str().unwrap_or_default();
-        let ico_icon = espanso_ico_image.to_str().unwrap_or_default();
-
         let id = Arc::new(Mutex::new(0));
-        let ico_file_c = U16CString::from_str(ico_icon).unwrap();
-        let bmp_file_c = U16CString::from_str(bmp_icon).unwrap();
 
         let manager = WindowsUIManager {
             id
         };
-
-        // Setup the menu item callback
-        unsafe {
-            let self_ptr = &manager as *const WindowsUIManager as *const c_void;
-            register_menu_item_callback(self_ptr, menu_item_callback);
-        }
-
-        thread::spawn(move || {
-            unsafe {
-                initialize_ui(ico_file_c.as_ptr(), bmp_file_c.as_ptr());
-            }
-        });
 
         manager
     }

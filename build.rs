@@ -27,7 +27,7 @@ fn get_config() -> PathBuf {
 #[cfg(target_os = "windows")]
 fn print_config()  {
     println!("cargo:rustc-link-lib=static=winbridge");
-    println!("cargo:rustc-link-lib=static=user32");
+    println!("cargo:rustc-link-lib=static=user32");  // TODO: maybe dylib is better
 }
 
 #[cfg(target_os = "linux")]
