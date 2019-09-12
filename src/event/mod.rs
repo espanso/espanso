@@ -2,19 +2,36 @@ pub(crate) mod manager;
 
 use serde::{Serialize, Deserialize};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Event {
     Action(ActionEvent),
     Key(KeyEvent)
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum ActionEvent {
     IconClick,
-    ContextMenuClick(i32)
+    ContextMenuClick(ActionType)
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
+pub enum ActionType {
+    Noop = 0,
+    Toggle = 1,
+    Exit = 2,
+}
+
+impl From<i32> for ActionType {
+    fn from(id: i32) -> Self {
+        match id {
+            1 => ActionType::Toggle,
+            2 => ActionType::Exit,
+            _ => ActionType::Noop,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
 pub enum KeyEvent {
     Char(char),
     Modifier(KeyModifier)

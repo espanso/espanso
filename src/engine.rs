@@ -5,7 +5,7 @@ use crate::config::BackendType;
 use crate::clipboard::ClipboardManager;
 use log::{info};
 use crate::ui::{UIManager, MenuItem, MenuItemType};
-use crate::event::{ActionEventReceiver, Event, ActionEvent};
+use crate::event::{ActionEventReceiver, Event, ActionEvent, ActionType};
 use std::cell::RefCell;
 
 pub struct Engine<'a, S: KeyboardSender, C: ClipboardManager, M: ConfigManager<'a>,
@@ -36,7 +36,7 @@ impl <'a, S: KeyboardSender, C: ClipboardManager, M: ConfigManager<'a>, U: UIMan
         menu.push(MenuItem{
             item_type: MenuItemType::Button,
             item_name: toggle_text,
-            item_id: 2,
+            item_id: ActionType::Toggle as i32,
         });
 
         menu.push(MenuItem{
@@ -48,7 +48,7 @@ impl <'a, S: KeyboardSender, C: ClipboardManager, M: ConfigManager<'a>, U: UIMan
         menu.push(MenuItem{
             item_type: MenuItemType::Button,
             item_name: "Exit".to_owned(),
-            item_id: 1,
+            item_id: ActionType::Exit as i32,
         });
 
         menu
@@ -119,7 +119,7 @@ impl <'a, S: KeyboardSender, C: ClipboardManager,
                 self.ui_manager.show_menu(self.build_menu());
             },
             ActionEvent::ContextMenuClick(id) => {
-                println!("{}", id);
+
             }
         }
     }

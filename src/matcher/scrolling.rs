@@ -1,6 +1,6 @@
 use crate::matcher::{Match, MatchReceiver};
 use std::cell::RefCell;
-use crate::event::KeyModifier;
+use crate::event::{KeyModifier, ActionEventReceiver, ActionEvent, ActionType};
 use crate::config::ConfigManager;
 use crate::event::KeyModifier::BACKSPACE;
 use std::time::SystemTime;
@@ -19,7 +19,29 @@ struct MatchEntry<'a> {
     _match: &'a Match
 }
 
-impl <'a, R: MatchReceiver, M: ConfigManager<'a>> super::Matcher for ScrollingMatcher<'a, R, M> where{
+impl <'a, R: MatchReceiver, M: ConfigManager<'a>> ScrollingMatcher<'a, R, M> {
+    pub fn new(config_manager: &'a M, receiver: &'a R) -> ScrollingMatcher<'a, R, M> {
+        let current_set_queue = RefCell::new(VecDeque::new());
+        let toggle_press_time = RefCell::new(SystemTime::now());
+
+        ScrollingMatcher{
+            config_manager,
+            receiver,
+            current_set_queue,
+            toggle_press_time,
+            is_enabled: RefCell::new(true)
+        }
+    }
+
+    fn toggle(&self) {
+        let mut is_enabled = self.is_enabled.borrow_mut();
+        *is_enabled = !(*is_enabled);
+
+        self.receiver.on_toggle(*is_enabled);
+    }
+}
+
+impl <'a, R: MatchReceiver, M: ConfigManager<'a>> super::Matcher for ScrollingMatcher<'a, R, M> {
     fn handle_char(&self, c: char) {
         // if not enabled, avoid any processing
         if !*(self.is_enabled.borrow()) {
@@ -79,14 +101,13 @@ impl <'a, R: MatchReceiver, M: ConfigManager<'a>> super::Matcher for ScrollingMa
             let mut toggle_press_time = self.toggle_press_time.borrow_mut();
             if let Ok(elapsed) = toggle_press_time.elapsed() {
                 if elapsed.as_millis() < config.toggle_interval as u128 {
-                    let mut is_enabled = self.is_enabled.borrow_mut();
-                    *is_enabled = !(*is_enabled);
+                    let mut is_enabled = self.is_enabled.borrow();
 
                     if !*is_enabled {
                         self.current_set_queue.borrow_mut().clear();
                     }
 
-                    self.receiver.on_toggle(*is_enabled);
+                    self.toggle();
                 }
             }
 
@@ -100,17 +121,19 @@ impl <'a, R: MatchReceiver, M: ConfigManager<'a>> super::Matcher for ScrollingMa
         }
     }
 }
-impl <'a, R: MatchReceiver, M: ConfigManager<'a>> ScrollingMatcher<'a, R, M> {
-    pub fn new(config_manager: &'a M, receiver: &'a R) -> ScrollingMatcher<'a, R, M> {
-        let current_set_queue = RefCell::new(VecDeque::new());
-        let toggle_press_time = RefCell::new(SystemTime::now());
 
-        ScrollingMatcher{
-            config_manager,
-            receiver,
-            current_set_queue,
-            toggle_press_time,
-            is_enabled: RefCell::new(true)
+impl <'a, R: MatchReceiver, M: ConfigManager<'a>> ActionEventReceiver for ScrollingMatcher<'a, R, M> {
+    fn on_action_event(&self, e: ActionEvent) {
+        match e {
+            ActionEvent::ContextMenuClick(action_type) => {
+                match action_type {
+                    ActionType::Toggle => {
+                        self.toggle();
+                    },
+                    _ => {}
+                }
+            },
+            _ => {}
         }
     }
 }

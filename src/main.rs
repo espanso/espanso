@@ -1,3 +1,6 @@
+#[macro_use]
+extern crate num_derive;
+
 use std::sync::{mpsc, Arc};
 use crate::matcher::Matcher;
 use crate::matcher::scrolling::ScrollingMatcher;
@@ -122,8 +125,8 @@ fn espanso_background(receive_channel: Receiver<Event>, config_set: ConfigSet) {
 
     let event_manager = DefaultEventManager::new(
         receive_channel,
-        &matcher,
-        &engine,
+        vec!(&matcher),
+        vec!(&engine, &matcher),
     );
 
     event_manager.eventloop();

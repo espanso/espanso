@@ -7,17 +7,17 @@ pub trait EventManager {
 
 pub struct DefaultEventManager<'a, K: KeyEventReceiver, A: ActionEventReceiver> {
     receive_channel: Receiver<Event>,
-    key_receiver: &'a K,
-    action_receiver: &'a A,
+    key_receivers: Vec<&'a K>,
+    action_receivers: Vec<&'a A>,
 }
 
 impl<'a, K: KeyEventReceiver, A: ActionEventReceiver> DefaultEventManager<'a, K, A> {
-    pub fn new(receive_channel: Receiver<Event>, key_receiver: &'a K,
-               action_receiver: &'a A) -> DefaultEventManager<'a, K, A> {
+    pub fn new(receive_channel: Receiver<Event>, key_receivers: Vec<&'a K>,
+               action_receivers: Vec<&'a A>) -> DefaultEventManager<'a, K, A> {
         DefaultEventManager {
             receive_channel,
-            key_receiver,
-            action_receiver,
+            key_receivers,
+            action_receivers,
         }
     }
 }
@@ -29,10 +29,10 @@ impl <'a, K: KeyEventReceiver, A: ActionEventReceiver> EventManager for DefaultE
                 Ok(event) => {
                     match event {
                         Event::Key(key_event) => {
-                            self.key_receiver.on_key_event(key_event);
+                            self.key_receivers.iter().for_each(move |&receiver| receiver.on_key_event(key_event.clone()));
                         },
                         Event::Action(action_event) => {
-                            self.action_receiver.on_action_event(action_event);
+                            self.action_receivers.iter().for_each(|&receiver| receiver.on_action_event(action_event.clone()));
                         }
                     }
                 },

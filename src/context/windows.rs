@@ -1,6 +1,6 @@
 use std::sync::mpsc::Sender;
 use crate::bridge::windows::*;
-use crate::event::{Event, KeyEvent, KeyModifier, ActionEvent};
+use crate::event::{Event, KeyEvent, KeyModifier, ActionEvent, ActionType};
 use crate::event::KeyModifier::*;
 use std::ffi::c_void;
 use std::fs::create_dir_all;
@@ -137,7 +137,7 @@ extern fn context_menu_click_callback(_self: *mut c_void, id: i32) {
     unsafe {
         let _self = _self as *mut WindowsContext;
 
-        let event = Event::Action(ActionEvent::ContextMenuClick(id));
+        let event = Event::Action(ActionEvent::ContextMenuClick(ActionType::from(id)));
         (*_self).send_channel.send(event).unwrap();
     }
 }
