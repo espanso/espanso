@@ -9,15 +9,18 @@ mod macos;
 
 pub trait UIManager {
     fn notify(&self, message: &str);
+    fn show_menu(&self, menu: Vec<MenuItem>);
 }
 
 pub enum MenuItemType {
     Button,
-    Separator
+    Separator,
 }
 
 pub struct MenuItem {
-
+    pub item_id: i32,
+    pub item_type: MenuItemType,
+    pub item_name: String,
 }
 
 // MAC IMPLEMENTATION

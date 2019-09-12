@@ -31,8 +31,8 @@ impl <'a, K: KeyEventReceiver, A: ActionEventReceiver> EventManager for DefaultE
                         Event::Key(key_event) => {
                             self.key_receiver.on_key_event(key_event);
                         },
-                        Event::Action => {
-                            self.action_receiver.on_action_event(event);  // TODO: action event
+                        Event::Action(action_event) => {
+                            self.action_receiver.on_action_event(action_event);
                         }
                     }
                 },

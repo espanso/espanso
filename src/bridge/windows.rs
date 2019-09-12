@@ -19,8 +19,9 @@ extern {
     // UI
     pub fn show_notification(message: *const u16) -> i32;
     pub fn close_notification();
-    pub fn register_menu_item_callback(cb: extern fn(_self: *mut c_void, *mut WindowsMenuItem,
-                                                    *mut i32));
+    pub fn show_context_menu(items: *const WindowsMenuItem, count: i32) -> i32;
+    pub fn register_icon_click_callback(cb: extern fn(_self: *mut c_void));
+    pub fn register_context_menu_click_callback(cb: extern fn(_self: *mut c_void, id: i32));
 
     // KEYBOARD
     pub fn register_keypress_callback(cb: extern fn(_self: *mut c_void, *const i32,

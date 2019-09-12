@@ -1,6 +1,6 @@
 use std::sync::mpsc::Sender;
 use crate::bridge::windows::*;
-use crate::event::{Event, KeyEvent, KeyModifier};
+use crate::event::{Event, KeyEvent, KeyModifier, ActionEvent};
 use crate::event::KeyModifier::*;
 use std::ffi::c_void;
 use std::fs::create_dir_all;
@@ -63,7 +63,8 @@ impl WindowsContext {
 
             // Register callbacks
             register_keypress_callback(keypress_callback);
-            register_menu_item_callback(menu_item_callback);
+            register_icon_click_callback(icon_click_callback);
+            register_context_menu_click_callback(context_menu_click_callback);
 
             let ico_file_c = U16CString::from_str(ico_icon).unwrap();
             let bmp_file_c = U16CString::from_str(bmp_icon).unwrap();
@@ -122,22 +123,21 @@ extern fn keypress_callback(_self: *mut c_void, raw_buffer: *const i32, len: i32
     }
 }
 
-extern fn menu_item_callback(_self: *mut c_void, items: *mut WindowsMenuItem, count: *mut i32) {
+extern fn icon_click_callback(_self: *mut c_void) {
     unsafe {
         let _self = _self as *mut WindowsContext;
 
-        let str = U16CString::from_str("Test").unwrap_or_default();
-        let mut str_buff : [u16; 100] = [0; 100];
-        std::ptr::copy(str.as_ptr(), str_buff.as_mut_ptr(), str.len());
-        let item = WindowsMenuItem {
-            item_id: 1,
-            item_type: 1,
-            item_name: str_buff,
-        };
+        let event = Event::Action(ActionEvent::IconClick);
+        (*_self).send_channel.send(event).unwrap();
+    }
+}
 
-        let items = unsafe { std::slice::from_raw_parts_mut(items, 100) };
 
-        items[0] = item;
-        *count = 1;
+extern fn context_menu_click_callback(_self: *mut c_void, id: i32) {
+    unsafe {
+        let _self = _self as *mut WindowsContext;
+
+        let event = Event::Action(ActionEvent::ContextMenuClick(id));
+        (*_self).send_channel.send(event).unwrap();
     }
 }
