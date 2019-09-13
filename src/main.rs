@@ -4,7 +4,6 @@ use crate::engine::Engine;
 use crate::config::ConfigSet;
 use crate::config::runtime::RuntimeConfigManager;
 use crate::ui::UIManager;
-use crate::context::Context;
 use crate::event::*;
 use crate::event::manager::{EventManager, DefaultEventManager};
 use std::{thread};
@@ -107,10 +106,9 @@ fn espanso_background(receive_channel: Receiver<Event>, config_set: ConfigSet) {
 
     let clipboard_manager = clipboard::get_manager();
 
-    let sender = keyboard::get_sender();  // TODO: rename manager
+    let manager = keyboard::get_manager();
 
-    // TODO: change sender from move to reference
-    let engine = Engine::new(sender,
+    let engine = Engine::new(&manager,
                              &clipboard_manager,
                              &config_manager,
                              &ui_manager

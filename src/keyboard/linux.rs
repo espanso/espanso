@@ -32,10 +32,10 @@ impl Drop for LinuxKeyboardInterceptor {
     }
 }
 
-pub struct LinuxKeyboardSender {
+pub struct LinuxKeyboardManager {
 }
 
-impl super::KeyboardSender for LinuxKeyboardSender {
+impl super::KeyboardManager for LinuxKeyboardManager {
     fn send_string(&self, s: &str) {
         let res = CString::new(s);
         match res {

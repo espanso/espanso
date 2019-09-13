@@ -1,4 +1,3 @@
-use std::sync::mpsc::Receiver;
 use serde::{Serialize, Deserialize};
 use crate::event::{KeyEvent, KeyModifier};
 use crate::event::KeyEventReceiver;

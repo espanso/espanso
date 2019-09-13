@@ -5,11 +5,10 @@ mod windows;
 mod linux;
 
 #[cfg(target_os = "macos")]
-mod macos;
+pub(crate) mod macos;
 
 use std::sync::mpsc::Sender;
 use crate::event::Event;
-use std::sync::Arc;
 
 pub trait Context {
     fn eventloop(&self);

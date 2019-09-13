@@ -2,7 +2,7 @@ use regex::Regex;
 use crate::system::SystemManager;
 use std::cell::RefCell;
 use std::time::SystemTime;
-use log::{debug, info, warn, error};
+use log::{debug, warn};
 use super::{Configs, ConfigSet};
 use crate::matcher::Match;
 
