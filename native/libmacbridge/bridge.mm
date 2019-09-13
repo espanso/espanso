@@ -2,6 +2,7 @@
 
 #import <Foundation/Foundation.h>
 #include "AppDelegate.h"
+#include <stdio.h>
 #include <string.h>
 extern "C" {
 
@@ -9,13 +10,20 @@ extern "C" {
 
 #include <vector>
 
-KeypressCallback keypress_callback;
 void * context_instance;
+char * icon_path;
+AppDelegate * delegate_ptr;
 
-int32_t initialize(void * context) {
+KeypressCallback keypress_callback;
+IconClickCallback icon_click_callback;
+ContextMenuClickCallback context_menu_click_callback;
+
+int32_t initialize(void * context, const char * _icon_path) {
     context_instance = context;
+    icon_path = strdup(_icon_path);
 
     AppDelegate *delegate = [[AppDelegate alloc] init];
+    delegate_ptr = delegate;
     NSApplication * application = [NSApplication sharedApplication];
     [application setDelegate:delegate];
 }
@@ -23,6 +31,15 @@ int32_t initialize(void * context) {
 void register_keypress_callback(KeypressCallback callback) {
     keypress_callback = callback;
 }
+
+void register_icon_click_callback(IconClickCallback callback) {
+    icon_click_callback = callback;
+}
+
+void register_context_menu_click_callback(ContextMenuClickCallback callback) {
+    context_menu_click_callback = callback;
+}
+
 
 int32_t eventloop() {
     [NSApp run];
@@ -182,4 +199,32 @@ int32_t set_clipboard(char * text) {
 
     NSString *nsText = [NSString stringWithUTF8String:text];
     [pasteboard setString:nsText forType:NSPasteboardTypeString];
+}
+
+// CONTEXT MENU
+
+int32_t show_context_menu(MenuItem * items, int32_t count) {
+    MenuItem * item_copy = (MenuItem*)malloc(sizeof(MenuItem)*count);
+    memcpy(item_copy, items, sizeof(MenuItem)*count);
+    int32_t count_copy = count;
+
+    dispatch_async(dispatch_get_main_queue(), ^(void) {
+
+        NSMenu *espansoMenu = [[NSMenu alloc] initWithTitle:@"Espanso"];
+
+        for (int i = 0; i<count_copy; i++) {
+            if (item_copy[i].type == 1) {
+                NSString *title = [NSString stringWithUTF8String:item_copy[i].name];
+                NSMenuItem *newMenu = [[NSMenuItem alloc] initWithTitle:title action:@selector(contextMenuClick:) keyEquivalent:@""];
+                [newMenu setTag:(NSInteger)item_copy[i].id];
+                [espansoMenu addItem: newMenu];
+            }else{
+                [espansoMenu addItem: [NSMenuItem separatorItem]];
+            }
+        }
+
+        free(item_copy);
+
+        [delegate_ptr->myStatusItem popUpStatusItemMenu:espansoMenu];
+    });
 }

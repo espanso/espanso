@@ -6,11 +6,12 @@
 extern "C" {
 
 extern void * context_instance;
+extern char * icon_path;
 
 /*
 * Initialize the AppDelegate and check for accessibility permissions
 */
-int32_t initialize(void * context);
+int32_t initialize(void * context, const char * icon_path);
 
 /*
  * Start the event loop indefinitely. Blocking call.
@@ -49,6 +50,32 @@ void delete_string(int32_t count);
  * Trigger normal paste ( Pressing CMD+V )
  */
 void trigger_paste();
+
+// UI
+
+/*
+ * Called when the tray icon is clicked
+ */
+typedef void (*IconClickCallback)(void * self);
+extern IconClickCallback icon_click_callback;
+void register_icon_click_callback(IconClickCallback callback);
+
+// CONTEXT MENU
+
+typedef struct {
+    int32_t id;
+    int32_t type;
+    char name[100];
+} MenuItem;
+
+int32_t show_context_menu(MenuItem * items, int32_t count);
+
+/*
+ * Called when the context menu is clicked
+ */
+typedef void (*ContextMenuClickCallback)(void * self, int32_t id);
+extern ContextMenuClickCallback context_menu_click_callback;
+extern "C" void register_context_menu_click_callback(ContextMenuClickCallback callback);
 
 // SYSTEM
 
