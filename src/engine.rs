@@ -119,7 +119,7 @@ impl <'a, S: KeyboardSender, C: ClipboardManager,
                 self.ui_manager.show_menu(self.build_menu());
             },
             ActionEvent::ContextMenuClick(id) => {
-
+                println!("{:?}",id);
             }
         }
     }

@@ -1,10 +1,13 @@
 use std::fs::create_dir_all;
 use std::{fs, io};
 use std::io::{Cursor};
+use std::ffi::CString;
 use log::{info, debug};
 use std::path::PathBuf;
 use std::process::Command;
-use crate::ui::MenuItem;
+use crate::ui::{MenuItem, MenuItemType};
+use crate::bridge::macos::{MacMenuItem, show_context_menu};
+use std::os::raw::c_char;
 
 const NOTIFY_HELPER_BINARY : &'static [u8] = include_bytes!("../res/mac/EspansoNotifyHelper.zip");
 const DEFAULT_NOTIFICATION_DELAY : f64 = 1.5;
@@ -25,7 +28,30 @@ impl super::UIManager for MacUIManager {
     }
 
     fn show_menu(&self, menu: Vec<MenuItem>) {
-        unimplemented!()
+        let mut raw_menu = Vec::new();
+
+        for item in menu.iter() {
+            let text = CString::new(item.item_name.clone()).unwrap_or_default();
+            let mut str_buff : [c_char; 100] = [0; 100];
+            unsafe {
+                std::ptr::copy(text.as_ptr(), str_buff.as_mut_ptr(), item.item_name.len());
+            }
+
+            let menu_type = match item.item_type {
+                MenuItemType::Button => {1},
+                MenuItemType::Separator => {2},
+            };
+
+            let raw_item = MacMenuItem {
+                item_id: item.item_id,
+                item_type: menu_type,
+                item_name: str_buff,
+            };
+
+            raw_menu.push(raw_item);
+        }
+
+        unsafe { show_context_menu(raw_menu.as_ptr(), raw_menu.len() as i32); }
     }
 }
 

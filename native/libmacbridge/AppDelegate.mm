@@ -18,6 +18,19 @@ BOOL checkAccessibility()
         NSLog(@"Accessibility Disabled");
     }
 
+    // Setup status icon
+    myStatusItem = [[[NSStatusBar systemStatusBar] statusItemWithLength:NSSquareStatusItemLength] retain];
+
+    NSString *nsIconPath = [NSString stringWithUTF8String:icon_path];
+    NSImage *statusImage = [[NSImage alloc] initWithContentsOfFile:nsIconPath];
+    [statusImage setTemplate:YES];
+
+    [myStatusItem.button setImage:statusImage];
+    [myStatusItem setHighlightMode:YES];
+    [myStatusItem.button setAction:@selector(statusIconClick:)];
+    [myStatusItem.button setTarget:self];
+
+    // Setup key listener
     NSLog(@"registering keydown mask");
     [NSEvent addGlobalMonitorForEventsMatchingMask:(NSEventMaskKeyDown | NSEventMaskFlagsChanged)
             handler:^(NSEvent *event){
@@ -41,6 +54,21 @@ BOOL checkAccessibility()
             //NSLog(@"keydown: %d", event.keyCode);
         }
     }];
+}
+
+- (IBAction) statusIconClick: (id) sender {
+    NSLog(@"Hello friends!");
+
+    icon_click_callback(context_instance);
+
+}
+
+- (IBAction) contextMenuClick: (id) sender {
+    NSLog(@"Click me up!");
+
+    NSInteger item_id = [[sender valueForKey:@"tag"] integerValue];
+
+    context_menu_click_callback(context_instance, static_cast<int32_t>(item_id));
 }
 
 @end
