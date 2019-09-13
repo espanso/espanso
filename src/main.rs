@@ -15,6 +15,8 @@ use log::{info, error, LevelFilter};
 use simplelog::{CombinedLogger, TermLogger, TerminalMode, SharedLogger};
 use std::process::exit;
 use std::time::Duration;
+use std::fs::{File, OpenOptions};
+use fs2::FileExt;
 
 mod ui;
 mod event;
@@ -50,6 +52,8 @@ fn main() {
             .about("Tool to detect current window properties, to simplify filters creation."))
         .subcommand(SubCommand::with_name("daemon")
             .about("Start the daemon without spawning a new process."))
+        .subcommand(SubCommand::with_name("status")
+            .about("Check if the espanso daemon is running or not."))
         .get_matches();
 
 
@@ -102,9 +106,21 @@ fn main() {
         daemon_main(config_set);
         return;
     }
+
+    if let Some(matches) = matches.subcommand_matches("status") {
+        status_main();
+        return;
+    }
 }
 
 fn daemon_main(config_set: ConfigSet) {
+    // Try to acquire lock file
+    let lock_file = acquire_lock();
+    if lock_file.is_none() {
+        error!("espanso is already running.");
+        exit(3);
+    }
+
     info!("starting daemon...");
 
     let (send_channel, receive_channel) = mpsc::channel();
@@ -148,6 +164,17 @@ fn daemon_background(receive_channel: Receiver<Event>, config_set: ConfigSet) {
     event_manager.eventloop();
 }
 
+fn status_main() {
+    let lock_file = acquire_lock();
+    if let Some(lock_file) = lock_file {
+        println!("espanso is not running");
+
+        release_lock(lock_file);
+    }else{
+        println!("espanso is running");
+    }
+}
+
 /// Cli tool used to analyze active windows to extract useful information
 /// to create configuration filters.
 fn detect_main() {
@@ -180,4 +207,27 @@ fn detect_main() {
 
         thread::sleep(Duration::from_millis(500));
     }
+}
+
+fn acquire_lock() -> Option<File> {
+    let espanso_dir = context::get_data_dir();
+    let lock_file_path = espanso_dir.join("espanso.lock");
+    let file = OpenOptions::new()
+        .read(true)
+        .write(true)
+        .create(true)
+        .open(lock_file_path)
+        .expect("Cannot create reference to lock file.");
+
+    let res = file.try_lock_exclusive();
+
+    if let Ok(_) = res {
+        return Some(file)
+    }
+
+    None
+}
+
+fn release_lock(lock_file: File) {
+    lock_file.unlock().unwrap()
 }
