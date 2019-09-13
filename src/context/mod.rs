@@ -9,9 +9,18 @@ pub(crate) mod macos;
 
 use std::sync::mpsc::Sender;
 use crate::event::Event;
+use std::path::PathBuf;
+use std::fs::create_dir_all;
 
 pub trait Context {
     fn eventloop(&self);
+}
+
+pub fn get_data_dir() -> PathBuf {
+    let data_dir = dirs::data_dir().expect("Can't obtain data_dir(), terminating.");
+    let espanso_dir = data_dir.join("espanso");
+    create_dir_all(&espanso_dir).expect("Error creating espanso data directory");
+    espanso_dir
 }
 
 // MAC IMPLEMENTATION
