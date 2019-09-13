@@ -11,7 +11,7 @@ use clap::{App, Arg};
 use std::path::Path;
 use std::sync::mpsc::Receiver;
 use log::{info, error, LevelFilter};
-use simplelog::{CombinedLogger, TermLogger, TerminalMode};
+use simplelog::{CombinedLogger, TermLogger, TerminalMode, SharedLogger};
 use std::process::exit;
 
 mod ui;
@@ -54,12 +54,18 @@ fn main() {
         1 => LevelFilter::Info,
         2 | _ => LevelFilter::Debug,
     };
+    let mut log_outputs: Vec<Box<dyn SharedLogger>> = Vec::new();
+
+    // Initialize terminal output
+    let terminal_out = TermLogger::new(log_level, simplelog::Config::default(), TerminalMode::Mixed);
+    if let Some(terminal_out) = terminal_out {
+        log_outputs.push(terminal_out);
+    }
+
+    //TODO: WriteLogger::new(LevelFilter::Info, Config::default(), File::create("my_rust_binary.log").unwrap()),
     CombinedLogger::init(
-        vec![
-            TermLogger::new(log_level, simplelog::Config::default(), TerminalMode::Mixed).unwrap(),
-            //WriteLogger::new(LevelFilter::Info, Config::default(), File::create("my_rust_binary.log").unwrap()),
-        ]
-    ).unwrap();
+        log_outputs
+    ).expect("Error opening log destination");
 
     info!("espanso is starting...");
 
