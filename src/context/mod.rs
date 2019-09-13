@@ -17,8 +17,8 @@ pub trait Context {
 
 // MAC IMPLEMENTATION
 #[cfg(target_os = "macos")]
-pub fn new(send_channel: Sender<Event>) -> Box<dyn Context> {  // TODO
-    macos::MacUIManager::new()
+pub fn new(send_channel: Sender<Event>) -> Box<dyn Context> {
+    macos::MacContext::new(send_channel)
 }
 
 // LINUX IMPLEMENTATION

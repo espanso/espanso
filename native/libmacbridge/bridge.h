@@ -5,10 +5,12 @@
 
 extern "C" {
 
+extern void * context_instance;
+
 /*
 * Initialize the AppDelegate and check for accessibility permissions
 */
-int32_t initialize();
+int32_t initialize(void * context);
 
 /*
  * Start the event loop indefinitely. Blocking call.
@@ -22,12 +24,11 @@ int32_t eventloop();
 typedef void (*KeypressCallback)(void * self, const char *buffer, int32_t len, int32_t is_modifier, int32_t key_code);
 
 extern KeypressCallback keypress_callback;
-extern void * interceptor_instance;
 
 /*
  * Register the callback that will be called when a keypress was made
  */
-void register_keypress_callback(void *self, KeypressCallback callback);
+void register_keypress_callback(KeypressCallback callback);
 
 /*
  * Type the given string by using the CGEventKeyboardSetUnicodeString call

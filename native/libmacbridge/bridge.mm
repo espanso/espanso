@@ -9,16 +9,19 @@ extern "C" {
 
 #include <vector>
 
+KeypressCallback keypress_callback;
+void * context_instance;
 
-void register_keypress_callback(void * self, KeypressCallback callback) {
-    keypress_callback = callback;
-    interceptor_instance = self;
-}
+int32_t initialize(void * context) {
+    context_instance = context;
 
-int32_t initialize() {
     AppDelegate *delegate = [[AppDelegate alloc] init];
     NSApplication * application = [NSApplication sharedApplication];
     [application setDelegate:delegate];
+}
+
+void register_keypress_callback(KeypressCallback callback) {
+    keypress_callback = callback;
 }
 
 int32_t eventloop() {

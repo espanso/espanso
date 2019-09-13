@@ -1,18 +1,13 @@
-#[macro_use]
-extern crate num_derive;
-
-use std::sync::{mpsc, Arc};
-use crate::matcher::Matcher;
+use std::sync::{mpsc};
 use crate::matcher::scrolling::ScrollingMatcher;
 use crate::engine::Engine;
-use crate::clipboard::ClipboardManager;
 use crate::config::ConfigSet;
 use crate::config::runtime::RuntimeConfigManager;
 use crate::ui::UIManager;
 use crate::context::Context;
 use crate::event::*;
 use crate::event::manager::{EventManager, DefaultEventManager};
-use std::{thread, time};
+use std::{thread};
 use clap::{App, Arg};
 use std::path::Path;
 use std::sync::mpsc::Receiver;
@@ -114,7 +109,7 @@ fn espanso_background(receive_channel: Receiver<Event>, config_set: ConfigSet) {
 
     let sender = keyboard::get_sender();  // TODO: rename manager
 
-    // TODO: change sender to move to reference
+    // TODO: change sender from move to reference
     let engine = Engine::new(sender,
                              &clipboard_manager,
                              &config_manager,
@@ -126,7 +121,7 @@ fn espanso_background(receive_channel: Receiver<Event>, config_set: ConfigSet) {
     let event_manager = DefaultEventManager::new(
         receive_channel,
         vec!(&matcher),
-        vec!(&engine, &matcher),
+        vec!(&engine),
     );
 
     event_manager.eventloop();

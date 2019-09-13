@@ -10,9 +10,6 @@ BOOL checkAccessibility()
     return AXIsProcessTrustedWithOptions((__bridge CFDictionaryRef)opts);
 }
 
-KeypressCallback keypress_callback;
-void * interceptor_instance;
-
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
 {
     if (checkAccessibility()) {
@@ -30,7 +27,7 @@ void * interceptor_instance;
             const char * chars = [event.characters UTF8String];
             int len = event.characters.length;
 
-            keypress_callback(interceptor_instance, chars, len, 0, event.keyCode);
+            keypress_callback(context_instance, chars, len, 0, event.keyCode);
             //NSLog(@"keydown: %@, %d", event.characters, event.keyCode);
         }else{
             // Because this event is triggered for both the press and release of a modifier, trigger the callback
@@ -38,7 +35,7 @@ void * interceptor_instance;
             if (([event modifierFlags] & (NSEventModifierFlagShift | NSEventModifierFlagCommand |
                 NSEventModifierFlagControl | NSEventModifierFlagOption)) == 0) {
 
-                keypress_callback(interceptor_instance, NULL, 0, 1, event.keyCode);
+                keypress_callback(context_instance, NULL, 0, 1, event.keyCode);
             }
 
             //NSLog(@"keydown: %d", event.keyCode);
