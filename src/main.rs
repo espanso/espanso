@@ -121,7 +121,7 @@ fn espanso_background(receive_channel: Receiver<Event>, config_set: ConfigSet) {
     let event_manager = DefaultEventManager::new(
         receive_channel,
         vec!(&matcher),
-        vec!(&engine),
+        vec!(&engine, &matcher),
     );
 
     event_manager.eventloop();

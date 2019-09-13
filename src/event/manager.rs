@@ -5,15 +5,15 @@ pub trait EventManager {
     fn eventloop(&self);
 }
 
-pub struct DefaultEventManager<'a, K: KeyEventReceiver, A: ActionEventReceiver> {
+pub struct DefaultEventManager<'a> {
     receive_channel: Receiver<Event>,
-    key_receivers: Vec<&'a K>,
-    action_receivers: Vec<&'a A>,
+    key_receivers: Vec<&'a dyn KeyEventReceiver>,
+    action_receivers: Vec<&'a dyn ActionEventReceiver>,
 }
 
-impl<'a, K: KeyEventReceiver, A: ActionEventReceiver> DefaultEventManager<'a, K, A> {
-    pub fn new(receive_channel: Receiver<Event>, key_receivers: Vec<&'a K>,
-               action_receivers: Vec<&'a A>) -> DefaultEventManager<'a, K, A> {
+impl<'a> DefaultEventManager<'a> {
+    pub fn new(receive_channel: Receiver<Event>, key_receivers: Vec<&'a dyn KeyEventReceiver>,
+               action_receivers: Vec<&'a dyn ActionEventReceiver>) -> DefaultEventManager<'a> {
         DefaultEventManager {
             receive_channel,
             key_receivers,
@@ -22,7 +22,7 @@ impl<'a, K: KeyEventReceiver, A: ActionEventReceiver> DefaultEventManager<'a, K,
     }
 }
 
-impl <'a, K: KeyEventReceiver, A: ActionEventReceiver> EventManager for DefaultEventManager<'a, K, A> {
+impl <'a> EventManager for DefaultEventManager<'a> {
     fn eventloop(&self) {
         loop {
             match self.receive_channel.recv() {
