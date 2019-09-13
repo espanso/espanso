@@ -42,15 +42,10 @@
 }
 
 - (IBAction) statusIconClick: (id) sender {
-    NSLog(@"Hello friends!");
-
     icon_click_callback(context_instance);
-
 }
 
 - (IBAction) contextMenuClick: (id) sender {
-    NSLog(@"Click me up!");
-
     NSInteger item_id = [[sender valueForKey:@"tag"] integerValue];
 
     context_menu_click_callback(context_instance, static_cast<int32_t>(item_id));
