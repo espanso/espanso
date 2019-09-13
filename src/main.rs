@@ -3,16 +3,18 @@ use crate::matcher::scrolling::ScrollingMatcher;
 use crate::engine::Engine;
 use crate::config::ConfigSet;
 use crate::config::runtime::RuntimeConfigManager;
+use crate::system::SystemManager;
 use crate::ui::UIManager;
 use crate::event::*;
 use crate::event::manager::{EventManager, DefaultEventManager};
 use std::{thread};
-use clap::{App, Arg};
+use clap::{App, Arg, SubCommand};
 use std::path::Path;
 use std::sync::mpsc::Receiver;
 use log::{info, error, LevelFilter};
 use simplelog::{CombinedLogger, TermLogger, TerminalMode, SharedLogger};
 use std::process::exit;
+use std::time::Duration;
 
 mod ui;
 mod event;
@@ -45,6 +47,8 @@ fn main() {
             .short("v")
             .multiple(true)
             .help("Sets the level of verbosity"))
+        .subcommand(SubCommand::with_name("detect")
+            .about("Tool to detect current window properties, to simplify filters creation"))
         .get_matches();
 
 
@@ -88,22 +92,27 @@ fn main() {
         return;
     }
 
-    espanso_main(config_set);
+    if let Some(matches) = matches.subcommand_matches("detect") {
+        detect_main();
+        return;
+    }
+
+    daemon_main(config_set);
 }
 
-fn espanso_main(config_set: ConfigSet) {
+fn daemon_main(config_set: ConfigSet) {
     let (send_channel, receive_channel) = mpsc::channel();
 
     let context = context::new(send_channel);
 
     thread::spawn(move || {
-        espanso_background(receive_channel, config_set);
+        daemon_background(receive_channel, config_set);
     });
 
     context.eventloop();
 }
 
-fn espanso_background(receive_channel: Receiver<Event>, config_set: ConfigSet) {
+fn daemon_background(receive_channel: Receiver<Event>, config_set: ConfigSet) {
     let system_manager = system::get_manager();
     let config_manager = RuntimeConfigManager::new(config_set, system_manager);
 
@@ -129,4 +138,38 @@ fn espanso_background(receive_channel: Receiver<Event>, config_set: ConfigSet) {
     );
 
     event_manager.eventloop();
+}
+
+/// Cli tool used to analyze active windows to extract useful information
+/// to create configuration filters.
+fn detect_main() {
+    let system_manager = system::get_manager();
+
+    println!("Listening for changes, now focus the window you want to analyze.");
+    println!("You can terminate with CTRL+C\n");
+
+    let mut last_title : String = "".to_owned();
+    let mut last_class : String = "".to_owned();
+    let mut last_exec : String = "".to_owned();
+
+    loop {
+        let curr_title = system_manager.get_current_window_title().unwrap_or_default();
+        let curr_class = system_manager.get_current_window_class().unwrap_or_default();
+        let curr_exec = system_manager.get_current_window_executable().unwrap_or_default();
+
+        // Check if a change occurred
+        if curr_title != last_title || curr_class != last_class || curr_exec != last_exec {
+            println!("Detected change, current window has properties:");
+            println!("==> Title: '{}'", curr_title);
+            println!("==> Class: '{}'", curr_class);
+            println!("==> Executable: '{}'", curr_exec);
+            println!("");
+        }
+
+        last_title = curr_title;
+        last_class = curr_class;
+        last_exec = curr_exec;
+
+        thread::sleep(Duration::from_millis(500));
+    }
 }
