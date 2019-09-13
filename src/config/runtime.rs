@@ -253,21 +253,28 @@ mod tests {
 
         let config_manager = RuntimeConfigManager::new(config_set.unwrap(), dummy_system_manager);
 
+        let sp1index = config_manager.set.specific
+            .iter().position(|x| x.name == "myname1").unwrap();
+        let sp2index = config_manager.set.specific
+            .iter().position(|x| x.name == "myname2").unwrap();
+        let sp3index = config_manager.set.specific
+            .iter().position(|x| x.name == "myname3").unwrap();
+
         assert_eq!(config_manager.exec_regexps.len(), 3);
         assert_eq!(config_manager.title_regexps.len(), 3);
         assert_eq!(config_manager.class_regexps.len(), 3);
 
-        assert!(config_manager.class_regexps[0].is_none());
-        assert!(config_manager.class_regexps[1].is_some());
-        assert!(config_manager.class_regexps[2].is_none());
+        assert!(config_manager.class_regexps[sp1index].is_none());
+        assert!(config_manager.class_regexps[sp2index].is_some());
+        assert!(config_manager.class_regexps[sp3index].is_none());
 
-        assert!(config_manager.title_regexps[0].is_none());
-        assert!(config_manager.title_regexps[1].is_some());
-        assert!(config_manager.title_regexps[2].is_some());
+        assert!(config_manager.title_regexps[sp1index].is_none());
+        assert!(config_manager.title_regexps[sp2index].is_some());
+        assert!(config_manager.title_regexps[sp3index].is_some());
 
-        assert!(config_manager.exec_regexps[0].is_some());
-        assert!(config_manager.exec_regexps[1].is_none());
-        assert!(config_manager.exec_regexps[2].is_none());
+        assert!(config_manager.exec_regexps[sp1index].is_some());
+        assert!(config_manager.exec_regexps[sp2index].is_none());
+        assert!(config_manager.exec_regexps[sp3index].is_none());
     }
 
     #[test]
@@ -297,21 +304,28 @@ mod tests {
 
         let config_manager = RuntimeConfigManager::new(config_set.unwrap(), dummy_system_manager);
 
+        let sp1index = config_manager.set.specific
+            .iter().position(|x| x.name == "myname1").unwrap();
+        let sp2index = config_manager.set.specific
+            .iter().position(|x| x.name == "myname2").unwrap();
+        let sp3index = config_manager.set.specific
+            .iter().position(|x| x.name == "myname3").unwrap();
+
         assert_eq!(config_manager.exec_regexps.len(), 3);
         assert_eq!(config_manager.title_regexps.len(), 3);
         assert_eq!(config_manager.class_regexps.len(), 3);
 
-        assert!(config_manager.class_regexps[0].is_none());
-        assert!(config_manager.class_regexps[1].is_some());
-        assert!(config_manager.class_regexps[2].is_none());
+        assert!(config_manager.class_regexps[sp1index].is_none());
+        assert!(config_manager.class_regexps[sp2index].is_some());
+        assert!(config_manager.class_regexps[sp3index].is_none());
 
-        assert!(config_manager.title_regexps[0].is_none());
-        assert!(config_manager.title_regexps[1].is_none());
-        assert!(config_manager.title_regexps[2].is_some());
+        assert!(config_manager.title_regexps[sp1index].is_none());
+        assert!(config_manager.title_regexps[sp2index].is_none());
+        assert!(config_manager.title_regexps[sp3index].is_some());
 
-        assert!(config_manager.exec_regexps[0].is_none());
-        assert!(config_manager.exec_regexps[1].is_none());
-        assert!(config_manager.exec_regexps[2].is_none());
+        assert!(config_manager.exec_regexps[sp1index].is_none());
+        assert!(config_manager.exec_regexps[sp2index].is_none());
+        assert!(config_manager.exec_regexps[sp3index].is_none());
     }
 
     #[test]
