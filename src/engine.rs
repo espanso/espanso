@@ -5,7 +5,7 @@ use crate::config::BackendType;
 use crate::clipboard::ClipboardManager;
 use log::{info};
 use crate::ui::{UIManager, MenuItem, MenuItemType};
-use crate::event::{ActionEventReceiver, Event, ActionEvent, ActionType};
+use crate::event::{ActionEventReceiver, ActionEvent, ActionType};
 use std::cell::RefCell;
 
 pub struct Engine<'a, S: KeyboardSender, C: ClipboardManager, M: ConfigManager<'a>,

@@ -1,10 +1,10 @@
 use std::fs::create_dir_all;
 use std::{fs, io};
-use std::io::{BufReader, Cursor};
-use zip::ZipArchive;
-use log::{info, debug, error};
+use std::io::{Cursor};
+use log::{info, debug};
 use std::path::PathBuf;
 use std::process::Command;
+use crate::ui::MenuItem;
 
 const NOTIFY_HELPER_BINARY : &'static [u8] = include_bytes!("../res/mac/EspansoNotifyHelper.zip");
 const DEFAULT_NOTIFICATION_DELAY : f64 = 1.5;
@@ -22,6 +22,10 @@ impl super::UIManager for MacUIManager {
         let res = Command::new(executable_path)
             .args(&["espanso", message, &DEFAULT_NOTIFICATION_DELAY.to_string()])
             .spawn();
+    }
+
+    fn show_menu(&self, menu: Vec<MenuItem>) {
+        unimplemented!()
     }
 }
 

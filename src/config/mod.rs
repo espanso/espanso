@@ -1,15 +1,13 @@
 extern crate dirs;
 
 use std::path::{Path, PathBuf};
-use std::{fs, io};
+use std::{fs};
 use crate::matcher::Match;
 use std::fs::{File, create_dir_all};
 use std::io::Read;
 use serde::{Serialize, Deserialize};
 use crate::event::KeyModifier;
-use crate::system::SystemManager;
 use std::collections::HashSet;
-use std::process::exit;
 use log::{debug, info, warn, error};
 use std::fmt;
 use std::error::Error;

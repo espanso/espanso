@@ -53,13 +53,13 @@ impl WindowsContext {
         let id = Arc::new(Mutex::new(0));
         let send_channel = send_channel;
 
-        let manager = Box::new(WindowsContext{
+        let context = Box::new(WindowsContext{
             send_channel,
             id
         });
 
         unsafe {
-            let manager_ptr = &*manager as *const WindowsContext as *const c_void;
+            let context_ptr = &*context as *const WindowsContext as *const c_void;
 
             // Register callbacks
             register_keypress_callback(keypress_callback);
@@ -70,13 +70,13 @@ impl WindowsContext {
             let bmp_file_c = U16CString::from_str(bmp_icon).unwrap();
 
             // Initialize the windows
-            let res = initialize(manager_ptr, ico_file_c.as_ptr(), bmp_file_c.as_ptr());
+            let res = initialize(context_ptr, ico_file_c.as_ptr(), bmp_file_c.as_ptr());
             if res != 1 {
                 panic!("Can't initialize Windows context")
             }
         }
 
-        manager
+        context
     }
 }
 
