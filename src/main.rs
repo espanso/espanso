@@ -40,15 +40,16 @@ fn main() {
             .value_name("FILE")
             .help("Sets a custom config directory. If not specified, reads the default $HOME/.espanso/default.yaml file, creating it if not present.")
             .takes_value(true))
-        .arg(Arg::with_name("dump")
-            .long("dump")
-            .help("Prints all current configuration options."))
         .arg(Arg::with_name("v")
             .short("v")
             .multiple(true)
             .help("Sets the level of verbosity"))
+        .subcommand(SubCommand::with_name("dump")
+            .about("Prints all current configuration options."))
         .subcommand(SubCommand::with_name("detect")
-            .about("Tool to detect current window properties, to simplify filters creation"))
+            .about("Tool to detect current window properties, to simplify filters creation."))
+        .subcommand(SubCommand::with_name("daemon")
+            .about("Start the daemon without spawning a new process."))
         .get_matches();
 
 
@@ -87,7 +88,7 @@ fn main() {
         exit(1);
     });
 
-    if matches.is_present("dump") {
+    if let Some(matches) = matches.subcommand_matches("dump") {
         println!("{:#?}", config_set);
         return;
     }
@@ -97,10 +98,15 @@ fn main() {
         return;
     }
 
-    daemon_main(config_set);
+    if let Some(matches) = matches.subcommand_matches("daemon") {
+        daemon_main(config_set);
+        return;
+    }
 }
 
 fn daemon_main(config_set: ConfigSet) {
+    info!("starting daemon...");
+
     let (send_channel, receive_channel) = mpsc::channel();
 
     let context = context::new(send_channel);
@@ -136,6 +142,8 @@ fn daemon_background(receive_channel: Receiver<Event>, config_set: ConfigSet) {
         vec!(&matcher),
         vec!(&engine, &matcher),
     );
+
+    info!("espanso is running!");
 
     event_manager.eventloop();
 }
