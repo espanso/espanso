@@ -1,12 +1,10 @@
-use std::sync::mpsc;
-use std::os::raw::{c_char, c_void};
 use std::ffi::CString;
 use crate::bridge::macos::*;
 
-pub struct MacKeyboardSender {
+pub struct MacKeyboardManager {
 }
 
-impl super::KeyboardSender for MacKeyboardSender {
+impl super::KeyboardManager for MacKeyboardManager {
     fn send_string(&self, s: &str) {
         let res = CString::new(s);
         match res {

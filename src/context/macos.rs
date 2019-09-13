@@ -6,7 +6,8 @@ use crate::event::KeyModifier::*;
 use std::fs::create_dir_all;
 use std::ffi::CString;
 use std::fs;
-use log::{info};
+use log::{info, error};
+use std::path::PathBuf;
 
 const STATUS_ICON_BINARY : &'static [u8] = include_bytes!("../res/mac/icon.png");
 
@@ -21,15 +22,15 @@ impl MacContext {
         });
 
         // Initialize the status icon path
-        let data_dir = dirs::data_dir().expect("Can't obtain data_dir(), terminating.");
-        let espanso_dir = data_dir.join("espanso");
-        let res = create_dir_all(&espanso_dir);
+        let espanso_dir = MacContext::get_data_dir();
         let status_icon_target = espanso_dir.join("icon.png");
 
         if status_icon_target.exists() {
             info!("Status icon already initialized, skipping.");
         }else {
-            fs::write(&status_icon_target, STATUS_ICON_BINARY);
+            fs::write(&status_icon_target, STATUS_ICON_BINARY).unwrap_or_else(|e| {
+               error!("Error copying the Status Icon to the espanso data directory: {}", e);
+            });
         }
 
         unsafe {
@@ -44,6 +45,13 @@ impl MacContext {
         }
 
         context
+    }
+
+    pub fn get_data_dir() -> PathBuf {
+        let data_dir = dirs::data_dir().expect("Can't obtain data_dir(), terminating.");
+        let espanso_dir = data_dir.join("espanso");
+        create_dir_all(&espanso_dir).expect("Error creating espanso data directory");
+        espanso_dir
     }
 }
 

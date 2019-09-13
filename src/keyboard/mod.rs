@@ -7,7 +7,7 @@ mod linux;
 #[cfg(target_os = "macos")]
 mod macos;
 
-pub trait KeyboardSender {  // TODO: rename KeyboardManager
+pub trait KeyboardManager {
     fn send_string(&self, s: &str);
     fn send_enter(&self);
     fn trigger_paste(&self);
@@ -16,18 +16,18 @@ pub trait KeyboardSender {  // TODO: rename KeyboardManager
 
 // WINDOWS IMPLEMENTATION
 #[cfg(target_os = "windows")]
-pub fn get_sender() -> impl KeyboardSender {
-    windows::WindowsKeyboardSender{}
+pub fn get_manager() -> impl KeyboardManager {
+    windows::WindowsKeyboardManager{}
 }
 
 // LINUX IMPLEMENTATION
 #[cfg(target_os = "linux")]
-pub fn get_sender() -> impl KeyboardSender {
-    linux::LinuxKeyboardSender{}
+pub fn get_manager() -> impl KeyboardManager {
+    linux::LinuxKeyboardManager{}
 }
 
 // MAC IMPLEMENTATION
 #[cfg(target_os = "macos")]
-pub fn get_sender() -> impl KeyboardSender {
-    macos::MacKeyboardSender{}
+pub fn get_manager() -> impl KeyboardManager {
+    macos::MacKeyboardManager{}
 }

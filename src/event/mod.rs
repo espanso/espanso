@@ -59,5 +59,5 @@ pub trait KeyEventReceiver {
 }
 
 pub trait ActionEventReceiver {
-    fn on_action_event(&self, e: ActionEvent); // TODO: Action event
+    fn on_action_event(&self, e: ActionEvent);
 }

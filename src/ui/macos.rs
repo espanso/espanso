@@ -1,11 +1,11 @@
-use std::fs::create_dir_all;
 use std::{fs, io};
 use std::io::{Cursor};
 use std::ffi::CString;
-use log::{info, debug};
+use log::{info, warn, debug};
 use std::path::PathBuf;
 use std::process::Command;
 use crate::ui::{MenuItem, MenuItemType};
+use crate::context::macos::MacContext;
 use crate::bridge::macos::{MacMenuItem, show_context_menu};
 use std::os::raw::c_char;
 
@@ -25,6 +25,10 @@ impl super::UIManager for MacUIManager {
         let res = Command::new(executable_path)
             .args(&["espanso", message, &DEFAULT_NOTIFICATION_DELAY.to_string()])
             .spawn();
+
+        if let Err(e) = res {
+            warn!("Error while dispatching Notify Helper {}", e)
+        }
     }
 
     fn show_menu(&self, menu: Vec<MenuItem>) {
@@ -65,11 +69,7 @@ impl MacUIManager {
     }
 
     fn initialize_notify_helper() -> PathBuf {
-        let data_dir = dirs::data_dir().expect("Can't obtain data_dir(), terminating.");
-
-        let espanso_dir = data_dir.join("espanso");
-
-        let res = create_dir_all(&espanso_dir);
+        let espanso_dir = MacContext::get_data_dir();
 
         info!("Initializing EspansoNotifyHelper in {}", espanso_dir.as_path().display());
 
@@ -78,42 +78,40 @@ impl MacUIManager {
         if espanso_target.exists() {
             info!("EspansoNotifyHelper already initialized, skipping.");
         }else{
-            if let Ok(_) = res {
-                // Extract zip file
-                let reader = Cursor::new(NOTIFY_HELPER_BINARY);
+            // Extract zip file
+            let reader = Cursor::new(NOTIFY_HELPER_BINARY);
 
-                let mut archive = zip::ZipArchive::new(reader).unwrap();
+            let mut archive = zip::ZipArchive::new(reader).unwrap();
 
-                for i in 0..archive.len() {
-                    let mut file = archive.by_index(i).unwrap();
-                    let outpath = espanso_dir.join(file.sanitized_name());
+            for i in 0..archive.len() {
+                let mut file = archive.by_index(i).unwrap();
+                let outpath = espanso_dir.join(file.sanitized_name());
 
-                    {
-                        let comment = file.comment();
-                        if !comment.is_empty() {
-                            debug!("File {} comment: {}", i, comment);
+                {
+                    let comment = file.comment();
+                    if !comment.is_empty() {
+                        debug!("File {} comment: {}", i, comment);
+                    }
+                }
+
+                if (&*file.name()).ends_with('/') {
+                    debug!("File {} extracted to \"{}\"", i, outpath.as_path().display());
+                    fs::create_dir_all(&outpath).unwrap();
+                } else {
+                    debug!("File {} extracted to \"{}\" ({} bytes)", i, outpath.as_path().display(), file.size());
+                    if let Some(p) = outpath.parent() {
+                        if !p.exists() {
+                            fs::create_dir_all(&p).unwrap();
                         }
                     }
+                    let mut outfile = fs::File::create(&outpath).unwrap();
+                    io::copy(&mut file, &mut outfile).unwrap();
+                }
 
-                    if (&*file.name()).ends_with('/') {
-                        debug!("File {} extracted to \"{}\"", i, outpath.as_path().display());
-                        fs::create_dir_all(&outpath).unwrap();
-                    } else {
-                        debug!("File {} extracted to \"{}\" ({} bytes)", i, outpath.as_path().display(), file.size());
-                        if let Some(p) = outpath.parent() {
-                            if !p.exists() {
-                                fs::create_dir_all(&p).unwrap();
-                            }
-                        }
-                        let mut outfile = fs::File::create(&outpath).unwrap();
-                        io::copy(&mut file, &mut outfile).unwrap();
-                    }
+                use std::os::unix::fs::PermissionsExt;
 
-                    use std::os::unix::fs::PermissionsExt;
-
-                    if let Some(mode) = file.unix_mode() {
-                        fs::set_permissions(&outpath, fs::Permissions::from_mode(mode)).unwrap();
-                    }
+                if let Some(mode) = file.unix_mode() {
+                    fs::set_permissions(&outpath, fs::Permissions::from_mode(mode)).unwrap();
                 }
             }
         }

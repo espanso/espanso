@@ -3,10 +3,10 @@ use std::os::raw::{c_void};
 use widestring::{U16CString};
 use crate::bridge::windows::*;
 
-pub struct WindowsKeyboardSender {
+pub struct WindowsKeyboardManager {
 }
 
-impl super::KeyboardSender for WindowsKeyboardSender {
+impl super::KeyboardManager for WindowsKeyboardManager {
     fn send_string(&self, s: &str) {
         let res = U16CString::from_str(s);
         match res {

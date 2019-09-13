@@ -8,7 +8,7 @@ use std::io::Read;
 use serde::{Serialize, Deserialize};
 use crate::event::KeyModifier;
 use std::collections::HashSet;
-use log::{debug, info, warn, error};
+use log::{error};
 use std::fmt;
 use std::error::Error;
 
