@@ -14,6 +14,7 @@ extern {
     pub fn eventloop();
 
     // System
+    pub fn check_accessibility() -> i32;
     pub fn get_active_app_bundle(buffer: *mut c_char, size: i32) -> i32;
     pub fn get_active_app_identifier(buffer: *mut c_char, size: i32) -> i32;
 

@@ -8,6 +8,7 @@ use std::ffi::CString;
 use std::fs;
 use log::{info, error};
 use std::path::PathBuf;
+use std::process::exit;
 
 const STATUS_ICON_BINARY : &'static [u8] = include_bytes!("../res/mac/icon.png");
 
@@ -17,6 +18,18 @@ pub struct MacContext {
 
 impl MacContext {
     pub fn new(send_channel: Sender<Event>) -> Box<MacContext> {
+        // Check accessibility
+        unsafe {
+            let res = check_accessibility();
+
+            if res == 0 {
+                error!("Accessibility must be enabled to make espanso work on MacOS.");
+                error!("Please allow espanso in the Security & Privacy panel, then restart espanso.");
+                error!("For more information: "); // TODO: add documentation link
+                exit(1);
+            }
+        }
+
         let context = Box::new(MacContext {
            send_channel
         });
