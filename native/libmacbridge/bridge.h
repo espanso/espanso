@@ -80,6 +80,12 @@ extern "C" void register_context_menu_click_callback(ContextMenuClickCallback ca
 // SYSTEM
 
 /*
+ * Check if espanso is authorized to control accessibility features, needed to detect key presses.
+ * @return
+ */
+int32_t check_accessibility();
+
+/*
  * Return the active NSRunningApplication path
  */
 int32_t get_active_app_bundle(char * buffer, int32_t size);

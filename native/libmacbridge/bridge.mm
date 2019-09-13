@@ -228,3 +228,10 @@ int32_t show_context_menu(MenuItem * items, int32_t count) {
         [delegate_ptr->myStatusItem popUpStatusItemMenu:espansoMenu];
     });
 }
+
+// 10.9+ only, see this url for compatibility:
+// http://stackoverflow.com/questions/17693408/enable-access-for-assistive-devices-programmatically-on-10-9
+int32_t check_accessibility() {
+    NSDictionary* opts = @{(__bridge id)kAXTrustedCheckOptionPrompt: @YES};
+    return AXIsProcessTrustedWithOptions((__bridge CFDictionaryRef)opts);
+}
