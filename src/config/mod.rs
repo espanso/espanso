@@ -283,6 +283,7 @@ mod tests {
     use super::*;
     use std::io::Write;
     use tempfile::{NamedTempFile, TempDir};
+    use std::any::Any;
 
     const TEST_WORKING_CONFIG_FILE : &str = include_str!("../res/test/working_config.yaml");
     const TEST_CONFIG_FILE_WITH_BAD_YAML : &str = include_str!("../res/test/config_with_bad_yaml.yaml");
@@ -293,6 +294,10 @@ mod tests {
         let file = NamedTempFile::new().unwrap();
         file.as_file().write_all(string.as_bytes());
         file
+    }
+
+    fn variant_eq<T>(a: &T, b: &T) -> bool {
+        std::mem::discriminant(a) == std::mem::discriminant(b)
     }
 
     #[test]
@@ -511,6 +516,6 @@ mod tests {
 
         let config_set = ConfigSet::load(tmp_dir.path());
         assert!(config_set.is_err());
-        assert_eq!(config_set.unwrap_err(), ConfigLoadError::NameDuplicate(specific_path2))
+        assert!(variant_eq(&config_set.unwrap_err(), &ConfigLoadError::NameDuplicate(PathBuf::new())))
     }
 }
