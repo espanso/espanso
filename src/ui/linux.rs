@@ -1,14 +1,9 @@
 use std::process::Command;
+use super::MenuItem;
 
-pub struct LinuxUIManager {
-
-}
+pub struct LinuxUIManager {}
 
 impl super::UIManager for LinuxUIManager {
-    fn initialize(&self) {
-        // TODO: check if notify-send is present and log an error otherwise.
-    }
-
     fn notify(&self, message: &str) {
         let res = Command::new("notify-send")
                         .args(&["-t", "2000", "espanso", message])
@@ -18,8 +13,16 @@ impl super::UIManager for LinuxUIManager {
             // TODO: print error log
         }
     }
+
+    fn show_menu(&self, menu: Vec<MenuItem>) {
+        unimplemented!()
+    }
 }
 
 impl LinuxUIManager {
+    pub fn new() -> LinuxUIManager {
+        // TODO: check if notify-send is present and log an error otherwise.
 
+        LinuxUIManager{}
+    }
 }

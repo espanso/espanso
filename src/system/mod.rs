@@ -13,14 +13,10 @@ pub trait SystemManager {
     fn get_current_window_executable(&self) -> Option<String>;
 }
 
-// TODO: change windows and linux implementations to avoid initialize() call and use constructor instead
-
 // LINUX IMPLEMENTATION
 #[cfg(target_os = "linux")]
 pub fn get_manager() -> impl SystemManager {
-    let manager = linux::LinuxSystemManager{};
-    manager.initialize();
-    manager
+    linux::LinuxSystemManager::new()
 }
 
 // WINDOWS IMPLEMENTATION

@@ -1,15 +1,9 @@
 use std::process::{Command, Stdio};
 use std::io::{Write};
 
-pub struct LinuxClipboardManager {
-
-}
+pub struct LinuxClipboardManager {}
 
 impl super::ClipboardManager for LinuxClipboardManager {
-    fn initialize(&self) {
-        // TODO: check if xclip is present and log an error otherwise.
-    }
-
     fn get_clipboard(&self) -> Option<String>  {
         let res = Command::new("xclip")
             .args(&["-o", "-sel", "clip"])
@@ -46,5 +40,9 @@ impl super::ClipboardManager for LinuxClipboardManager {
 }
 
 impl LinuxClipboardManager {
+    pub fn new() -> LinuxClipboardManager {
+        // TODO: check if xclip is present and log an error otherwise.
 
+        LinuxClipboardManager{}
+    }
 }

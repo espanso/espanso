@@ -32,9 +32,7 @@ pub fn get_uimanager() -> impl UIManager {
 // LINUX IMPLEMENTATION
 #[cfg(target_os = "linux")]
 pub fn get_uimanager() -> impl UIManager {
-    let manager = linux::LinuxUIManager{};
-    manager.initialize();
-    manager
+    linux::LinuxUIManager::new()
 }
 
 // WINDOWS IMPLEMENTATION
