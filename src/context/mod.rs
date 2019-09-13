@@ -22,10 +22,8 @@ pub fn new(send_channel: Sender<Event>) -> Box<dyn Context> {
 
 // LINUX IMPLEMENTATION
 #[cfg(target_os = "linux")]
-pub fn new(send_channel: Sender<Event>) -> Box<dyn Context> { // TODO
-    let manager = linux::LinuxUIManager{};
-    manager.initialize();
-    manager
+pub fn new(send_channel: Sender<Event>) -> Box<dyn Context> {
+    linux::LinuxContext::new(send_channel)
 }
 
 // WINDOWS IMPLEMENTATION

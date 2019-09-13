@@ -12,14 +12,10 @@ pub trait ClipboardManager {
     fn set_clipboard(&self, payload: &str);
 }
 
-// TODO: change windows and linux implementations to avoid initialize() call and use constructor instead
-
 // LINUX IMPLEMENTATION
 #[cfg(target_os = "linux")]
 pub fn get_manager() -> impl ClipboardManager {
-    let manager = linux::LinuxClipboardManager{};
-    manager.initialize();
-    manager
+    linux::LinuxClipboardManager::new()
 }
 
 // WINDOWS IMPLEMENTATION

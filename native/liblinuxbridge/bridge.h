@@ -3,10 +3,12 @@
 
 #include <stdint.h>
 
+extern void * context_instance;
+
 /*
  * Initialize the X11 context and parameters
  */
-extern "C" int32_t initialize();
+extern "C" int32_t initialize(void * context_instance);
 
 /*
  * Start the event loop indefinitely. Blocking call.
@@ -25,12 +27,11 @@ extern "C" void cleanup();
 typedef void (*KeypressCallback)(void * self, const char *buffer, int32_t len, int32_t is_modifier, int32_t key_code);
 
 extern KeypressCallback keypress_callback;
-extern void * interceptor_instance;
 
 /*
  * Register the callback that will be called when a keypress was made
  */
-extern "C" void register_keypress_callback(void *self, KeypressCallback callback);
+extern "C" void register_keypress_callback(KeypressCallback callback);
 
 /*
  * Type the given string by simulating Key Presses
@@ -64,5 +65,10 @@ extern "C" int32_t get_active_window_name(char * buffer, int32_t size);
  * Return the active windows's WM_CLASS
  */
 extern "C" int32_t get_active_window_class(char * buffer, int32_t size);
+
+/*
+ * Return the active windows's executable path
+ */
+extern "C" int32_t get_active_window_executable(char * buffer, int32_t size);
 
 #endif //ESPANSO_BRIDGE_H

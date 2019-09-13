@@ -59,16 +59,17 @@ xdo_t * xdo_context;
 void event_callback (XPointer, XRecordInterceptData*);
 
 KeypressCallback keypress_callback;
-void * interceptor_instance;
+void * context_instance;
 
-void register_keypress_callback(void * self, KeypressCallback callback) {
+void register_keypress_callback(KeypressCallback callback) {
     keypress_callback = callback;
-    interceptor_instance = self;
 }
 
 
-int32_t initialize() {
+int32_t initialize(void * _context_instance) {
     setlocale(LC_ALL, "");
+
+    context_instance = _context_instance;
 
     /*
     Open the connections to the X server.
@@ -185,9 +186,9 @@ void event_callback(XPointer p, XRecordInterceptData *hook)
         case KeyRelease:
             //printf ("%d %d %s\n", key_code, res, buffer.data());
             if (res > 0 && key_code != 22) {  // Printable character, but not backspace
-                keypress_callback(interceptor_instance, buffer.data(), buffer.size(), 0, key_code);
+                keypress_callback(context_instance, buffer.data(), buffer.size(), 0, key_code);
             }else{ // Modifier key
-                keypress_callback(interceptor_instance, NULL, 0, 1, key_code);
+                keypress_callback(context_instance, NULL, 0, 1, key_code);
             }
             break;
         default:
@@ -311,6 +312,38 @@ int32_t get_active_window_class(char * buffer, int32_t size) {
         XFree(hint.res_class);
     }
 
+    XCloseDisplay(disp);
+
+    return 1;
+}
+
+int32_t get_active_window_executable(char *buffer, int32_t size) {
+    Display *disp = XOpenDisplay(NULL);
+
+    if (!disp) {
+        return -1;
+    }
+
+    // Get the active window
+    Window win;
+    int revert_to_return;
+    XGetInputFocus(disp, &win, &revert_to_return);
+
+    // Get the window process PID
+    char *pid_raw = (char*)get_property(disp,win, XA_CARDINAL, "_NET_WM_PID", NULL);
+    if (pid_raw == NULL) {
+        return -2;
+    }
+
+    int pid = pid_raw[0] | pid_raw[1] << 8 | pid_raw[2] << 16 | pid_raw[3] << 24;
+
+    // Get the executable path from it
+    char proc_path[250];
+    snprintf(proc_path, 250, "/proc/%d/exe", pid);
+
+    readlink(proc_path, buffer, size);
+
+    XFree(pid_raw);
     XCloseDisplay(disp);
 
     return 1;
