@@ -348,3 +348,15 @@ int32_t get_active_window_executable(char *buffer, int32_t size) {
 
     return 1;
 }
+
+int32_t is_current_window_terminal() {
+    char class_buffer[250];
+    int res = get_active_window_class(class_buffer, 250);
+    if (res > 0) {
+        if (strstr(class_buffer, "terminal") != NULL) {
+            return 1;
+        }
+    }
+
+    return 0;
+}

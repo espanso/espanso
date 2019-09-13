@@ -11,6 +11,7 @@ extern {
     pub fn get_active_window_name(buffer: *mut c_char, size: i32) -> i32;
     pub fn get_active_window_class(buffer: *mut c_char, size: i32) -> i32;
     pub fn get_active_window_executable(buffer: *mut c_char, size: i32) -> i32;
+    pub fn is_current_window_terminal() -> i32;
 
     // Keyboard
     pub fn register_keypress_callback(cb: extern fn(_self: *mut c_void, *const u8,

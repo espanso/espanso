@@ -20,9 +20,17 @@ impl super::KeyboardManager for LinuxKeyboardManager {
     }
 
     fn trigger_paste(&self) {
-        unsafe { trigger_paste(); }
+        unsafe {
+            let is_terminal = is_current_window_terminal();
 
-        // TODO: detect when in terminal and use trigger_terminal_paste() instead
+            // Terminals use a different keyboard combination to paste from clipboard,
+            // so we need to check the correct situation.
+            if is_terminal == 0 {
+                trigger_paste();
+            }else{
+                trigger_terminal_paste();
+            }
+        }
     }
 
     fn delete_string(&self, count: i32) {
