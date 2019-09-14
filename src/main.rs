@@ -60,41 +60,30 @@ fn main() {
             .about("Check if the espanso daemon is running or not."))
         .get_matches();
 
+    let log_level = matches.occurrences_of("v") as i32;
 
-    // Setup logging
-    let log_level = match matches.occurrences_of("v") {
-        0 => LevelFilter::Warn,
-        1 => LevelFilter::Info,
-        2 | _ => LevelFilter::Debug,
-    };
-    let mut log_outputs: Vec<Box<dyn SharedLogger>> = Vec::new();
-
-    // Initialize terminal output
-    let terminal_out = TermLogger::new(log_level, simplelog::Config::default(), TerminalMode::Mixed);
-    if let Some(terminal_out) = terminal_out {
-        log_outputs.push(terminal_out);
-    }
-
-    //TODO: WriteLogger::new(LevelFilter::Info, Config::default(), File::create("my_rust_binary.log").unwrap()),
-    CombinedLogger::init(
-        log_outputs
-    ).expect("Error opening log destination");
-
-    info!("espanso is starting...");
-
-    let config_set = match matches.value_of("config") {
+    // Load the configuration
+    let mut config_set = match matches.value_of("config") {
         None => {
-            info!("loading configuration from default location...");
+            if log_level > 1 {
+                println!("loading configuration from default location...");
+            }
             ConfigSet::load_default()
         },
         Some(path) => {
-            info!("loading configuration from custom location: {}", path);
+            if log_level > 1 {
+                println!("loading configuration from custom location: {}", path);
+            }
             ConfigSet::load(Path::new(path))
         },
     }.unwrap_or_else(|e| {
-        error!("{}", e);
+        println!("{}", e);
         exit(1);
     });
+
+    config_set.default.log_level = log_level;
+
+    // Match the correct subcommand
 
     if let Some(matches) = matches.subcommand_matches("dump") {
         println!("{:#?}", config_set);
@@ -127,9 +116,30 @@ fn daemon_main(config_set: ConfigSet) {
     // Try to acquire lock file
     let lock_file = acquire_lock();
     if lock_file.is_none() {
-        error!("espanso is already running.");
+        println!("espanso is already running.");
         exit(3);
     }
+
+    // Initialize log
+    let log_level = match config_set.default.log_level {
+        0 => LevelFilter::Warn,
+        1 => LevelFilter::Info,
+        2 | _ => LevelFilter::Debug,
+    };
+
+    let mut log_outputs: Vec<Box<dyn SharedLogger>> = Vec::new();
+
+    // Initialize terminal output
+    let terminal_out = TermLogger::new(log_level,
+                                       simplelog::Config::default(), TerminalMode::Mixed);
+    if let Some(terminal_out) = terminal_out {
+        log_outputs.push(terminal_out);
+    }
+
+    //TODO: WriteLogger::new(LevelFilter::Info, Config::default(), File::create("my_rust_binary.log").unwrap()),
+    CombinedLogger::init(
+        log_outputs
+    ).expect("Error opening log destination");
 
     info!("starting daemon...");
 
@@ -195,7 +205,7 @@ fn start_main(config_set: ConfigSet) {
                 exit(4);
             }
             if pid > 0 {  // Parent process exit
-                println!("Daemon started!");
+                println!("daemon started!");
                 exit(0);
             }
 

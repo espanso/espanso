@@ -8,7 +8,7 @@ use std::io::Read;
 use serde::{Serialize, Deserialize};
 use crate::event::KeyModifier;
 use std::collections::HashSet;
-use log::{error};
+use log::{error, LevelFilter};
 use std::fmt;
 use std::error::Error;
 
@@ -24,7 +24,8 @@ fn default_name() -> String{ "default".to_owned() }
 fn default_filter_title() -> String{ "".to_owned() }
 fn default_filter_class() -> String{ "".to_owned() }
 fn default_filter_exec() -> String{ "".to_owned() }
-fn default_disable() -> bool{ false }
+fn default_disabled() -> bool{ false }
+fn default_log_level() -> i32 { 0 }
 fn default_config_caching_interval() -> i32 { 800 }
 fn default_toggle_interval() -> u32 { 230 }
 fn default_backspace_limit() -> i32 { 3 }
@@ -44,8 +45,11 @@ pub struct Configs {
     #[serde(default = "default_filter_exec")]
     pub filter_exec: String,
 
-    #[serde(default = "default_disable")]
+    #[serde(default = "default_disabled")]
     pub disabled: bool,
+
+    #[serde(default = "default_log_level")]
+    pub log_level: i32,
 
     #[serde(default = "default_config_caching_interval")]
     pub config_caching_interval: i32,
@@ -91,6 +95,7 @@ impl Configs {
         let mut result = true;
 
         validate_field!(result, self.config_caching_interval, default_config_caching_interval());
+        validate_field!(result, self.log_level, default_log_level());
         validate_field!(result, self.toggle_key, KeyModifier::default());
         validate_field!(result, self.toggle_interval, default_toggle_interval());
         validate_field!(result, self.backspace_limit, default_backspace_limit());
@@ -137,8 +142,8 @@ impl Configs {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ConfigSet {
-    default: Configs,
-    specific: Vec<Configs>,
+    pub default: Configs,
+    pub specific: Vec<Configs>,
 }
 
 impl ConfigSet {
