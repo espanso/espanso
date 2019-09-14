@@ -29,6 +29,7 @@ fn default_log_level() -> i32 { 0 }
 fn default_config_caching_interval() -> i32 { 800 }
 fn default_toggle_interval() -> u32 { 230 }
 fn default_backspace_limit() -> i32 { 3 }
+fn default_exclude_parent_matches() -> bool {false}
 fn default_matches() -> Vec<Match> { Vec::new() }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -65,6 +66,9 @@ pub struct Configs {
 
     #[serde(default)]
     pub backend: BackendType,
+
+    #[serde(default = "default_exclude_parent_matches")]
+    pub exclude_parent_matches: bool,
 
     #[serde(default = "default_matches")]
     pub matches: Vec<Match>
@@ -176,7 +180,7 @@ impl ConfigSet {
                     continue;
                 }
 
-                let config = Configs::load_config(path.as_path())?;
+                let mut config = Configs::load_config(path.as_path())?;
 
                 if !config.validate_specific_config() {
                     return Err(ConfigLoadError::InvalidParameter(path.to_owned()))
@@ -188,6 +192,23 @@ impl ConfigSet {
 
                 if name_set.contains(&config.name) {
                     return Err(ConfigLoadError::NameDuplicate(path.to_owned()));
+                }
+
+                // Compute new match set, merging the parent's matches.
+                // Note: if an app-specific redefines a trigger already present in the
+                // default config, the latter gets overwritten.
+                if !config.exclude_parent_matches {
+                    let mut merged_matches = config.matches.clone();
+                    let mut trigger_set = HashSet::new();
+                    merged_matches.iter().for_each(|m| {
+                       trigger_set.insert(m.trigger.clone());
+                    });
+                    let parent_matches : Vec<Match> = default.matches.iter().filter(|&m| {
+                        !trigger_set.contains(&m.trigger)
+                    }).map(|m| m.clone()).collect();
+
+                    merged_matches.extend(parent_matches);
+                    config.matches = merged_matches;
                 }
 
                 // TODO: check if it contains at least a filter, and warn the user about the problem
@@ -520,5 +541,97 @@ mod tests {
         let config_set = ConfigSet::load(tmp_dir.path());
         assert!(config_set.is_err());
         assert!(variant_eq(&config_set.unwrap_err(), &ConfigLoadError::NameDuplicate(PathBuf::new())))
+    }
+
+    #[test]
+    fn test_specific_config_set_merge_with_parent_matches() {
+        let tmp_dir = TempDir::new().expect("unable to create temp directory");
+        let default_path = tmp_dir.path().join(DEFAULT_CONFIG_FILE_NAME);
+        fs::write(default_path, r###"
+        matches:
+            - trigger: ":lol"
+              replace: "LOL"
+            - trigger: ":yess"
+              replace: "Bob"
+        "###);
+
+        let specific_path = tmp_dir.path().join("specific.yaml");
+        let specific_path_copy = specific_path.clone();
+        fs::write(specific_path, r###"
+        name: specific1
+
+        matches:
+            - trigger: "hello"
+              replace: "newstring"
+        "###);
+
+        let config_set = ConfigSet::load(tmp_dir.path()).unwrap();
+        assert_eq!(config_set.default.matches.len(), 2);
+        assert_eq!(config_set.specific[0].matches.len(), 3);
+
+        assert!(config_set.specific[0].matches.iter().find(|x| x.trigger == "hello").is_some());
+        assert!(config_set.specific[0].matches.iter().find(|x| x.trigger == ":lol").is_some());
+        assert!(config_set.specific[0].matches.iter().find(|x| x.trigger == ":yess").is_some());
+    }
+
+    #[test]
+    fn test_specific_config_set_merge_with_parent_matches_child_priority() {
+        let tmp_dir = TempDir::new().expect("unable to create temp directory");
+        let default_path = tmp_dir.path().join(DEFAULT_CONFIG_FILE_NAME);
+        fs::write(default_path, r###"
+        matches:
+            - trigger: ":lol"
+              replace: "LOL"
+            - trigger: ":yess"
+              replace: "Bob"
+        "###);
+
+        let specific_path = tmp_dir.path().join("specific.yaml");
+        let specific_path_copy = specific_path.clone();
+        fs::write(specific_path, r###"
+        name: specific1
+
+        matches:
+            - trigger: ":lol"
+              replace: "newstring"
+        "###);
+
+        let config_set = ConfigSet::load(tmp_dir.path()).unwrap();
+        assert_eq!(config_set.default.matches.len(), 2);
+        assert_eq!(config_set.specific[0].matches.len(), 2);
+
+        assert!(config_set.specific[0].matches.iter().find(|x| x.trigger == ":lol" && x.replace == "newstring").is_some());
+        assert!(config_set.specific[0].matches.iter().find(|x| x.trigger == ":yess").is_some());
+    }
+
+    #[test]
+    fn test_specific_config_set_exclude_merge_with_parent_matches() {
+        let tmp_dir = TempDir::new().expect("unable to create temp directory");
+        let default_path = tmp_dir.path().join(DEFAULT_CONFIG_FILE_NAME);
+        fs::write(default_path, r###"
+        matches:
+            - trigger: ":lol"
+              replace: "LOL"
+            - trigger: ":yess"
+              replace: "Bob"
+        "###);
+
+        let specific_path = tmp_dir.path().join("specific.yaml");
+        let specific_path_copy = specific_path.clone();
+        fs::write(specific_path, r###"
+        name: specific1
+
+        exclude_parent_matches: true
+
+        matches:
+            - trigger: "hello"
+              replace: "newstring"
+        "###);
+
+        let config_set = ConfigSet::load(tmp_dir.path()).unwrap();
+        assert_eq!(config_set.default.matches.len(), 2);
+        assert_eq!(config_set.specific[0].matches.len(), 1);
+
+        assert!(config_set.specific[0].matches.iter().find(|x| x.trigger == "hello" && x.replace == "newstring").is_some());
     }
 }

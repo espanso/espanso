@@ -8,6 +8,8 @@ use crate::matcher::Match;
 
 pub struct RuntimeConfigManager<'a, S: SystemManager> {
     set: ConfigSet,
+
+    // Filter regexps
     title_regexps: Vec<Option<Regex>>,
     class_regexps: Vec<Option<Regex>>,
     exec_regexps: Vec<Option<Regex>>,
@@ -178,6 +180,7 @@ impl <'a, S: SystemManager> super::ConfigManager<'a> for RuntimeConfigManager<'a
     }
 }
 
+// TESTS
 
 #[cfg(test)]
 mod tests {
