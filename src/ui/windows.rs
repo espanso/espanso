@@ -26,7 +26,7 @@ impl super::UIManager for WindowsUIManager {
 
         // Setup a timeout to close the notification
         let id = Arc::clone(&self.id);
-        thread::spawn(move || {
+        thread::Builder::new().name("notification_thread".to_string()).spawn(move || {
             for i in 1..10 {
                 let duration = time::Duration::from_millis(200);
                 thread::sleep(duration);

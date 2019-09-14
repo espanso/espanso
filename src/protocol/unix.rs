@@ -23,7 +23,7 @@ impl UnixIPCServer {
 impl super::IPCServer for UnixIPCServer {
     fn start(&self) {
         let event_channel = self.event_channel.clone();
-        std::thread::spawn(move || {
+        std::thread::Builder::new().name("ipc_server".to_string()).spawn(move || {
             let espanso_dir = context::get_data_dir();
             let unix_socket = espanso_dir.join(UNIX_SOCKET_NAME);
 
@@ -62,7 +62,7 @@ impl super::IPCServer for UnixIPCServer {
                     }
                 }
             }
-        });
+        }).expect("Unable to spawn IPC server thread");
     }
 }
 

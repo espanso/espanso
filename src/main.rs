@@ -9,7 +9,7 @@ use std::time::Duration;
 use clap::{App, Arg, SubCommand, ArgMatches};
 use fs2::FileExt;
 use log::{error, info, warn, LevelFilter};
-use simplelog::{CombinedLogger, SharedLogger, TerminalMode, TermLogger};
+use simplelog::{CombinedLogger, SharedLogger, TerminalMode, TermLogger, WriteLogger};
 
 use crate::config::ConfigSet;
 use crate::config::runtime::RuntimeConfigManager;
@@ -20,6 +20,7 @@ use crate::matcher::scrolling::ScrollingMatcher;
 use crate::system::SystemManager;
 use crate::ui::UIManager;
 use crate::protocol::*;
+use std::io::{BufReader, BufRead};
 
 mod ui;
 mod event;
@@ -34,6 +35,7 @@ mod protocol;
 mod clipboard;
 
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
+const LOG_FILE: &str = "espanso.log";
 
 fn main() {
     let matches = App::new("espanso")
@@ -67,6 +69,8 @@ fn main() {
             .about("Tool to detect current window properties, to simplify filters creation."))
         .subcommand(SubCommand::with_name("daemon")
             .about("Start the daemon without spawning a new process."))
+        .subcommand(SubCommand::with_name("log")
+            .about("Print the latest daemon logs."))
         .subcommand(SubCommand::with_name("start")
             .about("Start the daemon spawning a new process in the background."))
         .subcommand(SubCommand::with_name("stop")
@@ -122,6 +126,11 @@ fn main() {
         return;
     }
 
+    if let Some(_) = matches.subcommand_matches("log") {
+        log_main();
+        return;
+    }
+
     if let Some(_) = matches.subcommand_matches("start") {
         start_main(config_set);
         return;
@@ -168,10 +177,25 @@ fn daemon_main(config_set: ConfigSet) {
         log_outputs.push(terminal_out);
     }
 
-    //TODO: WriteLogger::new(LevelFilter::Info, Config::default(), File::create("my_rust_binary.log").unwrap()),
+    // Initialize log file output
+    let espanso_dir = context::get_data_dir();
+    let log_file_path = espanso_dir.join(LOG_FILE);
+    let log_file = OpenOptions::new()
+        .read(true)
+        .write(true)
+        .create(true)
+        .truncate(true)
+        .open(log_file_path)
+        .expect("Cannot create log file.");
+    let file_out = WriteLogger::new(LevelFilter::Info, simplelog::Config::default(), log_file);
+    log_outputs.push(file_out);
+
     CombinedLogger::init(
         log_outputs
     ).expect("Error opening log destination");
+
+    // Activate logging for panics
+    log_panics::init();
 
     info!("starting daemon...");
 
@@ -179,9 +203,9 @@ fn daemon_main(config_set: ConfigSet) {
 
     let context = context::new(send_channel.clone());
 
-    thread::spawn(move || {
+    thread::Builder::new().name("daemon_background".to_string()).spawn(move || {
         daemon_background(receive_channel, config_set);
-    });
+    }).expect("Unable to spawn daemon background thread");
 
     let ipc_server = protocol::get_ipc_server(send_channel.clone());
     ipc_server.start();
@@ -293,6 +317,7 @@ fn stop_main(config_set: ConfigSet) {
     }
 }
 
+/// Kill the daemon if running and start it again
 fn restart_main(config_set: ConfigSet) {
     // Kill the daemon if running
     let lock_file = acquire_lock();
@@ -346,6 +371,7 @@ fn detect_main() {
     }
 }
 
+/// Send the given command to the espanso daemon
 fn cmd_main(config_set: ConfigSet, matches: &ArgMatches) {
     let command = if let Some(_) = matches.subcommand_matches("exit") {
         Some(IPCCommand {
@@ -387,6 +413,31 @@ fn cmd_main(config_set: ConfigSet, matches: &ArgMatches) {
 fn send_command(config_set: ConfigSet, command: IPCCommand) -> Result<(), String> {
     let ipc_client = protocol::get_ipc_client();
     ipc_client.send_command(command)
+}
+
+fn log_main() {
+    let espanso_dir = context::get_data_dir();
+    let log_file_path = espanso_dir.join(LOG_FILE);
+
+    if !log_file_path.exists() {
+        println!("No log file found.");
+        exit(2);
+    }
+
+    let log_file = File::open(log_file_path);
+    if let Ok(log_file) = log_file {
+        let reader = BufReader::new(log_file);
+        for line in reader.lines() {
+            if let Ok(line) = line {
+                println!("{}", line);
+            }
+        }
+
+        exit(0);
+    }else{
+        println!("Error reading log file");
+        exit(1);
+    }
 }
 
 fn acquire_lock() -> Option<File> {
