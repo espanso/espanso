@@ -14,6 +14,8 @@ pub enum ActionType {
     Toggle = 1,
     Exit = 2,
     IconClick = 3,
+    Enable = 4,
+    Disable = 5,
 }
 
 impl From<i32> for ActionType {
@@ -22,6 +24,8 @@ impl From<i32> for ActionType {
             1 => ActionType::Toggle,
             2 => ActionType::Exit,
             3 => ActionType::IconClick,
+            4 => ActionType::Enable,
+            5 => ActionType::Disable,
             _ => ActionType::Noop,
         }
     }

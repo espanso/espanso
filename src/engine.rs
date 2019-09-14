@@ -95,7 +95,7 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
         }
     }
 
-    fn on_toggle(&self, status: bool) {
+    fn on_enable_update(&self, status: bool) {
         let message = if status {
             "espanso enabled"
         }else{
