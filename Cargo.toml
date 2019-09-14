@@ -17,6 +17,8 @@ simplelog = "0.7.1"
 zip = "0.5.3"
 fs2 = "0.4.3"
 serde_json = "1.0.40"
+log-panics = {version = "2.0.0", features = ["with-backtrace"]}
+backtrace = "0.3.37"
 
 [target.'cfg(unix)'.dependencies]
 libc = "0.2.62"
