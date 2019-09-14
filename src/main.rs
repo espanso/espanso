@@ -6,7 +6,7 @@ use std::sync::mpsc;
 use std::sync::mpsc::Receiver;
 use std::time::Duration;
 
-use clap::{App, Arg, SubCommand};
+use clap::{App, Arg, SubCommand, ArgMatches};
 use fs2::FileExt;
 use log::{error, info, LevelFilter};
 use simplelog::{CombinedLogger, SharedLogger, TerminalMode, TermLogger};
@@ -50,6 +50,17 @@ fn main() {
             .short("v")
             .multiple(true)
             .help("Sets the level of verbosity"))
+        .subcommand(SubCommand::with_name("cmd")
+            .about("Send a command to the espanso daemon.")
+            .subcommand(SubCommand::with_name("exit")
+                .about("Terminate the daemon."))
+            .subcommand(SubCommand::with_name("enable")
+                .about("Enable the espanso replacement engine."))
+            .subcommand(SubCommand::with_name("disable")
+                .about("Disable the espanso replacement engine."))
+            .subcommand(SubCommand::with_name("toggle")
+                .about("Toggle the status of the espanso replacement engine."))
+        )
         .subcommand(SubCommand::with_name("dump")
             .about("Prints all current configuration options."))
         .subcommand(SubCommand::with_name("detect")
@@ -111,6 +122,11 @@ fn main() {
         status_main();
         return;
     }
+
+    if let Some(matches) = matches.subcommand_matches("cmd") {
+        cmd_main(matches);
+        return;
+    }
 }
 
 /// Daemon subcommand, start the event loop and spawn a background thread worker
@@ -153,8 +169,8 @@ fn daemon_main(config_set: ConfigSet) {
         daemon_background(receive_channel, config_set);
     });
 
-    let ipc_manager = protocol::get_ipc_manager(send_channel.clone());
-    ipc_manager.start_server();
+    let ipc_server = protocol::get_ipc_server(send_channel.clone());
+    ipc_server.start();
 
     context.eventloop();
 }
@@ -271,6 +287,41 @@ fn detect_main() {
 
         thread::sleep(Duration::from_millis(500));
     }
+}
+
+fn cmd_main(matches: &ArgMatches) {
+    let command = if let Some(matches) = matches.subcommand_matches("exit") {
+        Some(IPCCommand {
+            id: String::from("exit"),
+            payload: String::from(""),
+        })
+    }else if let Some(matches) = matches.subcommand_matches("toggle") {
+        Some(IPCCommand {
+            id: String::from("toggle"),
+            payload: String::from(""),
+        })
+    }else if let Some(matches) = matches.subcommand_matches("enable") {
+        Some(IPCCommand {
+            id: String::from("enable"),
+            payload: String::from(""),
+        })
+    }else if let Some(matches) = matches.subcommand_matches("disable") {
+        Some(IPCCommand {
+            id: String::from("disable"),
+            payload: String::from(""),
+        })
+    }else{
+        None
+    };
+
+    if let Some(command) = command {
+        let ipc_client = protocol::get_ipc_client();
+        ipc_client.send_command(command);
+
+        exit(0);
+    }
+
+    exit(1);
 }
 
 fn acquire_lock() -> Option<File> {

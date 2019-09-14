@@ -37,7 +37,14 @@ impl <'a, R: MatchReceiver, M: ConfigManager<'a>> ScrollingMatcher<'a, R, M> {
         let mut is_enabled = self.is_enabled.borrow_mut();
         *is_enabled = !(*is_enabled);
 
-        self.receiver.on_toggle(*is_enabled);
+        self.receiver.on_enable_update(*is_enabled);
+    }
+
+    fn set_enabled(&self, enabled: bool) {
+        let mut is_enabled = self.is_enabled.borrow_mut();
+        *is_enabled = enabled;
+
+        self.receiver.on_enable_update(*is_enabled);
     }
 }
 
@@ -127,6 +134,12 @@ impl <'a, R: MatchReceiver, M: ConfigManager<'a>> ActionEventReceiver for Scroll
         match e {
             ActionType::Toggle => {
                 self.toggle();
+            },
+            ActionType::Enable => {
+                self.set_enabled(true);
+            },
+            ActionType::Disable => {
+                self.set_enabled(false);
             },
             _ => {}
         }

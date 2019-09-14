@@ -12,7 +12,7 @@ pub struct Match {
 
 pub trait MatchReceiver {
     fn on_match(&self, m: &Match);
-    fn on_toggle(&self, status: bool);
+    fn on_enable_update(&self, status: bool);
 }
 
 pub trait Matcher : KeyEventReceiver {
