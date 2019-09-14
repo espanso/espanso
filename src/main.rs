@@ -19,6 +19,7 @@ use crate::event::manager::{DefaultEventManager, EventManager};
 use crate::matcher::scrolling::ScrollingMatcher;
 use crate::system::SystemManager;
 use crate::ui::UIManager;
+use crate::protocol::*;
 
 mod ui;
 mod event;
@@ -29,6 +30,7 @@ mod system;
 mod context;
 mod matcher;
 mod keyboard;
+mod protocol;
 mod clipboard;
 
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
@@ -145,11 +147,14 @@ fn daemon_main(config_set: ConfigSet) {
 
     let (send_channel, receive_channel) = mpsc::channel();
 
-    let context = context::new(send_channel);
+    let context = context::new(send_channel.clone());
 
     thread::spawn(move || {
         daemon_background(receive_channel, config_set);
     });
+
+    let ipc_manager = protocol::get_ipc_manager(send_channel.clone());
+    ipc_manager.start_server();
 
     context.eventloop();
 }
@@ -257,7 +262,7 @@ fn detect_main() {
             println!("==> Title: '{}'", curr_title);
             println!("==> Class: '{}'", curr_class);
             println!("==> Executable: '{}'", curr_exec);
-            println!("");
+            println!();
         }
 
         last_title = curr_title;

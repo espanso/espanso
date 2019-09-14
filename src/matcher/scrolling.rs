@@ -1,6 +1,6 @@
 use crate::matcher::{Match, MatchReceiver};
 use std::cell::RefCell;
-use crate::event::{KeyModifier, ActionEventReceiver, ActionEvent, ActionType};
+use crate::event::{KeyModifier, ActionEventReceiver, ActionType};
 use crate::config::ConfigManager;
 use crate::event::KeyModifier::BACKSPACE;
 use std::time::SystemTime;
@@ -123,15 +123,10 @@ impl <'a, R: MatchReceiver, M: ConfigManager<'a>> super::Matcher for ScrollingMa
 }
 
 impl <'a, R: MatchReceiver, M: ConfigManager<'a>> ActionEventReceiver for ScrollingMatcher<'a, R, M> {
-    fn on_action_event(&self, e: ActionEvent) {
+    fn on_action_event(&self, e: ActionType) {
         match e {
-            ActionEvent::ContextMenuClick(action_type) => {
-                match action_type {
-                    ActionType::Toggle => {
-                        self.toggle();
-                    },
-                    _ => {}
-                }
+            ActionType::Toggle => {
+                self.toggle();
             },
             _ => {}
         }
