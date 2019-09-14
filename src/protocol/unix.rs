@@ -1,13 +1,11 @@
-use std::io::{BufRead, BufReader, Read};
+use std::io::{BufReader, Read};
 use std::io::Write;
 use std::os::unix::net::{UnixStream,UnixListener};
-use std::thread;
-use log::{info, error};
+use log::{info, error, warn};
 use std::sync::mpsc::Sender;
 use super::IPCCommand;
 
 use crate::context;
-use crate::context::get_data_dir;
 use crate::event::*;
 
 const UNIX_SOCKET_NAME : &str = "espanso.sock";
@@ -29,7 +27,9 @@ impl super::IPCServer for UnixIPCServer {
             let espanso_dir = context::get_data_dir();
             let unix_socket = espanso_dir.join(UNIX_SOCKET_NAME);
 
-            std::fs::remove_file(unix_socket.clone());
+            std::fs::remove_file(unix_socket.clone()).unwrap_or_else(|e| {
+                warn!("Unable to delete Unix socket: {}", e);
+            });
             let listener = UnixListener::bind(unix_socket.clone()).expect("Can't bind to Unix Socket");
 
             info!("Binded to IPC unix socket: {}", unix_socket.as_path().display());
@@ -39,19 +39,21 @@ impl super::IPCServer for UnixIPCServer {
                     Ok(stream) => {
                         let mut json_str= String::new();
                         let mut buf_reader = BufReader::new(stream);
-                        buf_reader.read_to_string(&mut json_str);
+                        let res = buf_reader.read_to_string(&mut json_str);
 
-                        let command : Result<IPCCommand, serde_json::Error> = serde_json::from_str(&json_str);
-                        match command {
-                            Ok(command) => {
-                                let event = command.to_event();
-                                if let Some(event) = event {
-                                    event_channel.send(event).expect("Broken event channel");
-                                }
-                            },
-                            Err(e) => {
-                                error!("Error deserializing JSON command: {}", e);
-                            },
+                        if res.is_ok() {
+                            let command : Result<IPCCommand, serde_json::Error> = serde_json::from_str(&json_str);
+                            match command {
+                                Ok(command) => {
+                                    let event = command.to_event();
+                                    if let Some(event) = event {
+                                        event_channel.send(event).expect("Broken event channel");
+                                    }
+                                },
+                                Err(e) => {
+                                    error!("Error deserializing JSON command: {}", e);
+                                },
+                            }
                         }
                     }
                     Err(err) => {
@@ -75,24 +77,27 @@ impl UnixIPCClient {
 }
 
 impl super::IPCClient for UnixIPCClient {
-    fn send_command(&self, command: IPCCommand) {
+    fn send_command(&self, command: IPCCommand) -> Result<(), String> {
         let espanso_dir = context::get_data_dir();
         let unix_socket = espanso_dir.join(UNIX_SOCKET_NAME);
 
         // Open the stream
-        let mut stream = UnixStream::connect(unix_socket);
+        let stream = UnixStream::connect(unix_socket);
         match stream {
             Ok(mut stream) => {
                 let json_str = serde_json::to_string(&command);
                 if let Ok(json_str) = json_str {
                     stream.write_all(json_str.as_bytes()).unwrap_or_else(|e| {
-                        println!("Can't write to IPC socket");
+                        println!("Can't write to IPC socket: {}", e);
                     });
+                    return Ok(())
                 }
             },
             Err(e) => {
-                println!("Can't connect to daemon: {}", e);
+                return Err(format!("Can't connect to daemon: {}", e))
             }
         }
+
+        Err("Can't send command".to_owned())
     }
 }

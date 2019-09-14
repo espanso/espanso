@@ -8,7 +8,7 @@ use std::time::Duration;
 
 use clap::{App, Arg, SubCommand, ArgMatches};
 use fs2::FileExt;
-use log::{error, info, LevelFilter};
+use log::{error, info, warn, LevelFilter};
 use simplelog::{CombinedLogger, SharedLogger, TerminalMode, TermLogger};
 
 use crate::config::ConfigSet;
@@ -69,6 +69,10 @@ fn main() {
             .about("Start the daemon without spawning a new process."))
         .subcommand(SubCommand::with_name("start")
             .about("Start the daemon spawning a new process in the background."))
+        .subcommand(SubCommand::with_name("stop")
+            .about("Stop the espanso daemon."))
+        .subcommand(SubCommand::with_name("restart")
+            .about("Restart the espanso daemon."))
         .subcommand(SubCommand::with_name("status")
             .about("Check if the espanso daemon is running or not."))
         .get_matches();
@@ -98,33 +102,43 @@ fn main() {
 
     // Match the correct subcommand
 
-    if let Some(matches) = matches.subcommand_matches("dump") {
+    if let Some(matches) = matches.subcommand_matches("cmd") {
+        cmd_main(config_set, matches);
+        return;
+    }
+
+    if let Some(_) = matches.subcommand_matches("dump") {
         println!("{:#?}", config_set);
         return;
     }
 
-    if let Some(matches) = matches.subcommand_matches("detect") {
+    if let Some(_) = matches.subcommand_matches("detect") {
         detect_main();
         return;
     }
 
-    if let Some(matches) = matches.subcommand_matches("daemon") {
+    if let Some(_) = matches.subcommand_matches("daemon") {
         daemon_main(config_set);
         return;
     }
 
-    if let Some(matches) = matches.subcommand_matches("start") {
+    if let Some(_) = matches.subcommand_matches("start") {
         start_main(config_set);
         return;
     }
 
-    if let Some(matches) = matches.subcommand_matches("status") {
+    if let Some(_) = matches.subcommand_matches("status") {
         status_main();
         return;
     }
 
-    if let Some(matches) = matches.subcommand_matches("cmd") {
-        cmd_main(matches);
+    if let Some(_) = matches.subcommand_matches("stop") {
+        stop_main(config_set);
+        return;
+    }
+
+    if let Some(_) = matches.subcommand_matches("restart") {
+        restart_main(config_set);
         return;
     }
 }
@@ -255,6 +269,49 @@ fn status_main() {
     }
 }
 
+
+/// Stop subcommand, used to stop the daemon.
+fn stop_main(config_set: ConfigSet) {
+    // Try to acquire lock file
+    let lock_file = acquire_lock();
+    if lock_file.is_some() {
+        println!("espanso daemon is not running.");
+        release_lock(lock_file.unwrap());
+        exit(3);
+    }
+
+    let res = send_command(config_set, IPCCommand{
+        id: "exit".to_owned(),
+        payload: "".to_owned(),
+    });
+
+    if let Err(e) = res {
+        println!("{}", e);
+        exit(1);
+    }else{
+        exit(0);
+    }
+}
+
+fn restart_main(config_set: ConfigSet) {
+    // Kill the daemon if running
+    let lock_file = acquire_lock();
+    if lock_file.is_none() {
+        // Terminate the current espanso daemon
+        send_command(config_set.clone(), IPCCommand{
+            id: "exit".to_owned(),
+            payload: "".to_owned(),
+        }).unwrap_or_else(|e| warn!("Unable to send IPC command to daemon: {}", e));
+    }else{
+        release_lock(lock_file.unwrap());
+    }
+
+    std::thread::sleep(Duration::from_millis(300));
+
+    // Restart the daemon
+    start_main(config_set);
+}
+
 /// Cli tool used to analyze active windows to extract useful information
 /// to create configuration filters.
 fn detect_main() {
@@ -289,23 +346,23 @@ fn detect_main() {
     }
 }
 
-fn cmd_main(matches: &ArgMatches) {
-    let command = if let Some(matches) = matches.subcommand_matches("exit") {
+fn cmd_main(config_set: ConfigSet, matches: &ArgMatches) {
+    let command = if let Some(_) = matches.subcommand_matches("exit") {
         Some(IPCCommand {
             id: String::from("exit"),
             payload: String::from(""),
         })
-    }else if let Some(matches) = matches.subcommand_matches("toggle") {
+    }else if let Some(_) = matches.subcommand_matches("toggle") {
         Some(IPCCommand {
             id: String::from("toggle"),
             payload: String::from(""),
         })
-    }else if let Some(matches) = matches.subcommand_matches("enable") {
+    }else if let Some(_) = matches.subcommand_matches("enable") {
         Some(IPCCommand {
             id: String::from("enable"),
             payload: String::from(""),
         })
-    }else if let Some(matches) = matches.subcommand_matches("disable") {
+    }else if let Some(_) = matches.subcommand_matches("disable") {
         Some(IPCCommand {
             id: String::from("disable"),
             payload: String::from(""),
@@ -315,13 +372,21 @@ fn cmd_main(matches: &ArgMatches) {
     };
 
     if let Some(command) = command {
-        let ipc_client = protocol::get_ipc_client();
-        ipc_client.send_command(command);
+        let res = send_command(config_set, command);
 
-        exit(0);
+        if res.is_ok() {
+            exit(0);
+        }else{
+            println!("{}", res.unwrap_err());
+        }
     }
 
     exit(1);
+}
+
+fn send_command(config_set: ConfigSet, command: IPCCommand) -> Result<(), String> {
+    let ipc_client = protocol::get_ipc_client();
+    ipc_client.send_command(command)
 }
 
 fn acquire_lock() -> Option<File> {

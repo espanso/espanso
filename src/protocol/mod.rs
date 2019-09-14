@@ -1,10 +1,7 @@
 use serde::{Deserialize, Serialize};
-use serde_json::Result;
 use std::sync::mpsc::Sender;
 use crate::event::Event;
-use crate::event::Event::*;
 use crate::event::ActionType;
-use crate::event::ActionType::*;
 
 #[cfg(target_os = "windows")]
 mod windows;
@@ -17,7 +14,7 @@ pub trait IPCServer {
 }
 
 pub trait IPCClient {
-    fn send_command(&self, command: IPCCommand);
+    fn send_command(&self, command: IPCCommand) -> Result<(), String>;
 }
 
 #[derive(Serialize, Deserialize, Debug)]

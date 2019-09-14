@@ -14,8 +14,8 @@ impl super::UIManager for LinuxUIManager {
         }
     }
 
-    fn show_menu(&self, menu: Vec<MenuItem>) {
-        unimplemented!()
+    fn show_menu(&self, _menu: Vec<MenuItem>) {
+        // Not implemented on linux
     }
 }
 
