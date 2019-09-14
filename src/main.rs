@@ -1,22 +1,24 @@
-use std::sync::{mpsc};
-use crate::matcher::scrolling::ScrollingMatcher;
-use crate::engine::Engine;
+use std::thread;
+use std::fs::{File, OpenOptions};
+use std::path::Path;
+use std::process::exit;
+use std::sync::mpsc;
+use std::sync::mpsc::Receiver;
+use std::time::Duration;
+
+use clap::{App, Arg, SubCommand};
+use fs2::FileExt;
+use log::{error, info, LevelFilter};
+use simplelog::{CombinedLogger, SharedLogger, TerminalMode, TermLogger};
+
 use crate::config::ConfigSet;
 use crate::config::runtime::RuntimeConfigManager;
+use crate::engine::Engine;
+use crate::event::*;
+use crate::event::manager::{DefaultEventManager, EventManager};
+use crate::matcher::scrolling::ScrollingMatcher;
 use crate::system::SystemManager;
 use crate::ui::UIManager;
-use crate::event::*;
-use crate::event::manager::{EventManager, DefaultEventManager};
-use std::{thread};
-use clap::{App, Arg, SubCommand};
-use std::path::Path;
-use std::sync::mpsc::Receiver;
-use log::{info, error, LevelFilter};
-use simplelog::{CombinedLogger, TermLogger, TerminalMode, SharedLogger};
-use std::process::exit;
-use std::time::Duration;
-use std::fs::{File, OpenOptions};
-use fs2::FileExt;
 
 mod ui;
 mod event;
@@ -52,6 +54,8 @@ fn main() {
             .about("Tool to detect current window properties, to simplify filters creation."))
         .subcommand(SubCommand::with_name("daemon")
             .about("Start the daemon without spawning a new process."))
+        .subcommand(SubCommand::with_name("start")
+            .about("Start the daemon spawning a new process in the background."))
         .subcommand(SubCommand::with_name("status")
             .about("Check if the espanso daemon is running or not."))
         .get_matches();
@@ -107,12 +111,18 @@ fn main() {
         return;
     }
 
+    if let Some(matches) = matches.subcommand_matches("start") {
+        start_main(config_set);
+        return;
+    }
+
     if let Some(matches) = matches.subcommand_matches("status") {
         status_main();
         return;
     }
 }
 
+/// Daemon subcommand, start the event loop and spawn a background thread worker
 fn daemon_main(config_set: ConfigSet) {
     // Try to acquire lock file
     let lock_file = acquire_lock();
@@ -134,6 +144,7 @@ fn daemon_main(config_set: ConfigSet) {
     context.eventloop();
 }
 
+/// Background thread worker for the daemon
 fn daemon_background(receive_channel: Receiver<Event>, config_set: ConfigSet) {
     let system_manager = system::get_manager();
     let config_manager = RuntimeConfigManager::new(config_set, system_manager);
@@ -164,6 +175,44 @@ fn daemon_background(receive_channel: Receiver<Event>, config_set: ConfigSet) {
     event_manager.eventloop();
 }
 
+/// start subcommand, spawn a background espanso process.
+fn start_main(config_set: ConfigSet) {
+    // Try to acquire lock file
+    let lock_file = acquire_lock();
+    if lock_file.is_none() {
+        println!("espanso is already running.");
+        exit(3);
+    }
+    release_lock(lock_file.unwrap());
+
+    if cfg!(target_os = "windows") {
+        // TODO: start windows detached
+    }else{
+        unsafe {
+            let pid = libc::fork();
+            if pid < 0 {
+                error!("Unable to fork.");
+                exit(4);
+            }
+            if pid > 0 {  // Parent process exit
+                println!("Daemon started!");
+                exit(0);
+            }
+
+            // Spawned process
+
+            // Create a new SID for the child process
+            let sid = libc::setsid();
+            if sid < 0 {
+                exit(5);
+            }
+        }
+
+        daemon_main(config_set);
+    }
+}
+
+/// status subcommand, print the current espanso status
 fn status_main() {
     let lock_file = acquire_lock();
     if let Some(lock_file) = lock_file {
