@@ -4,14 +4,8 @@ use serde::{Serialize, Deserialize};
 
 #[derive(Debug, Clone)]
 pub enum Event {
-    Action(ActionEvent),
+    Action(ActionType),
     Key(KeyEvent)
-}
-
-#[derive(Debug, Clone)]
-pub enum ActionEvent {
-    IconClick,
-    ContextMenuClick(ActionType)
 }
 
 #[derive(Debug, Clone)]
@@ -19,6 +13,7 @@ pub enum ActionType {
     Noop = 0,
     Toggle = 1,
     Exit = 2,
+    IconClick = 3,
 }
 
 impl From<i32> for ActionType {
@@ -26,6 +21,7 @@ impl From<i32> for ActionType {
         match id {
             1 => ActionType::Toggle,
             2 => ActionType::Exit,
+            3 => ActionType::IconClick,
             _ => ActionType::Noop,
         }
     }
@@ -59,5 +55,5 @@ pub trait KeyEventReceiver {
 }
 
 pub trait ActionEventReceiver {
-    fn on_action_event(&self, e: ActionEvent);
+    fn on_action_event(&self, e: ActionType);
 }

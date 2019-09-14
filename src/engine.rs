@@ -5,7 +5,7 @@ use crate::config::BackendType;
 use crate::clipboard::ClipboardManager;
 use log::{info};
 use crate::ui::{UIManager, MenuItem, MenuItemType};
-use crate::event::{ActionEventReceiver, ActionEvent, ActionType};
+use crate::event::{ActionEventReceiver, ActionType};
 use std::cell::RefCell;
 use std::process::exit;
 
@@ -114,20 +114,16 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
 impl <'a, S: KeyboardManager, C: ClipboardManager,
     M: ConfigManager<'a>, U: UIManager> ActionEventReceiver for Engine<'a, S, C, M, U>{
 
-    fn on_action_event(&self, e: ActionEvent) {
+    fn on_action_event(&self, e: ActionType) {
         match e {
-            ActionEvent::IconClick => {
+            ActionType::IconClick => {
                 self.ui_manager.show_menu(self.build_menu());
             },
-            ActionEvent::ContextMenuClick(id) => {
-                match id {
-                    ActionType::Exit => {
-                        info!("Terminating expanso from the context menu");
-                        exit(0);
-                    },
-                    _ => {}
-                }
-            }
+            ActionType::Exit => {
+                info!("Terminating espanso.");
+                exit(0);
+            },
+            _ => {}
         }
     }
 }

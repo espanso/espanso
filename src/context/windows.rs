@@ -127,7 +127,7 @@ extern fn icon_click_callback(_self: *mut c_void) {
     unsafe {
         let _self = _self as *mut WindowsContext;
 
-        let event = Event::Action(ActionEvent::IconClick);
+        let event = Event::Action(ActionType::IconClick);
         (*_self).send_channel.send(event).unwrap();
     }
 }
@@ -137,7 +137,7 @@ extern fn context_menu_click_callback(_self: *mut c_void, id: i32) {
     unsafe {
         let _self = _self as *mut WindowsContext;
 
-        let event = Event::Action(ActionEvent::ContextMenuClick(ActionType::from(id)));
+        let event = Event::Action(ActionType::from(id));
         (*_self).send_channel.send(event).unwrap();
     }
 }
