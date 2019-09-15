@@ -1,5 +1,6 @@
 use std::process::{Command, Stdio};
 use std::io::{Write};
+use log::error;
 
 pub struct LinuxClipboardManager {}
 
@@ -31,8 +32,8 @@ impl super::ClipboardManager for LinuxClipboardManager {
             if let Some(output) = stdin {
                 let res = output.write_all(payload.as_bytes());
 
-                if let Err(_) = res {
-                    // TODO: log error
+                if let Err(e) = res {
+                    error!("Could not set clipboard: {}", e);
                 }
             }
         }
@@ -41,8 +42,6 @@ impl super::ClipboardManager for LinuxClipboardManager {
 
 impl LinuxClipboardManager {
     pub fn new() -> LinuxClipboardManager {
-        // TODO: check if xclip is present and log an error otherwise.
-
         LinuxClipboardManager{}
     }
 }
