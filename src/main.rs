@@ -27,6 +27,7 @@ use std::io::{BufReader, BufRead};
 
 mod ui;
 mod event;
+mod check;
 mod bridge;
 mod engine;
 mod config;
@@ -154,6 +155,9 @@ fn main() {
         restart_main(config_set);
         return;
     }
+
+    // Defaults to start subcommand
+    start_main(config_set);
 }
 
 /// Daemon subcommand, start the event loop and spawn a background thread worker
@@ -164,6 +168,8 @@ fn daemon_main(config_set: ConfigSet) {
         println!("espanso is already running.");
         exit(3);
     }
+
+    precheck_guard();
 
     // Initialize log
     let log_level = match config_set.default.log_level {
@@ -260,6 +266,8 @@ fn start_main(config_set: ConfigSet) {
         exit(3);
     }
     release_lock(lock_file.unwrap());
+
+    precheck_guard();
 
     if cfg!(target_os = "windows") {
         // TODO: start windows detached
@@ -468,4 +476,14 @@ fn acquire_lock() -> Option<File> {
 
 fn release_lock(lock_file: File) {
     lock_file.unlock().unwrap()
+}
+
+/// Used to make sure all the required dependencies are present before starting espanso.
+fn precheck_guard() {
+    let satisfied = check::check_dependencies();
+    if !satisfied {
+        println!();
+        println!("Pre-check was not successful, espanso could not be started.");
+        exit(5);
+    }
 }
