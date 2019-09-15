@@ -183,7 +183,7 @@ void event_callback(XPointer p, XRecordInterceptData *hook)
     int res = XLookupString(&event, buffer.data(), buffer.size(), NULL, NULL);
 
     switch (event_type) {
-        case KeyRelease:
+        case KeyPress:
             //printf ("%d %d %s\n", key_code, res, buffer.data());
             if (res > 0 && key_code != 22) {  // Printable character, but not backspace
                 keypress_callback(context_instance, buffer.data(), buffer.size(), 0, key_code);
