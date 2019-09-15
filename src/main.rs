@@ -290,6 +290,15 @@ fn start_main(config_set: ConfigSet) {
             if sid < 0 {
                 exit(5);
             }
+
+            // Detach stdout and stderr
+            let null_path = std::ffi::CString::new("/dev/null").expect("CString unwrap failed");
+            let fd = libc::open(null_path.as_ptr(), libc::O_RDWR, 0);
+            if fd != -1 {
+                libc::dup2(fd, libc::STDIN_FILENO);
+                libc::dup2(fd, libc::STDOUT_FILENO);
+                libc::dup2(fd, libc::STDERR_FILENO);
+            }
         }
 
         daemon_main(config_set);
