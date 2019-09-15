@@ -3,6 +3,8 @@ use std::os::raw::c_void;
 use crate::event::*;
 use crate::event::KeyModifier::*;
 use crate::bridge::linux::*;
+use std::process::exit;
+use log::error;
 
 #[repr(C)]
 pub struct LinuxContext {
@@ -20,7 +22,11 @@ impl LinuxContext {
 
             register_keypress_callback(keypress_callback);
 
-            initialize(context_ptr);  // TODO: check initialization return codes
+            let res = initialize(context_ptr);
+            if res <= 0 {
+                error!("Could not initialize linux context, error: {}", res);
+                exit(10);
+            }
         }
 
         context

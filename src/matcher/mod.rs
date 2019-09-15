@@ -28,11 +28,11 @@ impl <'de> serde::Deserialize<'de> for Match {
 impl<'a> From<&'a AutoMatch> for Match{
     fn from(other: &'a AutoMatch) -> Self {
         lazy_static! {
-            static ref VarRegex: Regex = Regex::new("\\{\\{\\s*(\\w+)\\s*\\}\\}").unwrap();
+            static ref VAR_REGEX: Regex = Regex::new("\\{\\{\\s*(\\w+)\\s*\\}\\}").unwrap();
         }
 
         // Check if the match contains variables
-        let has_vars = VarRegex.is_match(&other.replace);
+        let has_vars = VAR_REGEX.is_match(&other.replace);
 
         Self {
             trigger: other.trigger.clone(),

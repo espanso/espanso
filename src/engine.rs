@@ -10,7 +10,6 @@ use crate::extension::Extension;
 use std::cell::RefCell;
 use std::process::exit;
 use std::collections::HashMap;
-use serde_yaml::Mapping;
 use regex::{Regex, Captures};
 
 pub struct Engine<'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>,
@@ -79,7 +78,7 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
 }
 
 lazy_static! {
-    static ref VarRegex: Regex = Regex::new("\\{\\{\\s*(?P<name>\\w+)\\s*\\}\\}").unwrap();
+    static ref VAR_REGEX: Regex = Regex::new("\\{\\{\\s*(?P<name>\\w+)\\s*\\}\\}").unwrap();
 }
 
 impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIManager>
@@ -95,7 +94,6 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
         self.keyboard_manager.delete_string(m.trigger.len() as i32);
 
         let target_string = if m._has_vars {
-            //self.extension_map.get("date").unwrap().calculate(Mapping::new()).unwrap()
             let mut output_map = HashMap::new();
 
             for variable in m.vars.iter() {
@@ -114,7 +112,7 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
             }
 
             // Replace the variables
-            let result = VarRegex.replace_all(&m.replace, |caps: &Captures| {
+            let result = VAR_REGEX.replace_all(&m.replace, |caps: &Captures| {
                 let var_name = caps.name("name").unwrap().as_str();
                 let output = output_map.get(var_name);
                 output.unwrap()
