@@ -1,17 +1,29 @@
+<img src="/images/icongreensmall.png" align="right" />
+
 # espanso
 
-Cross-platform Text Expander written in Rust
+> Cross-platform Text Expander written in Rust
 
 ![example](/images/example.gif)
 
+##### What is a Text Expander?
+
+A text expander is a program that detects when you type
+a specific **keyword** and replaces it with **something else**. 
+This is useful in many ways:
+* Save a lot of typing, expanding common snippets and sentences.
+
+
 ### Features
 
-* Works on Windows, MacOS and Linux
-* Works with almost any program
-* Works with Emojis
+* Works on **Windows**, **macOS** and **Linux**
+* Works with almost **any** program
+* Works with **Emojis** 😄
+* **Date** expansion support
+* **Custom scripts** support
+* **Shell commands** support
+* **App-specific** configurations
 * File based configuration
-
-### What is a Text Expander?
 
 
 
@@ -23,4 +35,5 @@ Cross-platform Text Expander written in Rust
 
 ### License
 
-espanso is licensed under the [GPL-3.0 license](/LICENSE).
+espanso was created by [Federico Terzi](http://federicoterzi.com)
+and is licensed under the [GPL-3.0 license](/LICENSE).
