@@ -1,5 +1,6 @@
 use std::process::Command;
 use super::MenuItem;
+use log::error;
 
 pub struct LinuxUIManager {}
 
@@ -9,8 +10,8 @@ impl super::UIManager for LinuxUIManager {
                         .args(&["-t", "2000", "espanso", message])
                         .output();
 
-        if let Err(_) = res {
-            // TODO: print error log
+        if let Err(e) = res {
+            error!("Could not send a notification, error: {}", e);
         }
     }
 
@@ -21,8 +22,6 @@ impl super::UIManager for LinuxUIManager {
 
 impl LinuxUIManager {
     pub fn new() -> LinuxUIManager {
-        // TODO: check if notify-send is present and log an error otherwise.
-
         LinuxUIManager{}
     }
 }

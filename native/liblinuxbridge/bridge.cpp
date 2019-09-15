@@ -121,6 +121,8 @@ int32_t initialize(void * _context_instance) {
     }
 
     xdo_context = xdo_new(NULL);
+
+    return 1;
 }
 
 int32_t eventloop() {
