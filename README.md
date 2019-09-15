@@ -8,16 +8,18 @@
 
 ##### What is a Text Expander?
 
-A text expander is a program that detects when you type
+A *text expander* is a program that detects when you type
 a specific **keyword** and replaces it with **something else**. 
 This is useful in many ways:
-* Save a lot of typing, expanding common snippets and sentences.
-
+* **Save a lot of typing**, expanding common sentences.
+* Create **system-wide** code snippets.
+* Execute **custom scripts**
+* Use **emojis** like a pro.
 
 ### Features
 
 * Works on **Windows**, **macOS** and **Linux**
-* Works with almost **any** program
+* Works with almost **any program**
 * Works with **Emojis** 😄
 * **Date** expansion support
 * **Custom scripts** support
