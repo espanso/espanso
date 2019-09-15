@@ -87,3 +87,47 @@ impl <M: Matcher> KeyEventReceiver for M {
         }
     }
 }
+
+
+// TESTS
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_match_has_vars_should_be_false() {
+        let match_str = r###"
+        trigger: ":test"
+        replace: "There are no variables"
+        "###;
+
+        let _match : Match = serde_yaml::from_str(match_str).unwrap();
+
+        assert_eq!(_match._has_vars, false);
+    }
+
+    #[test]
+    fn test_match_has_vars_should_be_true() {
+        let match_str = r###"
+        trigger: ":test"
+        replace: "There are {{one}} and {{two}} variables"
+        "###;
+
+        let _match : Match = serde_yaml::from_str(match_str).unwrap();
+
+        assert_eq!(_match._has_vars, true);
+    }
+
+    #[test]
+    fn test_match_has_vars_with_spaces_should_be_true() {
+        let match_str = r###"
+        trigger: ":test"
+        replace: "There is {{ one }} variable"
+        "###;
+
+        let _match : Match = serde_yaml::from_str(match_str).unwrap();
+
+        assert_eq!(_match._has_vars, true);
+    }
+}
