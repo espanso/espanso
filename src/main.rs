@@ -1,3 +1,6 @@
+#[macro_use]
+extern crate lazy_static;
+
 use std::thread;
 use std::fs::{File, OpenOptions};
 use std::path::Path;
@@ -33,6 +36,7 @@ mod matcher;
 mod keyboard;
 mod protocol;
 mod clipboard;
+mod extension;
 
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 const LOG_FILE: &str = "espanso.log";
@@ -223,12 +227,15 @@ fn daemon_background(receive_channel: Receiver<Event>, config_set: ConfigSet) {
 
     let clipboard_manager = clipboard::get_manager();
 
-    let manager = keyboard::get_manager();
+    let keyboard_manager = keyboard::get_manager();
 
-    let engine = Engine::new(&manager,
+    let extensions = extension::get_extensions();
+
+    let engine = Engine::new(&keyboard_manager,
                              &clipboard_manager,
                              &config_manager,
-                             &ui_manager
+                             &ui_manager,
+                             extensions,
     );
 
     let matcher = ScrollingMatcher::new(&config_manager, &engine);
