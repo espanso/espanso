@@ -180,6 +180,11 @@ impl ConfigSet {
                     continue;
                 }
 
+                // Skip non-yaml config files
+                if path.extension().unwrap_or_default().to_str().unwrap_or_default() != "yaml" {
+                    continue;
+                }
+
                 let mut config = Configs::load_config(path.as_path())?;
 
                 if !config.validate_specific_config() {
@@ -633,5 +638,33 @@ mod tests {
         assert_eq!(config_set.specific[0].matches.len(), 1);
 
         assert!(config_set.specific[0].matches.iter().find(|x| x.trigger == "hello" && x.replace == "newstring").is_some());
+    }
+
+    #[test]
+    fn test_only_yaml_files_are_loaded_from_config() {
+        let tmp_dir = TempDir::new().expect("unable to create temp directory");
+        let default_path = tmp_dir.path().join(DEFAULT_CONFIG_FILE_NAME);
+        fs::write(default_path, r###"
+        matches:
+            - trigger: ":lol"
+              replace: "LOL"
+            - trigger: ":yess"
+              replace: "Bob"
+        "###);
+
+        let specific_path = tmp_dir.path().join("specific.zzz");
+        let specific_path_copy = specific_path.clone();
+        fs::write(specific_path, r###"
+        name: specific1
+
+        exclude_parent_matches: true
+
+        matches:
+            - trigger: "hello"
+              replace: "newstring"
+        "###);
+
+        let config_set = ConfigSet::load(tmp_dir.path()).unwrap();
+        assert_eq!(config_set.specific.len(), 0);
     }
 }
