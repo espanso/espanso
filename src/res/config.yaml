@@ -23,7 +23,7 @@ matches:
   # Accented letters
   - trigger: "e'"
     replace: "è"
-  - trigger: "e/"
+  - trigger: "e//"
     replace: "é"
   - trigger: "a'"
     replace: "à"
