@@ -2,6 +2,10 @@
 name = "espanso"
 version = "0.1.0"
 authors = ["Federico Terzi <federicoterzi96@gmail.com>"]
+license = "GPL-3.0"
+description = "Cross-platform Text Expander written in Rust"
+readme = "README.md"
+homepage = "https://github.com/federico-terzi/espanso"
 edition = "2018"
 build="build.rs"
 
