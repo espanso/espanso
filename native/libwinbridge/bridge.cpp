@@ -110,7 +110,7 @@ LRESULT CALLBACK window_procedure(HWND window, unsigned int msg, WPARAM wp, LPAR
             SetWindowText(hwnd_st_u, ptr.get());
 
             // Show the window
-            ShowWindow(nw, SW_SHOW);
+            ShowWindow(nw, SW_SHOWNOACTIVATE);
             break;
         }
         case APPWM_NOTIFICATION_CLOSE:  // Request to close a notification
