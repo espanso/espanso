@@ -1,10 +1,8 @@
-<img src="/images/icongreensmall.png" align="right" />
-
 ![espanso](/images/titlebar.png)
 
 > Cross-platform Text Expander written in Rust
 
-![example](/images/example.gif)
+<img src="/images/example.gif" align="center" />
 
 ##### What is a Text Expander?
 
