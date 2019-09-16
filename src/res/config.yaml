@@ -2,13 +2,32 @@
 
 # This is the default configuration file, change it as you like it
 # You can refer to the official documentation:
+# https://github.com/federico-terzi/espanso
 
 # Matches are the substitution rules, when you type the "trigger" string
 # it gets replaced by the "replace" string.
 matches:
-  # Default
+  # Simple text replacement
   - trigger: ":espanso"
     replace: "Hi there!"
+
+  # Dates
+  - trigger: ":date"
+    replace: "{{mydate}}"
+    vars:
+      - name: mydate
+        type: date
+        params:
+          format: "%m/%d/%Y"
+
+  # Shell commands
+  - trigger: ":shell"
+    replace: "{{output}}"
+    vars:
+      - name: output
+        type: shell
+        params:
+          cmd: "echo Hello from you shell"
 
   # Emojis
   - trigger: ":lol"
@@ -21,29 +40,21 @@ matches:
     replace: "☹☹☹☹"
 
   # Accented letters
-  - trigger: "e'"
+  - trigger: "e''"
     replace: "è"
   - trigger: "e//"
     replace: "é"
-  - trigger: "a'"
+  - trigger: "a''"
     replace: "à"
-  - trigger: "i'"
+  - trigger: "i''"
     replace: "ì"
-  - trigger: "o'"
+  - trigger: "o''"
     replace: "ò"
-  - trigger: "u'"
+  - trigger: "u''"
     replace: "ù"
 
   # Capital accented letters
-  - trigger: "E'"
+  - trigger: "E''"
     replace: "È"
-  - trigger: "E/"
+  - trigger: "E//"
     replace: "É"
-  - trigger: "A'"
-    replace: "À"
-  - trigger: "I'"
-    replace: "Ì"
-  - trigger: "O'"
-    replace: "Ò"
-  - trigger: "U'"
-    replace: "Ù"
