@@ -568,12 +568,16 @@ int32_t start_daemon_process() {
     wchar_t cmd[MAX_PATH];
     swprintf(cmd, MAX_PATH, L"espanso.exe daemon");
 
+    // Get current espanso directory
+    TCHAR espansoFilePath[MAX_PATH];
+    GetModuleFileName(NULL, espansoFilePath, MAX_PATH);
+
     STARTUPINFO si = { sizeof(si) };
     PROCESS_INFORMATION pi;
 
     // Documentation: https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-createprocessw
     BOOL res = CreateProcess(
-            L"./espanso.exe",
+            espansoFilePath,
             cmd,
             NULL,
             NULL,
