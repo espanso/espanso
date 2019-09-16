@@ -29,6 +29,7 @@ mod macos;
 pub trait UIManager {
     fn notify(&self, message: &str);
     fn show_menu(&self, menu: Vec<MenuItem>);
+    fn cleanup(&self);
 }
 
 pub enum MenuItemType {

@@ -112,6 +112,11 @@ typedef void (*ContextMenuClickCallback)(void * self, int32_t id);
 extern ContextMenuClickCallback context_menu_click_callback;
 extern "C" void register_context_menu_click_callback(ContextMenuClickCallback callback);
 
+/*
+ * Hide the tray icon
+ */
+extern "C" void cleanup_ui();
+
 // NOTIFICATION
 
 /*

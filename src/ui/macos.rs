@@ -76,6 +76,10 @@ impl super::UIManager for MacUIManager {
 
         unsafe { show_context_menu(raw_menu.as_ptr(), raw_menu.len() as i32); }
     }
+
+    fn cleanup(&self) {
+        // Nothing to do here
+    }
 }
 
 impl MacUIManager {

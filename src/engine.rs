@@ -195,6 +195,7 @@ impl <'a, S: KeyboardManager, C: ClipboardManager,
             },
             ActionType::Exit => {
                 info!("Terminating espanso.");
+                self.ui_manager.cleanup();
                 exit(0);
             },
             _ => {}
