@@ -17,10 +17,8 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::io::{BufReader, Read};
-use std::io::Write;
 use std::os::unix::net::{UnixStream,UnixListener};
-use log::{info, error, warn};
+use log::{info, warn};
 use std::sync::mpsc::Sender;
 use super::IPCCommand;
 

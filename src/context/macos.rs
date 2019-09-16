@@ -20,13 +20,11 @@
 use std::sync::mpsc::Sender;
 use std::os::raw::c_void;
 use crate::bridge::macos::*;
-use crate::event::{Event, KeyEvent, KeyModifier, ActionEvent, ActionType};
+use crate::event::{Event, KeyEvent, KeyModifier, ActionType};
 use crate::event::KeyModifier::*;
-use std::fs::create_dir_all;
 use std::ffi::CString;
 use std::fs;
 use log::{info, error};
-use std::path::PathBuf;
 use std::process::exit;
 
 const STATUS_ICON_BINARY : &'static [u8] = include_bytes!("../res/mac/icon.png");
@@ -54,7 +52,7 @@ impl MacContext {
         });
 
         // Initialize the status icon path
-        let espanso_dir = MacContext::get_data_dir();
+        let espanso_dir = super::get_data_dir();
         let status_icon_target = espanso_dir.join("icon.png");
 
         if status_icon_target.exists() {

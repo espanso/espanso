@@ -24,9 +24,9 @@ use log::{info, warn, debug};
 use std::path::PathBuf;
 use std::process::Command;
 use crate::ui::{MenuItem, MenuItemType};
-use crate::context::macos::MacContext;
 use crate::bridge::macos::{MacMenuItem, show_context_menu};
 use std::os::raw::c_char;
+use crate::context;
 
 const NOTIFY_HELPER_BINARY : &'static [u8] = include_bytes!("../res/mac/EspansoNotifyHelper.zip");
 const DEFAULT_NOTIFICATION_DELAY : f64 = 1.5;
@@ -92,7 +92,7 @@ impl MacUIManager {
     }
 
     fn initialize_notify_helper() -> PathBuf {
-        let espanso_dir = MacContext::get_data_dir();
+        let espanso_dir = context::get_data_dir();
 
         info!("Initializing EspansoNotifyHelper in {}", espanso_dir.as_path().display());
 
