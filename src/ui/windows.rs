@@ -17,7 +17,7 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::bridge::windows::{show_notification, close_notification, WindowsMenuItem, show_context_menu};
+use crate::bridge::windows::{show_notification, close_notification, WindowsMenuItem, show_context_menu, cleanup_ui};
 use widestring::U16CString;
 use std::{thread, time};
 use log::{debug};
@@ -89,6 +89,12 @@ impl super::UIManager for WindowsUIManager {
         }
 
         unsafe { show_context_menu(raw_menu.as_ptr(), raw_menu.len() as i32); }
+    }
+
+    fn cleanup(&self) {
+        unsafe {
+            cleanup_ui();
+        }
     }
 }
 

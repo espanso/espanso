@@ -37,6 +37,10 @@ impl super::UIManager for LinuxUIManager {
     fn show_menu(&self, _menu: Vec<MenuItem>) {
         // Not implemented on linux
     }
+
+    fn cleanup(&self) {
+        // Nothing to do here
+    }
 }
 
 impl LinuxUIManager {

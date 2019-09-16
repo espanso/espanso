@@ -42,6 +42,7 @@ extern {
     pub fn show_context_menu(items: *const WindowsMenuItem, count: i32) -> i32;
     pub fn register_icon_click_callback(cb: extern fn(_self: *mut c_void));
     pub fn register_context_menu_click_callback(cb: extern fn(_self: *mut c_void, id: i32));
+    pub fn cleanup_ui();
 
     // CLIPBOARD
     pub fn get_clipboard(buffer: *mut u16, size: i32) -> i32;

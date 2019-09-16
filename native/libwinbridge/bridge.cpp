@@ -57,6 +57,7 @@ HWND nw = NULL;
 HWND hwnd_st_u = NULL;
 HBITMAP g_espanso_bmp = NULL;
 HICON g_espanso_ico = NULL;
+NOTIFYICONDATA nid = {};
 
 // Callbacks
 
@@ -376,7 +377,6 @@ int32_t initialize(void * self, wchar_t * ico_path, wchar_t * bmp_path) {
             SendMessage(nw, WM_SETICON, ICON_SMALL, (LPARAM)g_espanso_ico);
 
             //Notification
-            NOTIFYICONDATA nid = {};
             nid.cbSize = sizeof(nid);
             nid.hWnd = nw;
             nid.uID = 1;
@@ -558,6 +558,12 @@ int32_t show_context_menu(MenuItem * items, int32_t count) {
     return -1;
 }
 
+void cleanup_ui() {
+    Shell_NotifyIcon(NIM_DELETE, &nid);
+}
+
+// SYSTEM
+
 int32_t start_daemon_process() {
     wchar_t cmd[MAX_PATH];
     swprintf(cmd, MAX_PATH, L"espanso.exe daemon");
@@ -585,6 +591,8 @@ int32_t start_daemon_process() {
 
     return 1;
 }
+
+// CLIPBOARD
 
 int32_t set_clipboard(wchar_t *text) {
     const size_t len = wcslen(text) + 1;
