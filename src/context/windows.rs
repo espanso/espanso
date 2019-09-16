@@ -19,7 +19,7 @@
 
 use std::sync::mpsc::Sender;
 use crate::bridge::windows::*;
-use crate::event::{Event, KeyEvent, KeyModifier, ActionEvent, ActionType};
+use crate::event::{Event, KeyEvent, KeyModifier, ActionType};
 use crate::event::KeyModifier::*;
 use std::ffi::c_void;
 use std::fs::create_dir_all;

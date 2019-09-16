@@ -232,11 +232,12 @@ fn daemon_main(config_set: ConfigSet) {
 
     let context = context::new(send_channel.clone());
 
+    let config_set_copy = config_set.clone();
     thread::Builder::new().name("daemon_background".to_string()).spawn(move || {
-        daemon_background(receive_channel, config_set);
+        daemon_background(receive_channel, config_set_copy);
     }).expect("Unable to spawn daemon background thread");
 
-    let ipc_server = protocol::get_ipc_server(send_channel.clone());
+    let ipc_server = protocol::get_ipc_server(config_set, send_channel.clone());
     ipc_server.start();
 
     context.eventloop();
@@ -288,40 +289,46 @@ fn start_main(config_set: ConfigSet) {
 
     precheck_guard();
 
-    if cfg!(target_os = "windows") {
-        // TODO: start windows detached
-    }else{
-        unsafe {
-            let pid = libc::fork();
-            if pid < 0 {
-                error!("Unable to fork.");
-                exit(4);
-            }
-            if pid > 0 {  // Parent process exit
-                println!("daemon started!");
-                exit(0);
-            }
+    detach_daemon();
+}
 
-            // Spawned process
+#[cfg(target_os = "windows")]
+fn detach_daemon() {
+    // TODO
+}
 
-            // Create a new SID for the child process
-            let sid = libc::setsid();
-            if sid < 0 {
-                exit(5);
-            }
-
-            // Detach stdout and stderr
-            let null_path = std::ffi::CString::new("/dev/null").expect("CString unwrap failed");
-            let fd = libc::open(null_path.as_ptr(), libc::O_RDWR, 0);
-            if fd != -1 {
-                libc::dup2(fd, libc::STDIN_FILENO);
-                libc::dup2(fd, libc::STDOUT_FILENO);
-                libc::dup2(fd, libc::STDERR_FILENO);
-            }
+#[cfg(not(target_os = "windows"))]
+fn detach_daemon() {
+    unsafe {
+        let pid = libc::fork();
+        if pid < 0 {
+            error!("Unable to fork.");
+            exit(4);
+        }
+        if pid > 0 {  // Parent process exit
+            println!("daemon started!");
+            exit(0);
         }
 
-        daemon_main(config_set);
+        // Spawned process
+
+        // Create a new SID for the child process
+        let sid = libc::setsid();
+        if sid < 0 {
+            exit(5);
+        }
+
+        // Detach stdout and stderr
+        let null_path = std::ffi::CString::new("/dev/null").expect("CString unwrap failed");
+        let fd = libc::open(null_path.as_ptr(), libc::O_RDWR, 0);
+        if fd != -1 {
+            libc::dup2(fd, libc::STDIN_FILENO);
+            libc::dup2(fd, libc::STDOUT_FILENO);
+            libc::dup2(fd, libc::STDERR_FILENO);
+        }
     }
+
+    daemon_main(config_set);
 }
 
 /// status subcommand, print the current espanso status
@@ -454,7 +461,7 @@ fn cmd_main(config_set: ConfigSet, matches: &ArgMatches) {
 }
 
 fn send_command(config_set: ConfigSet, command: IPCCommand) -> Result<(), String> {
-    let ipc_client = protocol::get_ipc_client();
+    let ipc_client = protocol::get_ipc_client(config_set);
     ipc_client.send_command(command)
 }
 

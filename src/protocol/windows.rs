@@ -19,40 +19,37 @@
 
 use std::io::{BufReader, Read};
 use std::io::Write;
-use std::os::unix::net::{UnixStream,UnixListener};
 use log::{info, error, warn};
 use std::sync::mpsc::Sender;
+use std::net::{TcpListener, TcpStream, SocketAddr};
 use super::IPCCommand;
 
 use crate::context;
 use crate::event::*;
 use crate::protocol::{process_event, send_command};
+use crate::config::ConfigSet;
 
-const UNIX_SOCKET_NAME : &str = "espanso.sock";
-
-pub struct UnixIPCServer {
+pub struct WindowsIPCServer {
+    config_set: ConfigSet,
     event_channel: Sender<Event>,
 }
 
-impl UnixIPCServer {
-    pub fn new(event_channel: Sender<Event>) -> UnixIPCServer {
-        UnixIPCServer {event_channel}
+impl WindowsIPCServer {
+    pub fn new(config_set: ConfigSet, event_channel: Sender<Event>) -> WindowsIPCServer {
+        WindowsIPCServer {config_set, event_channel}
     }
 }
 
-impl super::IPCServer for UnixIPCServer {
+impl super::IPCServer for WindowsIPCServer {
     fn start(&self) {
         let event_channel = self.event_channel.clone();
+        let server_port = self.config_set.default.ipc_server_port;
         std::thread::Builder::new().name("ipc_server".to_string()).spawn(move || {
-            let espanso_dir = context::get_data_dir();
-            let unix_socket = espanso_dir.join(UNIX_SOCKET_NAME);
+            let listener = TcpListener::bind(
+                format!("127.0.0.1:{}", server_port)
+                ).expect("Error binding to IPC server port");
 
-            std::fs::remove_file(unix_socket.clone()).unwrap_or_else(|e| {
-                warn!("Unable to delete Unix socket: {}", e);
-            });
-            let listener = UnixListener::bind(unix_socket.clone()).expect("Can't bind to Unix Socket");
-
-            info!("Binded to IPC unix socket: {}", unix_socket.as_path().display());
+            info!("Binded to IPC tcp socket: {}", listener.local_addr().unwrap().to_string());
 
             for stream in listener.incoming() {
                 process_event(&event_channel, stream);
@@ -61,23 +58,21 @@ impl super::IPCServer for UnixIPCServer {
     }
 }
 
-pub struct UnixIPCClient {
-
+pub struct WindowsIPCClient {
+    config_set: ConfigSet,
 }
 
-impl UnixIPCClient {
-    pub fn new() -> UnixIPCClient {
-        UnixIPCClient{}
+impl WindowsIPCClient {
+    pub fn new(config_set: ConfigSet) -> WindowsIPCClient {
+        WindowsIPCClient{config_set}
     }
 }
 
-impl super::IPCClient for UnixIPCClient {
+impl super::IPCClient for WindowsIPCClient {
     fn send_command(&self, command: IPCCommand) -> Result<(), String> {
-        let espanso_dir = context::get_data_dir();
-        let unix_socket = espanso_dir.join(UNIX_SOCKET_NAME);
-
-        // Open the stream
-        let stream = UnixStream::connect(unix_socket);
+        let stream = TcpStream::connect(
+            ("127.0.0.1", self.config_set.default.ipc_server_port as u16)
+        );
 
         send_command(command, stream)
     }

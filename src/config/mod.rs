@@ -45,6 +45,7 @@ fn default_filter_class() -> String{ "".to_owned() }
 fn default_filter_exec() -> String{ "".to_owned() }
 fn default_disabled() -> bool{ false }
 fn default_log_level() -> i32 { 0 }
+fn default_ipc_server_port() -> i32 { 34982 }
 fn default_config_caching_interval() -> i32 { 800 }
 fn default_toggle_interval() -> u32 { 230 }
 fn default_backspace_limit() -> i32 { 3 }
@@ -70,6 +71,9 @@ pub struct Configs {
 
     #[serde(default = "default_log_level")]
     pub log_level: i32,
+
+    #[serde(default = "default_ipc_server_port")]
+    pub ipc_server_port: i32,
 
     #[serde(default = "default_config_caching_interval")]
     pub config_caching_interval: i32,
