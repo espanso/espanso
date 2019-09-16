@@ -37,7 +37,7 @@ impl MacContext {
     pub fn new(send_channel: Sender<Event>) -> Box<MacContext> {
         // Check accessibility
         unsafe {
-            let res = check_accessibility();
+            let res = prompt_accessibility();
 
             if res == 0 {
                 error!("Accessibility must be enabled to make espanso work on MacOS.");

@@ -49,8 +49,7 @@ pub fn check_dependencies() -> bool {
 
 #[cfg(target_os = "macos")]
 pub fn check_dependencies() -> bool {
-    // TODO: check accessibility
-
+    // Nothing to do here
     true
 }
 

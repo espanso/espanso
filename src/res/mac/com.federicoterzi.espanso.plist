@@ -6,9 +6,14 @@
     <string>com.federicoterzi.espanso</string>
     <key>ProgramArguments</key>
     <array>
-        <string>/Users/freddy/Documents/espanso</string>
+        <string>{{{espanso_path}}}</string>
+        <string>daemon</string>
     </array>
     <key>RunAtLoad</key>
     <true/>
+    <key>StandardErrorPath</key>
+    <string>/tmp/espanso.err</string>
+    <key>StandardOutPath</key>
+    <string>/tmp/espanso.out</string>
 </dict>
 </plist>

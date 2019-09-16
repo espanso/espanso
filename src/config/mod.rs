@@ -46,6 +46,7 @@ fn default_filter_exec() -> String{ "".to_owned() }
 fn default_disabled() -> bool{ false }
 fn default_log_level() -> i32 { 0 }
 fn default_ipc_server_port() -> i32 { 34982 }
+fn default_use_system_agent() -> bool { true }
 fn default_config_caching_interval() -> i32 { 800 }
 fn default_toggle_interval() -> u32 { 230 }
 fn default_backspace_limit() -> i32 { 3 }
@@ -74,6 +75,9 @@ pub struct Configs {
 
     #[serde(default = "default_ipc_server_port")]
     pub ipc_server_port: i32,
+
+    #[serde(default = "default_use_system_agent")]
+    pub use_system_agent: bool,
 
     #[serde(default = "default_config_caching_interval")]
     pub config_caching_interval: i32,
@@ -126,6 +130,8 @@ impl Configs {
         validate_field!(result, self.toggle_key, KeyModifier::default());
         validate_field!(result, self.toggle_interval, default_toggle_interval());
         validate_field!(result, self.backspace_limit, default_backspace_limit());
+        validate_field!(result, self.ipc_server_port, default_ipc_server_port());
+        validate_field!(result, self.use_system_agent, default_use_system_agent());
 
         result
     }

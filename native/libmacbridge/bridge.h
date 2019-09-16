@@ -105,6 +105,18 @@ extern "C" void register_context_menu_click_callback(ContextMenuClickCallback ca
 int32_t check_accessibility();
 
 /*
+ * Prompt to authorize the accessibility features.
+ * @return
+ */
+int32_t prompt_accessibility();
+
+/*
+ * Open Security & Privacy settings panel
+ * @return
+ */
+void open_settings_panel();
+
+/*
  * Return the active NSRunningApplication path
  */
 int32_t get_active_app_bundle(char * buffer, int32_t size);
