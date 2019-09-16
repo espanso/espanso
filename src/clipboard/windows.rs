@@ -19,6 +19,8 @@
 
 use std::process::{Command, Stdio};
 use std::io::{Write};
+use widestring::U16CString;
+use crate::bridge::windows::{set_clipboard, get_clipboard};
 
 pub struct WindowsClipboardManager {
 
@@ -32,10 +34,25 @@ impl WindowsClipboardManager {
 
 impl super::ClipboardManager for WindowsClipboardManager {
     fn get_clipboard(&self) -> Option<String>  {
-        unimplemented!();
+        unsafe {
+            let mut buffer : [u16; 2000] = [0; 2000];
+            let res = get_clipboard(buffer.as_mut_ptr(), buffer.len() as i32);
+
+            if res > 0 {
+                let c_string = U16CString::from_ptr_str(buffer.as_ptr());
+
+                let string = c_string.to_string_lossy();
+                return Some((*string).to_owned());
+            }
+        }
+
+        None
     }
 
     fn set_clipboard(&self, payload: &str) {
-        unimplemented!();
+        unsafe {
+            let payload_c = U16CString::from_str(payload).unwrap();
+            set_clipboard(payload_c.as_ptr());
+        }
     }
 }

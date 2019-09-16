@@ -475,6 +475,32 @@ void send_vkey(int32_t vk) {
     SendInput(vec.size(), vec.data(), sizeof(INPUT));
 }
 
+void trigger_paste() {
+    std::vector<INPUT> vec;
+
+    INPUT input = { 0 };
+
+    input.type = INPUT_KEYBOARD;
+    input.ki.wScan = 0;
+    input.ki.time = 0;
+    input.ki.dwExtraInfo = 0;
+    input.ki.wVk = VK_CONTROL;
+    input.ki.dwFlags = 0; // 0 for key press
+    vec.push_back(input);
+
+    input.ki.wVk = 0x56;  // V KEY
+    vec.push_back(input);
+
+    input.ki.dwFlags = KEYEVENTF_KEYUP; // KEYEVENTF_KEYUP for key release
+    vec.push_back(input);
+
+    input.ki.wVk = VK_CONTROL;
+    vec.push_back(input);
+
+    SendInput(vec.size(), vec.data(), sizeof(INPUT));
+}
+
+
 // SYSTEM
 
 int32_t get_active_window_name(wchar_t * buffer, int32_t size) {
@@ -558,4 +584,42 @@ int32_t start_daemon_process() {
     }
 
     return 1;
+}
+
+int32_t set_clipboard(wchar_t *text) {
+    const size_t len = wcslen(text) + 1;
+    HGLOBAL hMem =  GlobalAlloc(GMEM_MOVEABLE, len * sizeof(wchar_t));
+    memcpy(GlobalLock(hMem), text, len * sizeof(wchar_t));
+    GlobalUnlock(hMem);
+    if (!OpenClipboard(NULL)) {
+        return -1;
+    }
+    EmptyClipboard();
+    if (!SetClipboardData(CF_UNICODETEXT, hMem)) {
+        return -2;
+    }
+    CloseClipboard();
+}
+
+int32_t get_clipboard(wchar_t *buffer, int32_t size) {
+    if (!OpenClipboard(NULL)) {
+        return -1;
+    }
+
+    // Get handle of clipboard object for ANSI text
+    HANDLE hData = GetClipboardData(CF_UNICODETEXT);
+    if (!hData) {
+        return -2;
+    }
+
+    HGLOBAL hMem = GlobalLock(hData);
+    if (!hMem) {
+        return -3;
+    }
+
+    GlobalUnlock(hMem);
+
+    swprintf(buffer, size, L"%s", hMem);
+
+    CloseClipboard();
 }

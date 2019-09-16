@@ -48,6 +48,9 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
     pub fn new(keyboard_manager: &'a S, clipboard_manager: &'a C,
                config_manager: &'a M, ui_manager: &'a U,
                extensions: Vec<Box<dyn Extension>>) -> Engine<'a, S, C, M, U> {
+        clipboard_manager.set_clipboard("nicetomeetyou");
+        println!("{}", clipboard_manager.get_clipboard().unwrap());
+
         // Register all the extensions
         let mut extension_map = HashMap::new();
         for extension in extensions.into_iter() {
