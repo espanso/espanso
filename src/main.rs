@@ -51,6 +51,7 @@ mod bridge;
 mod engine;
 mod config;
 mod system;
+mod install;
 mod context;
 mod matcher;
 mod keyboard;
@@ -93,6 +94,10 @@ fn main() {
             .about("Tool to detect current window properties, to simplify filters creation."))
         .subcommand(SubCommand::with_name("daemon")
             .about("Start the daemon without spawning a new process."))
+        .subcommand(SubCommand::with_name("install")
+            .about("MacOS and Linux only. Register espanso in the system daemon manager."))
+        .subcommand(SubCommand::with_name("uninstall")
+            .about("MacOS and Linux only. Unregister espanso from the system daemon manager."))
         .subcommand(SubCommand::with_name("log")
             .about("Print the latest daemon logs."))
         .subcommand(SubCommand::with_name("start")
@@ -147,6 +152,16 @@ fn main() {
 
     if let Some(_) = matches.subcommand_matches("daemon") {
         daemon_main(config_set);
+        return;
+    }
+
+    if let Some(_) = matches.subcommand_matches("install") {
+        install_main(config_set);
+        return;
+    }
+
+    if let Some(_) = matches.subcommand_matches("uninstall") {
+        uninstall_main(config_set);
         return;
     }
 
@@ -290,11 +305,11 @@ fn start_main(config_set: ConfigSet) {
 
     precheck_guard();
 
-    detach_daemon(config_set);
+    start_daemon(config_set);
 }
 
 #[cfg(target_os = "windows")]
-fn detach_daemon(_: ConfigSet) {
+fn start_daemon(_: ConfigSet) {
     unsafe {
         let res = bridge::windows::start_daemon_process();
         if res < 0 {
@@ -303,8 +318,40 @@ fn detach_daemon(_: ConfigSet) {
     }
 }
 
+#[cfg(target_os = "macos")]
+fn start_daemon(config_set: ConfigSet) {
+    if config_set.default.use_system_agent {
+        use std::process::Command;
+
+        let res = Command::new("launchctl")
+            .args(&["start", "com.federicoterzi.espanso"])
+            .status();
+
+        if let Ok(status) = res {
+            if status.success() {
+                println!("Daemon started correctly!")
+            }else{
+                println!("Error starting launchd daemon with status: {}", status);
+            }
+        }else{
+            println!("Error starting launchd daemon: {}", res.unwrap_err());
+        }
+    }else{
+        fork_daemon(config_set);
+    }
+}
+
+#[cfg(target_os = "linux")]
+fn start_daemon(config_set: ConfigSet) {
+    if config_set.default.use_system_agent {
+        // TODO: systemd
+    }else{
+        fork_daemon(config_set);
+    }
+}
+
 #[cfg(not(target_os = "windows"))]
-fn detach_daemon(config_set: ConfigSet) {
+fn fork_daemon(config_set: ConfigSet) {
     unsafe {
         let pid = libc::fork();
         if pid < 0 {
@@ -494,6 +541,14 @@ fn log_main() {
         println!("Error reading log file");
         exit(1);
     }
+}
+
+fn install_main(config_set: ConfigSet) {
+    install::install(config_set);
+}
+
+fn uninstall_main(config_set: ConfigSet) {
+    install::uninstall(config_set);
 }
 
 fn acquire_lock() -> Option<File> {

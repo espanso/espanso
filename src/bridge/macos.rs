@@ -34,6 +34,8 @@ extern {
 
     // System
     pub fn check_accessibility() -> i32;
+    pub fn prompt_accessibility() -> i32;
+    pub fn open_settings_panel();
     pub fn get_active_app_bundle(buffer: *mut c_char, size: i32) -> i32;
     pub fn get_active_app_identifier(buffer: *mut c_char, size: i32) -> i32;
 
