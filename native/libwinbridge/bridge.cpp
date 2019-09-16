@@ -204,8 +204,8 @@ LRESULT CALLBACK window_procedure(HWND window, unsigned int msg, WPARAM wp, LPAR
             // Convert the input data
             RAWINPUT* raw = reinterpret_cast<RAWINPUT*>(lpb.data());
 
-            // Make sure it's a keyboard type event, relative to a key release.
-            if (raw->header.dwType == RIM_TYPEKEYBOARD && raw->data.keyboard.Message == WM_KEYUP)
+            // Make sure it's a keyboard type event, relative to a key press.
+            if (raw->header.dwType == RIM_TYPEKEYBOARD && raw->data.keyboard.Message == WM_KEYDOWN)
             {
                 DWORD currentTick = GetTickCount();
 
