@@ -29,7 +29,6 @@ lazy_static = "1.4.0"
 [target.'cfg(unix)'.dependencies]
 libc = "0.2.62"
 
-
 [dev-dependencies]
 tempfile = "3.1.0"
 
