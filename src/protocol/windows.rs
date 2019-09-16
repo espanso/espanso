@@ -17,14 +17,11 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::io::{BufReader, Read};
-use std::io::Write;
-use log::{info, error, warn};
+use log::{info};
 use std::sync::mpsc::Sender;
-use std::net::{TcpListener, TcpStream, SocketAddr};
+use std::net::{TcpListener, TcpStream};
 use super::IPCCommand;
 
-use crate::context;
 use crate::event::*;
 use crate::protocol::{process_event, send_command};
 use crate::config::ConfigSet;

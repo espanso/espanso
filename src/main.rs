@@ -30,7 +30,7 @@ use std::time::Duration;
 
 use clap::{App, Arg, SubCommand, ArgMatches};
 use fs2::FileExt;
-use log::{error, info, warn, LevelFilter};
+use log::{info, warn, LevelFilter};
 use simplelog::{CombinedLogger, SharedLogger, TerminalMode, TermLogger, WriteLogger};
 
 use crate::config::ConfigSet;
@@ -226,6 +226,7 @@ fn daemon_main(config_set: ConfigSet) {
     // Activate logging for panics
     log_panics::init();
 
+    info!("espanso version {}", VERSION);
     info!("starting daemon...");
 
     let (send_channel, receive_channel) = mpsc::channel();
@@ -289,11 +290,11 @@ fn start_main(config_set: ConfigSet) {
 
     precheck_guard();
 
-    detach_daemon();
+    detach_daemon(config_set);
 }
 
 #[cfg(target_os = "windows")]
-fn detach_daemon() {
+fn detach_daemon(_: ConfigSet) {
     unsafe {
         let res = bridge::windows::start_daemon_process();
         if res < 0 {
@@ -303,11 +304,11 @@ fn detach_daemon() {
 }
 
 #[cfg(not(target_os = "windows"))]
-fn detach_daemon() {
+fn detach_daemon(config_set: ConfigSet) {
     unsafe {
         let pid = libc::fork();
         if pid < 0 {
-            error!("Unable to fork.");
+            println!("Unable to fork.");
             exit(4);
         }
         if pid > 0 {  // Parent process exit

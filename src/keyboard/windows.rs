@@ -17,8 +17,6 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::sync::mpsc;
-use std::os::raw::{c_void};
 use widestring::{U16CString};
 use crate::bridge::windows::*;
 

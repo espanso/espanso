@@ -17,8 +17,6 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::process::{Command, Stdio};
-use std::io::{Write};
 use widestring::U16CString;
 use crate::bridge::windows::{set_clipboard, get_clipboard};
 
