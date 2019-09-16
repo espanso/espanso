@@ -41,9 +41,11 @@ Source: "{{{app_icon}}}"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\icon.ico"
+Name: "{userstartup}\espanso"; Filename: "{app}\espanso.exe"; Tasks:StartMenuEntry;
 
 [Tasks]
 Name: modifypath; Description: Add espanso to PATH ( recommended );
+Name: "StartMenuEntry" ; Description: "Start espanso at Windows startup" ;
 
 [Code]
 const
