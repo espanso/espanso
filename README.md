@@ -1,6 +1,6 @@
 <img src="/images/icongreensmall.png" align="right" />
 
-# espanso
+![espanso](/images/titlebar.png)
 
 > Cross-platform Text Expander written in Rust
 
