@@ -22,27 +22,22 @@ use crate::bridge::windows::*;
 use crate::event::{Event, KeyEvent, KeyModifier, ActionType};
 use crate::event::KeyModifier::*;
 use std::ffi::c_void;
-use std::fs::create_dir_all;
-use std::{fs, thread, time};
-use std::sync::{Arc, Mutex};
+use std::{fs};
 use widestring::U16CString;
-use log::{info, debug, error};
+use log::{info};
 
 const BMP_BINARY : &'static [u8] = include_bytes!("../res/win/espanso.bmp");
 const ICO_BINARY : &'static [u8] = include_bytes!("../res/win/espanso.ico");
 
 pub struct WindowsContext {
     send_channel: Sender<Event>,
-    id: Arc<Mutex<i32>>
 }
 
 impl WindowsContext {
     pub fn new(send_channel: Sender<Event>) -> Box<WindowsContext> {
         // Initialize image resources
 
-        let data_dir = dirs::data_dir().expect("Can't obtain data_dir(), terminating.");
-        let espanso_dir = data_dir.join("espanso");
-        let res = create_dir_all(&espanso_dir);
+        let espanso_dir = super::get_data_dir();
 
         info!("Initializing Espanso resources in {}", espanso_dir.as_path().display());
 
@@ -69,12 +64,10 @@ impl WindowsContext {
         let bmp_icon = espanso_bmp_image.to_str().unwrap_or_default();
         let ico_icon = espanso_ico_image.to_str().unwrap_or_default();
 
-        let id = Arc::new(Mutex::new(0));
         let send_channel = send_channel;
 
         let context = Box::new(WindowsContext{
             send_channel,
-            id
         });
 
         unsafe {

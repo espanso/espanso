@@ -17,19 +17,13 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::process::Command;
 use crate::bridge::windows::{show_notification, close_notification, WindowsMenuItem, show_context_menu};
 use widestring::U16CString;
-use std::{fs, thread, time};
-use log::{info, debug};
+use std::{thread, time};
+use log::{debug};
 use std::sync::Mutex;
 use std::sync::Arc;
-use std::fs::create_dir_all;
-use std::os::raw::c_void;
 use crate::ui::{MenuItem, MenuItemType};
-
-const BMP_BINARY : &'static [u8] = include_bytes!("../res/win/espanso.bmp");
-const ICO_BINARY : &'static [u8] = include_bytes!("../res/win/espanso.ico");
 
 pub struct WindowsUIManager {
     id: Arc<Mutex<i32>>
@@ -45,8 +39,8 @@ impl super::UIManager for WindowsUIManager {
 
         // Setup a timeout to close the notification
         let id = Arc::clone(&self.id);
-        thread::Builder::new().name("notification_thread".to_string()).spawn(move || {
-            for i in 1..10 {
+        let _ = thread::Builder::new().name("notification_thread".to_string()).spawn(move || {
+            for _ in 1..10 {
                 let duration = time::Duration::from_millis(200);
                 thread::sleep(duration);
 
