@@ -23,6 +23,10 @@
 #include <stdio.h>
 #include <stdint.h>
 
+// SYSTEM
+
+extern "C" int32_t start_daemon_process();
+
 extern void * manager_instance;
 
 /*

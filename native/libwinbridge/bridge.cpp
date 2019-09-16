@@ -27,7 +27,7 @@
 
 #define UNICODE
 
-#include <Windows.h>
+#include <windows.h>
 #include <strsafe.h>
 #include <shellapi.h>
 
@@ -530,4 +530,32 @@ int32_t show_context_menu(MenuItem * items, int32_t count) {
     }
 
     return -1;
+}
+
+int32_t start_daemon_process() {
+    wchar_t cmd[MAX_PATH];
+    swprintf(cmd, MAX_PATH, L"espanso.exe daemon");
+
+    STARTUPINFO si = { sizeof(si) };
+    PROCESS_INFORMATION pi;
+
+    // Documentation: https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-createprocessw
+    BOOL res = CreateProcess(
+            L"./espanso.exe",
+            cmd,
+            NULL,
+            NULL,
+            FALSE,
+            DETACHED_PROCESS,
+            NULL,
+            NULL,
+            &si,
+            &pi
+    );
+
+    if (!res) {
+        return -1;
+    }
+
+    return 1;
 }

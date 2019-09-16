@@ -294,7 +294,12 @@ fn start_main(config_set: ConfigSet) {
 
 #[cfg(target_os = "windows")]
 fn detach_daemon() {
-    // TODO
+    unsafe {
+        let res = bridge::windows::start_daemon_process();
+        if res < 0 {
+            println!("Error starting daemon process");
+        }
+    }
 }
 
 #[cfg(not(target_os = "windows"))]

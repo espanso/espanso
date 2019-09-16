@@ -29,6 +29,7 @@ pub struct WindowsMenuItem {
 #[allow(improper_ctypes)]
 #[link(name="winbridge", kind="static")]
 extern {
+    pub fn start_daemon_process() -> i32;
     pub fn initialize(s: *const c_void, ico_path: *const u16, bmp_path: *const u16) -> i32;
 
     // SYSTEM
