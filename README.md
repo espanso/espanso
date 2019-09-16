@@ -2,7 +2,10 @@
 
 > Cross-platform Text Expander written in Rust
 
-<img src="/images/example.gif" align="center" />
+<p align="center">
+  <img src="/images/example.gif" alt="espanso example" />
+</p>
+
 
 ##### What is a Text Expander?
 
