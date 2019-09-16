@@ -43,6 +43,10 @@ extern {
     pub fn register_icon_click_callback(cb: extern fn(_self: *mut c_void));
     pub fn register_context_menu_click_callback(cb: extern fn(_self: *mut c_void, id: i32));
 
+    // CLIPBOARD
+    pub fn get_clipboard(buffer: *mut u16, size: i32) -> i32;
+    pub fn set_clipboard(payload: *const u16) -> i32;
+
     // KEYBOARD
     pub fn register_keypress_callback(cb: extern fn(_self: *mut c_void, *const i32,
                                                 i32, i32, i32));
@@ -51,4 +55,5 @@ extern {
     pub fn send_string(string: *const u16);
     pub fn send_vkey(vk: i32);
     pub fn delete_string(count: i32);
+    pub fn trigger_paste();
 }

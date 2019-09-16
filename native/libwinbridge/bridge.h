@@ -69,6 +69,11 @@ extern "C" void send_vkey(int32_t vk);
  */
 extern "C" void delete_string(int32_t count);
 
+/*
+ * Send the Paste keyboard shortcut (CTRL+V)
+ */
+extern "C" void trigger_paste();
+
 // Detect current application commands
 
 /*
@@ -119,5 +124,16 @@ extern "C" int32_t show_notification(wchar_t * message);
  */
 extern "C" void close_notification();
 
+// CLIPBOARD
+
+/*
+ * Return the clipboard text
+ */
+extern "C" int32_t get_clipboard(wchar_t * buffer, int32_t size);
+
+/*
+ * Set the clipboard text
+ */
+extern "C" int32_t set_clipboard(wchar_t * text);
 
 #endif //ESPANSO_BRIDGE_H

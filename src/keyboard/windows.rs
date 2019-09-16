@@ -47,7 +47,9 @@ impl super::KeyboardManager for WindowsKeyboardManager {
     }
 
     fn trigger_paste(&self) {
-        unimplemented!()
+        unsafe {
+            trigger_paste();
+        }
     }
 
     fn delete_string(&self, count: i32) {
