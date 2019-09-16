@@ -1,6 +1,6 @@
 ![espanso](images/titlebar.png)
 
-> Cross-platform Text Expander written in Rust
+> A cross-platform Text Expander written in Rust
 
 ![Language](https://img.shields.io/badge/language-rust-orange)
 ![Platforms](https://img.shields.io/badge/platforms-Windows%2C%20macOS%20and%20Linux-blue)
@@ -8,7 +8,7 @@
 
 ![example](images/example.gif)
 
-##### What is a Text Expander?
+#### What is a Text Expander?
 
 A *text expander* is a program that detects when you type
 a specific **keyword** and replaces it with **something else**. 
@@ -18,7 +18,9 @@ This is useful in many ways:
 * Execute **custom scripts**
 * Use **emojis** like a pro.
 
-### Features
+___
+
+## Key Features
 
 * Works on **Windows**, **macOS** and **Linux**
 * Works with almost **any program**
