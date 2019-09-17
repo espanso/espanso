@@ -45,13 +45,21 @@ ___
 
 ### <a name="install-windows"></a>Windows
 
+TODO
+
 ### <a name="install-linux"></a>Linux
+
+TODO
 
 ### <a name="install-macos"></a>MacOS
 
+TODO
+
 ## FAQ
 
+#### How does espanso work?
 
+TODO
 
 ## Donations
 
