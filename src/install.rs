@@ -20,8 +20,6 @@
 // This functions are used to register/unregister espanso from the system daemon manager.
 
 use crate::config::ConfigSet;
-use std::fs::create_dir_all;
-use std::process::{Command, ExitStatus};
 
 // INSTALLATION
 
@@ -36,7 +34,10 @@ const MAC_PLIST_CONTENT : &str = include_str!("res/mac/com.federicoterzi.espanso
 const MAC_PLIST_FILENAME : &str = "com.federicoterzi.espanso.plist";
 
 #[cfg(target_os = "macos")]
-pub fn install(config_set: ConfigSet) {
+pub fn install(_config_set: ConfigSet) {
+    use std::fs::create_dir_all;
+    use std::process::{Command, ExitStatus};
+
     let home_dir = dirs::home_dir().expect("Could not get user home directory");
     let library_dir = home_dir.join("Library");
     let agents_dir = library_dir.join("LaunchAgents");
@@ -81,7 +82,10 @@ pub fn install(config_set: ConfigSet) {
 }
 
 #[cfg(target_os = "macos")]
-pub fn uninstall(config_set: ConfigSet) {
+pub fn uninstall(_config_set: ConfigSet) {
+    use std::fs::create_dir_all;
+    use std::process::{Command, ExitStatus};
+
     let home_dir = dirs::home_dir().expect("Could not get user home directory");
     let library_dir = home_dir.join("Library");
     let agents_dir = library_dir.join("LaunchAgents");
@@ -101,6 +105,11 @@ pub fn uninstall(config_set: ConfigSet) {
 }
 
 #[cfg(target_os = "windows")]
-pub fn install(config_set: ConfigSet) {
+pub fn install(_config_set: ConfigSet) {
+    println!("Windows does not support system daemon integration.")
+}
+
+#[cfg(target_os = "windows")]
+pub fn uninstall(_config_set: ConfigSet) {
     println!("Windows does not support system daemon integration.")
 }

@@ -103,33 +103,36 @@ impl super::Context for WindowsContext {
 // Native bridge code
 
 extern fn keypress_callback(_self: *mut c_void, raw_buffer: *const i32, len: i32,
-                            is_modifier: i32, key_code: i32) {
+                            is_modifier: i32, key_code: i32, is_key_down: i32) {
     unsafe {
         let _self = _self as *mut WindowsContext;
+        if is_key_down != 0 {  // KEY DOWN EVENT
+            if is_modifier == 0 {  // Char event
+                // Convert the received buffer to a character
+                let buffer = std::slice::from_raw_parts(raw_buffer, len as usize);
+                let r = std::char::from_u32(buffer[0] as u32);
 
-        if is_modifier == 0 {  // Char event
-            // Convert the received buffer to a character
-            let buffer = std::slice::from_raw_parts(raw_buffer, len as usize);
-            let r = std::char::from_u32(buffer[0] as u32);
-
-            // Send the char through the channel
-            if let Some(c) = r {
-                let event = Event::Key(KeyEvent::Char(c));
-                (*_self).send_channel.send(event).unwrap();
+                // Send the char through the channel
+                if let Some(c) = r {
+                    let event = Event::Key(KeyEvent::Char(c));
+                    (*_self).send_channel.send(event).unwrap();
+                }
             }
-        }else{  // Modifier event
-            let modifier: Option<KeyModifier> = match key_code {
-                0x5B | 0x5C => Some(META),
-                0x10 => Some(SHIFT),
-                0x12 => Some(ALT),
-                0x11 => Some(CTRL),
-                0x08  => Some(BACKSPACE),
-                _ => None,
-            };
+        }else{  // KEY UP event
+            if is_modifier != 0 {  // Modifier event
+                let modifier: Option<KeyModifier> = match key_code {
+                    0x5B | 0x5C => Some(META),
+                    0x10 => Some(SHIFT),
+                    0x12 => Some(ALT),
+                    0x11 => Some(CTRL),
+                    0x08  => Some(BACKSPACE),
+                    _ => None,
+                };
 
-            if let Some(modifier) = modifier {
-                let event = Event::Key(KeyEvent::Modifier(modifier));
-                (*_self).send_channel.send(event).unwrap();
+                if let Some(modifier) = modifier {
+                    let event = Event::Key(KeyEvent::Modifier(modifier));
+                    (*_self).send_channel.send(event).unwrap();
+                }
             }
         }
     }
