@@ -46,7 +46,20 @@ ___
 
 ### <a name="install-windows"></a>Windows
 
-TODO
+The installation on Windows is pretty straightforward, navigate to the
+[Release](https://github.com/federico-terzi/espanso/releases) page and
+download the latest installer ( usually named like 
+`espanso-win-0.1.0.exe` ).
+
+Because espanso is not digitally signed, you may experience a warning from
+Windows Smartscreen. In this case, just click on "More info" (1) and then
+on "Run anyway" (2), as shown in the picture:
+
+![Windows Smartscreen](images/windows-smartscreen.png)
+
+If you completed the installation procedure, you should have espanso running.
+A good way to find out is by going on any text field and typing `:espanso`. 
+You should see "Hi there!" appear.
 
 ### <a name="install-linux"></a>Linux
 
