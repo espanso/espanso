@@ -75,7 +75,7 @@ def build_windows(package_info):
     TARGET_DIR = os.path.join(PACKAGER_TARGET_DIR, "win")
     os.makedirs(TARGET_DIR, exist_ok=True)
 
-    INSTALLER_NAME = "espanso-setup"
+    INSTALLER_NAME = f"espanso-win-{package_info.version}"
 
     # Inno setup
     shutil.copy("packager/win/modpath.iss", os.path.join(TARGET_DIR, "modpath.iss"))
