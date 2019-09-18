@@ -205,8 +205,15 @@ LRESULT CALLBACK window_procedure(HWND window, unsigned int msg, WPARAM wp, LPAR
             RAWINPUT* raw = reinterpret_cast<RAWINPUT*>(lpb.data());
 
             // Make sure it's a keyboard type event, relative to a key press.
-            if (raw->header.dwType == RIM_TYPEKEYBOARD && raw->data.keyboard.Message == WM_KEYDOWN)
+            if (raw->header.dwType == RIM_TYPEKEYBOARD)
             {
+                // We only want KEY UP AND KEY DOWN events
+                if (raw->data.keyboard.Message != WM_KEYDOWN && raw->data.keyboard.Message != WM_KEYUP) {
+                    return 0;
+                }
+
+                int is_key_down = raw->data.keyboard.Message == WM_KEYDOWN;
+
                 DWORD currentTick = GetTickCount();
 
                 // If enough time has passed between the last keypress and now, refresh the keyboard layout
@@ -241,9 +248,9 @@ LRESULT CALLBACK window_procedure(HWND window, unsigned int msg, WPARAM wp, LPAR
                     // We need to call the callback in two different ways based on the type of key
                     // The only modifier we use that has a result > 0 is the BACKSPACE, so we have to consider it.
                     if (result >= 1 && raw->data.keyboard.VKey != VK_BACK) {
-                        keypress_callback(manager_instance, reinterpret_cast<int32_t*>(buffer.data()), buffer.size(), 0, raw->data.keyboard.VKey);
+                        keypress_callback(manager_instance, reinterpret_cast<int32_t*>(buffer.data()), buffer.size(), 0, raw->data.keyboard.VKey, is_key_down);
                     }else{
-                        keypress_callback(manager_instance, nullptr, 0, 1, raw->data.keyboard.VKey);
+                        keypress_callback(manager_instance, nullptr, 0, 1, raw->data.keyboard.VKey, is_key_down);
                     }
                 }
             }
