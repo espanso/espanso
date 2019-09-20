@@ -23,18 +23,13 @@ use crate::config::ConfigSet;
 
 // INSTALLATION
 
-#[cfg(target_os = "linux")]
-pub fn install(config_set: ConfigSet) {
-    // TODO
-}
-
 #[cfg(target_os = "macos")]
 const MAC_PLIST_CONTENT : &str = include_str!("res/mac/com.federicoterzi.espanso.plist");
 #[cfg(target_os = "macos")]
 const MAC_PLIST_FILENAME : &str = "com.federicoterzi.espanso.plist";
 
 #[cfg(target_os = "macos")]
-pub fn install(_config_set: ConfigSet) {
+pub fn register(_config_set: ConfigSet) {
     use std::fs::create_dir_all;
     use std::process::{Command, ExitStatus};
 
@@ -82,7 +77,7 @@ pub fn install(_config_set: ConfigSet) {
 }
 
 #[cfg(target_os = "macos")]
-pub fn uninstall(_config_set: ConfigSet) {
+pub fn unregister(_config_set: ConfigSet) {
     use std::fs::create_dir_all;
     use std::process::{Command, ExitStatus};
 
@@ -104,12 +99,26 @@ pub fn uninstall(_config_set: ConfigSet) {
     }
 }
 
+// LINUX
+
+#[cfg(target_os = "linux")]
+pub fn register(config_set: ConfigSet) {
+    println!("Linux does not support automatic system daemon integration.");
+}
+
+#[cfg(target_os = "linux")]
+pub fn unregister(config_set: ConfigSet) {
+    println!("Linux does not support automatic system daemon integration.");
+}
+
+// WINDOWS
+
 #[cfg(target_os = "windows")]
-pub fn install(_config_set: ConfigSet) {
-    println!("Windows does not support system daemon integration.")
+pub fn register(_config_set: ConfigSet) {
+    println!("Windows does not support automatic system daemon integration.")
 }
 
 #[cfg(target_os = "windows")]
-pub fn uninstall(_config_set: ConfigSet) {
-    println!("Windows does not support system daemon integration.")
+pub fn unregister(_config_set: ConfigSet) {
+    println!("Windows does not support automatic system daemon integration.")
 }
