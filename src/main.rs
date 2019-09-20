@@ -51,7 +51,7 @@ mod bridge;
 mod engine;
 mod config;
 mod system;
-mod install;
+mod sysdaemon;
 mod context;
 mod matcher;
 mod keyboard;
@@ -94,10 +94,10 @@ fn main() {
             .about("Tool to detect current window properties, to simplify filters creation."))
         .subcommand(SubCommand::with_name("daemon")
             .about("Start the daemon without spawning a new process."))
-        .subcommand(SubCommand::with_name("install")
-            .about("MacOS and Linux only. Register espanso in the system daemon manager."))
-        .subcommand(SubCommand::with_name("uninstall")
-            .about("MacOS and Linux only. Unregister espanso from the system daemon manager."))
+        .subcommand(SubCommand::with_name("register")
+            .about("MacOS only. Register espanso in the system daemon manager."))
+        .subcommand(SubCommand::with_name("unregister")
+            .about("MacOS only. Unregister espanso from the system daemon manager."))
         .subcommand(SubCommand::with_name("log")
             .about("Print the latest daemon logs."))
         .subcommand(SubCommand::with_name("start")
@@ -155,13 +155,13 @@ fn main() {
         return;
     }
 
-    if let Some(_) = matches.subcommand_matches("install") {
-        install_main(config_set);
+    if let Some(_) = matches.subcommand_matches("register") {
+        register_main(config_set);
         return;
     }
 
-    if let Some(_) = matches.subcommand_matches("uninstall") {
-        uninstall_main(config_set);
+    if let Some(_) = matches.subcommand_matches("unregister") {
+        unregister_main(config_set);
         return;
     }
 
@@ -543,12 +543,12 @@ fn log_main() {
     }
 }
 
-fn install_main(config_set: ConfigSet) {
-    install::install(config_set);
+fn register_main(config_set: ConfigSet) {
+    sysdaemon::register(config_set);
 }
 
-fn uninstall_main(config_set: ConfigSet) {
-    install::uninstall(config_set);
+fn unregister_main(config_set: ConfigSet) {
+    sysdaemon::unregister(config_set);
 }
 
 fn acquire_lock() -> Option<File> {
