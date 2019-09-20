@@ -15,22 +15,27 @@ matrix:
     - os: linux
       dist: bionic
       sudo: false
+      compiler: gcc
       addons:
         apt:
           packages:
             - libx11-dev
             - libxtst-dev
       env:
+        - BUILD_SHARED_LIBS=ON
         - TARGET=i686-unknown-linux-gnu
+
     - os: linux
       dist: bionic
       sudo: false
+      compiler: gcc
       addons:
         apt:
           packages:
             - libx11-dev
             - libxtst-dev
       env:
+        - BUILD_SHARED_LIBS=ON
         - TARGET=x86_64-unknown-linux-gnu
 
     # OSX
