@@ -7,7 +7,7 @@ steps:
 
   - script: |
       set -ex
-      cat ./ssh/known_hosts
+      cat ~/.ssh/known_hosts
       git config --global user.email "federicoterzi96@gmail.com"
       git config --global user.email "Federico Terzi"
       VER=$(cat Cargo.toml| grep version -m 1 | awk -F '"' '{ print $2 }')
