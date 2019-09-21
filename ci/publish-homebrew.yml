@@ -1,15 +1,13 @@
-parameters:
-  github:
-    gitHubConnection: "MyGithubConnection"
-
 steps:
   - task: InstallSSHKey@0
     inputs:
-      knownHostsEntry: "|1|O7/oHnAkobor3z8tAi95ahYk64o=|QNEcrbUqutXSvEaPDYdiOgR4yV0= ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6TbQa+PXYPCPy6rbTrTtw7PHkccKrpp0yVhp5HdEIcKr6pLlVDBfOLX9QUsyCOV0wzfjIJNlGEYsdlLJizHhbn2mUjvSAHQqZETYP81eFzLQNnPHt4EVVUh7VfDESU84KezmD5QlWpXLmvU31/yMf+Se8xhHTvKSCZIFImWwoG6mbUoWf9nzpIoaSjB+weqqUUmpaaasXVal72J+UX2B+2RPW3RcT0eOzQgqlJL3RKrTJvdsjE3JEAvGq3lGHSZXy28G3skua2SmVi/w4yCE6gbODqnTWlg7+wC604ydGXA8VJiS5ap43JXiUFFAaQ=="
+      knownHostsEntry: "github.com ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6TbQa+PXYPCPy6rbTrTtw7PHkccKrpp0yVhp5HdEIcKr6pLlVDBfOLX9QUsyCOV0wzfjIJNlGEYsdlLJizHhbn2mUjvSAHQqZETYP81eFzLQNnPHt4EVVUh7VfDESU84KezmD5QlWpXLmvU31/yMf+Se8xhHTvKSCZIFImWwoG6mbUoWf9nzpIoaSjB+weqqUUmpaaasXVal72J+UX2B+2RPW3RcT0eOzQgqlJL3RKrTJvdsjE3JEAvGq3lGHSZXy28G3skua2SmVi/w4yCE6gbODqnTWlg7+wC604ydGXA8VJiS5ap43JXiUFFAaQ=="
       sshPublicKey: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCsB9zcHN84/T5URAsfIpb52HnJl2kUK7WWXyV9pFXaO6yz722JxzVq56J3TTrcUCDhM3DKSGKivB6n/tmLw4mefcY3t7kh8puAtaNrNnB4TWqVPFHZtnpYuYslp1rM92r7Bz1FHfVfsDZxqSWlGU/lp0gNEEgXbr2PCExbCh3TGTsKePARhMAtPEvyEZk1+8uA/HvUTjhuDp7P+BbejAsqtgVF0QoEvqDE5af8DZY6+i1cHRgwBYgSnOus8FHsZUGMyAJQtb+dD7imGw/nzokPJzbmQJwQetyhp52CfThpAm12EFtIU43imb8nndlVAmsIHF6czbmI5LP3U0UcTLct freddy@freddy-Z97M-DS3H"
       sshKeySecureFile: "azuressh"
+
   - script: |
       set -ex
+      cat ./ssh/known_hosts
       git config --global user.email "federicoterzi96@gmail.com"
       git config --global user.email "Federico Terzi"
       VER=$(cat Cargo.toml| grep version -m 1 | awk -F '"' '{ print $2 }')
