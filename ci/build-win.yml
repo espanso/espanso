@@ -1,10 +1,11 @@
 steps:
   - task: UsePythonVersion@0
     inputs:
-      versionSpec: '3.6'
+      versionSpec: '3.7.4'
       addToPath: true
 
   - script: |
+      python --version
       python -m pip install toml click
     displayName: Installing python dependencies
 
@@ -13,3 +14,4 @@ steps:
       copy "target\\release\\espanso-win-installer.exe" "espanso-win-installer.exe"
       dir
     displayName: "Build and packaging for Windows"
+
