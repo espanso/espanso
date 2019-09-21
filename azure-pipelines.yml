@@ -6,18 +6,6 @@
 trigger:
 - master
 
-strategy:
-  matrix:
-    linux:
-      imageName: 'ubuntu-latest'
-#    mac:
-#      imageName: 'macos-10.13'
-#    windows:
-#      imageName: 'vs2017-win2016'
-
-pool:
-  vmImage: $(imageName)
-
 jobs:
   - job: Linux
     pool:
