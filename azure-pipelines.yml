@@ -26,6 +26,7 @@ jobs:
       - template: ci/test.yml
       - template: ci/build-macos.yml
       - template: ci/deploy.yml
+      - template: ci/publish-homebrew.yml
 
   - job: Windows
     pool:

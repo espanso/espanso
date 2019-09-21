@@ -468,9 +468,4 @@ mod tests {
         assert_eq!(config_manager.calculate_active_config().name, "firefox");
         assert_eq!(config_manager.active_config().name, "default");
     }
-
-    #[test]
-    fn test_should_fail() {
-        assert!(false);
-    }
 }
