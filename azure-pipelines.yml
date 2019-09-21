@@ -14,8 +14,9 @@ jobs:
       - script: |
           sudo apt -y update
           sudo apt install -y libxtst-dev libx11-dev libxdo3 libxdo-dev
+        displayName: Install library dependencies
       - template: ci/test.yml
-      - script: ci/build-linux.yml
+      - template: ci/build-linux.yml
 #      - template: ci/deploy.yml
 
 #  - job: macOS
