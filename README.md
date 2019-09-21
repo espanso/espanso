@@ -5,6 +5,7 @@
 ![Language](https://img.shields.io/badge/language-rust-orange)
 ![Platforms](https://img.shields.io/badge/platforms-Windows%2C%20macOS%20and%20Linux-blue)
 ![License](https://img.shields.io/github/license/federico-terzi/espanso)
+[![Build Status](https://dev.azure.com/freddy6896/espanso/_apis/build/status/federico-terzi.espanso?branchName=master)](https://dev.azure.com/freddy6896/espanso/_build/latest?definitionId=1&branchName=master)
 
 ![example](images/example.gif)
 
