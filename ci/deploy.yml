@@ -1,0 +1,20 @@
+parameters:
+  github:
+    isPreRelease: false
+    repositoryName: '$(Build.Repository.Name)'
+  dependsOn: []
+  displayName: "Release to github"
+
+jobs:
+  - task: GitHubRelease@0
+    displayName: Create GitHub release
+    inputs:
+      gitHubConnection: ${{ parameters.github.gitHubConnection }}
+      tagSource: manual
+      title: '$(build.my_tag) - $(build.date)'
+      tag: '$(build.my_tag)'
+      assetUploadMode: replace
+      action: edit
+      assets: 'espanso-*.gz'
+      repositoryName: ${{ parameters.github.repositoryName }}
+      isPreRelease: ${{ parameters.github.isPreRelease }}
