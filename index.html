@@ -10,12 +10,14 @@
   <meta name="author" content="Federico Terzi">
 
   <link rel="stylesheet" href="assets/css/bootstrap.min.css">
-  <link rel="stylesheet" type="text/css" href="assets/css/main.css">
+  <link rel="stylesheet" type="text/css" href="assets/css/styles.css">
 
   <link href="https://fonts.googleapis.com/css?family=Raleway:400,700&display=swap" rel="stylesheet">
 </head>
 
 <body>
+  <div id="particles-js"></div>
+
   <nav class="navbar navbar-expand-lg navbar-light">
     <a class="navbar-brand" href="#">
       <img src="assets/images/espanso.svg" class="logo-img">
@@ -51,11 +53,6 @@
     <a class="btn btn-lg" href="#" role="button">Get Started on MacOS</a>
     <p class="btn-subtitle">Also available for Windows and Linux</p>
   </div>
-
-  <script src="assets/js/jquery.slim.min.js"></script>
-  <script src="assets/js/popper.min.js"></script>
-  <script src="assets/js/bootstrap.min.js"></script>
-  <script src="assets/js/typeit.min.js"></script>
 
   <div class="container-fluid hiw text-center">
     <h2>How it works</h2>
@@ -159,6 +156,12 @@
     <p class="mt-4 mb-3">Do you want to know more?</p>
     <a class="btn btn-lg" href="#" role="button">Visit Documentation</a>
   </div>
+
+  <script src="assets/js/particles.min.js"></script>
+  <script src="assets/js/jquery.slim.min.js"></script>
+  <script src="assets/js/popper.min.js"></script>
+  <script src="assets/js/bootstrap.min.js"></script>
+  <script src="assets/js/typeit.min.js"></script>
 
   <script>
     function jumboText() {
@@ -295,6 +298,10 @@
     jumboText();
     hiw();
     features();
+
+    particlesJS.load('particles-js', 'assets/particles.json', function() {
+      console.log('callback - particles.js config loaded');
+    });
   </script>
 </body>
 </html>
