@@ -1,9 +1,0 @@
-steps:
-  - script: |
-      cargo build --release
-      cd target/release/
-      tar czf "espanso-linux.tar.gz" espanso
-      cd ../..
-      cp target/release/espanso-*.gz .
-      ls -la
-    displayName: "Cargo build and packaging for Linux"
