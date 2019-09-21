@@ -1,0 +1,23 @@
+.navbar {
+    li {
+        padding: 0 6px 0 6px;
+    }
+
+    .logo-img {
+        height: 40px;
+        margin: 10px 0 0 5px;
+    }
+
+    .btn {
+        background-color: $mainColor;
+        border: 0;
+        font-weight: 700;
+        color: white !important;
+        padding: 3px 20px 3px 20px !important;
+        margin: 3px 0 0 10px;
+
+        @media screen and (max-width: $screen-tablet) {
+            margin: 3px 0 0 0;
+        }
+    }
+}

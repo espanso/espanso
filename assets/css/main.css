@@ -1,0 +1,109 @@
+.navbar li {
+  padding: 0 6px 0 6px; }
+.navbar .logo-img {
+  height: 40px;
+  margin: 10px 0 0 5px; }
+.navbar .btn {
+  background-color: #00b894;
+  border: 0;
+  font-weight: 700;
+  color: white !important;
+  padding: 3px 20px 3px 20px !important;
+  margin: 3px 0 0 10px; }
+  @media screen and (max-width: 769px) {
+    .navbar .btn {
+      margin: 3px 0 0 0; } }
+
+.jumbotron {
+  background-color: transparent; }
+  .jumbotron h1 {
+    font-weight: 400;
+    margin: 120px 0 160px 0; }
+    @media screen and (max-width: 769px) {
+      .jumbotron h1 {
+        margin: 60px 0 90px 0;
+        font-size: 2.5em; } }
+  .jumbotron .btn {
+    font-weight: 700;
+    font-size: 1.6em;
+    background-color: #00b894;
+    color: white !important;
+    padding: 13px 30px 13px 30px;
+    border-radius: 50px;
+    border: 0; }
+    @media screen and (max-width: 769px) {
+      .jumbotron .btn {
+        font-size: 1.3em; } }
+  .jumbotron .btn-subtitle {
+    font-size: 1em;
+    margin: 10px;
+    color: #636e72; }
+
+.hiw {
+  background-image: url("/assets/images/background.svg");
+  background-position: center top;
+  background-size: cover;
+  background-repeat: no-repeat;
+  padding: 90px 10px 40px 10px;
+  color: white; }
+  @media screen and (max-width: 769px) {
+    .hiw {
+      padding: 70px 15px 40px 15px; } }
+  .hiw h2 {
+    font-weight: 700; }
+  .hiw .text-example {
+    font-size: 2em;
+    background-color: white;
+    color: #2d3436;
+    max-width: 500px;
+    padding: 15px 5px 15px 5px;
+    border-radius: 5px;
+    margin: auto; }
+
+.features {
+  margin-top: 50px; }
+  .features h2 {
+    font-weight: 700; }
+  .features h3 {
+    font-weight: 700; }
+  .features h4 {
+    font-weight: 700; }
+  .features .feature-col {
+    padding: 0 35px 0 35px;
+    margin: 20px 0 10px 0; }
+    .features .feature-col img {
+      height: 100px;
+      margin: 20px; }
+  .features .description {
+    min-height: 80px; }
+  .features .feature-example {
+    font-size: 1.5em;
+    background-color: #2d3436;
+    color: white;
+    height: 90px;
+    padding: 10px 20px 10px 20px;
+    border-radius: 5px;
+    margin: auto;
+    text-align: left; }
+  .features .extra-feature-col {
+    padding: 0 25px 0 25px;
+    margin: 10px 0 10px 0; }
+    .features .extra-feature-col img {
+      height: 70px;
+      margin: 0 0 30px 0; }
+  .features .btn {
+    font-weight: 700;
+    font-size: 1.4em;
+    background-color: #00b894;
+    color: white !important;
+    padding: 13px 30px 13px 30px;
+    border-radius: 40px;
+    border: 0; }
+    @media screen and (max-width: 769px) {
+      .features .btn {
+        font-size: 1.3em; } }
+
+body {
+  font-family: 'Raleway', sans-serif; }
+
+/*# sourceMappingURL=main.css.map */

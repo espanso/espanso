@@ -1,0 +1,125 @@
+.jumbotron {
+    background-color: transparent;
+
+    h1 {
+        font-weight: 400;
+        margin: 120px 0 160px 0;
+
+        @media screen and (max-width: $screen-tablet) {
+            margin: 60px 0 90px 0;
+            font-size: 2.5em;
+        }
+    }
+
+    .btn {
+        font-weight: 700;
+        font-size: 1.6em;
+        background-color: $mainColor;
+        color: white !important;
+        padding: 13px 30px 13px 30px;
+        border-radius: 50px;
+        border: 0;
+
+        @media screen and (max-width: $screen-tablet) {
+            font-size: 1.3em;
+        }
+    }
+
+    .btn-subtitle {
+        font-size: 1em;
+        margin: 10px;
+        color: $grayColor;
+    }
+}
+
+.hiw {
+    background-image: url("/assets/images/background.svg");
+    background-position: center top;
+    background-size: cover;
+    background-repeat:no-repeat;
+    padding: 90px 10px 40px 10px;
+    color: white;
+
+    @media screen and (max-width: $screen-tablet) {
+        padding: 70px 15px 40px 15px;
+    }
+
+    h2 {
+        font-weight: 700;
+    }
+
+    .text-example {
+        font-size: 2em;
+        background-color: white;
+        color: $blackColor;
+        max-width: 500px;
+        padding: 15px 5px 15px 5px;
+        border-radius: 5px;
+        margin: auto;
+    }
+}
+
+.features {
+    margin-top: 50px;
+
+    h2 {
+        font-weight: 700;
+    }
+
+    h3 {
+        font-weight: 700;
+    }
+
+    h4 {
+        font-weight: 700;
+    }
+
+    .feature-col {
+        padding: 0 35px 0 35px;
+        margin: 20px 0 10px 0;
+
+        img {
+            height: 100px;
+            margin: 20px;
+        }
+    }
+
+    .description {
+        min-height: 80px;
+    }
+
+    .feature-example {
+        font-size: 1.5em;
+        background-color: $blackColor;
+        color: white;
+        height: 90px;
+        padding: 10px 20px 10px 20px;
+        border-radius: 5px;
+        margin: auto;
+        text-align: left;
+    }
+
+    .extra-feature-col {
+        padding: 0 25px 0 25px;
+        margin: 10px 0 10px 0;
+
+        img {
+            height: 70px;
+            margin: 0 0 30px 0;
+        }
+    }
+
+    .btn {
+        font-weight: 700;
+        font-size: 1.4em;
+        background-color: $mainColor;
+        color: white !important;
+        padding: 13px 30px 13px 30px;
+        border-radius: 40px;
+        border: 0;
+
+        @media screen and (max-width: $screen-tablet) {
+            font-size: 1.3em;
+        }
+    }
+}

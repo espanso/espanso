@@ -1,0 +1,11 @@
+<svg id="apps" xmlns="http://www.w3.org/2000/svg" width="91" height="91" viewBox="0 0 91 91">
+  <circle id="Ellipse_3" data-name="Ellipse 3" cx="6" cy="6" r="6" transform="translate(5 5)" fill="none" stroke="#00b894" stroke-linecap="square" stroke-width="10"/>
+  <ellipse id="Ellipse_4" data-name="Ellipse 4" cx="5.5" cy="6" rx="5.5" ry="6" transform="translate(40 5)" fill="none" stroke="#00b894" stroke-linecap="square" stroke-width="10"/>
+  <circle id="Ellipse_5" data-name="Ellipse 5" cx="6" cy="6" r="6" transform="translate(74 5)" fill="none" stroke="#00b894" stroke-linecap="square" stroke-width="10"/>
+  <ellipse id="Ellipse_6" data-name="Ellipse 6" cx="6" cy="5.5" rx="6" ry="5.5" transform="translate(5 40)" fill="none" stroke="#00b894" stroke-linecap="square" stroke-width="10"/>
+  <circle id="Ellipse_7" data-name="Ellipse 7" cx="5.5" cy="5.5" r="5.5" transform="translate(40 40)" fill="none" stroke="#00b894" stroke-linecap="square" stroke-width="10"/>
+  <ellipse id="Ellipse_8" data-name="Ellipse 8" cx="6" cy="5.5" rx="6" ry="5.5" transform="translate(74 40)" fill="none" stroke="#00b894" stroke-linecap="square" stroke-width="10"/>
+  <circle id="Ellipse_9" data-name="Ellipse 9" cx="6" cy="6" r="6" transform="translate(5 74)" fill="none" stroke="#00b894" stroke-linecap="square" stroke-width="10"/>
+  <ellipse id="Ellipse_10" data-name="Ellipse 10" cx="5.5" cy="6" rx="5.5" ry="6" transform="translate(40 74)" fill="none" stroke="#00b894" stroke-linecap="square" stroke-width="10"/>
+  <circle id="Ellipse_11" data-name="Ellipse 11" cx="6" cy="6" r="6" transform="translate(74 74)" fill="none" stroke="#00b894" stroke-linecap="square" stroke-width="10"/>
+</svg>

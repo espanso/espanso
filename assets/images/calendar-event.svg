@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="137" height="135" viewBox="0 0 137 135">
+  <g id="calendar-event" transform="translate(2 2)">
+    <path id="Path_11" data-name="Path 11" d="M3,5H130V115.889H3Z" transform="translate(0 12.111)" fill="none" stroke="#00b894" stroke-linecap="square" stroke-width="10"/>
+    <path id="Path_12" data-name="Path 12" d="M130,9H3" transform="translate(0 35.667)" fill="none" stroke="#00b894" stroke-linecap="square" stroke-width="10"/>
+    <path id="Path_13" data-name="Path 13" d="M7,17.111V3" transform="translate(24.222 0)" fill="none" stroke="#00b894" stroke-linecap="square" stroke-width="10"/>
+    <path id="Path_14" data-name="Path 14" d="M17,17.111V3" transform="translate(84.778 0)" fill="none" stroke="#00b894" stroke-linecap="square" stroke-width="10"/>
+    <rect id="Rectangle_6" data-name="Rectangle 6" width="15" height="15" transform="translate(87 85.5)" fill="none" stroke="#00b894" stroke-linecap="square" stroke-width="10"/>
+  </g>
+</svg>

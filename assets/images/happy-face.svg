@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="135" viewBox="0 0 128 135">
+  <g id="happy-face" transform="translate(3 3)">
+    <path id="Path_7" data-name="Path 7" d="M7.3,14C11.85,24.348,23.128,31.665,34.976,31.665c11.8,0,23.053-7.336,27.642-17.638" transform="translate(25.923 63.619)" fill="none" stroke="#00b894" stroke-linecap="square" stroke-width="10"/>
+    <line id="Line_2" data-name="Line 2" transform="translate(43 45.432)" fill="none" stroke="#00b894" stroke-linecap="round" stroke-width="10"/>
+    <line id="Line_3" data-name="Line 3" transform="translate(79 45.432)" fill="none" stroke="#00b894" stroke-linecap="round" stroke-width="10"/>
+    <ellipse id="Ellipse_2" data-name="Ellipse 2" cx="59" cy="62.5" rx="59" ry="62.5" transform="translate(2 2)" fill="none" stroke="#00b894" stroke-linecap="square" stroke-width="10"/>
+  </g>
+</svg>
