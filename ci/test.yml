@@ -12,5 +12,5 @@ steps:
 
   - script: |
       cargo test --release
-      displayName: Cargo tests on Windows
-      condition: eq(variables['Agent.OS'], 'Windows_NT')
+    displayName: Cargo tests on Windows
+    condition: eq(variables['Agent.OS'], 'Windows_NT')
