@@ -2,7 +2,7 @@ parameters:
   github:
     isPreRelease: false
     repositoryName: '$(Build.Repository.Name)'
-    gitHubConnection: "federico-terzi"
+    gitHubConnection: "MyGithubConnection"
   dependsOn: []
   displayName: "Release to github"
 
