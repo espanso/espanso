@@ -5,5 +5,12 @@ steps:
   - template: install-rust.yml
 
   - script: |
+      set -e
       cargo test --release
-    displayName: cargo test
+    displayName: Cargo tests on Unix
+    condition: not(eq(variables['Agent.OS'], 'Windows_NT'))
+
+  - script: |
+      cargo test --release
+      displayName: Cargo tests on Windows
+      condition: eq(variables['Agent.OS'], 'Windows_NT')
