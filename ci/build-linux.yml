@@ -4,4 +4,6 @@ steps:
       VER=$(cat Cargo.toml| grep version -m 1 | awk -F '"' '{ print $2 }')
       cd target/release/
       tar czf "espanso-linux-$VER.tar.gz" espanso
-    displayName: Cargo build and packaging
+      cd ../..
+      cp target/release/espanso-linux-*.gz .
+    displayName: "Cargo build and packaging"
