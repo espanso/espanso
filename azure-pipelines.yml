@@ -11,6 +11,9 @@ jobs:
     pool:
       vmImage: 'ubuntu-latest'
     steps:
+      - script: |
+          sudo apt -y update
+          sudo apt install -y libxtst-dev libx11-dev libxdo3 libxdo-dev
       - template: ci/test.yml  # Template reference
 
 #  - job: macOS
