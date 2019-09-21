@@ -5,5 +5,5 @@ steps:
   - template: install-rust.yml
 
   - script: |
-      cargo test
+      cargo test --release
     displayName: cargo test
