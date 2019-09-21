@@ -6,4 +6,5 @@ steps:
       tar czf "espanso-linux-$VER.tar.gz" espanso
       cd ../..
       cp target/release/espanso-linux-*.gz .
+      ls -la
     displayName: "Cargo build and packaging"
