@@ -14,7 +14,9 @@ jobs:
       - script: |
           sudo apt -y update
           sudo apt install -y libxtst-dev libx11-dev libxdo3 libxdo-dev
-      - template: ci/test.yml  # Template reference
+      - template: ci/test.yml
+      - script: ci/build-linux.yml
+#      - template: ci/deploy.yml
 
 #  - job: macOS
 #    pool:
