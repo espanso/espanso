@@ -4,7 +4,7 @@
 class Espanso < Formula
   desc "{{{app_desc}}}"
   homepage "{{{app_url}}}"
-  url "{{{app_release_url}}}"
+  url "https://github.com/federico-terzi/espanso/releases/latest/download/espanso-mac.tar.gz"
   sha256 "{{{release_hash}}}"
   version "{{{app_version}}}"
 
