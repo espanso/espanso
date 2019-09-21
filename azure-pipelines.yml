@@ -17,7 +17,7 @@ jobs:
         displayName: Install library dependencies
       - template: ci/test.yml
       - template: ci/build-linux.yml
-#      - template: ci/deploy.yml
+      - template: ci/deploy.yml
 
 #  - job: macOS
 #    pool:
