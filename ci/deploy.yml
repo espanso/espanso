@@ -5,7 +5,7 @@ parameters:
   dependsOn: []
   displayName: "Release to github"
 
-jobs:
+steps:
   - task: GitHubRelease@0
     displayName: Create GitHub release
     inputs:
