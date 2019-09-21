@@ -75,7 +75,7 @@ def build_windows(package_info):
     TARGET_DIR = os.path.join(PACKAGER_TARGET_DIR, "win")
     os.makedirs(TARGET_DIR, exist_ok=True)
 
-    INSTALLER_NAME = f"espanso-win-{package_info.version}"
+    INSTALLER_NAME = f"espanso-win-installer"
 
     # Inno setup
     shutil.copy("packager/win/modpath.iss", os.path.join(TARGET_DIR, "modpath.iss"))
@@ -116,7 +116,7 @@ def build_mac(package_info):
     os.makedirs(TARGET_DIR, exist_ok=True)
 
     print("Compressing release to archive...")
-    target_name = f"espanso-mac-{package_info.version}.tar.gz"
+    target_name = f"espanso-mac.tar.gz"
     archive_target = os.path.abspath(os.path.join(TARGET_DIR, target_name))
     subprocess.run(["tar",
                     "-C", os.path.abspath("target/release"),

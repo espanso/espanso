@@ -19,16 +19,18 @@ jobs:
       - template: ci/build-linux.yml
       - template: ci/deploy.yml
 
-#  - job: macOS
-#    pool:
-#      vmImage: 'macOS-10.13'
-#    steps:
-#      - template: templates/npm-steps.yml  # Template reference
-#
-#  - job: Windows
-#    pool:
-#      vmImage: 'vs2017-win2016'
-#    steps:
-#      - script: echo This script runs before the template's steps, only on Windows.
-#      - template: templates/npm-steps.yml  # Template reference
-#      - script: echo This step runs after the template's steps.
+  - job: macOS
+    pool:
+      vmImage: 'macOS-10.14'
+    steps:
+      - template: ci/test.yml
+      - template: ci/build-macos.yml
+      - template: ci/deploy.yml
+
+  - job: Windows
+    pool:
+      vmImage: 'vs2019-win2019'
+    steps:
+      - template: ci/test.yml
+      - template: ci/build-win.yml
+      - template: ci/deploy.yml
