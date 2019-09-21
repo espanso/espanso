@@ -4,6 +4,8 @@ set -ex
 
 # TODO This is the "test phase", tweak it as you see fit
 main() {
+    ls -lR /usr/include
+
     cross build --target $TARGET
     cross build --target $TARGET --release
 
