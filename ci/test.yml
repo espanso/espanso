@@ -1,0 +1,9 @@
+parameters:
+  rust_version: stable
+
+steps:
+  - template: install-rust.yml
+
+  - script: |
+      cargo test
+    displayName: cargo test
