@@ -23,12 +23,30 @@ h1, h2, h3, h4 {
     img {
         display: block;
         margin: auto;
-        max-width: 100%;
+        max-width: 800px;
         height: auto;
+
+        @media screen and (max-width: $screen-tablet) {
+            max-width: 100%;
+        }
     }
 
     h2, h3, h4 {
         margin: 30px 0 20px 0;
+    }
+
+    .mybtn {
+        font-weight: 700;
+        font-size: 1.2em;
+        background-color: $mainColor;
+        color: white !important;
+        padding: 10px 25px 10px 25px;
+        border-radius: 40px;
+        border: 0;
+
+        @media screen and (max-width: $screen-tablet) {
+            font-size: 1.3em;
+        }
     }
 }
 
