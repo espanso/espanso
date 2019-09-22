@@ -1,307 +1,256 @@
-<!doctype html>
+---
+title: Home
+layout: default
+hideTitle: True
+avoidContainer: True
+showParticles: True
+---
 
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-
-  <title>espanso - Cross-platform Text Expander written in Rust</title>
-  <meta name="description" content="espanso - Cross-platform Text Expander written in Rust">
-  <meta name="author" content="Federico Terzi">
-
-  <link rel="stylesheet" href="assets/css/bootstrap.min.css">
-  <link rel="stylesheet" type="text/css" href="assets/css/styles.css">
-
-  <link href="https://fonts.googleapis.com/css?family=Raleway:400,700&display=swap" rel="stylesheet">
-</head>
-
-<body>
-  <div id="particles-js"></div>
-
-  <nav class="navbar navbar-expand-lg navbar-light">
-    <a class="navbar-brand" href="#">
-      <img src="assets/images/espanso.svg" class="logo-img">
-    </a>
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
+<div class="jumbotron text-center">
+  <h1 class="display-4" id="jumbo-text">Cross-platform Text Expander written in Rust</h1>
   
-    <div class="collapse navbar-collapse" id="navbarSupportedContent">
-      <ul class="navbar-nav ml-auto">
-        <li class="nav-item active">
-          <a class="nav-link" href="#">Home <span class="sr-only">(current)</span></a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="#">Installation</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="#">Documentation</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" target="_blank" href="https://github.com/federico-terzi/espanso">GitHub</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link btn" href="#">Donate</a>
-        </li>
-      </ul>
-    </div>
-  </nav>
+  <a class="btn btn-lg" href="#" role="button">Get Started on MacOS</a>
+  <p class="btn-subtitle">Also available for Windows and Linux</p>
+</div>
 
-  <div class="jumbotron text-center">
-    <h1 class="display-4" id="jumbo-text">Cross-platform Text Expander written in Rust</h1>
-    
-    <a class="btn btn-lg" href="#" role="button">Get Started on MacOS</a>
-    <p class="btn-subtitle">Also available for Windows and Linux</p>
+<div class="container-fluid hiw text-center">
+  <h2>How it works</h2>
+  <p class="mt-5 mb-4 teaser-text">espanso detects when you type a <b>keyword</b></p>
+  <p class="text-example" id="text-example-1">Today is <b>:date</b></p>
+  <p class="mt-4 mb-5 teaser-text">and <b>replaces</b> it while you're typing.</p>
+</div>
+
+<div class="container features text-center">
+  <h2>Features</h2>
+  <div class="row mt-4">
+    <div class="col-md-4 feature-col">
+      <img src="assets/images/bolt.svg" />
+      <h3>Smarter typing</h3>
+      <p class="description">Avoid typing the same sentences
+        over and over using the incredible
+        power of a full blown text expander.</p>
+      
+      <p class="feature-example" id="feature-1">Best Regards,<br>John Smith</p>
+    </div>
+    <div class="col-md-4 feature-col">
+      <img src="assets/images/chevron-right.svg" />
+      <h3>Shell support</h3>
+      <p class="description">With the full power of the shell
+        at your fingertips, copy-pasting
+        becomes obsolete.</p>
+      
+      <p class="feature-example" id="feature-2">Hey John, <br>My IP is 192.168.1.23</p>
+    </div>
+    <div class="col-md-4 feature-col">
+      <img src="assets/images/new.svg" />
+      <h3>Custom scripts</h3>
+      <p class="description">Execute custom scripts as you 
+        type and boost your productivity
+          for any kind of workflow.</p>
+      
+      <p class="feature-example" id="feature-3">Hello world</p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-4 feature-col">
+      <img src="assets/images/happy-face.svg" />
+      <h3>Emoji support</h3>
+      <p class="description">Emojis are now part of our
+        lives, and with espanso,
+        using them is a breeze.</p>
+      
+      <p class="feature-example" id="feature-4">This is so funny 😂</p>
+    </div>
+    <div class="col-md-4 feature-col">
+      <img src="assets/images/calendar-event.svg" />
+      <h3>Date support</h3>
+      <p class="description">espanso supports a wide range of date formats and expansions.</p>
+
+      <p class="feature-example" id="feature-5">Today is 06/12/2019</p>
+    </div>
+    <div class="col-md-4 feature-col">
+      <img src="assets/images/code-alt.svg" />
+      <h3>Code snippets</h3>
+      <p class="description">Bring your favourite code snippets
+        in every application.</p>
+      
+      <p class="feature-example" id="feature-6"><a href="#anchor" ></a></p>
+    </div>
+  </div>
+  <h4 class="mt-5 mb-5">And also</h4>
+  <div class="row">
+    <div class="col-md-3 extra-feature-col">
+      <img src="assets/images/apps.svg" />
+      <h4>System-wide
+        integration</h4>
+      <p class="description">espanso works with most 
+        applications, so you can boost
+          your productivity everywhere.</p>
+    </div>
+    <div class="col-md-3 extra-feature-col">
+      <img src="assets/images/file.svg" />
+      <h4>File based
+        configuration</h4>
+      <p class="description">espanso follows a Unix-like
+        configuration philosophy,
+        using simple files.</p>
+    </div>
+    <div class="col-md-3 extra-feature-col">
+      <img src="assets/images/code-alt.svg" />
+      <h4>Open-source
+        license</h4>
+      <p class="description">espanso is open-source,
+        licensed under the
+        GPL-3 license.</p>
+    </div>
+    <div class="col-md-3 extra-feature-col">
+      <img src="assets/images/component.svg" />
+      <h4>Cross-platform
+        support</h4>
+      <p class="description">espanso supports Windows,
+        Linux and macOS.</p>
+    </div>
   </div>
 
-  <div class="container-fluid hiw text-center">
-    <h2>How it works</h2>
-    <h3 class="mt-5 mb-5">espanso detects when you type a <b>keyword</b></h3>
-    <p class="text-example" id="text-example-1">Today is <b>:date</b></p>
-    <h3 class="mt-5 mb-5">and <b>replaces</b> it while you're typing.</h3>
-  </div>
+  <p class="mt-4 mb-3">Do you want to know more?</p>
+  <a class="btn btn-lg" href="#" role="button">Visit Documentation</a>
+</div>
 
-  <div class="container features text-center">
-    <h2>Features</h2>
-    <div class="row mt-4">
-      <div class="col-md-4 feature-col">
-        <img src="assets/images/bolt.svg" />
-        <h3>Smarter typing</h3>
-        <p class="description">Avoid typing the same sentences
-          over and over using the incredible
-          power of a full blown text expander.</p>
-        
-        <p class="feature-example" id="feature-1">Best Regards,<br>John Smith</p>
-      </div>
-      <div class="col-md-4 feature-col">
-        <img src="assets/images/chevron-right.svg" />
-        <h3>Shell support</h3>
-        <p class="description">With the full power of the shell
-          at your fingertips, copy-pasting
-          becomes obsolete.</p>
-        
-        <p class="feature-example" id="feature-2">Hey John, <br>My IP is 192.168.1.23</p>
-      </div>
-      <div class="col-md-4 feature-col">
-        <img src="assets/images/new.svg" />
-        <h3>Custom scripts</h3>
-        <p class="description">Execute custom scripts as you 
-          type and boost your productivity
-           for any kind of workflow.</p>
-        
-        <p class="feature-example" id="feature-3">Hello world</p>
-      </div>
-    </div>
-    <div class="row">
-      <div class="col-md-4 feature-col">
-        <img src="assets/images/happy-face.svg" />
-        <h3>Emoji support</h3>
-        <p class="description">Emojis are now part of our
-          lives, and with espanso,
-          using them is a breeze.</p>
-        
-        <p class="feature-example" id="feature-4">This is so funny 😂</p>
-      </div>
-      <div class="col-md-4 feature-col">
-        <img src="assets/images/calendar-event.svg" />
-        <h3>Date support</h3>
-        <p class="description">espanso supports a wide range of date formats and expansions.</p>
-  
-        <p class="feature-example" id="feature-5">Today is 06/12/2019</p>
-      </div>
-      <div class="col-md-4 feature-col">
-        <img src="assets/images/code-alt.svg" />
-        <h3>Code snippets</h3>
-        <p class="description">Bring your favourite code snippets
-          in every application.</p>
-        
-        <p class="feature-example" id="feature-6"><a href="#anchor" ></a></p>
-      </div>
-    </div>
-    <h4 class="mt-5 mb-5">And also</h4>
-    <div class="row">
-      <div class="col-md-3 extra-feature-col">
-        <img src="assets/images/apps.svg" />
-        <h4>System-wide
-          integration</h4>
-        <p class="description">espanso works with most 
-          applications, so you can boost
-           your productivity everywhere.</p>
-      </div>
-      <div class="col-md-3 extra-feature-col">
-        <img src="assets/images/file.svg" />
-        <h4>File based
-          configuration</h4>
-        <p class="description">espanso follows a Unix-like
-          configuration philosophy,
-          using simple files.</p>
-      </div>
-      <div class="col-md-3 extra-feature-col">
-        <img src="assets/images/code-alt.svg" />
-        <h4>Open-source
-          license</h4>
-        <p class="description">espanso is open-source,
-          licensed under the
-          GPL-3 license.</p>
-      </div>
-      <div class="col-md-3 extra-feature-col">
-        <img src="assets/images/component.svg" />
-        <h4>Cross-platform
-          support</h4>
-        <p class="description">espanso supports Windows,
-          Linux and macOS.</p>
-      </div>
-    </div>
+<script src="/assets/js/typeit.min.js"></script>
 
-    <p class="mt-4 mb-3">Do you want to know more?</p>
-    <a class="btn btn-lg" href="#" role="button">Visit Documentation</a>
-  </div>
+<script>
+  function jumboText() {
+    document.getElementById("jumbo-text").innerText = "";
+    new TypeIt('#jumbo-text', {
+      speed: 50,
+      startDelay: 900
+    })
+    .type(':espanso')
+    .pause(500)
+    .options({speed: 1, deleteSpeed: 7})
+    .delete(8)
+    .type('Cross-platform Text Expander written in Rust')
+    .go();
+  }
 
-  <script src="assets/js/particles.min.js"></script>
-  <script src="assets/js/jquery.slim.min.js"></script>
-  <script src="assets/js/popper.min.js"></script>
-  <script src="assets/js/bootstrap.min.js"></script>
-  <script src="assets/js/typeit.min.js"></script>
+  function hiw() {
+    document.getElementById("text-example-1").innerText = "";
+    new TypeIt('#text-example-1', {
+      speed: 50,
+      startDelay: 900,
+      loop: true,
+      waitUntilVisible: true,
+    })
+    .pause(1000)
+    .type('Today is <b>:date</b>')
+    .pause(400)
+    .options({speed: 1, deleteSpeed: 7})
+    .delete(5)
+    .type('<b>09/12/2019</b>')
+    .pause(1500)
+    .options({speed: 50, deleteSpeed: 7})
+    .go();
+  }
 
-  <script>
-    function jumboText() {
-      document.getElementById("jumbo-text").innerText = "";
-      new TypeIt('#jumbo-text', {
-        speed: 50,
-        startDelay: 900
-      })
-      .type(':espanso')
-      .pause(500)
-      .options({speed: 1, deleteSpeed: 7})
-      .delete(8)
-      .type('Cross-platform Text Expander written in Rust')
-      .go();
-    }
+  function features() {
+    document.getElementById("feature-1").innerText = "";
+    new TypeIt('#feature-1', {
+      speed: 50,
+      startDelay: 900,
+      loop: true,
+      waitUntilVisible: true,
+    })
+    .type('<b>:reg</b>')
+    .pause(400)
+    .options({speed: 1, deleteSpeed: 7})
+    .delete(4)
+    .type('Best Regards,<br>John Smith')
+    .pause(1500)
+    .options({speed: 50, deleteSpeed: 7})
+    .go();
 
-    function hiw() {
-      document.getElementById("text-example-1").innerText = "";
-      new TypeIt('#text-example-1', {
-        speed: 50,
-        startDelay: 900,
-        loop: true,
-        waitUntilVisible: true,
-      })
-      .pause(1000)
-      .type('Today is <b>:date</b>')
-      .pause(400)
-      .options({speed: 1, deleteSpeed: 7})
-      .delete(5)
-      .type('<b>09/12/2019</b>')
-      .pause(1500)
-      .options({speed: 50, deleteSpeed: 7})
-      .go();
-    }
+    document.getElementById("feature-2").innerText = "";
+    new TypeIt('#feature-2', {
+      speed: 50,
+      startDelay: 900,
+      loop: true,
+      waitUntilVisible: true,
+    })
+    .type('Hey John,<br>My IP is <b>:ip</b>')
+    .pause(400)
+    .options({speed: 1, deleteSpeed: 7})
+    .delete(3)
+    .type('192.168.1.23')
+    .pause(1500)
+    .options({speed: 50, deleteSpeed: 7})
+    .go();
 
-    function features() {
-      document.getElementById("feature-1").innerText = "";
-      new TypeIt('#feature-1', {
-        speed: 50,
-        startDelay: 900,
-        loop: true,
-        waitUntilVisible: true,
-      })
-      .type('<b>:reg</b>')
-      .pause(400)
-      .options({speed: 1, deleteSpeed: 7})
-      .delete(4)
-      .type('Best Regards,<br>John Smith')
-      .pause(1500)
-      .options({speed: 50, deleteSpeed: 7})
-      .go();
+    document.getElementById("feature-3").innerText = "";
+    new TypeIt('#feature-3', {
+      speed: 50,
+      startDelay: 900,
+      loop: true,
+      waitUntilVisible: true,
+    })
+    .type('<b>:pyscript</b>')
+    .pause(400)
+    .options({speed: 1, deleteSpeed: 7})
+    .delete(9)
+    .type('Hello world')
+    .pause(1500)
+    .options({speed: 50, deleteSpeed: 7})
+    .go();
 
-      document.getElementById("feature-2").innerText = "";
-      new TypeIt('#feature-2', {
-        speed: 50,
-        startDelay: 900,
-        loop: true,
-        waitUntilVisible: true,
-      })
-      .type('Hey John,<br>My IP is <b>:ip</b>')
-      .pause(400)
-      .options({speed: 1, deleteSpeed: 7})
-      .delete(3)
-      .type('192.168.1.23')
-      .pause(1500)
-      .options({speed: 50, deleteSpeed: 7})
-      .go();
+    document.getElementById("feature-4").innerText = "";
+    new TypeIt('#feature-4', {
+      speed: 50,
+      startDelay: 900,
+      loop: true,
+      waitUntilVisible: true,
+    })
+    .type('This is so funny <b>:lol</b>')
+    .pause(400)
+    .options({speed: 1, deleteSpeed: 7})
+    .delete(4)
+    .type('😂')
+    .pause(1500)
+    .options({speed: 50, deleteSpeed: 7})
+    .go();
 
-      document.getElementById("feature-3").innerText = "";
-      new TypeIt('#feature-3', {
-        speed: 50,
-        startDelay: 900,
-        loop: true,
-        waitUntilVisible: true,
-      })
-      .type('<b>:pyscript</b>')
-      .pause(400)
-      .options({speed: 1, deleteSpeed: 7})
-      .delete(9)
-      .type('Hello world')
-      .pause(1500)
-      .options({speed: 50, deleteSpeed: 7})
-      .go();
+    document.getElementById("feature-5").innerText = "";
+    new TypeIt('#feature-5', {
+      speed: 50,
+      startDelay: 900,
+      loop: true,
+      waitUntilVisible: true,
+    })
+    .type('Today is <b>:date</b>')
+    .pause(400)
+    .options({speed: 1, deleteSpeed: 7})
+    .delete(5)
+    .type('06/12/2019')
+    .pause(1500)
+    .options({speed: 50, deleteSpeed: 7})
+    .go();
 
-      document.getElementById("feature-4").innerText = "";
-      new TypeIt('#feature-4', {
-        speed: 50,
-        startDelay: 900,
-        loop: true,
-        waitUntilVisible: true,
-      })
-      .type('This is so funny <b>:lol</b>')
-      .pause(400)
-      .options({speed: 1, deleteSpeed: 7})
-      .delete(4)
-      .type('😂')
-      .pause(1500)
-      .options({speed: 50, deleteSpeed: 7})
-      .go();
+    document.getElementById("feature-6").innerText = "";
+    new TypeIt('#feature-6', {
+      speed: 50,
+      startDelay: 900,
+      loop: true,
+      waitUntilVisible: true,
+    })
+    .type('<b>:link</b>')
+    .pause(400)
+    .options({speed: 1, deleteSpeed: 7})
+    .delete(5)
+    .type('&lt;a href=&quot;#anchor&quot; &gt;&lt;/a&gt;')
+    .pause(1500)
+    .options({speed: 50, deleteSpeed: 7})
+    .go();
+  }
 
-      document.getElementById("feature-5").innerText = "";
-      new TypeIt('#feature-5', {
-        speed: 50,
-        startDelay: 900,
-        loop: true,
-        waitUntilVisible: true,
-      })
-      .type('Today is <b>:date</b>')
-      .pause(400)
-      .options({speed: 1, deleteSpeed: 7})
-      .delete(5)
-      .type('06/12/2019')
-      .pause(1500)
-      .options({speed: 50, deleteSpeed: 7})
-      .go();
-
-      document.getElementById("feature-6").innerText = "";
-      new TypeIt('#feature-6', {
-        speed: 50,
-        startDelay: 900,
-        loop: true,
-        waitUntilVisible: true,
-      })
-      .type('<b>:link</b>')
-      .pause(400)
-      .options({speed: 1, deleteSpeed: 7})
-      .delete(5)
-      .type('&lt;a href=&quot;#anchor&quot; &gt;&lt;/a&gt;')
-      .pause(1500)
-      .options({speed: 50, deleteSpeed: 7})
-      .go();
-    }
-
-    jumboText();
-    hiw();
-    features();
-
-    particlesJS.load('particles-js', 'assets/particles.json', function() {
-      console.log('callback - particles.js config loaded');
-    });
-  </script>
-</body>
-</html>
+  jumboText();
+  hiw();
+  features();
+</script>

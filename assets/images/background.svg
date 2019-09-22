@@ -1,7 +1,79 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="700" viewBox="0 0 1920 700">
-  <g id="Sfondo" transform="translate(-8 -1090.601)">
-    <path id="Path_3" data-name="Path 3" d="M-26,586.724s293.051-4.48,514.1-4.48,128.9-14.625,460.481-13.59S1894,641.884,1894,641.884v603.037s-614.081,32.78-1044.141,21.205c-265.915-7.157-409.746-21.205-459.039-21.205-167.368,0-416.82,16.413-416.82,16.413Z" transform="translate(34 522)" fill="#00b894"/>
-    <path id="Path_2" data-name="Path 2" d="M-14,565.1s281.051,15.608,502.1,15.608,646.881-16.623,978.46-15.608S1906,570.565,1906,570.565v660.266s-261.844-38.8-587.107-40.827-745.371,30.017-912.739,30.017S-14,1204.062-14,1204.062Z" transform="translate(22 557)" fill="#00755e"/>
-    <path id="Path_1" data-name="Path 1" d="M12,581.9s84.525-31.431,425.788-33.3,668.22,41.229,1012.43,48.378S1932,571.741,1932,571.741v643.072s-19.471,14.987-426.839,12.944-904.7-50.275-1195.822-44.728S12,1192.119,12,1192.119Z" transform="translate(-4 553)" fill="#00372c"/>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="1920"
+   height="520"
+   viewBox="0 0 1920 520"
+   version="1.1"
+   id="svg917"
+   sodipodi:docname="background.svg"
+   inkscape:version="0.92.4 5da689c313, 2019-01-14">
+  <metadata
+     id="metadata923">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs921" />
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1676"
+     inkscape:window-height="993"
+     id="namedview919"
+     showgrid="false"
+     inkscape:zoom="0.47140452"
+     inkscape:cx="743.93795"
+     inkscape:cy="466.1607"
+     inkscape:window-x="1280"
+     inkscape:window-y="36"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="svg917" />
+  <g
+     id="Sfondo"
+     transform="translate(-8,-1086.601)">
+    <path
+       id="Path_3"
+       data-name="Path 3"
+       d="m -26,586.724 c 0,0 293.051,-4.48 514.1,-4.48 221.049,0 128.9,-14.625 460.481,-13.59 331.581,1.035 945.419,73.23 945.419,73.23 v 417.037 c 0,0 -614.081,32.78 -1044.141,21.205 -265.915,-7.157 -409.746,-21.205 -459.039,-21.205 -167.368,0 -416.82,16.413 -416.82,16.413 z"
+       transform="translate(34,522)"
+       inkscape:connector-curvature="0"
+       style="fill:#00b894"
+       sodipodi:nodetypes="cssccsscc" />
+    <path
+       id="Path_2"
+       data-name="Path 2"
+       d="m -14,565.1 c 0,0 281.051,15.608 502.1,15.608 221.049,0 646.881,-16.623 978.46,-15.608 331.579,1.015 439.44,5.465 439.44,5.465 v 474.266 c 0,0 -261.844,-38.8 -587.107,-40.827 -325.263,-2.027 -745.371,30.017 -912.739,30.017 -167.368,0 -420.154,-15.959 -420.154,-15.959 z"
+       transform="translate(22,557)"
+       inkscape:connector-curvature="0"
+       style="fill:#00755e"
+       sodipodi:nodetypes="cssccsscc" />
+    <path
+       id="Path_1"
+       data-name="Path 1"
+       d="m 12,581.9 c 0,0 84.525,-31.431 425.788,-33.3 341.263,-1.869 668.22,41.229 1012.43,48.378 344.21,7.149 481.782,-25.237 481.782,-25.237 v 457.072 c 0,0 -19.471,14.987 -426.839,12.944 -407.368,-2.043 -904.7,-50.275 -1195.822,-44.728 C 18.217,1002.576 12,1006.119 12,1006.119 Z"
+       transform="translate(-4,553)"
+       inkscape:connector-curvature="0"
+       style="fill:#00372c"
+       sodipodi:nodetypes="cssccsscc" />
   </g>
 </svg>

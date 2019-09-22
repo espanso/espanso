@@ -5,8 +5,12 @@
         font-weight: 400;
         margin: 120px 0 160px 0;
 
-        @media screen and (max-width: $screen-tablet) {
-            margin: 60px 0 90px 0;
+        @media screen and (max-width: $screen-desktop) {
+            margin: 80px 0 100px 0;
+        }
+
+        @media screen and (max-width: $screen-phone) {
+            margin: 35px 0 70px 0;
             font-size: 2.5em;
         }
     }
@@ -33,19 +37,19 @@
 }
 
 .hiw {
-    background-image: url("/assets/images/background.svg");
-    background-position: center top;
-    background-size: cover;
-    background-repeat:no-repeat;
-    padding: 90px 10px 40px 10px;
+    background-image: url("/assets/images/background_up.svg"), url("/assets/images/background_down.svg");
+    background-position: center top, center bottom;
+    background-size: cover, cover;
+    background-repeat:no-repeat, no-repeat;
+    padding: 80px 0px 40px 0px;
     color: white;
 
     @media screen and (max-width: $screen-tablet) {
         padding: 70px 15px 40px 15px;
     }
 
-    h2 {
-        font-weight: 700;
+    .teaser-text {
+        font-size:1.4em;
     }
 
     .text-example {
@@ -122,11 +126,4 @@
             font-size: 1.3em;
         }
     }
-}
-
-#particles-js {
-    position: absolute;
-    width: 100%;
-    height: 700px;
-    z-index: -100;
 }
