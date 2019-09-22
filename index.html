@@ -113,7 +113,7 @@ showParticles: True
   </div>
 
   <p class="mt-4 mb-3">Do you want to know more?</p>
-  <a class="btn btn-lg" href="#" role="button">Visit Documentation</a>
+  <a class="btn btn-lg" href="/docs/" role="button">Visit Documentation</a>
 </div>
 
 <script src="/assets/js/typeit.min.js"></script>
@@ -136,6 +136,24 @@ showParticles: True
     }
 
     return os;
+  }
+
+    
+  function isVisible(element) {
+    var coordinates = element.getBoundingClientRect();
+
+    if (
+      coordinates.right > window.innerWidth ||
+      coordinates.bottom > window.innerHeight
+    ) {
+      return false;
+    }
+
+    if (coordinates.top < 0 || coordinates.left < 0) {
+      return false;
+    }
+
+    return true;
   }
 
   function jumboText() {
@@ -186,8 +204,10 @@ showParticles: True
   }
 
   function features() {
+    var examples = [];
+
     document.getElementById("feature-1").innerText = "";
-    new TypeIt('#feature-1', {
+    var instance = new TypeIt('#feature-1', {
       speed: 50,
       startDelay: 900,
       loop: true,
@@ -201,9 +221,10 @@ showParticles: True
     .pause(1500)
     .options({speed: 50, deleteSpeed: 7})
     .go();
+    examples.push({typeit: instance, element: document.getElementById("feature-1")});
 
     document.getElementById("feature-2").innerText = "";
-    new TypeIt('#feature-2', {
+    var instance = new TypeIt('#feature-2', {
       speed: 50,
       startDelay: 900,
       loop: true,
@@ -217,9 +238,10 @@ showParticles: True
     .pause(1500)
     .options({speed: 50, deleteSpeed: 7})
     .go();
+    examples.push({typeit: instance, element: document.getElementById("feature-2")});
 
     document.getElementById("feature-3").innerText = "";
-    new TypeIt('#feature-3', {
+    var instance = new TypeIt('#feature-3', {
       speed: 50,
       startDelay: 900,
       loop: true,
@@ -233,9 +255,10 @@ showParticles: True
     .pause(1500)
     .options({speed: 50, deleteSpeed: 7})
     .go();
+    examples.push({typeit: instance, element: document.getElementById("feature-3")});
 
     document.getElementById("feature-4").innerText = "";
-    new TypeIt('#feature-4', {
+    var instance = new TypeIt('#feature-4', {
       speed: 50,
       startDelay: 900,
       loop: true,
@@ -249,9 +272,10 @@ showParticles: True
     .pause(1500)
     .options({speed: 50, deleteSpeed: 7})
     .go();
+    examples.push({typeit: instance, element: document.getElementById("feature-4")});
 
     document.getElementById("feature-5").innerText = "";
-    new TypeIt('#feature-5', {
+    var instance = new TypeIt('#feature-5', {
       speed: 50,
       startDelay: 900,
       loop: true,
@@ -265,9 +289,10 @@ showParticles: True
     .pause(1500)
     .options({speed: 50, deleteSpeed: 7})
     .go();
+    examples.push({typeit: instance, element: document.getElementById("feature-5")});
 
     document.getElementById("feature-6").innerText = "";
-    new TypeIt('#feature-6', {
+    var instance = new TypeIt('#feature-6', {
       speed: 50,
       startDelay: 900,
       loop: true,
@@ -281,6 +306,18 @@ showParticles: True
     .pause(1500)
     .options({speed: 50, deleteSpeed: 7})
     .go();
+    examples.push({typeit: instance, element: document.getElementById("feature-6")});
+
+    // Fix page flickering
+    setInterval(function() {
+      for (var i = 0; i<examples.length; i++) {
+        if (!isVisible(examples[i].element)) {
+          examples[i].typeit.freeze();
+        }else{
+          examples[i].typeit.unfreeze();
+        }
+      }
+    }, 300);
   }
 
   jumboText();

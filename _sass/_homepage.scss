@@ -3,7 +3,7 @@
 
     h1 {
         font-weight: 400;
-        margin: 120px 0 160px 0;
+        margin: 100px 0 130px 0;
 
         @media screen and (max-width: $screen-desktop) {
             margin: 80px 0 100px 0;
@@ -12,6 +12,7 @@
         @media screen and (max-width: $screen-phone) {
             margin: 35px 0 70px 0;
             font-size: 2.5em;
+            height: 150px;
         }
     }
 
@@ -99,6 +100,7 @@
         background-color: $blackColor;
         color: white;
         height: 90px;
+        width: 100%;
         padding: 10px 20px 10px 20px;
         border-radius: 5px;
         margin: auto;
