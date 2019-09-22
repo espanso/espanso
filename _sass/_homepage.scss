@@ -30,8 +30,10 @@
     }
 
     .btn-subtitle {
+        display: block;
         font-size: 1em;
         margin: 10px;
+        text-decoration: none;
         color: $grayColor;
     }
 }

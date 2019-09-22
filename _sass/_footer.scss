@@ -1,0 +1,25 @@
+.footer-section {
+    color: white;
+    text-align: center;
+
+    .contrib-box {
+        background-image: url("/assets/images/footerback.svg");
+        background-position: center top;
+        background-size: cover;
+        margin: 60px 0 0 0;
+        padding: 50px 0 10px 0;
+    }
+
+    .copy-box {
+        padding: 15px 0 0 0;
+        background-color: $veryBlackColor;
+        height: 100%;
+        p {
+            line-height: 1em;
+        }
+    }
+
+    a {
+        color: $lightGrayColor;
+    }
+}

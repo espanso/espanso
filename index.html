@@ -9,8 +9,8 @@ showParticles: True
 <div class="jumbotron text-center">
   <h1 class="display-4" id="jumbo-text">Cross-platform Text Expander written in Rust</h1>
   
-  <a class="btn btn-lg" href="#" role="button">Get Started on MacOS</a>
-  <p class="btn-subtitle">Also available for Windows and Linux</p>
+  <a class="btn btn-lg" href="/install/mac/" role="button" id="get-started-btn">Get Started on MacOS</a>
+  <p><a class="btn-subtitle" href="/install/" id="get-started-other">Also available for Windows and Linux</a></p>
 </div>
 
 <div class="container-fluid hiw text-center">
@@ -119,7 +119,40 @@ showParticles: True
 <script src="/assets/js/typeit.min.js"></script>
 
 <script>
+  function getOS() {
+    var userAgent = window.navigator.userAgent,
+        platform = window.navigator.platform,
+        macosPlatforms = ['Macintosh', 'MacIntel', 'MacPPC', 'Mac68K'],
+        windowsPlatforms = ['Win32', 'Win64', 'Windows', 'WinCE'],
+        iosPlatforms = ['iPhone', 'iPad', 'iPod'],
+        os = null;
+
+    if (macosPlatforms.indexOf(platform) !== -1) {
+      os = 'mac';
+    } else if (windowsPlatforms.indexOf(platform) !== -1) {
+      os = 'win';
+    } else if (!os && /Linux/.test(platform)) {
+      os = 'linux';
+    }
+
+    return os;
+  }
+
   function jumboText() {
+    // Setup get started button
+    var os = getOS();
+    var btn = document.getElementById("get-started-btn");
+    var btnother = document.getElementById("get-started-other");
+    if (os == "win") {
+      btn.innerText = "Get Started on Windows";
+      btn.href = "/install/win/";
+      btnother.innerText = "Also available for macOS and Linux";
+    }else if(os == "linux") {
+      btn.innerText = "Get Started on Linux";
+      btn.href = "/install/linux/";
+      btnother.innerText = "Also available for macOS and Windows";
+    }
+    
     document.getElementById("jumbo-text").innerText = "";
     new TypeIt('#jumbo-text', {
       speed: 50,

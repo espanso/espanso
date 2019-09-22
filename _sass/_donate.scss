@@ -1,0 +1,34 @@
+.donate {
+    margin-top: 60px;
+    img {
+        height: 150px;
+        display: block;
+        margin-left: auto;
+
+        @media screen and (max-width: $screen-tablet) {
+            margin-right: auto;
+        }
+    }
+
+    @media screen and (max-width: $screen-tablet) {
+        text-align: center;
+    }
+
+    .bigger {
+        font-size: 1.2em;
+    }
+
+    .btn {
+        font-weight: 700;
+        font-size: 1.2em;
+        background-color: $orangeColor;
+        color: white !important;
+        padding: 10px 25px 10px 25px;
+        border-radius: 40px;
+        border: 0;
+
+        @media screen and (max-width: $screen-tablet) {
+            font-size: 1.3em;
+        }
+    }
+}
