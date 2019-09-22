@@ -8,12 +8,11 @@ have many problems making it work on others.
 
 * [Ubuntu/Debian](#installing-on-ubuntu--debian)
 * [Manjaro/Arch](#installing-on-manjaro--arch)
-* [Others](#installing-on-other-distros)
 
 #### Installing on Ubuntu / Debian
 
-Espanso depends upon the `X11 Record Extension`, the `XDO library` and the `xclip` command, 
-so you will need to install those first with the following command:
+Espanso depends upon the `X11 Record Extension`, the `xdo library` and the `xclip` command, 
+so you will need to install those first with the following commands:
 
 ```
 sudo apt update
@@ -41,8 +40,29 @@ If you now type `:espanso` in any text field, you should see "Hi there!" appear!
 
 #### Installing on Manjaro / Arch
 
-TODO
+Espanso depends upon the `X11 Record Extension`, the `xdo library` and the `xclip` command, 
+so you will need to install those first with the following commands:
 
-#### Installing on Other Distros
+```
+sudo pacman -Sy
+sudo pacman -S libxtst xdotool xclip
+```
 
-TODO
+You can now download the latest espanso release:
+```
+curl -L https://github.com/federico-terzi/espanso/releases/latest/download/espanso-linux.tar.gz | tar -xz -C /tmp/
+```
+
+And then move it to the `/usr/local/bin/` directory
+
+```
+sudo mv /tmp/espanso /usr/local/bin/espanso
+```
+
+You should now have espanso installed in your system. To start it, type the following command:
+
+```
+espanso start
+```
+
+If you now type `:espanso` in any text field, you should see "Hi there!" appear! 
