@@ -376,6 +376,8 @@ int32_t is_current_window_terminal() {
     if (res > 0) {
         if (strstr(class_buffer, "terminal") != NULL) {
             return 1;
+        }else if (strstr(class_buffer, "URxvt") != NULL) {  // Manjaro terminal
+            return 1;
         }
     }
 
