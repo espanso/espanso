@@ -1,15 +1,18 @@
 ---
 title: Install on Windows
-layout: default
+layout: docs
 ---
-The installation on Windows is straightforward, download the installer by
-clicking on the button below and follow the instructions.
+The easiest way to install espanso on Windows is by using the official installer.
 
-<div class="text-center">
+### Using the Installer
+
+Download the installer by clicking on the button below and follow the instructions.
+
+<div class="">
 <a class="btn btn-lg mybtn" href="https://github.com/federico-terzi/espanso/releases/latest/download/espanso-win-installer.exe" role="button">Download the Installer</a>
 </div>
 
-#### Problems you may experience
+### Problems you may experience
 
 Because espanso is not digitally signed, you may experience a warning from
 Windows Smartscreen. In this case, just click on "More info" (1) and then

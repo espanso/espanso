@@ -1,11 +1,11 @@
 ---
 title: Install on macOS
-layout: default
+layout: docs
 ---
 The easiest way to install espanso on macOS is by using the [Homebrew](https://brew.sh/)
 package manager, but you can also do it manually.
 
-#### Using Homebrew
+### Using Homebrew
 
 The first thing to do is to add the official espanso *tap* to Homebrew with
 the following command:
@@ -28,7 +28,7 @@ espanso --version
 
 At this point, you have to [Enable Accessibility](#enabling-accessibility) to use espanso.
 
-#### Enabling Accessibility
+### Enabling Accessibility
 
 Because espanso uses the macOS [Accessibility API](https://developer.apple.com/library/archive/documentation/Accessibility/Conceptual/AccessibilityMacOSX/)
 to work, you need to authorize it using the following procedure:

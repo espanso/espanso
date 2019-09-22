@@ -1,0 +1,47 @@
+.docs {
+    text-align: justify;
+
+    .index {
+        position: -webkit-sticky;
+        position: sticky;
+        top: 20px;
+
+        li {
+            margin-bottom: 5px;
+        }
+        a {
+            color: $blackColor;
+            border-right-style: solid;
+        }
+
+        .active {
+            a {
+                color: $mainColor;
+            }
+        }
+    }
+
+    h3, h4, h5 {
+        @media screen and (max-width: $screen-phone) {
+            text-align: center;
+        }
+    }
+
+    .card-body {
+        h3 {
+            margin: 0 0 15px 0;
+        }
+    }
+}
+
+.doc-col {
+    padding: 10px;
+
+    .card-link {
+        color: $blackColor;
+    }
+
+    .card:hover {
+        border-color: $mainColor;
+    }
+}

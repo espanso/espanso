@@ -1,0 +1,6 @@
+- name: Installation
+  link: /install/
+  desc: This section will cover the installation process on Windows, macOS and Linux.
+- name: Basic Usage
+  link: /docs/basic-usage/
+  desc: In this section we will cover the basics of espanso to get you started immediately.

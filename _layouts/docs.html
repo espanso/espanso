@@ -1,0 +1,78 @@
+---
+layout: default
+hideTitle: true
+---
+<div class="row docs">
+    <div class="col-md-2 d-none d-md-block">
+    </div>
+    <div class="col-md-10">
+        <h2 class="mt-4 mb-4">{{page.title}}</h2>
+    </div>
+</div>
+<div class="row docs">
+    <div class="col-md-2 d-none d-md-block">
+        <ul class="nav flex-column text-right index" id="index">
+        </ul>
+    </div>
+    <div class="col-md-10" id="contentBox">
+        {{ content }}
+    </div>
+<script>
+
+function loadSections() {
+    var headings = document.querySelectorAll("h1, h2, h3, h4, h5, h6");
+    var output = [];
+    for (var i = 0; i<headings.length; i++) {
+        var obj = {};
+        obj.element = headings[i];
+        obj.text = headings[i].innerText;
+        obj.id = headings[i].id;
+        if (headings[i].tagName === "H3") {
+            output.push(obj);
+        }
+    }
+    return output;
+}
+
+function loadIndex(sections) {
+    var index = document.getElementById("index");
+    for (var i = 0; i<sections.length; i++) {
+        var li = document.createElement("li");
+        var linkNode = document.createElement("a");
+        linkNode.classList.add("nav-link");
+        linkNode.appendChild(document.createTextNode(sections[i].text));
+        linkNode.href = "#"+sections[i].id;
+        li.appendChild(linkNode);
+        li.classList.add("nav-item");
+        index.appendChild(li);
+        sections[i].linkElement = li;
+    }
+}
+
+function updateIndexSelect() {
+    for (var i = 0; i<sections.length; i++) {
+        sections[i].linkElement.classList.remove("active");
+    }
+
+    for (var i = 0; i<sections.length; i++) {
+        if (isVisible(sections[i].element)) {
+            sections[i].linkElement.classList.add("active");
+            break;
+        }
+    }
+}
+
+var sections = loadSections();
+loadIndex(sections);
+
+// Scroll handler for index hightlight
+window.addEventListener("scroll", function() {
+    updateIndexSelect();
+});
+
+window.addEventListener("load", function() {
+    updateIndexSelect();
+});
+
+</script>
+</div>

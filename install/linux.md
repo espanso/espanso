@@ -1,6 +1,6 @@
 ---
 title: Install on Linux
-layout: default
+layout: docs
 ---
 The linux installation depends on the distro you are using. 
 Espanso has been tested in the following distros, but you shouldn't 
@@ -9,7 +9,7 @@ have many problems making it work on others.
 * [Ubuntu/Debian](#installing-on-ubuntu--debian)
 * [Manjaro/Arch](#installing-on-manjaro--arch)
 
-#### Installing on Ubuntu / Debian
+### Installing on Ubuntu / Debian
 
 Espanso depends upon the `X11 Record Extension`, the `xdo library` and the `xclip` command, 
 so you will need to install those first with the following commands:
@@ -38,7 +38,7 @@ espanso start
 
 If you now type `:espanso` in any text field, you should see "Hi there!" appear! 
 
-#### Installing on Manjaro / Arch
+### Installing on Manjaro / Arch
 
 Espanso depends upon the `X11 Record Extension`, the `xdo library` and the `xclip` command, 
 so you will need to install those first with the following commands:

@@ -9,9 +9,6 @@ github_username:  federico-terzi
 permalink: /blog/:title/
 highlighter: rouge
 
-collections:
-  portfolios:
-
 # Build settings
 markdown: kramdown
 theme: minima
@@ -19,7 +16,7 @@ plugins:
   - jekyll-feed
   - jekyll-sitemap
   - jekyll-seo-tag
-
+  
 social:
   name: Federico Terzi
   links:
