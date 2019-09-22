@@ -102,12 +102,12 @@ pub fn unregister(_config_set: ConfigSet) {
 // LINUX
 
 #[cfg(target_os = "linux")]
-pub fn register(config_set: ConfigSet) {
+pub fn register(_config_set: ConfigSet) {
     println!("Linux does not support automatic system daemon integration.");
 }
 
 #[cfg(target_os = "linux")]
-pub fn unregister(config_set: ConfigSet) {
+pub fn unregister(_config_set: ConfigSet) {
     println!("Linux does not support automatic system daemon integration.");
 }
 

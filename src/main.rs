@@ -343,11 +343,7 @@ fn start_daemon(config_set: ConfigSet) {
 
 #[cfg(target_os = "linux")]
 fn start_daemon(config_set: ConfigSet) {
-    if config_set.default.use_system_agent {
-        // TODO: systemd
-    }else{
-        fork_daemon(config_set);
-    }
+    fork_daemon(config_set);
 }
 
 #[cfg(not(target_os = "windows"))]
