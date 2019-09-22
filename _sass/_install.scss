@@ -1,0 +1,24 @@
+.install {
+    @media screen and (min-width: $screen-laptop) {
+        margin-top: 80px;
+    }
+
+    img {
+        height: 130px;
+        margin: 40px auto 40px auto;
+    }
+
+    .btn {
+        font-weight: 700;
+        font-size: 1.2em;
+        background-color: $mainColor;
+        color: white !important;
+        padding: 10px 25px 10px 25px;
+        border-radius: 40px;
+        border: 0;
+
+        @media screen and (max-width: $screen-tablet) {
+            font-size: 1.3em;
+        }
+    }
+}

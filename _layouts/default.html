@@ -1,0 +1,76 @@
+<!doctype html>
+<html>
+<!--
+Hi there, thanks for checking out the espanso website!
+If you want to see more interesting projects, visit my website: https://federicoterzi.com/
+-->
+  <head>
+    <meta charset="utf-8">
+    {% assign pagetitle = "" %}
+    {% if page.title and page.hideTitle == False %}
+    {% assign pagetitle = page.title | append: " - " %}
+    {% endif %}
+    <title>{{pagetitle}}{{ site.title }} - {{ site.subtitle }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    {% seo %}
+
+    <link rel="apple-touch-icon" sizes="57x57" href="/assets/images/apple-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="/assets/images/apple-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="/assets/images/apple-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="/assets/images/apple-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="/assets/images/apple-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="/assets/images/apple-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="/assets/images/apple-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="/assets/images/apple-icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/images/apple-icon-180x180.png">
+    <link rel="icon" type="image/png" sizes="192x192"  href="/assets/images/android-icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/images/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="96x96" href="/assets/images/favicon-96x96.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/images/favicon-16x16.png">
+    <link rel="manifest" href="/assets/images/manifest.json">
+    <meta name="msapplication-TileColor" content="#00b894">
+    <meta name="msapplication-TileImage" content="/assets/images/ms-icon-144x144.png">
+    <meta name="theme-color" content="#00b894">
+
+    <link rel="stylesheet" href="/assets/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="/assets/css/styles.css">
+    <link href="https://fonts.googleapis.com/css?family=Raleway:400,700&display=swap" rel="stylesheet">
+  </head>
+  <body>
+    {% include navigation.html %}    
+
+    {% if page.showParticles %}
+    <div id="particles-js"></div>
+    {% endif %}
+
+    {% unless page.avoidContainer %}
+    <div class="container content">
+    {% endunless %}
+
+    {% unless page.hideTitle or layout.hideTitle %}
+    <h2 class="page-title mt-4 mb-4">{{page.title}}</h2>
+    {% endunless %}
+
+    {{ content }}
+
+    {% unless page.avoidContainer %}
+    </div>
+    {% endunless %}
+
+    {% include footer.html %}
+
+    <script src="/assets/js/jquery.slim.min.js"></script>
+    <script src="/assets/js/popper.min.js"></script>
+    <script src="/assets/js/bootstrap.min.js"></script>
+
+    {% if page.showParticles %}
+    <script src="/assets/js/particles.min.js"></script>
+    <script>
+        particlesJS.load('particles-js', '/assets/particles.json', function() {
+            console.log('callback - particles.js config loaded');
+        });
+    </script>
+    {% endif %}
+  </body>
+</html>

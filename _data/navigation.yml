@@ -1,0 +1,10 @@
+- name: Home
+  link: /
+- name: Installation
+  link: /install/
+- name: Documentation
+  link: /docs/
+- name: Packages
+  link: https://hub.espanso.org
+- name: GitHub
+  link: https://github.com/federico-terzi/espanso
