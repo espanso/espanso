@@ -22,7 +22,7 @@ sudo apt install libxtst6 libxdo3 xclip
 
 You can now download the latest espanso release:
 ```
-curl https://github.com/federico-terzi/espanso/releases/latest/download/espanso-linux.tar.gz | tar -xz -C /tmp/
+curl -L https://github.com/federico-terzi/espanso/releases/latest/download/espanso-linux.tar.gz | tar -xz -C /tmp/
 ```
 
 And then move it to the `/usr/local/bin/` directory
