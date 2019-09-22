@@ -9,6 +9,7 @@
 **/*.rs.bk
 
 .idea
+_site/
 
 cmake-build-debug
 cmake-build-release
