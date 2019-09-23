@@ -34,9 +34,9 @@ use std::error::Error;
 pub(crate) mod runtime;
 
 // TODO: add documentation link
-const DEFAULT_CONFIG_FILE_CONTENT : &str = include_str!("../res/config.yaml");
+const DEFAULT_CONFIG_FILE_CONTENT : &str = include_str!("../res/config.yml");
 
-const DEFAULT_CONFIG_FILE_NAME : &str = "default.yaml";
+const DEFAULT_CONFIG_FILE_NAME : &str = "default.yml";
 
 // Default values for primitives
 fn default_name() -> String{ "default".to_owned() }
@@ -110,7 +110,7 @@ macro_rules! validate_field {
             if field_name.starts_with("self.") {
                 field_name = &field_name[5..];  // Remove the 'self.' prefix
             }
-            error!("Validation error, parameter '{}' is reserved and can be only used in the default.yaml config file", field_name);
+            error!("Validation error, parameter '{}' is reserved and can be only used in the default.yml config file", field_name);
             $result = false;
         }
     };
@@ -205,12 +205,12 @@ impl ConfigSet {
                 let path = entry.path();
 
                 // Skip the default one, already loaded
-                if path.file_name().unwrap_or("".as_ref()) == "default.yaml" {
+                if path.file_name().unwrap_or("".as_ref()) == "default.yml" {
                     continue;
                 }
 
                 // Skip non-yaml config files
-                if path.extension().unwrap_or_default().to_str().unwrap_or_default() != "yaml" {
+                if path.extension().unwrap_or_default().to_str().unwrap_or_default() != "yml" {
                     continue;
                 }
 
@@ -343,8 +343,8 @@ mod tests {
     use tempfile::{NamedTempFile, TempDir};
     use std::any::Any;
 
-    const TEST_WORKING_CONFIG_FILE : &str = include_str!("../res/test/working_config.yaml");
-    const TEST_CONFIG_FILE_WITH_BAD_YAML : &str = include_str!("../res/test/config_with_bad_yaml.yaml");
+    const TEST_WORKING_CONFIG_FILE : &str = include_str!("../res/test/working_config.yml");
+    const TEST_CONFIG_FILE_WITH_BAD_YAML : &str = include_str!("../res/test/config_with_bad_yaml.yml");
 
     // Test Configs
 
@@ -516,7 +516,7 @@ mod tests {
         let default_path = tmp_dir.path().join(DEFAULT_CONFIG_FILE_NAME);
         fs::write(default_path, DEFAULT_CONFIG_FILE_CONTENT);
 
-        let specific_path = tmp_dir.path().join("specific.yaml");
+        let specific_path = tmp_dir.path().join("specific.yml");
         let specific_path_copy = specific_path.clone();
         fs::write(specific_path, r###"
         config_caching_interval: 10000
@@ -533,7 +533,7 @@ mod tests {
         let default_path = tmp_dir.path().join(DEFAULT_CONFIG_FILE_NAME);
         fs::write(default_path, DEFAULT_CONFIG_FILE_CONTENT);
 
-        let specific_path = tmp_dir.path().join("specific.yaml");
+        let specific_path = tmp_dir.path().join("specific.yml");
         let specific_path_copy = specific_path.clone();
         fs::write(specific_path, r###"
         backend: Clipboard
@@ -564,11 +564,11 @@ mod tests {
     fn test_config_set_specific_file_duplicate_name() {
         let tmp_dir = create_temp_espanso_directory();
 
-        let specific_path = create_temp_file_in_dir(&tmp_dir, "specific.yaml", r###"
+        let specific_path = create_temp_file_in_dir(&tmp_dir, "specific.yml", r###"
         name: specific1
         "###);
 
-        let specific_path2 = create_temp_file_in_dir(&tmp_dir, "specific2.yaml", r###"
+        let specific_path2 = create_temp_file_in_dir(&tmp_dir, "specific2.yml", r###"
         name: specific1
         "###);
 
@@ -589,7 +589,7 @@ mod tests {
               replace: "Bob"
         "###);
 
-        let specific_path = tmp_dir.path().join("specific.yaml");
+        let specific_path = tmp_dir.path().join("specific.yml");
         let specific_path_copy = specific_path.clone();
         fs::write(specific_path, r###"
         name: specific1
@@ -620,7 +620,7 @@ mod tests {
               replace: "Bob"
         "###);
 
-        let specific_path = tmp_dir.path().join("specific.yaml");
+        let specific_path = tmp_dir.path().join("specific.yml");
         let specific_path_copy = specific_path.clone();
         fs::write(specific_path, r###"
         name: specific1
@@ -650,7 +650,7 @@ mod tests {
               replace: "Bob"
         "###);
 
-        let specific_path = tmp_dir.path().join("specific.yaml");
+        let specific_path = tmp_dir.path().join("specific.yml");
         let specific_path_copy = specific_path.clone();
         fs::write(specific_path, r###"
         name: specific1

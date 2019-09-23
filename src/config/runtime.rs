@@ -252,18 +252,18 @@ mod tests {
     fn test_runtime_constructor_regex_load_correctly() {
         let tmp_dir = create_temp_espanso_directory();
 
-        let specific_path = create_temp_file_in_dir(&tmp_dir, "specific.yaml", r###"
+        let specific_path = create_temp_file_in_dir(&tmp_dir, "specific.yml", r###"
         name: myname1
         filter_exec: "Title"
         "###);
 
-        let specific_path2 = create_temp_file_in_dir(&tmp_dir, "specific2.yaml", r###"
+        let specific_path2 = create_temp_file_in_dir(&tmp_dir, "specific2.yml", r###"
         name: myname2
         filter_title: "Yeah"
         filter_class: "Car"
         "###);
 
-        let specific_path3 = create_temp_file_in_dir(&tmp_dir, "specific3.yaml", r###"
+        let specific_path3 = create_temp_file_in_dir(&tmp_dir, "specific3.yml", r###"
         name: myname3
         filter_title: "Nice"
         "###);
@@ -303,18 +303,18 @@ mod tests {
     fn test_runtime_constructor_malformed_regexes_are_ignored() {
         let tmp_dir = create_temp_espanso_directory();
 
-        let specific_path = create_temp_file_in_dir(&tmp_dir, "specific.yaml", r###"
+        let specific_path = create_temp_file_in_dir(&tmp_dir, "specific.yml", r###"
         name: myname1
         filter_exec: "[`-_]"
         "###);
 
-        let specific_path2 = create_temp_file_in_dir(&tmp_dir, "specific2.yaml", r###"
+        let specific_path2 = create_temp_file_in_dir(&tmp_dir, "specific2.yml", r###"
         name: myname2
         filter_title: "[`-_]"
         filter_class: "Car"
         "###);
 
-        let specific_path3 = create_temp_file_in_dir(&tmp_dir, "specific3.yaml", r###"
+        let specific_path3 = create_temp_file_in_dir(&tmp_dir, "specific3.yml", r###"
         name: myname3
         filter_title: "Nice"
         "###);
@@ -354,7 +354,7 @@ mod tests {
     fn test_runtime_calculate_active_config_specific_title_match() {
         let tmp_dir = create_temp_espanso_directory();
 
-        let specific_path = create_temp_file_in_dir(&tmp_dir, "specific.yaml", r###"
+        let specific_path = create_temp_file_in_dir(&tmp_dir, "specific.yml", r###"
         name: chrome
         filter_title: "Chrome"
         "###);
@@ -372,7 +372,7 @@ mod tests {
     fn test_runtime_calculate_active_config_specific_class_match() {
         let tmp_dir = create_temp_espanso_directory();
 
-        let specific_path = create_temp_file_in_dir(&tmp_dir, "specific.yaml", r###"
+        let specific_path = create_temp_file_in_dir(&tmp_dir, "specific.yml", r###"
         name: chrome
         filter_class: "Chrome"
         "###);
@@ -390,7 +390,7 @@ mod tests {
     fn test_runtime_calculate_active_config_specific_exec_match() {
         let tmp_dir = create_temp_espanso_directory();
 
-        let specific_path = create_temp_file_in_dir(&tmp_dir, "specific.yaml", r###"
+        let specific_path = create_temp_file_in_dir(&tmp_dir, "specific.yml", r###"
         name: chrome
         filter_exec: "chrome.exe"
         "###);
@@ -408,7 +408,7 @@ mod tests {
     fn test_runtime_calculate_active_config_specific_multi_filter_match() {
         let tmp_dir = create_temp_espanso_directory();
 
-        let specific_path = create_temp_file_in_dir(&tmp_dir, "specific.yaml", r###"
+        let specific_path = create_temp_file_in_dir(&tmp_dir, "specific.yml", r###"
         name: chrome
         filter_class: Browser
         filter_exec: "firefox.exe"
@@ -428,7 +428,7 @@ mod tests {
     fn test_runtime_calculate_active_config_no_match() {
         let tmp_dir = create_temp_espanso_directory();
 
-        let specific_path = create_temp_file_in_dir(&tmp_dir, "specific.yaml", r###"
+        let specific_path = create_temp_file_in_dir(&tmp_dir, "specific.yml", r###"
         name: firefox
         filter_title: "Firefox"
         "###);
@@ -447,7 +447,7 @@ mod tests {
     fn test_runtime_active_config_cache() {
         let tmp_dir = create_temp_espanso_directory();
 
-        let specific_path = create_temp_file_in_dir(&tmp_dir, "specific.yaml", r###"
+        let specific_path = create_temp_file_in_dir(&tmp_dir, "specific.yml", r###"
         name: firefox
         filter_title: "Firefox"
         "###);
