@@ -51,13 +51,14 @@ mod bridge;
 mod engine;
 mod config;
 mod system;
-mod sysdaemon;
 mod context;
 mod matcher;
+mod package;
 mod keyboard;
 mod protocol;
 mod clipboard;
 mod extension;
+mod sysdaemon;
 
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 const LOG_FILE: &str = "espanso.log";

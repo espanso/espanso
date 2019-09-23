@@ -37,6 +37,8 @@ pub(crate) mod runtime;
 const DEFAULT_CONFIG_FILE_CONTENT : &str = include_str!("../res/config.yml");
 
 const DEFAULT_CONFIG_FILE_NAME : &str = "default.yml";
+const USER_CONFIGS_FOLDER_NAME: &str = "user";
+const PACKAGES_FOLDER_NAME : &str = "packages";
 
 // Default values for primitives
 fn default_name() -> String{ "default".to_owned() }
@@ -119,10 +121,10 @@ macro_rules! validate_field {
 impl Configs {
     /*
      * Validate the Config instance.
-     * It makes sure that app-specific config instances do not define
+     * It makes sure that user defined config instances do not define
      * attributes reserved to the default config.
      */
-    fn validate_specific_config(&self) -> bool {
+    fn validate_user_defined_config(&self) -> bool {
         let mut result = true;
 
         validate_field!(result, self.config_caching_interval, default_config_caching_interval());
@@ -185,76 +187,79 @@ impl ConfigSet {
             return Err(ConfigLoadError::InvalidConfigDirectory)
         }
 
+        // Load default configuration
         let default_file = dir_path.join(DEFAULT_CONFIG_FILE_NAME);
         let default = Configs::load_config(default_file.as_path())?;
 
+        // Load user defined configurations
+
+        // TODO: loading with parent merging
+
         let mut specific = Vec::new();
 
-        // Used to make sure no duplicates are present
-        let mut name_set = HashSet::new();
+        let specific_dir = dir_path.join(USER_CONFIGS_FOLDER_NAME);
+        if specific_dir.exists() {
+            // Used to make sure no duplicates are present
+            let mut name_set = HashSet::new();  // TODO: think about integration with packages
 
-        let dir_entry = fs::read_dir(dir_path);
-        if dir_entry.is_err() {
-            return Err(ConfigLoadError::UnableToReadFile)
-        }
-        let dir_entry = dir_entry.unwrap();
+            let dir_entry = fs::read_dir(specific_dir);
+            if dir_entry.is_err() {
+                return Err(ConfigLoadError::UnableToReadFile)
+            }
+            let dir_entry = dir_entry.unwrap();
 
-        for entry in dir_entry {
-            let entry = entry;
-            if let Ok(entry) = entry {
-                let path = entry.path();
+            for entry in dir_entry {
+                let entry = entry;
+                if let Ok(entry) = entry {
+                    let path = entry.path();
 
-                // Skip the default one, already loaded
-                if path.file_name().unwrap_or("".as_ref()) == "default.yml" {
-                    continue;
+                    // Skip non-yaml config files
+                    if path.extension().unwrap_or_default().to_str().unwrap_or_default() != "yml" {
+                        continue;
+                    }
+
+                    let mut config = Configs::load_config(path.as_path())?;
+
+                    if !config.validate_user_defined_config() {
+                        return Err(ConfigLoadError::InvalidParameter(path.to_owned()))
+                    }
+
+                    if config.name == "default" {
+                        return Err(ConfigLoadError::MissingName(path.to_owned()));
+                    }
+
+                    if name_set.contains(&config.name) {
+                        return Err(ConfigLoadError::NameDuplicate(path.to_owned()));
+                    }
+
+                    // Compute new match set, merging the parent's matches.
+                    // Note: if an app-specific redefines a trigger already present in the
+                    // default config, the latter gets overwritten.
+                    if !config.exclude_parent_matches {
+                        let mut merged_matches = config.matches.clone();
+                        let mut trigger_set = HashSet::new();
+                        merged_matches.iter().for_each(|m| {
+                            trigger_set.insert(m.trigger.clone());
+                        });
+                        let parent_matches : Vec<Match> = default.matches.iter().filter(|&m| {
+                            !trigger_set.contains(&m.trigger)
+                        }).map(|m| m.clone()).collect();
+
+                        merged_matches.extend(parent_matches);
+                        config.matches = merged_matches;
+                    }
+
+                    // TODO: check if it contains at least a filter, and warn the user about the problem
+
+                    name_set.insert(config.name.clone());
+                    specific.push(config);
                 }
-
-                // Skip non-yaml config files
-                if path.extension().unwrap_or_default().to_str().unwrap_or_default() != "yml" {
-                    continue;
-                }
-
-                let mut config = Configs::load_config(path.as_path())?;
-
-                if !config.validate_specific_config() {
-                    return Err(ConfigLoadError::InvalidParameter(path.to_owned()))
-                }
-
-                if config.name == "default" {
-                    return Err(ConfigLoadError::MissingName(path.to_owned()));
-                }
-
-                if name_set.contains(&config.name) {
-                    return Err(ConfigLoadError::NameDuplicate(path.to_owned()));
-                }
-
-                // Compute new match set, merging the parent's matches.
-                // Note: if an app-specific redefines a trigger already present in the
-                // default config, the latter gets overwritten.
-                if !config.exclude_parent_matches {
-                    let mut merged_matches = config.matches.clone();
-                    let mut trigger_set = HashSet::new();
-                    merged_matches.iter().for_each(|m| {
-                       trigger_set.insert(m.trigger.clone());
-                    });
-                    let parent_matches : Vec<Match> = default.matches.iter().filter(|&m| {
-                        !trigger_set.contains(&m.trigger)
-                    }).map(|m| m.clone()).collect();
-
-                    merged_matches.extend(parent_matches);
-                    config.matches = merged_matches;
-                }
-
-                // TODO: check if it contains at least a filter, and warn the user about the problem
-
-                name_set.insert(config.name.clone());
-                specific.push(config);
             }
         }
 
         Ok(ConfigSet {
             default,
-            specific
+            specific: specific
         })
     }
 
@@ -273,6 +278,24 @@ impl ConfigSet {
                 if !default_file.exists() {
                     let result = fs::write(&default_file, DEFAULT_CONFIG_FILE_CONTENT);
                     if result.is_err() {
+                        return Err(ConfigLoadError::UnableToCreateDefaultConfig)
+                    }
+                }
+
+                // Create auxiliary directories
+
+                let user_config_dir = espanso_dir.join(USER_CONFIGS_FOLDER_NAME);
+                if !user_config_dir.exists() {
+                    let res = create_dir_all(user_config_dir.as_path());
+                    if res.is_err() {
+                        return Err(ConfigLoadError::UnableToCreateDefaultConfig)
+                    }
+                }
+
+                let packages_dir = espanso_dir.join(PACKAGES_FOLDER_NAME);
+                if !packages_dir.exists() {
+                    let res = create_dir_all(packages_dir.as_path());
+                    if res.is_err() {
                         return Err(ConfigLoadError::UnableToCreateDefaultConfig)
                     }
                 }
@@ -311,8 +334,8 @@ impl fmt::Display for ConfigLoadError {
             ConfigLoadError::UnableToReadFile =>  write!(f, "Unable to read config file"),
             ConfigLoadError::InvalidYAML(path, e) => write!(f, "Error parsing YAML file '{}', invalid syntax: {}", path.to_str().unwrap_or_default(), e),
             ConfigLoadError::InvalidConfigDirectory =>  write!(f, "Invalid config directory"),
-            ConfigLoadError::InvalidParameter(path) =>  write!(f, "Invalid parameter in '{}', use of reserved parameters in app-specific configs is not permitted", path.to_str().unwrap_or_default()),
-            ConfigLoadError::MissingName(path) =>  write!(f, "The 'name' field is required in app-specific configurations, but it's missing in '{}'", path.to_str().unwrap_or_default()),
+            ConfigLoadError::InvalidParameter(path) =>  write!(f, "Invalid parameter in '{}', use of reserved parameters in used defined configs is not permitted", path.to_str().unwrap_or_default()),
+            ConfigLoadError::MissingName(path) =>  write!(f, "The 'name' field is required in user defined configurations, but it's missing in '{}'", path.to_str().unwrap_or_default()),
             ConfigLoadError::NameDuplicate(path) =>  write!(f, "Found duplicate 'name' in '{}', please use different names", path.to_str().unwrap_or_default()),
             ConfigLoadError::UnableToCreateDefaultConfig =>  write!(f, "Could not generate default config file"),
         }
@@ -326,8 +349,8 @@ impl Error for ConfigLoadError {
             ConfigLoadError::UnableToReadFile => "Unable to read config file",
             ConfigLoadError::InvalidYAML(_, _) => "Error parsing YAML file, invalid syntax",
             ConfigLoadError::InvalidConfigDirectory => "Invalid config directory",
-            ConfigLoadError::InvalidParameter(_) => "Invalid parameter, use of reserved parameters in app-specific configs is not permitted",
-            ConfigLoadError::MissingName(_) => "The 'name' field is required in app-specific configurations, but it's missing",
+            ConfigLoadError::InvalidParameter(_) => "Invalid parameter, use of reserved parameters in user defined configs is not permitted",
+            ConfigLoadError::MissingName(_) => "The 'name' field is required in user defined configurations, but it's missing",
             ConfigLoadError::NameDuplicate(_) => "Found duplicate 'name' in some configurations, please use different names",
             ConfigLoadError::UnableToCreateDefaultConfig => "Could not generate default config file",
         }
@@ -397,18 +420,18 @@ mod tests {
     }
 
     #[test]
-    fn test_specific_config_does_not_have_reserved_fields() {
+    fn test_user_defined_config_does_not_have_reserved_fields() {
         let working_config_file = create_tmp_file(r###"
 
         backend: Clipboard
 
         "###);
         let config = Configs::load_config(working_config_file.path());
-        assert_eq!(config.unwrap().validate_specific_config(), true);
+        assert_eq!(config.unwrap().validate_user_defined_config(), true);
     }
 
     #[test]
-    fn test_specific_config_has_reserved_fields_config_caching_interval() {
+    fn test_user_defined_config_has_reserved_fields_config_caching_interval() {
         let working_config_file = create_tmp_file(r###"
 
         # This should not happen in an app-specific config
@@ -416,11 +439,11 @@ mod tests {
 
         "###);
         let config = Configs::load_config(working_config_file.path());
-        assert_eq!(config.unwrap().validate_specific_config(), false);
+        assert_eq!(config.unwrap().validate_user_defined_config(), false);
     }
 
     #[test]
-    fn test_specific_config_has_reserved_fields_toggle_key() {
+    fn test_user_defined_config_has_reserved_fields_toggle_key() {
         let working_config_file = create_tmp_file(r###"
 
         # This should not happen in an app-specific config
@@ -428,11 +451,11 @@ mod tests {
 
         "###);
         let config = Configs::load_config(working_config_file.path());
-        assert_eq!(config.unwrap().validate_specific_config(), false);
+        assert_eq!(config.unwrap().validate_user_defined_config(), false);
     }
 
     #[test]
-    fn test_specific_config_has_reserved_fields_toggle_interval() {
+    fn test_user_defined_config_has_reserved_fields_toggle_interval() {
         let working_config_file = create_tmp_file(r###"
 
         # This should not happen in an app-specific config
@@ -440,11 +463,11 @@ mod tests {
 
         "###);
         let config = Configs::load_config(working_config_file.path());
-        assert_eq!(config.unwrap().validate_specific_config(), false);
+        assert_eq!(config.unwrap().validate_user_defined_config(), false);
     }
 
     #[test]
-    fn test_specific_config_has_reserved_fields_backspace_limit() {
+    fn test_user_defined_config_has_reserved_fields_backspace_limit() {
         let working_config_file = create_tmp_file(r###"
 
         # This should not happen in an app-specific config
@@ -452,7 +475,7 @@ mod tests {
 
         "###);
         let config = Configs::load_config(working_config_file.path());
-        assert_eq!(config.unwrap().validate_specific_config(), false);
+        assert_eq!(config.unwrap().validate_user_defined_config(), false);
     }
 
     #[test]
@@ -516,15 +539,14 @@ mod tests {
         let default_path = tmp_dir.path().join(DEFAULT_CONFIG_FILE_NAME);
         fs::write(default_path, DEFAULT_CONFIG_FILE_CONTENT);
 
-        let specific_path = tmp_dir.path().join("specific.yml");
-        let specific_path_copy = specific_path.clone();
-        fs::write(specific_path, r###"
+        let user_defined_path = create_user_config_file(tmp_dir.path(), "specific.yml", r###"
         config_caching_interval: 10000
         "###);
+        let user_defined_path_copy = user_defined_path.clone();
 
         let config_set = ConfigSet::load(tmp_dir.path());
         assert!(config_set.is_err());
-        assert_eq!(config_set.unwrap_err(), ConfigLoadError::InvalidParameter(specific_path_copy))
+        assert_eq!(config_set.unwrap_err(), ConfigLoadError::InvalidParameter(user_defined_path_copy))
     }
 
     #[test]
@@ -533,15 +555,14 @@ mod tests {
         let default_path = tmp_dir.path().join(DEFAULT_CONFIG_FILE_NAME);
         fs::write(default_path, DEFAULT_CONFIG_FILE_CONTENT);
 
-        let specific_path = tmp_dir.path().join("specific.yml");
-        let specific_path_copy = specific_path.clone();
-        fs::write(specific_path, r###"
+        let user_defined_path = create_user_config_file(tmp_dir.path(), "specific.yml", r###"
         backend: Clipboard
         "###);
+        let user_defined_path_copy = user_defined_path.clone();
 
         let config_set = ConfigSet::load(tmp_dir.path());
         assert!(config_set.is_err());
-        assert_eq!(config_set.unwrap_err(), ConfigLoadError::MissingName(specific_path_copy))
+        assert_eq!(config_set.unwrap_err(), ConfigLoadError::MissingName(user_defined_path_copy))
     }
 
     pub fn create_temp_espanso_directory() -> TempDir {
@@ -552,23 +573,32 @@ mod tests {
         tmp_dir
     }
 
-    pub fn create_temp_file_in_dir(tmp_dir: &TempDir, name: &str, content: &str) -> PathBuf {
-        let specific_path = tmp_dir.path().join(name);
-        let specific_path_copy = specific_path.clone();
-        fs::write(specific_path, content);
+    pub fn create_temp_file_in_dir(tmp_dir: &PathBuf, name: &str, content: &str) -> PathBuf {
+        let user_defined_path = tmp_dir.join(name);
+        let user_defined_path_copy = user_defined_path.clone();
+        fs::write(user_defined_path, content);
 
-        specific_path_copy
+        user_defined_path_copy
+    }
+
+    pub fn create_user_config_file(tmp_dir: &Path, name: &str, content: &str) -> PathBuf {
+        let user_config_dir = tmp_dir.join(USER_CONFIGS_FOLDER_NAME);
+        if !user_config_dir.exists() {
+            create_dir_all(&user_config_dir);
+        }
+
+        create_temp_file_in_dir(&user_config_dir, name, content)
     }
 
     #[test]
     fn test_config_set_specific_file_duplicate_name() {
         let tmp_dir = create_temp_espanso_directory();
 
-        let specific_path = create_temp_file_in_dir(&tmp_dir, "specific.yml", r###"
+        let user_defined_path = create_user_config_file(tmp_dir.path(), "specific.yml", r###"
         name: specific1
         "###);
 
-        let specific_path2 = create_temp_file_in_dir(&tmp_dir, "specific2.yml", r###"
+        let user_defined_path2 = create_user_config_file(tmp_dir.path(), "specific2.yml", r###"
         name: specific1
         "###);
 
@@ -578,7 +608,7 @@ mod tests {
     }
 
     #[test]
-    fn test_specific_config_set_merge_with_parent_matches() {
+    fn test_user_defined_config_set_merge_with_parent_matches() {
         let tmp_dir = TempDir::new().expect("unable to create temp directory");
         let default_path = tmp_dir.path().join(DEFAULT_CONFIG_FILE_NAME);
         fs::write(default_path, r###"
@@ -589,9 +619,7 @@ mod tests {
               replace: "Bob"
         "###);
 
-        let specific_path = tmp_dir.path().join("specific.yml");
-        let specific_path_copy = specific_path.clone();
-        fs::write(specific_path, r###"
+        let user_defined_path = create_user_config_file(tmp_dir.path(), "specific1.yml", r###"
         name: specific1
 
         matches:
@@ -609,7 +637,7 @@ mod tests {
     }
 
     #[test]
-    fn test_specific_config_set_merge_with_parent_matches_child_priority() {
+    fn test_user_defined_config_set_merge_with_parent_matches_child_priority() {
         let tmp_dir = TempDir::new().expect("unable to create temp directory");
         let default_path = tmp_dir.path().join(DEFAULT_CONFIG_FILE_NAME);
         fs::write(default_path, r###"
@@ -620,9 +648,7 @@ mod tests {
               replace: "Bob"
         "###);
 
-        let specific_path = tmp_dir.path().join("specific.yml");
-        let specific_path_copy = specific_path.clone();
-        fs::write(specific_path, r###"
+        let user_defined_path2 = create_user_config_file(tmp_dir.path(), "specific2.yml", r###"
         name: specific1
 
         matches:
@@ -639,7 +665,7 @@ mod tests {
     }
 
     #[test]
-    fn test_specific_config_set_exclude_merge_with_parent_matches() {
+    fn test_user_defined_config_set_exclude_merge_with_parent_matches() {
         let tmp_dir = TempDir::new().expect("unable to create temp directory");
         let default_path = tmp_dir.path().join(DEFAULT_CONFIG_FILE_NAME);
         fs::write(default_path, r###"
@@ -650,9 +676,7 @@ mod tests {
               replace: "Bob"
         "###);
 
-        let specific_path = tmp_dir.path().join("specific.yml");
-        let specific_path_copy = specific_path.clone();
-        fs::write(specific_path, r###"
+        let user_defined_path2 = create_user_config_file(tmp_dir.path(), "specific2.yml", r###"
         name: specific1
 
         exclude_parent_matches: true
@@ -681,9 +705,7 @@ mod tests {
               replace: "Bob"
         "###);
 
-        let specific_path = tmp_dir.path().join("specific.zzz");
-        let specific_path_copy = specific_path.clone();
-        fs::write(specific_path, r###"
+        let user_defined_path2 = create_user_config_file(tmp_dir.path(), "specific.zzz", r###"
         name: specific1
 
         exclude_parent_matches: true
