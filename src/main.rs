@@ -71,7 +71,7 @@ fn main() {
             .short("c")
             .long("config")
             .value_name("FILE")
-            .help("Sets a custom config directory. If not specified, reads the default $HOME/.espanso/default.yaml file, creating it if not present.")
+            .help("Sets a custom config directory. If not specified, reads the default $HOME/.espanso/default.yml file, creating it if not present.")
             .takes_value(true))
         .arg(Arg::with_name("v")
             .short("v")
