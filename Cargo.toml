@@ -25,6 +25,7 @@ log-panics = {version = "2.0.0", features = ["with-backtrace"]}
 backtrace = "0.3.37"
 chrono = "0.4.9"
 lazy_static = "1.4.0"
+walkdir = "2.2.9"
 
 [target.'cfg(unix)'.dependencies]
 libc = "0.2.62"
