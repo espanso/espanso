@@ -22,14 +22,15 @@ extern crate dirs;
 use std::path::{Path, PathBuf};
 use std::{fs};
 use crate::matcher::Match;
-use std::fs::{File, create_dir_all};
+use std::fs::{File, create_dir_all, DirEntry};
 use std::io::Read;
 use serde::{Serialize, Deserialize};
 use crate::event::KeyModifier;
-use std::collections::HashSet;
+use std::collections::{HashSet, HashMap};
 use log::{error};
 use std::fmt;
 use std::error::Error;
+use walkdir::WalkDir;
 
 pub(crate) mod runtime;
 
@@ -42,6 +43,7 @@ const PACKAGES_FOLDER_NAME : &str = "packages";
 
 // Default values for primitives
 fn default_name() -> String{ "default".to_owned() }
+fn default_parent() -> String{ "self".to_owned() }
 fn default_filter_title() -> String{ "".to_owned() }
 fn default_filter_class() -> String{ "".to_owned() }
 fn default_filter_exec() -> String{ "".to_owned() }
@@ -52,13 +54,16 @@ fn default_use_system_agent() -> bool { true }
 fn default_config_caching_interval() -> i32 { 800 }
 fn default_toggle_interval() -> u32 { 230 }
 fn default_backspace_limit() -> i32 { 3 }
-fn default_exclude_parent_matches() -> bool {false}
+fn default_exclude_default_matches() -> bool {false}
 fn default_matches() -> Vec<Match> { Vec::new() }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Configs {
     #[serde(default = "default_name")]
     pub name: String,
+
+    #[serde(default = "default_parent")]
+    pub parent: String,
 
     #[serde(default = "default_filter_title")]
     pub filter_title: String,
@@ -96,8 +101,8 @@ pub struct Configs {
     #[serde(default)]
     pub backend: BackendType,
 
-    #[serde(default = "default_exclude_parent_matches")]
-    pub exclude_parent_matches: bool,
+    #[serde(default = "default_exclude_default_matches")]
+    pub exclude_default_matches: bool,
 
     #[serde(default = "default_matches")]
     pub matches: Vec<Match>
@@ -173,6 +178,32 @@ impl Configs {
             Err(ConfigLoadError::FileNotFound)
         }
     }
+
+    fn merge_config(&mut self, new_config: Configs) {
+        let mut merged_matches = new_config.matches;
+        let mut trigger_set = HashSet::new();
+        merged_matches.iter().for_each(|m| {
+            trigger_set.insert(m.trigger.clone());
+        });
+        let parent_matches : Vec<Match> = self.matches.iter().filter(|&m| {
+            !trigger_set.contains(&m.trigger)
+        }).map(|m| m.clone()).collect();
+
+        merged_matches.extend(parent_matches);
+        self.matches = merged_matches;
+    }
+
+    fn merge_default(&mut self, default: &Configs) {
+        let mut trigger_set = HashSet::new();
+        self.matches.iter().for_each(|m| {
+            trigger_set.insert(m.trigger.clone());
+        });
+        let default_matches : Vec<Match> = default.matches.iter().filter(|&m| {
+            !trigger_set.contains(&m.trigger)
+        }).map(|m| m.clone()).collect();
+
+        self.matches.extend(default_matches);
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -191,76 +222,102 @@ impl ConfigSet {
         let default_file = dir_path.join(DEFAULT_CONFIG_FILE_NAME);
         let default = Configs::load_config(default_file.as_path())?;
 
-        // Load user defined configurations
+        // Analyze which config files has to be loaded
 
-        // TODO: loading with parent merging
-
-        let mut specific = Vec::new();
+        let mut target_files = Vec::new();
 
         let specific_dir = dir_path.join(USER_CONFIGS_FOLDER_NAME);
         if specific_dir.exists() {
-            // Used to make sure no duplicates are present
-            let mut name_set = HashSet::new();  // TODO: think about integration with packages
+            let dir_entry = WalkDir::new(specific_dir);
+            target_files.extend(dir_entry);
+        }
 
-            let dir_entry = fs::read_dir(specific_dir);
-            if dir_entry.is_err() {
-                return Err(ConfigLoadError::UnableToReadFile)
-            }
-            let dir_entry = dir_entry.unwrap();
+        let package_dir = dir_path.join(PACKAGES_FOLDER_NAME);
+        if package_dir.exists() {
+            let dir_entry = WalkDir::new(package_dir);
+            target_files.extend(dir_entry);
+        }
 
-            for entry in dir_entry {
-                let entry = entry;
-                if let Ok(entry) = entry {
-                    let path = entry.path();
+        // Load the user defined config files
 
-                    // Skip non-yaml config files
-                    if path.extension().unwrap_or_default().to_str().unwrap_or_default() != "yml" {
-                        continue;
-                    }
+        let mut name_set = HashSet::new();
+        let mut children_map: HashMap<String, Vec<Configs>> = HashMap::new();
+        let mut root_configs = Vec::new();
+        root_configs.push(default);
 
-                    let mut config = Configs::load_config(path.as_path())?;
+        for entry in target_files {
+            if let Ok(entry) = entry {
+                let path = entry.path();
 
-                    if !config.validate_user_defined_config() {
-                        return Err(ConfigLoadError::InvalidParameter(path.to_owned()))
-                    }
-
-                    if config.name == "default" {
-                        return Err(ConfigLoadError::MissingName(path.to_owned()));
-                    }
-
-                    if name_set.contains(&config.name) {
-                        return Err(ConfigLoadError::NameDuplicate(path.to_owned()));
-                    }
-
-                    // Compute new match set, merging the parent's matches.
-                    // Note: if an app-specific redefines a trigger already present in the
-                    // default config, the latter gets overwritten.
-                    if !config.exclude_parent_matches {
-                        let mut merged_matches = config.matches.clone();
-                        let mut trigger_set = HashSet::new();
-                        merged_matches.iter().for_each(|m| {
-                            trigger_set.insert(m.trigger.clone());
-                        });
-                        let parent_matches : Vec<Match> = default.matches.iter().filter(|&m| {
-                            !trigger_set.contains(&m.trigger)
-                        }).map(|m| m.clone()).collect();
-
-                        merged_matches.extend(parent_matches);
-                        config.matches = merged_matches;
-                    }
-
-                    // TODO: check if it contains at least a filter, and warn the user about the problem
-
-                    name_set.insert(config.name.clone());
-                    specific.push(config);
+                // Skip non-yaml config files
+                if path.extension().unwrap_or_default().to_str().unwrap_or_default() != "yml" {
+                    continue;
                 }
+
+                let mut config = Configs::load_config(&path)?;
+
+                // Make sure the config does not contain reserved fields
+                if !config.validate_user_defined_config() {
+                    return Err(ConfigLoadError::InvalidParameter(path.to_owned()))
+                }
+
+                // No name specified, defaulting to the path name
+                if config.name == "default" {
+                    config.name = path.to_str().unwrap_or_default().to_owned();
+                }
+
+                if name_set.contains(&config.name) {
+                    return Err(ConfigLoadError::NameDuplicate(path.to_owned()));
+                }
+
+                name_set.insert(config.name.clone());
+
+                if config.parent == "self" {  // No parent, root config
+                    root_configs.push(config);
+                }else{  // Children config
+                    let children_vec = children_map.entry(config.parent.clone()).or_default();
+                    children_vec.push(config);
+                }
+            }else{
+                eprintln!("Warning: Unable to read config file: {}", entry.unwrap_err())
+            }
+        }
+
+        // Merge the children config files
+        let mut configs = Vec::new();
+        for root_config in root_configs {
+            let config = ConfigSet::reduce_configs(root_config, &children_map);
+            configs.push(config);
+        }
+
+        // Separate default from specific
+        let default= configs.get(0).unwrap().clone();
+        let mut specific = (&configs[1..]).to_vec().clone();
+
+        // Add default matches to specific configs when needed
+        for config in specific.iter_mut() {
+            if !config.exclude_default_matches {
+                config.merge_default(&default);
             }
         }
 
         Ok(ConfigSet {
             default,
-            specific: specific
+            specific
         })
+    }
+
+    fn reduce_configs(target: Configs, children_map: &HashMap<String, Vec<Configs>>) -> Configs {
+        if children_map.contains_key(&target.name) {
+            let mut target = target;
+            for children in children_map.get(&target.name).unwrap() {
+                let children = Self::reduce_configs(children.clone(), children_map);
+                target.merge_config(children);
+            }
+            target
+        }else{
+            target
+        }
     }
 
     pub fn load_default() -> Result<ConfigSet, ConfigLoadError> {
@@ -550,7 +607,7 @@ mod tests {
     }
 
     #[test]
-    fn test_config_set_specific_file_missing_name() {
+    fn test_config_set_specific_file_missing_name_auto_generated() {
         let tmp_dir = TempDir::new().expect("unable to create temp directory");
         let default_path = tmp_dir.path().join(DEFAULT_CONFIG_FILE_NAME);
         fs::write(default_path, DEFAULT_CONFIG_FILE_CONTENT);
@@ -561,14 +618,18 @@ mod tests {
         let user_defined_path_copy = user_defined_path.clone();
 
         let config_set = ConfigSet::load(tmp_dir.path());
-        assert!(config_set.is_err());
-        assert_eq!(config_set.unwrap_err(), ConfigLoadError::MissingName(user_defined_path_copy))
+        assert!(config_set.is_ok());
+        assert_eq!(config_set.unwrap().specific[0].name, user_defined_path_copy.to_str().unwrap_or_default())
     }
 
     pub fn create_temp_espanso_directory() -> TempDir {
+        create_temp_espanso_directory_with_default_content(DEFAULT_CONFIG_FILE_CONTENT)
+    }
+
+    pub fn create_temp_espanso_directory_with_default_content(default_content: &str) -> TempDir {
         let tmp_dir = TempDir::new().expect("unable to create temp directory");
         let default_path = tmp_dir.path().join(DEFAULT_CONFIG_FILE_NAME);
-        fs::write(default_path, DEFAULT_CONFIG_FILE_CONTENT);
+        fs::write(default_path, default_content);
 
         tmp_dir
     }
@@ -588,6 +649,16 @@ mod tests {
         }
 
         create_temp_file_in_dir(&user_config_dir, name, content)
+    }
+
+    pub fn create_package_file(tmp_dir: &Path, package_name: &str, filename: &str, content: &str) -> PathBuf {
+        let package_config_dir = tmp_dir.join(PACKAGES_FOLDER_NAME);
+        let package_dir = package_config_dir.join(package_name);
+        if !package_dir.exists() {
+            create_dir_all(&package_dir);
+        }
+
+        create_temp_file_in_dir(&package_dir, filename, content)
     }
 
     #[test]
@@ -679,7 +750,7 @@ mod tests {
         let user_defined_path2 = create_user_config_file(tmp_dir.path(), "specific2.yml", r###"
         name: specific1
 
-        exclude_parent_matches: true
+        exclude_default_matches: true
 
         matches:
             - trigger: "hello"
@@ -708,7 +779,7 @@ mod tests {
         let user_defined_path2 = create_user_config_file(tmp_dir.path(), "specific.zzz", r###"
         name: specific1
 
-        exclude_parent_matches: true
+        exclude_default_matches: true
 
         matches:
             - trigger: "hello"
@@ -717,5 +788,197 @@ mod tests {
 
         let config_set = ConfigSet::load(tmp_dir.path()).unwrap();
         assert_eq!(config_set.specific.len(), 0);
+    }
+
+    #[test]
+    fn test_config_set_no_parent_configs_works_correctly() {
+        let tmp_dir = create_temp_espanso_directory();
+
+        let user_defined_path = create_user_config_file(tmp_dir.path(), "specific.yml", r###"
+        name: specific1
+        "###);
+
+        let user_defined_path2 = create_user_config_file(tmp_dir.path(), "specific2.yml", r###"
+        name: specific2
+        "###);
+
+        let config_set = ConfigSet::load(tmp_dir.path()).unwrap();
+        assert_eq!(config_set.specific.len(), 2);
+    }
+
+    #[test]
+    fn test_config_set_default_parent_works_correctly() {
+        let tmp_dir = create_temp_espanso_directory_with_default_content(r###"
+        matches:
+            - trigger: hasta
+              replace: Hasta la vista
+        "###);
+
+        let user_defined_path = create_user_config_file(tmp_dir.path(), "specific.yml", r###"
+        parent: default
+
+        matches:
+            - trigger: "hello"
+              replace: "world"
+        "###);
+
+        let config_set = ConfigSet::load(tmp_dir.path()).unwrap();
+        assert_eq!(config_set.specific.len(), 0);
+        assert_eq!(config_set.default.matches.len(), 2);
+        assert!(config_set.default.matches.iter().any(|m| m.trigger == "hasta"));
+        assert!(config_set.default.matches.iter().any(|m| m.trigger == "hello"));
+    }
+
+    #[test]
+    fn test_config_set_no_parent_should_not_merge() {
+        let tmp_dir = create_temp_espanso_directory_with_default_content(r###"
+        matches:
+            - trigger: hasta
+              replace: Hasta la vista
+        "###);
+
+        let user_defined_path = create_user_config_file(tmp_dir.path(), "specific.yml", r###"
+        matches:
+            - trigger: "hello"
+              replace: "world"
+        "###);
+
+        let config_set = ConfigSet::load(tmp_dir.path()).unwrap();
+        assert_eq!(config_set.specific.len(), 1);
+        assert_eq!(config_set.default.matches.len(), 1);
+        assert!(config_set.default.matches.iter().any(|m| m.trigger == "hasta"));
+        assert!(!config_set.default.matches.iter().any(|m| m.trigger == "hello"));
+        assert!(config_set.specific[0].matches.iter().any(|m| m.trigger == "hello"));
+    }
+
+    #[test]
+    fn test_config_set_default_nested_parent_works_correctly() {
+        let tmp_dir = create_temp_espanso_directory_with_default_content(r###"
+        matches:
+            - trigger: hasta
+              replace: Hasta la vista
+        "###);
+
+        let user_defined_path = create_user_config_file(tmp_dir.path(), "specific.yml", r###"
+        name: custom1
+        parent: default
+
+        matches:
+            - trigger: "hello"
+              replace: "world"
+        "###);
+
+        let user_defined_path2 = create_user_config_file(tmp_dir.path(), "specific2.yml", r###"
+        parent: custom1
+
+        matches:
+            - trigger: "super"
+              replace: "mario"
+        "###);
+
+        let config_set = ConfigSet::load(tmp_dir.path()).unwrap();
+        assert_eq!(config_set.specific.len(), 0);
+        assert_eq!(config_set.default.matches.len(), 3);
+        assert!(config_set.default.matches.iter().any(|m| m.trigger == "hasta"));
+        assert!(config_set.default.matches.iter().any(|m| m.trigger == "hello"));
+        assert!(config_set.default.matches.iter().any(|m| m.trigger == "super"));
+    }
+
+    #[test]
+    fn test_config_set_parent_merge_children_priority_should_be_higher() {
+        let tmp_dir = create_temp_espanso_directory_with_default_content(r###"
+        matches:
+            - trigger: hasta
+              replace: Hasta la vista
+        "###);
+
+        let user_defined_path = create_user_config_file(tmp_dir.path(), "specific.yml", r###"
+        parent: default
+
+        matches:
+            - trigger: "hasta"
+              replace: "world"
+        "###);
+
+        let config_set = ConfigSet::load(tmp_dir.path()).unwrap();
+        assert_eq!(config_set.specific.len(), 0);
+        assert_eq!(config_set.default.matches.len(), 1);
+        assert!(config_set.default.matches.iter().any(|m| m.trigger == "hasta" && m.replace == "world"));
+    }
+
+    #[test]
+    fn test_config_set_package_configs_default_merge() {
+        let tmp_dir = create_temp_espanso_directory_with_default_content(r###"
+        matches:
+            - trigger: hasta
+              replace: Hasta la vista
+        "###);
+
+        let package_path = create_package_file(tmp_dir.path(), "package1", "package.yml", r###"
+        parent: default
+
+        matches:
+            - trigger: "harry"
+              replace: "potter"
+        "###);
+
+        let config_set = ConfigSet::load(tmp_dir.path()).unwrap();
+        assert_eq!(config_set.specific.len(), 0);
+        assert_eq!(config_set.default.matches.len(), 2);
+        assert!(config_set.default.matches.iter().any(|m| m.trigger == "hasta"));
+        assert!(config_set.default.matches.iter().any(|m| m.trigger == "harry"));
+    }
+
+    #[test]
+    fn test_config_set_package_configs_without_merge() {
+        let tmp_dir = create_temp_espanso_directory_with_default_content(r###"
+        matches:
+            - trigger: hasta
+              replace: Hasta la vista
+        "###);
+
+        let package_path = create_package_file(tmp_dir.path(), "package1", "package.yml", r###"
+        matches:
+            - trigger: "harry"
+              replace: "potter"
+        "###);
+
+        let config_set = ConfigSet::load(tmp_dir.path()).unwrap();
+        assert_eq!(config_set.specific.len(), 1);
+        assert_eq!(config_set.default.matches.len(), 1);
+        assert!(config_set.default.matches.iter().any(|m| m.trigger == "hasta"));
+        assert!(config_set.specific[0].matches.iter().any(|m| m.trigger == "harry"));
+    }
+
+    #[test]
+    fn test_config_set_package_configs_multiple_files() {
+        let tmp_dir = create_temp_espanso_directory_with_default_content(r###"
+        matches:
+            - trigger: hasta
+              replace: Hasta la vista
+        "###);
+
+        let package_path = create_package_file(tmp_dir.path(), "package1", "package.yml", r###"
+        name: package1
+
+        matches:
+            - trigger: "harry"
+              replace: "potter"
+        "###);
+
+        let package_path2 = create_package_file(tmp_dir.path(), "package1", "addon.yml", r###"
+        parent: package1
+
+        matches:
+            - trigger: "ron"
+              replace: "weasley"
+        "###);
+
+        let config_set = ConfigSet::load(tmp_dir.path()).unwrap();
+        assert_eq!(config_set.specific.len(), 1);
+        assert_eq!(config_set.default.matches.len(), 1);
+        assert!(config_set.default.matches.iter().any(|m| m.trigger == "hasta"));
+        assert!(config_set.specific[0].matches.iter().any(|m| m.trigger == "harry"));
+        assert!(config_set.specific[0].matches.iter().any(|m| m.trigger == "ron"));
     }
 }
