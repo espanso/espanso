@@ -321,47 +321,55 @@ impl ConfigSet {
     }
 
     pub fn load_default() -> Result<ConfigSet, ConfigLoadError> {
-        let res = dirs::home_dir();
-        if let Some(home_dir) = res {
-            let espanso_dir = home_dir.join(".espanso");
+        let espanso_dir = ConfigSet::get_default_config_dir();
 
-            // Create the espanso dir if id doesn't exist
-            let res = create_dir_all(espanso_dir.as_path());
+        // Create the espanso dir if id doesn't exist
+        let res = create_dir_all(espanso_dir.as_path());
 
-            if let Ok(_) = res {
-                let default_file = espanso_dir.join(DEFAULT_CONFIG_FILE_NAME);
+        if let Ok(_) = res {
+            let default_file = espanso_dir.join(DEFAULT_CONFIG_FILE_NAME);
 
-                // If config file does not exist, create one from template
-                if !default_file.exists() {
-                    let result = fs::write(&default_file, DEFAULT_CONFIG_FILE_CONTENT);
-                    if result.is_err() {
-                        return Err(ConfigLoadError::UnableToCreateDefaultConfig)
-                    }
+            // If config file does not exist, create one from template
+            if !default_file.exists() {
+                let result = fs::write(&default_file, DEFAULT_CONFIG_FILE_CONTENT);
+                if result.is_err() {
+                    return Err(ConfigLoadError::UnableToCreateDefaultConfig)
                 }
-
-                // Create auxiliary directories
-
-                let user_config_dir = espanso_dir.join(USER_CONFIGS_FOLDER_NAME);
-                if !user_config_dir.exists() {
-                    let res = create_dir_all(user_config_dir.as_path());
-                    if res.is_err() {
-                        return Err(ConfigLoadError::UnableToCreateDefaultConfig)
-                    }
-                }
-
-                let packages_dir = espanso_dir.join(PACKAGES_FOLDER_NAME);
-                if !packages_dir.exists() {
-                    let res = create_dir_all(packages_dir.as_path());
-                    if res.is_err() {
-                        return Err(ConfigLoadError::UnableToCreateDefaultConfig)
-                    }
-                }
-
-                return ConfigSet::load(espanso_dir.as_path())
             }
+
+            // Create auxiliary directories
+
+            let user_config_dir = espanso_dir.join(USER_CONFIGS_FOLDER_NAME);
+            if !user_config_dir.exists() {
+                let res = create_dir_all(user_config_dir.as_path());
+                if res.is_err() {
+                    return Err(ConfigLoadError::UnableToCreateDefaultConfig)
+                }
+            }
+
+            let packages_dir = espanso_dir.join(PACKAGES_FOLDER_NAME);
+            if !packages_dir.exists() {
+                let res = create_dir_all(packages_dir.as_path());
+                if res.is_err() {
+                    return Err(ConfigLoadError::UnableToCreateDefaultConfig)
+                }
+            }
+
+            return ConfigSet::load(espanso_dir.as_path())
         }
 
         return Err(ConfigLoadError::UnableToCreateDefaultConfig)
+    }
+
+    pub fn get_default_config_dir() -> PathBuf {
+        let home_dir = dirs::home_dir().expect("Unable to get home directory");
+        let espanso_dir = home_dir.join(".espanso");
+        espanso_dir
+    }
+
+    pub fn get_default_packages_dir() -> PathBuf {
+        let espanso_dir = ConfigSet::get_default_config_dir();
+        espanso_dir.join(PACKAGES_FOLDER_NAME)
     }
 }
 
