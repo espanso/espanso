@@ -58,7 +58,8 @@ pub enum UpdateResult {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum InstallResult {
-    NotFound,
+    NotFoundInIndex,
+    NotFoundInRepo,
     AlreadyInstalled,
     Installed
 }

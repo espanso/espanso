@@ -47,6 +47,7 @@ use std::io::{BufReader, BufRead};
 mod ui;
 mod event;
 mod check;
+mod utils;
 mod bridge;
 mod engine;
 mod config;
