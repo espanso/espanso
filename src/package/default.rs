@@ -27,6 +27,8 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use crate::package::UpdateResult::{NotOutdated, Updated};
 use crate::package::InstallResult::{NotFound, AlreadyInstalled};
 use std::fs;
+use tempfile::TempDir;
+use git2::Repository;
 
 const DEFAULT_PACKAGE_INDEX_FILE : &str = "package_index.json";
 
@@ -83,6 +85,12 @@ impl DefaultPackageManager {
         let index : PackageIndex = serde_json::from_str(&body)?;
 
         Ok(index)
+    }
+
+    fn clone_repo_to_temp(repo_url: &str) -> Result<TempDir, Box<dyn Error>> {
+        let temp_dir = TempDir::new()?;
+        let repo = Repository::clone(repo_url, temp_dir.path())?;
+        Ok(temp_dir)
     }
 
 
@@ -154,18 +162,23 @@ impl super::PackageManager for DefaultPackageManager {
         let package = self.get_package(name);
         match package {
             Some(package) => {
-                // Check if package is already present
-                let packages = self.list_local_packages();
-                if packages.iter().any(|p| p == name) {  // Package already installed
-                    Ok(AlreadyInstalled)
-                }else{  // Package not installed
-                    unimplemented!()
-                }
+                self.install_package_from_repo(name, &package.repo)
             },
             None => {
                 Ok(NotFound)
             },
         }
+    }
+
+    fn install_package_from_repo(&self, name: &str, repo_url: &str) -> Result<InstallResult, Box<dyn Error>> {
+        // Check if package is already installed
+        let packages = self.list_local_packages();
+        if packages.iter().any(|p| p == name) {  // Package already installed
+            return Ok(AlreadyInstalled);
+        }
+
+        // TODO: clone the repo, and copy the folder to the packages dir
+        unimplemented!()
     }
 }
 
@@ -314,5 +327,11 @@ mod tests {
         });
 
         assert_eq!(temp.package_manager.install_package("italian-accents").unwrap(), AlreadyInstalled);
+    }
+
+    #[test]
+    fn test_clone_temp_repository() {
+        let cloned_dir = DefaultPackageManager::clone_repo_to_temp("https://github.com/federico-terzi/espanso-hub-core").unwrap();
+        assert!(cloned_dir.path().join("LICENSE").exists());
     }
 }
