@@ -18,10 +18,10 @@
  */
 
 use std::path::{PathBuf, Path};
-use crate::package::{PackageIndex, UpdateResult, Package, InstallResult};
+use crate::package::{PackageIndex, UpdateResult, Package, InstallResult, RemoveResult};
 use std::error::Error;
-use std::fs::File;
-use std::io::BufReader;
+use std::fs::{File, create_dir};
+use std::io::{BufReader, BufRead};
 use chrono::{NaiveDateTime, Timelike};
 use std::time::{SystemTime, UNIX_EPOCH};
 use crate::package::UpdateResult::{NotOutdated, Updated};
@@ -29,6 +29,9 @@ use crate::package::InstallResult::{NotFoundInIndex, AlreadyInstalled};
 use std::fs;
 use tempfile::TempDir;
 use git2::Repository;
+use regex::Regex;
+use crate::package::RemoveResult::Removed;
+use std::collections::HashMap;
 
 const DEFAULT_PACKAGE_INDEX_FILE : &str = "package_index.json";
 
@@ -93,6 +96,66 @@ impl DefaultPackageManager {
         Ok(temp_dir)
     }
 
+    fn parse_package_from_readme(readme_path: &Path) -> Option<Package> {
+        lazy_static! {
+            static ref FieldRegex: Regex = Regex::new(r###"^\s*(.*?)\s*:\s*"?(.*?)"?$"###).unwrap();
+        }
+
+        // Read readme line by line
+        let file = File::open(readme_path);
+        if let Ok(file) = file {
+            let reader = BufReader::new(file);
+
+            let mut fields :HashMap<String, String> = HashMap::new();
+
+            let mut started = false;
+
+            for (index, line) in reader.lines().enumerate() {
+                let line = line.unwrap();
+                if line.contains("---") {
+                    if started {
+                        break
+                    }else{
+                        started = true;
+                    }
+                }else{
+                    if started {
+                        let caps = FieldRegex.captures(&line);
+                        if let Some(caps) = caps {
+                            let property = caps.get(1);
+                            let value = caps.get(2);
+                            if property.is_some() && value.is_some() {
+                                fields.insert(property.unwrap().as_str().to_owned(),
+                                              value.unwrap().as_str().to_owned());
+                            }
+                        }
+                    }
+                }
+            }
+
+            if !fields.contains_key("package_name") ||
+               !fields.contains_key("package_title") ||
+               !fields.contains_key("package_version") ||
+               !fields.contains_key("package_repo") ||
+               !fields.contains_key("package_desc") ||
+               !fields.contains_key("package_author") {
+                return None
+            }
+
+            let mut package = Package {
+                name: fields.get("package_name").unwrap().clone(),
+                title: fields.get("package_title").unwrap().clone(),
+                version: fields.get("package_version").unwrap().clone(),
+                repo: fields.get("package_repo").unwrap().clone(),
+                desc: fields.get("package_desc").unwrap().clone(),
+                author: fields.get("package_author").unwrap().clone()
+            };
+
+            Some(package)
+        }else{
+            None
+        }
+    }
 
     fn local_index_timestamp(&self) -> u64 {
         if let Some(local_index) = &self.local_index {
@@ -184,20 +247,51 @@ impl super::PackageManager for DefaultPackageManager {
             return Ok(InstallResult::NotFoundInRepo);
         }
 
-        crate::utils::copy_dir_into(&temp_package_dir, &self.package_dir)?;
+        let readme_path = temp_package_dir.join("README.md");
+
+        let package = Self::parse_package_from_readme(&readme_path);
+        if !package.is_some() {
+            return Ok(InstallResult::UnableToParsePackageInfo);  // TODO: test
+        }
+        let package = package.unwrap();
+
+        let source_dir = temp_package_dir.join(package.version);
+        if !source_dir.exists() {
+            return Ok(InstallResult::MissingPackageVersion);  // TODO: test
+        }
+
+        let target_dir = &self.package_dir.join(name);
+        create_dir(&target_dir)?;
+
+        crate::utils::copy_dir(&source_dir, target_dir)?;
+
+        let readme_dest = target_dir.join("README.md");
+        std::fs::copy(readme_path, readme_dest)?;
 
         Ok(InstallResult::Installed)
+    }
+
+    fn remove_package(&self, name: &str) -> Result<RemoveResult, Box<dyn Error>> {
+        let package_dir = self.package_dir.join(name);
+        if !package_dir.exists() {
+            return Ok(RemoveResult::NotFound);
+        }
+
+        std::fs::remove_dir_all(package_dir)?;
+
+        Ok(Removed)
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tempfile::TempDir;
+    use tempfile::{TempDir, NamedTempFile};
     use std::path::Path;
     use crate::package::PackageManager;
-    use std::fs::create_dir;
+    use std::fs::{create_dir, create_dir_all};
     use crate::package::InstallResult::{Installed, NotFoundInRepo};
+    use std::io::Write;
 
     const OUTDATED_INDEX_CONTENT : &str = include_str!("../res/test/outdated_index.json");
     const INDEX_CONTENT_WITHOUT_UPDATE: &str = include_str!("../res/test/index_without_update.json");
@@ -365,5 +459,87 @@ mod tests {
         });
 
         assert_eq!(temp.package_manager.install_package("not-existing").unwrap(), NotFoundInRepo);
+    }
+
+    #[test]
+    fn test_remove_package() {
+        let mut temp = create_temp_package_manager(|package_dir, _| {
+            let dummy_package_dir = package_dir.join("dummy-package");
+            create_dir_all(&dummy_package_dir);
+            std::fs::write(dummy_package_dir.join("README.md"), "readme");
+            std::fs::write(dummy_package_dir.join("package.yml"), "name: package");
+        });
+
+        assert!(temp.package_dir.path().join("dummy-package").exists());
+        assert!(temp.package_dir.path().join("dummy-package/README.md").exists());
+        assert!(temp.package_dir.path().join("dummy-package/package.yml").exists());
+        assert_eq!(temp.package_manager.remove_package("dummy-package").unwrap(), RemoveResult::Removed);
+        assert!(!temp.package_dir.path().join("dummy-package").exists());
+        assert!(!temp.package_dir.path().join("dummy-package/README.md").exists());
+        assert!(!temp.package_dir.path().join("dummy-package/package.yml").exists());
+    }
+
+    #[test]
+    fn test_remove_package_not_found() {
+        let mut temp = create_temp_package_manager(|_, _| {});
+
+        assert_eq!(temp.package_manager.remove_package("not-existing").unwrap(), RemoveResult::NotFound);
+    }
+
+    #[test]
+    fn test_parse_package_from_readme() {
+        let file = NamedTempFile::new().unwrap();
+        fs::write(file.path(), r###"
+        ---
+        package_name: "italian-accents"
+        package_title: "Italian Accents"
+        package_desc: "Include Italian accents substitutions to espanso."
+        package_version: "0.1.0"
+        package_author: "Federico Terzi"
+        package_repo: "https://github.com/federico-terzi/espanso-hub-core"
+        ---
+        "###);
+
+        let package = DefaultPackageManager::parse_package_from_readme(file.path()).unwrap();
+
+        let target_package = Package {
+            name: "italian-accents".to_string(),
+            title: "Italian Accents".to_string(),
+            version: "0.1.0".to_string(),
+            repo: "https://github.com/federico-terzi/espanso-hub-core".to_string(),
+            desc: "Include Italian accents substitutions to espanso.".to_string(),
+            author: "Federico Terzi".to_string()
+        };
+
+        assert_eq!(package, target_package);
+    }
+
+    #[test]
+    fn test_parse_package_from_readme_with_bad_metadata() {
+        let file = NamedTempFile::new().unwrap();
+        fs::write(file.path(), r###"
+        ---
+        package_name: italian-accents
+        package_title: "Italian Accents"
+        package_desc: "Include Italian accents substitutions to espanso."
+        package_version:"0.1.0"
+        package_author:Federico Terzi
+        package_repo: "https://github.com/federico-terzi/espanso-hub-core"
+        ---
+        Readme text
+        "###);
+
+        let package = DefaultPackageManager::parse_package_from_readme(file.path()).unwrap();
+
+        let target_package = Package {
+            name: "italian-accents".to_string(),
+            title: "Italian Accents".to_string(),
+            version: "0.1.0".to_string(),
+            repo: "https://github.com/federico-terzi/espanso-hub-core".to_string(),
+            desc: "Include Italian accents substitutions to espanso.".to_string(),
+            author: "Federico Terzi".to_string()
+        };
+
+        assert_eq!(package, target_package);
     }
 }
