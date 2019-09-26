@@ -3,11 +3,11 @@
     "packages": [
 
         {
-            "name": "basic-emojis",
-            "title": "Basic Emojis",
+            "name": "dummy-package",
+            "title": "Dummy Package",
             "version": "0.1.0",
             "repo": "https://github.com/federico-terzi/espanso-hub-core",
-            "desc": "A package to include some basic emojis in espanso.",
+            "desc": "Dummy package",
             "author": "Federico Terzi"
 
         },
@@ -21,7 +21,15 @@
             "desc": "Include Italian accents substitutions to espanso.",
             "author": "Federico Terzi"
 
+        },
+
+        {
+            "name": "not-existing",
+            "title": "Not Existing",
+            "version": "0.1.0",
+            "repo": "https://github.com/federico-terzi/espanso-hub-core",
+            "desc": "Package that does not exist in the repo",
+            "author": "Federico Terzi"
+
         }
-
-
-]}
+    ]}

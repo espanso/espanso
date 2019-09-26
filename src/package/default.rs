@@ -25,7 +25,7 @@ use std::io::BufReader;
 use chrono::{NaiveDateTime, Timelike};
 use std::time::{SystemTime, UNIX_EPOCH};
 use crate::package::UpdateResult::{NotOutdated, Updated};
-use crate::package::InstallResult::{NotFound, AlreadyInstalled};
+use crate::package::InstallResult::{NotFoundInIndex, AlreadyInstalled};
 use std::fs;
 use tempfile::TempDir;
 use git2::Repository;
@@ -165,7 +165,7 @@ impl super::PackageManager for DefaultPackageManager {
                 self.install_package_from_repo(name, &package.repo)
             },
             None => {
-                Ok(NotFound)
+                Ok(NotFoundInIndex)
             },
         }
     }
@@ -177,8 +177,16 @@ impl super::PackageManager for DefaultPackageManager {
             return Ok(AlreadyInstalled);
         }
 
-        // TODO: clone the repo, and copy the folder to the packages dir
-        unimplemented!()
+        let temp_dir = Self::clone_repo_to_temp(repo_url)?;
+
+        let temp_package_dir = temp_dir.path().join(name);
+        if !temp_package_dir.exists() {
+            return Ok(InstallResult::NotFoundInRepo);
+        }
+
+        crate::utils::copy_dir_into(&temp_package_dir, &self.package_dir)?;
+
+        Ok(InstallResult::Installed)
     }
 }
 
@@ -189,6 +197,7 @@ mod tests {
     use std::path::Path;
     use crate::package::PackageManager;
     use std::fs::create_dir;
+    use crate::package::InstallResult::{Installed, NotFoundInRepo};
 
     const OUTDATED_INDEX_CONTENT : &str = include_str!("../res/test/outdated_index.json");
     const INDEX_CONTENT_WITHOUT_UPDATE: &str = include_str!("../res/test/index_without_update.json");
@@ -315,7 +324,7 @@ mod tests {
             std::fs::write(index_file, INSTALL_PACKAGE_INDEX);
         });
 
-        assert_eq!(temp.package_manager.install_package("not-existing").unwrap(), NotFound);
+        assert_eq!(temp.package_manager.install_package("doesnotexist").unwrap(), NotFoundInIndex);
     }
 
     #[test]
@@ -333,5 +342,28 @@ mod tests {
     fn test_clone_temp_repository() {
         let cloned_dir = DefaultPackageManager::clone_repo_to_temp("https://github.com/federico-terzi/espanso-hub-core").unwrap();
         assert!(cloned_dir.path().join("LICENSE").exists());
+    }
+
+    #[test]
+    fn test_install_package() {
+        let mut temp = create_temp_package_manager(|_, data_dir| {
+            let index_file = data_dir.join(DEFAULT_PACKAGE_INDEX_FILE);
+            std::fs::write(index_file, INSTALL_PACKAGE_INDEX);
+        });
+
+        assert_eq!(temp.package_manager.install_package("dummy-package").unwrap(), Installed);
+        assert!(temp.package_dir.path().join("dummy-package").exists());
+        assert!(temp.package_dir.path().join("dummy-package/README.md").exists());
+        assert!(temp.package_dir.path().join("dummy-package/package.yml").exists());
+    }
+
+    #[test]
+    fn test_install_package_does_not_exist_in_repo() {
+        let mut temp = create_temp_package_manager(|_, data_dir| {
+            let index_file = data_dir.join(DEFAULT_PACKAGE_INDEX_FILE);
+            std::fs::write(index_file, INSTALL_PACKAGE_INDEX);
+        });
+
+        assert_eq!(temp.package_manager.install_package("not-existing").unwrap(), NotFoundInRepo);
     }
 }
