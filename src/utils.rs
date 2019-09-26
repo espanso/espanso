@@ -1,21 +1,38 @@
+/*
+ * This file is part of espanso.
+ *
+ * Copyright (C) 2019 Federico Terzi
+ *
+ * espanso is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * espanso is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 use std::path::Path;
 use std::error::Error;
 use walkdir::WalkDir;
 use std::fs::create_dir;
 
-pub fn copy_dir_into(source_dir: &Path, dest_dir: &Path) -> Result<(), Box<dyn Error>> {
-    // Create source directory in dest dir
-    let name = source_dir.file_name().expect("Error obtaining the filename");
-    let target_dir = dest_dir.join(name);
-    create_dir(&target_dir)?;
-
+pub fn copy_dir(source_dir: &Path, dest_dir: &Path) -> Result<(), Box<dyn Error>> {
     for entry in WalkDir::new(source_dir) {
         let entry = entry?;
         let entry = entry.path();
         if entry.is_dir() {
-            copy_dir_into(entry, &target_dir);
+            let name = entry.file_name().expect("Error obtaining the filename");
+            let target_dir = dest_dir.join(name);
+            create_dir(&target_dir)?;
+            copy_dir(entry, &target_dir);
         }else if entry.is_file() {
-            let target_entry = target_dir.join(entry.file_name().expect("Error obtaining the filename"));
+            let target_entry = dest_dir.join(entry.file_name().expect("Error obtaining the filename"));
             std::fs::copy(entry, target_entry);
         }
     }
@@ -40,7 +57,10 @@ mod tests {
         std::fs::write(source_dir.join("file1.txt"), "file1");
         std::fs::write(source_dir.join("file2.txt"), "file2");
 
-        copy_dir_into(&source_dir, dest_tmp_dir.path());
+        let target_dir = dest_tmp_dir.path().join("source");
+        create_dir(&target_dir);
+
+        copy_dir(&source_dir, &target_dir);
 
         assert!(dest_tmp_dir.path().join("source").exists());
         assert!(dest_tmp_dir.path().join("source/file1.txt").exists());
@@ -60,7 +80,10 @@ mod tests {
         create_dir(&nested_dir);
         std::fs::write(nested_dir.join("nestedfile.txt"), "nestedfile1");
 
-        copy_dir_into(&source_dir, dest_tmp_dir.path());
+        let target_dir = dest_tmp_dir.path().join("source");
+        create_dir(&target_dir);
+
+        copy_dir(&source_dir, &target_dir);
 
         assert!(dest_tmp_dir.path().join("source").exists());
         assert!(dest_tmp_dir.path().join("source/file1.txt").exists());

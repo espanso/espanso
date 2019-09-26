@@ -29,9 +29,11 @@ pub trait PackageManager {
 
     fn install_package(&self, name: &str) -> Result<InstallResult, Box<dyn Error>>;
     fn install_package_from_repo(&self, name: &str, repo_url: &str) -> Result<InstallResult, Box<dyn Error>>;
+
+    fn remove_package(&self, name: &str) -> Result<RemoveResult, Box<dyn Error>>;
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct Package {
     name: String,
     title: String,
@@ -41,7 +43,7 @@ pub struct Package {
     author: String
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct PackageIndex {
     #[serde(rename = "lastUpdate")]
     last_update: u64,
@@ -60,6 +62,14 @@ pub enum UpdateResult {
 pub enum InstallResult {
     NotFoundInIndex,
     NotFoundInRepo,
+    UnableToParsePackageInfo,
+    MissingPackageVersion,
     AlreadyInstalled,
     Installed
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum RemoveResult {
+    NotFound,
+    Removed
 }
