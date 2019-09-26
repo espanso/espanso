@@ -19,9 +19,10 @@
 
 pub(crate) mod default;
 use serde::{Serialize, Deserialize};
+use std::error::Error;
 
 pub trait PackageManager {
-    fn update_index(&self);
+    fn update_index(&mut self, force: bool) -> Result<UpdateResult, Box<dyn Error>>;
     fn is_index_outdated(&self) -> bool;
 }
 
@@ -41,4 +42,11 @@ pub struct PackageIndex {
     last_update: u64,
 
     packages: Vec<Package>
+}
+
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum UpdateResult {
+    NotOutdated,
+    Updated,
 }
