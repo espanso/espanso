@@ -28,6 +28,7 @@ pub trait PackageManager {
     fn get_package(&self, name: &str) -> Option<Package>;
 
     fn install_package(&self, name: &str) -> Result<InstallResult, Box<dyn Error>>;
+    fn install_package_from_repo(&self, name: &str, repo_url: &str) -> Result<InstallResult, Box<dyn Error>>;
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
