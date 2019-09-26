@@ -1,0 +1,27 @@
+{
+    "lastUpdate": 1565437389,
+    "packages": [
+
+        {
+            "name": "basic-emojis",
+            "title": "Basic Emojis",
+            "version": "0.1.0",
+            "repo": "https://github.com/federico-terzi/espanso-hub-core",
+            "desc": "A package to include some basic emojis in espanso.",
+            "author": "Federico Terzi"
+
+        },
+
+
+        {
+            "name": "italian-accents",
+            "title": "Italian Accents",
+            "version": "0.1.0",
+            "repo": "https://github.com/federico-terzi/espanso-hub-core",
+            "desc": "Include Italian accents substitutions to espanso.",
+            "author": "Federico Terzi"
+
+        }
+
+
+]}

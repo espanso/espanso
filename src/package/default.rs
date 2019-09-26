@@ -18,13 +18,15 @@
  */
 
 use std::path::{PathBuf, Path};
-use crate::package::{PackageIndex, UpdateResult};
+use crate::package::{PackageIndex, UpdateResult, Package, InstallResult};
 use std::error::Error;
 use std::fs::File;
 use std::io::BufReader;
 use chrono::{NaiveDateTime, Timelike};
 use std::time::{SystemTime, UNIX_EPOCH};
 use crate::package::UpdateResult::{NotOutdated, Updated};
+use crate::package::InstallResult::{NotFound, AlreadyInstalled};
+use std::fs;
 
 const DEFAULT_PACKAGE_INDEX_FILE : &str = "package_index.json";
 
@@ -91,9 +93,39 @@ impl DefaultPackageManager {
 
         return 0;
     }
+
+    fn list_local_packages(&self) -> Vec<String> {
+        let dir = fs::read_dir(&self.package_dir);
+        let mut output = Vec::new();
+        if let Ok(dir) = dir {
+            for entry in dir {
+                if let Ok(entry) = entry {
+                    let path = entry.path();
+                    if path.is_dir() {
+                        let name = path.file_name();
+                        if let Some(name) = name {
+                            output.push(name.to_str().unwrap().to_owned())
+                        }
+                    }
+                }
+            }
+        }
+
+        output
+    }
 }
 
 impl super::PackageManager for DefaultPackageManager {
+    fn is_index_outdated(&self) -> bool {
+        let current_time = SystemTime::now().duration_since(UNIX_EPOCH).expect("Time went backwards");
+        let current_timestamp = current_time.as_secs();
+
+        let local_index_timestamp = self.local_index_timestamp();
+
+        // Local index is outdated if older than a day
+        local_index_timestamp + 60*60*24 < current_timestamp
+    }
+
     fn update_index(&mut self, force: bool) -> Result<UpdateResult, Box<dyn Error>> {
         if force || self.is_index_outdated() {
             let updated_index = DefaultPackageManager::request_index()?;
@@ -105,14 +137,35 @@ impl super::PackageManager for DefaultPackageManager {
         }
     }
 
-    fn is_index_outdated(&self) -> bool {
-        let current_time = SystemTime::now().duration_since(UNIX_EPOCH).expect("Time went backwards");
-        let current_timestamp = current_time.as_secs();
+    fn get_package(&self, name: &str) -> Option<Package> {
+        if let Some(local_index) = &self.local_index {
+            let result = local_index.packages.iter().find(|package| {
+                package.name == name
+            });
+            if let Some(package) = result {
+                return Some(package.clone())
+            }
+        }
 
-        let local_index_timestamp = self.local_index_timestamp();
+        None
+    }
 
-        // Local index is outdated if older than a day
-        local_index_timestamp + 60*60*24 < current_timestamp
+    fn install_package(&self, name: &str) -> Result<InstallResult, Box<dyn Error>> {
+        let package = self.get_package(name);
+        match package {
+            Some(package) => {
+                // Check if package is already present
+                let packages = self.list_local_packages();
+                if packages.iter().any(|p| p == name) {  // Package already installed
+                    Ok(AlreadyInstalled)
+                }else{  // Package not installed
+                    unimplemented!()
+                }
+            },
+            None => {
+                Ok(NotFound)
+            },
+        }
     }
 }
 
@@ -122,9 +175,12 @@ mod tests {
     use tempfile::TempDir;
     use std::path::Path;
     use crate::package::PackageManager;
+    use std::fs::create_dir;
 
     const OUTDATED_INDEX_CONTENT : &str = include_str!("../res/test/outdated_index.json");
     const INDEX_CONTENT_WITHOUT_UPDATE: &str = include_str!("../res/test/index_without_update.json");
+    const GET_PACKAGE_INDEX: &str = include_str!("../res/test/get_package_index.json");
+    const INSTALL_PACKAGE_INDEX: &str = include_str!("../res/test/install_package_index.json");
 
     struct TempPackageManager {
         package_dir: TempDir,
@@ -203,5 +259,60 @@ mod tests {
         });
 
         assert_eq!(temp.package_manager.update_index(false).unwrap(), UpdateResult::Updated);
+    }
+
+    #[test]
+    fn test_get_package_should_be_found() {
+        let mut temp = create_temp_package_manager(|_, data_dir| {
+            let index_file = data_dir.join(DEFAULT_PACKAGE_INDEX_FILE);
+            std::fs::write(index_file, GET_PACKAGE_INDEX);
+        });
+
+        assert_eq!(temp.package_manager.get_package("italian-accents").unwrap().title, "Italian Accents");
+    }
+
+    #[test]
+    fn test_get_package_should_not_be_found() {
+        let mut temp = create_temp_package_manager(|_, data_dir| {
+            let index_file = data_dir.join(DEFAULT_PACKAGE_INDEX_FILE);
+            std::fs::write(index_file, GET_PACKAGE_INDEX);
+        });
+
+        assert!(temp.package_manager.get_package("not-existing").is_none());
+    }
+
+    #[test]
+    fn test_list_local_packages() {
+        let mut temp = create_temp_package_manager(|package_dir, _| {
+            create_dir(package_dir.join("package-1"));
+            create_dir(package_dir.join("package2"));
+            std::fs::write(package_dir.join("dummyfile.txt"), "test");
+        });
+
+        let packages = temp.package_manager.list_local_packages();
+        assert_eq!(packages.len(), 2);
+        assert!(packages.iter().any(|p| p == "package-1"));
+        assert!(packages.iter().any(|p| p == "package2"));
+    }
+
+    #[test]
+    fn test_install_package_not_found() {
+        let mut temp = create_temp_package_manager(|package_dir, data_dir| {
+            let index_file = data_dir.join(DEFAULT_PACKAGE_INDEX_FILE);
+            std::fs::write(index_file, INSTALL_PACKAGE_INDEX);
+        });
+
+        assert_eq!(temp.package_manager.install_package("not-existing").unwrap(), NotFound);
+    }
+
+    #[test]
+    fn test_install_package_already_installed() {
+        let mut temp = create_temp_package_manager(|package_dir, data_dir| {
+            create_dir(package_dir.join("italian-accents"));
+            let index_file = data_dir.join(DEFAULT_PACKAGE_INDEX_FILE);
+            std::fs::write(index_file, INSTALL_PACKAGE_INDEX);
+        });
+
+        assert_eq!(temp.package_manager.install_package("italian-accents").unwrap(), AlreadyInstalled);
     }
 }
