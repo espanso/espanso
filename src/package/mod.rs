@@ -22,8 +22,12 @@ use serde::{Serialize, Deserialize};
 use std::error::Error;
 
 pub trait PackageManager {
-    fn update_index(&mut self, force: bool) -> Result<UpdateResult, Box<dyn Error>>;
     fn is_index_outdated(&self) -> bool;
+    fn update_index(&mut self, force: bool) -> Result<UpdateResult, Box<dyn Error>>;
+
+    fn get_package(&self, name: &str) -> Option<Package>;
+
+    fn install_package(&self, name: &str) -> Result<InstallResult, Box<dyn Error>>;
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -49,4 +53,11 @@ pub struct PackageIndex {
 pub enum UpdateResult {
     NotOutdated,
     Updated,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum InstallResult {
+    NotFound,
+    AlreadyInstalled,
+    Installed
 }
