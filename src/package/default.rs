@@ -18,12 +18,13 @@
  */
 
 use std::path::{PathBuf, Path};
-use crate::package::PackageIndex;
+use crate::package::{PackageIndex, UpdateResult};
 use std::error::Error;
 use std::fs::File;
 use std::io::BufReader;
 use chrono::{NaiveDateTime, Timelike};
 use std::time::{SystemTime, UNIX_EPOCH};
+use crate::package::UpdateResult::{NotOutdated, Updated};
 
 const DEFAULT_PACKAGE_INDEX_FILE : &str = "package_index.json";
 
@@ -93,8 +94,15 @@ impl DefaultPackageManager {
 }
 
 impl super::PackageManager for DefaultPackageManager {
-    fn update_index(&self) {
-        unimplemented!()
+    fn update_index(&mut self, force: bool) -> Result<UpdateResult, Box<dyn Error>> {
+        if force || self.is_index_outdated() {
+            let updated_index = DefaultPackageManager::request_index()?;
+            self.local_index = Some(updated_index);
+
+            Ok(Updated)
+        }else{
+            Ok(NotOutdated)
+        }
     }
 
     fn is_index_outdated(&self) -> bool {
@@ -104,7 +112,7 @@ impl super::PackageManager for DefaultPackageManager {
         let local_index_timestamp = self.local_index_timestamp();
 
         // Local index is outdated if older than a day
-        local_index_timestamp < current_timestamp + 60*60*24
+        local_index_timestamp + 60*60*24 < current_timestamp
     }
 }
 
@@ -116,6 +124,7 @@ mod tests {
     use crate::package::PackageManager;
 
     const OUTDATED_INDEX_CONTENT : &str = include_str!("../res/test/outdated_index.json");
+    const INDEX_CONTENT_WITHOUT_UPDATE: &str = include_str!("../res/test/index_without_update.json");
 
     struct TempPackageManager {
         package_dir: TempDir,
@@ -158,5 +167,41 @@ mod tests {
         });
 
         assert!(temp.package_manager.is_index_outdated());
+    }
+
+    #[test]
+    fn test_up_to_date_index_should_not_be_updated() {
+        let mut temp = create_temp_package_manager(|_, data_dir| {
+            let index_file = data_dir.join(DEFAULT_PACKAGE_INDEX_FILE);
+            let current_time = SystemTime::now().duration_since(UNIX_EPOCH).expect("Time went backwards");
+            let current_timestamp = current_time.as_secs();
+            let new_contents = INDEX_CONTENT_WITHOUT_UPDATE.replace("XXXX", &format!("{}", current_timestamp));
+            std::fs::write(index_file, new_contents);
+        });
+
+        assert_eq!(temp.package_manager.update_index(false).unwrap(), UpdateResult::NotOutdated);
+    }
+
+    #[test]
+    fn test_up_to_date_index_with_force_should_be_updated() {
+        let mut temp = create_temp_package_manager(|_, data_dir| {
+            let index_file = data_dir.join(DEFAULT_PACKAGE_INDEX_FILE);
+            let current_time = SystemTime::now().duration_since(UNIX_EPOCH).expect("Time went backwards");
+            let current_timestamp = current_time.as_secs();
+            let new_contents = INDEX_CONTENT_WITHOUT_UPDATE.replace("XXXX", &format!("{}", current_timestamp));
+            std::fs::write(index_file, new_contents);
+        });
+
+        assert_eq!(temp.package_manager.update_index(true).unwrap(), UpdateResult::Updated);
+    }
+
+    #[test]
+    fn test_outdated_index_should_be_updated() {
+        let mut temp = create_temp_package_manager(|_, data_dir| {
+            let index_file = data_dir.join(DEFAULT_PACKAGE_INDEX_FILE);
+            std::fs::write(index_file, OUTDATED_INDEX_CONTENT);
+        });
+
+        assert_eq!(temp.package_manager.update_index(false).unwrap(), UpdateResult::Updated);
     }
 }
