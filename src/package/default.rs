@@ -22,7 +22,6 @@ use crate::package::{PackageIndex, UpdateResult, Package, InstallResult, RemoveR
 use std::error::Error;
 use std::fs::{File, create_dir};
 use std::io::{BufReader, BufRead};
-use chrono::{NaiveDateTime, Timelike};
 use std::time::{SystemTime, UNIX_EPOCH};
 use crate::package::UpdateResult::{NotOutdated, Updated};
 use crate::package::InstallResult::{NotFoundInIndex, AlreadyInstalled};
@@ -79,7 +78,7 @@ impl DefaultPackageManager {
     }
 
     fn request_index() -> Result<super::PackageIndex, Box<dyn Error>> {
-        let mut client = reqwest::Client::new();
+        let client = reqwest::Client::new();
         let request = client.get("https://hub.espanso.org/json/")
             .header("User-Agent", format!("espanso/{}", crate::VERSION));
 
@@ -92,13 +91,13 @@ impl DefaultPackageManager {
 
     fn clone_repo_to_temp(repo_url: &str) -> Result<TempDir, Box<dyn Error>> {
         let temp_dir = TempDir::new()?;
-        let repo = Repository::clone(repo_url, temp_dir.path())?;
+        let _repo = Repository::clone(repo_url, temp_dir.path())?;
         Ok(temp_dir)
     }
 
     fn parse_package_from_readme(readme_path: &Path) -> Option<Package> {
         lazy_static! {
-            static ref FieldRegex: Regex = Regex::new(r###"^\s*(.*?)\s*:\s*"?(.*?)"?$"###).unwrap();
+            static ref FIELD_REGEX: Regex = Regex::new(r###"^\s*(.*?)\s*:\s*"?(.*?)"?$"###).unwrap();
         }
 
         // Read readme line by line
@@ -110,7 +109,7 @@ impl DefaultPackageManager {
 
             let mut started = false;
 
-            for (index, line) in reader.lines().enumerate() {
+            for (_index, line) in reader.lines().enumerate() {
                 let line = line.unwrap();
                 if line.contains("---") {
                     if started {
@@ -120,7 +119,7 @@ impl DefaultPackageManager {
                     }
                 }else{
                     if started {
-                        let caps = FieldRegex.captures(&line);
+                        let caps = FIELD_REGEX.captures(&line);
                         if let Some(caps) = caps {
                             let property = caps.get(1);
                             let value = caps.get(2);
@@ -142,7 +141,7 @@ impl DefaultPackageManager {
                 return None
             }
 
-            let mut package = Package {
+            let package = Package {
                 name: fields.get("package_name").unwrap().clone(),
                 title: fields.get("package_title").unwrap().clone(),
                 version: fields.get("package_version").unwrap().clone(),
@@ -165,7 +164,7 @@ impl DefaultPackageManager {
         return 0;
     }
 
-    fn list_local_packages(&self) -> Vec<String> {
+    fn list_local_packages_names(&self) -> Vec<String> {
         let dir = fs::read_dir(&self.package_dir);
         let mut output = Vec::new();
         if let Ok(dir) = dir {
@@ -184,6 +183,14 @@ impl DefaultPackageManager {
 
         output
     }
+
+    fn cache_local_index(&self) {
+        if let Some(local_index) = &self.local_index {
+            let serialized = serde_json::to_string(local_index).expect("Unable to serialize local index");
+            let local_index_file = self.data_dir.join(DEFAULT_PACKAGE_INDEX_FILE);
+            std::fs::write(local_index_file, serialized).expect("Unable to cache local index");
+        }
+    }
 }
 
 impl super::PackageManager for DefaultPackageManager {
@@ -201,6 +208,9 @@ impl super::PackageManager for DefaultPackageManager {
         if force || self.is_index_outdated() {
             let updated_index = DefaultPackageManager::request_index()?;
             self.local_index = Some(updated_index);
+
+            // Save the index to file
+            self.cache_local_index();
 
             Ok(Updated)
         }else{
@@ -235,7 +245,7 @@ impl super::PackageManager for DefaultPackageManager {
 
     fn install_package_from_repo(&self, name: &str, repo_url: &str) -> Result<InstallResult, Box<dyn Error>> {
         // Check if package is already installed
-        let packages = self.list_local_packages();
+        let packages = self.list_local_packages_names();
         if packages.iter().any(|p| p == name) {  // Package already installed
             return Ok(AlreadyInstalled);
         }
@@ -280,6 +290,23 @@ impl super::PackageManager for DefaultPackageManager {
         std::fs::remove_dir_all(package_dir)?;
 
         Ok(Removed)
+    }
+
+    fn list_local_packages(&self) -> Vec<Package> {
+        let mut output = Vec::new();
+
+        let package_names = self.list_local_packages_names();
+
+        for name in package_names.iter() {
+            let package_dir = &self.package_dir.join(name);
+            let readme_file = package_dir.join("README.md");
+            let package = Self::parse_package_from_readme(&readme_file);
+            if let Some(package) = package {
+                output.push(package);
+            }
+        }
+
+        output
     }
 }
 
@@ -378,6 +405,14 @@ mod tests {
     }
 
     #[test]
+    fn test_update_index_should_create_file() {
+        let mut temp = create_temp_package_manager(|_, _| {});
+
+        assert_eq!(temp.package_manager.update_index(false).unwrap(), UpdateResult::Updated);
+        assert!(temp.data_dir.path().join(DEFAULT_PACKAGE_INDEX_FILE).exists())
+    }
+
+    #[test]
     fn test_get_package_should_be_found() {
         let mut temp = create_temp_package_manager(|_, data_dir| {
             let index_file = data_dir.join(DEFAULT_PACKAGE_INDEX_FILE);
@@ -398,14 +433,14 @@ mod tests {
     }
 
     #[test]
-    fn test_list_local_packages() {
+    fn test_list_local_packages_names() {
         let mut temp = create_temp_package_manager(|package_dir, _| {
             create_dir(package_dir.join("package-1"));
             create_dir(package_dir.join("package2"));
             std::fs::write(package_dir.join("dummyfile.txt"), "test");
         });
 
-        let packages = temp.package_manager.list_local_packages();
+        let packages = temp.package_manager.list_local_packages_names();
         assert_eq!(packages.len(), 2);
         assert!(packages.iter().any(|p| p == "package-1"));
         assert!(packages.iter().any(|p| p == "package2"));
@@ -459,6 +494,23 @@ mod tests {
         });
 
         assert_eq!(temp.package_manager.install_package("not-existing").unwrap(), NotFoundInRepo);
+    }
+
+    #[test]
+    fn test_list_local_packages() {
+        let mut temp = create_temp_package_manager(|_, data_dir| {
+            let index_file = data_dir.join(DEFAULT_PACKAGE_INDEX_FILE);
+            std::fs::write(index_file, INSTALL_PACKAGE_INDEX);
+        });
+
+        assert_eq!(temp.package_manager.install_package("dummy-package").unwrap(), Installed);
+        assert!(temp.package_dir.path().join("dummy-package").exists());
+        assert!(temp.package_dir.path().join("dummy-package/README.md").exists());
+        assert!(temp.package_dir.path().join("dummy-package/package.yml").exists());
+
+        let list = temp.package_manager.list_local_packages();
+        assert_eq!(list.len(), 1);
+        assert_eq!(list[0].name, "dummy-package");
     }
 
     #[test]

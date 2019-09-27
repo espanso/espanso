@@ -31,24 +31,26 @@ pub trait PackageManager {
     fn install_package_from_repo(&self, name: &str, repo_url: &str) -> Result<InstallResult, Box<dyn Error>>;
 
     fn remove_package(&self, name: &str) -> Result<RemoveResult, Box<dyn Error>>;
+
+    fn list_local_packages(&self) -> Vec<Package>;
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct Package {
-    name: String,
-    title: String,
-    version: String,
-    repo: String,
-    desc: String,
-    author: String
+    pub name: String,
+    pub title: String,
+    pub version: String,
+    pub repo: String,
+    pub desc: String,
+    pub author: String
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct PackageIndex {
     #[serde(rename = "lastUpdate")]
-    last_update: u64,
+    pub last_update: u64,
 
-    packages: Vec<Package>
+    pub packages: Vec<Package>
 }
 
 

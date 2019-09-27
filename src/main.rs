@@ -43,6 +43,8 @@ use crate::system::SystemManager;
 use crate::ui::UIManager;
 use crate::protocol::*;
 use std::io::{BufReader, BufRead};
+use crate::package::default::DefaultPackageManager;
+use crate::package::{PackageManager, InstallResult, UpdateResult, RemoveResult};
 
 mod ui;
 mod event;
@@ -65,7 +67,12 @@ const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 const LOG_FILE: &str = "espanso.log";
 
 fn main() {
-    let matches = App::new("espanso")
+    let install_subcommand = SubCommand::with_name("install")
+        .about("Install a package. Equivalent to 'espanso package install'")
+        .arg(Arg::with_name("package_name")
+            .help("Package name"));
+
+    let mut clap_instance = App::new("espanso")
         .version(VERSION)
         .author("Federico Terzi")
         .about("Cross-platform Text Expander written in Rust")
@@ -110,7 +117,26 @@ fn main() {
             .about("Restart the espanso daemon."))
         .subcommand(SubCommand::with_name("status")
             .about("Check if the espanso daemon is running or not."))
-        .get_matches();
+
+        // Package manager
+        .subcommand(SubCommand::with_name("package")
+            .about("Espanso package manager commands")
+            .subcommand(install_subcommand.clone())
+            .subcommand(SubCommand::with_name("list")
+                .about("List all installed packages")
+                .arg(Arg::with_name("full")
+                    .help("Print all package info")
+                    .long("full")))
+            .subcommand(SubCommand::with_name("remove")
+                .about("Remove an installed package")
+                .arg(Arg::with_name("package_name")
+                    .help("Package name")))
+            .subcommand(SubCommand::with_name("refresh")
+                .about("Update espanso package index"))
+        )
+        .subcommand(install_subcommand);
+
+    let matches = clap_instance.clone().get_matches();
 
     let log_level = matches.occurrences_of("v") as i32;
 
@@ -192,8 +218,32 @@ fn main() {
         return;
     }
 
-    // Defaults to start subcommand
-    start_main(config_set);
+    if let Some(matches) = matches.subcommand_matches("install") {
+        install_main(config_set, matches);
+        return;
+    }
+
+    if let Some(matches) = matches.subcommand_matches("package") {
+        if let Some(matches) = matches.subcommand_matches("install") {
+            install_main(config_set, matches);
+            return;
+        }
+        if let Some(matches) = matches.subcommand_matches("remove") {
+            remove_package_main(config_set, matches);
+            return;
+        }
+        if let Some(matches) = matches.subcommand_matches("list") {
+            list_package_main(config_set, matches);
+            return;
+        }
+        if let Some(_) = matches.subcommand_matches("refresh") {
+            update_index_main(config_set);
+            return;
+        }
+    }
+
+    // Defaults help print
+    clap_instance.print_long_help().expect("Unable to print help");
 }
 
 /// Daemon subcommand, start the event loop and spawn a background thread worker
@@ -548,6 +598,142 @@ fn register_main(config_set: ConfigSet) {
 fn unregister_main(config_set: ConfigSet) {
     sysdaemon::unregister(config_set);
 }
+
+fn install_main(_config_set: ConfigSet, matches: &ArgMatches) {
+    let package_name = matches.value_of("package_name").unwrap_or_else(|| {
+        eprintln!("Missing package name!");
+        exit(1);
+    });
+
+    let mut package_manager = DefaultPackageManager::new_default();
+
+    if package_manager.is_index_outdated() {
+        println!("Updating package index...");
+        let res = package_manager.update_index(false);
+
+        match res {
+            Ok(update_result) => {
+                match update_result {
+                    UpdateResult::NotOutdated => {
+                        eprintln!("Index was already up to date");
+                    },
+                    UpdateResult::Updated => {
+                        println!("Index updated!");
+                    },
+                }
+            },
+            Err(e) => {
+                eprintln!("{}", e);
+                exit(2);
+            },
+        }
+    }else{
+        println!("Using cached package index, run 'espanso package refresh' to update it.")
+    }
+
+    let res = package_manager.install_package(package_name);
+
+    match res {
+        Ok(install_result) => {
+            match install_result {
+                InstallResult::NotFoundInIndex => {
+                    eprintln!("Package not found");
+                },
+                InstallResult::NotFoundInRepo => {
+                    eprintln!("Package not found in repository, are you sure the folder exist in the repo?");
+                },
+                InstallResult::UnableToParsePackageInfo => {
+                    eprintln!("Unable to parse Package info from README.md");
+                },
+                InstallResult::MissingPackageVersion => {
+                    eprintln!("Missing package version");
+                },
+                InstallResult::AlreadyInstalled => {
+                    eprintln!("{} already installed!", package_name);
+                },
+                InstallResult::Installed => {
+                    println!("{} successfully installed!", package_name);
+                    println!();
+                    println!("You need to restart espanso for changes to take effect, using:");
+                    println!("  espanso restart");
+                },
+            }
+        },
+        Err(e) => {
+            eprintln!("{}", e);
+        },
+    }
+}
+
+fn remove_package_main(_config_set: ConfigSet, matches: &ArgMatches) {
+    let package_name = matches.value_of("package_name").unwrap_or_else(|| {
+        eprintln!("Missing package name!");
+        exit(1);
+    });
+
+    let package_manager = DefaultPackageManager::new_default();
+
+    let res = package_manager.remove_package(package_name);
+
+    match res {
+        Ok(remove_result) => {
+            match remove_result {
+                RemoveResult::NotFound => {
+                    eprintln!("{} package was not installed.", package_name);
+                },
+                RemoveResult::Removed => {
+                    println!("{} successfully removed!", package_name);
+                    println!();
+                    println!("You need to restart espanso for changes to take effect, using:");
+                    println!("  espanso restart");
+                },
+            }
+        },
+        Err(e) => {
+            eprintln!("{}", e);
+        },
+    }
+}
+
+fn update_index_main(_config_set: ConfigSet) {
+    let mut package_manager = DefaultPackageManager::new_default();
+
+    let res = package_manager.update_index(true);
+
+    match res {
+        Ok(update_result) => {
+            match update_result {
+                UpdateResult::NotOutdated => {
+                    eprintln!("Index was already up to date");
+                },
+                UpdateResult::Updated => {
+                    println!("Index updated!");
+                },
+            }
+        },
+        Err(e) => {
+            eprintln!("{}", e);
+            exit(2);
+        },
+    }
+}
+
+fn list_package_main(_config_set: ConfigSet, matches: &ArgMatches) {
+    let package_manager = DefaultPackageManager::new_default();
+
+    let list = package_manager.list_local_packages();
+
+    if matches.is_present("full") {
+        for package in list.iter() {
+            println!("{:?}", package);
+        }
+    }else{
+        for package in list.iter() {
+            println!("{} - {}", package.name, package.version);
+        }
+    }
+}
+
 
 fn acquire_lock() -> Option<File> {
     let espanso_dir = context::get_data_dir();

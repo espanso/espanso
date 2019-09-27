@@ -19,7 +19,6 @@
 
 use std::path::Path;
 use std::error::Error;
-use walkdir::WalkDir;
 use std::fs::create_dir;
 
 pub fn copy_dir(source_dir: &Path, dest_dir: &Path) -> Result<(), Box<dyn Error>> {
@@ -30,10 +29,10 @@ pub fn copy_dir(source_dir: &Path, dest_dir: &Path) -> Result<(), Box<dyn Error>
             let name = entry.file_name().expect("Error obtaining the filename");
             let target_dir = dest_dir.join(name);
             create_dir(&target_dir)?;
-            copy_dir(&entry, &target_dir);
+            copy_dir(&entry, &target_dir)?;
         }else if entry.is_file() {
             let target_entry = dest_dir.join(entry.file_name().expect("Error obtaining the filename"));
-            std::fs::copy(entry, target_entry);
+            std::fs::copy(entry, target_entry)?;
         }
     }
 
@@ -44,7 +43,6 @@ pub fn copy_dir(source_dir: &Path, dest_dir: &Path) -> Result<(), Box<dyn Error>
 mod tests {
     use super::*;
     use tempfile::TempDir;
-    use std::path::Path;
     use std::fs::create_dir;
 
     #[test]
