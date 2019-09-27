@@ -204,7 +204,6 @@ impl <'a, S: SystemManager> super::ConfigManager<'a> for RuntimeConfigManager<'a
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::io::Write;
     use tempfile::{NamedTempFile, TempDir};
     use crate::config::{DEFAULT_CONFIG_FILE_NAME, DEFAULT_CONFIG_FILE_CONTENT};
     use std::fs;

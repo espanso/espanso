@@ -22,7 +22,7 @@ extern crate dirs;
 use std::path::{Path, PathBuf};
 use std::{fs};
 use crate::matcher::Match;
-use std::fs::{File, create_dir_all, DirEntry};
+use std::fs::{File, create_dir_all};
 use std::io::Read;
 use serde::{Serialize, Deserialize};
 use crate::event::KeyModifier;
@@ -387,7 +387,6 @@ pub enum ConfigLoadError {
     InvalidYAML(PathBuf, String),
     InvalidConfigDirectory,
     InvalidParameter(PathBuf),
-    MissingName(PathBuf),
     NameDuplicate(PathBuf),
     UnableToCreateDefaultConfig,
 }
@@ -400,7 +399,6 @@ impl fmt::Display for ConfigLoadError {
             ConfigLoadError::InvalidYAML(path, e) => write!(f, "Error parsing YAML file '{}', invalid syntax: {}", path.to_str().unwrap_or_default(), e),
             ConfigLoadError::InvalidConfigDirectory =>  write!(f, "Invalid config directory"),
             ConfigLoadError::InvalidParameter(path) =>  write!(f, "Invalid parameter in '{}', use of reserved parameters in used defined configs is not permitted", path.to_str().unwrap_or_default()),
-            ConfigLoadError::MissingName(path) =>  write!(f, "The 'name' field is required in user defined configurations, but it's missing in '{}'", path.to_str().unwrap_or_default()),
             ConfigLoadError::NameDuplicate(path) =>  write!(f, "Found duplicate 'name' in '{}', please use different names", path.to_str().unwrap_or_default()),
             ConfigLoadError::UnableToCreateDefaultConfig =>  write!(f, "Could not generate default config file"),
         }
@@ -415,7 +413,6 @@ impl Error for ConfigLoadError {
             ConfigLoadError::InvalidYAML(_, _) => "Error parsing YAML file, invalid syntax",
             ConfigLoadError::InvalidConfigDirectory => "Invalid config directory",
             ConfigLoadError::InvalidParameter(_) => "Invalid parameter, use of reserved parameters in user defined configs is not permitted",
-            ConfigLoadError::MissingName(_) => "The 'name' field is required in user defined configurations, but it's missing",
             ConfigLoadError::NameDuplicate(_) => "Found duplicate 'name' in some configurations, please use different names",
             ConfigLoadError::UnableToCreateDefaultConfig => "Could not generate default config file",
         }

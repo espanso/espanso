@@ -28,12 +28,10 @@ lazy_static = "1.4.0"
 walkdir = "2.2.9"
 reqwest = "0.9.20"
 git2 = {version = "0.10.1", features = ["https"]}
+tempfile = "3.1.0"
 
 [target.'cfg(unix)'.dependencies]
 libc = "0.2.62"
-
-[dev-dependencies]
-tempfile = "3.1.0"
 
 [build-dependencies]
 cmake = "0.1.31"
