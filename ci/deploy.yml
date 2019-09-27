@@ -33,3 +33,4 @@ steps:
       addChangeLog: false
       repositoryName: ${{ parameters.github.repositoryName }}
       isPreRelease: ${{ parameters.github.isPreRelease }}
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))

@@ -2,6 +2,11 @@ parameters:
   rust_version: stable
 
 steps:
+  - script: |
+      echo Master check
+    displayName: Master branch check
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+
   - template: install-rust.yml
 
   - script: |
