@@ -23,14 +23,14 @@ use walkdir::WalkDir;
 use std::fs::create_dir;
 
 pub fn copy_dir(source_dir: &Path, dest_dir: &Path) -> Result<(), Box<dyn Error>> {
-    for entry in WalkDir::new(source_dir) {
+    for entry in std::fs::read_dir(source_dir)? {
         let entry = entry?;
         let entry = entry.path();
         if entry.is_dir() {
             let name = entry.file_name().expect("Error obtaining the filename");
             let target_dir = dest_dir.join(name);
             create_dir(&target_dir)?;
-            copy_dir(entry, &target_dir);
+            copy_dir(&entry, &target_dir);
         }else if entry.is_file() {
             let target_entry = dest_dir.join(entry.file_name().expect("Error obtaining the filename"));
             std::fs::copy(entry, target_entry);
