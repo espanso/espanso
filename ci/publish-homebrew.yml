@@ -19,3 +19,4 @@ steps:
       git commit -m "Update to version: $VER"
       git push
     displayName: "Publishing to Homebrew"
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
