@@ -55,7 +55,7 @@ impl <'a> EventManager for DefaultEventManager<'a> {
                         }
                     }
                 },
-                Err(_) => panic!("Broken event channel"),
+                Err(e) => panic!("Broken event channel {}", e),
             }
         }
     }

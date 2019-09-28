@@ -34,7 +34,6 @@ use walkdir::WalkDir;
 
 pub(crate) mod runtime;
 
-// TODO: add documentation link
 const DEFAULT_CONFIG_FILE_CONTENT : &str = include_str!("../res/config.yml");
 
 const DEFAULT_CONFIG_FILE_NAME : &str = "default.yml";
@@ -162,7 +161,7 @@ impl Configs {
             let mut contents = String::new();
             let res = file.read_to_string(&mut contents);
 
-            if let Err(_) = res {
+            if res.is_err() {
                 return Err(ConfigLoadError::UnableToReadFile)
             }
 
@@ -187,7 +186,7 @@ impl Configs {
         });
         let parent_matches : Vec<Match> = self.matches.iter().filter(|&m| {
             !trigger_set.contains(&m.trigger)
-        }).map(|m| m.clone()).collect();
+        }).cloned().collect();
 
         merged_matches.extend(parent_matches);
         self.matches = merged_matches;
@@ -200,7 +199,7 @@ impl Configs {
         });
         let default_matches : Vec<Match> = default.matches.iter().filter(|&m| {
             !trigger_set.contains(&m.trigger)
-        }).map(|m| m.clone()).collect();
+        }).cloned().collect();
 
         self.matches.extend(default_matches);
     }
@@ -326,7 +325,7 @@ impl ConfigSet {
         // Create the espanso dir if id doesn't exist
         let res = create_dir_all(espanso_dir.as_path());
 
-        if let Ok(_) = res {
+        if res.is_ok() {
             let default_file = espanso_dir.join(DEFAULT_CONFIG_FILE_NAME);
 
             // If config file does not exist, create one from template
@@ -358,13 +357,12 @@ impl ConfigSet {
             return ConfigSet::load(espanso_dir.as_path())
         }
 
-        return Err(ConfigLoadError::UnableToCreateDefaultConfig)
+        Err(ConfigLoadError::UnableToCreateDefaultConfig)
     }
 
     pub fn get_default_config_dir() -> PathBuf {
         let home_dir = dirs::home_dir().expect("Unable to get home directory");
-        let espanso_dir = home_dir.join(".espanso");
-        espanso_dir
+        home_dir.join(".espanso")
     }
 
     pub fn get_default_packages_dir() -> PathBuf {
