@@ -244,6 +244,7 @@ fn main() {
 
     // Defaults help print
     clap_instance.print_long_help().expect("Unable to print help");
+    println!();
 }
 
 /// Daemon subcommand, start the event loop and spawn a background thread worker
