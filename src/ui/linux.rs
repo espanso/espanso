@@ -22,7 +22,7 @@ use super::MenuItem;
 use log::{error, info};
 use std::path::PathBuf;
 
-const LINUX_ICON_CONTENT : &'static [u8] = include_bytes!("../res/linux/icon.png");
+const LINUX_ICON_CONTENT : &[u8] = include_bytes!("../res/linux/icon.png");
 
 pub struct LinuxUIManager {
     icon_path: PathBuf,

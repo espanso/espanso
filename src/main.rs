@@ -63,7 +63,7 @@ mod clipboard;
 mod extension;
 mod sysdaemon;
 
-const VERSION: &'static str = env!("CARGO_PKG_VERSION");
+const VERSION: &str = env!("CARGO_PKG_VERSION");
 const LOG_FILE: &str = "espanso.log";
 
 fn main() {
@@ -168,52 +168,52 @@ fn main() {
         return;
     }
 
-    if let Some(_) = matches.subcommand_matches("dump") {
+    if matches.subcommand_matches("dump").is_some() {
         println!("{:#?}", config_set);
         return;
     }
 
-    if let Some(_) = matches.subcommand_matches("detect") {
+    if matches.subcommand_matches("detect").is_some() {
         detect_main();
         return;
     }
 
-    if let Some(_) = matches.subcommand_matches("daemon") {
+    if matches.subcommand_matches("daemon").is_some() {
         daemon_main(config_set);
         return;
     }
 
-    if let Some(_) = matches.subcommand_matches("register") {
+    if matches.subcommand_matches("register").is_some() {
         register_main(config_set);
         return;
     }
 
-    if let Some(_) = matches.subcommand_matches("unregister") {
+    if matches.subcommand_matches("unregister").is_some() {
         unregister_main(config_set);
         return;
     }
 
-    if let Some(_) = matches.subcommand_matches("log") {
+    if matches.subcommand_matches("log").is_some() {
         log_main();
         return;
     }
 
-    if let Some(_) = matches.subcommand_matches("start") {
+    if matches.subcommand_matches("start").is_some() {
         start_main(config_set);
         return;
     }
 
-    if let Some(_) = matches.subcommand_matches("status") {
+    if matches.subcommand_matches("status").is_some() {
         status_main();
         return;
     }
 
-    if let Some(_) = matches.subcommand_matches("stop") {
+    if matches.subcommand_matches("stop").is_some() {
         stop_main(config_set);
         return;
     }
 
-    if let Some(_) = matches.subcommand_matches("restart") {
+    if matches.subcommand_matches("restart").is_some() {
         restart_main(config_set);
         return;
     }
@@ -236,7 +236,7 @@ fn main() {
             list_package_main(config_set, matches);
             return;
         }
-        if let Some(_) = matches.subcommand_matches("refresh") {
+        if matches.subcommand_matches("refresh").is_some() {
             update_index_main(config_set);
             return;
         }
@@ -525,22 +525,22 @@ fn detect_main() {
 
 /// Send the given command to the espanso daemon
 fn cmd_main(config_set: ConfigSet, matches: &ArgMatches) {
-    let command = if let Some(_) = matches.subcommand_matches("exit") {
+    let command = if matches.subcommand_matches("exit").is_some() {
         Some(IPCCommand {
             id: String::from("exit"),
             payload: String::from(""),
         })
-    }else if let Some(_) = matches.subcommand_matches("toggle") {
+    }else if matches.subcommand_matches("toggle").is_some() {
         Some(IPCCommand {
             id: String::from("toggle"),
             payload: String::from(""),
         })
-    }else if let Some(_) = matches.subcommand_matches("enable") {
+    }else if matches.subcommand_matches("enable").is_some() {
         Some(IPCCommand {
             id: String::from("enable"),
             payload: String::from(""),
         })
-    }else if let Some(_) = matches.subcommand_matches("disable") {
+    }else if matches.subcommand_matches("disable").is_some() {
         Some(IPCCommand {
             id: String::from("disable"),
             payload: String::from(""),
@@ -748,7 +748,7 @@ fn acquire_lock() -> Option<File> {
 
     let res = file.try_lock_exclusive();
 
-    if let Ok(_) = res {
+    if res.is_ok() {
         return Some(file)
     }
 
