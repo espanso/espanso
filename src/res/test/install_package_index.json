@@ -12,6 +12,36 @@
 
         },
 
+        {
+            "name": "dummy-package2",
+            "title": "Dummy Package",
+            "version": "9.9.9",
+            "repo": "https://github.com/federico-terzi/espanso-hub-core",
+            "desc": "Dummy package",
+            "author": "Federico Terzi"
+
+        },
+
+        {
+            "name": "dummy-package3",
+            "title": "Dummy Package",
+            "version": "0.1.0",
+            "repo": "https://github.com/federico-terzi/espanso-hub-core",
+            "desc": "Dummy package",
+            "author": "Federico Terzi"
+
+        },
+
+        {
+            "name": "dummy-package4",
+            "title": "Dummy Package",
+            "version": "0.1.0",
+            "repo": "https://github.com/federico-terzi/espanso-hub-core",
+            "desc": "Dummy package",
+            "author": "Federico Terzi"
+
+        },
+
 
         {
             "name": "italian-accents",

@@ -117,16 +117,14 @@ impl DefaultPackageManager {
                     }else{
                         started = true;
                     }
-                }else{
-                    if started {
-                        let caps = FIELD_REGEX.captures(&line);
-                        if let Some(caps) = caps {
-                            let property = caps.get(1);
-                            let value = caps.get(2);
-                            if property.is_some() && value.is_some() {
-                                fields.insert(property.unwrap().as_str().to_owned(),
-                                              value.unwrap().as_str().to_owned());
-                            }
+                }else if started {
+                    let caps = FIELD_REGEX.captures(&line);
+                    if let Some(caps) = caps {
+                        let property = caps.get(1);
+                        let value = caps.get(2);
+                        if property.is_some() && value.is_some() {
+                            fields.insert(property.unwrap().as_str().to_owned(),
+                                          value.unwrap().as_str().to_owned());
                         }
                     }
                 }
@@ -161,7 +159,7 @@ impl DefaultPackageManager {
             return local_index.last_update
         }
 
-        return 0;
+        0
     }
 
     fn list_local_packages_names(&self) -> Vec<String> {
@@ -260,14 +258,14 @@ impl super::PackageManager for DefaultPackageManager {
         let readme_path = temp_package_dir.join("README.md");
 
         let package = Self::parse_package_from_readme(&readme_path);
-        if !package.is_some() {
-            return Ok(InstallResult::UnableToParsePackageInfo);  // TODO: test
+        if package.is_none() {
+            return Ok(InstallResult::UnableToParsePackageInfo);
         }
         let package = package.unwrap();
 
         let source_dir = temp_package_dir.join(package.version);
         if !source_dir.exists() {
-            return Ok(InstallResult::MissingPackageVersion);  // TODO: test
+            return Ok(InstallResult::MissingPackageVersion);
         }
 
         let target_dir = &self.package_dir.join(name);
@@ -317,7 +315,7 @@ mod tests {
     use std::path::Path;
     use crate::package::PackageManager;
     use std::fs::{create_dir, create_dir_all};
-    use crate::package::InstallResult::{Installed, NotFoundInRepo};
+    use crate::package::InstallResult::*;
     use std::io::Write;
 
     const OUTDATED_INDEX_CONTENT : &str = include_str!("../res/test/outdated_index.json");
@@ -494,6 +492,36 @@ mod tests {
         });
 
         assert_eq!(temp.package_manager.install_package("not-existing").unwrap(), NotFoundInRepo);
+    }
+
+    #[test]
+    fn test_install_package_missing_version() {
+        let mut temp = create_temp_package_manager(|_, data_dir| {
+            let index_file = data_dir.join(DEFAULT_PACKAGE_INDEX_FILE);
+            std::fs::write(index_file, INSTALL_PACKAGE_INDEX);
+        });
+
+        assert_eq!(temp.package_manager.install_package("dummy-package2").unwrap(), MissingPackageVersion);
+    }
+
+    #[test]
+    fn test_install_package_missing_readme_unable_to_parse_package_info() {
+        let mut temp = create_temp_package_manager(|_, data_dir| {
+            let index_file = data_dir.join(DEFAULT_PACKAGE_INDEX_FILE);
+            std::fs::write(index_file, INSTALL_PACKAGE_INDEX);
+        });
+
+        assert_eq!(temp.package_manager.install_package("dummy-package3").unwrap(), UnableToParsePackageInfo);
+    }
+
+    #[test]
+    fn test_install_package_bad_readme_unable_to_parse_package_info() {
+        let mut temp = create_temp_package_manager(|_, data_dir| {
+            let index_file = data_dir.join(DEFAULT_PACKAGE_INDEX_FILE);
+            std::fs::write(index_file, INSTALL_PACKAGE_INDEX);
+        });
+
+        assert_eq!(temp.package_manager.install_package("dummy-package4").unwrap(), UnableToParsePackageInfo);
     }
 
     #[test]
