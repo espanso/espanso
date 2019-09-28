@@ -1,6 +1,15 @@
 - name: Installation
   link: /install/
   desc: This section will cover the installation process on Windows, macOS and Linux.
-- name: Basic Usage
-  link: /docs/basic-usage/
+- name: Getting Started
+  link: /docs/get-started/
   desc: In this section we will cover the basics of espanso to get you started immediately.
+- name: Matches
+  link: /docs/matches/
+  desc: This sections will cover Matches in detail, showing their features and options.
+- name: Packages
+  link: /docs/packages/
+  desc: This section will cover the basics and the creation of espanso packages.
+- name: Configuration
+  link: /docs/configuration/
+  desc: This sections will cover the configuration options and behaviour.
