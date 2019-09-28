@@ -59,3 +59,5 @@ If everything goes well, you should see the espanso icon appear in the status ba
 ![macOS status bar icon](/assets/images/espanso-icon-macos-statusbar.png)
 
 If you now type `:espanso` in any text field, you should see "Hi there!" appear! 
+
+At this point, you are ready to read the [Getting Started](/docs/get-started/) tutorial.

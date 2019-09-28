@@ -7,6 +7,8 @@ instead of GUIs. This has many advantages, such as the capability to easily sync
 configurations between machines using [Git](https://git-scm.com/) or cloud services
 such as [Dropbox](https://www.dropbox.com/) or [Google Drive](https://www.google.com/drive/).
 
+### Structure
+
 All espanso configurations reside in a folder called `.espanso`, located in the user home directory.
 The path of the home directory depends on the Operating System, here's a few examples:
 * Windows: `C:\Users\Federico\.espanso\`

@@ -38,6 +38,8 @@ espanso start
 
 If you now type `:espanso` in any text field, you should see "Hi there!" appear! 
 
+At this point, you are ready to read the [Getting Started](/docs/get-started/) tutorial.
+
 ### Installing on Manjaro / Arch
 
 Espanso depends upon the `X11 Record Extension`, the `xdo library` and the `xclip` command, 
@@ -66,3 +68,5 @@ espanso start
 ```
 
 If you now type `:espanso` in any text field, you should see "Hi there!" appear! 
+
+At this point, you are ready to read the [Getting Started](/docs/get-started/) tutorial.

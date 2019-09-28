@@ -42,6 +42,126 @@ Matches are very flexible and powerful to solve many tasks. You can learn all ab
 espanso ships with very few built-in Matches to give you the maximum flexibility, but you can expand it's capabilities
 in two ways: creating your own **custom matches** or **installing packages**. Both of these possibilities are introduced below.
 
+### Configuration
+
+espanso uses a **file-based configuration** approach, following the Unix philosophy. All configuration files
+reside in the `.espanso` directory, located in **user's home** directory. The path depends on the current OS, for example:
+* Windows: `C:\Users\Federico\.espanso\`
+* Mac: `/Users/Federico/.espanso/`
+* Linux: `/home/federico/.espanso/`
+
+While this folder may contain many different files, let's focus on the most important one: `default.yml`.
+
+The `default.yml` file contain the **main espanso configuration** and uses the widely 
+spread [YAML](https://en.wikipedia.org/wiki/YAML) syntax. 
+It can be used to change various settings as well as **creating custom matches**. 
+You can learn all about espanso's configuration by visiting the [documentation](/docs/configuration).
+
 ### Creating your own Match
 
+That's enough theory for now, let's start with some action! Let's say you write a lot of emails, and you're
+tired of writing the greetings at the end, so you decide to speed up the process.
+
+We will configure espanso so that every time you type `:br`, it will be expanded to:
+
+```
+Best Regards,
+Jon Snow
+```
+
+By now you should know that we need to **define a Match**. 
+
+With your favourite text editor, open the `.espanso/default.yml` file, introduced previously in the [Configuration](#configuration) section. You should see something like:
+
+```
+# espanso configuration file
+
+# This is the default configuration file, change it as you like it
+# You can refer to the official documentation:
+# https://espanso.org/docs/
+
+# Matches are the substitution rules, when you type the "trigger" string
+# it gets replaced by the "replace" string.
+matches:
+  # Simple text replacement
+  - trigger: ":espanso"
+    replace: "Hi there!"
+
+...
+```
+
+We need to define a new Match, so in the `matches:` section, add the following code:
+```
+  - trigger: ":br"
+    replace: "Best Regards,\nJon Snow"
+```
+**Make sure to include the indentation**, otherwise it won't be valid YAML syntax. You should get something like:
+
+```
+# espanso configuration file
+
+# This is the default configuration file, change it as you like it
+# You can refer to the official documentation:
+# https://espanso.org/docs/
+
+# Matches are the substitution rules, when you type the "trigger" string
+# it gets replaced by the "replace" string.
+matches:
+  # Simple text replacement
+  - trigger: ":espanso"
+    replace: "Hi there!"
+
+  - trigger: ":br"
+    replace: "Best Regards,\nJon Snow"
+
+...
+```
+
+We're almost there! After every configuration change, **espanso must be restarted**. Open a terminal and type:
+
+```
+espanso restart
+```
+
+Now try to type `:bs` anywhere. If you did everything correctly, you should see `Best Regards` appear! 
+
+### Understanding Packages
+
+Custom matches are amazing, but sometimes it can be tedious to define Matches for every **common operation**,
+and even more when you want to **share them with other people**.
+
+espanso offers an easy way to **share and reuse matches** with other people, **packages**. In fact, they are so important that espanso includes a **build-in package manager** and a **store**, the [espanso hub](https://hub.espanso.org/). 
+
+If you are lucky enough, someone might have already written a **package** to include the matches you need!
+Otherwise, you can create a package and publish it on the hub, for more information check out the [Packages](/docs/packages/) documentation.
+
 ### Installing a Package
+
+Let's say you want to **add some emojis** to espanso, such that when you type `:ok` it gets expanded to 👍.
+
+A solution would be to install the [Basic Emojis](https://hub.espanso.org/packages/basic-emojis/) package from the
+[espanso hub](https://hub.espanso.org/) store. Open a terminal and type:
+
+```
+espanso install basic-emojis
+```
+
+At this point, as we did with custom matches, we need to **restart espanso**. We can do so with the command:
+
+```
+espanso restart
+```
+
+If you now type `:ook` into any text field, you should see 👍👍👍👍 appear!
+
+### Useful shortcuts
+
+Let's conclude this introduction with the most important shortcut espanso offers, the **toggle shortcut**:
+
+There are times when you may want to **disable espanso to avoid an unwanted expansion**. This can be
+easily accomplished by quickly **double pressing the `ALT` key** ( Option on MacOS ). You should then see a notification showing "Espanso disabled".
+
+At this point, espanso will be disabled and will not expand any match. 
+
+To **re-enable** it, double press the `ALT` key again.
+
