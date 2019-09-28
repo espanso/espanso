@@ -26,7 +26,7 @@ After installing espanso, the `.espanso` directory will contain the following fi
 The `default.yml` file contains the **main configurations** and for a basic usage, this is the only file
 you will be working with. 
 
-The `user` folder is used to store advanced configurations, such as [Application-specific](#application-specific-config) configs.
+The `user` folder is used to store more advanced user configurations, such as [Application-specific](#application-specific-config) configs.
 
 The `packages` folder stores packages installed using the *package manager* and should not be directly modified
 by the user. For more information, check out the [Packages](/docs/packages) section of the documentation.
