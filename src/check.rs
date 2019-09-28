@@ -30,7 +30,7 @@ pub fn check_dependencies() -> bool {
     let status = Command::new("notify-send")
         .arg("-v")
         .output();
-    if let Err(_) = status {
+    if status.is_err() {
         println!("Error: 'notify-send' command is needed for espanso to work correctly, please install it.");
         result = false;
     }
@@ -39,7 +39,7 @@ pub fn check_dependencies() -> bool {
     let status = Command::new("xclip")
         .arg("-version")
         .output();
-    if let Err(_) = status {
+    if status.is_err() {
         println!("Error: 'xclip' command is needed for espanso to work correctly, please install it.");
         result = false;
     }

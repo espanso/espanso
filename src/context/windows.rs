@@ -26,8 +26,8 @@ use std::{fs};
 use widestring::U16CString;
 use log::{info};
 
-const BMP_BINARY : &'static [u8] = include_bytes!("../res/win/espanso.bmp");
-const ICO_BINARY : &'static [u8] = include_bytes!("../res/win/espanso.ico");
+const BMP_BINARY : &[u8] = include_bytes!("../res/win/espanso.bmp");
+const ICO_BINARY : &[u8] = include_bytes!("../res/win/espanso.ico");
 
 pub struct WindowsContext {
     send_channel: Sender<Event>,

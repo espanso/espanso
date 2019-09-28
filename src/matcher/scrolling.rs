@@ -126,7 +126,7 @@ impl <'a, R: MatchReceiver, M: ConfigManager<'a>> super::Matcher for ScrollingMa
         if m == config.toggle_key {
             let mut toggle_press_time = self.toggle_press_time.borrow_mut();
             if let Ok(elapsed) = toggle_press_time.elapsed() {
-                if elapsed.as_millis() < config.toggle_interval as u128 {
+                if elapsed.as_millis() < u128::from(config.toggle_interval) {
                     self.toggle();
 
                     let is_enabled = self.is_enabled.borrow();
