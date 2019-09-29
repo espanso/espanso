@@ -32,6 +32,27 @@
             margin: 0 0 15px 0;
         }
     }
+    
+    table {
+        border-collapse: collapse;
+
+        @media screen and (max-width: $screen-phone) {
+            display: block;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+       
+    }
+
+    td, th {
+        border: 1px solid #ddd;
+        padding: 8px;
+    }
+
+    th {
+        background-color: $lightGrayColor;
+    }
+      
 }
 
 .doc-col {
