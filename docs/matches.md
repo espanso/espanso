@@ -108,7 +108,7 @@ place it anywhere you want and paste the following code:
 print("Hello from python")
 ```
 
-Now take note of the **path** of the script, and add the following match to espanso configuration:
+Now take note of the **path** of the script, and add the following match to the espanso configuration:
 
 {% raw %}
 ```yaml
@@ -124,8 +124,8 @@ Now take note of the **path** of the script, and add the following match to espa
 ```
 {% endraw %}
 
-As always, restart espanso with `espanso restart` and you should have this match expand into the output
-of the script!
+As always, restart espanso with `espanso restart`. 
+If you now try to type `:pyscript` anywhere, you should see `Hello from python` appear.
 
 You can do the same thing with any programming language, just change the `args` array accordingly.
 
@@ -162,7 +162,7 @@ IP address!
 
 #### Bash pipes
 
-This extension also supports bash **pipes** as you would do in your shell, such as:
+This extension also supports bash **pipes** as your shell, such as:
 
 {% raw %}
 ```yml
