@@ -73,7 +73,7 @@ By now you should know that we need to **define a Match**.
 
 With your favourite text editor, open the `.espanso/default.yml` file, introduced previously in the [Configuration](#configuration) section. You should see something like:
 
-```
+```yml
 # espanso configuration file
 
 # This is the default configuration file, change it as you like it
@@ -91,13 +91,13 @@ matches:
 ```
 
 We need to define a new Match, so in the `matches:` section, add the following code:
-```
+```yml
   - trigger: ":br"
     replace: "Best Regards,\nJon Snow"
 ```
 **Make sure to include the indentation**, otherwise it won't be valid YAML syntax. You should get something like:
 
-```
+```yml
 # espanso configuration file
 
 # This is the default configuration file, change it as you like it

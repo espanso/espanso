@@ -10,14 +10,14 @@ In their most basic form, **Matches are pairs that associate a *trigger* with a 
 
 For example, we can define a match that will expand every occurrence of `hello` with `world` while we are typing. Using the [YAML](https://en.wikipedia.org/wiki/YAML) syntax, it can be expressed as:
 
-```
+```yml
 - trigger: "hello"
   replace: "world"
 ```
 
 To replace the original text with a *multi-line* expansion, we can use the `\n` line terminator character, such as:
 
-```
+```yml
 - trigger: "hello"
   replace: "line1\nline2"
 ```
@@ -39,7 +39,7 @@ It's 11:29
 Let's add the following match to a configuration file, such as the `default.yml` config.
 
 {% raw %}
-```
+```yaml
 - trigger: ":now"
   replace: "It's {{mytime}}"
   vars:
@@ -60,10 +60,138 @@ At this point, everytime we type `:now`, we should see something like: `It's 09:
 
 Let's analyze the match step by step:
 
-TODO
+```yml
+- trigger: ":now"
+```
+
+In the first line we declare the trigger `:now`, that must be typed by the user to expand the match.
+
+{% raw %}
+```yml
+  replace: "It's {{mytime}}"
+```
+{% endraw %}
+
+In the second line, we declare the *replace text* as usual, but this time we include the `mytime` **variable**,
+that will contain the output of the **extension** used below.
+
+{% raw %}
+```yml
+  vars:
+    - name: mytime
+      type: date
+```
+{% endraw %}
+
+In the next lines, we defined the `mytime` variable as type **date**. The type of a variable defines
+the **extension** that will be executed to calculate its value. In this case, we use the [Date Extension](#date-extension).
+
+```yml
+      params:
+        format: "%H:%M"
+```
+
+In the remaining lines we declared the **parameters** used by the extension, in this case the *date format*.
 
 ### Script Extension
 
+There will be tasks for which espanso was not designed for. For those cases, espanso offers the
+**Script Extension**, that enables you to call an **external script**, written in **any language**,
+ and use its output in a match.
+
+To better understand this feature, let's dive into an example:
+
+We want to expand a match into the output of a **Python** script. Let's create the `script.py` file,
+place it anywhere you want and paste the following code:
+
+```python
+print("Hello from python")
+```
+
+Now take note of the **path** of the script, and add the following match to espanso configuration:
+
+{% raw %}
+```yaml
+- trigger: ":pyscript"
+  replace: "{{output}}"
+  vars:
+    - name: output
+      type: script
+      params:
+        args:
+          - python
+          - /path/to/your/script.py
+```
+{% endraw %}
+
+As always, restart espanso with `espanso restart` and you should have this match expand into the output
+of the script!
+
+You can do the same thing with any programming language, just change the `args` array accordingly.
+
+#### A note on performance
+
+Because of the execution time, you should limit yourself to fast-running scripts to avoid
+any lag.
+
 ### Shell Extension
 
+The **Shell Extension** is similar to the [Script Extension](#script-extension), but instead of executing
+a script, it executes **shell commands**. This offers a lot of flexibility on Unix systems thanks to the
+`bash` shell.
+
+Let's say you regularly send your IP address to your coworkers. You can setup a match to fetch your public
+IP from [ipify](https://www.ipify.org/).
+
+> Note: this example uses the `curl` command, usually preinstalled in most Unix systems.
+
+{% raw %}
+```yml
+- trigger: ":ip"
+  replace: "{{output}}"
+  vars:
+    - name: output
+      type: shell
+      params:
+        cmd: "curl 'https://api.ipify.org'"
+```
+{% endraw %}
+
+As always, restart espanso with `espanso restart`. Now everytime you type `:ip`, it gets expanded to your public
+IP address!
+
+#### Bash pipes
+
+This extension also supports bash **pipes** as you would do in your shell, such as:
+
+{% raw %}
+```yml
+- trigger: ":localip"
+  replace: "{{output}}"
+  vars:
+    - name: output
+      type: shell
+      params:
+        cmd: "ip a | grep 'inet 192' | awk '{ print $2 }'"
+```
+{% endraw %}
+
 ### Date Extension
+
+The **Date Extension** can be used to include *date* and *time* information in a match. 
+
+The most important aspect to consider when using this extension is the `format` parameter,
+that specifies how the date will be rendered. A **list of all the possible options** can be
+found in the [official chrono documentation](https://docs.rs/chrono/0.3.1/chrono/format/strftime/index.html).
+
+{% raw %}
+```yaml
+- trigger: ":now"
+  replace: "It's {{mytime}}"
+  vars:
+    - name: mytime
+      type: date
+      params:
+        format: "%H:%M"
+```
+{% endraw %}
