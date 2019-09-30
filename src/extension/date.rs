@@ -18,7 +18,7 @@
  */
 
 use serde_yaml::{Mapping, Value};
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Local};
 
 pub struct DateExtension {}
 
@@ -34,7 +34,7 @@ impl super::Extension for DateExtension {
     }
 
     fn calculate(&self, params: &Mapping) -> Option<String> {
-        let now: DateTime<Utc> = Utc::now();
+        let now: DateTime<Local> = Local::now();
 
         let format = params.get(&Value::from("format"));
 
