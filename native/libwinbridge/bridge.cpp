@@ -59,6 +59,8 @@ HBITMAP g_espanso_bmp = NULL;
 HICON g_espanso_ico = NULL;
 NOTIFYICONDATA nid = {};
 
+UINT WM_TASKBARCREATED = RegisterWindowMessage(L"TaskbarCreated");
+
 // Callbacks
 
 KeypressCallback keypress_callback = NULL;
@@ -258,6 +260,9 @@ LRESULT CALLBACK window_procedure(HWND window, unsigned int msg, WPARAM wp, LPAR
             return 0;
         }
         default:
+            if (msg == WM_TASKBARCREATED) {  // Explorer crashed, recreate the icon
+                Shell_NotifyIcon(NIM_ADD, &nid);
+            }
             return DefWindowProc(window, msg, wp, lp);
     }
 }
