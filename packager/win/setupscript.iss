@@ -37,11 +37,12 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 [Files]
 Source: "{{{executable_path}}}"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{{{app_icon}}}"; DestDir: "{app}"; Flags: ignoreversion
+Source: "vc_redist.x64.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
-Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\icon.ico"
-Name: "{userstartup}\espanso"; Filename: "{app}\espanso.exe"; Tasks:StartMenuEntry;
+Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Parameters: "start"; IconFilename: "{app}\icon.ico"
+Name: "{userstartup}\espanso"; Filename: "{app}\espanso.exe"; Parameters: "start"; Tasks:StartMenuEntry;
 
 [Tasks]
 Name: modifypath; Description: Add espanso to PATH ( recommended );
@@ -60,7 +61,10 @@ end;
 #include "modpath.iss"
 
 [Run]
-Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
+Filename: {tmp}\vc_redist.x64.exe; \
+    Parameters: "/install /quiet"; \
+    StatusMsg: "Installing Visual C++ 2019 Redistributable";
+Filename: "{app}\{#MyAppExeName}"; Parameters: "start"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
 
 [UninstallRun]
 Filename: "{cmd}"; Parameters: "/C ""taskkill /im espanso.exe /f /t"

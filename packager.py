@@ -6,6 +6,7 @@ import hashlib
 import click
 import shutil
 import toml
+import urllib.request
 from dataclasses import dataclass
 
 PACKAGER_TARGET_DIR = "target/packager"
@@ -74,6 +75,10 @@ def build_windows(package_info):
 
     TARGET_DIR = os.path.join(PACKAGER_TARGET_DIR, "win")
     os.makedirs(TARGET_DIR, exist_ok=True)
+
+    print("Downloading Visual C++ redistributable")
+    vc_redist_file = os.path.join(TARGET_DIR, "vc_redist.x64.exe")
+    urllib.request.urlretrieve("https://aka.ms/vs/16/release/vc_redist.x64.exe", vc_redist_file)
 
     INSTALLER_NAME = f"espanso-win-installer"
 
