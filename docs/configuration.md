@@ -2,7 +2,7 @@
 title: Configuration
 layout: docs
 ---
-Following a Unix-like philisophy, **espanso uses files to manage it's configuration**
+Following a Unix-like philosophy, **espanso uses files to manage it's configuration**
 instead of GUIs. This has many advantages, such as the capability to easily sync your
 configurations between machines using [Git](https://git-scm.com/) or cloud services
 such as [Dropbox](https://www.dropbox.com/) or [Google Drive](https://www.google.com/drive/).
@@ -33,7 +33,7 @@ by the user. For more information, check out the [Packages](/docs/packages) sect
 
 ### Application-Specific Configurations
 
-Sometimes you may need to make espanso behave **differently** in some applications. For example, you may want to have
+Sometimes you may need to make espanso behave **differently** with some applications. For example, you may want to have
 a different set of Matches for an application, or you may need to change the `backend` option for compatibility
 purposes.
 
@@ -64,7 +64,7 @@ in the title, use this configuration instead of the `default.yml` one"
 
 #### Available Filters
 
-espanso supports varius filters, but their support depends on the Operating System used. You can refer to this table:
+espanso supports various filters, but their support depends on the Operating System used. You can refer to this table:
 
 Filter | Description | Windows Support | MacOS Support | Linux Support
 --- | --- | --- | --- | ---
@@ -102,7 +102,7 @@ Here's a list of all options available for the configuration file:
 Option | Description | Possible Values | Default | App-Specific 
 --- | --- | --- | --- | ---
 `backend` | The typing engine used. `Inject` simulate keypresses, `Clipboard` simulates a copy/paste | `Clipboard` or `Inject` | `Inject` | Yes
-`backspace_limit` | How many backspace espanso tracks to correct mispelled keywords | int | `3` | No
+`backspace_limit` | How many backspace espanso tracks to correct misspelled keywords | int | `3` | No
 `disabled` | Set the current configuration as disabled | `True`/`False` | `False` | Yes
 `parent` | The target for the current configuration file, mainly used in packages | string | `self` | Yes
 `ipc_server_port` | Windows only. Set the daemon listening port | int | `34982` | No
