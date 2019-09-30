@@ -7,6 +7,7 @@ class Espanso < Formula
   url "https://github.com/federico-terzi/espanso/releases/latest/download/espanso-mac.tar.gz"
   sha256 "{{{release_hash}}}"
   version "{{{app_version}}}"
+  depends_on "openssl@1.1"
 
   def install
     bin.install "espanso"
