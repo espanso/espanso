@@ -5,5 +5,6 @@ steps:
       tar czf "espanso-linux.tar.gz" espanso
       cd ../..
       cp target/release/espanso-*.gz .
+      sha256sum espanso-*.gz | awk '{ print $1 }' > espanso-linux-sha256.txt
       ls -la
     displayName: "Cargo build and packaging for Linux"
