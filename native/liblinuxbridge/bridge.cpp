@@ -291,83 +291,96 @@ char *xwm_get_win_title(Display *disp, Window win)
 }
 
 int32_t get_active_window_name(char * buffer, int32_t size) {
-    Display *disp = XOpenDisplay(NULL);
+    xdo_t * x = xdo_new(NULL);
 
-    if (!disp) {
+    if (!x) {
         return -1;
     }
 
     // Get the active window
     Window win;
-    int revert_to_return;
-    XGetInputFocus(disp, &win, &revert_to_return);
+    int ret = xdo_get_active_window(x, &win);
+    int result = 1;
+    if (ret) {
+        fprintf(stderr, "xdo_get_active_window reported an error\n");
+        result = -2;
+    }else{
+        char * title = xwm_get_win_title(x->xdpy, win);
 
-    char * title = xwm_get_win_title(disp, win);
+        snprintf(buffer, size, "%s", title);
 
-    snprintf(buffer, size, "%s", title);
+        XFree(title);
+    }
 
-    XFree(title);
+    xdo_free(x);
 
-    XCloseDisplay(disp);
-
-    return 1;
+    return result;
 }
 
 int32_t get_active_window_class(char * buffer, int32_t size) {
-    Display *disp = XOpenDisplay(NULL);
+    xdo_t * x = xdo_new(NULL);
 
-    if (!disp) {
+    if (!x) {
         return -1;
     }
 
     // Get the active window
     Window win;
-    int revert_to_return;
-    XGetInputFocus(disp, &win, &revert_to_return);
+    int ret = xdo_get_active_window(x, &win);
+    int result = 1;
+    if (ret) {
+        fprintf(stderr, "xdo_get_active_window reported an error\n");
+        result = -2;
+    }else{
+        XClassHint hint;
 
-    XClassHint hint;
-
-    if (XGetClassHint(disp, win, &hint)) {
-        snprintf(buffer, size, "%s", hint.res_class);
-        XFree(hint.res_name);
-        XFree(hint.res_class);
+        if (XGetClassHint(x->xdpy, win, &hint)) {
+            snprintf(buffer, size, "%s", hint.res_class);
+            XFree(hint.res_name);
+            XFree(hint.res_class);
+        }
     }
 
-    XCloseDisplay(disp);
+    xdo_free(x);
 
-    return 1;
+    return result;
 }
 
 int32_t get_active_window_executable(char *buffer, int32_t size) {
-    Display *disp = XOpenDisplay(NULL);
+    xdo_t * x = xdo_new(NULL);
 
-    if (!disp) {
+    if (!x) {
         return -1;
     }
 
     // Get the active window
     Window win;
-    int revert_to_return;
-    XGetInputFocus(disp, &win, &revert_to_return);
+    int ret = xdo_get_active_window(x, &win);
+    int result = 1;
+    if (ret) {
+        fprintf(stderr, "xdo_get_active_window reported an error\n");
+        result = -2;
+    }else{
+        // Get the window process PID
+        char *pid_raw = (char*)get_property(x->xdpy,win, XA_CARDINAL, "_NET_WM_PID", NULL);
+        if (pid_raw == NULL) {
+            result = -3;
+        }else{
+            int pid = pid_raw[0] | pid_raw[1] << 8 | pid_raw[2] << 16 | pid_raw[3] << 24;
 
-    // Get the window process PID
-    char *pid_raw = (char*)get_property(disp,win, XA_CARDINAL, "_NET_WM_PID", NULL);
-    if (pid_raw == NULL) {
-        return -2;
+            // Get the executable path from it
+            char proc_path[250];
+            snprintf(proc_path, 250, "/proc/%d/exe", pid);
+
+            readlink(proc_path, buffer, size);
+
+            XFree(pid_raw);
+        }
     }
 
-    int pid = pid_raw[0] | pid_raw[1] << 8 | pid_raw[2] << 16 | pid_raw[3] << 24;
+    xdo_free(x);
 
-    // Get the executable path from it
-    char proc_path[250];
-    snprintf(proc_path, 250, "/proc/%d/exe", pid);
-
-    readlink(proc_path, buffer, size);
-
-    XFree(pid_raw);
-    XCloseDisplay(disp);
-
-    return 1;
+    return result;
 }
 
 int32_t is_current_window_terminal() {
