@@ -52,6 +52,18 @@
     th {
         background-color: $lightGrayColor;
     }
+
+    blockquote {
+        border: 1px solid;
+        border-color: $lightGrayColor;
+        border-radius: 5px;
+        padding: 8px;
+        color: $grayColor;
+        
+        p {
+            margin: 0;
+        }
+    }
       
 }
 

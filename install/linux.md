@@ -9,6 +9,10 @@ have many problems making it work on others.
 * [Ubuntu/Debian](#installing-on-ubuntu--debian)
 * [Manjaro/Arch](#installing-on-manjaro--arch)
 
+#### Wayland support
+
+Currently espanso supports X11 systems only.
+
 ### Installing on Ubuntu / Debian
 
 Espanso depends upon the `X11 Record Extension`, the `xdo library` and the `xclip` command, 
@@ -24,11 +28,15 @@ You can now download the latest espanso release:
 curl -L https://github.com/federico-terzi/espanso/releases/latest/download/espanso-linux.tar.gz | tar -xz -C /tmp/
 ```
 
+> If you want to verify the correctness of the archive, in the [Github Releases](https://github.com/federico-terzi/espanso/releases/) page you will find the **SHA256** hash in the file `espanso-linux-sha256.txt`.
+
 And then move it to the `/usr/local/bin/` directory
 
 ```
 sudo mv /tmp/espanso /usr/local/bin/espanso
 ```
+
+> If you want to avoid using `sudo`, you can move espanso in the `~/.local/bin` directory instead. Make sure that the `~/.local/bin` directory is in the `PATH`. If not present, you may need to reboot the system.
 
 You should now have espanso installed in your system. To start it, type the following command:
 
@@ -55,11 +63,15 @@ You can now download the latest espanso release:
 curl -L https://github.com/federico-terzi/espanso/releases/latest/download/espanso-linux.tar.gz | tar -xz -C /tmp/
 ```
 
+> If you want to verify the correctness of the archive, in the [Github Releases](https://github.com/federico-terzi/espanso/releases/) page you will find the **SHA256** hash in the file `espanso-linux-sha256.txt`.
+
 And then move it to the `/usr/local/bin/` directory
 
 ```
 sudo mv /tmp/espanso /usr/local/bin/espanso
 ```
+
+> If you want to avoid using `sudo`, you can move espanso in the `~/.local/bin` directory instead. Make sure that the `~/.local/bin` directory is in the `PATH`. If not present, you may need to reboot the system.
 
 You should now have espanso installed in your system. To start it, type the following command:
 

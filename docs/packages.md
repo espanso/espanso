@@ -45,7 +45,7 @@ espanso package list
 To remove a package, open a terminal and type:
 
 ```
-espanso package remove <package-name>
+espanso uninstall <package-name>
 ```
 
 Where `<package-name>` is the name of the package. You can obtain that name [listing installed packages](#listing-installed-packages).

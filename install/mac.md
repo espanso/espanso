@@ -51,7 +51,7 @@ then check "espanso" (2), as shown in the picture:
 Now open the terminal again and type:
 
 ```
-espanso register
+espanso start
 ```
 
 If everything goes well, you should see the espanso icon appear in the status bar:
