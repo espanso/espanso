@@ -72,6 +72,11 @@ fn main() {
         .arg(Arg::with_name("package_name")
             .help("Package name"));
 
+    let uninstall_subcommand = SubCommand::with_name("uninstall")
+        .about("Remove an installed package. Equivalent to 'espanso package uninstall'")
+        .arg(Arg::with_name("package_name")
+            .help("Package name"));
+
     let mut clap_instance = App::new("espanso")
         .version(VERSION)
         .author("Federico Terzi")
@@ -122,19 +127,18 @@ fn main() {
         .subcommand(SubCommand::with_name("package")
             .about("Espanso package manager commands")
             .subcommand(install_subcommand.clone())
+            .subcommand(uninstall_subcommand.clone())
             .subcommand(SubCommand::with_name("list")
                 .about("List all installed packages")
                 .arg(Arg::with_name("full")
                     .help("Print all package info")
                     .long("full")))
-            .subcommand(SubCommand::with_name("remove")
-                .about("Remove an installed package")
-                .arg(Arg::with_name("package_name")
-                    .help("Package name")))
+
             .subcommand(SubCommand::with_name("refresh")
                 .about("Update espanso package index"))
         )
-        .subcommand(install_subcommand);
+        .subcommand(install_subcommand)
+        .subcommand(uninstall_subcommand);
 
     let matches = clap_instance.clone().get_matches();
 
@@ -223,12 +227,17 @@ fn main() {
         return;
     }
 
+    if let Some(matches) = matches.subcommand_matches("uninstall") {
+        remove_package_main(config_set, matches);
+        return;
+    }
+
     if let Some(matches) = matches.subcommand_matches("package") {
         if let Some(matches) = matches.subcommand_matches("install") {
             install_main(config_set, matches);
             return;
         }
-        if let Some(matches) = matches.subcommand_matches("remove") {
+        if let Some(matches) = matches.subcommand_matches("uninstall") {
             remove_package_main(config_set, matches);
             return;
         }
