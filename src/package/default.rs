@@ -54,7 +54,7 @@ impl DefaultPackageManager {
 
     pub fn new_default() -> DefaultPackageManager {
         DefaultPackageManager::new(
-            crate::config::ConfigSet::get_default_packages_dir(),
+            crate::context::get_package_dir(),
             crate::context::get_data_dir()
         )
     }

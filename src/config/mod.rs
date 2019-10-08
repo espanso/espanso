@@ -38,7 +38,6 @@ const DEFAULT_CONFIG_FILE_CONTENT : &str = include_str!("../res/config.yml");
 
 const DEFAULT_CONFIG_FILE_NAME : &str = "default.yml";
 const USER_CONFIGS_FOLDER_NAME: &str = "user";
-const PACKAGES_FOLDER_NAME : &str = "packages";
 
 // Default values for primitives
 fn default_name() -> String{ "default".to_owned() }
@@ -212,26 +211,25 @@ pub struct ConfigSet {
 }
 
 impl ConfigSet {
-    pub fn load(dir_path: &Path) -> Result<ConfigSet, ConfigLoadError> {
-        if !dir_path.is_dir() {
+    pub fn load(config_dir: &Path, package_dir: &Path) -> Result<ConfigSet, ConfigLoadError> {
+        if !config_dir.is_dir() {
             return Err(ConfigLoadError::InvalidConfigDirectory)
         }
 
         // Load default configuration
-        let default_file = dir_path.join(DEFAULT_CONFIG_FILE_NAME);
+        let default_file = config_dir.join(DEFAULT_CONFIG_FILE_NAME);
         let default = Configs::load_config(default_file.as_path())?;
 
         // Analyze which config files has to be loaded
 
         let mut target_files = Vec::new();
 
-        let specific_dir = dir_path.join(USER_CONFIGS_FOLDER_NAME);
+        let specific_dir = config_dir.join(USER_CONFIGS_FOLDER_NAME);
         if specific_dir.exists() {
             let dir_entry = WalkDir::new(specific_dir);
             target_files.extend(dir_entry);
         }
 
-        let package_dir = dir_path.join(PACKAGES_FOLDER_NAME);
         if package_dir.exists() {
             let dir_entry = WalkDir::new(package_dir);
             target_files.extend(dir_entry);
@@ -320,54 +318,40 @@ impl ConfigSet {
     }
 
     pub fn load_default() -> Result<ConfigSet, ConfigLoadError> {
-        let config_dir = ConfigSet::get_default_config_dir();
+        // Configuration related
 
-        // Create the espanso dir if it doesn't exist
-        let res = create_dir_all(config_dir.as_path());
+        let config_dir = crate::context::get_config_dir();
 
-        if res.is_ok() {
-            let default_file = config_dir.join(DEFAULT_CONFIG_FILE_NAME);
+        let default_file = config_dir.join(DEFAULT_CONFIG_FILE_NAME);
 
-            // If config file does not exist, create one from template
-            if !default_file.exists() {
-                let result = fs::write(&default_file, DEFAULT_CONFIG_FILE_CONTENT);
-                if result.is_err() {
-                    return Err(ConfigLoadError::UnableToCreateDefaultConfig)
-                }
+        // If config file does not exist, create one from template
+        if !default_file.exists() {
+            let result = fs::write(&default_file, DEFAULT_CONFIG_FILE_CONTENT);
+            if result.is_err() {
+                return Err(ConfigLoadError::UnableToCreateDefaultConfig)
             }
-
-            // Create auxiliary directories
-
-            let user_config_dir = config_dir.join(USER_CONFIGS_FOLDER_NAME);
-            if !user_config_dir.exists() {
-                let res = create_dir_all(user_config_dir.as_path());
-                if res.is_err() {
-                    return Err(ConfigLoadError::UnableToCreateDefaultConfig)
-                }
-            }
-
-            let packages_dir = ConfigSet::get_default_packages_dir().join(PACKAGES_FOLDER_NAME);
-            if !packages_dir.exists() {
-                let res = create_dir_all(packages_dir.as_path());
-                if res.is_err() {
-                    return Err(ConfigLoadError::UnableToCreateDefaultConfig)
-                }
-            }
-
-            return ConfigSet::load(config_dir.as_path())
         }
 
-        Err(ConfigLoadError::UnableToCreateDefaultConfig)
-    }
+        // Create auxiliary directories
 
-    pub fn get_default_config_dir() -> PathBuf {
-        let config_dir = dirs::config_dir().expect("Unable to get config directory");
-        config_dir.join("espanso")
-    }
+        let user_config_dir = config_dir.join(USER_CONFIGS_FOLDER_NAME);
+        if !user_config_dir.exists() {
+            let res = create_dir_all(user_config_dir.as_path());
+            if res.is_err() {
+                return Err(ConfigLoadError::UnableToCreateDefaultConfig)
+            }
+        }
 
-    pub fn get_default_packages_dir() -> PathBuf {
-        let data_dir = ConfigSet::get_default_config_dir();
-        data_dir.join(PACKAGES_FOLDER_NAME)
+
+        // Packages
+
+        let package_dir = crate::context::get_package_dir();
+        let res = create_dir_all(package_dir.as_path());
+        if res.is_err() {
+            return Err(ConfigLoadError::UnableToCreateDefaultConfig)  // TODO: change error type
+        }
+
+        return ConfigSet::load(config_dir.as_path(), package_dir.as_path());
     }
 }
 
@@ -547,94 +531,18 @@ mod tests {
 
     // Test ConfigSet
 
-    #[test]
-    fn test_config_set_default_content_should_work_correctly() {
-        let tmp_dir = TempDir::new().expect("unable to create temp directory");
-        let default_path = tmp_dir.path().join(DEFAULT_CONFIG_FILE_NAME);
-        fs::write(default_path, DEFAULT_CONFIG_FILE_CONTENT);
-
-        let config_set = ConfigSet::load(tmp_dir.path());
-        assert!(config_set.is_ok());
+    pub fn create_temp_espanso_directories() -> (TempDir, TempDir) {
+        create_temp_espanso_directories_with_default_content(DEFAULT_CONFIG_FILE_CONTENT)
     }
 
-    #[test]
-    fn test_config_set_load_fail_bad_directory() {
-        let config_set = ConfigSet::load(Path::new("invalid/path"));
-        assert_eq!(config_set.is_err(), true);
-        assert_eq!(config_set.unwrap_err(), ConfigLoadError::InvalidConfigDirectory);
-    }
+    pub fn create_temp_espanso_directories_with_default_content(default_content: &str) -> (TempDir, TempDir) {
+        let data_dir = TempDir::new().expect("unable to create data directory");
+        let package_dir = TempDir::new().expect("unable to create package directory");
 
-    #[test]
-    fn test_config_set_missing_default_file() {
-        let tmp_dir = TempDir::new().expect("unable to create temp directory");
-
-        let config_set = ConfigSet::load(tmp_dir.path());
-        assert_eq!(config_set.is_err(), true);
-        assert_eq!(config_set.unwrap_err(), ConfigLoadError::FileNotFound);
-    }
-
-    #[test]
-    fn test_config_set_invalid_yaml_syntax() {
-        let tmp_dir = TempDir::new().expect("unable to create temp directory");
-        let default_path = tmp_dir.path().join(DEFAULT_CONFIG_FILE_NAME);
-        let default_path_copy = default_path.clone();
-        fs::write(default_path, TEST_CONFIG_FILE_WITH_BAD_YAML);
-
-        let config_set = ConfigSet::load(tmp_dir.path());
-        match config_set {
-            Ok(_) => {assert!(false)},
-            Err(e) => {
-                match e {
-                    ConfigLoadError::InvalidYAML(p, _) => assert_eq!(p, default_path_copy),
-                    _ => assert!(false),
-                }
-                assert!(true);
-            },
-        }
-    }
-
-    #[test]
-    fn test_config_set_specific_file_with_reserved_fields() {
-        let tmp_dir = TempDir::new().expect("unable to create temp directory");
-        let default_path = tmp_dir.path().join(DEFAULT_CONFIG_FILE_NAME);
-        fs::write(default_path, DEFAULT_CONFIG_FILE_CONTENT);
-
-        let user_defined_path = create_user_config_file(tmp_dir.path(), "specific.yml", r###"
-        config_caching_interval: 10000
-        "###);
-        let user_defined_path_copy = user_defined_path.clone();
-
-        let config_set = ConfigSet::load(tmp_dir.path());
-        assert!(config_set.is_err());
-        assert_eq!(config_set.unwrap_err(), ConfigLoadError::InvalidParameter(user_defined_path_copy))
-    }
-
-    #[test]
-    fn test_config_set_specific_file_missing_name_auto_generated() {
-        let tmp_dir = TempDir::new().expect("unable to create temp directory");
-        let default_path = tmp_dir.path().join(DEFAULT_CONFIG_FILE_NAME);
-        fs::write(default_path, DEFAULT_CONFIG_FILE_CONTENT);
-
-        let user_defined_path = create_user_config_file(tmp_dir.path(), "specific.yml", r###"
-        backend: Clipboard
-        "###);
-        let user_defined_path_copy = user_defined_path.clone();
-
-        let config_set = ConfigSet::load(tmp_dir.path());
-        assert!(config_set.is_ok());
-        assert_eq!(config_set.unwrap().specific[0].name, user_defined_path_copy.to_str().unwrap_or_default())
-    }
-
-    pub fn create_temp_espanso_directory() -> TempDir {
-        create_temp_espanso_directory_with_default_content(DEFAULT_CONFIG_FILE_CONTENT)
-    }
-
-    pub fn create_temp_espanso_directory_with_default_content(default_content: &str) -> TempDir {
-        let tmp_dir = TempDir::new().expect("unable to create temp directory");
-        let default_path = tmp_dir.path().join(DEFAULT_CONFIG_FILE_NAME);
+        let default_path = data_dir.path().join(DEFAULT_CONFIG_FILE_NAME);
         fs::write(default_path, default_content);
 
-        tmp_dir
+        (data_dir, package_dir)
     }
 
     pub fn create_temp_file_in_dir(tmp_dir: &PathBuf, name: &str, content: &str) -> PathBuf {
@@ -654,9 +562,8 @@ mod tests {
         create_temp_file_in_dir(&user_config_dir, name, content)
     }
 
-    pub fn create_package_file(tmp_dir: &Path, package_name: &str, filename: &str, content: &str) -> PathBuf {
-        let package_config_dir = tmp_dir.join(PACKAGES_FOLDER_NAME);
-        let package_dir = package_config_dir.join(package_name);
+    pub fn create_package_file(package_data_dir: &Path, package_name: &str, filename: &str, content: &str) -> PathBuf {
+        let package_dir = package_data_dir.join(package_name);
         if !package_dir.exists() {
             create_dir_all(&package_dir);
         }
@@ -665,27 +572,98 @@ mod tests {
     }
 
     #[test]
+    fn test_config_set_default_content_should_work_correctly() {
+        let (data_dir, package_dir) = create_temp_espanso_directories();
+
+        let config_set = ConfigSet::load(data_dir.path(), package_dir.path());
+        assert!(config_set.is_ok());
+    }
+
+    #[test]
+    fn test_config_set_load_fail_bad_directory() {
+        let config_set = ConfigSet::load(Path::new("invalid/path"), Path::new("invalid/path"));
+        assert_eq!(config_set.is_err(), true);
+        assert_eq!(config_set.unwrap_err(), ConfigLoadError::InvalidConfigDirectory);
+    }
+
+    #[test]
+    fn test_config_set_missing_default_file() {
+        let data_dir = TempDir::new().expect("unable to create temp directory");
+        let package_dir = TempDir::new().expect("unable to create package directory");
+
+        let config_set = ConfigSet::load(data_dir.path(), package_dir.path());
+        assert_eq!(config_set.is_err(), true);
+        assert_eq!(config_set.unwrap_err(), ConfigLoadError::FileNotFound);
+    }
+
+    #[test]
+    fn test_config_set_invalid_yaml_syntax() {
+        let (data_dir, package_dir) = create_temp_espanso_directories_with_default_content(
+            TEST_CONFIG_FILE_WITH_BAD_YAML
+        );
+        let default_path = data_dir.path().join(DEFAULT_CONFIG_FILE_NAME);
+
+        let config_set = ConfigSet::load(data_dir.path(), package_dir.path());
+        match config_set {
+            Ok(_) => {assert!(false)},
+            Err(e) => {
+                match e {
+                    ConfigLoadError::InvalidYAML(p, _) => assert_eq!(p, default_path),
+                    _ => assert!(false),
+                }
+                assert!(true);
+            },
+        }
+    }
+
+    #[test]
+    fn test_config_set_specific_file_with_reserved_fields() {
+        let (data_dir, package_dir) = create_temp_espanso_directories();
+
+        let user_defined_path = create_user_config_file(data_dir.path(), "specific.yml", r###"
+        config_caching_interval: 10000
+        "###);
+        let user_defined_path_copy = user_defined_path.clone();
+
+        let config_set = ConfigSet::load(data_dir.path(), package_dir.path());
+        assert!(config_set.is_err());
+        assert_eq!(config_set.unwrap_err(), ConfigLoadError::InvalidParameter(user_defined_path_copy))
+    }
+
+    #[test]
+    fn test_config_set_specific_file_missing_name_auto_generated() {
+        let (data_dir, package_dir) = create_temp_espanso_directories();
+
+        let user_defined_path = create_user_config_file(data_dir.path(), "specific.yml", r###"
+        backend: Clipboard
+        "###);
+        let user_defined_path_copy = user_defined_path.clone();
+
+        let config_set = ConfigSet::load(data_dir.path(), package_dir.path());
+        assert!(config_set.is_ok());
+        assert_eq!(config_set.unwrap().specific[0].name, user_defined_path_copy.to_str().unwrap_or_default())
+    }
+
+    #[test]
     fn test_config_set_specific_file_duplicate_name() {
-        let tmp_dir = create_temp_espanso_directory();
+        let (data_dir, package_dir) = create_temp_espanso_directories();
 
-        let user_defined_path = create_user_config_file(tmp_dir.path(), "specific.yml", r###"
+        let user_defined_path = create_user_config_file(data_dir.path(), "specific.yml", r###"
         name: specific1
         "###);
 
-        let user_defined_path2 = create_user_config_file(tmp_dir.path(), "specific2.yml", r###"
+        let user_defined_path2 = create_user_config_file(data_dir.path(), "specific2.yml", r###"
         name: specific1
         "###);
 
-        let config_set = ConfigSet::load(tmp_dir.path());
+        let config_set = ConfigSet::load(data_dir.path(), package_dir.path());
         assert!(config_set.is_err());
         assert!(variant_eq(&config_set.unwrap_err(), &ConfigLoadError::NameDuplicate(PathBuf::new())))
     }
 
     #[test]
     fn test_user_defined_config_set_merge_with_parent_matches() {
-        let tmp_dir = TempDir::new().expect("unable to create temp directory");
-        let default_path = tmp_dir.path().join(DEFAULT_CONFIG_FILE_NAME);
-        fs::write(default_path, r###"
+        let (data_dir, package_dir) = create_temp_espanso_directories_with_default_content(r###"
         matches:
             - trigger: ":lol"
               replace: "LOL"
@@ -693,7 +671,7 @@ mod tests {
               replace: "Bob"
         "###);
 
-        let user_defined_path = create_user_config_file(tmp_dir.path(), "specific1.yml", r###"
+        let user_defined_path = create_user_config_file(data_dir.path(), "specific1.yml", r###"
         name: specific1
 
         matches:
@@ -701,7 +679,7 @@ mod tests {
               replace: "newstring"
         "###);
 
-        let config_set = ConfigSet::load(tmp_dir.path()).unwrap();
+        let config_set = ConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
         assert_eq!(config_set.default.matches.len(), 2);
         assert_eq!(config_set.specific[0].matches.len(), 3);
 
@@ -712,9 +690,7 @@ mod tests {
 
     #[test]
     fn test_user_defined_config_set_merge_with_parent_matches_child_priority() {
-        let tmp_dir = TempDir::new().expect("unable to create temp directory");
-        let default_path = tmp_dir.path().join(DEFAULT_CONFIG_FILE_NAME);
-        fs::write(default_path, r###"
+        let (data_dir, package_dir) = create_temp_espanso_directories_with_default_content(r###"
         matches:
             - trigger: ":lol"
               replace: "LOL"
@@ -722,7 +698,7 @@ mod tests {
               replace: "Bob"
         "###);
 
-        let user_defined_path2 = create_user_config_file(tmp_dir.path(), "specific2.yml", r###"
+        let user_defined_path2 = create_user_config_file(data_dir.path(), "specific2.yml", r###"
         name: specific1
 
         matches:
@@ -730,7 +706,7 @@ mod tests {
               replace: "newstring"
         "###);
 
-        let config_set = ConfigSet::load(tmp_dir.path()).unwrap();
+        let config_set = ConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
         assert_eq!(config_set.default.matches.len(), 2);
         assert_eq!(config_set.specific[0].matches.len(), 2);
 
@@ -740,9 +716,7 @@ mod tests {
 
     #[test]
     fn test_user_defined_config_set_exclude_merge_with_parent_matches() {
-        let tmp_dir = TempDir::new().expect("unable to create temp directory");
-        let default_path = tmp_dir.path().join(DEFAULT_CONFIG_FILE_NAME);
-        fs::write(default_path, r###"
+        let (data_dir, package_dir) = create_temp_espanso_directories_with_default_content(r###"
         matches:
             - trigger: ":lol"
               replace: "LOL"
@@ -750,7 +724,7 @@ mod tests {
               replace: "Bob"
         "###);
 
-        let user_defined_path2 = create_user_config_file(tmp_dir.path(), "specific2.yml", r###"
+        let user_defined_path2 = create_user_config_file(data_dir.path(), "specific2.yml", r###"
         name: specific1
 
         exclude_default_matches: true
@@ -760,7 +734,7 @@ mod tests {
               replace: "newstring"
         "###);
 
-        let config_set = ConfigSet::load(tmp_dir.path()).unwrap();
+        let config_set = ConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
         assert_eq!(config_set.default.matches.len(), 2);
         assert_eq!(config_set.specific[0].matches.len(), 1);
 
@@ -769,17 +743,17 @@ mod tests {
 
     #[test]
     fn test_only_yaml_files_are_loaded_from_config() {
-        let tmp_dir = TempDir::new().expect("unable to create temp directory");
-        let default_path = tmp_dir.path().join(DEFAULT_CONFIG_FILE_NAME);
-        fs::write(default_path, r###"
-        matches:
-            - trigger: ":lol"
-              replace: "LOL"
-            - trigger: ":yess"
-              replace: "Bob"
-        "###);
+        let (data_dir, package_dir) = create_temp_espanso_directories_with_default_content(
+            r###"
+            matches:
+                - trigger: ":lol"
+                  replace: "LOL"
+                - trigger: ":yess"
+                  replace: "Bob"
+            "###
+        );
 
-        let user_defined_path2 = create_user_config_file(tmp_dir.path(), "specific.zzz", r###"
+        let user_defined_path2 = create_user_config_file(data_dir.path(), "specific.zzz", r###"
         name: specific1
 
         exclude_default_matches: true
@@ -789,35 +763,35 @@ mod tests {
               replace: "newstring"
         "###);
 
-        let config_set = ConfigSet::load(tmp_dir.path()).unwrap();
+        let config_set = ConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
         assert_eq!(config_set.specific.len(), 0);
     }
 
     #[test]
     fn test_config_set_no_parent_configs_works_correctly() {
-        let tmp_dir = create_temp_espanso_directory();
+        let (data_dir, package_dir) = create_temp_espanso_directories();
 
-        let user_defined_path = create_user_config_file(tmp_dir.path(), "specific.yml", r###"
+        let user_defined_path = create_user_config_file(data_dir.path(), "specific.yml", r###"
         name: specific1
         "###);
 
-        let user_defined_path2 = create_user_config_file(tmp_dir.path(), "specific2.yml", r###"
+        let user_defined_path2 = create_user_config_file(data_dir.path(), "specific2.yml", r###"
         name: specific2
         "###);
 
-        let config_set = ConfigSet::load(tmp_dir.path()).unwrap();
+        let config_set = ConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
         assert_eq!(config_set.specific.len(), 2);
     }
 
     #[test]
     fn test_config_set_default_parent_works_correctly() {
-        let tmp_dir = create_temp_espanso_directory_with_default_content(r###"
+        let (data_dir, package_dir) = create_temp_espanso_directories_with_default_content(r###"
         matches:
             - trigger: hasta
               replace: Hasta la vista
         "###);
 
-        let user_defined_path = create_user_config_file(tmp_dir.path(), "specific.yml", r###"
+        let user_defined_path = create_user_config_file(data_dir.path(), "specific.yml", r###"
         parent: default
 
         matches:
@@ -825,7 +799,7 @@ mod tests {
               replace: "world"
         "###);
 
-        let config_set = ConfigSet::load(tmp_dir.path()).unwrap();
+        let config_set = ConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
         assert_eq!(config_set.specific.len(), 0);
         assert_eq!(config_set.default.matches.len(), 2);
         assert!(config_set.default.matches.iter().any(|m| m.trigger == "hasta"));
@@ -834,19 +808,19 @@ mod tests {
 
     #[test]
     fn test_config_set_no_parent_should_not_merge() {
-        let tmp_dir = create_temp_espanso_directory_with_default_content(r###"
+        let (data_dir, package_dir)= create_temp_espanso_directories_with_default_content(r###"
         matches:
             - trigger: hasta
               replace: Hasta la vista
         "###);
 
-        let user_defined_path = create_user_config_file(tmp_dir.path(), "specific.yml", r###"
+        let user_defined_path = create_user_config_file(data_dir.path(), "specific.yml", r###"
         matches:
             - trigger: "hello"
               replace: "world"
         "###);
 
-        let config_set = ConfigSet::load(tmp_dir.path()).unwrap();
+        let config_set = ConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
         assert_eq!(config_set.specific.len(), 1);
         assert_eq!(config_set.default.matches.len(), 1);
         assert!(config_set.default.matches.iter().any(|m| m.trigger == "hasta"));
@@ -856,13 +830,13 @@ mod tests {
 
     #[test]
     fn test_config_set_default_nested_parent_works_correctly() {
-        let tmp_dir = create_temp_espanso_directory_with_default_content(r###"
+        let (data_dir, package_dir) = create_temp_espanso_directories_with_default_content(r###"
         matches:
             - trigger: hasta
               replace: Hasta la vista
         "###);
 
-        let user_defined_path = create_user_config_file(tmp_dir.path(), "specific.yml", r###"
+        let user_defined_path = create_user_config_file(data_dir.path(), "specific.yml", r###"
         name: custom1
         parent: default
 
@@ -871,7 +845,7 @@ mod tests {
               replace: "world"
         "###);
 
-        let user_defined_path2 = create_user_config_file(tmp_dir.path(), "specific2.yml", r###"
+        let user_defined_path2 = create_user_config_file(data_dir.path(), "specific2.yml", r###"
         parent: custom1
 
         matches:
@@ -879,7 +853,7 @@ mod tests {
               replace: "mario"
         "###);
 
-        let config_set = ConfigSet::load(tmp_dir.path()).unwrap();
+        let config_set = ConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
         assert_eq!(config_set.specific.len(), 0);
         assert_eq!(config_set.default.matches.len(), 3);
         assert!(config_set.default.matches.iter().any(|m| m.trigger == "hasta"));
@@ -889,13 +863,13 @@ mod tests {
 
     #[test]
     fn test_config_set_parent_merge_children_priority_should_be_higher() {
-        let tmp_dir = create_temp_espanso_directory_with_default_content(r###"
+        let (data_dir, package_dir) = create_temp_espanso_directories_with_default_content(r###"
         matches:
             - trigger: hasta
               replace: Hasta la vista
         "###);
 
-        let user_defined_path = create_user_config_file(tmp_dir.path(), "specific.yml", r###"
+        let user_defined_path = create_user_config_file(data_dir.path(), "specific.yml", r###"
         parent: default
 
         matches:
@@ -903,7 +877,7 @@ mod tests {
               replace: "world"
         "###);
 
-        let config_set = ConfigSet::load(tmp_dir.path()).unwrap();
+        let config_set = ConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
         assert_eq!(config_set.specific.len(), 0);
         assert_eq!(config_set.default.matches.len(), 1);
         assert!(config_set.default.matches.iter().any(|m| m.trigger == "hasta" && m.replace == "world"));
@@ -911,13 +885,13 @@ mod tests {
 
     #[test]
     fn test_config_set_package_configs_default_merge() {
-        let tmp_dir = create_temp_espanso_directory_with_default_content(r###"
+        let (data_dir, package_dir) = create_temp_espanso_directories_with_default_content(r###"
         matches:
             - trigger: hasta
               replace: Hasta la vista
         "###);
 
-        let package_path = create_package_file(tmp_dir.path(), "package1", "package.yml", r###"
+        let package_path = create_package_file(package_dir.path(), "package1", "package.yml", r###"
         parent: default
 
         matches:
@@ -925,7 +899,7 @@ mod tests {
               replace: "potter"
         "###);
 
-        let config_set = ConfigSet::load(tmp_dir.path()).unwrap();
+        let config_set = ConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
         assert_eq!(config_set.specific.len(), 0);
         assert_eq!(config_set.default.matches.len(), 2);
         assert!(config_set.default.matches.iter().any(|m| m.trigger == "hasta"));
@@ -934,19 +908,19 @@ mod tests {
 
     #[test]
     fn test_config_set_package_configs_without_merge() {
-        let tmp_dir = create_temp_espanso_directory_with_default_content(r###"
+        let (data_dir, package_dir) = create_temp_espanso_directories_with_default_content(r###"
         matches:
             - trigger: hasta
               replace: Hasta la vista
         "###);
 
-        let package_path = create_package_file(tmp_dir.path(), "package1", "package.yml", r###"
+        let package_path = create_package_file(package_dir.path(), "package1", "package.yml", r###"
         matches:
             - trigger: "harry"
               replace: "potter"
         "###);
 
-        let config_set = ConfigSet::load(tmp_dir.path()).unwrap();
+        let config_set = ConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
         assert_eq!(config_set.specific.len(), 1);
         assert_eq!(config_set.default.matches.len(), 1);
         assert!(config_set.default.matches.iter().any(|m| m.trigger == "hasta"));
@@ -955,13 +929,13 @@ mod tests {
 
     #[test]
     fn test_config_set_package_configs_multiple_files() {
-        let tmp_dir = create_temp_espanso_directory_with_default_content(r###"
+        let (data_dir, package_dir) = create_temp_espanso_directories_with_default_content(r###"
         matches:
             - trigger: hasta
               replace: Hasta la vista
         "###);
 
-        let package_path = create_package_file(tmp_dir.path(), "package1", "package.yml", r###"
+        let package_path = create_package_file(package_dir.path(), "package1", "package.yml", r###"
         name: package1
 
         matches:
@@ -969,7 +943,7 @@ mod tests {
               replace: "potter"
         "###);
 
-        let package_path2 = create_package_file(tmp_dir.path(), "package1", "addon.yml", r###"
+        let package_path2 = create_package_file(package_dir.path(), "package1", "addon.yml", r###"
         parent: package1
 
         matches:
@@ -977,7 +951,7 @@ mod tests {
               replace: "weasley"
         "###);
 
-        let config_set = ConfigSet::load(tmp_dir.path()).unwrap();
+        let config_set = ConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
         assert_eq!(config_set.specific.len(), 1);
         assert_eq!(config_set.default.matches.len(), 1);
         assert!(config_set.default.matches.iter().any(|m| m.trigger == "hasta"));
