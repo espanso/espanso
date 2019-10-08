@@ -366,7 +366,7 @@ impl ConfigSet {
     }
 
     pub fn get_default_packages_dir() -> PathBuf {
-        let data_dir = dirs::data_local_dir().expect("Unable to get package directory");
+        let data_dir = ConfigSet::get_default_config_dir();
         data_dir.join(PACKAGES_FOLDER_NAME)
     }
 }
