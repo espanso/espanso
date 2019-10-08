@@ -361,13 +361,13 @@ impl ConfigSet {
     }
 
     pub fn get_default_config_dir() -> PathBuf {
-        let home_dir = dirs::home_dir().expect("Unable to get home directory");
-        home_dir.join(".espanso")
+        let config_dir = dirs::config_dir().expect("Unable to get config directory");
+        config_dir.join("espanso")
     }
 
     pub fn get_default_packages_dir() -> PathBuf {
-        let espanso_dir = ConfigSet::get_default_config_dir();
-        espanso_dir.join(PACKAGES_FOLDER_NAME)
+        let data_dir = dirs::data_local_dir().expect("Unable to get data directory");
+        data_dir.join(PACKAGES_FOLDER_NAME)
     }
 }
 
