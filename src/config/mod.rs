@@ -320,13 +320,13 @@ impl ConfigSet {
     }
 
     pub fn load_default() -> Result<ConfigSet, ConfigLoadError> {
-        let espanso_dir = ConfigSet::get_default_config_dir();
+        let config_dir = ConfigSet::get_default_config_dir();
 
-        // Create the espanso dir if id doesn't exist
-        let res = create_dir_all(espanso_dir.as_path());
+        // Create the espanso dir if it doesn't exist
+        let res = create_dir_all(config_dir.as_path());
 
         if res.is_ok() {
-            let default_file = espanso_dir.join(DEFAULT_CONFIG_FILE_NAME);
+            let default_file = config_dir.join(DEFAULT_CONFIG_FILE_NAME);
 
             // If config file does not exist, create one from template
             if !default_file.exists() {
@@ -338,7 +338,7 @@ impl ConfigSet {
 
             // Create auxiliary directories
 
-            let user_config_dir = espanso_dir.join(USER_CONFIGS_FOLDER_NAME);
+            let user_config_dir = config_dir.join(USER_CONFIGS_FOLDER_NAME);
             if !user_config_dir.exists() {
                 let res = create_dir_all(user_config_dir.as_path());
                 if res.is_err() {
@@ -346,7 +346,7 @@ impl ConfigSet {
                 }
             }
 
-            let packages_dir = espanso_dir.join(PACKAGES_FOLDER_NAME);
+            let packages_dir = ConfigSet::get_default_packages_dir().join(PACKAGES_FOLDER_NAME);
             if !packages_dir.exists() {
                 let res = create_dir_all(packages_dir.as_path());
                 if res.is_err() {
@@ -354,20 +354,20 @@ impl ConfigSet {
                 }
             }
 
-            return ConfigSet::load(espanso_dir.as_path())
+            return ConfigSet::load(config_dir.as_path())
         }
 
         Err(ConfigLoadError::UnableToCreateDefaultConfig)
     }
 
     pub fn get_default_config_dir() -> PathBuf {
-        let home_dir = dirs::home_dir().expect("Unable to get home directory");
-        home_dir.join(".espanso")
+        let config_dir = dirs::config_dir().expect("Unable to get config directory");
+        config_dir.join("espanso")
     }
 
     pub fn get_default_packages_dir() -> PathBuf {
-        let espanso_dir = ConfigSet::get_default_config_dir();
-        espanso_dir.join(PACKAGES_FOLDER_NAME)
+        let data_dir = ConfigSet::get_default_config_dir();
+        data_dir.join(PACKAGES_FOLDER_NAME)
     }
 }
 
