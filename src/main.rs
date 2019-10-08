@@ -81,12 +81,6 @@ fn main() {
         .version(VERSION)
         .author("Federico Terzi")
         .about("Cross-platform Text Expander written in Rust")
-        .arg(Arg::with_name("config")
-            .short("c")
-            .long("config")
-            .value_name("FILE")
-            .help("Sets a custom config directory. If not specified, reads the default $HOME/.espanso/default.yml file, creating it if not present.")
-            .takes_value(true))
         .arg(Arg::with_name("v")
             .short("v")
             .multiple(true)
@@ -122,6 +116,8 @@ fn main() {
             .about("Restart the espanso daemon."))
         .subcommand(SubCommand::with_name("status")
             .about("Check if the espanso daemon is running or not."))
+        .subcommand(SubCommand::with_name("path")
+            .about("Prints all the current espanso directory paths, to easily locate configuration and data paths."))
 
         // Package manager
         .subcommand(SubCommand::with_name("package")
@@ -145,20 +141,7 @@ fn main() {
     let log_level = matches.occurrences_of("v") as i32;
 
     // Load the configuration
-    let mut config_set = match matches.value_of("config") {
-        None => {
-            if log_level > 1 {
-                println!("loading configuration from default location...");
-            }
-            ConfigSet::load_default()
-        },
-        Some(path) => {
-            if log_level > 1 {
-                println!("loading configuration from custom location: {}", path);
-            }
-            ConfigSet::load(Path::new(path))
-        },
-    }.unwrap_or_else(|e| {
+    let mut config_set = ConfigSet::load_default().unwrap_or_else(|e| {
         println!("{}", e);
         exit(1);
     });
@@ -229,6 +212,11 @@ fn main() {
 
     if let Some(matches) = matches.subcommand_matches("uninstall") {
         remove_package_main(config_set, matches);
+        return;
+    }
+
+    if matches.subcommand_matches("path").is_some() {
+        path_main(config_set);
         return;
     }
 
@@ -742,6 +730,12 @@ fn list_package_main(_config_set: ConfigSet, matches: &ArgMatches) {
             println!("{} - {}", package.name, package.version);
         }
     }
+}
+
+fn path_main(_config_set: ConfigSet) {
+    println!("Config: {}", crate::context::get_config_dir().to_string_lossy());
+    println!("Packages: {}", crate::context::get_package_dir().to_string_lossy());
+    println!("Data: {}", crate::context::get_config_dir().to_string_lossy());
 }
 
 

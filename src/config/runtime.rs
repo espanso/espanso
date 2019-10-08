@@ -209,7 +209,7 @@ mod tests {
     use std::fs;
     use std::path::PathBuf;
     use crate::config::ConfigManager;
-    use crate::config::tests::{create_temp_espanso_directory, create_temp_file_in_dir, create_user_config_file};
+    use crate::config::tests::{create_temp_espanso_directories, create_temp_file_in_dir, create_user_config_file};
 
     struct DummySystemManager {
         title: RefCell<String>,
@@ -249,25 +249,25 @@ mod tests {
 
     #[test]
     fn test_runtime_constructor_regex_load_correctly() {
-        let tmp_dir = create_temp_espanso_directory();
+        let (data_dir, package_dir) = create_temp_espanso_directories();
 
-        let specific_path = create_user_config_file(&tmp_dir.path(), "specific.yml", r###"
+        let specific_path = create_user_config_file(&data_dir.path(), "specific.yml", r###"
         name: myname1
         filter_exec: "Title"
         "###);
 
-        let specific_path2 = create_user_config_file(&tmp_dir.path(), "specific2.yml", r###"
+        let specific_path2 = create_user_config_file(&data_dir.path(), "specific2.yml", r###"
         name: myname2
         filter_title: "Yeah"
         filter_class: "Car"
         "###);
 
-        let specific_path3 = create_user_config_file(&tmp_dir.path(), "specific3.yml", r###"
+        let specific_path3 = create_user_config_file(&data_dir.path(), "specific3.yml", r###"
         name: myname3
         filter_title: "Nice"
         "###);
 
-        let config_set = ConfigSet::load(tmp_dir.path());
+        let config_set = ConfigSet::load(data_dir.path(), package_dir.path());
         assert!(config_set.is_ok());
 
         let dummy_system_manager = DummySystemManager::new();
@@ -300,25 +300,25 @@ mod tests {
 
     #[test]
     fn test_runtime_constructor_malformed_regexes_are_ignored() {
-        let tmp_dir = create_temp_espanso_directory();
+        let (data_dir, package_dir) = create_temp_espanso_directories();
 
-        let specific_path = create_user_config_file(&tmp_dir.path(), "specific.yml", r###"
+        let specific_path = create_user_config_file(&data_dir.path(), "specific.yml", r###"
         name: myname1
         filter_exec: "[`-_]"
         "###);
 
-        let specific_path2 = create_user_config_file(&tmp_dir.path(), "specific2.yml", r###"
+        let specific_path2 = create_user_config_file(&data_dir.path(), "specific2.yml", r###"
         name: myname2
         filter_title: "[`-_]"
         filter_class: "Car"
         "###);
 
-        let specific_path3 = create_user_config_file(&tmp_dir.path(), "specific3.yml", r###"
+        let specific_path3 = create_user_config_file(&data_dir.path(), "specific3.yml", r###"
         name: myname3
         filter_title: "Nice"
         "###);
 
-        let config_set = ConfigSet::load(tmp_dir.path());
+        let config_set = ConfigSet::load(data_dir.path(), package_dir.path());
         assert!(config_set.is_ok());
 
         let dummy_system_manager = DummySystemManager::new();
@@ -351,14 +351,14 @@ mod tests {
 
     #[test]
     fn test_runtime_calculate_active_config_specific_title_match() {
-        let tmp_dir = create_temp_espanso_directory();
+        let (data_dir, package_dir) = create_temp_espanso_directories();
 
-        let specific_path = create_user_config_file(&tmp_dir.path(), "specific.yml", r###"
+        let specific_path = create_user_config_file(&data_dir.path(), "specific.yml", r###"
         name: chrome
         filter_title: "Chrome"
         "###);
 
-        let config_set = ConfigSet::load(tmp_dir.path());
+        let config_set = ConfigSet::load(data_dir.path(), package_dir.path());
         assert!(config_set.is_ok());
 
         let dummy_system_manager = DummySystemManager::new_custom("Google Chrome", "Chrome", "C:\\Path\\chrome.exe");
@@ -369,14 +369,14 @@ mod tests {
     }
 
     fn test_runtime_calculate_active_config_specific_class_match() {
-        let tmp_dir = create_temp_espanso_directory();
+        let (data_dir, package_dir) = create_temp_espanso_directories();
 
-        let specific_path = create_user_config_file(&tmp_dir.path(), "specific.yml", r###"
+        let specific_path = create_user_config_file(&data_dir.path(), "specific.yml", r###"
         name: chrome
         filter_class: "Chrome"
         "###);
 
-        let config_set = ConfigSet::load(tmp_dir.path());
+        let config_set = ConfigSet::load(data_dir.path(), package_dir.path());
         assert!(config_set.is_ok());
 
         let dummy_system_manager = DummySystemManager::new_custom("Google Chrome", "Chrome", "C:\\Path\\chrome.exe");
@@ -387,14 +387,14 @@ mod tests {
     }
 
     fn test_runtime_calculate_active_config_specific_exec_match() {
-        let tmp_dir = create_temp_espanso_directory();
+        let (data_dir, package_dir) = create_temp_espanso_directories();
 
-        let specific_path = create_user_config_file(&tmp_dir.path(), "specific.yml", r###"
+        let specific_path = create_user_config_file(&data_dir.path(), "specific.yml", r###"
         name: chrome
         filter_exec: "chrome.exe"
         "###);
 
-        let config_set = ConfigSet::load(tmp_dir.path());
+        let config_set = ConfigSet::load(data_dir.path(), package_dir.path());
         assert!(config_set.is_ok());
 
         let dummy_system_manager = DummySystemManager::new_custom("Google Chrome", "Chrome", "C:\\Path\\chrome.exe");
@@ -405,15 +405,15 @@ mod tests {
     }
 
     fn test_runtime_calculate_active_config_specific_multi_filter_match() {
-        let tmp_dir = create_temp_espanso_directory();
+        let (data_dir, package_dir) = create_temp_espanso_directories();
 
-        let specific_path = create_user_config_file(&tmp_dir.path(), "specific.yml", r###"
+        let specific_path = create_user_config_file(&data_dir.path(), "specific.yml", r###"
         name: chrome
         filter_class: Browser
         filter_exec: "firefox.exe"
         "###);
 
-        let config_set = ConfigSet::load(tmp_dir.path());
+        let config_set = ConfigSet::load(data_dir.path(), package_dir.path());
         assert!(config_set.is_ok());
 
         let dummy_system_manager = DummySystemManager::new_custom("Google Chrome", "Browser", "C:\\Path\\chrome.exe");
@@ -425,14 +425,14 @@ mod tests {
 
     #[test]
     fn test_runtime_calculate_active_config_no_match() {
-        let tmp_dir = create_temp_espanso_directory();
+        let (data_dir, package_dir) = create_temp_espanso_directories();
 
-        let specific_path = create_user_config_file(&tmp_dir.path(), "specific.yml", r###"
+        let specific_path = create_user_config_file(&data_dir.path(), "specific.yml", r###"
         name: firefox
         filter_title: "Firefox"
         "###);
 
-        let config_set = ConfigSet::load(tmp_dir.path());
+        let config_set = ConfigSet::load(data_dir.path(), package_dir.path());
         assert!(config_set.is_ok());
 
         let dummy_system_manager = DummySystemManager::new_custom("Google Chrome", "Chrome", "C:\\Path\\chrome.exe");
@@ -444,14 +444,14 @@ mod tests {
 
     #[test]
     fn test_runtime_active_config_cache() {
-        let tmp_dir = create_temp_espanso_directory();
+        let (data_dir, package_dir) = create_temp_espanso_directories();
 
-        let specific_path = create_user_config_file(&tmp_dir.path(), "specific.yml", r###"
+        let specific_path = create_user_config_file(&data_dir.path(), "specific.yml", r###"
         name: firefox
         filter_title: "Firefox"
         "###);
 
-        let config_set = ConfigSet::load(tmp_dir.path());
+        let config_set = ConfigSet::load(data_dir.path(), package_dir.path());
         assert!(config_set.is_ok());
 
         let dummy_system_manager = DummySystemManager::new_custom("Google Chrome", "Chrome", "C:\\Path\\chrome.exe");
