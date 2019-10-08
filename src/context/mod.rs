@@ -36,7 +36,7 @@ pub trait Context {
 }
 
 pub fn get_data_dir() -> PathBuf {
-    let data_dir = dirs::data_dir().expect("Can't obtain data_dir(), terminating.");
+    let data_dir = dirs::data_local_dir().expect("Can't obtain data_dir(), terminating.");
     let espanso_dir = data_dir.join("espanso");
     create_dir_all(&espanso_dir).expect("Error creating espanso data directory");
     espanso_dir
