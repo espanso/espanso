@@ -63,6 +63,18 @@ pub fn get_data_dir() -> PathBuf {
 }
 
 pub fn get_config_dir() -> PathBuf {
+    // Portable mode check
+    // Get the espanso executable path
+    let espanso_exe_path = std::env::current_exe().expect("Could not get espanso executable path");
+    let exe_dir = espanso_exe_path.parent();
+    if let Some(parent) = exe_dir {
+        let config_dir = parent.join(".espanso");
+        if config_dir.exists() {
+            println!("PORTABLE MODE, using config folder: '{}'", config_dir.to_string_lossy());
+            return config_dir;
+        }
+    }
+
     // For compatibility purposes, check if the $HOME/.espanso directory is available
     let home_dir = dirs::home_dir().expect("Can't obtain the user home directory, terminating.");
     let legacy_espanso_dir = home_dir.join(".espanso");
@@ -86,13 +98,10 @@ const PACKAGES_FOLDER_NAME : &str = "packages";
 
 pub fn get_package_dir() -> PathBuf {
     // Deprecated $HOME/.espanso/packages directory compatibility check
-    let home_dir = dirs::home_dir().expect("Can't obtain the user home directory, terminating.");
-    let legacy_espanso_dir = home_dir.join(".espanso");
-    if legacy_espanso_dir.exists() {
-        let legacy_package_dir = legacy_espanso_dir.join(PACKAGES_FOLDER_NAME);
-        if legacy_package_dir.exists() {
-            return legacy_package_dir;
-        }
+    let config_dir = get_config_dir();
+    let legacy_package_dir = config_dir.join(PACKAGES_FOLDER_NAME);
+    if legacy_package_dir.exists() {
+        return legacy_package_dir;
     }
 
     // New package location, starting from version v0.3.0
