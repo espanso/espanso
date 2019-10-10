@@ -22,7 +22,6 @@ extern crate lazy_static;
 
 use std::thread;
 use std::fs::{File, OpenOptions};
-use std::path::Path;
 use std::process::exit;
 use std::sync::mpsc;
 use std::sync::mpsc::Receiver;
