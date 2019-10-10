@@ -54,6 +54,12 @@ impl super::ClipboardManager for LinuxClipboardManager {
                 if let Err(e) = res {
                     error!("Could not set clipboard: {}", e);
                 }
+
+                let res = child.wait();
+
+                if let Err(e) = res {
+                    error!("Could not set clipboard: {}", e);
+                }
             }
         }
     }

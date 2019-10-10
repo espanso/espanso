@@ -148,8 +148,21 @@ pub enum BackendType {
     Clipboard
 }
 impl Default for BackendType {
+    // The default backend varies based on the operating system.
+    // On Windows and macOS, the Inject backend is working great and should
+    // be preferred as it doesn't override the clipboard.
+    // On the other hand, on linux it has many problems due to the bugs
+    // of the libxdo used. For this reason, Clipboard will be the default
+    // backend on Linux from version v0.3.0
+
+    #[cfg(not(target_os = "linux"))]
     fn default() -> Self {
         BackendType::Inject
+    }
+
+    #[cfg(target_os = "linux")]
+    fn default() -> Self {
+        BackendType::Clipboard
     }
 }
 

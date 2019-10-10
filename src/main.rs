@@ -291,6 +291,8 @@ fn daemon_main(config_set: ConfigSet) {
     log_panics::init();
 
     info!("espanso version {}", VERSION);
+    info!("using config path: {}", context::get_config_dir().to_string_lossy());
+    info!("using package path: {}", context::get_package_dir().to_string_lossy());
     info!("starting daemon...");
 
     let (send_channel, receive_channel) = mpsc::channel();
