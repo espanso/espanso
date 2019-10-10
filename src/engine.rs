@@ -110,7 +110,7 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
             return;
         }
 
-        self.keyboard_manager.delete_string(m.trigger.len() as i32);
+        self.keyboard_manager.delete_string(m.trigger.chars().count() as i32);
 
         let target_string = if m._has_vars {
             let mut output_map = HashMap::new();
