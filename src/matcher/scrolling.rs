@@ -35,6 +35,7 @@ pub struct ScrollingMatcher<'a, R: MatchReceiver, M: ConfigManager<'a>> {
 
 struct MatchEntry<'a> {
     start: usize,
+    count: usize,
     _match: &'a Match
 }
 
@@ -68,7 +69,7 @@ impl <'a, R: MatchReceiver, M: ConfigManager<'a>> ScrollingMatcher<'a, R, M> {
 }
 
 impl <'a, R: MatchReceiver, M: ConfigManager<'a>> super::Matcher for ScrollingMatcher<'a, R, M> {
-    fn handle_char(&self, c: char) {
+    fn handle_char(&self, c: &str) {
         // if not enabled, avoid any processing
         if !*(self.is_enabled.borrow()) {
             return;
@@ -77,8 +78,12 @@ impl <'a, R: MatchReceiver, M: ConfigManager<'a>> super::Matcher for ScrollingMa
         let mut current_set_queue = self.current_set_queue.borrow_mut();
 
         let new_matches: Vec<MatchEntry> = self.config_manager.matches().iter()
-            .filter(|&x| x.trigger.chars().nth(0).unwrap() == c)
-            .map(|x | MatchEntry{start: 1, _match: &x})
+            .filter(|&x| x.trigger.starts_with(c))
+            .map(|x | MatchEntry{
+                start: 1,
+                count: x.trigger.chars().count(),
+                _match: &x
+            })
             .collect();
         // TODO: use an associative structure to improve the efficiency of this first "new_matches" lookup.
 
@@ -86,9 +91,18 @@ impl <'a, R: MatchReceiver, M: ConfigManager<'a>> super::Matcher for ScrollingMa
             Some(last_matches) => {
                 let mut updated: Vec<MatchEntry> = last_matches.iter()
                     .filter(|&x| {
-                        x._match.trigger[x.start..].chars().nth(0).unwrap() == c
+                        let nchar = x._match.trigger.chars().nth(x.start);
+                        if let Some(nchar) = nchar {
+                            c.starts_with(nchar)
+                        }else{
+                            false
+                        }
                     })
-                    .map(|x | MatchEntry{start: x.start+1, _match: &x._match})
+                    .map(|x | MatchEntry{
+                        start: x.start+1,
+                        count: x.count,
+                        _match: &x._match
+                    })
                     .collect();
 
                 updated.extend(new_matches);
@@ -100,7 +114,7 @@ impl <'a, R: MatchReceiver, M: ConfigManager<'a>> super::Matcher for ScrollingMa
         let mut found_match = None;
 
         for entry in combined_matches.iter() {
-            if entry.start == entry._match.trigger.len() {
+            if entry.start == entry.count {
                 found_match = Some(entry._match);
                 break;
             }

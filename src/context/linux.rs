@@ -18,12 +18,13 @@
  */
 
 use std::sync::mpsc::Sender;
-use std::os::raw::c_void;
+use std::os::raw::{c_void, c_char};
 use crate::event::*;
 use crate::event::KeyModifier::*;
 use crate::bridge::linux::*;
 use std::process::exit;
 use log::error;
+use std::ffi::CStr;
 
 #[repr(C)]
 pub struct LinuxContext {
@@ -74,14 +75,19 @@ extern fn keypress_callback(_self: *mut c_void, raw_buffer: *const u8, len: i32,
         let _self = _self as *mut LinuxContext;
 
         if is_modifier == 0 {  // Char event
-            // Convert the received buffer to a character
-            let buffer = std::slice::from_raw_parts(raw_buffer, len as usize);
-            let r = String::from_utf8_lossy(buffer).chars().nth(0);
+            // Convert the received buffer to a string
+            let c_str = CStr::from_ptr(raw_buffer as (*const c_char));
+            let char_str = c_str.to_str();
 
             // Send the char through the channel
-            if let Some(c) = r {
-                let event = Event::Key(KeyEvent::Char(c));
-                (*_self).send_channel.send(event).unwrap();
+            match char_str {
+                Ok(char_str) => {
+                    let event = Event::Key(KeyEvent::Char(char_str.to_owned()));
+                    (*_self).send_channel.send(event).unwrap();
+                },
+                Err(e) => {
+                    error!("Unable to receive char: {}",e);
+                },
             }
         }else{  // Modifier event
             let modifier: Option<KeyModifier> = match key_code {
