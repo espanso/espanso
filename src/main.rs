@@ -102,9 +102,9 @@ fn main() {
         .subcommand(SubCommand::with_name("daemon")
             .about("Start the daemon without spawning a new process."))
         .subcommand(SubCommand::with_name("register")
-            .about("MacOS only. Register espanso in the system daemon manager."))
+            .about("MacOS and Linux only. Register espanso in the system daemon manager."))
         .subcommand(SubCommand::with_name("unregister")
-            .about("MacOS only. Unregister espanso from the system daemon manager."))
+            .about("MacOS and Linux only. Unregister espanso from the system daemon manager."))
         .subcommand(SubCommand::with_name("log")
             .about("Print the latest daemon logs."))
         .subcommand(SubCommand::with_name("start")
@@ -382,10 +382,10 @@ fn start_daemon(config_set: ConfigSet) {
             if status.success() {
                 println!("Daemon started correctly!")
             }else{
-                println!("Error starting launchd daemon with status: {}", status);
+                eprintln!("Error starting launchd daemon with status: {}", status);
             }
         }else{
-            println!("Error starting launchd daemon: {}", res.unwrap_err());
+            eprintln!("Error starting launchd daemon: {}", res.unwrap_err());
         }
     }else{
         fork_daemon(config_set);
@@ -394,7 +394,50 @@ fn start_daemon(config_set: ConfigSet) {
 
 #[cfg(target_os = "linux")]
 fn start_daemon(config_set: ConfigSet) {
-    fork_daemon(config_set);
+    if config_set.default.use_system_agent {
+        use std::process::Command;
+
+        // Make sure espanso is currently registered in systemd
+        let res = Command::new("systemctl")
+            .args(&["--user", "is-enabled", "espanso.service"])
+            .status();
+        if !res.unwrap().success() {
+            use std::io::{self, BufRead};
+            eprintln!("espanso must be registered to systemd (user level) first.");
+            eprint!("Do you want to proceed? [Y/n]: ");
+
+            let mut line = String::new();
+            let stdin = io::stdin();
+            stdin.lock().read_line(&mut line).unwrap();
+            let answer = line.trim().to_lowercase();
+            if answer != "n" {
+                register_main(config_set);
+            }else{
+                eprintln!("Please register espanso to systemd with this command:");
+                eprintln!("   espanso register");
+                // TODO: enable flag to use non-managed daemon mode
+
+                std::process::exit(4);
+            }
+        }
+
+        // Start the espanso service
+        let res = Command::new("systemctl")
+            .args(&["--user", "start", "espanso.service"])
+            .status();
+
+        if let Ok(status) = res {
+            if status.success() {
+                println!("Daemon started correctly!")
+            }else{
+                eprintln!("Error starting systemd daemon with status: {}", status);
+            }
+        }else{
+            eprintln!("Error starting systemd daemon: {}", res.unwrap_err());
+        }
+    }else{
+        fork_daemon(config_set);
+    }
 }
 
 #[cfg(not(target_os = "windows"))]

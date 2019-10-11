@@ -84,6 +84,16 @@ void register_keypress_callback(KeypressCallback callback) {
     keypress_callback = callback;
 }
 
+int32_t check_x11() {
+    Display *check_disp = XOpenDisplay(NULL);
+
+    if (!check_disp) {
+        return -1;
+    }
+
+    XCloseDisplay(check_disp);
+    return 1;
+}
 
 int32_t initialize(void * _context_instance) {
     setlocale(LC_ALL, "");

@@ -22,6 +22,7 @@ use std::os::raw::{c_void, c_char};
 #[allow(improper_ctypes)]
 #[link(name="linuxbridge", kind="static")]
 extern {
+    pub fn check_x11() -> i32;
     pub fn initialize(s: *const c_void) -> i32;
     pub fn eventloop();
     pub fn cleanup();
