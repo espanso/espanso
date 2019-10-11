@@ -23,8 +23,9 @@ use crate::event::*;
 use crate::event::KeyModifier::*;
 use crate::bridge::linux::*;
 use std::process::exit;
-use log::error;
+use log::{error, info};
 use std::ffi::CStr;
+use std::{thread, time};
 
 #[repr(C)]
 pub struct LinuxContext {
@@ -33,6 +34,16 @@ pub struct LinuxContext {
 
 impl LinuxContext {
     pub fn new(send_channel: Sender<Event>) -> Box<LinuxContext> {
+        // Check if the X11 context is available
+        let x11_available = unsafe {
+            check_x11()
+        };
+
+        if x11_available < 0 {
+            error!("Error, can't connect to X11 context");
+            std::process::exit(100);
+        }
+
         let context = Box::new(LinuxContext {
             send_channel,
         });
