@@ -149,14 +149,53 @@ int32_t initialize(void * _context_instance) {
         return -5;
     }
 
+    if (!XRecordEnableContextAsync(data_disp, context, event_callback, NULL)) {
+        return -6;
+    }
+
     xdo_context = xdo_new(NULL);
+
+    /**
+     * Note: We might never get a MappingNotify event if the
+     * modifier and keymap information was never cached in Xlib.
+     * The next line makes sure that this happens initially.
+     */
+    XKeysymToKeycode(ctrl_disp, XK_F1);
 
     return 1;
 }
 
 int32_t eventloop() {
-    if (!XRecordEnableContext (data_disp, context, event_callback, NULL)) {
-        return -1;
+    bool running = true;
+
+    int ctrl_fd = XConnectionNumber(ctrl_disp);
+    int data_fd = XConnectionNumber(data_disp);
+
+    while (running)
+    {
+        fd_set fds;
+        FD_ZERO(&fds);
+        FD_SET(ctrl_fd, &fds);
+        FD_SET(data_fd, &fds);
+        timeval timeout;
+        timeout.tv_sec = 2;
+        timeout.tv_usec = 0;
+        int retval = select(max(ctrl_fd, data_fd) + 1,
+                            &fds, NULL, NULL, &timeout);
+
+        if (FD_ISSET(data_fd, &fds)) {
+            XRecordProcessReplies(data_disp);
+        }
+        if (FD_ISSET(ctrl_fd, &fds)) {
+            XEvent event;
+            XNextEvent(ctrl_disp, &event);
+            if (event.type == MappingNotify) {
+                XMappingEvent *e = (XMappingEvent *) &event;
+                if (e->request == MappingKeyboard) {
+                    XRefreshKeyboardMapping(e);
+                }
+            }
+        }
     }
 
     return 1;
