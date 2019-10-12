@@ -32,6 +32,15 @@ you will be working with. You can find a list of all the possible options in the
 
 The `user` folder is used to store more advanced user configurations, such as [Application-specific](#application-specific-configurations) configs.
 
+#### Migrating from versions prior to v0.3.0
+
+Prior to version v0.3.0, espanso located all configurations in the user home directory, into the `.espanso` folder.
+This location is now deprecated and, while being still supported for compatibility purposes, you should migrate to the new one with the following steps:
+
+* Copy the `default.yml` and the `user/` directory in the new `espanso` config folder ( you can find the new config location with the `espanso path` command ).
+* Copy the contents of the `packages` folder into the new `packages` path ( you can find the new package 
+location with the `espanso path` command ).
+
 ### Application-Specific Configurations
 
 Sometimes you may need to make espanso behave **differently** with some applications. For example, you may want to have
