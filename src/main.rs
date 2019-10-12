@@ -400,17 +400,15 @@ fn start_daemon(config_set: ConfigSet) {
         // Make sure espanso is currently registered in systemd
         let res = Command::new("systemctl")
             .args(&["--user", "is-enabled", "espanso.service"])
-            .status();
-        if !res.unwrap().success() {
-            use std::io::{self, BufRead};
-            eprintln!("espanso must be registered to systemd (user level) first.");
-            eprint!("Do you want to proceed? [Y/n]: ");
+            .output();
+        if !res.unwrap().status.success() {
+            use dialoguer::Confirmation;
+            if Confirmation::new()
+                .with_text("espanso must be registered to systemd (user level) first. Do you want to proceed?")
+                .default(true)
+                .show_default(true)
+                .interact().expect("Unable to read user answer") {
 
-            let mut line = String::new();
-            let stdin = io::stdin();
-            stdin.lock().read_line(&mut line).unwrap();
-            let answer = line.trim().to_lowercase();
-            if answer != "n" {
                 register_main(config_set);
             }else{
                 eprintln!("Please register espanso to systemd with this command:");
