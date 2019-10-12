@@ -250,7 +250,7 @@ LRESULT CALLBACK window_procedure(HWND window, unsigned int msg, WPARAM wp, LPAR
                     // We need to call the callback in two different ways based on the type of key
                     // The only modifier we use that has a result > 0 is the BACKSPACE, so we have to consider it.
                     if (result >= 1 && raw->data.keyboard.VKey != VK_BACK) {
-                        keypress_callback(manager_instance, reinterpret_cast<int32_t*>(buffer.data()), buffer.size(), 0, raw->data.keyboard.VKey, is_key_down);
+                        keypress_callback(manager_instance, reinterpret_cast<uint16_t*>(buffer.data()), buffer.size(), 0, raw->data.keyboard.VKey, is_key_down);
                     }else{
                         keypress_callback(manager_instance, nullptr, 0, 1, raw->data.keyboard.VKey, is_key_down);
                     }

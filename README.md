@@ -48,6 +48,14 @@ please consider making a small donation, it really helps :)
 
 [![Donate with PayPal](images/donate.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=FHNLR5DRS267E&source=url)
 
+## Contributors
+
+Many people helped the project along the way, thanks to all of you. In particular, I want to thank: 
+
+* [Scrumplex](https://scrumplex.net/) - Official AUR repo mantainer and Linux Guru
+* [Luca Antognetti](https://github.com/luca-ant) - Linux and Windows Tester
+* [Matteo Pellegrino](https://www.matteopellegrino.me/) - MacOS Tester
+
 ## Remarks
 
 * Special thanks to the [ModifyPath](https://www.legroom.net/software/modpath)

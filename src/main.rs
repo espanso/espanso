@@ -22,7 +22,6 @@ extern crate lazy_static;
 
 use std::thread;
 use std::fs::{File, OpenOptions};
-use std::path::Path;
 use std::process::exit;
 use std::sync::mpsc;
 use std::sync::mpsc::Receiver;
@@ -81,12 +80,6 @@ fn main() {
         .version(VERSION)
         .author("Federico Terzi")
         .about("Cross-platform Text Expander written in Rust")
-        .arg(Arg::with_name("config")
-            .short("c")
-            .long("config")
-            .value_name("FILE")
-            .help("Sets a custom config directory. If not specified, reads the default $HOME/.espanso/default.yml file, creating it if not present.")
-            .takes_value(true))
         .arg(Arg::with_name("v")
             .short("v")
             .multiple(true)
@@ -109,9 +102,9 @@ fn main() {
         .subcommand(SubCommand::with_name("daemon")
             .about("Start the daemon without spawning a new process."))
         .subcommand(SubCommand::with_name("register")
-            .about("MacOS only. Register espanso in the system daemon manager."))
+            .about("MacOS and Linux only. Register espanso in the system daemon manager."))
         .subcommand(SubCommand::with_name("unregister")
-            .about("MacOS only. Unregister espanso from the system daemon manager."))
+            .about("MacOS and Linux only. Unregister espanso from the system daemon manager."))
         .subcommand(SubCommand::with_name("log")
             .about("Print the latest daemon logs."))
         .subcommand(SubCommand::with_name("start")
@@ -122,6 +115,8 @@ fn main() {
             .about("Restart the espanso daemon."))
         .subcommand(SubCommand::with_name("status")
             .about("Check if the espanso daemon is running or not."))
+        .subcommand(SubCommand::with_name("path")
+            .about("Prints all the current espanso directory paths, to easily locate configuration and data paths."))
 
         // Package manager
         .subcommand(SubCommand::with_name("package")
@@ -145,20 +140,7 @@ fn main() {
     let log_level = matches.occurrences_of("v") as i32;
 
     // Load the configuration
-    let mut config_set = match matches.value_of("config") {
-        None => {
-            if log_level > 1 {
-                println!("loading configuration from default location...");
-            }
-            ConfigSet::load_default()
-        },
-        Some(path) => {
-            if log_level > 1 {
-                println!("loading configuration from custom location: {}", path);
-            }
-            ConfigSet::load(Path::new(path))
-        },
-    }.unwrap_or_else(|e| {
+    let mut config_set = ConfigSet::load_default().unwrap_or_else(|e| {
         println!("{}", e);
         exit(1);
     });
@@ -229,6 +211,11 @@ fn main() {
 
     if let Some(matches) = matches.subcommand_matches("uninstall") {
         remove_package_main(config_set, matches);
+        return;
+    }
+
+    if matches.subcommand_matches("path").is_some() {
+        path_main(config_set);
         return;
     }
 
@@ -304,6 +291,8 @@ fn daemon_main(config_set: ConfigSet) {
     log_panics::init();
 
     info!("espanso version {}", VERSION);
+    info!("using config path: {}", context::get_config_dir().to_string_lossy());
+    info!("using package path: {}", context::get_package_dir().to_string_lossy());
     info!("starting daemon...");
 
     let (send_channel, receive_channel) = mpsc::channel();
@@ -393,10 +382,10 @@ fn start_daemon(config_set: ConfigSet) {
             if status.success() {
                 println!("Daemon started correctly!")
             }else{
-                println!("Error starting launchd daemon with status: {}", status);
+                eprintln!("Error starting launchd daemon with status: {}", status);
             }
         }else{
-            println!("Error starting launchd daemon: {}", res.unwrap_err());
+            eprintln!("Error starting launchd daemon: {}", res.unwrap_err());
         }
     }else{
         fork_daemon(config_set);
@@ -405,7 +394,50 @@ fn start_daemon(config_set: ConfigSet) {
 
 #[cfg(target_os = "linux")]
 fn start_daemon(config_set: ConfigSet) {
-    fork_daemon(config_set);
+    if config_set.default.use_system_agent {
+        use std::process::Command;
+
+        // Make sure espanso is currently registered in systemd
+        let res = Command::new("systemctl")
+            .args(&["--user", "is-enabled", "espanso.service"])
+            .status();
+        if !res.unwrap().success() {
+            use std::io::{self, BufRead};
+            eprintln!("espanso must be registered to systemd (user level) first.");
+            eprint!("Do you want to proceed? [Y/n]: ");
+
+            let mut line = String::new();
+            let stdin = io::stdin();
+            stdin.lock().read_line(&mut line).unwrap();
+            let answer = line.trim().to_lowercase();
+            if answer != "n" {
+                register_main(config_set);
+            }else{
+                eprintln!("Please register espanso to systemd with this command:");
+                eprintln!("   espanso register");
+                // TODO: enable flag to use non-managed daemon mode
+
+                std::process::exit(4);
+            }
+        }
+
+        // Start the espanso service
+        let res = Command::new("systemctl")
+            .args(&["--user", "start", "espanso.service"])
+            .status();
+
+        if let Ok(status) = res {
+            if status.success() {
+                println!("Daemon started correctly!")
+            }else{
+                eprintln!("Error starting systemd daemon with status: {}", status);
+            }
+        }else{
+            eprintln!("Error starting systemd daemon: {}", res.unwrap_err());
+        }
+    }else{
+        fork_daemon(config_set);
+    }
 }
 
 #[cfg(not(target_os = "windows"))]
@@ -742,6 +774,12 @@ fn list_package_main(_config_set: ConfigSet, matches: &ArgMatches) {
             println!("{} - {}", package.name, package.version);
         }
     }
+}
+
+fn path_main(_config_set: ConfigSet) {
+    println!("Config: {}", crate::context::get_config_dir().to_string_lossy());
+    println!("Packages: {}", crate::context::get_package_dir().to_string_lossy());
+    println!("Data: {}", crate::context::get_config_dir().to_string_lossy());
 }
 
 

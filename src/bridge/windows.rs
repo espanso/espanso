@@ -49,7 +49,7 @@ extern {
     pub fn set_clipboard(payload: *const u16) -> i32;
 
     // KEYBOARD
-    pub fn register_keypress_callback(cb: extern fn(_self: *mut c_void, *const i32,
+    pub fn register_keypress_callback(cb: extern fn(_self: *mut c_void, *const u16,
                                                 i32, i32, i32, i32));
 
     pub fn eventloop();

@@ -52,7 +52,7 @@ impl From<i32> for ActionType {
 
 #[derive(Debug, Clone)]
 pub enum KeyEvent {
-    Char(char),
+    Char(String),
     Modifier(KeyModifier)
 }
 

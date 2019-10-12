@@ -13,6 +13,7 @@ steps:
       set -e
       python packager.py build
       cp target/packager/mac/espanso-*.gz .
+      cp target/packager/mac/espanso-*.txt .
       cp target/packager/mac/espanso.rb .
       ls -la
     displayName: "Cargo build and packaging for MacOS"
