@@ -45,10 +45,16 @@ in two ways: creating your own **custom matches** or **installing packages**. Bo
 ### Configuration
 
 espanso uses a **file-based configuration** approach, following the Unix philosophy. All configuration files
-reside in the `.espanso` directory, located in **user's home** directory. The path depends on the current OS, for example:
-* Windows: `C:\Users\Federico\.espanso\`
-* Mac: `/Users/Federico/.espanso/`
-* Linux: `/home/federico/.espanso/`
+reside in the `espanso` directory, whose location depends on the current OS:
+* Linux: `$XDG_CONFIG_HOME/espanso` (e.g. `/home/user/.config/espanso`)
+* macOS: `$HOME/Library/Preferences/espanso` (e.g. `/Users/user/Library/Preferences/espanso`)
+* Windows: `{FOLDERID_RoamingAppData}\espanso` (e.g. `C:\Users\user\AppData\Roaming\espanso`)
+
+A quick way to find the path of your configuration folder is by using the following command:
+
+```
+espanso path
+```
 
 While this folder may contain many different files, let's focus on the most important one: `default.yml`.
 
@@ -123,7 +129,7 @@ We're almost there! After every configuration change, **espanso must be restarte
 espanso restart
 ```
 
-Now try to type `:bs` anywhere. If you did everything correctly, you should see `Best Regards` appear! 
+Now try to type `:br` anywhere. If you did everything correctly, you should see `Best Regards` appear! 
 
 ### Understanding Packages
 
