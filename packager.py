@@ -6,6 +6,7 @@ import hashlib
 import click
 import shutil
 import toml
+import hashlib
 import urllib.request
 from dataclasses import dataclass
 
@@ -106,6 +107,17 @@ def build_windows(package_info):
     print("Compiling installer with Inno setup")
     subprocess.run(["iscc", os.path.abspath(os.path.join(TARGET_DIR, "setupscript.iss"))])
 
+    print("Calculating the SHA256")
+    sha256_hash = hashlib.sha256()
+    with open(os.path.abspath(os.path.join(TARGET_DIR, INSTALLER_NAME+".exe")),"rb") as f:
+        # Read and update hash string value in blocks of 4K
+        for byte_block in iter(lambda: f.read(4096),b""):
+            sha256_hash.update(byte_block)
+
+        hash_file = os.path.abspath(os.path.join(TARGET_DIR, "espanso-win-installer-sha256.txt"))
+        with open(hash_file, "w") as hf:
+            hf.write(sha256_hash.hexdigest())
+
 
 def build_mac(package_info):
     print("Starting packaging process for MacOS...")
@@ -130,6 +142,17 @@ def build_mac(package_info):
                     "espanso",
                     ])
     print(f"Created archive: {archive_target}")
+
+    print("Calculating the SHA256")
+    sha256_hash = hashlib.sha256()
+    with open(archive_target,"rb") as f:
+        # Read and update hash string value in blocks of 4K
+        for byte_block in iter(lambda: f.read(4096),b""):
+            sha256_hash.update(byte_block)
+
+        hash_file = os.path.abspath(os.path.join(TARGET_DIR, "espanso-mac-sha256.txt"))
+        with open(hash_file, "w") as hf:
+            hf.write(sha256_hash.hexdigest())
 
     print("Processing Homebrew formula template")
     with open("packager/mac/espanso.rb", "r") as formula_template:
