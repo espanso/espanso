@@ -25,6 +25,11 @@
 extern void * context_instance;
 
 /*
+ * Check if the X11 context is available
+ */
+extern "C" int32_t check_x11();
+
+/*
  * Initialize the X11 context and parameters
  */
 extern "C" int32_t initialize(void * context_instance);

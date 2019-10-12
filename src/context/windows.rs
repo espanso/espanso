@@ -23,8 +23,8 @@ use crate::event::{Event, KeyEvent, KeyModifier, ActionType};
 use crate::event::KeyModifier::*;
 use std::ffi::c_void;
 use std::{fs};
-use widestring::U16CString;
-use log::{info};
+use widestring::{U16CString, U16CStr};
+use log::{info, error};
 
 const BMP_BINARY : &[u8] = include_bytes!("../res/win/espanso.bmp");
 const ICO_BINARY : &[u8] = include_bytes!("../res/win/espanso.ico");
@@ -102,20 +102,31 @@ impl super::Context for WindowsContext {
 
 // Native bridge code
 
-extern fn keypress_callback(_self: *mut c_void, raw_buffer: *const i32, len: i32,
+extern fn keypress_callback(_self: *mut c_void, raw_buffer: *const u16, len: i32,
                             is_modifier: i32, key_code: i32, is_key_down: i32) {
     unsafe {
         let _self = _self as *mut WindowsContext;
         if is_key_down != 0 {  // KEY DOWN EVENT
             if is_modifier == 0 {  // Char event
-                // Convert the received buffer to a character
+                // Convert the received buffer to a string
                 let buffer = std::slice::from_raw_parts(raw_buffer, len as usize);
-                let r = std::char::from_u32(buffer[0] as u32);
+                let c_string = U16CStr::from_slice_with_nul(buffer);
 
-                // Send the char through the channel
-                if let Some(c) = r {
-                    let event = Event::Key(KeyEvent::Char(c));
-                    (*_self).send_channel.send(event).unwrap();
+                if let Ok(c_string) = c_string {
+                    let string = c_string.to_string();
+
+                    // Send the char through the channel
+                    match string {
+                        Ok(string) => {
+                            let event = Event::Key(KeyEvent::Char(string));
+                            (*_self).send_channel.send(event).unwrap();
+                        },
+                        Err(e) => {
+                            error!("Unable to receive char: {}",e);
+                        },
+                    }
+                }else{
+                    error!("unable to decode widechar");
                 }
             }
         }else{  // KEY UP event
