@@ -50,6 +50,30 @@ At this point, you are ready to read the [Getting Started](/docs/get-started/) t
 
 ### Installing on Manjaro / Arch
 
+There are multiple ways to install espanso on Arch: the preferred method is by using the [AUR](#installing-from-aur) package,
+but you can also install it manually from the [prebuilt executables](#installing-from-the-prebuilt-release).
+
+#### Installing from AUR
+
+The official way to install espanso on Arch-based systems is by using one of the AUR packages, currently maintained by [Scrumplex](https://scrumplex.net/). There are multiple options available:
+
+* [espanso-bin](https://aur.archlinux.org/packages/espanso-bin/) - Pre-compiled version for x64 systems.
+* [espanso](https://aur.archlinux.org/packages/espanso/) - Builds from the latest (stable) release.
+* [espanso-git](https://aur.archlinux.org/packages/espanso-git/) - Builds from latest commit ( in master branch ).
+
+If you are using a 64 bit machine, you should prefer `espanso-bin` as it is much faster to install. If you have a 32 bit system, or prefer compiling espanso
+from sources, you should use the `espanso` package instead.
+
+When you are ready, you can install espanso with:
+
+```
+git clone https://aur.archlinux.org/espanso-bin.git
+cd espanso-bin
+makepkg -si
+```
+ 
+#### Installing from the prebuilt release
+
 Espanso depends upon the `X11 Record Extension`, the `xdo library` and the `xclip` command, 
 so you will need to install those first with the following commands:
 
