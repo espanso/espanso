@@ -31,12 +31,19 @@ pub struct ScrollingMatcher<'a, R: MatchReceiver, M: ConfigManager<'a>> {
     current_set_queue: RefCell<VecDeque<Vec<MatchEntry<'a>>>>,
     toggle_press_time: RefCell<SystemTime>,
     is_enabled: RefCell<bool>,
+    was_previous_char_word_separator: RefCell<bool>,
 }
 
+#[derive(Clone)]
 struct MatchEntry<'a> {
     start: usize,
     count: usize,
-    _match: &'a Match
+    _match: &'a Match,
+
+    // Usually false, becomes true if the match was detected and has the "word" option.
+    // This is needed to trigger the replacement only if the next char is a
+    // word separator ( such as space ).
+    waiting_for_separator: bool,
 }
 
 impl <'a, R: MatchReceiver, M: ConfigManager<'a>> ScrollingMatcher<'a, R, M> {
@@ -49,7 +56,8 @@ impl <'a, R: MatchReceiver, M: ConfigManager<'a>> ScrollingMatcher<'a, R, M> {
             receiver,
             current_set_queue,
             toggle_press_time,
-            is_enabled: RefCell::new(true)
+            is_enabled: RefCell::new(true),
+            was_previous_char_word_separator: RefCell::new(true),
         }
     }
 
@@ -75,33 +83,72 @@ impl <'a, R: MatchReceiver, M: ConfigManager<'a>> super::Matcher for ScrollingMa
             return;
         }
 
+        // Obtain the configuration for the active application if present,
+        // otherwise get the default one
+        let active_config = self.config_manager.active_config();
+
+        // Check if the current char is a word separator
+        let is_current_word_separator = active_config.word_separators.contains(
+            &c.chars().nth(0).unwrap_or_default()
+        );
+        if is_current_word_separator {
+
+        }
+
+        let mut was_previous_word_separator = self.was_previous_char_word_separator.borrow_mut();
+
         let mut current_set_queue = self.current_set_queue.borrow_mut();
 
-        let new_matches: Vec<MatchEntry> = self.config_manager.matches().iter()
-            .filter(|&x| x.trigger.starts_with(c))
+        let new_matches: Vec<MatchEntry> = active_config.matches.iter()
+            .filter(|&x| {
+                if !x.trigger.starts_with(c) {
+                    false
+                }else{
+                    if x.word {
+                        *was_previous_word_separator
+                    }else{
+                        true
+                    }
+                }
+            })
             .map(|x | MatchEntry{
                 start: 1,
                 count: x.trigger.chars().count(),
-                _match: &x
+                _match: &x,
+                waiting_for_separator: false
             })
             .collect();
         // TODO: use an associative structure to improve the efficiency of this first "new_matches" lookup.
 
-        let combined_matches: Vec<MatchEntry> = match current_set_queue.back() {
+        let mut combined_matches: Vec<MatchEntry> = match current_set_queue.back_mut() {
             Some(last_matches) => {
                 let mut updated: Vec<MatchEntry> = last_matches.iter()
                     .filter(|&x| {
-                        let nchar = x._match.trigger.chars().nth(x.start);
-                        if let Some(nchar) = nchar {
-                            c.starts_with(nchar)
+                        if x.waiting_for_separator {
+                            // The match is only waiting for a separator to call the replacement
+                            is_current_word_separator
                         }else{
-                            false
+                            let nchar = x._match.trigger.chars().nth(x.start);
+                            if let Some(nchar) = nchar {
+                                c.starts_with(nchar)
+                            }else{
+                                false
+                            }
                         }
                     })
-                    .map(|x | MatchEntry{
-                        start: x.start+1,
-                        count: x.count,
-                        _match: &x._match
+                    .map(|x | {
+                        let new_start = if x.waiting_for_separator {
+                            x.start  // Avoid incrementing, we are only waiting for a separator
+                        }else{
+                            x.start+1  // Increment, we want to check if the next char matches
+                        };
+
+                        MatchEntry{
+                            start: new_start,
+                            count: x.count,
+                            _match: &x._match,
+                            waiting_for_separator: x.waiting_for_separator
+                        }
                     })
                     .collect();
 
@@ -113,9 +160,24 @@ impl <'a, R: MatchReceiver, M: ConfigManager<'a>> super::Matcher for ScrollingMa
 
         let mut found_match = None;
 
-        for entry in combined_matches.iter() {
-            if entry.start == entry.count {
-                found_match = Some(entry._match);
+        for entry in combined_matches.iter_mut() {
+            let is_found_match = if entry.start == entry.count {
+                if !entry._match.word {
+                    true
+                }else{
+                    if entry.waiting_for_separator {
+                        true
+                    }else{
+                        entry.waiting_for_separator = true;
+                        false
+                    }
+                }
+            }else{
+                false
+            };
+
+            if is_found_match {
+                found_match = Some(entry.clone());
                 break;
             }
         }
@@ -126,12 +188,27 @@ impl <'a, R: MatchReceiver, M: ConfigManager<'a>> super::Matcher for ScrollingMa
             current_set_queue.pop_front();
         }
 
-        if let Some(_match) = found_match {
+        if let Some(match_entry) = found_match {
             if let Some(last) = current_set_queue.back_mut() {
                 last.clear();
             }
-            self.receiver.on_match(_match);
+
+            let trailing_separator = if !match_entry.waiting_for_separator {
+                None
+            }else{
+                let as_char = c.chars().nth(0);
+                match as_char {
+                    Some(c) => {
+                        Some(c) // Current char is the trailing separator
+                    },
+                    None => {None},
+                }
+            };
+
+            self.receiver.on_match(match_entry._match, trailing_separator);
         }
+
+        *was_previous_word_separator = is_current_word_separator;
     }
 
     fn handle_modifier(&self, m: KeyModifier) {

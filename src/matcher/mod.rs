@@ -30,6 +30,7 @@ pub struct Match {
     pub trigger: String,
     pub replace: String,
     pub vars: Vec<MatchVariable>,
+    pub word: bool,
 
     #[serde(skip_serializing)]
     pub _has_vars: bool,
@@ -57,6 +58,7 @@ impl<'a> From<&'a AutoMatch> for Match{
             trigger: other.trigger.clone(),
             replace: other.replace.clone(),
             vars: other.vars.clone(),
+            word: other.word.clone(),
             _has_vars: has_vars,
         }
     }
@@ -70,9 +72,13 @@ struct AutoMatch {
 
     #[serde(default = "default_vars")]
     pub vars: Vec<MatchVariable>,
+
+    #[serde(default = "default_word")]
+    pub word: bool,
 }
 
 fn default_vars() -> Vec<MatchVariable> {Vec::new()}
+fn default_word() -> bool {false}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct MatchVariable {
@@ -85,7 +91,7 @@ pub struct MatchVariable {
 }
 
 pub trait MatchReceiver {
-    fn on_match(&self, m: &Match);
+    fn on_match(&self, m: &Match, trailing_separator: Option<char>);
     fn on_enable_update(&self, status: bool);
 }
 

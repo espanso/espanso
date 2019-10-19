@@ -103,16 +103,22 @@ lazy_static! {
 impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIManager>
     MatchReceiver for Engine<'a, S, C, M, U>{
 
-    fn on_match(&self, m: &Match) {
+    fn on_match(&self, m: &Match, trailing_separator: Option<char>) {
         let config = self.config_manager.active_config();
 
         if config.disabled {
             return;
         }
 
-        self.keyboard_manager.delete_string(m.trigger.chars().count() as i32);
+        let char_count = if trailing_separator.is_none() {
+            m.trigger.chars().count() as i32
+        }else{
+            m.trigger.chars().count() as i32 + 1 // Count also the separator
+        };
 
-        let target_string = if m._has_vars {
+        self.keyboard_manager.delete_string(char_count);
+
+        let mut target_string = if m._has_vars {
             let mut output_map = HashMap::new();
 
             for variable in m.vars.iter() {
@@ -141,6 +147,11 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
         }else{  // No variables, simple text substitution
             m.replace.clone()
         };
+
+        // If a trailing separator was counted in the match, add it back to the target string
+        if let Some(trailing_separator) = trailing_separator {
+            target_string.push(trailing_separator);
+        }
 
         match config.backend {
             BackendType::Inject => {
