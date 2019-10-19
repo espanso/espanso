@@ -93,6 +93,13 @@ pub fn get_config_dir() -> PathBuf {
         return legacy_espanso_dir;
     }
 
+    // Check for $HOME/.config/espanso location
+    let home_config_dir = home_dir.join(".config");
+    let config_espanso_dir = home_config_dir.join("espanso");
+    if config_espanso_dir.exists() {
+        return config_espanso_dir;
+    }
+
     // New config location, from version v0.3.0
     // Refer to issue #73 for more information: https://github.com/federico-terzi/espanso/issues/73
     let config_dir = dirs::config_dir().expect("Can't obtain config_dir(), terminating.");
