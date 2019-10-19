@@ -118,11 +118,25 @@ pub fn register(config_set: ConfigSet) {
     if let Ok(res) = res {
         let output = String::from_utf8_lossy(res.stdout.as_slice());
         let output = output.trim();
-        if res.status.success() && output == "enabled" {
-            eprintln!("espanso service is already registered to systemd");
-            eprintln!("If you want to register it again, please uninstall it first with:");
-            eprintln!("    espanso unregister");
-            std::process::exit(5);
+        if res.status.success() {
+            if output == "enabled" {
+                eprintln!("espanso service is already registered to systemd");
+                eprintln!("If you want to register it again, please uninstall it first with:");
+                eprintln!("    espanso unregister");
+                std::process::exit(5);
+            }
+        }else{
+            if output == "disabled" {
+                use dialoguer::Confirmation;
+                if !Confirmation::new()
+                    .with_text("espanso is already registered but currently disabled. Do you want to override it?")
+                    .default(false)
+                    .show_default(true)
+                    .interact().expect("Unable to read user answer") {
+
+                    std::process::exit(6);
+                }
+            }
         }
     }
 
