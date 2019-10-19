@@ -440,6 +440,12 @@ int32_t is_current_window_terminal() {
             return 1;
         }else if (strstr(class_buffer, "URxvt") != NULL) {  // Manjaro terminal
             return 1;
+        }else if (strstr(class_buffer, "XTerm") != NULL) {  // XTerm and UXTerm
+            return 1;
+        }else if (strstr(class_buffer, "Termite") != NULL) {  // Termite
+            return 1;
+        }else if (strstr(class_buffer, "konsole") != NULL) {  // KDE Konsole
+            return 1;
         }
     }
 

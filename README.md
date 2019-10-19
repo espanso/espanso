@@ -2,6 +2,7 @@
 
 > A cross-platform Text Expander written in Rust
 
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/federico-terzi/espanso)
 ![Language](https://img.shields.io/badge/language-rust-orange)
 ![Platforms](https://img.shields.io/badge/platforms-Windows%2C%20macOS%20and%20Linux-blue)
 ![License](https://img.shields.io/github/license/federico-terzi/espanso)

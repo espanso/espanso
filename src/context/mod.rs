@@ -30,6 +30,7 @@ use std::sync::mpsc::Sender;
 use crate::event::Event;
 use std::path::PathBuf;
 use std::fs::create_dir_all;
+use std::sync::Once;
 
 pub trait Context {
     fn eventloop(&self);
@@ -55,6 +56,8 @@ pub fn new(send_channel: Sender<Event>) -> Box<dyn Context> {
 
 // espanso directories
 
+static WARING_INIT : Once = Once::new();
+
 pub fn get_data_dir() -> PathBuf {
     let data_dir = dirs::data_local_dir().expect("Can't obtain data_local_dir(), terminating.");
     let espanso_dir = data_dir.join("espanso");
@@ -79,11 +82,22 @@ pub fn get_config_dir() -> PathBuf {
     let home_dir = dirs::home_dir().expect("Can't obtain the user home directory, terminating.");
     let legacy_espanso_dir = home_dir.join(".espanso");
     if legacy_espanso_dir.exists() {
-        eprintln!("WARNING: using legacy espanso config location in $HOME/.espanso is DEPRECATED");
-        eprintln!("Starting from espanso v0.3.0, espanso config location is changed.");
-        eprintln!("Please check out the documentation to find out more: https://espanso.org/docs/configuration/");
+        // Avoid printing the warning multiple times with std::sync::Once
+        WARING_INIT.call_once(|| {
+            eprintln!("WARNING: using legacy espanso config location in $HOME/.espanso is DEPRECATED");
+            eprintln!("Starting from espanso v0.3.0, espanso config location is changed.");
+            eprintln!("Please check out the documentation to find out more: https://espanso.org/docs/configuration/");
+            eprintln!()
+        });
 
         return legacy_espanso_dir;
+    }
+
+    // Check for $HOME/.config/espanso location
+    let home_config_dir = home_dir.join(".config");
+    let config_espanso_dir = home_config_dir.join("espanso");
+    if config_espanso_dir.exists() {
+        return config_espanso_dir;
     }
 
     // New config location, from version v0.3.0
