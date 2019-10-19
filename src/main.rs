@@ -777,7 +777,7 @@ fn list_package_main(_config_set: ConfigSet, matches: &ArgMatches) {
 fn path_main(_config_set: ConfigSet) {
     println!("Config: {}", crate::context::get_config_dir().to_string_lossy());
     println!("Packages: {}", crate::context::get_package_dir().to_string_lossy());
-    println!("Data: {}", crate::context::get_config_dir().to_string_lossy());
+    println!("Data: {}", crate::context::get_data_dir().to_string_lossy());
 }
 
 
