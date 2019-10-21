@@ -91,9 +91,6 @@ impl <'a, R: MatchReceiver, M: ConfigManager<'a>> super::Matcher for ScrollingMa
         let is_current_word_separator = active_config.word_separators.contains(
             &c.chars().nth(0).unwrap_or_default()
         );
-        if is_current_word_separator {
-
-        }
 
         let mut was_previous_word_separator = self.was_previous_char_word_separator.borrow_mut();
 
@@ -104,6 +101,8 @@ impl <'a, R: MatchReceiver, M: ConfigManager<'a>> super::Matcher for ScrollingMa
                 if !x.trigger.starts_with(c) {
                     false
                 }else{
+                    // If word option is true, a match can only be started if the previous
+                    // char was a word separator
                     if x.word {
                         *was_previous_word_separator
                     }else{
@@ -188,6 +187,8 @@ impl <'a, R: MatchReceiver, M: ConfigManager<'a>> super::Matcher for ScrollingMa
             current_set_queue.pop_front();
         }
 
+        *was_previous_word_separator = is_current_word_separator;
+
         if let Some(match_entry) = found_match {
             if let Some(last) = current_set_queue.back_mut() {
                 last.clear();
@@ -196,6 +197,9 @@ impl <'a, R: MatchReceiver, M: ConfigManager<'a>> super::Matcher for ScrollingMa
             let trailing_separator = if !match_entry.waiting_for_separator {
                 None
             }else{
+                // Force espanso to consider the previous char a word separator after a match
+                *was_previous_word_separator = true;
+
                 let as_char = c.chars().nth(0);
                 match as_char {
                     Some(c) => {
@@ -207,8 +211,6 @@ impl <'a, R: MatchReceiver, M: ConfigManager<'a>> super::Matcher for ScrollingMa
 
             self.receiver.on_match(match_entry._match, trailing_separator);
         }
-
-        *was_previous_word_separator = is_current_word_separator;
     }
 
     fn handle_modifier(&self, m: KeyModifier) {
