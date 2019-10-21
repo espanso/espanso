@@ -150,8 +150,15 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
 
         // If a trailing separator was counted in the match, add it back to the target string
         if let Some(trailing_separator) = trailing_separator {
-            target_string.push(trailing_separator);
+            if trailing_separator == '\r' {   // If the trailing separator is a carriage return,
+                target_string.push('\n');   // convert it to new line
+            }else{
+                target_string.push(trailing_separator);
+            }
         }
+
+        // Convert Windows style newlines into unix styles
+        target_string = target_string.replace("\r\n", "\n");
 
         match config.backend {
             BackendType::Inject => {
@@ -162,7 +169,7 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
                     self.keyboard_manager.send_string(&target_string);
                 }else{
                     // To handle newlines, substitute each "\n" char with an Enter key press.
-                    let splits = target_string.lines();
+                    let splits = target_string.split('\n');
 
                     for (i, split) in splits.enumerate() {
                         if i > 0 {
