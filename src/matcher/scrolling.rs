@@ -17,7 +17,7 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::matcher::{Match, MatchReceiver};
+use crate::matcher::{Match, MatchReceiver, TriggerEntry};
 use std::cell::RefCell;
 use crate::event::{KeyModifier, ActionEventReceiver, ActionType};
 use crate::config::ConfigManager;
@@ -31,8 +31,10 @@ pub struct ScrollingMatcher<'a, R: MatchReceiver, M: ConfigManager<'a>> {
     current_set_queue: RefCell<VecDeque<Vec<MatchEntry<'a>>>>,
     toggle_press_time: RefCell<SystemTime>,
     is_enabled: RefCell<bool>,
+    was_previous_char_word_separator: RefCell<bool>,
 }
 
+#[derive(Clone)]
 struct MatchEntry<'a> {
     start: usize,
     count: usize,
@@ -49,7 +51,8 @@ impl <'a, R: MatchReceiver, M: ConfigManager<'a>> ScrollingMatcher<'a, R, M> {
             receiver,
             current_set_queue,
             toggle_press_time,
-            is_enabled: RefCell::new(true)
+            is_enabled: RefCell::new(true),
+            was_previous_char_word_separator: RefCell::new(true),
         }
     }
 
@@ -66,6 +69,17 @@ impl <'a, R: MatchReceiver, M: ConfigManager<'a>> ScrollingMatcher<'a, R, M> {
 
         self.receiver.on_enable_update(*is_enabled);
     }
+
+    fn is_matching(mtc: &Match, current_char: &str, start: usize, is_current_word_separator: bool) -> bool {
+        match mtc._trigger_sequence[start] {
+            TriggerEntry::Char(c) => {
+                current_char.starts_with(c)
+            },
+            TriggerEntry::WordSeparator => {
+                is_current_word_separator
+            },
+        }
+    }
 }
 
 impl <'a, R: MatchReceiver, M: ConfigManager<'a>> super::Matcher for ScrollingMatcher<'a, R, M> {
@@ -75,28 +89,42 @@ impl <'a, R: MatchReceiver, M: ConfigManager<'a>> super::Matcher for ScrollingMa
             return;
         }
 
+        // Obtain the configuration for the active application if present,
+        // otherwise get the default one
+        let active_config = self.config_manager.active_config();
+
+        // Check if the current char is a word separator
+        let is_current_word_separator = active_config.word_separators.contains(
+            &c.chars().nth(0).unwrap_or_default()
+        );
+
+        let mut was_previous_word_separator = self.was_previous_char_word_separator.borrow_mut();
+
         let mut current_set_queue = self.current_set_queue.borrow_mut();
 
-        let new_matches: Vec<MatchEntry> = self.config_manager.matches().iter()
-            .filter(|&x| x.trigger.starts_with(c))
+        let new_matches: Vec<MatchEntry> = active_config.matches.iter()
+            .filter(|&x| {
+                let mut result = Self::is_matching(x, c, 0, is_current_word_separator);
+
+                if x.word {
+                    result = result && *was_previous_word_separator
+                }
+
+                result
+            })
             .map(|x | MatchEntry{
                 start: 1,
-                count: x.trigger.chars().count(),
+                count: x._trigger_sequence.len(),
                 _match: &x
             })
             .collect();
         // TODO: use an associative structure to improve the efficiency of this first "new_matches" lookup.
 
-        let combined_matches: Vec<MatchEntry> = match current_set_queue.back() {
+        let combined_matches: Vec<MatchEntry> = match current_set_queue.back_mut() {
             Some(last_matches) => {
                 let mut updated: Vec<MatchEntry> = last_matches.iter()
                     .filter(|&x| {
-                        let nchar = x._match.trigger.chars().nth(x.start);
-                        if let Some(nchar) = nchar {
-                            c.starts_with(nchar)
-                        }else{
-                            false
-                        }
+                        Self::is_matching(x._match, c, x.start, is_current_word_separator)
                     })
                     .map(|x | MatchEntry{
                         start: x.start+1,
@@ -126,11 +154,29 @@ impl <'a, R: MatchReceiver, M: ConfigManager<'a>> super::Matcher for ScrollingMa
             current_set_queue.pop_front();
         }
 
-        if let Some(_match) = found_match {
+        *was_previous_word_separator = is_current_word_separator;
+
+        if let Some(mtc) = found_match {
             if let Some(last) = current_set_queue.back_mut() {
                 last.clear();
             }
-            self.receiver.on_match(_match);
+
+            let trailing_separator = if !is_current_word_separator {
+                None
+            }else{
+                let as_char = c.chars().nth(0);
+                match as_char {
+                    Some(c) => {
+                        Some(c) // Current char is the trailing separator
+                    },
+                    None => {None},
+                }
+            };
+
+            // Force espanso to consider the last char as a separator
+            *was_previous_word_separator = true;
+
+            self.receiver.on_match(mtc, trailing_separator);
         }
     }
 
