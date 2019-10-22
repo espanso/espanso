@@ -185,6 +185,13 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
                 self.keyboard_manager.trigger_paste();
             },
         }
+
+        // Cursor Hint
+        if let Some(cursor_rewind) = m._cursor_rewind {
+            // Simulate left arrow key presses to bring the cursor into the desired position
+
+            self.keyboard_manager.move_cursor_left(cursor_rewind);
+        }
     }
 
     fn on_enable_update(&self, status: bool) {

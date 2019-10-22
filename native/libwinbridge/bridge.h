@@ -65,6 +65,11 @@ extern "C" void send_string(const wchar_t * string);
 extern "C" void send_vkey(int32_t vk);
 
 /*
+ * Send the given Virtual Key press multiple times
+ */
+extern "C" void send_multi_vkey(int32_t vk, int32_t count);
+
+/*
  * Send the backspace keypress, *count* times.
  */
 extern "C" void delete_string(int32_t count);
