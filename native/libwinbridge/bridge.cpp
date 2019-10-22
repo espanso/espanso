@@ -243,7 +243,12 @@ LRESULT CALLBACK window_procedure(HWND window, unsigned int msg, WPARAM wp, LPAR
                 if (GetKeyboardState(lpKeyState.data())) {
                     // Convert the virtual key to an unicode char
                     std::array<WCHAR, 4> buffer;
-                    int result = ToUnicodeEx(raw->data.keyboard.VKey, raw->data.keyboard.MakeCode, lpKeyState.data(), buffer.data(), buffer.size(), 0, currentKeyboardLayout);
+
+                    // This flag is needed to avoid chaning the keyboard state for some layouts.
+                    // Refer to issue: https://github.com/federico-terzi/espanso/issues/86
+                    UINT flags = 1 << 2;
+
+                    int result = ToUnicodeEx(raw->data.keyboard.VKey, raw->data.keyboard.MakeCode, lpKeyState.data(), buffer.data(), buffer.size(), flags, currentKeyboardLayout);
 
                     //std::cout << result << " " << buffer[0] << " " << raw->data.keyboard.VKey << std::endl;
 
