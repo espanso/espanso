@@ -94,9 +94,16 @@ impl <'a, R: MatchReceiver, M: ConfigManager<'a>> super::Matcher for ScrollingMa
         let active_config = self.config_manager.active_config();
 
         // Check if the current char is a word separator
-        let is_current_word_separator = active_config.word_separators.contains(
+        let mut is_current_word_separator = active_config.word_separators.contains(
             &c.chars().nth(0).unwrap_or_default()
         );
+
+        // Workaround needed on macos to consider espanso replacement key presses as separators.
+        if cfg!(target_os = "macos") {
+            if c.len() > 1 {
+                is_current_word_separator = true;
+            }
+        }
 
         let mut was_previous_word_separator = self.was_previous_char_word_separator.borrow_mut();
 
