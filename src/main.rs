@@ -530,6 +530,7 @@ fn restart_main(config_set: ConfigSet) {
 
 /// Cli tool used to analyze active windows to extract useful information
 /// to create configuration filters.
+#[cfg(not(target_os = "macos"))]
 fn detect_main() {
     let system_manager = system::get_manager();
 
@@ -559,6 +560,52 @@ fn detect_main() {
         last_exec = curr_exec;
 
         thread::sleep(Duration::from_millis(500));
+    }
+}
+
+/// Cli tool used to analyze active windows to extract useful information
+/// to create configuration filters.
+/// On macOS version we need to start an event loop for the app to register changes.
+#[cfg(target_os = "macos")]
+fn detect_main() {
+    thread::spawn(|| {
+        use std::io::Write;
+        use std::io::stdout;
+
+        let system_manager = system::get_manager();
+
+        println!("Listening for changes, now focus the window you want to analyze.");
+        println!("Warning: stay on the window for a few seconds, as it may take a while to register.");
+        println!("You can terminate with CTRL+C\n");
+
+        let mut last_title : String = "".to_owned();
+        let mut last_class : String = "".to_owned();
+        let mut last_exec : String = "".to_owned();
+
+        loop {
+            let curr_title = system_manager.get_current_window_title().unwrap_or_default();
+            let curr_class = system_manager.get_current_window_class().unwrap_or_default();
+            let curr_exec = system_manager.get_current_window_executable().unwrap_or_default();
+
+            // Check if a change occurred
+            if curr_title != last_title || curr_class != last_class || curr_exec != last_exec {
+                println!("Detected change, current window has properties:");
+                println!("==> Title: '{}'", curr_title);
+                println!("==> Class: '{}'", curr_class);
+                println!("==> Executable: '{}'", curr_exec);
+                println!();
+            }
+
+            last_title = curr_title;
+            last_class = curr_class;
+            last_exec = curr_exec;
+
+            thread::sleep(Duration::from_millis(500));
+        }
+    });
+
+    unsafe {
+        crate::bridge::macos::headless_eventloop();
     }
 }
 
