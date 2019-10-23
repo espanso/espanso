@@ -61,6 +61,11 @@ void send_string(const char * string);
 void send_vkey(int32_t vk);
 
 /*
+ * Send the Virtual Key press multiple times
+ */
+void send_multi_vkey(int32_t vk, int32_t count);
+
+/*
  * Send the backspace keypress, *count* times.
  */
 void delete_string(int32_t count);
