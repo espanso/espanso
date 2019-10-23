@@ -101,23 +101,7 @@ void send_string(const char * string) {
 }
 
 void delete_string(int32_t count) {
-    dispatch_async(dispatch_get_main_queue(), ^(void) {
-        for (int i = 0; i < count; i++) {
-            CGEventRef keydown;
-            keydown = CGEventCreateKeyboardEvent(NULL, 0x33, true);
-            CGEventPost(kCGHIDEventTap, keydown);
-            CFRelease(keydown);
-
-            usleep(2000);
-
-            CGEventRef keyup;
-            keyup = CGEventCreateKeyboardEvent(NULL, 0x33, false);
-            CGEventPost(kCGHIDEventTap, keyup);
-            CFRelease(keyup);
-
-            usleep(2000);
-        }
-    });
+    send_multi_vkey(0x33, count);
 }
 
 void send_vkey(int32_t vk) {
@@ -127,14 +111,34 @@ void send_vkey(int32_t vk) {
         CGEventPost(kCGHIDEventTap, keydown);
         CFRelease(keydown);
 
-        usleep(2000);
+        usleep(500);
 
         CGEventRef keyup;
         keyup = CGEventCreateKeyboardEvent(NULL, vk, false);
         CGEventPost(kCGHIDEventTap, keyup);
         CFRelease(keyup);
 
-        usleep(2000);
+        usleep(500);
+    });
+}
+
+void send_multi_vkey(int32_t vk, int32_t count) {
+    dispatch_async(dispatch_get_main_queue(), ^(void) {
+        for (int i = 0; i < count; i++) {
+            CGEventRef keydown;
+            keydown = CGEventCreateKeyboardEvent(NULL, vk, true);
+            CGEventPost(kCGHIDEventTap, keydown);
+            CFRelease(keydown);
+
+            usleep(500);
+
+            CGEventRef keyup;
+            keyup = CGEventCreateKeyboardEvent(NULL, vk, false);
+            CGEventPost(kCGHIDEventTap, keyup);
+            CFRelease(keyup);
+
+            usleep(500);
+        }
     });
 }
 
