@@ -64,6 +64,12 @@ int32_t eventloop() {
     [NSApp run];
 }
 
+int32_t headless_eventloop() {
+    NSApplication * application = [NSApplication sharedApplication];
+    [NSApp run];
+    return 0;
+}
+
 void send_string(const char * string) {
     char * stringCopy = strdup(string);
     dispatch_async(dispatch_get_main_queue(), ^(void) {

@@ -31,6 +31,7 @@ pub struct MacMenuItem {
 extern {
     pub fn initialize(s: *const c_void, icon_path: *const c_char);
     pub fn eventloop();
+    pub fn headless_eventloop();
 
     // System
     pub fn check_accessibility() -> i32;
