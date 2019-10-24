@@ -38,11 +38,6 @@ pub struct Match {
     // Automatically calculated from the trigger, used by the matcher to check for correspondences.
     #[serde(skip_serializing)]
     pub _trigger_sequence: Vec<TriggerEntry>,
-
-    // If a cursor position hint is present, this value contains the amount of "left" moves necessary
-    // to arrive to the target point
-    #[serde(skip_serializing)]
-    pub _cursor_rewind: Option<i32>,
 }
 
 impl <'de> serde::Deserialize<'de> for Match {
@@ -62,30 +57,7 @@ impl<'a> From<&'a AutoMatch> for Match{
 
         // TODO: may need to replace windows newline (\r\n) with newline only (\n)
 
-        let mut new_replace = other.replace.clone();
-
-        // Check if the replace result contains a Cursor Hint
-        let cursor_rewind = if other.replace.contains("{{|}}") {
-            let index = other.replace.find("{{|}}");
-            if let Some(index) = index {
-                // Convert the byte index to a char index
-                let char_str = &other.replace[0..index];
-                let char_index = char_str.chars().count();
-                let total_size = other.replace.chars().count();
-
-                // Remove the {{|}} placeholder
-                new_replace = other.replace.replace("{{|}}", "");
-
-                // Calculate the amount of rewind moves needed (LEFT ARROW).
-                // Subtract also 5, equal to the number of chars of the placeholder "{{|}}"
-                let moves = (total_size - char_index - 5) as i32;
-                Some(moves)
-            }else{
-                None
-            }
-        }else{
-            None
-        };
+        let new_replace = other.replace.clone();
 
         // Check if the match contains variables
         let has_vars = VAR_REGEX.is_match(&other.replace);
@@ -107,7 +79,6 @@ impl<'a> From<&'a AutoMatch> for Match{
             word: other.word.clone(),
             _has_vars: has_vars,
             _trigger_sequence: trigger_sequence,
-            _cursor_rewind: cursor_rewind,
         }
     }
 }
@@ -240,53 +211,5 @@ mod tests {
         assert_eq!(_match._trigger_sequence[2], TriggerEntry::Char('s'));
         assert_eq!(_match._trigger_sequence[3], TriggerEntry::Char('t'));
         assert_eq!(_match._trigger_sequence[4], TriggerEntry::WordSeparator);
-    }
-
-    #[test]
-    fn test_match_cursor_hint_not_present() {
-        let match_str = r###"
-        trigger: "test"
-        replace: "This is a test"
-        "###;
-
-        let _match : Match = serde_yaml::from_str(match_str).unwrap();
-
-        assert!(_match._cursor_rewind.is_none());
-    }
-
-    #[test]
-    fn test_match_cursor_hint_should_be_removed() {
-        let match_str = r###"
-        trigger: "test"
-        replace: "Testing the {{|}} cursor position"
-        "###;
-
-        let _match : Match = serde_yaml::from_str(match_str).unwrap();
-
-        assert_eq!(_match.replace, "Testing the  cursor position");
-    }
-
-    #[test]
-    fn test_match_cursor_rewind_single_line() {
-        let match_str = r###"
-        trigger: "test"
-        replace: "Testing the {{|}} cursor position"
-        "###;
-
-        let _match : Match = serde_yaml::from_str(match_str).unwrap();
-
-        assert_eq!(_match._cursor_rewind.unwrap(), 16);
-    }
-
-    #[test]
-    fn test_match_cursor_rewind_multiple_line() {
-        let match_str = r###"
-        trigger: "test"
-        replace: "Testing the \n{{|}}\n cursor position"
-        "###;
-
-        let _match : Match = serde_yaml::from_str(match_str).unwrap();
-
-        assert_eq!(_match._cursor_rewind.unwrap(), 17);
     }
 }
