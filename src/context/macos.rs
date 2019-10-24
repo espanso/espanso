@@ -27,7 +27,7 @@ use std::fs;
 use log::{info, error};
 use std::process::exit;
 
-const STATUS_ICON_BINARY : &[u8] = include_bytes!("../res/mac/icon@2x.png");
+const STATUS_ICON_BINARY : &[u8] = include_bytes!("../res/mac/icon.png");
 
 pub struct MacContext {
     pub send_channel: Sender<Event>
@@ -53,7 +53,7 @@ impl MacContext {
 
         // Initialize the status icon path
         let espanso_dir = super::get_data_dir();
-        let status_icon_target = espanso_dir.join("icon@2x.png");
+        let status_icon_target = espanso_dir.join("icon.png");
 
         if status_icon_target.exists() {
             info!("Status icon already initialized, skipping.");
