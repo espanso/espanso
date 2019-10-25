@@ -48,4 +48,11 @@ impl super::KeyboardManager for MacKeyboardManager {
     fn delete_string(&self, count: i32) {
         unsafe {delete_string(count)}
     }
+
+    fn move_cursor_left(&self, count: i32) {
+        unsafe {
+            // Simulate the Left arrow count times
+            send_multi_vkey(0x7B, count);
+        }
+    }
 }

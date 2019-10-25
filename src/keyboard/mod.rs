@@ -31,6 +31,7 @@ pub trait KeyboardManager {
     fn send_enter(&self);
     fn trigger_paste(&self);
     fn delete_string(&self, count: i32);
+    fn move_cursor_left(&self, count: i32);
 }
 
 // WINDOWS IMPLEMENTATION

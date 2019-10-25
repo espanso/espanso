@@ -55,4 +55,11 @@ impl super::KeyboardManager for WindowsKeyboardManager {
             delete_string(count)
         }
     }
+
+    fn move_cursor_left(&self, count: i32) {
+        unsafe {
+            // Send the left arrow key multiple times
+            send_multi_vkey(0x25, count)
+        }
+    }
 }

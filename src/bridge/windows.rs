@@ -55,6 +55,7 @@ extern {
     pub fn eventloop();
     pub fn send_string(string: *const u16);
     pub fn send_vkey(vk: i32);
+    pub fn send_multi_vkey(vk: i32, count: i32);
     pub fn delete_string(count: i32);
     pub fn trigger_paste();
 }
