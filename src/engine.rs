@@ -160,6 +160,25 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
         // Convert Windows style newlines into unix styles
         target_string = target_string.replace("\r\n", "\n");
 
+        // Calculate cursor rewind moves if a Cursor Hint is present
+        let index = target_string.find("$|$");
+        let cursor_rewind = if let Some(index) = index {
+            // Convert the byte index to a char index
+            let char_str = &target_string[0..index];
+            let char_index = char_str.chars().count();
+            let total_size = target_string.chars().count();
+
+            // Remove the $|$ placeholder
+            target_string = target_string.replace("$|$", "");
+
+            // Calculate the amount of rewind moves needed (LEFT ARROW).
+            // Subtract also 3, equal to the number of chars of the placeholder "$|$"
+            let moves = (total_size - char_index - 3) as i32;
+            Some(moves)
+        }else{
+            None
+        };
+
         match config.backend {
             BackendType::Inject => {
                 // Send the expected string. On linux, newlines are managed automatically
@@ -184,6 +203,11 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
                 self.clipboard_manager.set_clipboard(&target_string);
                 self.keyboard_manager.trigger_paste();
             },
+        }
+
+        if let Some(moves) = cursor_rewind {
+            // Simulate left arrow key presses to bring the cursor into the desired position
+            self.keyboard_manager.move_cursor_left(moves);
         }
     }
 

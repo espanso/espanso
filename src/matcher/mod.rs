@@ -55,6 +55,10 @@ impl<'a> From<&'a AutoMatch> for Match{
             static ref VAR_REGEX: Regex = Regex::new("\\{\\{\\s*(\\w+)\\s*\\}\\}").unwrap();
         }
 
+        // TODO: may need to replace windows newline (\r\n) with newline only (\n)
+
+        let new_replace = other.replace.clone();
+
         // Check if the match contains variables
         let has_vars = VAR_REGEX.is_match(&other.replace);
 
@@ -70,7 +74,7 @@ impl<'a> From<&'a AutoMatch> for Match{
 
         Self {
             trigger: other.trigger.clone(),
-            replace: other.replace.clone(),
+            replace: new_replace,
             vars: other.vars.clone(),
             word: other.word.clone(),
             _has_vars: has_vars,

@@ -68,6 +68,11 @@ extern "C" void send_string(const char * string);
 extern "C" void delete_string(int32_t count);
 
 /*
+ * Send the left arrow keypress, *count* times.
+ */
+extern "C" void left_arrow(int32_t count);
+
+/*
  * Trigger normal paste ( Pressing CTRL+V )
  */
 extern "C" void trigger_paste();
