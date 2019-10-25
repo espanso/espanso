@@ -53,4 +53,10 @@ impl super::KeyboardManager for LinuxKeyboardManager {
     fn delete_string(&self, count: i32) {
         unsafe {delete_string(count)}
     }
+
+    fn move_cursor_left(&self, count: i32) {
+        unsafe {
+            left_arrow(count);
+        }
+    }
 }
