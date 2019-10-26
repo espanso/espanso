@@ -278,6 +278,12 @@ void delete_string(int32_t count) {
     }
 }
 
+void left_arrow(int32_t count) {
+    for (int i = 0; i<count; i++) {
+        xdo_send_keysequence_window(xdo_context, CURRENTWINDOW, "Left", 8000);
+    }
+}
+
 void trigger_paste() {
     xdo_send_keysequence_window(xdo_context, CURRENTWINDOW, "Control_L+v", 8000);
 }
@@ -445,6 +451,8 @@ int32_t is_current_window_terminal() {
         }else if (strstr(class_buffer, "Termite") != NULL) {  // Termite
             return 1;
         }else if (strstr(class_buffer, "konsole") != NULL) {  // KDE Konsole
+            return 1;
+        }else if (strstr(class_buffer, "Terminator") != NULL) {  // Terminator
             return 1;
         }
     }
