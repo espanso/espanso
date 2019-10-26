@@ -146,14 +146,14 @@ you could have used espanso like this:
 This would correctly replace `ther` with `there`, but it also has the problem of expanding
 `other` into `othere`, making it unusable.
 
-With *word triggers* you can now add the `word: True` property to a match, telling espanso
+With *word triggers* you can now add the `word: true` property to a match, telling espanso
 to only trigger that match if surrounded by *word separators* ( such as *spaces*, *commas* and *newlines*). 
 So in this case it becomes:
 
 ```yaml
   - trigger: "ther"
     replace: "there"
-    word: True
+    word: true
 ```
 
 At this point, espanso will only expand `ther` into `there` when used as a standalone word.
