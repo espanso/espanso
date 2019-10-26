@@ -93,6 +93,77 @@ the **extension** that will be executed to calculate its value. In this case, we
 
 In the remaining lines we declared the **parameters** used by the extension, in this case the *date format*.
 
+### Cursor Hints
+
+Let's say you want to use espanso to expand some HTML code snippets, such as:
+
+```yaml
+  - trigger: ":div"
+    replace: "<div></div>"
+```
+
+With this match, any time you type `:div` you get the `<div></div>` expansion, with the cursor at the end.
+
+While being useful, this snippet would have been much more convenient if **the cursor was positioned
+between the tags**, such as `<div>|</div>`.
+
+Starting from version 0.3.2, espanso supports **cursor hints**, a way to control the position of the cursor
+after the expansion. 
+
+Using them is very simple, just insert `$|$` where you want the cursor to be positioned, in this case:
+
+```yaml
+  - trigger: ":div"
+    replace: "<div>$|$</div>"
+```
+
+If you now type `:div`, you get the `<div></div>` expansion, with the cursor between the tags!
+
+#### Things to keep in mind
+
+* You can only define **one cursor hint** per match. Multiple hints will be ignored.
+* This feature should be used with care in **multiline** expansions, as it may yield
+  **unexpected results** when using it in code editors that support **auto indenting**. 
+  This is due to the way the feature is implemented: espanso simulates a series of `left arrow`
+  key-presses to position the cursor in the right position. This works perfectly in single line
+  replacements or in non-autoindenting fields, but can be problematic in code editors, as they
+  automatically insert indentations that modify the number of required presses in a way
+  espanso is not capable to detect.
+
+### Word Triggers
+
+If you ever thought about using espanso as an **autocorrection tool for typos**, you may have experienced
+this problem:
+
+Let's say you occasionally type `ther` instead of `there`. Before the introduction of *word triggers*, 
+you could have used espanso like this:
+
+```yaml
+  - trigger: "ther"
+    replace: "there"
+```
+
+This would correctly replace `ther` with `there`, but it also has the problem of expanding
+`other` into `othere`, making it unusable.
+
+With *word triggers* you can now add the `word: True` property to a match, telling espanso
+to only trigger that match if surrounded by *word separators* ( such as *spaces*, *commas* and *newlines*). 
+So in this case it becomes:
+
+```yaml
+  - trigger: "ther"
+    replace: "there"
+    word: True
+```
+
+At this point, espanso will only expand `ther` into `there` when used as a standalone word.
+For instance:
+
+Before | After |
+--- | ---
+Is ther anyone else? | Is there anyone else? | `ther` is converted to `there`
+I have other interests | I have other interests | `other` is left unchanged
+
 ### Script Extension
 
 There will be tasks for which espanso was not designed for. For those cases, espanso offers the
