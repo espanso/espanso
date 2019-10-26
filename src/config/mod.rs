@@ -50,7 +50,7 @@ fn default_log_level() -> i32 { 0 }
 fn default_ipc_server_port() -> i32 { 34982 }
 fn default_use_system_agent() -> bool { true }
 fn default_config_caching_interval() -> i32 { 800 }
-fn default_word_separators() -> Vec<char> { vec![' ', ',', '.', '\r', '\n'] }
+fn default_word_separators() -> Vec<char> { vec![' ', ',', '.', '\r', '\n', 22u8 as char] }
 fn default_toggle_interval() -> u32 { 230 }
 fn default_backspace_limit() -> i32 { 3 }
 fn default_exclude_default_matches() -> bool {false}
