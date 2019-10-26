@@ -39,6 +39,7 @@ extern {
 
     pub fn send_string(string: *const c_char);
     pub fn delete_string(count: i32);
+    pub fn left_arrow(count: i32);
     pub fn trigger_paste();
     pub fn trigger_terminal_paste();
 }

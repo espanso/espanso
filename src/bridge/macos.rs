@@ -31,6 +31,7 @@ pub struct MacMenuItem {
 extern {
     pub fn initialize(s: *const c_void, icon_path: *const c_char);
     pub fn eventloop();
+    pub fn headless_eventloop();
 
     // System
     pub fn check_accessibility() -> i32;
@@ -54,6 +55,7 @@ extern {
 
     pub fn send_string(string: *const c_char);
     pub fn send_vkey(vk: i32);
+    pub fn send_multi_vkey(vk: i32, count: i32);
     pub fn delete_string(count: i32);
     pub fn trigger_paste();
 }

@@ -38,6 +38,11 @@ int32_t initialize(void * context, const char * icon_path);
 int32_t eventloop();
 
 /*
+ * Initialize the application and start the headless eventloop, used for the espanso detect command
+ */
+int32_t headless_eventloop();
+
+/*
  * Called when a new keypress is made, the first argument is an char array,
  * while the second is the size of the array.
  */
@@ -59,6 +64,11 @@ void send_string(const char * string);
  * Send the Virtual Key press
  */
 void send_vkey(int32_t vk);
+
+/*
+ * Send the Virtual Key press multiple times
+ */
+void send_multi_vkey(int32_t vk, int32_t count);
 
 /*
  * Send the backspace keypress, *count* times.

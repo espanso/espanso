@@ -243,7 +243,12 @@ LRESULT CALLBACK window_procedure(HWND window, unsigned int msg, WPARAM wp, LPAR
                 if (GetKeyboardState(lpKeyState.data())) {
                     // Convert the virtual key to an unicode char
                     std::array<WCHAR, 4> buffer;
-                    int result = ToUnicodeEx(raw->data.keyboard.VKey, raw->data.keyboard.MakeCode, lpKeyState.data(), buffer.data(), buffer.size(), 0, currentKeyboardLayout);
+
+                    // This flag is needed to avoid chaning the keyboard state for some layouts.
+                    // Refer to issue: https://github.com/federico-terzi/espanso/issues/86
+                    UINT flags = 1 << 2;
+
+                    int result = ToUnicodeEx(raw->data.keyboard.VKey, raw->data.keyboard.MakeCode, lpKeyState.data(), buffer.data(), buffer.size(), flags, currentKeyboardLayout);
 
                     //std::cout << result << " " << buffer[0] << " " << raw->data.keyboard.VKey << std::endl;
 
@@ -448,24 +453,7 @@ void send_string(const wchar_t * string) {
  * Send the backspace keypress, *count* times.
  */
 void delete_string(int32_t count) {
-    std::vector<INPUT> vec;
-
-    for (int i = 0; i < count; i++) {
-        INPUT input = { 0 };
-
-        input.type = INPUT_KEYBOARD;
-        input.ki.wScan = 0;
-        input.ki.time = 0;
-        input.ki.dwExtraInfo = 0;
-        input.ki.wVk = VK_BACK;
-        input.ki.dwFlags = 0; // 0 for key press
-        vec.push_back(input);
-
-        input.ki.dwFlags = KEYEVENTF_KEYUP; // KEYEVENTF_KEYUP for key release
-        vec.push_back(input);
-    }
-
-    SendInput(vec.size(), vec.data(), sizeof(INPUT));
+    send_multi_vkey(VK_BACK, count);
 }
 
 void send_vkey(int32_t vk) {
@@ -483,6 +471,27 @@ void send_vkey(int32_t vk) {
 
     input.ki.dwFlags = KEYEVENTF_KEYUP; // KEYEVENTF_KEYUP for key release
     vec.push_back(input);
+
+    SendInput(vec.size(), vec.data(), sizeof(INPUT));
+}
+
+void send_multi_vkey(int32_t vk, int32_t count) {
+    std::vector<INPUT> vec;
+
+    for (int i = 0; i < count; i++) {
+        INPUT input = { 0 };
+
+        input.type = INPUT_KEYBOARD;
+        input.ki.wScan = 0;
+        input.ki.time = 0;
+        input.ki.dwExtraInfo = 0;
+        input.ki.wVk = vk;
+        input.ki.dwFlags = 0; // 0 for key press
+        vec.push_back(input);
+
+        input.ki.dwFlags = KEYEVENTF_KEYUP; // KEYEVENTF_KEYUP for key release
+        vec.push_back(input);
+    }
 
     SendInput(vec.size(), vec.data(), sizeof(INPUT));
 }

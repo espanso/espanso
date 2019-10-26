@@ -103,16 +103,22 @@ lazy_static! {
 impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIManager>
     MatchReceiver for Engine<'a, S, C, M, U>{
 
-    fn on_match(&self, m: &Match) {
+    fn on_match(&self, m: &Match, trailing_separator: Option<char>) {
         let config = self.config_manager.active_config();
 
         if config.disabled {
             return;
         }
 
-        self.keyboard_manager.delete_string(m.trigger.chars().count() as i32);
+        let char_count = if trailing_separator.is_none() {
+            m.trigger.chars().count() as i32
+        }else{
+            m.trigger.chars().count() as i32 + 1 // Count also the separator
+        };
 
-        let target_string = if m._has_vars {
+        self.keyboard_manager.delete_string(char_count);
+
+        let mut target_string = if m._has_vars {
             let mut output_map = HashMap::new();
 
             for variable in m.vars.iter() {
@@ -142,6 +148,37 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
             m.replace.clone()
         };
 
+        // If a trailing separator was counted in the match, add it back to the target string
+        if let Some(trailing_separator) = trailing_separator {
+            if trailing_separator == '\r' {   // If the trailing separator is a carriage return,
+                target_string.push('\n');   // convert it to new line
+            }else{
+                target_string.push(trailing_separator);
+            }
+        }
+
+        // Convert Windows style newlines into unix styles
+        target_string = target_string.replace("\r\n", "\n");
+
+        // Calculate cursor rewind moves if a Cursor Hint is present
+        let index = target_string.find("$|$");
+        let cursor_rewind = if let Some(index) = index {
+            // Convert the byte index to a char index
+            let char_str = &target_string[0..index];
+            let char_index = char_str.chars().count();
+            let total_size = target_string.chars().count();
+
+            // Remove the $|$ placeholder
+            target_string = target_string.replace("$|$", "");
+
+            // Calculate the amount of rewind moves needed (LEFT ARROW).
+            // Subtract also 3, equal to the number of chars of the placeholder "$|$"
+            let moves = (total_size - char_index - 3) as i32;
+            Some(moves)
+        }else{
+            None
+        };
+
         match config.backend {
             BackendType::Inject => {
                 // Send the expected string. On linux, newlines are managed automatically
@@ -151,7 +188,7 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
                     self.keyboard_manager.send_string(&target_string);
                 }else{
                     // To handle newlines, substitute each "\n" char with an Enter key press.
-                    let splits = target_string.lines();
+                    let splits = target_string.split('\n');
 
                     for (i, split) in splits.enumerate() {
                         if i > 0 {
@@ -166,6 +203,11 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
                 self.clipboard_manager.set_clipboard(&target_string);
                 self.keyboard_manager.trigger_paste();
             },
+        }
+
+        if let Some(moves) = cursor_rewind {
+            // Simulate left arrow key presses to bring the cursor into the desired position
+            self.keyboard_manager.move_cursor_left(moves);
         }
     }
 
