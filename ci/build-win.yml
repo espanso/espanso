@@ -1,7 +1,7 @@
 steps:
   - task: UsePythonVersion@0
     inputs:
-      versionSpec: '3.7.4'
+      versionSpec: '3.7'
       addToPath: true
 
   - script: |
