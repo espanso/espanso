@@ -168,7 +168,10 @@ impl <'a, R: MatchReceiver, M: ConfigManager<'a>> super::Matcher for ScrollingMa
                 last.clear();
             }
 
-            let trailing_separator = if !is_current_word_separator {
+            let trailing_separator = if !mtc.word {
+                // If it's not a word match, it cannot have a trailing separator
+                None
+            } else if !is_current_word_separator {
                 None
             }else{
                 let as_char = c.chars().nth(0);
