@@ -116,8 +116,16 @@ fn main() {
         .subcommand(SubCommand::with_name("status")
             .about("Check if the espanso daemon is running or not."))
         .subcommand(SubCommand::with_name("path")
-            .about("Prints all the current espanso directory paths, to easily locate configuration and data paths."))
-
+            .about("Prints all the current espanso directory paths, to easily locate configuration and data paths.")
+            .subcommand(SubCommand::with_name("config")
+                .about("Print the current config folder path."))
+            .subcommand(SubCommand::with_name("packages")
+                .about("Print the current packages folder path."))
+            .subcommand(SubCommand::with_name("data")
+                .about("Print the current data folder path."))
+            .subcommand(SubCommand::with_name("default")
+                .about("Print the default configuration file path."))
+        )
         // Package manager
         .subcommand(SubCommand::with_name("package")
             .about("Espanso package manager commands")
@@ -214,8 +222,8 @@ fn main() {
         return;
     }
 
-    if matches.subcommand_matches("path").is_some() {
-        path_main(config_set);
+    if let Some(matches) = matches.subcommand_matches("path") {
+        path_main(config_set, matches);
         return;
     }
 
@@ -821,10 +829,25 @@ fn list_package_main(_config_set: ConfigSet, matches: &ArgMatches) {
     }
 }
 
-fn path_main(_config_set: ConfigSet) {
-    println!("Config: {}", crate::context::get_config_dir().to_string_lossy());
-    println!("Packages: {}", crate::context::get_package_dir().to_string_lossy());
-    println!("Data: {}", crate::context::get_data_dir().to_string_lossy());
+fn path_main(_config_set: ConfigSet, matches: &ArgMatches) {
+    let config = crate::context::get_config_dir();
+    let packages = crate::context::get_package_dir();
+    let data = crate::context::get_data_dir();
+
+    if matches.subcommand_matches("config").is_some() {
+        println!("{}", config.to_string_lossy());
+    }else if matches.subcommand_matches("packages").is_some() {
+        println!("{}", packages.to_string_lossy());
+    }else if matches.subcommand_matches("data").is_some() {
+        println!("{}", data.to_string_lossy());
+    }else if matches.subcommand_matches("default").is_some() {
+        let default_file = config.join(crate::config::DEFAULT_CONFIG_FILE_NAME);
+        println!("{}", default_file.to_string_lossy());
+    }else{
+        println!("Config: {}", config.to_string_lossy());
+        println!("Packages: {}", packages.to_string_lossy());
+        println!("Data: {}", data.to_string_lossy());
+    }
 }
 
 

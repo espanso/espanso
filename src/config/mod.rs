@@ -36,7 +36,7 @@ pub(crate) mod runtime;
 
 const DEFAULT_CONFIG_FILE_CONTENT : &str = include_str!("../res/config.yml");
 
-const DEFAULT_CONFIG_FILE_NAME : &str = "default.yml";
+pub const DEFAULT_CONFIG_FILE_NAME : &str = "default.yml";
 const USER_CONFIGS_FOLDER_NAME: &str = "user";
 
 // Default values for primitives
