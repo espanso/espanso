@@ -454,6 +454,8 @@ int32_t is_current_window_terminal() {
             return 1;
         }else if (strstr(class_buffer, "Terminator") != NULL) {  // Terminator
             return 1;
+        }else if (strstr(class_buffer, "St") != NULL) {  // Simple terminal
+            return 1;
         }
     }
 
