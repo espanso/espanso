@@ -463,6 +463,8 @@ int32_t is_current_window_terminal() {
             return 1;
         }else if (strstr(class_buffer, "St") != NULL) {  // Simple terminal
             return 1;
+        }else if (strstr(class_buffer, "Alacritty") != NULL) {  // Alacritty terminal
+            return 1;
         }
     }
 
