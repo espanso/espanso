@@ -30,6 +30,7 @@ Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
 ChangesEnvironment=yes
+AlwaysRestart = yes
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -62,7 +63,7 @@ end;
 
 [Run]
 Filename: {tmp}\vc_redist.x64.exe; \
-    Parameters: "/install /quiet"; \
+    Parameters: "/install /quiet /norestart"; \
     StatusMsg: "Installing Visual C++ 2019 Redistributable";
 Filename: "{app}\{#MyAppExeName}"; Parameters: "start"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
 

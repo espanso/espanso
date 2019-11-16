@@ -285,6 +285,13 @@ void left_arrow(int32_t count) {
 }
 
 void trigger_paste() {
+    // Before sending the paste shortcut, trigger the press and release of the Shift key
+    // this is needed because for some triggers, for example ending with ":", the user
+    // will still have the Shift key pressed when espanso execute the pasting shortcut,
+    // therefore sending CTRL+Shift+V instead of CTRL+V.
+    // With this call, we force the shift key to be unpressed when pasting.
+    xdo_send_keysequence_window(xdo_context, CURRENTWINDOW, "Shift", 8000);
+
     xdo_send_keysequence_window(xdo_context, CURRENTWINDOW, "Control_L+v", 8000);
 }
 
@@ -455,6 +462,8 @@ int32_t is_current_window_terminal() {
         }else if (strstr(class_buffer, "Terminator") != NULL) {  // Terminator
             return 1;
         }else if (strstr(class_buffer, "St") != NULL) {  // Simple terminal
+            return 1;
+        }else if (strstr(class_buffer, "Alacritty") != NULL) {  // Alacritty terminal
             return 1;
         }
     }
