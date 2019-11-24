@@ -63,6 +63,7 @@ pub enum KeyModifier {
     ALT,
     META,
     BACKSPACE,
+    OFF,
 }
 
 impl Default for KeyModifier {
