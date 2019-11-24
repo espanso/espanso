@@ -194,6 +194,7 @@ impl <'a, R: MatchReceiver, M: ConfigManager<'a>> super::Matcher for ScrollingMa
         let config = self.config_manager.default_config();
 
         if m == config.toggle_key {
+            if m == KeyModifier::OFF { return }
             let mut toggle_press_time = self.toggle_press_time.borrow_mut();
             if let Ok(elapsed) = toggle_press_time.elapsed() {
                 if elapsed.as_millis() < u128::from(config.toggle_interval) {
