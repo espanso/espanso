@@ -426,6 +426,7 @@ mod tests {
     use std::io::Write;
     use tempfile::{NamedTempFile, TempDir};
     use std::any::Any;
+    use crate::matcher::{TextContent, MatchContentType};
 
     const TEST_WORKING_CONFIG_FILE : &str = include_str!("../res/test/working_config.yml");
     const TEST_CONFIG_FILE_WITH_BAD_YAML : &str = include_str!("../res/test/config_with_bad_yaml.yml");
@@ -727,7 +728,13 @@ mod tests {
         assert_eq!(config_set.default.matches.len(), 2);
         assert_eq!(config_set.specific[0].matches.len(), 2);
 
-        assert!(config_set.specific[0].matches.iter().find(|x| x.trigger == ":lol" && x.replace == "newstring").is_some());
+        assert!(config_set.specific[0].matches.iter().find(|x| {
+            if let MatchContentType::Text(content) = &x.content {
+                x.trigger == ":lol" && content.replace == "newstring"
+            }else{
+                false
+            }
+        }).is_some());
         assert!(config_set.specific[0].matches.iter().find(|x| x.trigger == ":yess").is_some());
     }
 
@@ -755,7 +762,13 @@ mod tests {
         assert_eq!(config_set.default.matches.len(), 2);
         assert_eq!(config_set.specific[0].matches.len(), 1);
 
-        assert!(config_set.specific[0].matches.iter().find(|x| x.trigger == "hello" && x.replace == "newstring").is_some());
+        assert!(config_set.specific[0].matches.iter().find(|x| {
+            if let MatchContentType::Text(content) = &x.content {
+                x.trigger == "hello" && content.replace == "newstring"
+            }else{
+                false
+            }
+        }).is_some());
     }
 
     #[test]
@@ -897,7 +910,13 @@ mod tests {
         let config_set = ConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
         assert_eq!(config_set.specific.len(), 0);
         assert_eq!(config_set.default.matches.len(), 1);
-        assert!(config_set.default.matches.iter().any(|m| m.trigger == "hasta" && m.replace == "world"));
+        assert!(config_set.default.matches.iter().any(|m| {
+            if let MatchContentType::Text(content) = &m.content {
+                m.trigger == "hasta" && content.replace == "world"
+            }else{
+                false
+            }
+        }));
     }
 
     #[test]

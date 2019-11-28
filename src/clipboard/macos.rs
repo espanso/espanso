@@ -18,8 +18,10 @@
  */
 
 use std::os::raw::c_char;
-use crate::bridge::macos::{get_clipboard, set_clipboard};
+use crate::bridge::macos::*;
 use std::ffi::{CStr, CString};
+use std::path::Path;
+use log::{error, warn};
 
 pub struct MacClipboardManager {
 
@@ -49,6 +51,24 @@ impl super::ClipboardManager for MacClipboardManager {
         if let Ok(cstr) = res {
             unsafe {
                 set_clipboard(cstr.as_ptr());
+            }
+        }
+    }
+
+    fn set_clipboard_image(&self, image_path: &Path) {
+        // Make sure the image exist beforehand
+        if !image_path.exists() {
+            error!("Image not found in path: {:?}", image_path);
+        }else{
+            let path_string = image_path.to_string_lossy().into_owned();
+            let res = CString::new(path_string);
+            if let Ok(path) = res {
+                unsafe {
+                    let result = set_clipboard_image(path.as_ptr());
+                    if result != 1 {
+                        warn!("Couldn't set clipboard for image: {:?}", image_path)
+                    }
+                }
             }
         }
     }
