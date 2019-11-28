@@ -22,6 +22,8 @@ use crate::event::{KeyEvent, KeyModifier};
 use crate::event::KeyEventReceiver;
 use serde_yaml::Mapping;
 use regex::Regex;
+use std::path::PathBuf;
+use std::fs;
 
 pub(crate) mod scrolling;
 
@@ -53,7 +55,7 @@ pub struct TextContent {
 
 #[derive(Debug, Serialize, Clone)]
 pub struct ImageContent {
-    pub path: String,
+    pub path: PathBuf,
 }
 
 impl <'de> serde::Deserialize<'de> for Match {
@@ -97,8 +99,29 @@ impl<'a> From<&'a AutoMatch> for Match{
 
             MatchContentType::Text(content)
         }else if let Some(image_path) = &other.image_path {  // Image match
+            // On Windows, we have to replace the forward / with the backslash \ in the path
+            let new_path = if cfg!(target_os = "windows") {
+                image_path.replace("/", "\\")
+            }else{
+                image_path.to_owned()
+            };
+
+            // Calculate variables in path
+            let new_path = if new_path.contains("$CONFIG") {
+                let config_dir = crate::context::get_config_dir();
+                let config_path = fs::canonicalize(&config_dir);
+                let config_path = if let Ok(config_path) = config_path {
+                    config_path.to_string_lossy().into_owned()
+                }else{
+                    "".to_owned()
+                };
+                new_path.replace("$CONFIG", &config_path)
+            }else{
+                new_path.to_owned()
+            };
+
             let content = ImageContent {
-                path: image_path.clone()
+                path: PathBuf::from(new_path)
             };
 
             MatchContentType::Image(content)

@@ -218,14 +218,12 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
 
             // Image Match
             MatchContentType::Image(content) => {
-                let image_path = PathBuf::from(&content.path);
-
                 // Make sure the image exist beforehand
-                if image_path.exists() {
-                    self.clipboard_manager.set_clipboard_image(&image_path);
+                if content.path.exists() {
+                    self.clipboard_manager.set_clipboard_image(&content.path);
                     self.keyboard_manager.trigger_paste();
                 }else{
-                    error!("Image not found in path: {:?}", image_path);
+                    error!("Image not found in path: {:?}", content.path);
                 }
             },
         }
