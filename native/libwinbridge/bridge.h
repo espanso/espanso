@@ -146,4 +146,9 @@ extern "C" int32_t get_clipboard(wchar_t * buffer, int32_t size);
  */
 extern "C" int32_t set_clipboard(wchar_t * text);
 
+/*
+ * Set the clipboard image to the given path
+ */
+extern "C" int32_t set_clipboard_image(wchar_t * path);
+
 #endif //ESPANSO_BRIDGE_H
