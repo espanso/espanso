@@ -148,5 +148,11 @@ int32_t get_clipboard(char * buffer, int32_t size);
  */
 int32_t set_clipboard(char * text);
 
+/*
+ * Set the clipboard image to the given file
+ */
+int32_t set_clipboard_image(char * path);
+
+
 };
 #endif //ESPANSO_BRIDGE_H

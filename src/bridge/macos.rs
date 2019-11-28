@@ -43,6 +43,7 @@ extern {
     // Clipboard
     pub fn get_clipboard(buffer: *mut c_char, size: i32) -> i32;
     pub fn set_clipboard(text: *const c_char) -> i32;
+    pub fn set_clipboard_image(path: *const c_char) -> i32;
 
     // UI
     pub fn register_icon_click_callback(cb: extern fn(_self: *mut c_void));
