@@ -31,6 +31,9 @@
 #include <strsafe.h>
 #include <shellapi.h>
 
+#pragma comment( lib, "gdiplus.lib" )
+#include <gdiplus.h>
+
 // How many milliseconds must pass between keystrokes to refresh the keyboard layout
 const long refreshKeyboardLayoutInterval = 2000;
 
@@ -655,4 +658,44 @@ int32_t get_clipboard(wchar_t *buffer, int32_t size) {
     swprintf(buffer, size, L"%s", hMem);
 
     CloseClipboard();
+}
+
+int32_t set_clipboard_image(wchar_t *path) {
+    bool result = false;
+
+    Gdiplus::GdiplusStartupInput gdiplusStartupInput;
+    ULONG_PTR gdiplusToken;
+    Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
+
+    Gdiplus::Bitmap *gdibmp = Gdiplus::Bitmap::FromFile(path);
+    if (gdibmp)
+    {
+        HBITMAP hbitmap;
+        gdibmp->GetHBITMAP(0, &hbitmap);
+        if (OpenClipboard(NULL))
+        {
+            EmptyClipboard();
+            DIBSECTION ds;
+            if (GetObject(hbitmap, sizeof(DIBSECTION), &ds))
+            {
+                HDC hdc = GetDC(HWND_DESKTOP);
+                //create compatible bitmap (get DDB from DIB)
+                HBITMAP hbitmap_ddb = CreateDIBitmap(hdc, &ds.dsBmih, CBM_INIT,
+                                                     ds.dsBm.bmBits, (BITMAPINFO*)&ds.dsBmih, DIB_RGB_COLORS);
+                ReleaseDC(HWND_DESKTOP, hdc);
+                SetClipboardData(CF_BITMAP, hbitmap_ddb);
+                DeleteObject(hbitmap_ddb);
+                result = true;
+            }
+            CloseClipboard();
+        }
+
+        //cleanup:
+        DeleteObject(hbitmap);
+        delete gdibmp;
+    }
+
+    Gdiplus::GdiplusShutdown(gdiplusToken);
+
+    return result;
 }
