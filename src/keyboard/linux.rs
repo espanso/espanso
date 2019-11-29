@@ -57,7 +57,10 @@ impl super::KeyboardManager for LinuxKeyboardManager {
                 },
                 PasteShortcut::CtrlShiftV => {
                     trigger_terminal_paste();
-                }
+                },
+                PasteShortcut::ShiftInsert=> {
+                    trigger_shift_ins_paste();
+                },
                 _ => {
                     error!("Linux backend does not support this Paste Shortcut, please open an issue on GitHub if you need it.")
                 }
