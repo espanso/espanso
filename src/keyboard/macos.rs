@@ -19,6 +19,8 @@
 
 use std::ffi::CString;
 use crate::bridge::macos::*;
+use super::PasteShortcut;
+use log::error;
 
 pub struct MacKeyboardManager {
 }
@@ -39,9 +41,18 @@ impl super::KeyboardManager for MacKeyboardManager {
         }
     }
 
-    fn trigger_paste(&self) {
+    fn trigger_paste(&self, shortcut: &PasteShortcut) {
         unsafe {
-            trigger_paste();
+            match shortcut {
+                PasteShortcut::Default => {
+                    unsafe {
+                        trigger_paste();
+                    }
+                },
+                _ => {
+                    error!("MacOS backend does not support this Paste Shortcut, please open an issue on GitHub if you need it.")
+                }
+            }
         }
     }
 

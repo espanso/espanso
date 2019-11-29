@@ -26,6 +26,7 @@ use std::fs::{File, create_dir_all};
 use std::io::Read;
 use serde::{Serialize, Deserialize};
 use crate::event::KeyModifier;
+use crate::keyboard::PasteShortcut;
 use std::collections::{HashSet, HashMap};
 use log::{error};
 use std::fmt;
@@ -96,6 +97,9 @@ pub struct Configs {
 
     #[serde(default = "default_toggle_interval")]
     pub toggle_interval: u32,
+
+    #[serde(default)]
+    pub paste_shortcut: PasteShortcut,
 
     #[serde(default = "default_backspace_limit")]
     pub backspace_limit: i32,
