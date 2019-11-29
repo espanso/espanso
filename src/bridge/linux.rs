@@ -42,4 +42,5 @@ extern {
     pub fn left_arrow(count: i32);
     pub fn trigger_paste();
     pub fn trigger_terminal_paste();
+    pub fn trigger_shift_ins_paste();
 }

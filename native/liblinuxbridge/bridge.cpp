@@ -299,6 +299,10 @@ void trigger_terminal_paste() {
     xdo_send_keysequence_window(xdo_context, CURRENTWINDOW, "Control_L+Shift+v", 8000);
 }
 
+void trigger_shift_ins_paste() {
+    xdo_send_keysequence_window(xdo_context, CURRENTWINDOW, "Shift+Insert", 8000);
+}
+
 // SYSTEM MODULE
 
 // Function taken from the wmlib tool source code
@@ -470,3 +474,5 @@ int32_t is_current_window_terminal() {
 
     return 0;
 }
+
+
