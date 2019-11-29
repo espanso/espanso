@@ -18,7 +18,8 @@
  */
 
 use widestring::U16CString;
-use crate::bridge::windows::{set_clipboard, get_clipboard};
+use crate::bridge::windows::{set_clipboard, get_clipboard, set_clipboard_image};
+use std::path::Path;
 
 pub struct WindowsClipboardManager {
 
@@ -51,6 +52,14 @@ impl super::ClipboardManager for WindowsClipboardManager {
         unsafe {
             let payload_c = U16CString::from_str(payload).unwrap();
             set_clipboard(payload_c.as_ptr());
+        }
+    }
+
+    fn set_clipboard_image(&self, image_path: &Path) {
+        let path_string = image_path.to_string_lossy().into_owned();
+        unsafe {
+            let payload_c = U16CString::from_str(path_string).unwrap();
+            set_clipboard_image(payload_c.as_ptr());
         }
     }
 }

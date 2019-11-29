@@ -17,6 +17,8 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use std::path::Path;
+
 #[cfg(target_os = "windows")]
 mod windows;
 
@@ -29,6 +31,7 @@ mod macos;
 pub trait ClipboardManager {
     fn get_clipboard(&self) -> Option<String>;
     fn set_clipboard(&self, payload: &str);
+    fn set_clipboard_image(&self, image_path: &Path);
 }
 
 // LINUX IMPLEMENTATION
