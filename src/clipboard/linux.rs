@@ -19,7 +19,8 @@
 
 use std::process::{Command, Stdio};
 use std::io::{Write};
-use log::error;
+use log::{error, warn};
+use std::path::Path;
 
 pub struct LinuxClipboardManager {}
 
@@ -62,6 +63,29 @@ impl super::ClipboardManager for LinuxClipboardManager {
                 }
             }
         }
+    }
+
+    fn set_clipboard_image(&self, image_path: &Path) {
+        let extension = image_path.extension();
+        let mime = match extension {
+            Some(ext) => {
+                let ext = ext.to_string_lossy().to_lowercase();
+                match ext.as_ref() {
+                    "png" => {"image/png"},
+                    "jpg" | "jpeg" => {"image/jpeg"},
+                    "gif" => {"image/gif"},
+                    "svg" => {"image/svg"},
+                    _ => {"image/png"},
+                }
+            },
+            None => {"image/png"},
+        };
+
+        let image_path = image_path.to_string_lossy().into_owned();
+
+        let res = Command::new("xclip")
+            .args(&["-selection", "clipboard", "-t", mime, "-i", &image_path])
+            .spawn();
     }
 }
 
