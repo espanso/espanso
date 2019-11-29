@@ -206,7 +206,7 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
                     },
                     BackendType::Clipboard => {
                         self.clipboard_manager.set_clipboard(&target_string);
-                        self.keyboard_manager.trigger_paste();
+                        self.keyboard_manager.trigger_paste(&config.paste_shortcut);
                     },
                 }
 
@@ -221,7 +221,7 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
                 // Make sure the image exist beforehand
                 if content.path.exists() {
                     self.clipboard_manager.set_clipboard_image(&content.path);
-                    self.keyboard_manager.trigger_paste();
+                    self.keyboard_manager.trigger_paste(&config.paste_shortcut);
                 }else{
                     error!("Image not found in path: {:?}", content.path);
                 }

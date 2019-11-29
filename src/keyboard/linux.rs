@@ -19,6 +19,8 @@
 
 use std::ffi::CString;
 use crate::bridge::linux::*;
+use super::PasteShortcut;
+use log::error;
 
 pub struct LinuxKeyboardManager {
 }
@@ -36,16 +38,29 @@ impl super::KeyboardManager for LinuxKeyboardManager {
         // On linux this is not needed, so NOOP
     }
 
-    fn trigger_paste(&self) {
+    fn trigger_paste(&self, shortcut: &PasteShortcut) {
         unsafe {
-            let is_terminal = is_current_window_terminal();
+            match shortcut {
+                PasteShortcut::Default => {
+                    let is_terminal = is_current_window_terminal();
 
-            // Terminals use a different keyboard combination to paste from clipboard,
-            // so we need to check the correct situation.
-            if is_terminal == 0 {
-                trigger_paste();
-            }else{
-                trigger_terminal_paste();
+                    // Terminals use a different keyboard combination to paste from clipboard,
+                    // so we need to check the correct situation.
+                    if is_terminal == 0 {
+                        trigger_paste();
+                    }else{
+                        trigger_terminal_paste();
+                    }
+                },
+                PasteShortcut::CtrlV => {
+                    trigger_paste();
+                },
+                PasteShortcut::CtrlShiftV => {
+                    trigger_terminal_paste();
+                }
+                _ => {
+                    error!("Linux backend does not support this Paste Shortcut, please open an issue on GitHub if you need it.")
+                }
             }
         }
     }
