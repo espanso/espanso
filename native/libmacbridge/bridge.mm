@@ -230,6 +230,24 @@ int32_t set_clipboard(char * text) {
     [pasteboard setString:nsText forType:NSPasteboardTypeString];
 }
 
+int32_t set_clipboard_image(char *path) {
+    NSString *pathString = [NSString stringWithUTF8String:path];
+    NSImage *image = [[NSImage alloc] initWithContentsOfFile:pathString];
+    int result = 0;
+
+    if (image != nil) {
+        NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
+        [pasteboard clearContents];
+        NSArray *copiedObjects = [NSArray arrayWithObject:image];
+        [pasteboard writeObjects:copiedObjects];
+        result = 1;
+    }
+    [image release];
+
+    return result;
+}
+
+
 // CONTEXT MENU
 
 int32_t show_context_menu(MenuItem * items, int32_t count) {

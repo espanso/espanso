@@ -47,6 +47,7 @@ extern {
     // CLIPBOARD
     pub fn get_clipboard(buffer: *mut u16, size: i32) -> i32;
     pub fn set_clipboard(payload: *const u16) -> i32;
+    pub fn set_clipboard_image(path: *const u16) -> i32;
 
     // KEYBOARD
     pub fn register_keypress_callback(cb: extern fn(_self: *mut c_void, *const u16,

@@ -17,6 +17,8 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use serde::{Serialize, Deserialize, Deserializer};
+
 #[cfg(target_os = "windows")]
 mod windows;
 
@@ -29,9 +31,24 @@ mod macos;
 pub trait KeyboardManager {
     fn send_string(&self, s: &str);
     fn send_enter(&self);
-    fn trigger_paste(&self);
+    fn trigger_paste(&self, shortcut: &PasteShortcut);
     fn delete_string(&self, count: i32);
     fn move_cursor_left(&self, count: i32);
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum PasteShortcut {
+    Default,        // Default one for the current system
+    CtrlV,          // Classic Ctrl+V shortcut
+    CtrlShiftV,     // Could be used to paste without formatting in many applications
+    ShiftInsert,    // Often used in Linux systems
+    MetaV,          // Corresponding to Win+V on Windows and Linux, CMD+V on macOS
+}
+
+impl Default for PasteShortcut{
+    fn default() -> Self {
+        PasteShortcut::Default
+    }
 }
 
 // WINDOWS IMPLEMENTATION

@@ -41,6 +41,13 @@ ___
 
 Visit the [official documentation](https://espanso.org/docs/).
 
+## Support
+
+If you need some help to setup espanso, want to ask a question or simply get involved
+in the community, [Join the official Subreddit](https://www.reddit.com/r/espanso/)! :)
+
+
+
 ## Donations
 
 espanso is a free, open source software developed in my (little) spare time.
@@ -57,6 +64,7 @@ Many people helped the project along the way, thanks to all of you. In particula
 * [Luca Antognetti](https://github.com/luca-ant) - Linux and Windows Tester
 * [Matteo Pellegrino](https://www.matteopellegrino.me/) - MacOS Tester
 * [Timo Runge](http://timorunge.com/) - MacOS contributor
+* [NickSeagull](http://nickseagull.github.io/) - Contributor
 
 ## Remarks
 
