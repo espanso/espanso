@@ -308,7 +308,7 @@ mod tests {
 
         match _match.content {
             MatchContentType::Image(content) => {
-                assert_eq!(content.path, "/path/to/file");
+                assert_eq!(content.path, PathBuf::from("/path/to/file"));
             },
             _ => {
                 assert!(false);
