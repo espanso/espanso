@@ -164,6 +164,44 @@ Before | After |
 Is ther anyone else? | Is there anyone else? | `ther` is converted to `there`
 I have other interests | I have other interests | `other` is left unchanged
 
+### Image Matches
+
+In version 0.4.0, espanso added the possibility to **expand matches into images**. 
+This can be useful in many situations, such as when writing emails or chatting.
+
+![Image match example](/assets/images/imagematches.gif)
+
+The syntax is pretty similar to the standard one, except you have to specify `image_path`
+instead of `replace`. This will be the path to your image.
+
+```yaml
+  - trigger: ":cat"
+    image_path: "/path/to/image.png"
+```
+
+#### Format remarks
+
+On Windows and macOS, most commonly used formats (such as PNG, JPEG and GIF) should work as expected.
+On Linux, **you should generally use PNG** as it's the most compatible.
+
+#### Path convention
+
+While you can use any valid path in the `image_path` field, there are times in which it proves limited.
+For example, if you are synchronizing your configuration across different machines, you could have problems
+creating the same path on each of them.
+
+In those cases, the best solution is to create a folder into the espanso configuration directory and put all
+your images there.
+At this point, you can use the `$CONFIG` variable in `image_path` to avoid hard-coding the path. For example:
+
+Create the `images` folder inside the espanso configuration directory (the one which contains the `default.yml` file),
+and store all your images there. Let's say I stored the `cat.png` image. We can now create a Match with:
+
+```yaml
+  - trigger: ":cat"
+    image_path: "$CONFIG/images/cat.png"
+```
+
 ### Script Extension
 
 There will be tasks for which espanso was not designed for. For those cases, espanso offers the
