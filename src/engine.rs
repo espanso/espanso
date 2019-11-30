@@ -17,7 +17,7 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::matcher::{Match, MatchReceiver};
+use crate::matcher::{Match, MatchReceiver, MatchContentType};
 use crate::keyboard::KeyboardManager;
 use crate::config::ConfigManager;
 use crate::config::BackendType;
@@ -29,6 +29,7 @@ use crate::extension::Extension;
 use std::cell::RefCell;
 use std::process::exit;
 use std::collections::HashMap;
+use std::path::PathBuf;
 use regex::{Regex, Captures};
 
 pub struct Engine<'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>,
@@ -118,96 +119,113 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
 
         self.keyboard_manager.delete_string(char_count);
 
-        let mut target_string = if m._has_vars {
-            let mut output_map = HashMap::new();
+        // Manage the different types of matches
+        match &m.content {
+            // Text Match
+            MatchContentType::Text(content) => {
+                let mut target_string = if content._has_vars {
+                    let mut output_map = HashMap::new();
 
-            for variable in m.vars.iter() {
-                let extension = self.extension_map.get(&variable.var_type);
-                if let Some(extension) = extension {
-                    let ext_out = extension.calculate(&variable.params);
-                    if let Some(output) = ext_out {
-                        output_map.insert(variable.name.clone(), output);
-                    }else{
-                        output_map.insert(variable.name.clone(), "".to_owned());
-                        warn!("Could not generate output for variable: {}", variable.name);
-                    }
-                }else{
-                    error!("No extension found for variable type: {}", variable.var_type);
-                }
-            }
-
-            // Replace the variables
-            let result = VAR_REGEX.replace_all(&m.replace, |caps: &Captures| {
-                let var_name = caps.name("name").unwrap().as_str();
-                let output = output_map.get(var_name);
-                output.unwrap()
-            });
-
-            result.to_string()
-        }else{  // No variables, simple text substitution
-            m.replace.clone()
-        };
-
-        // If a trailing separator was counted in the match, add it back to the target string
-        if let Some(trailing_separator) = trailing_separator {
-            if trailing_separator == '\r' {   // If the trailing separator is a carriage return,
-                target_string.push('\n');   // convert it to new line
-            }else{
-                target_string.push(trailing_separator);
-            }
-        }
-
-        // Convert Windows style newlines into unix styles
-        target_string = target_string.replace("\r\n", "\n");
-
-        // Calculate cursor rewind moves if a Cursor Hint is present
-        let index = target_string.find("$|$");
-        let cursor_rewind = if let Some(index) = index {
-            // Convert the byte index to a char index
-            let char_str = &target_string[0..index];
-            let char_index = char_str.chars().count();
-            let total_size = target_string.chars().count();
-
-            // Remove the $|$ placeholder
-            target_string = target_string.replace("$|$", "");
-
-            // Calculate the amount of rewind moves needed (LEFT ARROW).
-            // Subtract also 3, equal to the number of chars of the placeholder "$|$"
-            let moves = (total_size - char_index - 3) as i32;
-            Some(moves)
-        }else{
-            None
-        };
-
-        match config.backend {
-            BackendType::Inject => {
-                // Send the expected string. On linux, newlines are managed automatically
-                // while on windows and macos, we need to emulate a Enter key press.
-
-                if cfg!(target_os = "linux") {
-                    self.keyboard_manager.send_string(&target_string);
-                }else{
-                    // To handle newlines, substitute each "\n" char with an Enter key press.
-                    let splits = target_string.split('\n');
-
-                    for (i, split) in splits.enumerate() {
-                        if i > 0 {
-                            self.keyboard_manager.send_enter();
+                    for variable in content.vars.iter() {
+                        let extension = self.extension_map.get(&variable.var_type);
+                        if let Some(extension) = extension {
+                            let ext_out = extension.calculate(&variable.params);
+                            if let Some(output) = ext_out {
+                                output_map.insert(variable.name.clone(), output);
+                            }else{
+                                output_map.insert(variable.name.clone(), "".to_owned());
+                                warn!("Could not generate output for variable: {}", variable.name);
+                            }
+                        }else{
+                            error!("No extension found for variable type: {}", variable.var_type);
                         }
+                    }
 
-                        self.keyboard_manager.send_string(split);
+                    // Replace the variables
+                    let result = VAR_REGEX.replace_all(&content.replace, |caps: &Captures| {
+                        let var_name = caps.name("name").unwrap().as_str();
+                        let output = output_map.get(var_name);
+                        output.unwrap()
+                    });
+
+                    result.to_string()
+                }else{  // No variables, simple text substitution
+                    content.replace.clone()
+                };
+
+                // If a trailing separator was counted in the match, add it back to the target string
+                if let Some(trailing_separator) = trailing_separator {
+                    if trailing_separator == '\r' {   // If the trailing separator is a carriage return,
+                        target_string.push('\n');   // convert it to new line
+                    }else{
+                        target_string.push(trailing_separator);
                     }
                 }
-            },
-            BackendType::Clipboard => {
-                self.clipboard_manager.set_clipboard(&target_string);
-                self.keyboard_manager.trigger_paste();
-            },
-        }
 
-        if let Some(moves) = cursor_rewind {
-            // Simulate left arrow key presses to bring the cursor into the desired position
-            self.keyboard_manager.move_cursor_left(moves);
+                // Convert Windows style newlines into unix styles
+                target_string = target_string.replace("\r\n", "\n");
+
+                // Calculate cursor rewind moves if a Cursor Hint is present
+                let index = target_string.find("$|$");
+                let cursor_rewind = if let Some(index) = index {
+                    // Convert the byte index to a char index
+                    let char_str = &target_string[0..index];
+                    let char_index = char_str.chars().count();
+                    let total_size = target_string.chars().count();
+
+                    // Remove the $|$ placeholder
+                    target_string = target_string.replace("$|$", "");
+
+                    // Calculate the amount of rewind moves needed (LEFT ARROW).
+                    // Subtract also 3, equal to the number of chars of the placeholder "$|$"
+                    let moves = (total_size - char_index - 3) as i32;
+                    Some(moves)
+                }else{
+                    None
+                };
+
+                match config.backend {
+                    BackendType::Inject => {
+                        // Send the expected string. On linux, newlines are managed automatically
+                        // while on windows and macos, we need to emulate a Enter key press.
+
+                        if cfg!(target_os = "linux") {
+                            self.keyboard_manager.send_string(&target_string);
+                        }else{
+                            // To handle newlines, substitute each "\n" char with an Enter key press.
+                            let splits = target_string.split('\n');
+
+                            for (i, split) in splits.enumerate() {
+                                if i > 0 {
+                                    self.keyboard_manager.send_enter();
+                                }
+
+                                self.keyboard_manager.send_string(split);
+                            }
+                        }
+                    },
+                    BackendType::Clipboard => {
+                        self.clipboard_manager.set_clipboard(&target_string);
+                        self.keyboard_manager.trigger_paste(&config.paste_shortcut);
+                    },
+                }
+
+                if let Some(moves) = cursor_rewind {
+                    // Simulate left arrow key presses to bring the cursor into the desired position
+                    self.keyboard_manager.move_cursor_left(moves);
+                }
+            },
+
+            // Image Match
+            MatchContentType::Image(content) => {
+                // Make sure the image exist beforehand
+                if content.path.exists() {
+                    self.clipboard_manager.set_clipboard_image(&content.path);
+                    self.keyboard_manager.trigger_paste(&config.paste_shortcut);
+                }else{
+                    error!("Image not found in path: {:?}", content.path);
+                }
+            },
         }
     }
 

@@ -19,6 +19,8 @@
 
 use widestring::{U16CString};
 use crate::bridge::windows::*;
+use super::PasteShortcut;
+use log::error;
 
 pub struct WindowsKeyboardManager {
 }
@@ -44,9 +46,18 @@ impl super::KeyboardManager for WindowsKeyboardManager {
         }
     }
 
-    fn trigger_paste(&self) {
+    fn trigger_paste(&self, shortcut: &PasteShortcut) {
         unsafe {
-            trigger_paste();
+            match shortcut {
+                PasteShortcut::Default => {
+                    unsafe {
+                        trigger_paste();
+                    }
+                },
+                _ => {
+                    error!("Windows backend does not support this Paste Shortcut, please open an issue on GitHub if you need it.")
+                }
+            }
         }
     }
 

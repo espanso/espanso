@@ -22,22 +22,40 @@ use crate::event::{KeyEvent, KeyModifier};
 use crate::event::KeyEventReceiver;
 use serde_yaml::Mapping;
 use regex::Regex;
+use std::path::PathBuf;
+use std::fs;
 
 pub(crate) mod scrolling;
 
 #[derive(Debug, Serialize, Clone)]
 pub struct Match {
     pub trigger: String,
-    pub replace: String,
-    pub vars: Vec<MatchVariable>,
+    pub content: MatchContentType,
     pub word: bool,
-
-    #[serde(skip_serializing)]
-    pub _has_vars: bool,
 
     // Automatically calculated from the trigger, used by the matcher to check for correspondences.
     #[serde(skip_serializing)]
     pub _trigger_sequence: Vec<TriggerEntry>,
+}
+
+#[derive(Debug, Serialize, Clone)]
+pub enum MatchContentType {
+    Text(TextContent),
+    Image(ImageContent),
+}
+
+#[derive(Debug, Serialize, Clone)]
+pub struct TextContent {
+    pub replace: String,
+    pub vars: Vec<MatchVariable>,
+
+    #[serde(skip_serializing)]
+    pub _has_vars: bool,
+}
+
+#[derive(Debug, Serialize, Clone)]
+pub struct ImageContent {
+    pub path: PathBuf,
 }
 
 impl <'de> serde::Deserialize<'de> for Match {
@@ -53,14 +71,9 @@ impl<'a> From<&'a AutoMatch> for Match{
     fn from(other: &'a AutoMatch) -> Self {
         lazy_static! {
             static ref VAR_REGEX: Regex = Regex::new("\\{\\{\\s*(\\w+)\\s*\\}\\}").unwrap();
-        }
+        };
 
         // TODO: may need to replace windows newline (\r\n) with newline only (\n)
-
-        let new_replace = other.replace.clone();
-
-        // Check if the match contains variables
-        let has_vars = VAR_REGEX.is_match(&other.replace);
 
         // Calculate the trigger sequence
         let mut trigger_sequence = Vec::new();
@@ -72,12 +85,55 @@ impl<'a> From<&'a AutoMatch> for Match{
             trigger_sequence.push(TriggerEntry::WordSeparator);
         }
 
+        let content = if let Some(replace) = &other.replace {  // Text match
+            let new_replace = replace.clone();
+
+            // Check if the match contains variables
+            let has_vars = VAR_REGEX.is_match(replace);
+
+            let content = TextContent {
+                replace: new_replace,
+                vars: other.vars.clone(),
+                _has_vars: has_vars,
+            };
+
+            MatchContentType::Text(content)
+        }else if let Some(image_path) = &other.image_path {  // Image match
+            // On Windows, we have to replace the forward / with the backslash \ in the path
+            let new_path = if cfg!(target_os = "windows") {
+                image_path.replace("/", "\\")
+            }else{
+                image_path.to_owned()
+            };
+
+            // Calculate variables in path
+            let new_path = if new_path.contains("$CONFIG") {
+                let config_dir = crate::context::get_config_dir();
+                let config_path = fs::canonicalize(&config_dir);
+                let config_path = if let Ok(config_path) = config_path {
+                    config_path.to_string_lossy().into_owned()
+                }else{
+                    "".to_owned()
+                };
+                new_path.replace("$CONFIG", &config_path)
+            }else{
+                new_path.to_owned()
+            };
+
+            let content = ImageContent {
+                path: PathBuf::from(new_path)
+            };
+
+            MatchContentType::Image(content)
+        }else {
+            eprintln!("ERROR: no action specified for match {}, please specify either 'replace' or 'image_path'", other.trigger);
+            std::process::exit(2);
+        };
+
         Self {
             trigger: other.trigger.clone(),
-            replace: new_replace,
-            vars: other.vars.clone(),
+            content,
             word: other.word.clone(),
-            _has_vars: has_vars,
             _trigger_sequence: trigger_sequence,
         }
     }
@@ -87,7 +143,12 @@ impl<'a> From<&'a AutoMatch> for Match{
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct AutoMatch {
     pub trigger: String,
-    pub replace: String,
+
+    #[serde(default = "default_replace")]
+    pub replace: Option<String>,
+
+    #[serde(default = "default_image_path")]
+    pub image_path: Option<String>,
 
     #[serde(default = "default_vars")]
     pub vars: Vec<MatchVariable>,
@@ -98,6 +159,8 @@ struct AutoMatch {
 
 fn default_vars() -> Vec<MatchVariable> {Vec::new()}
 fn default_word() -> bool {false}
+fn default_replace() -> Option<String> {None}
+fn default_image_path() -> Option<String> {None}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct MatchVariable {
@@ -154,7 +217,14 @@ mod tests {
 
         let _match : Match = serde_yaml::from_str(match_str).unwrap();
 
-        assert_eq!(_match._has_vars, false);
+        match _match.content {
+            MatchContentType::Text(content) => {
+                assert_eq!(content._has_vars, false);
+            },
+            _ => {
+                assert!(false);
+            },
+        }
     }
 
     #[test]
@@ -166,7 +236,14 @@ mod tests {
 
         let _match : Match = serde_yaml::from_str(match_str).unwrap();
 
-        assert_eq!(_match._has_vars, true);
+        match _match.content {
+            MatchContentType::Text(content) => {
+                assert_eq!(content._has_vars, true);
+            },
+            _ => {
+                assert!(false);
+            },
+        }
     }
 
     #[test]
@@ -178,7 +255,14 @@ mod tests {
 
         let _match : Match = serde_yaml::from_str(match_str).unwrap();
 
-        assert_eq!(_match._has_vars, true);
+        match _match.content {
+            MatchContentType::Text(content) => {
+                assert_eq!(content._has_vars, true);
+            },
+            _ => {
+                assert!(false);
+            },
+        }
     }
 
     #[test]
@@ -211,5 +295,24 @@ mod tests {
         assert_eq!(_match._trigger_sequence[2], TriggerEntry::Char('s'));
         assert_eq!(_match._trigger_sequence[3], TriggerEntry::Char('t'));
         assert_eq!(_match._trigger_sequence[4], TriggerEntry::WordSeparator);
+    }
+
+    #[test]
+    fn test_match_with_image_content() {
+        let match_str = r###"
+        trigger: "test"
+        image_path: "/path/to/file"
+        "###;
+
+        let _match : Match = serde_yaml::from_str(match_str).unwrap();
+
+        match _match.content {
+            MatchContentType::Image(content) => {
+                assert_eq!(content.path, PathBuf::from("/path/to/file"));
+            },
+            _ => {
+                assert!(false);
+            },
+        }
     }
 }

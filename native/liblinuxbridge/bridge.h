@@ -82,6 +82,11 @@ extern "C" void trigger_paste();
  */
 extern "C" void trigger_terminal_paste();
 
+/*
+ * Trigger shift ins pasting( Pressing SHIFT+INS )
+ */
+extern "C" void trigger_shift_ins_paste();
+
 
 // SYSTEM MODULE
 
