@@ -1,0 +1,26 @@
+---
+title: Sponsors
+layout: default
+showParticles: True
+---
+Many people helped espanso along the way, allowing me to stay motivated and focused on our mission. Thank you, there are no words to say how much I appreciate your help :)
+
+<div class="mt-4">
+{% for item in site.data.sponsors %}
+    {% assign remainder = forloop.index0 | modulo: 6 %}
+    {% if remainder == 0 %}
+        {% if forloop.index0 != 0 %}
+            </div>
+        {% endif %}
+
+        <div class="row sponsors mt-4">
+    {% endif %}
+    <div class="col-md-2">
+        <a href="{{item.link}}">
+            <img src="{{item.image}}" class="rounded-circle sponsor-img" alt="{{item.name}}">
+            <p class="sponsor-name">{{item.name}}</p>
+        </a>
+    </div>
+{% endfor %}
+</div>
+</div>
