@@ -42,14 +42,16 @@ impl super::KeyboardManager for LinuxKeyboardManager {
         unsafe {
             match shortcut {
                 PasteShortcut::Default => {
-                    let is_terminal = is_current_window_terminal();
+                    let is_special = is_current_window_special();
 
                     // Terminals use a different keyboard combination to paste from clipboard,
                     // so we need to check the correct situation.
-                    if is_terminal == 0 {
+                    if is_special == 0 {
                         trigger_paste();
-                    }else if is_terminal == 2 {  // Special case for stterm
+                    }else if is_special == 2 {  // Special case for stterm
                         trigger_alt_shift_ins_paste();
+                    }else if is_special == 3 {  // Special case for Emacs
+                        trigger_shift_ins_paste();
                     }else{
                         trigger_terminal_paste();
                     }

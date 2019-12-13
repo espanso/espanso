@@ -111,8 +111,8 @@ extern "C" int32_t get_active_window_class(char * buffer, int32_t size);
 extern "C" int32_t get_active_window_executable(char * buffer, int32_t size);
 
 /*
- * Return 1 if the current window is a terminal window, 0 otherwise.
+ * Return a value greater than 0 if the current window needs a special paste combination, 0 otherwise.
  */
-extern "C" int32_t is_current_window_terminal();
+extern "C" int32_t is_current_window_special();
 
 #endif //ESPANSO_BRIDGE_H

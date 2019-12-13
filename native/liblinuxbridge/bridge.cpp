@@ -453,7 +453,7 @@ int32_t get_active_window_executable(char *buffer, int32_t size) {
     return result;
 }
 
-int32_t is_current_window_terminal() {
+int32_t is_current_window_special() {
     char class_buffer[250];
     int res = get_active_window_class(class_buffer, 250);
     if (res > 0) {
@@ -477,6 +477,8 @@ int32_t is_current_window_terminal() {
             return 1;
         }else if (strstr(class_buffer, "Alacritty") != NULL) {  // Alacritty terminal
             return 1;
+        }else if (strstr(class_buffer, "Emacs") != NULL) {  // Emacs
+            return 3;
         }
     }
 
