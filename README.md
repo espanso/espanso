@@ -29,6 +29,7 @@ ___
 * Works on **Windows**, **macOS** and **Linux**
 * Works with almost **any program**
 * Works with **Emojis** 😄
+* Works with **Images**
 * **Date** expansion support
 * **Custom scripts** support
 * **Shell commands** support
@@ -54,7 +55,8 @@ espanso is a free, open source software developed in my (little) spare time.
 If you liked the project and would like to support further development, 
 please consider making a small donation, it really helps :)
 
-[![Donate with PayPal](images/donate.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=FHNLR5DRS267E&source=url)
+[![Donate with PayPal](images/githubsponsor.png)](https://github.com/sponsors/federico-terzi)
+[![Donate with PayPal](images/paypal.png)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=FHNLR5DRS267E&source=url)
 
 ## Contributors
 
@@ -65,6 +67,7 @@ Many people helped the project along the way, thanks to all of you. In particula
 * [Matteo Pellegrino](https://www.matteopellegrino.me/) - MacOS Tester
 * [Timo Runge](http://timorunge.com/) - MacOS contributor
 * [NickSeagull](http://nickseagull.github.io/) - Contributor
+* [matt-h](https://github.com/matt-h) - Contributor
 
 ## Remarks
 
