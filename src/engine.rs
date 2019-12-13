@@ -205,8 +205,10 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
                         }
                     },
                     BackendType::Clipboard => {
+                        let previous_clipboard_content = self.clipboard_manager.get_clipboard().unwrap_or(String::from(""));
                         self.clipboard_manager.set_clipboard(&target_string);
                         self.keyboard_manager.trigger_paste(&config.paste_shortcut);
+                        self.clipboard_manager.set_clipboard(&previous_clipboard_content);
                     },
                 }
 
