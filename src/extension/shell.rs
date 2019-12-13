@@ -93,7 +93,12 @@ mod tests {
         let output = extension.calculate(&params);
 
         assert!(output.is_some());
-        assert_eq!(output.unwrap(), "hello world\n");
+
+        if cfg!(target_os = "windows") {
+            assert_eq!(output.unwrap(), "hello world\r\n");
+        }else{
+            assert_eq!(output.unwrap(), "hello world\n");
+        }
     }
 
     #[test]
@@ -112,7 +117,12 @@ mod tests {
     #[test]
     fn test_shell_trimmed_2() {
         let mut params = Mapping::new();
-        params.insert(Value::from("cmd"), Value::from("echo \"   hello world     \""));
+        if cfg!(target_os = "windows") {
+            params.insert(Value::from("cmd"), Value::from("echo    hello world     "));
+        }else{
+            params.insert(Value::from("cmd"), Value::from("echo \"   hello world     \""));
+        }
+
         params.insert(Value::from("trim"), Value::from(true));
 
         let extension = ShellExtension::new();
@@ -132,7 +142,11 @@ mod tests {
         let output = extension.calculate(&params);
 
         assert!(output.is_some());
-        assert_eq!(output.unwrap(), "hello world\n");
+        if cfg!(target_os = "windows") {
+            assert_eq!(output.unwrap(), "hello world\r\n");
+        }else{
+            assert_eq!(output.unwrap(), "hello world\n");
+        }
     }
 
     #[test]
