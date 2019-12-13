@@ -48,6 +48,8 @@ impl super::KeyboardManager for LinuxKeyboardManager {
                     // so we need to check the correct situation.
                     if is_terminal == 0 {
                         trigger_paste();
+                    }else if is_terminal == 2 {  // Special case for stterm
+                        trigger_alt_shift_ins_paste();
                     }else{
                         trigger_terminal_paste();
                     }
