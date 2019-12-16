@@ -2,7 +2,7 @@
 title: Install on Windows
 layout: docs
 ---
-The easiest way to install espanso on Windows is by using the official installer.
+The easiest way to install espanso on Windows is by using the official installer.  **Note: espanso currently supports Windows 10 only**.
 
 ### Using the Installer
 

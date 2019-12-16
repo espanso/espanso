@@ -304,3 +304,26 @@ found in the [official chrono documentation](https://docs.rs/chrono/0.3.1/chrono
         format: "%H:%M"
 ```
 {% endraw %}
+
+### Random Extension
+
+Introduced in version 0.4.1, the **Random Extension** can be used to write non-deterministic replacement texts. Said in other words, you can now specify a set of possible expansions for a match, useful to avoid repetitions. 
+
+You can use this feature by declaring a variable of type `random` and then passing a number of `choices` as a parameter:
+
+{% raw %}
+```yaml
+  - trigger: ":quote"
+    replace: "{{output}}"
+    vars:
+      - name: output
+        type: random
+        params:
+          choices:
+            - "Every moment is a fresh beginning."
+            - "Everything you can imagine is real."
+            - "Whatever you do, do it well."
+```
+{% endraw %}
+
+In this case, typing `:quote` will expand randomly to one of the tree quotes.

@@ -25,7 +25,6 @@
     .btn {
         font-weight: 700;
         font-size: 1.2em;
-        background-color: $orangeColor;
         color: white !important;
         padding: 10px 25px 10px 25px;
         border-radius: 40px;
@@ -34,5 +33,10 @@
         @media screen and (max-width: $screen-tablet) {
             font-size: 1.3em;
         }
+    }
+
+    .mbtn {
+        height: 60px;
+        display: inline;
     }
 }
