@@ -303,6 +303,10 @@ void trigger_shift_ins_paste() {
     xdo_send_keysequence_window(xdo_context, CURRENTWINDOW, "Shift+Insert", 8000);
 }
 
+void trigger_alt_shift_ins_paste() {
+    xdo_send_keysequence_window(xdo_context, CURRENTWINDOW, "Shift+Alt+Insert", 8000);
+}
+
 // SYSTEM MODULE
 
 // Function taken from the wmlib tool source code
@@ -449,7 +453,7 @@ int32_t get_active_window_executable(char *buffer, int32_t size) {
     return result;
 }
 
-int32_t is_current_window_terminal() {
+int32_t is_current_window_special() {
     char class_buffer[250];
     int res = get_active_window_class(class_buffer, 250);
     if (res > 0) {
@@ -465,10 +469,16 @@ int32_t is_current_window_terminal() {
             return 1;
         }else if (strstr(class_buffer, "Terminator") != NULL) {  // Terminator
             return 1;
+        }else if (strstr(class_buffer, "stterm") != NULL) {  // Simple terminal 3
+            return 2;
         }else if (strstr(class_buffer, "St") != NULL) {  // Simple terminal
+            return 1;
+        }else if (strstr(class_buffer, "st") != NULL) {  // Simple terminal 2
             return 1;
         }else if (strstr(class_buffer, "Alacritty") != NULL) {  // Alacritty terminal
             return 1;
+        }else if (strstr(class_buffer, "Emacs") != NULL) {  // Emacs
+            return 3;
         }
     }
 

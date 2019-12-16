@@ -95,6 +95,19 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
 
         menu
     }
+
+    fn return_content_if_preserve_clipboard_is_enabled(&self) -> Option<String> {
+        // If the preserve_clipboard option is enabled, first save the current
+        // clipboard content in order to restore it later.
+        if self.config_manager.default_config().preserve_clipboard {
+            match self.clipboard_manager.get_clipboard() {
+                Some(clipboard) => {Some(clipboard)},
+                None => {None},
+            }
+        }else {
+            None
+        }
+    }
 }
 
 lazy_static! {
@@ -118,6 +131,8 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
         };
 
         self.keyboard_manager.delete_string(char_count);
+
+        let mut previous_clipboard_content : Option<String> = None;
 
         // Manage the different types of matches
         match &m.content {
@@ -205,6 +220,10 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
                         }
                     },
                     BackendType::Clipboard => {
+                        // If the preserve_clipboard option is enabled, save the current
+                        // clipboard content to restore it later.
+                        previous_clipboard_content = self.return_content_if_preserve_clipboard_is_enabled();
+
                         self.clipboard_manager.set_clipboard(&target_string);
                         self.keyboard_manager.trigger_paste(&config.paste_shortcut);
                     },
@@ -220,12 +239,21 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
             MatchContentType::Image(content) => {
                 // Make sure the image exist beforehand
                 if content.path.exists() {
+                    // If the preserve_clipboard option is enabled, save the current
+                    // clipboard content to restore it later.
+                    previous_clipboard_content = self.return_content_if_preserve_clipboard_is_enabled();
+
                     self.clipboard_manager.set_clipboard_image(&content.path);
                     self.keyboard_manager.trigger_paste(&config.paste_shortcut);
                 }else{
                     error!("Image not found in path: {:?}", content.path);
                 }
             },
+        }
+
+        // Restore previous clipboard content
+        if let Some(previous_clipboard_content) = previous_clipboard_content {
+            self.clipboard_manager.set_clipboard(&previous_clipboard_content);
         }
     }
 

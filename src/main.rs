@@ -402,9 +402,24 @@ fn start_daemon(config_set: ConfigSet) {
 
 #[cfg(target_os = "linux")]
 fn start_daemon(config_set: ConfigSet) {
-    if config_set.default.use_system_agent {
-        use std::process::Command;
+    use std::process::{Command, Stdio};
 
+    // Check if Systemd is available in the system
+    let status = Command::new("systemctl")
+        .args(&["--version"])
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .status();
+
+    // If Systemd is not available in the system, espanso should default to unmanaged mode
+    // See issue https://github.com/federico-terzi/espanso/issues/139
+    let force_unmanaged = if let Err(status) = status {
+        true
+    } else {
+        false
+    };
+
+    if config_set.default.use_system_agent && !force_unmanaged {
         // Make sure espanso is currently registered in systemd
         let res = Command::new("systemctl")
             .args(&["--user", "is-enabled", "espanso.service"])
@@ -442,6 +457,10 @@ fn start_daemon(config_set: ConfigSet) {
             eprintln!("Error starting systemd daemon: {}", res.unwrap_err());
         }
     }else{
+        if force_unmanaged {
+            eprintln!("Systemd is not available in this system, switching to unmanaged mode.");
+        }
+
         fork_daemon(config_set);
     }
 }
