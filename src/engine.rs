@@ -26,6 +26,7 @@ use log::{info, warn, error};
 use crate::ui::{UIManager, MenuItem, MenuItemType};
 use crate::event::{ActionEventReceiver, ActionType};
 use crate::extension::Extension;
+use crate::render::{Renderer, RenderResult};
 use std::cell::RefCell;
 use std::process::exit;
 use std::collections::HashMap;
@@ -33,35 +34,28 @@ use std::path::PathBuf;
 use regex::{Regex, Captures};
 
 pub struct Engine<'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>,
-                  U: UIManager> {
+                  U: UIManager, R: Renderer> {
     keyboard_manager: &'a S,
     clipboard_manager: &'a C,
     config_manager: &'a M,
     ui_manager: &'a U,
-
-    extension_map: HashMap<String, Box<dyn Extension>>,
+    renderer: &'a R,
 
     enabled: RefCell<bool>,
 }
 
-impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIManager>
-    Engine<'a, S, C, M, U> {
+impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIManager, R: Renderer>
+    Engine<'a, S, C, M, U, R> {
     pub fn new(keyboard_manager: &'a S, clipboard_manager: &'a C,
                config_manager: &'a M, ui_manager: &'a U,
-               extensions: Vec<Box<dyn Extension>>) -> Engine<'a, S, C, M, U> {
-        // Register all the extensions
-        let mut extension_map = HashMap::new();
-        for extension in extensions.into_iter() {
-            extension_map.insert(extension.name(), extension);
-        }
-
+               renderer: &'a R) -> Engine<'a, S, C, M, U, R> {
         let enabled = RefCell::new(true);
 
         Engine{keyboard_manager,
             clipboard_manager,
             config_manager,
             ui_manager,
-            extension_map,
+            renderer,
             enabled
         }
     }
@@ -114,8 +108,8 @@ lazy_static! {
     static ref VAR_REGEX: Regex = Regex::new("\\{\\{\\s*(?P<name>\\w+)\\s*\\}\\}").unwrap();
 }
 
-impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIManager>
-    MatchReceiver for Engine<'a, S, C, M, U>{
+impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIManager, R: Renderer>
+    MatchReceiver for Engine<'a, S, C, M, U, R>{
 
     fn on_match(&self, m: &Match, trailing_separator: Option<char>) {
         let config = self.config_manager.active_config();
@@ -134,40 +128,10 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
 
         let mut previous_clipboard_content : Option<String> = None;
 
-        // Manage the different types of matches
-        match &m.content {
-            // Text Match
-            MatchContentType::Text(content) => {
-                let mut target_string = if content._has_vars {
-                    let mut output_map = HashMap::new();
+        let rendered = self.renderer.render_match(m, config, vec![]);
 
-                    for variable in content.vars.iter() {
-                        let extension = self.extension_map.get(&variable.var_type);
-                        if let Some(extension) = extension {
-                            let ext_out = extension.calculate(&variable.params);
-                            if let Some(output) = ext_out {
-                                output_map.insert(variable.name.clone(), output);
-                            }else{
-                                output_map.insert(variable.name.clone(), "".to_owned());
-                                warn!("Could not generate output for variable: {}", variable.name);
-                            }
-                        }else{
-                            error!("No extension found for variable type: {}", variable.var_type);
-                        }
-                    }
-
-                    // Replace the variables
-                    let result = VAR_REGEX.replace_all(&content.replace, |caps: &Captures| {
-                        let var_name = caps.name("name").unwrap().as_str();
-                        let output = output_map.get(var_name);
-                        output.unwrap()
-                    });
-
-                    result.to_string()
-                }else{  // No variables, simple text substitution
-                    content.replace.clone()
-                };
-
+        match rendered {
+            RenderResult::Text(mut target_string) => {
                 // If a trailing separator was counted in the match, add it back to the target string
                 if let Some(trailing_separator) = trailing_separator {
                     if trailing_separator == '\r' {   // If the trailing separator is a carriage return,
@@ -234,20 +198,16 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
                     self.keyboard_manager.move_cursor_left(moves);
                 }
             },
+            RenderResult::Image(image_path) => {
+                // If the preserve_clipboard option is enabled, save the current
+                // clipboard content to restore it later.
+                previous_clipboard_content = self.return_content_if_preserve_clipboard_is_enabled();
 
-            // Image Match
-            MatchContentType::Image(content) => {
-                // Make sure the image exist beforehand
-                if content.path.exists() {
-                    // If the preserve_clipboard option is enabled, save the current
-                    // clipboard content to restore it later.
-                    previous_clipboard_content = self.return_content_if_preserve_clipboard_is_enabled();
-
-                    self.clipboard_manager.set_clipboard_image(&content.path);
-                    self.keyboard_manager.trigger_paste(&config.paste_shortcut);
-                }else{
-                    error!("Image not found in path: {:?}", content.path);
-                }
+                self.clipboard_manager.set_clipboard_image(&image_path);
+                self.keyboard_manager.trigger_paste(&config.paste_shortcut);
+            },
+            RenderResult::Error => {
+                error!("Could not render match: {}", m.trigger);
             },
         }
 
@@ -274,7 +234,7 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
 }
 
 impl <'a, S: KeyboardManager, C: ClipboardManager,
-    M: ConfigManager<'a>, U: UIManager> ActionEventReceiver for Engine<'a, S, C, M, U>{
+    M: ConfigManager<'a>, U: UIManager, R: Renderer> ActionEventReceiver for Engine<'a, S, C, M, U, R>{
 
     fn on_action_event(&self, e: ActionType) {
         match e {
