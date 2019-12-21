@@ -52,6 +52,7 @@ mod utils;
 mod bridge;
 mod engine;
 mod config;
+mod render;
 mod system;
 mod context;
 mod matcher;
@@ -332,11 +333,13 @@ fn daemon_background(receive_channel: Receiver<Event>, config_set: ConfigSet) {
 
     let extensions = extension::get_extensions();
 
+    let renderer = render::default::DefaultRenderer::new(extensions);
+
     let engine = Engine::new(&keyboard_manager,
                              &clipboard_manager,
                              &config_manager,
                              &ui_manager,
-                             extensions,
+                             &renderer,
     );
 
     let matcher = ScrollingMatcher::new(&config_manager, &engine);
