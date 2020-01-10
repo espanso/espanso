@@ -24,7 +24,11 @@ use crate::config::Configs;
 pub(crate) mod default;
 
 pub trait Renderer {
+    // Render a match output
     fn render_match(&self, m: &Match, config: &Configs, args: Vec<String>) -> RenderResult;
+
+    // Render a passive expansion text
+    fn render_passive(&self, text: &str, config: &Configs) -> RenderResult;
 }
 
 pub enum RenderResult {

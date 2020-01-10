@@ -32,7 +32,7 @@ use fs2::FileExt;
 use log::{info, warn, LevelFilter};
 use simplelog::{CombinedLogger, SharedLogger, TerminalMode, TermLogger, WriteLogger};
 
-use crate::config::ConfigSet;
+use crate::config::{ConfigSet, ConfigManager};
 use crate::config::runtime::RuntimeConfigManager;
 use crate::engine::Engine;
 use crate::event::*;
@@ -333,7 +333,8 @@ fn daemon_background(receive_channel: Receiver<Event>, config_set: ConfigSet) {
 
     let extensions = extension::get_extensions();
 
-    let renderer = render::default::DefaultRenderer::new(extensions);
+    let renderer = render::default::DefaultRenderer::new(extensions,
+                                                          config_manager.default_config().clone());
 
     let engine = Engine::new(&keyboard_manager,
                              &clipboard_manager,
