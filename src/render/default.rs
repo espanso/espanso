@@ -33,18 +33,36 @@ lazy_static! {
 
 pub struct DefaultRenderer {
     extension_map: HashMap<String, Box<dyn Extension>>,
+
+    // Regex used to identify matches (and arguments) in passive expansions
+    passive_match_regex: Regex,
+
+    // Regex used to separate arguments in passive expansions
+    passive_arg_regex: Regex,
 }
 
 impl DefaultRenderer {
-    pub fn new(extensions: Vec<Box<dyn Extension>>) -> DefaultRenderer {
+    pub fn new(extensions: Vec<Box<dyn Extension>>, config: Configs) -> DefaultRenderer {
         // Register all the extensions
         let mut extension_map = HashMap::new();
         for extension in extensions.into_iter() {
             extension_map.insert(extension.name(), extension);
         }
 
+        // Compile the regexes
+        let passive_match_regex = Regex::new(&config.passive_match_regex)
+                                        .unwrap_or_else(|e| {
+                                            panic!("Invalid passive match regex");
+                                        });
+        let passive_arg_regex = Regex::new(&config.passive_arg_regex)
+                                        .unwrap_or_else(|e| {
+                                            panic!("Invalid passive arg regex");
+                                        });
+
         DefaultRenderer{
-            extension_map
+            extension_map,
+            passive_match_regex,
+            passive_arg_regex
         }
     }
 
@@ -69,7 +87,7 @@ impl super::Renderer for DefaultRenderer {
         match &m.content {
             // Text Match
             MatchContentType::Text(content) => {
-                let mut target_string = if content._has_vars {
+                let target_string = if content._has_vars {
                     let mut output_map = HashMap::new();
 
                     for variable in content.vars.iter() {
@@ -108,6 +126,7 @@ impl super::Renderer for DefaultRenderer {
                                 },
                             }
                         }else{  // Normal extension variables
+                            // TODO: pass the arguments to the extension
                             let extension = self.extension_map.get(&variable.var_type);
                             if let Some(extension) = extension {
                                 let ext_out = extension.calculate(&variable.params);
@@ -122,6 +141,11 @@ impl super::Renderer for DefaultRenderer {
                             }
                         }
                     }
+
+                    // TODO: replace the arguments
+                    // the idea is that every param placeholder, such as $1$, is replaced with
+                    // an ArgExtension when loading a match, which renders the argument as output
+                    // this is only used as syntactic sugar
 
                     // Replace the variables
                     let result = VAR_REGEX.replace_all(&content.replace, |caps: &Captures| {
@@ -150,6 +174,156 @@ impl super::Renderer for DefaultRenderer {
             },
         }
     }
+
+    fn render_passive(&self, text: &str, config: &Configs) -> RenderResult {
+        // Render the matches
+        let result = self.passive_match_regex.replace_all(&text, |caps: &Captures| {
+            let match_name = if let Some(name) = caps.name("name") {
+                name.as_str()
+            }else{
+                ""
+            };
+
+
+            // Get the original matching string, useful to return the match untouched
+            let original_match = caps.get(0).unwrap().as_str();
+
+            // Find the corresponding match
+            let m = DefaultRenderer::find_match(config, match_name);
+
+            // If no match is found, leave the match without modifications
+            if m.is_none() {
+                return original_match.to_owned();
+            }
+
+            // Compute the args by separating them
+            let match_args = if let Some(args) = caps.name("args") {
+                args.as_str()
+            }else{
+                ""
+            };
+            let args : Vec<String> = self.passive_arg_regex.split(match_args).into_iter().map(
+                |arg| arg.to_owned()
+            ).collect();
+
+            let m = m.unwrap();
+            // Render the actual match
+            let result = self.render_match(&m, &config, args);
+
+            match result {
+                RenderResult::Text(out) => {
+                    out
+                },
+                _ => {
+                    original_match.to_owned()
+                }
+            }
+        });
+
+        RenderResult::Text(result.into_owned())
+    }
 }
 
-// TODO: tests
+// TESTS
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn get_renderer(config: Configs) -> DefaultRenderer {
+        DefaultRenderer::new(crate::extension::get_extensions(), config)
+    }
+
+    fn get_config_for(s: &str) -> Configs {
+        let config : Configs = serde_yaml::from_str(s).unwrap();
+        config
+    }
+
+    fn verify_render(rendered: RenderResult, target: &str) {
+        match rendered {
+            RenderResult::Text(rendered) => {
+                println!("{}", rendered);
+                assert_eq!(rendered, target);
+            },
+            _ => {
+                assert!(false)
+            }
+        }
+    }
+
+    #[test]
+    fn test_render_passive_no_matches() {
+        let text = r###"
+        this text contains no matches
+        "###;
+
+        let config = get_config_for(r###"
+        matches:
+            - trigger: test
+              replace: result
+        "###);
+
+        let renderer = get_renderer(config.clone());
+
+        let rendered = renderer.render_passive(text, &config);
+
+        verify_render(rendered, text);
+    }
+
+    #[test]
+    fn test_render_passive_simple_match_no_args() {
+        let text = "this is a :test";
+
+        let config = get_config_for(r###"
+        matches:
+            - trigger: ':test'
+              replace: result
+        "###);
+
+        let renderer = get_renderer(config.clone());
+
+        let rendered = renderer.render_passive(text, &config);
+
+        verify_render(rendered, "this is a result");
+    }
+
+    #[test]
+    fn test_render_passive_multiple_match_no_args() {
+        let text = "this is a :test and then another :test";
+
+        let config = get_config_for(r###"
+        matches:
+            - trigger: ':test'
+              replace: result
+        "###);
+
+        let renderer = get_renderer(config.clone());
+
+        let rendered = renderer.render_passive(text, &config);
+
+        verify_render(rendered, "this is a result and then another result");
+    }
+
+    #[test]
+    fn test_render_passive_simple_match_multiline_no_args() {
+        let text = r###"this is a
+        :test
+        "###;
+
+        let result= r###"this is a
+        result
+        "###;
+
+        let config = get_config_for(r###"
+        matches:
+            - trigger: ':test'
+              replace: result
+        "###);
+
+        let renderer = get_renderer(config.clone());
+
+        let rendered = renderer.render_passive(text, &config);
+
+        verify_render(rendered, result);
+    }
+}
