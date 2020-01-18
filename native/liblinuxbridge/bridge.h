@@ -92,6 +92,10 @@ extern "C" void trigger_shift_ins_paste();
  */
 extern "C" void trigger_alt_shift_ins_paste();
 
+/*
+ * Trigger copy shortcut ( Pressing CTRL+C )
+ */
+extern "C" void trigger_copy();
 
 // SYSTEM MODULE
 

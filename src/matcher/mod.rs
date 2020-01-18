@@ -181,6 +181,7 @@ pub enum TriggerEntry {
 pub trait MatchReceiver {
     fn on_match(&self, m: &Match, trailing_separator: Option<char>);
     fn on_enable_update(&self, status: bool);
+    fn on_passive(&self);
 }
 
 pub trait Matcher : KeyEventReceiver {
