@@ -20,6 +20,15 @@
 use serde_yaml::{Mapping, Value};
 use std::process::Command;
 use log::{warn, error};
+use regex::{Regex, Captures};
+
+lazy_static! {
+    static ref POS_ARG_REGEX: Regex = if cfg!(target_os = "windows") {
+        Regex::new("\\%(?P<pos>\\d+)").unwrap()
+    }else{
+        Regex::new("\\$(?P<pos>\\d+)").unwrap()
+    };
+}
 
 pub struct ShellExtension {}
 
@@ -34,7 +43,7 @@ impl super::Extension for ShellExtension {
         String::from("shell")
     }
 
-    fn calculate(&self, params: &Mapping, _: &Vec<String>) -> Option<String> {  // TODO: add argument handling
+    fn calculate(&self, params: &Mapping, args: &Vec<String>) -> Option<String> {
         let cmd = params.get(&Value::from("cmd"));
         if cmd.is_none() {
             warn!("No 'cmd' parameter specified for shell variable");
@@ -42,14 +51,25 @@ impl super::Extension for ShellExtension {
         }
         let cmd = cmd.unwrap().as_str().unwrap();
 
+        // Render positional parameters in args
+        let cmd = POS_ARG_REGEX.replace_all(&cmd, |caps: &Captures| {
+            let position_str  = caps.name("pos").unwrap().as_str();
+            let position = position_str.parse::<i32>().unwrap_or(-1);
+            if position >= 0 && position < args.len() as i32 {
+                args[position as usize].to_owned()
+            }else{
+                "".to_owned()
+            }
+        }).to_string();
+
         let output = if cfg!(target_os = "windows") {
             Command::new("cmd")
-                .args(&["/C", cmd])
+                .args(&["/C", &cmd])
                 .output()
         } else {
             Command::new("sh")
                 .arg("-c")
-                .arg(cmd)
+                .arg(&cmd)
                 .output()
         };
 
@@ -163,5 +183,31 @@ mod tests {
         assert_eq!(output.unwrap(), "hello world");
     }
 
-    // TODO: add tests with arguments
+    #[test]
+    #[cfg(not(target_os = "windows"))]
+    fn test_shell_args_unix() {
+        let mut params = Mapping::new();
+        params.insert(Value::from("cmd"), Value::from("echo $0"));
+
+        let extension = ShellExtension::new();
+        let output = extension.calculate(&params, &vec!["hello".to_owned()]);
+
+        assert!(output.is_some());
+
+        assert_eq!(output.unwrap(), "hello\n");
+    }
+
+    #[test]
+    #[cfg(target_os = "windows")]
+    fn test_shell_args_windows() {
+        let mut params = Mapping::new();
+        params.insert(Value::from("cmd"), Value::from("echo %0"));
+
+        let extension = ShellExtension::new();
+        let output = extension.calculate(&params, &vec!["hello".to_owned()]);
+
+        assert!(output.is_some());
+
+        assert_eq!(output.unwrap(), "hello\r\n");
+    }
 }
