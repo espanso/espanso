@@ -66,12 +66,6 @@ pub enum KeyModifier {
     OFF,
 }
 
-impl Default for KeyModifier {
-    fn default() -> Self {
-        KeyModifier::ALT
-    }
-}
-
 // Receivers
 
 pub trait KeyEventReceiver {

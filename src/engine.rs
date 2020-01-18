@@ -231,6 +231,39 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
 
         self.ui_manager.notify(message);
     }
+
+    fn on_passive(&self) {
+        info!("Passive mode activated");
+
+        // Trigger a copy shortcut to transfer the content of the selection to the clipboard
+        self.keyboard_manager.trigger_copy();
+
+        // Sleep for a while, giving time to effectively copy the text
+        std::thread::sleep(std::time::Duration::from_millis(100));  // TODO: avoid hardcoding
+
+        // Then get the text from the clipboard and render the match output
+        let clipboard = self.clipboard_manager.get_clipboard();
+
+        if let Some(clipboard) = clipboard {
+            let config = self.config_manager.active_config();
+
+            let rendered = self.renderer.render_passive(&clipboard,
+                                                        &config);
+
+            match rendered {
+                RenderResult::Text(payload) => {
+                    // Paste back the result in the field
+                    self.clipboard_manager.set_clipboard(&payload);
+
+                    std::thread::sleep(std::time::Duration::from_millis(100)); // TODO: avoid hardcoding
+                    self.keyboard_manager.trigger_paste(&config.paste_shortcut);
+                },
+                _ => {
+                    warn!("Cannot expand passive match")
+                },
+            }
+        }
+    }
 }
 
 impl <'a, S: KeyboardManager, C: ClipboardManager,
