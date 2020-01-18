@@ -34,7 +34,7 @@ impl super::Extension for ShellExtension {
         String::from("shell")
     }
 
-    fn calculate(&self, params: &Mapping) -> Option<String> {
+    fn calculate(&self, params: &Mapping, _: &Vec<String>) -> Option<String> {  // TODO: add argument handling
         let cmd = params.get(&Value::from("cmd"));
         if cmd.is_none() {
             warn!("No 'cmd' parameter specified for shell variable");
@@ -90,7 +90,7 @@ mod tests {
         params.insert(Value::from("cmd"), Value::from("echo hello world"));
 
         let extension = ShellExtension::new();
-        let output = extension.calculate(&params);
+        let output = extension.calculate(&params, &vec![]);
 
         assert!(output.is_some());
 
@@ -108,7 +108,7 @@ mod tests {
         params.insert(Value::from("trim"), Value::from(true));
 
         let extension = ShellExtension::new();
-        let output = extension.calculate(&params);
+        let output = extension.calculate(&params, &vec![]);
 
         assert!(output.is_some());
         assert_eq!(output.unwrap(), "hello world");
@@ -126,7 +126,7 @@ mod tests {
         params.insert(Value::from("trim"), Value::from(true));
 
         let extension = ShellExtension::new();
-        let output = extension.calculate(&params);
+        let output = extension.calculate(&params, &vec![]);
 
         assert!(output.is_some());
         assert_eq!(output.unwrap(), "hello world");
@@ -139,7 +139,7 @@ mod tests {
         params.insert(Value::from("trim"), Value::from("error"));
 
         let extension = ShellExtension::new();
-        let output = extension.calculate(&params);
+        let output = extension.calculate(&params, &vec![]);
 
         assert!(output.is_some());
         if cfg!(target_os = "windows") {
@@ -157,9 +157,11 @@ mod tests {
         params.insert(Value::from("trim"), Value::from(true));
 
         let extension = ShellExtension::new();
-        let output = extension.calculate(&params);
+        let output = extension.calculate(&params, &vec![]);
 
         assert!(output.is_some());
         assert_eq!(output.unwrap(), "hello world");
     }
+
+    // TODO: add tests with arguments
 }

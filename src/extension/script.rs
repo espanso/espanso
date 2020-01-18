@@ -34,7 +34,7 @@ impl super::Extension for ScriptExtension {
         String::from("script")
     }
 
-    fn calculate(&self, params: &Mapping) -> Option<String> {
+    fn calculate(&self, params: &Mapping, _: &Vec<String>) -> Option<String> {  // TODO: add argument handling
         let args = params.get(&Value::from("args"));
         if args.is_none() {
             warn!("No 'args' parameter specified for script variable");

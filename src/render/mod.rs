@@ -22,6 +22,7 @@ use crate::matcher::{Match};
 use crate::config::Configs;
 
 pub(crate) mod default;
+pub(crate) mod utils;
 
 pub trait Renderer {
     // Render a match output

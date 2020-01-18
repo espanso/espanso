@@ -34,7 +34,7 @@ impl super::Extension for RandomExtension {
         String::from("random")
     }
 
-    fn calculate(&self, params: &Mapping) -> Option<String> {
+    fn calculate(&self, params: &Mapping, _: &Vec<String>) -> Option<String> {  // TODO: add argument handling
         let choices = params.get(&Value::from("choices"));
         if choices.is_none() {
             warn!("No 'choices' parameter specified for random variable");
@@ -82,7 +82,7 @@ mod tests {
         params.insert(Value::from("choices"), Value::from(choices.clone()));
 
         let extension = RandomExtension::new();
-        let output = extension.calculate(&params);
+        let output = extension.calculate(&params, &vec![]);
 
         assert!(output.is_some());
 
@@ -90,4 +90,6 @@ mod tests {
 
         assert!(choices.iter().any(|x| x == &output));
     }
+
+    // TODO: add test with arguments
 }

@@ -55,7 +55,8 @@ fn default_word_separators() -> Vec<char> { vec![' ', ',', '.', '\r', '\n', 22u8
 fn default_toggle_interval() -> u32 { 230 }
 fn default_preserve_clipboard() -> bool {false}
 fn default_passive_match_regex() -> String{ "(?P<name>:\\p{L}+)(/(?P<args>.*)/)?".to_owned() }
-fn default_passive_arg_regex() -> String{ "((\\\\/)|[^/])+".to_owned() }
+fn default_passive_arg_delimiter() -> char { '/' }
+fn default_passive_arg_escape() -> char { '\\' }
 fn default_backspace_limit() -> i32 { 3 }
 fn default_exclude_default_matches() -> bool {false}
 fn default_matches() -> Vec<Match> { Vec::new() }
@@ -107,8 +108,11 @@ pub struct Configs {
     #[serde(default = "default_passive_match_regex")]
     pub passive_match_regex: String,
 
-    #[serde(default = "default_passive_arg_regex")]
-    pub passive_arg_regex: String,
+    #[serde(default = "default_passive_arg_delimiter")]
+    pub passive_arg_delimiter: char,
+
+    #[serde(default = "default_passive_arg_escape")]
+    pub passive_arg_escape: char,
 
     #[serde(default)]
     pub paste_shortcut: PasteShortcut,
@@ -159,7 +163,8 @@ impl Configs {
         validate_field!(result, self.use_system_agent, default_use_system_agent());
         validate_field!(result, self.preserve_clipboard, default_preserve_clipboard());
         validate_field!(result, self.passive_match_regex, default_passive_match_regex());
-        validate_field!(result, self.passive_arg_regex, default_passive_arg_regex());
+        validate_field!(result, self.passive_arg_delimiter, default_passive_arg_delimiter());
+        validate_field!(result, self.passive_arg_escape, default_passive_arg_escape());
 
         result
     }
