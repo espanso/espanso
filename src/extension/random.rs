@@ -34,7 +34,7 @@ impl super::Extension for RandomExtension {
         String::from("random")
     }
 
-    fn calculate(&self, params: &Mapping, _: &Vec<String>) -> Option<String> {  // TODO: add argument handling
+    fn calculate(&self, params: &Mapping, args: &Vec<String>) -> Option<String> {
         let choices = params.get(&Value::from("choices"));
         if choices.is_none() {
             warn!("No 'choices' parameter specified for random variable");
@@ -51,7 +51,10 @@ impl super::Extension for RandomExtension {
 
             match choice {
                 Some(output) => {
-                    return Some(output.clone())
+                    // Render arguments
+                    let output = crate::render::utils::render_args(output, args);
+
+                    return Some(output)
                 },
                 None => {
                     error!("Could not select a random choice.");
@@ -91,5 +94,29 @@ mod tests {
         assert!(choices.iter().any(|x| x == &output));
     }
 
-    // TODO: add test with arguments
+    #[test]
+    fn test_random_with_args() {
+        let mut params = Mapping::new();
+        let choices = vec!(
+            "first $0$",
+            "second $0$",
+            "$0$ third",
+        );
+        params.insert(Value::from("choices"), Value::from(choices.clone()));
+
+        let extension = RandomExtension::new();
+        let output = extension.calculate(&params, &vec!["test".to_owned()]);
+
+        assert!(output.is_some());
+
+        let output = output.unwrap();
+
+        let rendered_choices = vec!(
+            "first test",
+            "second test",
+            "test third",
+        );
+
+        assert!(rendered_choices.iter().any(|x| x == &output));
+    }
 }
