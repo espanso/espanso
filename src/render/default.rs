@@ -36,9 +36,6 @@ pub struct DefaultRenderer {
 
     // Regex used to identify matches (and arguments) in passive expansions
     passive_match_regex: Regex,
-
-    // Regex used to separate arguments in passive expansions
-    passive_arg_regex: Regex,
 }
 
 impl DefaultRenderer {
@@ -54,15 +51,10 @@ impl DefaultRenderer {
                                         .unwrap_or_else(|e| {
                                             panic!("Invalid passive match regex");
                                         });
-        let passive_arg_regex = Regex::new(&config.passive_arg_regex)
-                                        .unwrap_or_else(|e| {
-                                            panic!("Invalid passive arg regex");
-                                        });
 
         DefaultRenderer{
             extension_map,
             passive_match_regex,
-            passive_arg_regex
         }
     }
 
@@ -129,7 +121,7 @@ impl super::Renderer for DefaultRenderer {
                             // TODO: pass the arguments to the extension
                             let extension = self.extension_map.get(&variable.var_type);
                             if let Some(extension) = extension {
-                                let ext_out = extension.calculate(&variable.params);
+                                let ext_out = extension.calculate(&variable.params, &args);
                                 if let Some(output) = ext_out {
                                     output_map.insert(variable.name.clone(), output);
                                 }else{
@@ -142,11 +134,6 @@ impl super::Renderer for DefaultRenderer {
                         }
                     }
 
-                    // TODO: replace the arguments
-                    // the idea is that every param placeholder, such as $1$, is replaced with
-                    // an ArgExtension when loading a match, which renders the argument as output
-                    // this is only used as syntactic sugar
-
                     // Replace the variables
                     let result = VAR_REGEX.replace_all(&content.replace, |caps: &Captures| {
                         let var_name = caps.name("name").unwrap().as_str();
@@ -158,6 +145,9 @@ impl super::Renderer for DefaultRenderer {
                 }else{  // No variables, simple text substitution
                     content.replace.clone()
                 };
+
+                // Render any argument that may be present
+                let target_string = utils::render_args(&target_string, &args);
 
                 RenderResult::Text(target_string)
             },
@@ -202,9 +192,9 @@ impl super::Renderer for DefaultRenderer {
             }else{
                 ""
             };
-            let args : Vec<String> = self.passive_arg_regex.split(match_args).into_iter().map(
-                |arg| arg.to_owned()
-            ).collect();
+            let args : Vec<String> = utils::split_args(match_args,
+                                                       config.passive_arg_delimiter,
+                                                       config.passive_arg_escape);
 
             let m = m.unwrap();
             // Render the actual match
@@ -242,7 +232,6 @@ mod tests {
     fn verify_render(rendered: RenderResult, target: &str) {
         match rendered {
             RenderResult::Text(rendered) => {
-                println!("{}", rendered);
                 assert_eq!(rendered, target);
             },
             _ => {
@@ -325,5 +314,98 @@ mod tests {
         let rendered = renderer.render_passive(text, &config);
 
         verify_render(rendered, result);
+    }
+
+    #[test]
+    fn test_render_passive_nested_matches_no_args() {
+        let text = ":greet";
+
+        let config = get_config_for(r###"
+        matches:
+            - trigger: ':greet'
+              replace: "hi {{name}}"
+              vars:
+                - name: name
+                  type: match
+                  params:
+                    trigger: ":name"
+
+            - trigger: ':name'
+              replace: john
+        "###);
+
+        let renderer = get_renderer(config.clone());
+
+        let rendered = renderer.render_passive(text, &config);
+
+        verify_render(rendered, "hi john");
+    }
+
+    #[test]
+    fn test_render_passive_simple_match_with_args() {
+        let text = ":greet/Jon/";
+
+        let config = get_config_for(r###"
+        matches:
+            - trigger: ':greet'
+              replace: "Hi $0$"
+        "###);
+
+        let renderer = get_renderer(config.clone());
+
+        let rendered = renderer.render_passive(text, &config);
+
+        verify_render(rendered, "Hi Jon");
+    }
+
+    #[test]
+    fn test_render_passive_simple_match_with_multiple_args() {
+        let text = ":greet/Jon/Snow/";
+
+        let config = get_config_for(r###"
+        matches:
+            - trigger: ':greet'
+              replace: "Hi $0$, there is $1$ outside"
+        "###);
+
+        let renderer = get_renderer(config.clone());
+
+        let rendered = renderer.render_passive(text, &config);
+
+        verify_render(rendered, "Hi Jon, there is Snow outside");
+    }
+
+    #[test]
+    fn test_render_passive_simple_match_with_escaped_args() {
+        let text = ":greet/Jon/10\\/12/";
+
+        let config = get_config_for(r###"
+        matches:
+            - trigger: ':greet'
+              replace: "Hi $0$, today is $1$"
+        "###);
+
+        let renderer = get_renderer(config.clone());
+
+        let rendered = renderer.render_passive(text, &config);
+
+        verify_render(rendered, "Hi Jon, today is 10/12");
+    }
+
+    #[test]
+    fn test_render_passive_simple_match_with_args_not_closed() {
+        let text = ":greet/Jon/Snow";
+
+        let config = get_config_for(r###"
+        matches:
+            - trigger: ':greet'
+              replace: "Hi $0$"
+        "###);
+
+        let renderer = get_renderer(config.clone());
+
+        let rendered = renderer.render_passive(text, &config);
+
+        verify_render(rendered, "Hi JonSnow");
     }
 }
