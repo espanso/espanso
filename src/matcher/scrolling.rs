@@ -114,6 +114,11 @@ impl <'a, R: MatchReceiver, M: ConfigManager<'a>> super::Matcher for ScrollingMa
 
         let new_matches: Vec<MatchEntry> = active_config.matches.iter()
             .filter(|&x| {
+                // only active-enabled matches are considered
+                if x.passive_only {
+                    return false;
+                }
+
                 let mut result = Self::is_matching(x, c, 0, is_current_word_separator);
 
                 if x.word {
