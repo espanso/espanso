@@ -32,6 +32,7 @@ use std::process::exit;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use regex::{Regex, Captures};
+use std::time::SystemTime;
 
 pub struct Engine<'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>,
                   U: UIManager, R: Renderer> {
@@ -42,6 +43,8 @@ pub struct Engine<'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<
     renderer: &'a R,
 
     enabled: RefCell<bool>,
+    last_action_time: RefCell<SystemTime>,  // Used to block espanso from re-interpreting it's own inputs
+    action_noop_interval: u128,
 }
 
 impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIManager, R: Renderer>
@@ -50,13 +53,17 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
                config_manager: &'a M, ui_manager: &'a U,
                renderer: &'a R) -> Engine<'a, S, C, M, U, R> {
         let enabled = RefCell::new(true);
+        let last_action_time = RefCell::new(SystemTime::now());
+        let action_noop_interval = config_manager.default_config().action_noop_interval;
 
         Engine{keyboard_manager,
             clipboard_manager,
             config_manager,
             ui_manager,
             renderer,
-            enabled
+            enabled,
+            last_action_time,
+            action_noop_interval,
         }
     }
 
@@ -102,6 +109,20 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
             None
         }
     }
+
+    /// Used to check if the last action has been executed within a specified interval.
+    /// If so, return true (blocking the action), otherwise false.
+    fn check_last_action_and_set(&self, interval: u128) -> bool {
+        let mut last_action_time = self.last_action_time.borrow_mut();
+        if let Ok(elapsed) = last_action_time.elapsed() {
+            if elapsed.as_millis() < interval {
+                return true;
+            }
+        }
+
+        (*last_action_time) = SystemTime::now();
+        return false;
+    }
 }
 
 lazy_static! {
@@ -115,6 +136,11 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
         let config = self.config_manager.active_config();
 
         if config.disabled {
+            return;
+        }
+
+        // avoid espanso reinterpreting its own actions
+        if self.check_last_action_and_set(self.action_noop_interval) {
             return;
         }
 
@@ -218,6 +244,11 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
     }
 
     fn on_enable_update(&self, status: bool) {
+        // avoid espanso reinterpreting its own actions
+        if self.check_last_action_and_set(self.action_noop_interval) {
+            return;
+        }
+
         let message = if status {
             "espanso enabled"
         }else{
@@ -233,6 +264,11 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
     }
 
     fn on_passive(&self) {
+        // avoid espanso reinterpreting its own actions
+        if self.check_last_action_and_set(self.action_noop_interval) {
+            return;
+        }
+
         info!("Passive mode activated");
 
         // Trigger a copy shortcut to transfer the content of the selection to the clipboard
