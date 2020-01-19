@@ -59,6 +59,7 @@ fn default_passive_match_regex() -> String{ "(?P<name>:\\p{L}+)(/(?P<args>.*)/)?
 fn default_passive_arg_delimiter() -> char { '/' }
 fn default_passive_arg_escape() -> char { '\\' }
 fn default_passive_key() -> KeyModifier { KeyModifier::OFF }
+fn default_action_noop_interval() -> u128 { 500 }
 fn default_backspace_limit() -> i32 { 3 }
 fn default_exclude_default_matches() -> bool {false}
 fn default_matches() -> Vec<Match> { Vec::new() }
@@ -119,6 +120,9 @@ pub struct Configs {
     #[serde(default = "default_passive_key")]
     pub passive_key: KeyModifier,
 
+    #[serde(default = "default_action_noop_interval")]
+    pub action_noop_interval: u128,
+
     #[serde(default)]
     pub paste_shortcut: PasteShortcut,
 
@@ -171,6 +175,7 @@ impl Configs {
         validate_field!(result, self.passive_arg_delimiter, default_passive_arg_delimiter());
         validate_field!(result, self.passive_arg_escape, default_passive_arg_escape());
         validate_field!(result, self.passive_key, default_passive_key());
+        validate_field!(result, self.action_noop_interval, default_action_noop_interval());
 
         result
     }
