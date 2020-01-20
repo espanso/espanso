@@ -73,4 +73,10 @@ impl super::KeyboardManager for WindowsKeyboardManager {
             send_multi_vkey(0x25, count)
         }
     }
+
+    fn trigger_copy(&self) {
+        unsafe {
+            trigger_copy();
+        }
+    }
 }

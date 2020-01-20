@@ -62,6 +62,7 @@ impl super::Extension for ScriptExtension {
                     .output()
             };
 
+            println!("{:?}", output);
             match output {
                 Ok(output) => {
                     let output_str = String::from_utf8_lossy(output.stdout.as_slice());
@@ -86,6 +87,7 @@ mod tests {
     use crate::extension::Extension;
 
     #[test]
+    #[cfg(not(target_os = "windows"))]
     fn test_script_basic() {
         let mut params = Mapping::new();
         params.insert(Value::from("args"), Value::from(vec!["echo", "hello world"]));
@@ -94,15 +96,11 @@ mod tests {
         let output = extension.calculate(&params, &vec![]);
 
         assert!(output.is_some());
-
-        if cfg!(target_os = "windows") {
-            assert_eq!(output.unwrap(), "hello world\r\n");
-        }else{
-            assert_eq!(output.unwrap(), "hello world\n");
-        }
+        assert_eq!(output.unwrap(), "hello world\n");
     }
 
     #[test]
+    #[cfg(not(target_os = "windows"))]
     fn test_script_inject_args_off() {
         let mut params = Mapping::new();
         params.insert(Value::from("args"), Value::from(vec!["echo", "hello world"]));
@@ -111,15 +109,11 @@ mod tests {
         let output = extension.calculate(&params, &vec!["jon".to_owned()]);
 
         assert!(output.is_some());
-
-        if cfg!(target_os = "windows") {
-            assert_eq!(output.unwrap(), "hello world\r\n");
-        }else{
-            assert_eq!(output.unwrap(), "hello world\n");
-        }
+        assert_eq!(output.unwrap(), "hello world\n");
     }
 
     #[test]
+    #[cfg(not(target_os = "windows"))]
     fn test_script_inject_args_on() {
         let mut params = Mapping::new();
         params.insert(Value::from("args"), Value::from(vec!["echo", "hello world"]));
@@ -129,11 +123,6 @@ mod tests {
         let output = extension.calculate(&params, &vec!["jon".to_owned()]);
 
         assert!(output.is_some());
-
-        if cfg!(target_os = "windows") {
-            assert_eq!(output.unwrap(), "hello world jon\r\n");
-        }else{
-            assert_eq!(output.unwrap(), "hello world jon\n");
-        }
+        assert_eq!(output.unwrap(), "hello world jon\n");
     }
 }

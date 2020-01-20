@@ -24,7 +24,7 @@ use regex::{Regex, Captures};
 
 lazy_static! {
     static ref POS_ARG_REGEX: Regex = if cfg!(target_os = "windows") {
-        Regex::new("\\%(?P<pos>\\d+)").unwrap()
+        Regex::new("%(?P<pos>\\d+)").unwrap()
     }else{
         Regex::new("\\$(?P<pos>\\d+)").unwrap()
     };
