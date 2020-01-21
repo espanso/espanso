@@ -409,6 +409,7 @@ impl ConfigSet {
             let mut specific_triggers : Vec<String> = s.matches.iter().map(|t| {
                 t.trigger.clone()
             }).collect();
+            specific_triggers.sort();
             has_conflicts |= Self::list_has_conflicts(&specific_triggers);
         }
 
@@ -1055,5 +1056,114 @@ mod tests {
         assert!(config_set.default.matches.iter().any(|m| m.trigger == "hasta"));
         assert!(config_set.specific[0].matches.iter().any(|m| m.trigger == "harry"));
         assert!(config_set.specific[0].matches.iter().any(|m| m.trigger == "ron"));
+    }
+
+    #[test]
+    fn test_list_has_conflict_no_conflict() {
+        assert_eq!(ConfigSet::list_has_conflicts(&vec!(":ab".to_owned(), ":bc".to_owned())), false);
+    }
+
+    #[test]
+    fn test_list_has_conflict_conflict() {
+        let mut list = vec!("ac".to_owned(), "ab".to_owned(), "abc".to_owned());
+        list.sort();
+        assert_eq!(ConfigSet::list_has_conflicts(&list), true);
+    }
+
+    #[test]
+    fn test_has_conflict_no_conflict() {
+        let (data_dir, package_dir) = create_temp_espanso_directories_with_default_content(r###"
+        matches:
+            - trigger: ac
+              replace: Hasta la vista
+            - trigger: bc
+              replace: Jon
+        "###);
+
+        let user_defined_path = create_user_config_file(data_dir.path(), "specific.yml", r###"
+        name: specific1
+
+        matches:
+            - trigger: "hello"
+              replace: "world"
+        "###);
+
+        let config_set = ConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
+        assert_eq!(ConfigSet::has_conflicts(&config_set.default, &config_set.specific), false);
+    }
+
+    #[test]
+    fn test_has_conflict_conflict_in_default() {
+        let (data_dir, package_dir) = create_temp_espanso_directories_with_default_content(r###"
+        matches:
+            - trigger: ac
+              replace: Hasta la vista
+            - trigger: bc
+              replace: Jon
+            - trigger: acb
+              replace: Error
+        "###);
+
+        let user_defined_path = create_user_config_file(data_dir.path(), "specific.yml", r###"
+        name: specific1
+
+        matches:
+            - trigger: "hello"
+              replace: "world"
+        "###);
+
+        let config_set = ConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
+        assert_eq!(ConfigSet::has_conflicts(&config_set.default, &config_set.specific), true);
+    }
+
+    #[test]
+    fn test_has_conflict_conflict_in_specific_and_default() {
+        let (data_dir, package_dir) = create_temp_espanso_directories_with_default_content(r###"
+        matches:
+            - trigger: ac
+              replace: Hasta la vista
+            - trigger: bc
+              replace: Jon
+        "###);
+
+        let user_defined_path = create_user_config_file(data_dir.path(), "specific.yml", r###"
+        name: specific1
+
+        matches:
+            - trigger: "bcd"
+              replace: "Conflict"
+        "###);
+
+        let config_set = ConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
+        assert_eq!(ConfigSet::has_conflicts(&config_set.default, &config_set.specific), true);
+    }
+
+    #[test]
+    fn test_has_conflict_no_conflict_in_specific_and_specific() {
+        let (data_dir, package_dir) = create_temp_espanso_directories_with_default_content(r###"
+        matches:
+            - trigger: ac
+              replace: Hasta la vista
+            - trigger: bc
+              replace: Jon
+        "###);
+
+        let user_defined_path = create_user_config_file(data_dir.path(), "specific.yml", r###"
+        name: specific1
+
+        matches:
+            - trigger: "bad"
+              replace: "Conflict"
+        "###);
+        let user_defined_path2 = create_user_config_file(data_dir.path(), "specific2.yml", r###"
+        name: specific2
+
+        matches:
+            - trigger: "badass"
+              replace: "Conflict"
+        "###);
+
+        let config_set = ConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
+        assert_eq!(ConfigSet::has_conflicts(&config_set.default, &config_set.specific), false);
     }
 }
