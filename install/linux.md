@@ -20,7 +20,7 @@ so you will need to install those first with the following commands:
 
 ```
 sudo apt update
-sudo apt install libxtst6 libxdo3 xclip
+sudo apt install libxtst6 libxdo3 xclip libnotify-bin
 ```
 
 You can now download the latest espanso release:
@@ -79,7 +79,7 @@ so you will need to install those first with the following commands:
 
 ```
 sudo pacman -Sy
-sudo pacman -S libxtst xdotool xclip
+sudo pacman -S libxtst xdotool xclip libnotify
 ```
 
 You can now download the latest espanso release:
