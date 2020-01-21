@@ -479,6 +479,8 @@ int32_t is_current_window_special() {
             return 1;
         }else if (strstr(class_buffer, "Emacs") != NULL) {  // Emacs
             return 3;
+        }else if (strstr(class_buffer, "yakuake") != NULL) {  // Yakuake terminal
+            return 1;
         }
     }
 
