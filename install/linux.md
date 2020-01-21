@@ -15,8 +15,9 @@ Currently espanso supports X11 systems only.
 
 ### Installing on Ubuntu / Debian
 
-Espanso depends upon the `X11 Record Extension`, the `xdo library` and the `xclip` command, 
-so you will need to install those first with the following commands:
+Espanso depends upon the `X11 Record Extension`, the `xdo library`, the `xclip` command and
+the `libnotify-bin` library, so you will need to install 
+those first with the following commands:
 
 ```
 sudo apt update
@@ -74,8 +75,8 @@ makepkg -si
  
 #### Installing from the prebuilt release
 
-Espanso depends upon the `X11 Record Extension`, the `xdo library` and the `xclip` command, 
-so you will need to install those first with the following commands:
+Espanso depends upon the `X11 Record Extension`, the `xdo library`, the `xclip` command and the
+`libnotify` library, so you will need to install those first with the following commands:
 
 ```
 sudo pacman -Sy
