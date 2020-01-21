@@ -481,6 +481,8 @@ int32_t is_current_window_special() {
             return 3;
         }else if (strstr(class_buffer, "yakuake") != NULL) {  // Yakuake terminal
             return 1;
+        }else if (strstr(class_buffer, "Tilix") != NULL) {  // Tilix terminal
+            return 1;
         }
     }
 
