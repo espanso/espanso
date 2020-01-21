@@ -15,14 +15,40 @@ For example, we can define a match that will expand every occurrence of `hello` 
   replace: "world"
 ```
 
-To replace the original text with a *multi-line* expansion, we can use the `\n` line terminator character, such as:
+#### Multi-line expansions
+
+To replace the original text with a multi-line expansion, we can either use the `\n` line terminator character, such as:
 
 ```yml
 - trigger: "hello"
   replace: "line1\nline2"
 ```
+> Notice that when using `\n` as the line terminator character, quotes are needed.
+
+Or values can span multiple lines using  `|` or `>`. Spanning multiple lines using a *Literal Block Scalar* `|` will include the newlines and any trailing spaces. Using a *Folded Block Scalar* `>` will fold newlines to spaces; it’s used to make what would otherwise be a very long line easier to read and edit. In either case the indentation will be ignored. Examples are:
+
+
+```yml
+- trigger: "include newlines"
+  replace: |
+            exactly as you see
+            will appear these three
+            lines of poetry
+```
+```yml
+- trigger: "fold newlines"
+  replace: >
+            this is really a
+            single line of text
+            despite appearances
+```
+> Notice how no quotes are needed
+
+There are a number of characters that are special (or reserved) and cannot be used as the first character of an unquoted scalar: ``' "  [] {} > | * & ! % # ` @ ``
 
 These kind of expansions are simple text replacements and are *static*.
+
+> Special thanks to [@muhlinux](https://github.com/muhlinux) for the help with this section.
 
 ### Dynamic Matches
 
