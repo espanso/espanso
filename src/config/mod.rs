@@ -48,6 +48,7 @@ fn default_filter_class() -> String{ "".to_owned() }
 fn default_filter_exec() -> String{ "".to_owned() }
 fn default_disabled() -> bool{ false }
 fn default_log_level() -> i32 { 0 }
+fn default_conflict_check() -> bool{ true }
 fn default_ipc_server_port() -> i32 { 34982 }
 fn default_use_system_agent() -> bool { true }
 fn default_config_caching_interval() -> i32 { 800 }
@@ -80,6 +81,9 @@ pub struct Configs {
 
     #[serde(default = "default_log_level")]
     pub log_level: i32,
+
+    #[serde(default = "default_conflict_check")]
+    pub conflict_check: bool,
 
     #[serde(default = "default_ipc_server_port")]
     pub ipc_server_port: i32,
@@ -144,6 +148,7 @@ impl Configs {
 
         validate_field!(result, self.config_caching_interval, default_config_caching_interval());
         validate_field!(result, self.log_level, default_log_level());
+        validate_field!(result, self.conflict_check, default_conflict_check());
         validate_field!(result, self.toggle_key, KeyModifier::default());
         validate_field!(result, self.toggle_interval, default_toggle_interval());
         validate_field!(result, self.backspace_limit, default_backspace_limit());
@@ -324,6 +329,18 @@ impl ConfigSet {
             }
         }
 
+        // Check if some triggers are conflicting with each other
+        // For more information, see: https://github.com/federico-terzi/espanso/issues/135
+        if default.conflict_check {
+            for s in specific.iter() {
+                let has_conflicts = Self::has_conflicts(&default, &specific);
+                if has_conflicts {
+                    eprintln!("Warning: some triggers had conflicts and may not behave as intended");
+                    eprintln!("To turn off this check, add \"conflict_check: false\" in the configuration");
+                }
+            }
+        }
+
         Ok(ConfigSet {
             default,
             specific
@@ -378,6 +395,42 @@ impl ConfigSet {
         }
 
         return ConfigSet::load(config_dir.as_path(), package_dir.as_path());
+    }
+
+    fn has_conflicts(default: &Configs, specific: &Vec<Configs>) -> bool {
+        let mut sorted_triggers : Vec<String> = default.matches.iter().map(|t| {
+            t.trigger.clone()
+        }).collect();
+        sorted_triggers.sort();
+
+        let mut has_conflicts = Self::list_has_conflicts(&sorted_triggers);
+
+        for s in specific.iter() {
+            let mut specific_triggers : Vec<String> = s.matches.iter().map(|t| {
+                t.trigger.clone()
+            }).collect();
+            has_conflicts |= Self::list_has_conflicts(&specific_triggers);
+        }
+
+        has_conflicts
+    }
+
+    fn list_has_conflicts(sorted_list: &Vec<String>) -> bool {
+        if sorted_list.len() <= 1 {
+            return false
+        }
+
+        let mut has_conflicts = false;
+
+        for (i, item) in sorted_list.iter().skip(1).enumerate() {
+            let previous = &sorted_list[i];
+            if item.starts_with(previous) {
+                has_conflicts = true;
+                eprintln!("Warning: trigger '{}' is conflicting with '{}' and may not behave as intended", item, previous);
+            }
+        }
+
+        has_conflicts
     }
 }
 
