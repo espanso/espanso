@@ -524,6 +524,31 @@ void trigger_paste() {
     SendInput(vec.size(), vec.data(), sizeof(INPUT));
 }
 
+void trigger_copy() {
+    std::vector<INPUT> vec;
+
+    INPUT input = { 0 };
+
+    input.type = INPUT_KEYBOARD;
+    input.ki.wScan = 0;
+    input.ki.time = 0;
+    input.ki.dwExtraInfo = 0;
+    input.ki.wVk = VK_CONTROL;
+    input.ki.dwFlags = 0; // 0 for key press
+    vec.push_back(input);
+
+    input.ki.wVk = 0x43;  // C KEY
+    vec.push_back(input);
+
+    input.ki.dwFlags = KEYEVENTF_KEYUP; // KEYEVENTF_KEYUP for key release
+    vec.push_back(input);
+
+    input.ki.wVk = VK_CONTROL;
+    vec.push_back(input);
+
+    SendInput(vec.size(), vec.data(), sizeof(INPUT));
+}
+
 
 // SYSTEM
 
@@ -699,3 +724,4 @@ int32_t set_clipboard_image(wchar_t *path) {
 
     return result;
 }
+

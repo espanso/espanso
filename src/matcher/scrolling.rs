@@ -18,7 +18,7 @@
  */
 
 use crate::matcher::{Match, MatchReceiver, TriggerEntry};
-use std::cell::RefCell;
+use std::cell::{RefCell, Ref};
 use crate::event::{KeyModifier, ActionEventReceiver, ActionType};
 use crate::config::ConfigManager;
 use crate::event::KeyModifier::BACKSPACE;
@@ -30,6 +30,7 @@ pub struct ScrollingMatcher<'a, R: MatchReceiver, M: ConfigManager<'a>> {
     receiver: &'a R,
     current_set_queue: RefCell<VecDeque<Vec<MatchEntry<'a>>>>,
     toggle_press_time: RefCell<SystemTime>,
+    passive_press_time: RefCell<SystemTime>,
     is_enabled: RefCell<bool>,
     was_previous_char_word_separator: RefCell<bool>,
 }
@@ -45,12 +46,14 @@ impl <'a, R: MatchReceiver, M: ConfigManager<'a>> ScrollingMatcher<'a, R, M> {
     pub fn new(config_manager: &'a M, receiver: &'a R) -> ScrollingMatcher<'a, R, M> {
         let current_set_queue = RefCell::new(VecDeque::new());
         let toggle_press_time = RefCell::new(SystemTime::now());
+        let passive_press_time = RefCell::new(SystemTime::now());
 
         ScrollingMatcher{
             config_manager,
             receiver,
             current_set_queue,
             toggle_press_time,
+            passive_press_time,
             is_enabled: RefCell::new(true),
             was_previous_char_word_separator: RefCell::new(true),
         }
@@ -111,6 +114,11 @@ impl <'a, R: MatchReceiver, M: ConfigManager<'a>> super::Matcher for ScrollingMa
 
         let new_matches: Vec<MatchEntry> = active_config.matches.iter()
             .filter(|&x| {
+                // only active-enabled matches are considered
+                if x.passive_only {
+                    return false;
+                }
+
                 let mut result = Self::is_matching(x, c, 0, is_current_word_separator);
 
                 if x.word {
@@ -193,22 +201,25 @@ impl <'a, R: MatchReceiver, M: ConfigManager<'a>> super::Matcher for ScrollingMa
     fn handle_modifier(&self, m: KeyModifier) {
         let config = self.config_manager.default_config();
 
+        // TODO: at the moment, activating the passive key triggers the toggle key
+        // study a mechanism to avoid this problem
+
         if m == config.toggle_key {
-            if m == KeyModifier::OFF { return }
-            let mut toggle_press_time = self.toggle_press_time.borrow_mut();
-            if let Ok(elapsed) = toggle_press_time.elapsed() {
-                if elapsed.as_millis() < u128::from(config.toggle_interval) {
-                    self.toggle();
+            check_interval(&self.toggle_press_time,
+                           u128::from(config.toggle_interval), || {
+                self.toggle();
 
-                    let is_enabled = self.is_enabled.borrow();
+                let is_enabled = self.is_enabled.borrow();
 
-                    if !*is_enabled {
-                        self.current_set_queue.borrow_mut().clear();
-                    }
+                if !*is_enabled {
+                    self.current_set_queue.borrow_mut().clear();
                 }
-            }
-
-            (*toggle_press_time) = SystemTime::now();
+            });
+        }else if m == config.passive_key {
+            check_interval(&self.passive_press_time,
+                           u128::from(config.toggle_interval), || {
+                self.receiver.on_passive();
+            });
         }
 
         // Backspace handling, basically "rewinding history"
@@ -234,4 +245,15 @@ impl <'a, R: MatchReceiver, M: ConfigManager<'a>> ActionEventReceiver for Scroll
             _ => {}
         }
     }
+}
+
+fn check_interval<F>(state_var: &RefCell<SystemTime>, interval: u128, elapsed_callback: F) where F:Fn() {
+    let mut press_time = state_var.borrow_mut();
+    if let Ok(elapsed) = press_time.elapsed() {
+        if elapsed.as_millis() < interval {
+            elapsed_callback();
+        }
+    }
+
+    (*press_time) = SystemTime::now();
 }

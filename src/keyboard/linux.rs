@@ -81,4 +81,10 @@ impl super::KeyboardManager for LinuxKeyboardManager {
             left_arrow(count);
         }
     }
+
+    fn trigger_copy(&self) {
+        unsafe {
+            trigger_copy();
+        }
+    }
 }

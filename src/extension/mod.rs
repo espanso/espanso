@@ -26,7 +26,7 @@ mod random;
 
 pub trait Extension {
     fn name(&self) -> String;
-    fn calculate(&self, params: &Mapping) -> Option<String>;
+    fn calculate(&self, params: &Mapping, args: &Vec<String>) -> Option<String>;
 }
 
 pub fn get_extensions() -> Vec<Box<dyn Extension>> {

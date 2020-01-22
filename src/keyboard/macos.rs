@@ -56,6 +56,12 @@ impl super::KeyboardManager for MacKeyboardManager {
         }
     }
 
+    fn trigger_copy(&self) {
+        unsafe {
+            trigger_copy();
+        }
+    }
+
     fn delete_string(&self, count: i32) {
         unsafe {delete_string(count)}
     }
