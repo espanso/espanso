@@ -32,6 +32,7 @@ pub struct Match {
     pub trigger: String,
     pub content: MatchContentType,
     pub word: bool,
+    pub passive_only: bool,
 
     // Automatically calculated from the trigger, used by the matcher to check for correspondences.
     #[serde(skip_serializing)]
@@ -133,7 +134,8 @@ impl<'a> From<&'a AutoMatch> for Match{
         Self {
             trigger: other.trigger.clone(),
             content,
-            word: other.word.clone(),
+            word: other.word,
+            passive_only: other.passive_only,
             _trigger_sequence: trigger_sequence,
         }
     }
@@ -155,10 +157,14 @@ struct AutoMatch {
 
     #[serde(default = "default_word")]
     pub word: bool,
+
+    #[serde(default = "default_passive_only")]
+    pub passive_only: bool,
 }
 
 fn default_vars() -> Vec<MatchVariable> {Vec::new()}
 fn default_word() -> bool {false}
+fn default_passive_only() -> bool {false}
 fn default_replace() -> Option<String> {None}
 fn default_image_path() -> Option<String> {None}
 
@@ -181,6 +187,7 @@ pub enum TriggerEntry {
 pub trait MatchReceiver {
     fn on_match(&self, m: &Match, trailing_separator: Option<char>);
     fn on_enable_update(&self, status: bool);
+    fn on_passive(&self);
 }
 
 pub trait Matcher : KeyEventReceiver {

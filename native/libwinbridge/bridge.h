@@ -79,6 +79,11 @@ extern "C" void delete_string(int32_t count);
  */
 extern "C" void trigger_paste();
 
+/*
+ * Send the copy keyboard shortcut (CTRL+C)
+ */
+extern "C" void trigger_copy();
+
 // Detect current application commands
 
 /*

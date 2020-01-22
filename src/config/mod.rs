@@ -54,7 +54,13 @@ fn default_use_system_agent() -> bool { true }
 fn default_config_caching_interval() -> i32 { 800 }
 fn default_word_separators() -> Vec<char> { vec![' ', ',', '.', '\r', '\n', 22u8 as char] }
 fn default_toggle_interval() -> u32 { 230 }
+fn default_toggle_key() -> KeyModifier { KeyModifier::ALT }
 fn default_preserve_clipboard() -> bool {false}
+fn default_passive_match_regex() -> String{ "(?P<name>:\\p{L}+)(/(?P<args>.*)/)?".to_owned() }
+fn default_passive_arg_delimiter() -> char { '/' }
+fn default_passive_arg_escape() -> char { '\\' }
+fn default_passive_key() -> KeyModifier { KeyModifier::OFF }
+fn default_action_noop_interval() -> u128 { 500 }
 fn default_backspace_limit() -> i32 { 3 }
 fn default_exclude_default_matches() -> bool {false}
 fn default_matches() -> Vec<Match> { Vec::new() }
@@ -97,7 +103,7 @@ pub struct Configs {
     #[serde(default = "default_word_separators")]
     pub word_separators: Vec<char>,  // TODO: add parsing test
 
-    #[serde(default)]
+    #[serde(default = "default_toggle_key")]
     pub toggle_key: KeyModifier,
 
     #[serde(default = "default_toggle_interval")]
@@ -105,6 +111,21 @@ pub struct Configs {
 
     #[serde(default = "default_preserve_clipboard")]
     pub preserve_clipboard: bool,
+
+    #[serde(default = "default_passive_match_regex")]
+    pub passive_match_regex: String,
+
+    #[serde(default = "default_passive_arg_delimiter")]
+    pub passive_arg_delimiter: char,
+
+    #[serde(default = "default_passive_arg_escape")]
+    pub passive_arg_escape: char,
+
+    #[serde(default = "default_passive_key")]
+    pub passive_key: KeyModifier,
+
+    #[serde(default = "default_action_noop_interval")]
+    pub action_noop_interval: u128,
 
     #[serde(default)]
     pub paste_shortcut: PasteShortcut,
@@ -149,12 +170,17 @@ impl Configs {
         validate_field!(result, self.config_caching_interval, default_config_caching_interval());
         validate_field!(result, self.log_level, default_log_level());
         validate_field!(result, self.conflict_check, default_conflict_check());
-        validate_field!(result, self.toggle_key, KeyModifier::default());
+        validate_field!(result, self.toggle_key, default_toggle_key());
         validate_field!(result, self.toggle_interval, default_toggle_interval());
         validate_field!(result, self.backspace_limit, default_backspace_limit());
         validate_field!(result, self.ipc_server_port, default_ipc_server_port());
         validate_field!(result, self.use_system_agent, default_use_system_agent());
         validate_field!(result, self.preserve_clipboard, default_preserve_clipboard());
+        validate_field!(result, self.passive_match_regex, default_passive_match_regex());
+        validate_field!(result, self.passive_arg_delimiter, default_passive_arg_delimiter());
+        validate_field!(result, self.passive_arg_escape, default_passive_arg_escape());
+        validate_field!(result, self.passive_key, default_passive_key());
+        validate_field!(result, self.action_noop_interval, default_action_noop_interval());
 
         result
     }
