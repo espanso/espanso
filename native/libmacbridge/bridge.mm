@@ -101,6 +101,14 @@ void send_string(const char * string) {
 
             usleep(2000);
 
+            // Some applications require an explicit release of the space key
+            // For more information: https://github.com/federico-terzi/espanso/issues/159
+            CGEventRef e2 = CGEventCreateKeyboardEvent(NULL, 0x31, false);
+            CGEventPost(kCGHIDEventTap, e2);
+            CFRelease(e2);
+
+            usleep(2000);
+
             i += chunk_size;
         }
     });
