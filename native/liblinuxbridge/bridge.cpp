@@ -307,6 +307,14 @@ void trigger_alt_shift_ins_paste() {
     xdo_send_keysequence_window(xdo_context, CURRENTWINDOW, "Shift+Alt+Insert", 8000);
 }
 
+void trigger_copy() {
+    // Release the other keys, for an explanation, read the 'trigger_paste' method
+
+    xdo_send_keysequence_window(xdo_context, CURRENTWINDOW, "Alt", 8000);
+    xdo_send_keysequence_window(xdo_context, CURRENTWINDOW, "Shift", 8000);
+    xdo_send_keysequence_window(xdo_context, CURRENTWINDOW, "Control_L+c", 8000);
+}
+
 // SYSTEM MODULE
 
 // Function taken from the wmlib tool source code

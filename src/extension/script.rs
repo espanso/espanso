@@ -34,7 +34,7 @@ impl super::Extension for ScriptExtension {
         String::from("script")
     }
 
-    fn calculate(&self, params: &Mapping) -> Option<String> {
+    fn calculate(&self, params: &Mapping, user_args: &Vec<String>) -> Option<String> {
         let args = params.get(&Value::from("args"));
         if args.is_none() {
             warn!("No 'args' parameter specified for script variable");
@@ -42,9 +42,16 @@ impl super::Extension for ScriptExtension {
         }
         let args = args.unwrap().as_sequence();
         if let Some(args) = args {
-            let str_args = args.iter().map(|arg| {
+            let mut str_args = args.iter().map(|arg| {
                arg.as_str().unwrap_or_default().to_string()
             }).collect::<Vec<String>>();
+
+            // The user has to enable argument concatenation explicitly
+            let inject_args = params.get(&Value::from("inject_args"))
+                .unwrap_or(&Value::from(false)).as_bool().unwrap_or(false);
+            if inject_args {
+                str_args.extend(user_args.clone());
+            }
 
             let output = if str_args.len() > 1 {
                 Command::new(&str_args[0])
@@ -55,6 +62,7 @@ impl super::Extension for ScriptExtension {
                     .output()
             };
 
+            println!("{:?}", output);
             match output {
                 Ok(output) => {
                     let output_str = String::from_utf8_lossy(output.stdout.as_slice());
@@ -70,5 +78,51 @@ impl super::Extension for ScriptExtension {
 
         error!("Could not execute script with args '{:?}'", args);
         None
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::extension::Extension;
+
+    #[test]
+    #[cfg(not(target_os = "windows"))]
+    fn test_script_basic() {
+        let mut params = Mapping::new();
+        params.insert(Value::from("args"), Value::from(vec!["echo", "hello world"]));
+
+        let extension = ScriptExtension::new();
+        let output = extension.calculate(&params, &vec![]);
+
+        assert!(output.is_some());
+        assert_eq!(output.unwrap(), "hello world\n");
+    }
+
+    #[test]
+    #[cfg(not(target_os = "windows"))]
+    fn test_script_inject_args_off() {
+        let mut params = Mapping::new();
+        params.insert(Value::from("args"), Value::from(vec!["echo", "hello world"]));
+
+        let extension = ScriptExtension::new();
+        let output = extension.calculate(&params, &vec!["jon".to_owned()]);
+
+        assert!(output.is_some());
+        assert_eq!(output.unwrap(), "hello world\n");
+    }
+
+    #[test]
+    #[cfg(not(target_os = "windows"))]
+    fn test_script_inject_args_on() {
+        let mut params = Mapping::new();
+        params.insert(Value::from("args"), Value::from(vec!["echo", "hello world"]));
+        params.insert(Value::from("inject_args"), Value::from(true));
+
+        let extension = ScriptExtension::new();
+        let output = extension.calculate(&params, &vec!["jon".to_owned()]);
+
+        assert!(output.is_some());
+        assert_eq!(output.unwrap(), "hello world jon\n");
     }
 }
