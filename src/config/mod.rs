@@ -63,6 +63,7 @@ fn default_enable_passive() -> bool { false }
 fn default_enable_active() -> bool { true }
 fn default_action_noop_interval() -> u128 { 500 }
 fn default_backspace_limit() -> i32 { 3 }
+fn default_restore_clipboard_delay() -> i32 { 300 }
 fn default_exclude_default_matches() -> bool {false}
 fn default_matches() -> Vec<Match> { Vec::new() }
 
@@ -137,6 +138,9 @@ pub struct Configs {
     #[serde(default = "default_backspace_limit")]
     pub backspace_limit: i32,
 
+    #[serde(default = "default_restore_clipboard_delay")]
+    pub restore_clipboard_delay: i32,
+
     #[serde(default)]
     pub backend: BackendType,
 
@@ -185,6 +189,7 @@ impl Configs {
         validate_field!(result, self.passive_arg_escape, default_passive_arg_escape());
         validate_field!(result, self.passive_key, default_passive_key());
         validate_field!(result, self.action_noop_interval, default_action_noop_interval());
+        validate_field!(result, self.restore_clipboard_delay, default_restore_clipboard_delay());
 
         result
     }

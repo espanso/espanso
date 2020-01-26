@@ -239,6 +239,10 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
 
         // Restore previous clipboard content
         if let Some(previous_clipboard_content) = previous_clipboard_content {
+            // Sometimes an expansion gets overwritten before pasting by the previous content
+            // A delay is needed to mitigate the problem
+            std::thread::sleep(std::time::Duration::from_millis(config.restore_clipboard_delay as u64));
+
             self.clipboard_manager.set_clipboard(&previous_clipboard_content);
         }
     }
