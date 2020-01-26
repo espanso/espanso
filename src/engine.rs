@@ -135,7 +135,7 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
     fn on_match(&self, m: &Match, trailing_separator: Option<char>) {
         let config = self.config_manager.active_config();
 
-        if config.disabled {
+        if !config.enable_active {
             return;
         }
 
@@ -269,6 +269,12 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
             return;
         }
 
+        let config = self.config_manager.active_config();
+
+        if !config.enable_passive {
+            return;
+        }
+
         info!("Passive mode activated");
 
         // Trigger a copy shortcut to transfer the content of the selection to the clipboard
@@ -281,8 +287,6 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
         let clipboard = self.clipboard_manager.get_clipboard();
 
         if let Some(clipboard) = clipboard {
-            let config = self.config_manager.active_config();
-
             let rendered = self.renderer.render_passive(&clipboard,
                                                         &config);
 

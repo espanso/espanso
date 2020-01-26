@@ -46,7 +46,6 @@ fn default_parent() -> String{ "self".to_owned() }
 fn default_filter_title() -> String{ "".to_owned() }
 fn default_filter_class() -> String{ "".to_owned() }
 fn default_filter_exec() -> String{ "".to_owned() }
-fn default_disabled() -> bool{ false }
 fn default_log_level() -> i32 { 0 }
 fn default_conflict_check() -> bool{ true }
 fn default_ipc_server_port() -> i32 { 34982 }
@@ -60,6 +59,8 @@ fn default_passive_match_regex() -> String{ "(?P<name>:\\p{L}+)(/(?P<args>.*)/)?
 fn default_passive_arg_delimiter() -> char { '/' }
 fn default_passive_arg_escape() -> char { '\\' }
 fn default_passive_key() -> KeyModifier { KeyModifier::OFF }
+fn default_enable_passive() -> bool { false }
+fn default_enable_active() -> bool { true }
 fn default_action_noop_interval() -> u128 { 500 }
 fn default_backspace_limit() -> i32 { 3 }
 fn default_exclude_default_matches() -> bool {false}
@@ -81,9 +82,6 @@ pub struct Configs {
 
     #[serde(default = "default_filter_exec")]
     pub filter_exec: String,
-
-    #[serde(default = "default_disabled")]
-    pub disabled: bool,
 
     #[serde(default = "default_log_level")]
     pub log_level: i32,
@@ -123,6 +121,12 @@ pub struct Configs {
 
     #[serde(default = "default_passive_key")]
     pub passive_key: KeyModifier,
+
+    #[serde(default = "default_enable_passive")]
+    pub enable_passive: bool,
+
+    #[serde(default = "default_enable_active")]
+    pub enable_active: bool,
 
     #[serde(default = "default_action_noop_interval")]
     pub action_noop_interval: u128,
