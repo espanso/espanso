@@ -79,10 +79,11 @@ impl super::Renderer for DefaultRenderer {
         match &m.content {
             // Text Match
             MatchContentType::Text(content) => {
-                let target_string = if content._has_vars {
+                let target_string = if content._has_vars || !config.global_vars.is_empty(){
                     let mut output_map = HashMap::new();
 
-                    for variable in content.vars.iter() {
+                    // Cycle through both the local and global variables
+                    for variable in config.global_vars.iter().chain(&content.vars) {
                         // In case of variables of type match, we need to recursively call
                         // the render function
                         if variable.var_type == "match" {
@@ -118,7 +119,6 @@ impl super::Renderer for DefaultRenderer {
                                 },
                             }
                         }else{  // Normal extension variables
-                            // TODO: pass the arguments to the extension
                             let extension = self.extension_map.get(&variable.var_type);
                             if let Some(extension) = extension {
                                 let ext_out = extension.calculate(&variable.params, &args);
@@ -407,5 +407,78 @@ mod tests {
         let rendered = renderer.render_passive(text, &config);
 
         verify_render(rendered, "Hi JonSnow");
+    }
+
+    #[test]
+    fn test_render_passive_local_var() {
+        let text = "this is :test";
+
+        let config = get_config_for(r###"
+        matches:
+            - trigger: ':test'
+              replace: "my {{output}}"
+              vars:
+                - name: output
+                  type: dummy
+                  params:
+                    echo: "result"
+        "###);
+
+        let renderer = get_renderer(config.clone());
+
+        let rendered = renderer.render_passive(text, &config);
+
+        verify_render(rendered, "this is my result");
+    }
+
+    #[test]
+    fn test_render_passive_global_var() {
+        let text = "this is :test";
+
+        let config = get_config_for(r###"
+        global_vars:
+            - name: output
+              type: dummy
+              params:
+                echo: "result"
+        matches:
+            - trigger: ':test'
+              replace: "my {{output}}"
+
+        "###);
+
+        let renderer = get_renderer(config.clone());
+
+        let rendered = renderer.render_passive(text, &config);
+
+        verify_render(rendered, "this is my result");
+    }
+
+    #[test]
+    fn test_render_passive_global_var_is_overridden_by_local() {
+        let text = "this is :test";
+
+        let config = get_config_for(r###"
+        global_vars:
+            - name: output
+              type: dummy
+              params:
+                echo: "result"
+        matches:
+            - trigger: ':test'
+              replace: "my {{output}}"
+              vars:
+                - name: "output"
+                  type: dummy
+                  params:
+                    echo: "local"
+
+        "###);
+
+        let renderer = get_renderer(config.clone());
+
+        let rendered = renderer.render_passive(text, &config);
+
+        verify_render(rendered, "this is my local");
     }
 }
