@@ -34,6 +34,7 @@ pub trait KeyboardManager {
     fn trigger_paste(&self, shortcut: &PasteShortcut);
     fn delete_string(&self, count: i32);
     fn move_cursor_left(&self, count: i32);
+    fn trigger_copy(&self);
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

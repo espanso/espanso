@@ -80,6 +80,11 @@ void delete_string(int32_t count);
  */
 void trigger_paste();
 
+/*
+ * Trigger normal copy ( Pressing CMD+C )
+ */
+void trigger_copy();
+
 // UI
 
 /*
