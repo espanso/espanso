@@ -44,3 +44,4 @@ cmake = "0.1.31"
 maintainer = "Federico Terzi <federicoterzi96@gmail.com>"
 depends = "$auto, systemd, libxtst6, libxdo3, xclip, libnotify-bin"
 section = "utility"
+license-file = ["LICENSE", "1"]
