@@ -17,13 +17,16 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::bridge::windows::{show_notification, close_notification, WindowsMenuItem, show_context_menu, cleanup_ui};
+use crate::bridge::windows::{close_notification, WindowsMenuItem, show_context_menu, cleanup_ui};
 use widestring::U16CString;
 use std::{thread, time};
 use log::{debug};
 use std::sync::Mutex;
 use std::sync::Arc;
 use crate::ui::{MenuItem, MenuItemType};
+use std::path::Path;
+use winrt_notification::{Duration, IconCrop, Sound, Toast};
+use std::io;
 
 pub struct WindowsUIManager {
     id: Arc<Mutex<i32>>
@@ -31,38 +34,43 @@ pub struct WindowsUIManager {
 
 impl super::UIManager for WindowsUIManager {
     fn notify(&self, message: &str) {
-        let current_id: i32 = {
-            let mut id = self.id.lock().unwrap();
-            *id += 1;
-            *id
-        };
+        fn get_icon_path() -> io::Result<Box<Path>> {
+            let path_buf = std::env::current_exe()?;
+            let path_buf = path_buf.parent().unwrap().to_path_buf();
+            let installed_ico = path_buf.join("icon.ico");
+            let dev_ico = path_buf.parent().unwrap().parent().unwrap().join("packager/win/icon.ico");
 
-        // Setup a timeout to close the notification
-        let id = Arc::clone(&self.id);
-        let _ = thread::Builder::new().name("notification_thread".to_string()).spawn(move || {
-            for _ in 1..10 {
-                let duration = time::Duration::from_millis(200);
-                thread::sleep(duration);
-
-                let new_id = id.lock().unwrap();
-                if *new_id != current_id {
-                    debug!("Cancelling notification close event with id {}", current_id);
-                    return;
-                }
+            if installed_ico.is_file() {
+                Ok(installed_ico.into_boxed_path())
+            } else if dev_ico.is_file() {
+                Ok(dev_ico.into_boxed_path())
+            } else {
+                Err(io::Error::new(io::ErrorKind::NotFound, "icon.ico not found"))
             }
-
-            unsafe {
-                close_notification();
-            }
-        });
-
-        // Create and show a window notification
-        unsafe {
-            let message = U16CString::from_str(message).unwrap();
-            show_notification(message.as_ptr());
         }
 
+        // Create and show a window notification
+        let mut toast: Toast = Toast::new(Toast::POWERSHELL_APP_ID) // TODO: Use an ID assigned during installation.
+            .title("Espanso")
+            .text1(message)
+            .duration(Duration::Short);
+    
+        if let Ok(p) = get_icon_path() {
+            toast = toast
+            .icon(
+                &p,
+                IconCrop::Circular,
+                "espanso",
+            );
+        } else {
+            toast = toast.text2(":(");
+        }
+        
+        toast.show().expect("Unable to toast");
+
     }
+
+    
 
     fn show_menu(&self, menu: Vec<MenuItem>) {
         let mut raw_menu = Vec::new();
