@@ -17,19 +17,19 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::bridge::windows::{close_notification, WindowsMenuItem, show_context_menu, cleanup_ui};
-use widestring::U16CString;
-use std::{thread, time};
-use log::{debug};
-use std::sync::Mutex;
-use std::sync::Arc;
+use crate::bridge::windows::{cleanup_ui, close_notification, show_context_menu, WindowsMenuItem};
 use crate::ui::{MenuItem, MenuItemType};
-use std::path::Path;
-use winrt_notification::{Duration, IconCrop, Sound, Toast};
+use log::debug;
 use std::io;
+use std::path::Path;
+use std::sync::Arc;
+use std::sync::Mutex;
+use std::{thread, time};
+use widestring::U16CString;
+use winrt_notification::{Duration, IconCrop, Sound, Toast};
 
 pub struct WindowsUIManager {
-    id: Arc<Mutex<i32>>
+    id: Arc<Mutex<i32>>,
 }
 
 impl super::UIManager for WindowsUIManager {
@@ -38,14 +38,22 @@ impl super::UIManager for WindowsUIManager {
             let path_buf = std::env::current_exe()?;
             let path_buf = path_buf.parent().unwrap().to_path_buf();
             let installed_ico = path_buf.join("icon.ico");
-            let dev_ico = path_buf.parent().unwrap().parent().unwrap().join("packager/win/icon.ico");
+            let dev_ico = path_buf
+                .parent()
+                .unwrap()
+                .parent()
+                .unwrap()
+                .join("packager/win/icon.ico");
 
             if installed_ico.is_file() {
                 Ok(installed_ico.into_boxed_path())
             } else if dev_ico.is_file() {
                 Ok(dev_ico.into_boxed_path())
             } else {
-                Err(io::Error::new(io::ErrorKind::NotFound, "icon.ico not found"))
+                Err(io::Error::new(
+                    io::ErrorKind::NotFound,
+                    "icon.ico not found",
+                ))
             }
         }
 
@@ -54,37 +62,29 @@ impl super::UIManager for WindowsUIManager {
             .title("Espanso")
             .text1(message)
             .duration(Duration::Short);
-    
+
         if let Ok(p) = get_icon_path() {
-            toast = toast
-            .icon(
-                &p,
-                IconCrop::Circular,
-                "espanso",
-            );
+            toast = toast.icon(&p, IconCrop::Circular, "espanso");
         } else {
             toast = toast.text2(":(");
         }
-        
+
         toast.show().expect("Unable to toast");
-
     }
-
-    
 
     fn show_menu(&self, menu: Vec<MenuItem>) {
         let mut raw_menu = Vec::new();
 
         for item in menu.iter() {
             let text = U16CString::from_str(item.item_name.clone()).unwrap_or_default();
-            let mut str_buff : [u16; 100] = [0; 100];
+            let mut str_buff: [u16; 100] = [0; 100];
             unsafe {
                 std::ptr::copy(text.as_ptr(), str_buff.as_mut_ptr(), text.len());
             }
 
             let menu_type = match item.item_type {
-                MenuItemType::Button => {1},
-                MenuItemType::Separator => {2},
+                MenuItemType::Button => 1,
+                MenuItemType::Separator => 2,
             };
 
             let raw_item = WindowsMenuItem {
@@ -96,7 +96,9 @@ impl super::UIManager for WindowsUIManager {
             raw_menu.push(raw_item);
         }
 
-        unsafe { show_context_menu(raw_menu.as_ptr(), raw_menu.len() as i32); }
+        unsafe {
+            show_context_menu(raw_menu.as_ptr(), raw_menu.len() as i32);
+        }
     }
 
     fn cleanup(&self) {
@@ -110,9 +112,7 @@ impl WindowsUIManager {
     pub fn new() -> WindowsUIManager {
         let id = Arc::new(Mutex::new(0));
 
-        let manager = WindowsUIManager {
-            id
-        };
+        let manager = WindowsUIManager { id };
 
         manager
     }
