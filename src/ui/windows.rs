@@ -17,7 +17,7 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::bridge::windows::{cleanup_ui, close_notification, show_context_menu, WindowsMenuItem};
+use crate::bridge::windows::{cleanup_ui, show_context_menu, WindowsMenuItem};
 use crate::ui::{MenuItem, MenuItemType};
 use log::debug;
 use std::io;
@@ -28,15 +28,12 @@ use std::{thread, time};
 use widestring::U16CString;
 use winrt_notification::{Duration, IconCrop, Sound, Toast};
 
-pub struct WindowsUIManager {
-    id: Arc<Mutex<i32>>,
-}
+pub struct WindowsUIManager;
 
 impl super::UIManager for WindowsUIManager {
     fn notify(&self, message: &str) {
         fn get_icon_path() -> io::Result<Box<Path>> {
-            let path_buf = std::env::current_exe()?;
-            let path_buf = path_buf.parent().unwrap().to_path_buf();
+            let path_buf = std::env::current_exe()?.parent().unwrap().to_path_buf();
             let installed_ico = path_buf.join("icon.ico");
             let dev_ico = path_buf
                 .parent()
@@ -109,11 +106,7 @@ impl super::UIManager for WindowsUIManager {
 }
 
 impl WindowsUIManager {
-    pub fn new() -> WindowsUIManager {
-        let id = Arc::new(Mutex::new(0));
-
-        let manager = WindowsUIManager { id };
-
-        manager
+    pub fn new() -> Self {
+        WindowsUIManager
     }
 }
