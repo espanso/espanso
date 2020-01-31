@@ -62,8 +62,6 @@ impl super::UIManager for WindowsUIManager {
 
         if let Ok(p) = get_icon_path() {
             toast = toast.icon(&p, IconCrop::Circular, "espanso");
-        } else {
-            toast = toast.text2(":(");
         }
 
         toast.show().expect("Unable to toast");
