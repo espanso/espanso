@@ -37,8 +37,6 @@ extern {
     pub fn get_active_window_executable(buffer: *mut u16, size: i32) -> i32;
 
     // UI
-    pub fn show_notification(message: *const u16) -> i32;
-    pub fn close_notification();
     pub fn show_context_menu(items: *const WindowsMenuItem, count: i32) -> i32;
     pub fn register_icon_click_callback(cb: extern fn(_self: *mut c_void));
     pub fn register_context_menu_click_callback(cb: extern fn(_self: *mut c_void, id: i32));
