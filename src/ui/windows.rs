@@ -30,38 +30,40 @@ use winrt_notification::{Duration, IconCrop, Sound, Toast};
 
 pub struct WindowsUIManager;
 
+impl WindowsUIManager {
+    fn get_icon_path() -> io::Result<Box<Path>> {
+        let path_buf = std::env::current_exe()?.parent().unwrap().to_path_buf();
+        let installed_ico = path_buf.join("icon.ico");
+        let dev_ico = path_buf
+            .parent()
+            .unwrap()
+            .parent()
+            .unwrap()
+            .join("packager/win/icon.ico");
+
+        if installed_ico.is_file() {
+            Ok(installed_ico.into_boxed_path())
+        } else if dev_ico.is_file() {
+            Ok(dev_ico.into_boxed_path())
+        } else {
+            Err(io::Error::new(
+                io::ErrorKind::NotFound,
+                "icon.ico not found",
+            ))
+        }
+    }
+}
+
 impl super::UIManager for WindowsUIManager {
     fn notify(&self, message: &str) {
-        fn get_icon_path() -> io::Result<Box<Path>> {
-            let path_buf = std::env::current_exe()?.parent().unwrap().to_path_buf();
-            let installed_ico = path_buf.join("icon.ico");
-            let dev_ico = path_buf
-                .parent()
-                .unwrap()
-                .parent()
-                .unwrap()
-                .join("packager/win/icon.ico");
-
-            if installed_ico.is_file() {
-                Ok(installed_ico.into_boxed_path())
-            } else if dev_ico.is_file() {
-                Ok(dev_ico.into_boxed_path())
-            } else {
-                Err(io::Error::new(
-                    io::ErrorKind::NotFound,
-                    "icon.ico not found",
-                ))
-            }
-        }
-
         // Create and show a window notification
         let mut toast: Toast = Toast::new(Toast::POWERSHELL_APP_ID) // TODO: Use an ID assigned during installation.
             .title("Espanso")
             .text1(message)
             .duration(Duration::Short);
 
-        if let Ok(p) = get_icon_path() {
-            toast = toast.icon(&p, IconCrop::Circular, "espanso");
+        if let Ok(ref p) = Self::get_icon_path() {
+            toast = toast.icon(p, IconCrop::Circular, "espanso");
         }
 
         toast.show().expect("Unable to toast");
