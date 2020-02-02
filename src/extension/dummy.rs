@@ -1,7 +1,7 @@
 /*
  * This file is part of espanso.
  *
- * Copyright (C) 2019 Federico Terzi
+ * Copyright (C) 2020 Federico Terzi
  *
  * espanso is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,25 +17,28 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use serde_yaml::Mapping;
+use serde_yaml::{Mapping, Value};
 
-mod date;
-mod shell;
-mod script;
-mod random;
-mod dummy;
+pub struct DummyExtension {}
 
-pub trait Extension {
-    fn name(&self) -> String;
-    fn calculate(&self, params: &Mapping, args: &Vec<String>) -> Option<String>;
+impl DummyExtension {
+    pub fn new() -> DummyExtension {
+        DummyExtension{}
+    }
 }
 
-pub fn get_extensions() -> Vec<Box<dyn Extension>> {
-    vec![
-        Box::new(date::DateExtension::new()),
-        Box::new(shell::ShellExtension::new()),
-        Box::new(script::ScriptExtension::new()),
-        Box::new(random::RandomExtension::new()),
-        Box::new(dummy::DummyExtension::new()),
-    ]
+impl super::Extension for DummyExtension {
+    fn name(&self) -> String {
+        String::from("dummy")
+    }
+
+    fn calculate(&self, params: &Mapping, _: &Vec<String>) -> Option<String> {
+        let echo = params.get(&Value::from("echo"));
+
+        if let Some(echo) = echo {
+            Some(echo.as_str().unwrap_or_default().to_owned())
+        }else{
+            None
+        }
+    }
 }

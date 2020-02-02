@@ -21,7 +21,7 @@ extern crate dirs;
 
 use std::path::{Path, PathBuf};
 use std::{fs};
-use crate::matcher::Match;
+use crate::matcher::{Match, MatchVariable};
 use std::fs::{File, create_dir_all};
 use std::io::Read;
 use serde::{Serialize, Deserialize};
@@ -46,21 +46,31 @@ fn default_parent() -> String{ "self".to_owned() }
 fn default_filter_title() -> String{ "".to_owned() }
 fn default_filter_class() -> String{ "".to_owned() }
 fn default_filter_exec() -> String{ "".to_owned() }
-fn default_disabled() -> bool{ false }
 fn default_log_level() -> i32 { 0 }
+fn default_conflict_check() -> bool{ true }
 fn default_ipc_server_port() -> i32 { 34982 }
 fn default_use_system_agent() -> bool { true }
 fn default_config_caching_interval() -> i32 { 800 }
 fn default_word_separators() -> Vec<char> { vec![' ', ',', '.', '\r', '\n', 22u8 as char] }
 fn default_toggle_interval() -> u32 { 230 }
+fn default_toggle_key() -> KeyModifier { KeyModifier::ALT }
 fn default_preserve_clipboard() -> bool {false}
+fn default_passive_match_regex() -> String{ "(?P<name>:\\p{L}+)(/(?P<args>.*)/)?".to_owned() }
+fn default_passive_arg_delimiter() -> char { '/' }
+fn default_passive_arg_escape() -> char { '\\' }
+fn default_passive_key() -> KeyModifier { KeyModifier::OFF }
+fn default_enable_passive() -> bool { false }
+fn default_enable_active() -> bool { true }
+fn default_action_noop_interval() -> u128 { 500 }
 fn default_backspace_limit() -> i32 { 3 }
-fn default_exclude_default_matches() -> bool {false}
+fn default_restore_clipboard_delay() -> i32 { 300 }
+fn default_exclude_default_entries() -> bool {false}
 fn default_matches() -> Vec<Match> { Vec::new() }
+fn default_global_vars() -> Vec<MatchVariable> { Vec::new() }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Configs {
-    #[serde(default = "default_name")]
+#[serde(default = "default_name")]
     pub name: String,
 
     #[serde(default = "default_parent")]
@@ -75,11 +85,11 @@ pub struct Configs {
     #[serde(default = "default_filter_exec")]
     pub filter_exec: String,
 
-    #[serde(default = "default_disabled")]
-    pub disabled: bool,
-
     #[serde(default = "default_log_level")]
     pub log_level: i32,
+
+    #[serde(default = "default_conflict_check")]
+    pub conflict_check: bool,
 
     #[serde(default = "default_ipc_server_port")]
     pub ipc_server_port: i32,
@@ -93,7 +103,7 @@ pub struct Configs {
     #[serde(default = "default_word_separators")]
     pub word_separators: Vec<char>,  // TODO: add parsing test
 
-    #[serde(default)]
+    #[serde(default = "default_toggle_key")]
     pub toggle_key: KeyModifier,
 
     #[serde(default = "default_toggle_interval")]
@@ -102,20 +112,48 @@ pub struct Configs {
     #[serde(default = "default_preserve_clipboard")]
     pub preserve_clipboard: bool,
 
+    #[serde(default = "default_passive_match_regex")]
+    pub passive_match_regex: String,
+
+    #[serde(default = "default_passive_arg_delimiter")]
+    pub passive_arg_delimiter: char,
+
+    #[serde(default = "default_passive_arg_escape")]
+    pub passive_arg_escape: char,
+
+    #[serde(default = "default_passive_key")]
+    pub passive_key: KeyModifier,
+
+    #[serde(default = "default_enable_passive")]
+    pub enable_passive: bool,
+
+    #[serde(default = "default_enable_active")]
+    pub enable_active: bool,
+
+    #[serde(default = "default_action_noop_interval")]
+    pub action_noop_interval: u128,
+
     #[serde(default)]
     pub paste_shortcut: PasteShortcut,
 
     #[serde(default = "default_backspace_limit")]
     pub backspace_limit: i32,
 
+    #[serde(default = "default_restore_clipboard_delay")]
+    pub restore_clipboard_delay: i32,
+
     #[serde(default)]
     pub backend: BackendType,
 
-    #[serde(default = "default_exclude_default_matches")]
-    pub exclude_default_matches: bool,
+    #[serde(default = "default_exclude_default_entries")]
+    pub exclude_default_entries: bool,
 
     #[serde(default = "default_matches")]
-    pub matches: Vec<Match>
+    pub matches: Vec<Match>,
+
+    #[serde(default = "default_global_vars")]
+    pub global_vars: Vec<MatchVariable>
+
 }
 
 // Macro used to validate config fields
@@ -144,12 +182,19 @@ impl Configs {
 
         validate_field!(result, self.config_caching_interval, default_config_caching_interval());
         validate_field!(result, self.log_level, default_log_level());
-        validate_field!(result, self.toggle_key, KeyModifier::default());
+        validate_field!(result, self.conflict_check, default_conflict_check());
+        validate_field!(result, self.toggle_key, default_toggle_key());
         validate_field!(result, self.toggle_interval, default_toggle_interval());
         validate_field!(result, self.backspace_limit, default_backspace_limit());
         validate_field!(result, self.ipc_server_port, default_ipc_server_port());
         validate_field!(result, self.use_system_agent, default_use_system_agent());
         validate_field!(result, self.preserve_clipboard, default_preserve_clipboard());
+        validate_field!(result, self.passive_match_regex, default_passive_match_regex());
+        validate_field!(result, self.passive_arg_delimiter, default_passive_arg_delimiter());
+        validate_field!(result, self.passive_arg_escape, default_passive_arg_escape());
+        validate_field!(result, self.passive_key, default_passive_key());
+        validate_field!(result, self.action_noop_interval, default_action_noop_interval());
+        validate_field!(result, self.restore_clipboard_delay, default_restore_clipboard_delay());
 
         result
     }
@@ -204,29 +249,56 @@ impl Configs {
     }
 
     fn merge_config(&mut self, new_config: Configs) {
+        // Merge matches
         let mut merged_matches = new_config.matches;
-        let mut trigger_set = HashSet::new();
+        let mut match_trigger_set = HashSet::new();
         merged_matches.iter().for_each(|m| {
-            trigger_set.insert(m.trigger.clone());
+            match_trigger_set.insert(m.trigger.clone());
         });
         let parent_matches : Vec<Match> = self.matches.iter().filter(|&m| {
-            !trigger_set.contains(&m.trigger)
+            !match_trigger_set.contains(&m.trigger)
         }).cloned().collect();
 
         merged_matches.extend(parent_matches);
         self.matches = merged_matches;
+
+        // Merge global variables
+        let mut merged_global_vars = new_config.global_vars;
+        let mut vars_name_set = HashSet::new();
+        merged_global_vars.iter().for_each(|m| {
+            vars_name_set.insert(m.name.clone());
+        });
+        let parent_vars : Vec<MatchVariable> = self.global_vars.iter().filter(|&m| {
+            !vars_name_set.contains(&m.name)
+        }).cloned().collect();
+
+        merged_global_vars.extend(parent_vars);
+        self.global_vars = merged_global_vars;
     }
 
     fn merge_default(&mut self, default: &Configs) {
-        let mut trigger_set = HashSet::new();
+        // Merge matches
+        let mut match_trigger_set = HashSet::new();
         self.matches.iter().for_each(|m| {
-            trigger_set.insert(m.trigger.clone());
+            match_trigger_set.insert(m.trigger.clone());
         });
         let default_matches : Vec<Match> = default.matches.iter().filter(|&m| {
-            !trigger_set.contains(&m.trigger)
+            !match_trigger_set.contains(&m.trigger)
         }).cloned().collect();
 
         self.matches.extend(default_matches);
+
+        // Merge global variables
+        let mut vars_name_set = HashSet::new();
+        self.global_vars.iter().for_each(|m| {
+            vars_name_set.insert(m.name.clone());
+        });
+        let default_vars : Vec<MatchVariable> = default.global_vars.iter().filter(|&m| {
+            !vars_name_set.contains(&m.name)
+        }).cloned().collect();
+
+        self.global_vars.extend(default_vars);
+
     }
 }
 
@@ -317,10 +389,22 @@ impl ConfigSet {
         let default= configs.get(0).unwrap().clone();
         let mut specific = (&configs[1..]).to_vec().clone();
 
-        // Add default matches to specific configs when needed
+        // Add default entries to specific configs when needed
         for config in specific.iter_mut() {
-            if !config.exclude_default_matches {
+            if !config.exclude_default_entries {
                 config.merge_default(&default);
+            }
+        }
+
+        // Check if some triggers are conflicting with each other
+        // For more information, see: https://github.com/federico-terzi/espanso/issues/135
+        if default.conflict_check {
+            for s in specific.iter() {
+                let has_conflicts = Self::has_conflicts(&default, &specific);
+                if has_conflicts {
+                    eprintln!("Warning: some triggers had conflicts and may not behave as intended");
+                    eprintln!("To turn off this check, add \"conflict_check: false\" in the configuration");
+                }
             }
         }
 
@@ -378,6 +462,43 @@ impl ConfigSet {
         }
 
         return ConfigSet::load(config_dir.as_path(), package_dir.as_path());
+    }
+
+    fn has_conflicts(default: &Configs, specific: &Vec<Configs>) -> bool {
+        let mut sorted_triggers : Vec<String> = default.matches.iter().map(|t| {
+            t.trigger.clone()
+        }).collect();
+        sorted_triggers.sort();
+
+        let mut has_conflicts = Self::list_has_conflicts(&sorted_triggers);
+
+        for s in specific.iter() {
+            let mut specific_triggers : Vec<String> = s.matches.iter().map(|t| {
+                t.trigger.clone()
+            }).collect();
+            specific_triggers.sort();
+            has_conflicts |= Self::list_has_conflicts(&specific_triggers);
+        }
+
+        has_conflicts
+    }
+
+    fn list_has_conflicts(sorted_list: &Vec<String>) -> bool {
+        if sorted_list.len() <= 1 {
+            return false
+        }
+
+        let mut has_conflicts = false;
+
+        for (i, item) in sorted_list.iter().skip(1).enumerate() {
+            let previous = &sorted_list[i];
+            if item.starts_with(previous) {
+                has_conflicts = true;
+                eprintln!("Warning: trigger '{}' is conflicting with '{}' and may not behave as intended", item, previous);
+            }
+        }
+
+        has_conflicts
     }
 }
 
@@ -760,7 +881,7 @@ mod tests {
         let user_defined_path2 = create_user_config_file(data_dir.path(), "specific2.yml", r###"
         name: specific1
 
-        exclude_default_matches: true
+        exclude_default_entries: true
 
         matches:
             - trigger: "hello"
@@ -795,7 +916,7 @@ mod tests {
         let user_defined_path2 = create_user_config_file(data_dir.path(), "specific.zzz", r###"
         name: specific1
 
-        exclude_default_matches: true
+        exclude_default_entries: true
 
         matches:
             - trigger: "hello"
@@ -1002,5 +1123,193 @@ mod tests {
         assert!(config_set.default.matches.iter().any(|m| m.trigger == "hasta"));
         assert!(config_set.specific[0].matches.iter().any(|m| m.trigger == "harry"));
         assert!(config_set.specific[0].matches.iter().any(|m| m.trigger == "ron"));
+    }
+
+    #[test]
+    fn test_list_has_conflict_no_conflict() {
+        assert_eq!(ConfigSet::list_has_conflicts(&vec!(":ab".to_owned(), ":bc".to_owned())), false);
+    }
+
+    #[test]
+    fn test_list_has_conflict_conflict() {
+        let mut list = vec!("ac".to_owned(), "ab".to_owned(), "abc".to_owned());
+        list.sort();
+        assert_eq!(ConfigSet::list_has_conflicts(&list), true);
+    }
+
+    #[test]
+    fn test_has_conflict_no_conflict() {
+        let (data_dir, package_dir) = create_temp_espanso_directories_with_default_content(r###"
+        matches:
+            - trigger: ac
+              replace: Hasta la vista
+            - trigger: bc
+              replace: Jon
+        "###);
+
+        let user_defined_path = create_user_config_file(data_dir.path(), "specific.yml", r###"
+        name: specific1
+
+        matches:
+            - trigger: "hello"
+              replace: "world"
+        "###);
+
+        let config_set = ConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
+        assert_eq!(ConfigSet::has_conflicts(&config_set.default, &config_set.specific), false);
+    }
+
+    #[test]
+    fn test_has_conflict_conflict_in_default() {
+        let (data_dir, package_dir) = create_temp_espanso_directories_with_default_content(r###"
+        matches:
+            - trigger: ac
+              replace: Hasta la vista
+            - trigger: bc
+              replace: Jon
+            - trigger: acb
+              replace: Error
+        "###);
+
+        let user_defined_path = create_user_config_file(data_dir.path(), "specific.yml", r###"
+        name: specific1
+
+        matches:
+            - trigger: "hello"
+              replace: "world"
+        "###);
+
+        let config_set = ConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
+        assert_eq!(ConfigSet::has_conflicts(&config_set.default, &config_set.specific), true);
+    }
+
+    #[test]
+    fn test_has_conflict_conflict_in_specific_and_default() {
+        let (data_dir, package_dir) = create_temp_espanso_directories_with_default_content(r###"
+        matches:
+            - trigger: ac
+              replace: Hasta la vista
+            - trigger: bc
+              replace: Jon
+        "###);
+
+        let user_defined_path = create_user_config_file(data_dir.path(), "specific.yml", r###"
+        name: specific1
+
+        matches:
+            - trigger: "bcd"
+              replace: "Conflict"
+        "###);
+
+        let config_set = ConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
+        assert_eq!(ConfigSet::has_conflicts(&config_set.default, &config_set.specific), true);
+    }
+
+    #[test]
+    fn test_has_conflict_no_conflict_in_specific_and_specific() {
+        let (data_dir, package_dir) = create_temp_espanso_directories_with_default_content(r###"
+        matches:
+            - trigger: ac
+              replace: Hasta la vista
+            - trigger: bc
+              replace: Jon
+        "###);
+
+        let user_defined_path = create_user_config_file(data_dir.path(), "specific.yml", r###"
+        name: specific1
+
+        matches:
+            - trigger: "bad"
+              replace: "Conflict"
+        "###);
+        let user_defined_path2 = create_user_config_file(data_dir.path(), "specific2.yml", r###"
+        name: specific2
+
+        matches:
+            - trigger: "badass"
+              replace: "Conflict"
+        "###);
+
+        let config_set = ConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
+        assert_eq!(ConfigSet::has_conflicts(&config_set.default, &config_set.specific), false);
+    }
+
+    #[test]
+    fn test_config_set_specific_inherits_default_global_vars() {
+        let (data_dir, package_dir) = create_temp_espanso_directories_with_default_content(r###"
+        global_vars:
+            - name: testvar
+              type: date
+              params:
+                format: "%m"
+        "###);
+
+        let user_defined_path = create_user_config_file(data_dir.path(), "specific.yml", r###"
+         global_vars:
+            - name: specificvar
+              type: date
+              params:
+                format: "%m"
+        "###);
+
+        let config_set = ConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
+        assert_eq!(config_set.specific.len(), 1);
+        assert_eq!(config_set.default.global_vars.len(), 1);
+        assert_eq!(config_set.specific[0].global_vars.len(), 2);
+        assert!(config_set.specific[0].global_vars.iter().any(|m| m.name == "testvar"));
+        assert!(config_set.specific[0].global_vars.iter().any(|m| m.name == "specificvar"));
+    }
+
+    #[test]
+    fn test_config_set_default_get_variables_from_specific() {
+        let (data_dir, package_dir) = create_temp_espanso_directories_with_default_content(r###"
+        global_vars:
+            - name: testvar
+              type: date
+              params:
+                format: "%m"
+        "###);
+
+        let user_defined_path = create_user_config_file(data_dir.path(), "specific.yml", r###"
+         parent: default
+         global_vars:
+            - name: specificvar
+              type: date
+              params:
+                format: "%m"
+        "###);
+
+        let config_set = ConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
+        assert_eq!(config_set.specific.len(), 0);
+        assert_eq!(config_set.default.global_vars.len(), 2);
+        assert!(config_set.default.global_vars.iter().any(|m| m.name == "testvar"));
+        assert!(config_set.default.global_vars.iter().any(|m| m.name == "specificvar"));
+    }
+
+    #[test]
+    fn test_config_set_specific_dont_inherits_default_global_vars_when_exclude_is_on() {
+        let (data_dir, package_dir) = create_temp_espanso_directories_with_default_content(r###"
+        global_vars:
+            - name: testvar
+              type: date
+              params:
+                format: "%m"
+        "###);
+
+        let user_defined_path = create_user_config_file(data_dir.path(), "specific.yml", r###"
+         exclude_default_entries: true
+
+         global_vars:
+            - name: specificvar
+              type: date
+              params:
+                format: "%m"
+        "###);
+
+        let config_set = ConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
+        assert_eq!(config_set.specific.len(), 1);
+        assert_eq!(config_set.default.global_vars.len(), 1);
+        assert_eq!(config_set.specific[0].global_vars.len(), 1);
+        assert!(config_set.specific[0].global_vars.iter().any(|m| m.name == "specificvar"));
     }
 }
