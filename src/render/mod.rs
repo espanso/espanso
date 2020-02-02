@@ -17,25 +17,23 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use serde_yaml::Mapping;
+use std::path::PathBuf;
+use crate::matcher::{Match};
+use crate::config::Configs;
 
-mod date;
-mod shell;
-mod script;
-mod random;
-mod dummy;
+pub(crate) mod default;
+pub(crate) mod utils;
 
-pub trait Extension {
-    fn name(&self) -> String;
-    fn calculate(&self, params: &Mapping, args: &Vec<String>) -> Option<String>;
+pub trait Renderer {
+    // Render a match output
+    fn render_match(&self, m: &Match, config: &Configs, args: Vec<String>) -> RenderResult;
+
+    // Render a passive expansion text
+    fn render_passive(&self, text: &str, config: &Configs) -> RenderResult;
 }
 
-pub fn get_extensions() -> Vec<Box<dyn Extension>> {
-    vec![
-        Box::new(date::DateExtension::new()),
-        Box::new(shell::ShellExtension::new()),
-        Box::new(script::ScriptExtension::new()),
-        Box::new(random::RandomExtension::new()),
-        Box::new(dummy::DummyExtension::new()),
-    ]
+pub enum RenderResult {
+    Text(String),
+    Image(PathBuf),
+    Error
 }
