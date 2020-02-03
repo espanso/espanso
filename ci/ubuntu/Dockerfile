@@ -30,8 +30,9 @@ RUN set -eux; \
     cargo --version; \
     rustc --version;
 
-RUN git clone https://github.com/federico-terzi/espanso.git \
-    && cd espanso \
-    && cargo install cargo-deb
+RUN mkdir espanso
 
-COPY build_deb.sh .
+COPY . espanso
+
+RUN cd espanso \
+    && cargo install cargo-deb

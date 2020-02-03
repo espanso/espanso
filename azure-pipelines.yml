@@ -24,10 +24,8 @@ jobs:
       vmImage: 'ubuntu-latest'
     steps:
       - script: |
-          cd ci/ubuntu
-          sudo docker build -t espanso-ubuntu .
-          cd ../../
-          sudo docker run --rm -v "$(pwd):/shared" -it espanso-ubuntu ./build_deb.sh
+          sudo docker build -t espanso-ubuntu . -f ci/ubuntu/Dockerfile
+          sudo docker run --rm -v "$(pwd):/shared" -it espanso-ubuntu espanso/ci/ubuntu/build_deb.sh
         displayName: Setting up docker
       - template: ci/deploy.yml
 
