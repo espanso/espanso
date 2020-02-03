@@ -25,7 +25,7 @@ jobs:
     steps:
       - script: |
           sudo docker build -t espanso-ubuntu . -f ci/ubuntu/Dockerfile
-          sudo docker run --rm -v "$(pwd):/shared" -it espanso-ubuntu espanso/ci/ubuntu/build_deb.sh
+          sudo docker run --rm -v "$(pwd):/shared" espanso-ubuntu espanso/ci/ubuntu/build_deb.sh
         displayName: Setting up docker
       - template: ci/deploy.yml
 
