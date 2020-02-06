@@ -119,6 +119,32 @@ the **extension** that will be executed to calculate its value. In this case, we
 
 In the remaining lines we declared the **parameters** used by the extension, in this case the *date format*.
 
+### Global Variables
+
+Introduced in version 0.5.0, *global variables* allow the definition of variables that can be used in all matches. In your `default.yml` file,
+you can add:
+
+```yaml
+global_vars:
+  - name: "global1"
+    type: "shell"
+    params:
+      cmd: "echo global var"
+  - name: "greet"
+    type: "dummy"
+    params:
+      echo: "Hey"
+```
+
+At this point, you can use `global1` and `greet` in all your matches:
+
+```yaml
+- trigger: ":hello"
+  replace: "{{greet}} Jon"
+```
+
+And typing `:hello` will result in `Hey Jon`.
+
 ### Cursor Hints
 
 Let's say you want to use espanso to expand some HTML code snippets, such as:
@@ -227,6 +253,25 @@ and store all your images there. Let's say I stored the `cat.png` image. We can 
   - trigger: ":cat"
     image_path: "$CONFIG/images/cat.png"
 ```
+
+### Nested Matches
+
+Introduced in version 0.5.0, *nested matches* allow to include the output of a match inside another one.
+
+```yaml
+- trigger: ":one"
+  replace: "nested"
+
+- trigger: ":nested"
+  replace: "This is a {{output}} match"
+  vars:
+    - name: output
+      type: match
+      params:
+        trigger: ":one"
+```
+
+At this point, if you type `:nested` you'll see `This is a nested match appear`.
 
 ### Script Extension
 

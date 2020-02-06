@@ -113,7 +113,10 @@ Option | Description | Possible Values | Default | App-Specific
 --- | --- | --- | --- | ---
 `backend` | The typing engine used. `Inject` simulate keypresses, `Clipboard` simulates a copy/paste | `Clipboard` or `Inject` | `Inject` on Win and macOS, `Clipboard` on Linux | Yes
 `backspace_limit` | How many backspace espanso tracks to correct misspelled keywords | int | `3` | No
-`disabled` | Set the current configuration as disabled | `True`/`False` | `False` | Yes
+`enable_active` | Disable the active mode for the current configuration | `True`/`False` | `True` | Yes
+`enable_passive` | Disable the passive mode for the current configuration | `True`/`False` | `False` | Yes
 `parent` | The target for the current configuration file, mainly used in packages | string | `self` | Yes
 `ipc_server_port` | Windows only. Set the daemon listening port | int | `34982` | No
-`exclude_default_matches` | Used in app-specific configs, avoid parent matches | `True`/`False` | `False` | Yes
+`exclude_default_entries` | Used in app-specific configs, avoid parent matches and global variables | `True`/`False` | `False` | Yes
+`toggle_key` | Change the key used to toggle espanso active mode | `CTRL`, `ALT`, `SHIFT`, `META` | `ALT` | No
+`passive_key` | Change the key used to trigger passive mode | `CTRL`, `ALT`, `SHIFT`, `META` | `OFF` | No

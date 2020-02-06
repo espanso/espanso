@@ -15,6 +15,38 @@ Currently espanso supports X11 systems only.
 
 ### Installing on Ubuntu / Debian
 
+You can install espanso in various ways on Debian-based systems. As of now, the recommended way is to use the `DEB` package method.
+
+#### Installing using DEB package
+
+Espanso ships with a `.deb` package, which makes it pretty convenient to install on Debian-based systems.
+
+Start by downloading the latest release:
+
+```
+wget https://github.com/federico-terzi/espanso/releases/latest/download/espanso-debian-amd64.deb
+```
+
+> If you want to verify the correctness of the archive, in the [Github Releases](https://github.com/federico-terzi/espanso/releases/) page you will find the **SHA256** hash in the file `espanso-debian-amd64-sha256.txt`.
+
+You can now install the package using:
+
+```
+sudo apt install ./espanso-debian-amd64.deb
+```
+
+You should now have espanso installed in your system. To start it, type the following command:
+
+```
+espanso start
+```
+
+If you now type `:espanso` in any text field, you should see "Hi there!" appear! 
+
+At this point, you are ready to read the [Getting Started](/docs/get-started/) tutorial.
+
+#### Manual installation
+
 Espanso depends upon the `X11 Record Extension`, the `xdo library`, the `xclip` command and
 the `libnotify-bin` library, so you will need to install 
 those first with the following commands:
