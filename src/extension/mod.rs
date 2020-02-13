@@ -20,10 +20,10 @@
 use serde_yaml::Mapping;
 
 mod date;
-mod shell;
-mod script;
-mod random;
 mod dummy;
+mod random;
+mod script;
+mod shell;
 
 pub trait Extension {
     fn name(&self) -> String;

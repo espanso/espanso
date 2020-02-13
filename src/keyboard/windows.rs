@@ -17,26 +17,22 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use widestring::{U16CString};
-use crate::bridge::windows::*;
 use super::PasteShortcut;
+use crate::bridge::windows::*;
 use log::error;
+use widestring::U16CString;
 
-pub struct WindowsKeyboardManager {
-}
+pub struct WindowsKeyboardManager {}
 
 impl super::KeyboardManager for WindowsKeyboardManager {
     fn send_string(&self, s: &str) {
         let res = U16CString::from_str(s);
         match res {
-            Ok(s) => {
-                unsafe {
-                    send_string(s.as_ptr());
-                }
-            }
-            Err(e) => println!("Error while sending string: {}", e.to_string())
+            Ok(s) => unsafe {
+                send_string(s.as_ptr());
+            },
+            Err(e) => println!("Error while sending string: {}", e.to_string()),
         }
-
     }
 
     fn send_enter(&self) {
@@ -62,9 +58,7 @@ impl super::KeyboardManager for WindowsKeyboardManager {
     }
 
     fn delete_string(&self, count: i32) {
-        unsafe {
-            delete_string(count)
-        }
+        unsafe { delete_string(count) }
     }
 
     fn move_cursor_left(&self, count: i32) {

@@ -17,18 +17,16 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::process::{Command, Stdio};
-use std::io::{Write};
 use log::{error, warn};
+use std::io::Write;
 use std::path::Path;
+use std::process::{Command, Stdio};
 
 pub struct LinuxClipboardManager {}
 
 impl super::ClipboardManager for LinuxClipboardManager {
-    fn get_clipboard(&self) -> Option<String>  {
-        let res = Command::new("xclip")
-            .args(&["-o", "-sel", "clip"])
-            .output();
+    fn get_clipboard(&self) -> Option<String> {
+        let res = Command::new("xclip").args(&["-o", "-sel", "clip"]).output();
 
         if let Ok(output) = res {
             if output.status.success() {
@@ -71,14 +69,14 @@ impl super::ClipboardManager for LinuxClipboardManager {
             Some(ext) => {
                 let ext = ext.to_string_lossy().to_lowercase();
                 match ext.as_ref() {
-                    "png" => {"image/png"},
-                    "jpg" | "jpeg" => {"image/jpeg"},
-                    "gif" => {"image/gif"},
-                    "svg" => {"image/svg"},
-                    _ => {"image/png"},
+                    "png" => "image/png",
+                    "jpg" | "jpeg" => "image/jpeg",
+                    "gif" => "image/gif",
+                    "svg" => "image/svg",
+                    _ => "image/png",
                 }
-            },
-            None => {"image/png"},
+            }
+            None => "image/png",
         };
 
         let image_path = image_path.to_string_lossy().into_owned();
@@ -91,6 +89,6 @@ impl super::ClipboardManager for LinuxClipboardManager {
 
 impl LinuxClipboardManager {
     pub fn new() -> LinuxClipboardManager {
-        LinuxClipboardManager{}
+        LinuxClipboardManager {}
     }
 }

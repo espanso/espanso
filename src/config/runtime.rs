@@ -17,13 +17,13 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use regex::Regex;
+use super::{ConfigSet, Configs};
+use crate::matcher::Match;
 use crate::system::SystemManager;
+use log::{debug, warn};
+use regex::Regex;
 use std::cell::RefCell;
 use std::time::SystemTime;
-use log::{debug, warn};
-use super::{Configs, ConfigSet};
-use crate::matcher::Match;
 
 pub struct RuntimeConfigManager<'a, S: SystemManager> {
     set: ConfigSet,
@@ -37,10 +37,10 @@ pub struct RuntimeConfigManager<'a, S: SystemManager> {
 
     // Cache
     last_config_update: RefCell<SystemTime>,
-    last_config: RefCell<Option<&'a Configs>>
+    last_config: RefCell<Option<&'a Configs>>,
 }
 
-impl <'a, S: SystemManager> RuntimeConfigManager<'a, S> {
+impl<'a, S: SystemManager> RuntimeConfigManager<'a, S> {
     pub fn new<'b>(set: ConfigSet, system_manager: S) -> RuntimeConfigManager<'b, S> {
         // Compile all the regexps
         let title_regexps = set.specific.iter().map(
@@ -101,7 +101,7 @@ impl <'a, S: SystemManager> RuntimeConfigManager<'a, S> {
             exec_regexps,
             system_manager,
             last_config_update,
-            last_config
+            last_config,
         }
     }
 
@@ -118,10 +118,12 @@ impl <'a, S: SystemManager> RuntimeConfigManager<'a, S> {
             for (i, regex) in self.title_regexps.iter().enumerate() {
                 if let Some(regex) = regex {
                     if regex.is_match(&title) {
-                        debug!("Matched 'filter_title' for '{}' config, using custom settings.",
-                               self.set.specific[i].name);
+                        debug!(
+                            "Matched 'filter_title' for '{}' config, using custom settings.",
+                            self.set.specific[i].name
+                        );
 
-                        return &self.set.specific[i]
+                        return &self.set.specific[i];
                     }
                 }
             }
@@ -135,10 +137,12 @@ impl <'a, S: SystemManager> RuntimeConfigManager<'a, S> {
             for (i, regex) in self.exec_regexps.iter().enumerate() {
                 if let Some(regex) = regex {
                     if regex.is_match(&executable) {
-                        debug!("Matched 'filter_exec' for '{}' config, using custom settings.",
-                               self.set.specific[i].name);
+                        debug!(
+                            "Matched 'filter_exec' for '{}' config, using custom settings.",
+                            self.set.specific[i].name
+                        );
 
-                        return &self.set.specific[i]
+                        return &self.set.specific[i];
                     }
                 }
             }
@@ -152,10 +156,12 @@ impl <'a, S: SystemManager> RuntimeConfigManager<'a, S> {
             for (i, regex) in self.class_regexps.iter().enumerate() {
                 if let Some(regex) = regex {
                     if regex.is_match(&class) {
-                        debug!("Matched 'filter_class' for '{}' config, using custom settings.",
-                               self.set.specific[i].name);
+                        debug!(
+                            "Matched 'filter_class' for '{}' config, using custom settings.",
+                            self.set.specific[i].name
+                        );
 
-                        return &self.set.specific[i]
+                        return &self.set.specific[i];
                     }
                 }
             }
@@ -167,7 +173,7 @@ impl <'a, S: SystemManager> RuntimeConfigManager<'a, S> {
     }
 }
 
-impl <'a, S: SystemManager> super::ConfigManager<'a> for RuntimeConfigManager<'a, S> {
+impl<'a, S: SystemManager> super::ConfigManager<'a> for RuntimeConfigManager<'a, S> {
     fn active_config(&'a self) -> &'a Configs {
         let mut last_config_update = self.last_config_update.borrow_mut();
         if let Ok(elapsed) = (*last_config_update).elapsed() {
@@ -204,12 +210,14 @@ impl <'a, S: SystemManager> super::ConfigManager<'a> for RuntimeConfigManager<'a
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tempfile::{NamedTempFile, TempDir};
-    use crate::config::{DEFAULT_CONFIG_FILE_NAME, DEFAULT_CONFIG_FILE_CONTENT};
+    use crate::config::tests::{
+        create_temp_espanso_directories, create_temp_file_in_dir, create_user_config_file,
+    };
+    use crate::config::ConfigManager;
+    use crate::config::{DEFAULT_CONFIG_FILE_CONTENT, DEFAULT_CONFIG_FILE_NAME};
     use std::fs;
     use std::path::PathBuf;
-    use crate::config::ConfigManager;
-    use crate::config::tests::{create_temp_espanso_directories, create_temp_file_in_dir, create_user_config_file};
+    use tempfile::{NamedTempFile, TempDir};
 
     struct DummySystemManager {
         title: RefCell<String>,
@@ -229,10 +237,10 @@ mod tests {
     }
     impl DummySystemManager {
         pub fn new_custom(title: &str, class: &str, exec: &str) -> DummySystemManager {
-            DummySystemManager{
+            DummySystemManager {
                 title: RefCell::new(title.to_owned()),
                 class: RefCell::new(class.to_owned()),
-                exec: RefCell::new(exec.to_owned())
+                exec: RefCell::new(exec.to_owned()),
             }
         }
 
@@ -251,21 +259,33 @@ mod tests {
     fn test_runtime_constructor_regex_load_correctly() {
         let (data_dir, package_dir) = create_temp_espanso_directories();
 
-        let specific_path = create_user_config_file(&data_dir.path(), "specific.yml", r###"
+        let specific_path = create_user_config_file(
+            &data_dir.path(),
+            "specific.yml",
+            r###"
         name: myname1
         filter_exec: "Title"
-        "###);
+        "###,
+        );
 
-        let specific_path2 = create_user_config_file(&data_dir.path(), "specific2.yml", r###"
+        let specific_path2 = create_user_config_file(
+            &data_dir.path(),
+            "specific2.yml",
+            r###"
         name: myname2
         filter_title: "Yeah"
         filter_class: "Car"
-        "###);
+        "###,
+        );
 
-        let specific_path3 = create_user_config_file(&data_dir.path(), "specific3.yml", r###"
+        let specific_path3 = create_user_config_file(
+            &data_dir.path(),
+            "specific3.yml",
+            r###"
         name: myname3
         filter_title: "Nice"
-        "###);
+        "###,
+        );
 
         let config_set = ConfigSet::load(data_dir.path(), package_dir.path());
         assert!(config_set.is_ok());
@@ -274,12 +294,24 @@ mod tests {
 
         let config_manager = RuntimeConfigManager::new(config_set.unwrap(), dummy_system_manager);
 
-        let sp1index = config_manager.set.specific
-            .iter().position(|x| x.name == "myname1").unwrap();
-        let sp2index = config_manager.set.specific
-            .iter().position(|x| x.name == "myname2").unwrap();
-        let sp3index = config_manager.set.specific
-            .iter().position(|x| x.name == "myname3").unwrap();
+        let sp1index = config_manager
+            .set
+            .specific
+            .iter()
+            .position(|x| x.name == "myname1")
+            .unwrap();
+        let sp2index = config_manager
+            .set
+            .specific
+            .iter()
+            .position(|x| x.name == "myname2")
+            .unwrap();
+        let sp3index = config_manager
+            .set
+            .specific
+            .iter()
+            .position(|x| x.name == "myname3")
+            .unwrap();
 
         assert_eq!(config_manager.exec_regexps.len(), 3);
         assert_eq!(config_manager.title_regexps.len(), 3);
@@ -302,21 +334,33 @@ mod tests {
     fn test_runtime_constructor_malformed_regexes_are_ignored() {
         let (data_dir, package_dir) = create_temp_espanso_directories();
 
-        let specific_path = create_user_config_file(&data_dir.path(), "specific.yml", r###"
+        let specific_path = create_user_config_file(
+            &data_dir.path(),
+            "specific.yml",
+            r###"
         name: myname1
         filter_exec: "[`-_]"
-        "###);
+        "###,
+        );
 
-        let specific_path2 = create_user_config_file(&data_dir.path(), "specific2.yml", r###"
+        let specific_path2 = create_user_config_file(
+            &data_dir.path(),
+            "specific2.yml",
+            r###"
         name: myname2
         filter_title: "[`-_]"
         filter_class: "Car"
-        "###);
+        "###,
+        );
 
-        let specific_path3 = create_user_config_file(&data_dir.path(), "specific3.yml", r###"
+        let specific_path3 = create_user_config_file(
+            &data_dir.path(),
+            "specific3.yml",
+            r###"
         name: myname3
         filter_title: "Nice"
-        "###);
+        "###,
+        );
 
         let config_set = ConfigSet::load(data_dir.path(), package_dir.path());
         assert!(config_set.is_ok());
@@ -325,12 +369,24 @@ mod tests {
 
         let config_manager = RuntimeConfigManager::new(config_set.unwrap(), dummy_system_manager);
 
-        let sp1index = config_manager.set.specific
-            .iter().position(|x| x.name == "myname1").unwrap();
-        let sp2index = config_manager.set.specific
-            .iter().position(|x| x.name == "myname2").unwrap();
-        let sp3index = config_manager.set.specific
-            .iter().position(|x| x.name == "myname3").unwrap();
+        let sp1index = config_manager
+            .set
+            .specific
+            .iter()
+            .position(|x| x.name == "myname1")
+            .unwrap();
+        let sp2index = config_manager
+            .set
+            .specific
+            .iter()
+            .position(|x| x.name == "myname2")
+            .unwrap();
+        let sp3index = config_manager
+            .set
+            .specific
+            .iter()
+            .position(|x| x.name == "myname3")
+            .unwrap();
 
         assert_eq!(config_manager.exec_regexps.len(), 3);
         assert_eq!(config_manager.title_regexps.len(), 3);
@@ -353,15 +409,20 @@ mod tests {
     fn test_runtime_calculate_active_config_specific_title_match() {
         let (data_dir, package_dir) = create_temp_espanso_directories();
 
-        let specific_path = create_user_config_file(&data_dir.path(), "specific.yml", r###"
+        let specific_path = create_user_config_file(
+            &data_dir.path(),
+            "specific.yml",
+            r###"
         name: chrome
         filter_title: "Chrome"
-        "###);
+        "###,
+        );
 
         let config_set = ConfigSet::load(data_dir.path(), package_dir.path());
         assert!(config_set.is_ok());
 
-        let dummy_system_manager = DummySystemManager::new_custom("Google Chrome", "Chrome", "C:\\Path\\chrome.exe");
+        let dummy_system_manager =
+            DummySystemManager::new_custom("Google Chrome", "Chrome", "C:\\Path\\chrome.exe");
 
         let config_manager = RuntimeConfigManager::new(config_set.unwrap(), dummy_system_manager);
 
@@ -371,15 +432,20 @@ mod tests {
     fn test_runtime_calculate_active_config_specific_class_match() {
         let (data_dir, package_dir) = create_temp_espanso_directories();
 
-        let specific_path = create_user_config_file(&data_dir.path(), "specific.yml", r###"
+        let specific_path = create_user_config_file(
+            &data_dir.path(),
+            "specific.yml",
+            r###"
         name: chrome
         filter_class: "Chrome"
-        "###);
+        "###,
+        );
 
         let config_set = ConfigSet::load(data_dir.path(), package_dir.path());
         assert!(config_set.is_ok());
 
-        let dummy_system_manager = DummySystemManager::new_custom("Google Chrome", "Chrome", "C:\\Path\\chrome.exe");
+        let dummy_system_manager =
+            DummySystemManager::new_custom("Google Chrome", "Chrome", "C:\\Path\\chrome.exe");
 
         let config_manager = RuntimeConfigManager::new(config_set.unwrap(), dummy_system_manager);
 
@@ -389,15 +455,20 @@ mod tests {
     fn test_runtime_calculate_active_config_specific_exec_match() {
         let (data_dir, package_dir) = create_temp_espanso_directories();
 
-        let specific_path = create_user_config_file(&data_dir.path(), "specific.yml", r###"
+        let specific_path = create_user_config_file(
+            &data_dir.path(),
+            "specific.yml",
+            r###"
         name: chrome
         filter_exec: "chrome.exe"
-        "###);
+        "###,
+        );
 
         let config_set = ConfigSet::load(data_dir.path(), package_dir.path());
         assert!(config_set.is_ok());
 
-        let dummy_system_manager = DummySystemManager::new_custom("Google Chrome", "Chrome", "C:\\Path\\chrome.exe");
+        let dummy_system_manager =
+            DummySystemManager::new_custom("Google Chrome", "Chrome", "C:\\Path\\chrome.exe");
 
         let config_manager = RuntimeConfigManager::new(config_set.unwrap(), dummy_system_manager);
 
@@ -407,16 +478,21 @@ mod tests {
     fn test_runtime_calculate_active_config_specific_multi_filter_match() {
         let (data_dir, package_dir) = create_temp_espanso_directories();
 
-        let specific_path = create_user_config_file(&data_dir.path(), "specific.yml", r###"
+        let specific_path = create_user_config_file(
+            &data_dir.path(),
+            "specific.yml",
+            r###"
         name: chrome
         filter_class: Browser
         filter_exec: "firefox.exe"
-        "###);
+        "###,
+        );
 
         let config_set = ConfigSet::load(data_dir.path(), package_dir.path());
         assert!(config_set.is_ok());
 
-        let dummy_system_manager = DummySystemManager::new_custom("Google Chrome", "Browser", "C:\\Path\\chrome.exe");
+        let dummy_system_manager =
+            DummySystemManager::new_custom("Google Chrome", "Browser", "C:\\Path\\chrome.exe");
 
         let config_manager = RuntimeConfigManager::new(config_set.unwrap(), dummy_system_manager);
 
@@ -427,15 +503,20 @@ mod tests {
     fn test_runtime_calculate_active_config_no_match() {
         let (data_dir, package_dir) = create_temp_espanso_directories();
 
-        let specific_path = create_user_config_file(&data_dir.path(), "specific.yml", r###"
+        let specific_path = create_user_config_file(
+            &data_dir.path(),
+            "specific.yml",
+            r###"
         name: firefox
         filter_title: "Firefox"
-        "###);
+        "###,
+        );
 
         let config_set = ConfigSet::load(data_dir.path(), package_dir.path());
         assert!(config_set.is_ok());
 
-        let dummy_system_manager = DummySystemManager::new_custom("Google Chrome", "Chrome", "C:\\Path\\chrome.exe");
+        let dummy_system_manager =
+            DummySystemManager::new_custom("Google Chrome", "Chrome", "C:\\Path\\chrome.exe");
 
         let config_manager = RuntimeConfigManager::new(config_set.unwrap(), dummy_system_manager);
 
@@ -446,22 +527,29 @@ mod tests {
     fn test_runtime_active_config_cache() {
         let (data_dir, package_dir) = create_temp_espanso_directories();
 
-        let specific_path = create_user_config_file(&data_dir.path(), "specific.yml", r###"
+        let specific_path = create_user_config_file(
+            &data_dir.path(),
+            "specific.yml",
+            r###"
         name: firefox
         filter_title: "Firefox"
-        "###);
+        "###,
+        );
 
         let config_set = ConfigSet::load(data_dir.path(), package_dir.path());
         assert!(config_set.is_ok());
 
-        let dummy_system_manager = DummySystemManager::new_custom("Google Chrome", "Chrome", "C:\\Path\\chrome.exe");
+        let dummy_system_manager =
+            DummySystemManager::new_custom("Google Chrome", "Chrome", "C:\\Path\\chrome.exe");
 
         let config_manager = RuntimeConfigManager::new(config_set.unwrap(), dummy_system_manager);
 
         assert_eq!(config_manager.active_config().name, "default");
         assert_eq!(config_manager.calculate_active_config().name, "default");
 
-        config_manager.system_manager.change("Firefox", "Browser", "C\\Path\\firefox.exe");
+        config_manager
+            .system_manager
+            .change("Firefox", "Browser", "C\\Path\\firefox.exe");
 
         // Active config should have changed, but not cached one
         assert_eq!(config_manager.calculate_active_config().name, "firefox");

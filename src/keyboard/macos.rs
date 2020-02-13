@@ -17,20 +17,21 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::ffi::CString;
-use crate::bridge::macos::*;
 use super::PasteShortcut;
+use crate::bridge::macos::*;
 use log::error;
+use std::ffi::CString;
 
-pub struct MacKeyboardManager {
-}
+pub struct MacKeyboardManager {}
 
 impl super::KeyboardManager for MacKeyboardManager {
     fn send_string(&self, s: &str) {
         let res = CString::new(s);
         match res {
-            Ok(cstr) => unsafe { send_string(cstr.as_ptr()); }
-            Err(e) => panic!(e.to_string())
+            Ok(cstr) => unsafe {
+                send_string(cstr.as_ptr());
+            },
+            Err(e) => panic!(e.to_string()),
         }
     }
 
@@ -63,7 +64,7 @@ impl super::KeyboardManager for MacKeyboardManager {
     }
 
     fn delete_string(&self, count: i32) {
-        unsafe {delete_string(count)}
+        unsafe { delete_string(count) }
     }
 
     fn move_cursor_left(&self, count: i32) {

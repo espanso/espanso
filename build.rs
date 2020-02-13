@@ -25,7 +25,7 @@ fn get_config() -> PathBuf {
 */
 
 #[cfg(target_os = "windows")]
-fn print_config()  {
+fn print_config() {
     println!("cargo:rustc-link-lib=static=winbridge");
     println!("cargo:rustc-link-lib=dylib=user32");
 }
@@ -46,8 +46,7 @@ fn print_config() {
     println!("cargo:rustc-link-lib=framework=Cocoa");
 }
 
-fn main()
-{
+fn main() {
     let dst = get_config();
 
     println!("cargo:rustc-link-search=native={}", dst.display());

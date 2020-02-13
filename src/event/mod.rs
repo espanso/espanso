@@ -19,12 +19,12 @@
 
 pub(crate) mod manager;
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone)]
 pub enum Event {
     Action(ActionType),
-    Key(KeyEvent)
+    Key(KeyEvent),
 }
 
 #[derive(Debug, Clone)]
@@ -53,7 +53,7 @@ impl From<i32> for ActionType {
 #[derive(Debug, Clone)]
 pub enum KeyEvent {
     Char(String),
-    Modifier(KeyModifier)
+    Modifier(KeyModifier),
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

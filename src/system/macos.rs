@@ -19,12 +19,10 @@
 
 use std::os::raw::c_char;
 
-use std::ffi::CStr;
 use crate::bridge::macos::{get_active_app_bundle, get_active_app_identifier};
+use std::ffi::CStr;
 
-pub struct MacSystemManager {
-
-}
+pub struct MacSystemManager {}
 
 impl super::SystemManager for MacSystemManager {
     fn get_current_window_title(&self) -> Option<String> {
@@ -33,7 +31,7 @@ impl super::SystemManager for MacSystemManager {
 
     fn get_current_window_class(&self) -> Option<String> {
         unsafe {
-            let mut buffer : [c_char; 250] = [0; 250];
+            let mut buffer: [c_char; 250] = [0; 250];
             let res = get_active_app_identifier(buffer.as_mut_ptr(), buffer.len() as i32);
 
             if res > 0 {
@@ -51,7 +49,7 @@ impl super::SystemManager for MacSystemManager {
 
     fn get_current_window_executable(&self) -> Option<String> {
         unsafe {
-            let mut buffer : [c_char; 250] = [0; 250];
+            let mut buffer: [c_char; 250] = [0; 250];
             let res = get_active_app_bundle(buffer.as_mut_ptr(), buffer.len() as i32);
 
             if res > 0 {
@@ -70,8 +68,6 @@ impl super::SystemManager for MacSystemManager {
 
 impl MacSystemManager {
     pub fn new() -> MacSystemManager {
-        MacSystemManager{
-
-        }
+        MacSystemManager {}
     }
 }

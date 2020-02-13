@@ -17,15 +17,15 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use log::{error, warn};
+use regex::{Captures, Regex};
 use serde_yaml::{Mapping, Value};
 use std::process::Command;
-use log::{warn, error};
-use regex::{Regex, Captures};
 
 lazy_static! {
     static ref POS_ARG_REGEX: Regex = if cfg!(target_os = "windows") {
         Regex::new("%(?P<pos>\\d+)").unwrap()
-    }else{
+    } else {
         Regex::new("\\$(?P<pos>\\d+)").unwrap()
     };
 }
@@ -34,7 +34,7 @@ pub struct ShellExtension {}
 
 impl ShellExtension {
     pub fn new() -> ShellExtension {
-        ShellExtension{}
+        ShellExtension {}
     }
 }
 
@@ -47,30 +47,27 @@ impl super::Extension for ShellExtension {
         let cmd = params.get(&Value::from("cmd"));
         if cmd.is_none() {
             warn!("No 'cmd' parameter specified for shell variable");
-            return None
+            return None;
         }
         let cmd = cmd.unwrap().as_str().unwrap();
 
         // Render positional parameters in args
-        let cmd = POS_ARG_REGEX.replace_all(&cmd, |caps: &Captures| {
-            let position_str  = caps.name("pos").unwrap().as_str();
-            let position = position_str.parse::<i32>().unwrap_or(-1);
-            if position >= 0 && position < args.len() as i32 {
-                args[position as usize].to_owned()
-            }else{
-                "".to_owned()
-            }
-        }).to_string();
+        let cmd = POS_ARG_REGEX
+            .replace_all(&cmd, |caps: &Captures| {
+                let position_str = caps.name("pos").unwrap().as_str();
+                let position = position_str.parse::<i32>().unwrap_or(-1);
+                if position >= 0 && position < args.len() as i32 {
+                    args[position as usize].to_owned()
+                } else {
+                    "".to_owned()
+                }
+            })
+            .to_string();
 
         let output = if cfg!(target_os = "windows") {
-            Command::new("cmd")
-                .args(&["/C", &cmd])
-                .output()
+            Command::new("cmd").args(&["/C", &cmd]).output()
         } else {
-            Command::new("sh")
-                .arg("-c")
-                .arg(&cmd)
-                .output()
+            Command::new("sh").arg("-c").arg(&cmd).output()
         };
 
         match output {
@@ -90,11 +87,11 @@ impl super::Extension for ShellExtension {
                 }
 
                 Some(output_str)
-            },
+            }
             Err(e) => {
                 error!("Could not execute cmd '{}', error: {}", cmd, e);
                 None
-            },
+            }
         }
     }
 }
@@ -116,7 +113,7 @@ mod tests {
 
         if cfg!(target_os = "windows") {
             assert_eq!(output.unwrap(), "hello world\r\n");
-        }else{
+        } else {
             assert_eq!(output.unwrap(), "hello world\n");
         }
     }
@@ -139,8 +136,11 @@ mod tests {
         let mut params = Mapping::new();
         if cfg!(target_os = "windows") {
             params.insert(Value::from("cmd"), Value::from("echo    hello world     "));
-        }else{
-            params.insert(Value::from("cmd"), Value::from("echo \"   hello world     \""));
+        } else {
+            params.insert(
+                Value::from("cmd"),
+                Value::from("echo \"   hello world     \""),
+            );
         }
 
         params.insert(Value::from("trim"), Value::from(true));
@@ -164,7 +164,7 @@ mod tests {
         assert!(output.is_some());
         if cfg!(target_os = "windows") {
             assert_eq!(output.unwrap(), "hello world\r\n");
-        }else{
+        } else {
             assert_eq!(output.unwrap(), "hello world\n");
         }
     }

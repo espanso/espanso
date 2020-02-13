@@ -17,9 +17,9 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::path::PathBuf;
-use crate::matcher::{Match};
 use crate::config::Configs;
+use crate::matcher::Match;
+use std::path::PathBuf;
 
 pub(crate) mod default;
 pub(crate) mod utils;
@@ -35,5 +35,5 @@ pub trait Renderer {
 pub enum RenderResult {
     Text(String),
     Image(PathBuf),
-    Error
+    Error,
 }

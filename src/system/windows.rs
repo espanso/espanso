@@ -17,23 +17,21 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use widestring::U16CString;
 use crate::bridge::windows::*;
+use widestring::U16CString;
 
-pub struct WindowsSystemManager {
-
-}
+pub struct WindowsSystemManager {}
 
 impl WindowsSystemManager {
     pub fn new() -> WindowsSystemManager {
-        WindowsSystemManager{}
+        WindowsSystemManager {}
     }
 }
 
 impl super::SystemManager for WindowsSystemManager {
     fn get_current_window_title(&self) -> Option<String> {
         unsafe {
-            let mut buffer : [u16; 100] = [0; 100];
+            let mut buffer: [u16; 100] = [0; 100];
             let res = get_active_window_name(buffer.as_mut_ptr(), buffer.len() as i32);
 
             if res > 0 {
@@ -53,7 +51,7 @@ impl super::SystemManager for WindowsSystemManager {
 
     fn get_current_window_executable(&self) -> Option<String> {
         unsafe {
-            let mut buffer : [u16; 250] = [0; 250];
+            let mut buffer: [u16; 250] = [0; 250];
             let res = get_active_window_executable(buffer.as_mut_ptr(), buffer.len() as i32);
 
             if res > 0 {

@@ -18,7 +18,7 @@
  */
 
 pub(crate) mod default;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use std::error::Error;
 
 pub trait PackageManager {
@@ -28,7 +28,11 @@ pub trait PackageManager {
     fn get_package(&self, name: &str) -> Option<Package>;
 
     fn install_package(&self, name: &str) -> Result<InstallResult, Box<dyn Error>>;
-    fn install_package_from_repo(&self, name: &str, repo_url: &str) -> Result<InstallResult, Box<dyn Error>>;
+    fn install_package_from_repo(
+        &self,
+        name: &str,
+        repo_url: &str,
+    ) -> Result<InstallResult, Box<dyn Error>>;
 
     fn remove_package(&self, name: &str) -> Result<RemoveResult, Box<dyn Error>>;
 
@@ -42,7 +46,7 @@ pub struct Package {
     pub version: String,
     pub repo: String,
     pub desc: String,
-    pub author: String
+    pub author: String,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
@@ -50,9 +54,8 @@ pub struct PackageIndex {
     #[serde(rename = "lastUpdate")]
     pub last_update: u64,
 
-    pub packages: Vec<Package>
+    pub packages: Vec<Package>,
 }
-
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum UpdateResult {
@@ -67,11 +70,11 @@ pub enum InstallResult {
     UnableToParsePackageInfo,
     MissingPackageVersion,
     AlreadyInstalled,
-    Installed
+    Installed,
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum RemoveResult {
     NotFound,
-    Removed
+    Removed,
 }

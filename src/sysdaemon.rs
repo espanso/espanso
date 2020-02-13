@@ -24,9 +24,9 @@ use crate::config::ConfigSet;
 // INSTALLATION
 
 #[cfg(target_os = "macos")]
-const MAC_PLIST_CONTENT : &str = include_str!("res/mac/com.federicoterzi.espanso.plist");
+const MAC_PLIST_CONTENT: &str = include_str!("res/mac/com.federicoterzi.espanso.plist");
 #[cfg(target_os = "macos")]
-const MAC_PLIST_FILENAME : &str = "com.federicoterzi.espanso.plist";
+const MAC_PLIST_FILENAME: &str = "com.federicoterzi.espanso.plist";
 
 #[cfg(target_os = "macos")]
 pub fn register(_config_set: ConfigSet) {
@@ -44,13 +44,21 @@ pub fn register(_config_set: ConfigSet) {
 
     let plist_file = agents_dir.join(MAC_PLIST_FILENAME);
     if !plist_file.exists() {
-        println!("Creating LaunchAgents entry: {}", plist_file.to_str().unwrap_or_default());
+        println!(
+            "Creating LaunchAgents entry: {}",
+            plist_file.to_str().unwrap_or_default()
+        );
 
         let espanso_path = std::env::current_exe().expect("Could not get espanso executable path");
-        println!("Entry will point to: {}", espanso_path.to_str().unwrap_or_default());
+        println!(
+            "Entry will point to: {}",
+            espanso_path.to_str().unwrap_or_default()
+        );
 
-        let plist_content = String::from(MAC_PLIST_CONTENT)
-            .replace("{{{espanso_path}}}", espanso_path.to_str().unwrap_or_default());
+        let plist_content = String::from(MAC_PLIST_CONTENT).replace(
+            "{{{espanso_path}}}",
+            espanso_path.to_str().unwrap_or_default(),
+        );
 
         std::fs::write(plist_file.clone(), plist_content).expect("Unable to write plist file");
 
@@ -60,8 +68,8 @@ pub fn register(_config_set: ConfigSet) {
     println!("Reloading entry...");
 
     let res = Command::new("launchctl")
-    .args(&["unload", "-w", plist_file.to_str().unwrap_or_default()])
-    .output();
+        .args(&["unload", "-w", plist_file.to_str().unwrap_or_default()])
+        .output();
 
     let res = Command::new("launchctl")
         .args(&["load", "-w", plist_file.to_str().unwrap_or_default()])
@@ -71,7 +79,7 @@ pub fn register(_config_set: ConfigSet) {
         if status.success() {
             println!("Entry loaded correctly!")
         }
-    }else{
+    } else {
         println!("Error loading new entry");
     }
 }
@@ -94,7 +102,7 @@ pub fn unregister(_config_set: ConfigSet) {
         std::fs::remove_file(&plist_file).expect("Could not remove espanso entry");
 
         println!("Entry removed correctly!")
-    }else{
+    } else {
         println!("espanso is not installed");
     }
 }
@@ -102,9 +110,9 @@ pub fn unregister(_config_set: ConfigSet) {
 // LINUX
 
 #[cfg(target_os = "linux")]
-const LINUX_SERVICE_CONTENT : &str = include_str!("res/linux/systemd.service");
+const LINUX_SERVICE_CONTENT: &str = include_str!("res/linux/systemd.service");
 #[cfg(target_os = "linux")]
-const LINUX_SERVICE_FILENAME : &str = "espanso.service";
+const LINUX_SERVICE_FILENAME: &str = "espanso.service";
 
 #[cfg(target_os = "linux")]
 pub fn register(config_set: ConfigSet) {
@@ -125,7 +133,7 @@ pub fn register(config_set: ConfigSet) {
                 eprintln!("    espanso unregister");
                 std::process::exit(5);
             }
-        }else{
+        } else {
             if output == "disabled" {
                 use dialoguer::Confirmation;
                 if !Confirmation::new()
@@ -153,15 +161,24 @@ pub fn register(config_set: ConfigSet) {
 
     let service_file = user_dir.join(LINUX_SERVICE_FILENAME);
     if !service_file.exists() {
-        println!("Creating service entry: {}", service_file.to_str().unwrap_or_default());
+        println!(
+            "Creating service entry: {}",
+            service_file.to_str().unwrap_or_default()
+        );
 
         let espanso_path = std::env::current_exe().expect("Could not get espanso executable path");
-        println!("Entry will point to: {}", espanso_path.to_str().unwrap_or_default());
+        println!(
+            "Entry will point to: {}",
+            espanso_path.to_str().unwrap_or_default()
+        );
 
-        let service_content = String::from(LINUX_SERVICE_CONTENT)
-            .replace("{{{espanso_path}}}", espanso_path.to_str().unwrap_or_default());
+        let service_content = String::from(LINUX_SERVICE_CONTENT).replace(
+            "{{{espanso_path}}}",
+            espanso_path.to_str().unwrap_or_default(),
+        );
 
-        std::fs::write(service_file.clone(), service_content).expect("Unable to write service file");
+        std::fs::write(service_file.clone(), service_content)
+            .expect("Unable to write service file");
 
         println!("Service file created correctly!")
     }
@@ -176,7 +193,7 @@ pub fn register(config_set: ConfigSet) {
         if status.success() {
             println!("Service registered correctly!")
         }
-    }else{
+    } else {
         println!("Error loading espanso service");
     }
 }
@@ -202,13 +219,16 @@ pub fn unregister(config_set: ConfigSet) {
             Ok(_) => {
                 println!("Deleted entry at {}", service_file.to_string_lossy());
                 println!("Service unregistered successfully!");
-            },
+            }
             Err(e) => {
-                println!("Error, could not delete service entry at {} with error {}",
-                         service_file.to_string_lossy(), e);
-            },
+                println!(
+                    "Error, could not delete service entry at {} with error {}",
+                    service_file.to_string_lossy(),
+                    e
+                );
+            }
         }
-    }else{
+    } else {
         eprintln!("Error, could not find espanso service file");
     }
 }

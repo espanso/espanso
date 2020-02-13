@@ -17,14 +17,14 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use log::{info};
-use std::sync::mpsc::Sender;
-use std::net::{TcpListener, TcpStream};
 use super::IPCCommand;
+use log::info;
+use std::net::{TcpListener, TcpStream};
+use std::sync::mpsc::Sender;
 
+use crate::config::ConfigSet;
 use crate::event::*;
 use crate::protocol::{process_event, send_command};
-use crate::config::ConfigSet;
 
 pub struct WindowsIPCServer {
     config_set: ConfigSet,
@@ -33,7 +33,10 @@ pub struct WindowsIPCServer {
 
 impl WindowsIPCServer {
     pub fn new(config_set: ConfigSet, event_channel: Sender<Event>) -> WindowsIPCServer {
-        WindowsIPCServer {config_set, event_channel}
+        WindowsIPCServer {
+            config_set,
+            event_channel,
+        }
     }
 }
 
@@ -41,17 +44,22 @@ impl super::IPCServer for WindowsIPCServer {
     fn start(&self) {
         let event_channel = self.event_channel.clone();
         let server_port = self.config_set.default.ipc_server_port;
-        std::thread::Builder::new().name("ipc_server".to_string()).spawn(move || {
-            let listener = TcpListener::bind(
-                format!("127.0.0.1:{}", server_port)
-                ).expect("Error binding to IPC server port");
+        std::thread::Builder::new()
+            .name("ipc_server".to_string())
+            .spawn(move || {
+                let listener = TcpListener::bind(format!("127.0.0.1:{}", server_port))
+                    .expect("Error binding to IPC server port");
 
-            info!("Binded to IPC tcp socket: {}", listener.local_addr().unwrap().to_string());
+                info!(
+                    "Binded to IPC tcp socket: {}",
+                    listener.local_addr().unwrap().to_string()
+                );
 
-            for stream in listener.incoming() {
-                process_event(&event_channel, stream);
-            }
-        }).expect("Unable to spawn IPC server thread");
+                for stream in listener.incoming() {
+                    process_event(&event_channel, stream);
+                }
+            })
+            .expect("Unable to spawn IPC server thread");
     }
 }
 
@@ -61,15 +69,14 @@ pub struct WindowsIPCClient {
 
 impl WindowsIPCClient {
     pub fn new(config_set: ConfigSet) -> WindowsIPCClient {
-        WindowsIPCClient{config_set}
+        WindowsIPCClient { config_set }
     }
 }
 
 impl super::IPCClient for WindowsIPCClient {
     fn send_command(&self, command: IPCCommand) -> Result<(), String> {
-        let stream = TcpStream::connect(
-            ("127.0.0.1", self.config_set.default.ipc_server_port as u16)
-        );
+        let stream =
+            TcpStream::connect(("127.0.0.1", self.config_set.default.ipc_server_port as u16));
 
         send_command(command, stream)
     }

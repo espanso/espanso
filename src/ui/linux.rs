@@ -17,12 +17,12 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::process::Command;
 use super::MenuItem;
 use log::{error, info};
 use std::path::PathBuf;
+use std::process::Command;
 
-const LINUX_ICON_CONTENT : &[u8] = include_bytes!("../res/linux/icon.png");
+const LINUX_ICON_CONTENT: &[u8] = include_bytes!("../res/linux/icon.png");
 
 pub struct LinuxUIManager {
     icon_path: PathBuf,
@@ -31,9 +31,15 @@ pub struct LinuxUIManager {
 impl super::UIManager for LinuxUIManager {
     fn notify(&self, message: &str) {
         let res = Command::new("notify-send")
-                        .args(&["-i", self.icon_path.to_str().unwrap_or_default(),
-                            "-t", "2000", "espanso", message])
-                        .output();
+            .args(&[
+                "-i",
+                self.icon_path.to_str().unwrap_or_default(),
+                "-t",
+                "2000",
+                "espanso",
+                message,
+            ])
+            .output();
 
         if let Err(e) = res {
             error!("Could not send a notification, error: {}", e);
@@ -55,12 +61,13 @@ impl LinuxUIManager {
         let data_dir = crate::context::get_data_dir();
         let icon_path = data_dir.join("icon.png");
         if !icon_path.exists() {
-            info!("Creating espanso icon in '{}'", icon_path.to_str().unwrap_or_default());
+            info!(
+                "Creating espanso icon in '{}'",
+                icon_path.to_str().unwrap_or_default()
+            );
             std::fs::write(&icon_path, LINUX_ICON_CONTENT).expect("Unable to copy espanso icon");
         }
 
-        LinuxUIManager{
-            icon_path
-        }
+        LinuxUIManager { icon_path }
     }
 }

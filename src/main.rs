@@ -20,48 +20,48 @@
 #[macro_use]
 extern crate lazy_static;
 
-use std::thread;
 use std::fs::{File, OpenOptions};
 use std::process::exit;
 use std::sync::mpsc;
 use std::sync::mpsc::Receiver;
+use std::thread;
 use std::time::Duration;
 
-use clap::{App, Arg, SubCommand, ArgMatches};
+use clap::{App, Arg, ArgMatches, SubCommand};
 use fs2::FileExt;
 use log::{info, warn, LevelFilter};
-use simplelog::{CombinedLogger, SharedLogger, TerminalMode, TermLogger, WriteLogger};
+use simplelog::{CombinedLogger, SharedLogger, TermLogger, TerminalMode, WriteLogger};
 
-use crate::config::{ConfigSet, ConfigManager};
 use crate::config::runtime::RuntimeConfigManager;
+use crate::config::{ConfigManager, ConfigSet};
 use crate::engine::Engine;
-use crate::event::*;
 use crate::event::manager::{DefaultEventManager, EventManager};
+use crate::event::*;
 use crate::matcher::scrolling::ScrollingMatcher;
+use crate::package::default::DefaultPackageManager;
+use crate::package::{InstallResult, PackageManager, RemoveResult, UpdateResult};
+use crate::protocol::*;
 use crate::system::SystemManager;
 use crate::ui::UIManager;
-use crate::protocol::*;
-use std::io::{BufReader, BufRead};
-use crate::package::default::DefaultPackageManager;
-use crate::package::{PackageManager, InstallResult, UpdateResult, RemoveResult};
+use std::io::{BufRead, BufReader};
 
-mod ui;
-mod event;
-mod check;
-mod utils;
 mod bridge;
-mod engine;
+mod check;
+mod clipboard;
 mod config;
-mod render;
-mod system;
 mod context;
+mod engine;
+mod event;
+mod extension;
+mod keyboard;
 mod matcher;
 mod package;
-mod keyboard;
 mod protocol;
-mod clipboard;
-mod extension;
+mod render;
 mod sysdaemon;
+mod system;
+mod ui;
+mod utils;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 const LOG_FILE: &str = "espanso.log";
@@ -69,13 +69,11 @@ const LOG_FILE: &str = "espanso.log";
 fn main() {
     let install_subcommand = SubCommand::with_name("install")
         .about("Install a package. Equivalent to 'espanso package install'")
-        .arg(Arg::with_name("package_name")
-            .help("Package name"));
+        .arg(Arg::with_name("package_name").help("Package name"));
 
     let uninstall_subcommand = SubCommand::with_name("uninstall")
         .about("Remove an installed package. Equivalent to 'espanso package uninstall'")
-        .arg(Arg::with_name("package_name")
-            .help("Package name"));
+        .arg(Arg::with_name("package_name").help("Package name"));
 
     let mut clap_instance = App::new("espanso")
         .version(VERSION)
@@ -248,7 +246,9 @@ fn main() {
     }
 
     // Defaults help print
-    clap_instance.print_long_help().expect("Unable to print help");
+    clap_instance
+        .print_long_help()
+        .expect("Unable to print help");
     println!();
 }
 
@@ -273,8 +273,8 @@ fn daemon_main(config_set: ConfigSet) {
     let mut log_outputs: Vec<Box<dyn SharedLogger>> = Vec::new();
 
     // Initialize terminal output
-    let terminal_out = TermLogger::new(log_level,
-                                       simplelog::Config::default(), TerminalMode::Mixed);
+    let terminal_out =
+        TermLogger::new(log_level, simplelog::Config::default(), TerminalMode::Mixed);
     if let Some(terminal_out) = terminal_out {
         log_outputs.push(terminal_out);
     }
@@ -292,16 +292,20 @@ fn daemon_main(config_set: ConfigSet) {
     let file_out = WriteLogger::new(LevelFilter::Info, simplelog::Config::default(), log_file);
     log_outputs.push(file_out);
 
-    CombinedLogger::init(
-        log_outputs
-    ).expect("Error opening log destination");
+    CombinedLogger::init(log_outputs).expect("Error opening log destination");
 
     // Activate logging for panics
     log_panics::init();
 
     info!("espanso version {}", VERSION);
-    info!("using config path: {}", context::get_config_dir().to_string_lossy());
-    info!("using package path: {}", context::get_package_dir().to_string_lossy());
+    info!(
+        "using config path: {}",
+        context::get_config_dir().to_string_lossy()
+    );
+    info!(
+        "using package path: {}",
+        context::get_package_dir().to_string_lossy()
+    );
     info!("starting daemon...");
 
     let (send_channel, receive_channel) = mpsc::channel();
@@ -309,9 +313,12 @@ fn daemon_main(config_set: ConfigSet) {
     let context = context::new(send_channel.clone());
 
     let config_set_copy = config_set.clone();
-    thread::Builder::new().name("daemon_background".to_string()).spawn(move || {
-        daemon_background(receive_channel, config_set_copy);
-    }).expect("Unable to spawn daemon background thread");
+    thread::Builder::new()
+        .name("daemon_background".to_string())
+        .spawn(move || {
+            daemon_background(receive_channel, config_set_copy);
+        })
+        .expect("Unable to spawn daemon background thread");
 
     let ipc_server = protocol::get_ipc_server(config_set, send_channel.clone());
     ipc_server.start();
@@ -333,23 +340,21 @@ fn daemon_background(receive_channel: Receiver<Event>, config_set: ConfigSet) {
 
     let extensions = extension::get_extensions();
 
-    let renderer = render::default::DefaultRenderer::new(extensions,
-                                                          config_manager.default_config().clone());
+    let renderer =
+        render::default::DefaultRenderer::new(extensions, config_manager.default_config().clone());
 
-    let engine = Engine::new(&keyboard_manager,
-                             &clipboard_manager,
-                             &config_manager,
-                             &ui_manager,
-                             &renderer,
+    let engine = Engine::new(
+        &keyboard_manager,
+        &clipboard_manager,
+        &config_manager,
+        &ui_manager,
+        &renderer,
     );
 
     let matcher = ScrollingMatcher::new(&config_manager, &engine);
 
-    let event_manager = DefaultEventManager::new(
-        receive_channel,
-        vec!(&matcher),
-        vec!(&engine, &matcher),
-    );
+    let event_manager =
+        DefaultEventManager::new(receive_channel, vec![&matcher], vec![&engine, &matcher]);
 
     info!("espanso is running!");
 
@@ -393,13 +398,13 @@ fn start_daemon(config_set: ConfigSet) {
         if let Ok(status) = res {
             if status.success() {
                 println!("Daemon started correctly!")
-            }else{
+            } else {
                 eprintln!("Error starting launchd daemon with status: {}", status);
             }
-        }else{
+        } else {
             eprintln!("Error starting launchd daemon: {}", res.unwrap_err());
         }
-    }else{
+    } else {
         fork_daemon(config_set);
     }
 }
@@ -454,13 +459,13 @@ fn start_daemon(config_set: ConfigSet) {
         if let Ok(status) = res {
             if status.success() {
                 println!("Daemon started correctly!")
-            }else{
+            } else {
                 eprintln!("Error starting systemd daemon with status: {}", status);
             }
-        }else{
+        } else {
             eprintln!("Error starting systemd daemon: {}", res.unwrap_err());
         }
-    }else{
+    } else {
         if force_unmanaged {
             eprintln!("Systemd is not available in this system, switching to unmanaged mode.");
         }
@@ -477,7 +482,8 @@ fn fork_daemon(config_set: ConfigSet) {
             println!("Unable to fork.");
             exit(4);
         }
-        if pid > 0 {  // Parent process exit
+        if pid > 0 {
+            // Parent process exit
             println!("daemon started!");
             exit(0);
         }
@@ -510,11 +516,10 @@ fn status_main() {
         println!("espanso is not running");
 
         release_lock(lock_file);
-    }else{
+    } else {
         println!("espanso is running");
     }
 }
-
 
 /// Stop subcommand, used to stop the daemon.
 fn stop_main(config_set: ConfigSet) {
@@ -526,15 +531,18 @@ fn stop_main(config_set: ConfigSet) {
         exit(3);
     }
 
-    let res = send_command(config_set, IPCCommand{
-        id: "exit".to_owned(),
-        payload: "".to_owned(),
-    });
+    let res = send_command(
+        config_set,
+        IPCCommand {
+            id: "exit".to_owned(),
+            payload: "".to_owned(),
+        },
+    );
 
     if let Err(e) = res {
         println!("{}", e);
         exit(1);
-    }else{
+    } else {
         exit(0);
     }
 }
@@ -545,11 +553,15 @@ fn restart_main(config_set: ConfigSet) {
     let lock_file = acquire_lock();
     if lock_file.is_none() {
         // Terminate the current espanso daemon
-        send_command(config_set.clone(), IPCCommand{
-            id: "exit".to_owned(),
-            payload: "".to_owned(),
-        }).unwrap_or_else(|e| warn!("Unable to send IPC command to daemon: {}", e));
-    }else{
+        send_command(
+            config_set.clone(),
+            IPCCommand {
+                id: "exit".to_owned(),
+                payload: "".to_owned(),
+            },
+        )
+        .unwrap_or_else(|e| warn!("Unable to send IPC command to daemon: {}", e));
+    } else {
         release_lock(lock_file.unwrap());
     }
 
@@ -568,14 +580,20 @@ fn detect_main() {
     println!("Listening for changes, now focus the window you want to analyze.");
     println!("You can terminate with CTRL+C\n");
 
-    let mut last_title : String = "".to_owned();
-    let mut last_class : String = "".to_owned();
-    let mut last_exec : String = "".to_owned();
+    let mut last_title: String = "".to_owned();
+    let mut last_class: String = "".to_owned();
+    let mut last_exec: String = "".to_owned();
 
     loop {
-        let curr_title = system_manager.get_current_window_title().unwrap_or_default();
-        let curr_class = system_manager.get_current_window_class().unwrap_or_default();
-        let curr_exec = system_manager.get_current_window_executable().unwrap_or_default();
+        let curr_title = system_manager
+            .get_current_window_title()
+            .unwrap_or_default();
+        let curr_class = system_manager
+            .get_current_window_class()
+            .unwrap_or_default();
+        let curr_exec = system_manager
+            .get_current_window_executable()
+            .unwrap_or_default();
 
         // Check if a change occurred
         if curr_title != last_title || curr_class != last_class || curr_exec != last_exec {
@@ -600,23 +618,31 @@ fn detect_main() {
 #[cfg(target_os = "macos")]
 fn detect_main() {
     thread::spawn(|| {
-        use std::io::Write;
         use std::io::stdout;
+        use std::io::Write;
 
         let system_manager = system::get_manager();
 
         println!("Listening for changes, now focus the window you want to analyze.");
-        println!("Warning: stay on the window for a few seconds, as it may take a while to register.");
+        println!(
+            "Warning: stay on the window for a few seconds, as it may take a while to register."
+        );
         println!("You can terminate with CTRL+C\n");
 
-        let mut last_title : String = "".to_owned();
-        let mut last_class : String = "".to_owned();
-        let mut last_exec : String = "".to_owned();
+        let mut last_title: String = "".to_owned();
+        let mut last_class: String = "".to_owned();
+        let mut last_exec: String = "".to_owned();
 
         loop {
-            let curr_title = system_manager.get_current_window_title().unwrap_or_default();
-            let curr_class = system_manager.get_current_window_class().unwrap_or_default();
-            let curr_exec = system_manager.get_current_window_executable().unwrap_or_default();
+            let curr_title = system_manager
+                .get_current_window_title()
+                .unwrap_or_default();
+            let curr_class = system_manager
+                .get_current_window_class()
+                .unwrap_or_default();
+            let curr_exec = system_manager
+                .get_current_window_executable()
+                .unwrap_or_default();
 
             // Check if a change occurred
             if curr_title != last_title || curr_class != last_class || curr_exec != last_exec {
@@ -647,22 +673,22 @@ fn cmd_main(config_set: ConfigSet, matches: &ArgMatches) {
             id: String::from("exit"),
             payload: String::from(""),
         })
-    }else if matches.subcommand_matches("toggle").is_some() {
+    } else if matches.subcommand_matches("toggle").is_some() {
         Some(IPCCommand {
             id: String::from("toggle"),
             payload: String::from(""),
         })
-    }else if matches.subcommand_matches("enable").is_some() {
+    } else if matches.subcommand_matches("enable").is_some() {
         Some(IPCCommand {
             id: String::from("enable"),
             payload: String::from(""),
         })
-    }else if matches.subcommand_matches("disable").is_some() {
+    } else if matches.subcommand_matches("disable").is_some() {
         Some(IPCCommand {
             id: String::from("disable"),
             payload: String::from(""),
         })
-    }else{
+    } else {
         None
     };
 
@@ -671,7 +697,7 @@ fn cmd_main(config_set: ConfigSet, matches: &ArgMatches) {
 
         if res.is_ok() {
             exit(0);
-        }else{
+        } else {
             println!("{}", res.unwrap_err());
         }
     }
@@ -703,7 +729,7 @@ fn log_main() {
         }
 
         exit(0);
-    }else{
+    } else {
         println!("Error reading log file");
         exit(1);
     }
@@ -730,22 +756,20 @@ fn install_main(_config_set: ConfigSet, matches: &ArgMatches) {
         let res = package_manager.update_index(false);
 
         match res {
-            Ok(update_result) => {
-                match update_result {
-                    UpdateResult::NotOutdated => {
-                        eprintln!("Index was already up to date");
-                    },
-                    UpdateResult::Updated => {
-                        println!("Index updated!");
-                    },
+            Ok(update_result) => match update_result {
+                UpdateResult::NotOutdated => {
+                    eprintln!("Index was already up to date");
+                }
+                UpdateResult::Updated => {
+                    println!("Index updated!");
                 }
             },
             Err(e) => {
                 eprintln!("{}", e);
                 exit(2);
-            },
+            }
         }
-    }else{
+    } else {
         println!("Using cached package index, run 'espanso package refresh' to update it.")
     }
 
@@ -756,30 +780,30 @@ fn install_main(_config_set: ConfigSet, matches: &ArgMatches) {
             match install_result {
                 InstallResult::NotFoundInIndex => {
                     eprintln!("Package not found");
-                },
+                }
                 InstallResult::NotFoundInRepo => {
                     eprintln!("Package not found in repository, are you sure the folder exist in the repo?");
-                },
+                }
                 InstallResult::UnableToParsePackageInfo => {
                     eprintln!("Unable to parse Package info from README.md");
-                },
+                }
                 InstallResult::MissingPackageVersion => {
                     eprintln!("Missing package version");
-                },
+                }
                 InstallResult::AlreadyInstalled => {
                     eprintln!("{} already installed!", package_name);
-                },
+                }
                 InstallResult::Installed => {
                     println!("{} successfully installed!", package_name);
                     println!();
                     println!("You need to restart espanso for changes to take effect, using:");
                     println!("  espanso restart");
-                },
+                }
             }
-        },
+        }
         Err(e) => {
             eprintln!("{}", e);
-        },
+        }
     }
 }
 
@@ -794,22 +818,20 @@ fn remove_package_main(_config_set: ConfigSet, matches: &ArgMatches) {
     let res = package_manager.remove_package(package_name);
 
     match res {
-        Ok(remove_result) => {
-            match remove_result {
-                RemoveResult::NotFound => {
-                    eprintln!("{} package was not installed.", package_name);
-                },
-                RemoveResult::Removed => {
-                    println!("{} successfully removed!", package_name);
-                    println!();
-                    println!("You need to restart espanso for changes to take effect, using:");
-                    println!("  espanso restart");
-                },
+        Ok(remove_result) => match remove_result {
+            RemoveResult::NotFound => {
+                eprintln!("{} package was not installed.", package_name);
+            }
+            RemoveResult::Removed => {
+                println!("{} successfully removed!", package_name);
+                println!();
+                println!("You need to restart espanso for changes to take effect, using:");
+                println!("  espanso restart");
             }
         },
         Err(e) => {
             eprintln!("{}", e);
-        },
+        }
     }
 }
 
@@ -819,20 +841,18 @@ fn update_index_main(_config_set: ConfigSet) {
     let res = package_manager.update_index(true);
 
     match res {
-        Ok(update_result) => {
-            match update_result {
-                UpdateResult::NotOutdated => {
-                    eprintln!("Index was already up to date");
-                },
-                UpdateResult::Updated => {
-                    println!("Index updated!");
-                },
+        Ok(update_result) => match update_result {
+            UpdateResult::NotOutdated => {
+                eprintln!("Index was already up to date");
+            }
+            UpdateResult::Updated => {
+                println!("Index updated!");
             }
         },
         Err(e) => {
             eprintln!("{}", e);
             exit(2);
-        },
+        }
     }
 }
 
@@ -845,7 +865,7 @@ fn list_package_main(_config_set: ConfigSet, matches: &ArgMatches) {
         for package in list.iter() {
             println!("{:?}", package);
         }
-    }else{
+    } else {
         for package in list.iter() {
             println!("{} - {}", package.name, package.version);
         }
@@ -859,20 +879,19 @@ fn path_main(_config_set: ConfigSet, matches: &ArgMatches) {
 
     if matches.subcommand_matches("config").is_some() {
         println!("{}", config.to_string_lossy());
-    }else if matches.subcommand_matches("packages").is_some() {
+    } else if matches.subcommand_matches("packages").is_some() {
         println!("{}", packages.to_string_lossy());
-    }else if matches.subcommand_matches("data").is_some() {
+    } else if matches.subcommand_matches("data").is_some() {
         println!("{}", data.to_string_lossy());
-    }else if matches.subcommand_matches("default").is_some() {
+    } else if matches.subcommand_matches("default").is_some() {
         let default_file = config.join(crate::config::DEFAULT_CONFIG_FILE_NAME);
         println!("{}", default_file.to_string_lossy());
-    }else{
+    } else {
         println!("Config: {}", config.to_string_lossy());
         println!("Packages: {}", packages.to_string_lossy());
         println!("Data: {}", data.to_string_lossy());
     }
 }
-
 
 fn acquire_lock() -> Option<File> {
     let espanso_dir = context::get_data_dir();
@@ -887,7 +906,7 @@ fn acquire_lock() -> Option<File> {
     let res = file.try_lock_exclusive();
 
     if res.is_ok() {
-        return Some(file)
+        return Some(file);
     }
 
     None

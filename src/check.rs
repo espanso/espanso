@@ -27,20 +27,18 @@ pub fn check_dependencies() -> bool {
     let mut result = true;
 
     // Make sure notify-send is installed
-    let status = Command::new("notify-send")
-        .arg("-v")
-        .output();
+    let status = Command::new("notify-send").arg("-v").output();
     if status.is_err() {
         println!("Error: 'notify-send' command is needed for espanso to work correctly, please install it.");
         result = false;
     }
 
     // Make sure xclip is installed
-    let status = Command::new("xclip")
-        .arg("-version")
-        .output();
+    let status = Command::new("xclip").arg("-version").output();
     if status.is_err() {
-        println!("Error: 'xclip' command is needed for espanso to work correctly, please install it.");
+        println!(
+            "Error: 'xclip' command is needed for espanso to work correctly, please install it."
+        );
         result = false;
     }
 

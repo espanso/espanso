@@ -17,16 +17,16 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::os::unix::net::{UnixStream,UnixListener};
-use log::{info, warn};
-use std::sync::mpsc::Sender;
 use super::IPCCommand;
+use log::{info, warn};
+use std::os::unix::net::{UnixListener, UnixStream};
+use std::sync::mpsc::Sender;
 
 use crate::context;
 use crate::event::*;
 use crate::protocol::{process_event, send_command};
 
-const UNIX_SOCKET_NAME : &str = "espanso.sock";
+const UNIX_SOCKET_NAME: &str = "espanso.sock";
 
 pub struct UnixIPCServer {
     event_channel: Sender<Event>,
@@ -34,38 +34,43 @@ pub struct UnixIPCServer {
 
 impl UnixIPCServer {
     pub fn new(event_channel: Sender<Event>) -> UnixIPCServer {
-        UnixIPCServer {event_channel}
+        UnixIPCServer { event_channel }
     }
 }
 
 impl super::IPCServer for UnixIPCServer {
     fn start(&self) {
         let event_channel = self.event_channel.clone();
-        std::thread::Builder::new().name("ipc_server".to_string()).spawn(move || {
-            let espanso_dir = context::get_data_dir();
-            let unix_socket = espanso_dir.join(UNIX_SOCKET_NAME);
+        std::thread::Builder::new()
+            .name("ipc_server".to_string())
+            .spawn(move || {
+                let espanso_dir = context::get_data_dir();
+                let unix_socket = espanso_dir.join(UNIX_SOCKET_NAME);
 
-            std::fs::remove_file(unix_socket.clone()).unwrap_or_else(|e| {
-                warn!("Unable to delete Unix socket: {}", e);
-            });
-            let listener = UnixListener::bind(unix_socket.clone()).expect("Can't bind to Unix Socket");
+                std::fs::remove_file(unix_socket.clone()).unwrap_or_else(|e| {
+                    warn!("Unable to delete Unix socket: {}", e);
+                });
+                let listener =
+                    UnixListener::bind(unix_socket.clone()).expect("Can't bind to Unix Socket");
 
-            info!("Binded to IPC unix socket: {}", unix_socket.as_path().display());
+                info!(
+                    "Binded to IPC unix socket: {}",
+                    unix_socket.as_path().display()
+                );
 
-            for stream in listener.incoming() {
-                process_event(&event_channel, stream);
-            }
-        }).expect("Unable to spawn IPC server thread");
+                for stream in listener.incoming() {
+                    process_event(&event_channel, stream);
+                }
+            })
+            .expect("Unable to spawn IPC server thread");
     }
 }
 
-pub struct UnixIPCClient {
-
-}
+pub struct UnixIPCClient {}
 
 impl UnixIPCClient {
     pub fn new() -> UnixIPCClient {
-        UnixIPCClient{}
+        UnixIPCClient {}
     }
 }
 
