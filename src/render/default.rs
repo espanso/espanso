@@ -29,6 +29,7 @@ use crate::extension::Extension;
 
 lazy_static! {
     static ref VAR_REGEX: Regex = Regex::new("\\{\\{\\s*(?P<name>\\w+)\\s*\\}\\}").unwrap();
+    static ref UNKNOWN_VARIABLE : String = "".to_string();
 }
 
 pub struct DefaultRenderer {
@@ -138,7 +139,7 @@ impl super::Renderer for DefaultRenderer {
                     let result = VAR_REGEX.replace_all(&content.replace, |caps: &Captures| {
                         let var_name = caps.name("name").unwrap().as_str();
                         let output = output_map.get(var_name);
-                        output.unwrap()
+                        output.unwrap_or(&UNKNOWN_VARIABLE)
                     });
 
                     result.to_string()
@@ -480,5 +481,22 @@ mod tests {
         let rendered = renderer.render_passive(text, &config);
 
         verify_render(rendered, "this is my local");
+    }
+
+    #[test]
+    fn test_render_match_with_unknown_variable_does_not_crash() {
+        let text = "this is :test";
+
+        let config = get_config_for(r###"
+            matches:
+                - trigger: ':test'
+                  replace: "my {{unknown}}"
+            "###);
+
+        let renderer = get_renderer(config.clone());
+
+        let rendered = renderer.render_passive(text, &config);
+
+        verify_render(rendered, "this is my ");
     }
 }
