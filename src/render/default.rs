@@ -147,6 +147,11 @@ impl super::Renderer for DefaultRenderer {
                     content.replace.clone()
                 };
 
+                // Unescape any brackets (needed to be able to insert double brackets in replacement
+                // text, without triggering the variable system). See issue #187
+                let target_string = target_string.replace("\\{", "{")
+                                                        .replace("\\}", "}");
+
                 // Render any argument that may be present
                 let target_string = utils::render_args(&target_string, &args);
 
@@ -498,5 +503,22 @@ mod tests {
         let rendered = renderer.render_passive(text, &config);
 
         verify_render(rendered, "this is my ");
+    }
+
+    #[test]
+    fn test_render_escaped_double_brackets_should_not_consider_them_variable() {
+        let text = "this is :test";
+
+        let config = get_config_for(r###"
+            matches:
+                - trigger: ':test'
+                  replace: "my \\{\\{unknown\\}\\}"
+            "###);
+
+        let renderer = get_renderer(config.clone());
+
+        let rendered = renderer.render_passive(text, &config);
+
+        verify_render(rendered, "this is my {{unknown}}");
     }
 }
