@@ -46,6 +46,7 @@ use crate::package::default::DefaultPackageManager;
 use crate::package::{PackageManager, InstallResult, UpdateResult, RemoveResult};
 
 mod ui;
+mod edit;
 mod event;
 mod check;
 mod utils;
@@ -96,6 +97,8 @@ fn main() {
             .subcommand(SubCommand::with_name("toggle")
                 .about("Toggle the status of the espanso replacement engine."))
         )
+        .subcommand(SubCommand::with_name("edit")
+            .about("Open the default text editor to edit config files and reload them automatically when exiting"))
         .subcommand(SubCommand::with_name("dump")
             .about("Prints all current configuration options."))
         .subcommand(SubCommand::with_name("detect")
@@ -160,6 +163,11 @@ fn main() {
 
     if let Some(matches) = matches.subcommand_matches("cmd") {
         cmd_main(config_set, matches);
+        return;
+    }
+
+    if matches.subcommand_matches("edit").is_some() {
+        edit_main(config_set);
         return;
     }
 
@@ -873,6 +881,9 @@ fn path_main(_config_set: ConfigSet, matches: &ArgMatches) {
     }
 }
 
+fn edit_main(config_set: ConfigSet) {
+    crate::edit::open_editor(&config_set);
+}
 
 fn acquire_lock() -> Option<File> {
     let espanso_dir = context::get_data_dir();
