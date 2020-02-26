@@ -54,7 +54,7 @@ fn default_config_caching_interval() -> i32 { 800 }
 fn default_word_separators() -> Vec<char> { vec![' ', ',', '.', '\r', '\n', 22u8 as char] }
 fn default_toggle_interval() -> u32 { 230 }
 fn default_toggle_key() -> KeyModifier { KeyModifier::ALT }
-fn default_preserve_clipboard() -> bool {false}
+fn default_preserve_clipboard() -> bool {true}
 fn default_passive_match_regex() -> String{ "(?P<name>:\\p{L}+)(/(?P<args>.*)/)?".to_owned() }
 fn default_passive_arg_delimiter() -> char { '/' }
 fn default_passive_arg_escape() -> char { '\\' }
