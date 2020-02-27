@@ -18,44 +18,40 @@
  */
 
 use crate::config::ConfigSet;
+use std::path::Path;
 
-#[cfg(target_os = "linux")]
-pub fn open_editor(config: &ConfigSet) -> bool {
-    // TODO
-}
-
-#[cfg(target_os = "macos")]
-pub fn open_editor(config: &ConfigSet) -> bool {
-    // TODO
-}
-
-#[cfg(target_os = "windows")]
-pub fn open_editor(config: &ConfigSet) -> bool {
+pub fn open_editor(config: &ConfigSet, file_path: &Path) -> bool {
     use std::process::Command;
 
-    // Get the configuration file path
-    let file_path = crate::context::get_config_dir().join(crate::config::DEFAULT_CONFIG_FILE_NAME);
+    // Check if another editor is defined in the environment variables
+    let editor_var = std::env::var_os("EDITOR");
+    let visual_var = std::env::var_os("VISUAL");
+
+    // Prioritize the editors specified by the environment variable, otherwise use the config
+    let editor : String = if let Some(editor_var) = editor_var {
+        editor_var.to_string_lossy().to_string()
+    }else if let Some(visual_var) = visual_var {
+        visual_var.to_string_lossy().to_string()
+    }else{
+        config.default.editor.clone()
+    };
 
     // Start the editor and wait for its termination
-    let status = Command::new("cmd")
-        .arg("/C")
-        .arg("start")
-        .arg("/wait")
-        .arg("C:\\Windows\\System32\\notepad.exe")
+    let status = Command::new(editor)
         .arg(file_path)
         .spawn();
 
     if let Ok(mut child) = status {
         // Wait for the user to edit the configuration
-        child.wait();
+        let result = child.wait();
 
-        // TODO: instead of waiting, a file watcher should be started to detect file changes and
-        // after each of them a reload should be issued
-
-        println!("Ok");
-        true
+        if let Ok(exit_status) = result {
+            exit_status.success()
+        }else{
+            false
+        }
     }else{
-        println!("Error: could not start editor.");
+        println!("Error: could not start editor at: {}", config.default.editor);
         false
     }
 }
