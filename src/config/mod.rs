@@ -38,7 +38,7 @@ pub(crate) mod runtime;
 const DEFAULT_CONFIG_FILE_CONTENT : &str = include_str!("../res/config.yml");
 
 pub const DEFAULT_CONFIG_FILE_NAME : &str = "default.yml";
-const USER_CONFIGS_FOLDER_NAME: &str = "user";
+pub const USER_CONFIGS_FOLDER_NAME: &str = "user";
 
 // Default values for primitives
 fn default_name() -> String{ "default".to_owned() }
@@ -68,9 +68,16 @@ fn default_exclude_default_entries() -> bool {false}
 fn default_matches() -> Vec<Match> { Vec::new() }
 fn default_global_vars() -> Vec<MatchVariable> { Vec::new() }
 
+#[cfg(target_os = "linux")]
+fn default_editor() -> String{ "/bin/nano".to_owned() }
+#[cfg(target_os = "macos")]
+fn default_editor() -> String{ "/usr/bin/nano".to_owned() } // TODO: change
+#[cfg(target_os = "windows")]
+fn default_editor() -> String{ "C:\\Windows\\System32\\notepad.exe".to_owned() }
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Configs {
-#[serde(default = "default_name")]
+    #[serde(default = "default_name")]
     pub name: String,
 
     #[serde(default = "default_parent")]
@@ -147,6 +154,9 @@ pub struct Configs {
 
     #[serde(default = "default_exclude_default_entries")]
     pub exclude_default_entries: bool,
+
+    #[serde(default = "default_editor")]
+    pub editor: String,
 
     #[serde(default = "default_matches")]
     pub matches: Vec<Match>,
