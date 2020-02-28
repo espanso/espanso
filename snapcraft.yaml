@@ -1,9 +1,9 @@
 name: espanso
-version: 0.4.1
+version: 0.5.1
 summary: A Cross-platform Text Expander written in Rust
 description: TODO
 
-confinement: strict
+confinement: classic
 base: core18
 
 parts:
