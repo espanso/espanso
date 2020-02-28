@@ -32,7 +32,7 @@ use fs2::FileExt;
 use log::{info, warn, LevelFilter};
 use simplelog::{CombinedLogger, SharedLogger, TerminalMode, TermLogger, WriteLogger};
 
-use crate::config::ConfigSet;
+use crate::config::{ConfigSet, ConfigManager};
 use crate::config::runtime::RuntimeConfigManager;
 use crate::engine::Engine;
 use crate::event::*;
@@ -46,12 +46,14 @@ use crate::package::default::DefaultPackageManager;
 use crate::package::{PackageManager, InstallResult, UpdateResult, RemoveResult};
 
 mod ui;
+mod edit;
 mod event;
 mod check;
 mod utils;
 mod bridge;
 mod engine;
 mod config;
+mod render;
 mod system;
 mod context;
 mod matcher;
@@ -95,6 +97,10 @@ fn main() {
             .subcommand(SubCommand::with_name("toggle")
                 .about("Toggle the status of the espanso replacement engine."))
         )
+        .subcommand(SubCommand::with_name("edit")
+            .about("Open the default text editor to edit config files and reload them automatically when exiting")
+            .arg(Arg::with_name("config")
+                .help("Defaults to \"default\". The configuration file name to edit (without the .yml extension).")))
         .subcommand(SubCommand::with_name("dump")
             .about("Prints all current configuration options."))
         .subcommand(SubCommand::with_name("detect")
@@ -159,6 +165,11 @@ fn main() {
 
     if let Some(matches) = matches.subcommand_matches("cmd") {
         cmd_main(config_set, matches);
+        return;
+    }
+
+    if let Some(matches) = matches.subcommand_matches("edit") {
+        edit_main(config_set, matches);
         return;
     }
 
@@ -332,11 +343,14 @@ fn daemon_background(receive_channel: Receiver<Event>, config_set: ConfigSet) {
 
     let extensions = extension::get_extensions();
 
+    let renderer = render::default::DefaultRenderer::new(extensions,
+                                                          config_manager.default_config().clone());
+
     let engine = Engine::new(&keyboard_manager,
                              &clipboard_manager,
                              &config_manager,
                              &ui_manager,
-                             extensions,
+                             &renderer,
     );
 
     let matcher = ScrollingMatcher::new(&config_manager, &engine);
@@ -869,6 +883,67 @@ fn path_main(_config_set: ConfigSet, matches: &ArgMatches) {
     }
 }
 
+fn edit_main(config_set: ConfigSet, matches: &ArgMatches) {
+    // Determine which is the file to edit
+    let config = matches.value_of("config").unwrap_or("default");
+
+    let config_dir = crate::context::get_config_dir();
+
+    let config_path = match config {
+        "default" => {
+            config_dir.join(crate::config::DEFAULT_CONFIG_FILE_NAME)
+        },
+        name => { // Otherwise, search in the user/ config folder
+            config_dir.join(crate::config::USER_CONFIGS_FOLDER_NAME)
+                .join(name.to_owned() + ".yml")
+        }
+    };
+
+    println!("Editing file: {:?}", &config_path);
+
+    // Based on the fact that the file already exists or not, we should detect in different
+    // ways if a reload is needed
+    let should_reload =if config_path.exists() {
+        // Get the last modified date, so that we can detect if the user actually edits the file
+        // before reloading
+        let metadata = std::fs::metadata(&config_path).expect("cannot gather file metadata");
+        let last_modified = metadata.modified().expect("cannot read file last modified date");
+
+        let result = crate::edit::open_editor(&config_set, &config_path);
+        if result {
+            let new_metadata = std::fs::metadata(&config_path).expect("cannot gather file metadata");
+            let new_last_modified = new_metadata.modified().expect("cannot read file last modified date");
+
+            if last_modified != new_last_modified {
+                println!("File has been modified, reloading configuration");
+                true
+            }else{
+                println!("File has not been modified, avoiding reload");
+                false
+            }
+        }else{
+            false
+        }
+    }else{
+        let result = crate::edit::open_editor(&config_set, &config_path);
+        if result {
+            // If the file has been created, we should reload the espanso config
+            if config_path.exists() {
+                println!("A new file has been created, reloading configuration");
+                true
+            }else{
+                println!("No file has been created, avoiding reload");
+                false
+            }
+        }else{
+            false
+        }
+    };
+
+    if should_reload {
+        restart_main(config_set)
+    }
+}
 
 fn acquire_lock() -> Option<File> {
     let espanso_dir = context::get_data_dir();

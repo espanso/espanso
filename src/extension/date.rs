@@ -33,7 +33,7 @@ impl super::Extension for DateExtension {
         String::from("date")
     }
 
-    fn calculate(&self, params: &Mapping) -> Option<String> {
+    fn calculate(&self, params: &Mapping, _: &Vec<String>) -> Option<String> {
         let now: DateTime<Local> = Local::now();
 
         let format = params.get(&Value::from("format"));

@@ -52,6 +52,8 @@ impl super::KeyboardManager for LinuxKeyboardManager {
                         trigger_alt_shift_ins_paste();
                     }else if is_special == 3 {  // Special case for Emacs
                         trigger_shift_ins_paste();
+                    }else if is_special == 4 {  // CTRL+ALT+V used in some terminals (urxvt)
+                        trigger_ctrl_alt_paste();
                     }else{
                         trigger_terminal_paste();
                     }
@@ -64,6 +66,9 @@ impl super::KeyboardManager for LinuxKeyboardManager {
                 },
                 PasteShortcut::ShiftInsert=> {
                     trigger_shift_ins_paste();
+                },
+                PasteShortcut::CtrlAltV => {
+                    trigger_ctrl_alt_paste();
                 },
                 _ => {
                     error!("Linux backend does not support this Paste Shortcut, please open an issue on GitHub if you need it.")
@@ -79,6 +84,12 @@ impl super::KeyboardManager for LinuxKeyboardManager {
     fn move_cursor_left(&self, count: i32) {
         unsafe {
             left_arrow(count);
+        }
+    }
+
+    fn trigger_copy(&self) {
+        unsafe {
+            trigger_copy();
         }
     }
 }
