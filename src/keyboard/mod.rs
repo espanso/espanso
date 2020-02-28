@@ -34,6 +34,7 @@ pub trait KeyboardManager {
     fn trigger_paste(&self, shortcut: &PasteShortcut);
     fn delete_string(&self, count: i32);
     fn move_cursor_left(&self, count: i32);
+    fn trigger_copy(&self);
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -42,6 +43,7 @@ pub enum PasteShortcut {
     CtrlV,          // Classic Ctrl+V shortcut
     CtrlShiftV,     // Could be used to paste without formatting in many applications
     ShiftInsert,    // Often used in Linux systems
+    CtrlAltV,       // Used in some Linux terminals (urxvt)
     MetaV,          // Corresponding to Win+V on Windows and Linux, CMD+V on macOS
 }
 
