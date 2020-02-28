@@ -44,5 +44,6 @@ extern {
     pub fn trigger_terminal_paste();
     pub fn trigger_shift_ins_paste();
     pub fn trigger_alt_shift_ins_paste();
+    pub fn trigger_ctrl_alt_paste();
     pub fn trigger_copy();
 }

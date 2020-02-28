@@ -93,6 +93,11 @@ extern "C" void trigger_shift_ins_paste();
 extern "C" void trigger_alt_shift_ins_paste();
 
 /*
+ * Trigger CTRL+ALT+V pasting
+ */
+extern "C" void trigger_ctrl_alt_paste();
+
+/*
  * Trigger copy shortcut ( Pressing CTRL+C )
  */
 extern "C" void trigger_copy();
