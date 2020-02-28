@@ -307,6 +307,10 @@ void trigger_alt_shift_ins_paste() {
     xdo_send_keysequence_window(xdo_context, CURRENTWINDOW, "Shift+Alt+Insert", 8000);
 }
 
+void trigger_ctrl_alt_paste() {
+    xdo_send_keysequence_window(xdo_context, CURRENTWINDOW, "Control_L+Alt+v", 8000);
+}
+
 void trigger_copy() {
     // Release the other keys, for an explanation, read the 'trigger_paste' method
 
@@ -467,8 +471,8 @@ int32_t is_current_window_special() {
     if (res > 0) {
         if (strstr(class_buffer, "terminal") != NULL) {
             return 1;
-        }else if (strstr(class_buffer, "URxvt") != NULL) {  // Manjaro terminal
-            return 1;
+        }else if (strstr(class_buffer, "URxvt") != NULL) {  // urxvt terminal
+            return 4;
         }else if (strstr(class_buffer, "XTerm") != NULL) {  // XTerm and UXTerm
             return 1;
         }else if (strstr(class_buffer, "Termite") != NULL) {  // Termite
