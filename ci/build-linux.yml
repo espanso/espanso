@@ -9,10 +9,3 @@ steps:
       ls -la
     displayName: "Cargo build and packaging for Linux"
 
-  - script: |
-      cargo install cargo-deb
-      cargo deb
-      cp target/release/debian/espanso*amd64.deb espanso-debian-amd64.deb
-      sha256sum espanso-*amd64.deb | awk '{ print $1 }' > espanso-debian-amd64-sha256.txt
-      ls -la
-    displayName: "Packaging deb package"
