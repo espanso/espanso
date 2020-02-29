@@ -23,7 +23,7 @@ use crate::event::*;
 use crate::event::KeyModifier::*;
 use crate::bridge::linux::*;
 use std::process::exit;
-use log::{error, info};
+use log::{debug, error, info};
 use std::ffi::CStr;
 use std::{thread, time};
 
