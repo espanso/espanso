@@ -56,6 +56,8 @@ def build(skipcargo):
         build_windows(package_info)
     elif TARGET_OS == "macos":
         build_mac(package_info)
+    elif TARGET_OS == "linux":
+        build_snap(package_info)
 
 
 def build_windows(package_info):
@@ -173,6 +175,26 @@ def build_mac(package_info):
             output_script.write(content)
 
     print("Done!")
+
+
+def build_snap(package_info):
+    print("Starting packaging process for Snap package...")
+
+    print("Rendering snapcraft template...")
+    with open("packager/linux/snapcraft-template.yaml", "r") as snapcraft_template:
+        content = snapcraft_template.read()
+
+        # Replace variables
+        content = content.replace("{{{app_version}}}", package_info.version)
+
+        with open("snapcraft.yaml", "w") as output_file:
+            output_file.write(content)
+
+    print("Starting snapcraft packaging process...")
+    subprocess.run(["snapcraft"])
+
+    print("Done!")
+
 
 if __name__ == '__main__':
     print("[[ espanso packager ]]")
