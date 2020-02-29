@@ -97,7 +97,7 @@ extern fn keypress_callback(_self: *mut c_void, raw_buffer: *const u8, len: i32,
                     (*_self).send_channel.send(event).unwrap();
                 },
                 Err(e) => {
-                    error!("Unable to receive char: {}",e);
+                    debug!("Unable to receive char: {}",e);
                 },
             }
         }else{  // Modifier event
