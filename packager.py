@@ -7,6 +7,7 @@ import click
 import shutil
 import toml
 import hashlib
+import glob
 import urllib.request
 from dataclasses import dataclass
 
@@ -79,9 +80,23 @@ def build_windows(package_info):
     TARGET_DIR = os.path.join(PACKAGER_TARGET_DIR, "win")
     os.makedirs(TARGET_DIR, exist_ok=True)
 
-    print("Downloading Visual C++ redistributable")
-    vc_redist_file = os.path.join(TARGET_DIR, "vc_redist.x64.exe")
-    urllib.request.urlretrieve("https://aka.ms/vs/16/release/vc_redist.x64.exe", vc_redist_file)
+    print("Gathering CRT DLLs...")
+    msvc_dirs = glob.glob("C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\*\\VC\\Redist\\MSVC\\*")
+    print("Found Redists: ", msvc_dirs)
+
+    msvc_dir = msvc_dirs[0]
+    print("Using: ",msvc_dir)
+    if len(msvc_dir) == 0:
+        raise Exception("Cannot find redistributable dlls")
+    dll_files = glob.glob(msvc_dir + "\\x64\\*CRT\\*.dll")
+
+    print("Found DLLs:")
+    dll_include_list = []
+    for dll in dll_files:
+        print("Including: "+dll)
+        dll_include_list.append("Source: \""+dll+"\"; DestDir: \"{app}\"; Flags: ignoreversion")
+
+    dll_include = "\r\n".join(dll_include_list)
 
     INSTALLER_NAME = f"espanso-win-installer"
 
@@ -102,6 +117,7 @@ def build_windows(package_info):
         content = content.replace("{{{executable_path}}}",  os.path.abspath("target/release/espanso.exe"))
         content = content.replace("{{{output_dir}}}",  os.path.abspath(TARGET_DIR))
         content = content.replace("{{{output_name}}}",  INSTALLER_NAME)
+        content = content.replace("{{{dll_include}}}",  dll_include)
 
         with open(os.path.join(TARGET_DIR, "setupscript.iss"), "w") as output_script:
             output_script.write(content)
