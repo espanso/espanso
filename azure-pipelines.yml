@@ -19,6 +19,16 @@ jobs:
       - template: ci/build-linux.yml
       - template: ci/deploy.yml
 
+  - job: UbuntuDEB
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+      - script: |
+          sudo docker build -t espanso-ubuntu . -f ci/ubuntu/Dockerfile
+          sudo docker run --rm -v "$(pwd):/shared" espanso-ubuntu espanso/ci/ubuntu/build_deb.sh
+        displayName: Setting up docker
+      - template: ci/deploy.yml
+
   - job: macOS
     pool:
       vmImage: 'macOS-10.14'
