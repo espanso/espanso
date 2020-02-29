@@ -1,0 +1,37 @@
+steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '3.7'
+      addToPath: true
+
+  - script: |
+      python --version
+      python -m pip install toml click
+    displayName: Installing python dependencies
+
+  - script: |
+      sudo snap install snapcraft
+    displayName: Setting up snapcraft
+
+  - script: |
+      set -e
+      python packager.py build --skipcargo
+    displayName: "Building the SNAP"
+
+  - task: DownloadSecureFile@1
+    name: snapcraftlogin
+    displayName: "Downloading snapcraft login"
+    inputs:
+      secureFile: snapcraft.login
+
+  - script: |
+      set -e
+      mkdir .snapcraft
+      cp $(snapcraftlogin.secureFilePath) .snapcraft/snapcraft.cfg
+    displayName: "Installing SNAP credentials"
+
+  - script: |
+      set -e
+      test -f *.snap
+      snapcraft push espanso*.snap --release stable
+    displayName: "Publishing snap to the store"

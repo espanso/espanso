@@ -29,6 +29,12 @@ jobs:
         displayName: Setting up docker
       - template: ci/deploy.yml
 
+  - job: UbuntuSNAP
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+      - template: ci/build-snap.yml
+
   - job: macOS
     pool:
       vmImage: 'macOS-10.14'
