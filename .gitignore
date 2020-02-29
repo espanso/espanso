@@ -32,3 +32,8 @@ profile
 *.moved-aside
 DerivedData
 .idea/
+
+*.snap
+
+venv/
+snapcraft.yaml
