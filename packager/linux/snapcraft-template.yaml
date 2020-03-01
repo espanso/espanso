@@ -68,8 +68,3 @@ parts:
 apps:
   espanso:
     command: bin/espanso
-    plugs:
-     - x11
-     - network-bind
-     - desktop
-     - unity7
