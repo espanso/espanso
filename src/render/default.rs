@@ -59,15 +59,18 @@ impl DefaultRenderer {
         }
     }
 
-    fn find_match(config: &Configs, trigger: &str) -> Option<Match> {
+    fn find_match(config: &Configs, trigger: &str) -> Option<(Match, usize)> {
         let mut result = None;
 
         // TODO: if performances become a problem, implement a more efficient lookup
         for m in config.matches.iter() {
-            if m.trigger == trigger {
-                result = Some(m.clone());
-                break;
+            for (trigger_offset, m_trigger) in m.triggers.iter().enumerate() {
+                if m_trigger == trigger {
+                    result = Some((m.clone(), trigger_offset));
+                    break;
+                }
             }
+
         }
 
         result
@@ -75,7 +78,7 @@ impl DefaultRenderer {
 }
 
 impl super::Renderer for DefaultRenderer {
-    fn render_match(&self, m: &Match, config: &Configs, args: Vec<String>) -> RenderResult {
+    fn render_match(&self, m: &Match, trigger_offset: usize, config: &Configs, args: Vec<String>) -> RenderResult {
         // Manage the different types of matches
         match &m.content {
             // Text Match
@@ -104,11 +107,11 @@ impl super::Renderer for DefaultRenderer {
                                 continue
                             }
 
-                            let inner_match = inner_match.unwrap();
+                            let (inner_match, trigger_offset) = inner_match.unwrap();
 
                             // Render the inner match
                             // TODO: inner arguments
-                            let result = self.render_match(&inner_match, config, vec![]);
+                            let result = self.render_match(&inner_match, trigger_offset, config, vec![]);
 
                             // Inner matches are only supported for text-expansions, warn the user otherwise
                             match result {
@@ -154,6 +157,8 @@ impl super::Renderer for DefaultRenderer {
 
                 // Render any argument that may be present
                 let target_string = utils::render_args(&target_string, &args);
+
+                // TODO: add case affect expansion here
 
                 RenderResult::Text(target_string)
             },
@@ -202,9 +207,9 @@ impl super::Renderer for DefaultRenderer {
                                                        config.passive_arg_delimiter,
                                                        config.passive_arg_escape);
 
-            let m = m.unwrap();
+            let (m, trigger_offset) = m.unwrap();
             // Render the actual match
-            let result = self.render_match(&m, &config, args);
+            let result = self.render_match(&m, trigger_offset, &config, args);
 
             match result {
                 RenderResult::Text(out) => {
@@ -520,5 +525,39 @@ mod tests {
         let rendered = renderer.render_passive(text, &config);
 
         verify_render(rendered, "this is my {{unknown}}");
+    }
+
+    #[test]
+    fn test_render_passive_simple_match_multi_trigger_no_args() {
+        let text = "this is a :yolo and :test";
+
+        let config = get_config_for(r###"
+        matches:
+            - triggers: [':test', ':yolo']
+              replace: result
+        "###);
+
+        let renderer = get_renderer(config.clone());
+
+        let rendered = renderer.render_passive(text, &config);
+
+        verify_render(rendered, "this is a result and result");
+    }
+
+    #[test]
+    fn test_render_passive_simple_match_multi_trigger_with_args() {
+        let text = ":yolo/Jon/";
+
+        let config = get_config_for(r###"
+        matches:
+            - triggers: [':greet', ':yolo']
+              replace: "Hi $0$"
+        "###);
+
+        let renderer = get_renderer(config.clone());
+
+        let rendered = renderer.render_passive(text, &config);
+
+        verify_render(rendered, "Hi Jon");
     }
 }
