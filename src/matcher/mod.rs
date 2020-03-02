@@ -29,14 +29,14 @@ pub(crate) mod scrolling;
 
 #[derive(Debug, Serialize, Clone)]
 pub struct Match {
-    pub trigger: String,
+    pub triggers: Vec<String>,
     pub content: MatchContentType,
     pub word: bool,
     pub passive_only: bool,
 
-    // Automatically calculated from the trigger, used by the matcher to check for correspondences.
+    // Automatically calculated from the triggers, used by the matcher to check for correspondences.
     #[serde(skip_serializing)]
-    pub _trigger_sequence: Vec<TriggerEntry>,
+    pub _trigger_sequences: Vec<Vec<TriggerEntry>>,
 }
 
 #[derive(Debug, Serialize, Clone)]
@@ -74,17 +74,28 @@ impl<'a> From<&'a AutoMatch> for Match{
             static ref VAR_REGEX: Regex = Regex::new("\\{\\{\\s*(\\w+)\\s*\\}\\}").unwrap();
         };
 
-        // TODO: may need to replace windows newline (\r\n) with newline only (\n)
+        let triggers = if !other.triggers.is_empty() {
+            other.triggers.clone()
+        }else if !other.trigger.is_empty() {
+            vec!(other.trigger.clone())
+        }else{
+            panic!("Match does not have any trigger defined: {:?}", other)
+        };
 
-        // Calculate the trigger sequence
-        let mut trigger_sequence = Vec::new();
-        let trigger_chars : Vec<char> = other.trigger.chars().collect();
-        trigger_sequence.extend(trigger_chars.into_iter().map(|c| {
-            TriggerEntry::Char(c)
-        }));
-        if other.word {  // If it's a word match, end with a word separator
-            trigger_sequence.push(TriggerEntry::WordSeparator);
-        }
+        let trigger_sequences = triggers.iter().map(|trigger| {
+            // Calculate the trigger sequence
+            let mut trigger_sequence = Vec::new();
+            let trigger_chars : Vec<char> = trigger.chars().collect();
+            trigger_sequence.extend(trigger_chars.into_iter().map(|c| {
+                TriggerEntry::Char(c)
+            }));
+            if other.word {  // If it's a word match, end with a word separator
+                trigger_sequence.push(TriggerEntry::WordSeparator);
+            }
+
+            trigger_sequence
+        }).collect();
+
 
         let content = if let Some(replace) = &other.replace {  // Text match
             let new_replace = replace.clone();
@@ -132,11 +143,11 @@ impl<'a> From<&'a AutoMatch> for Match{
         };
 
         Self {
-            trigger: other.trigger.clone(),
+            triggers,
             content,
             word: other.word,
             passive_only: other.passive_only,
-            _trigger_sequence: trigger_sequence,
+            _trigger_sequences: trigger_sequences,
         }
     }
 }
@@ -144,7 +155,11 @@ impl<'a> From<&'a AutoMatch> for Match{
 /// Used to deserialize the Match struct before applying some custom elaboration.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct AutoMatch {
+    #[serde(default = "default_trigger")]
     pub trigger: String,
+
+    #[serde(default = "default_triggers")]
+    pub triggers: Vec<String>,
 
     #[serde(default = "default_replace")]
     pub replace: Option<String>,
@@ -162,6 +177,8 @@ struct AutoMatch {
     pub passive_only: bool,
 }
 
+fn default_trigger() -> String {"".to_owned()}
+fn default_triggers() -> Vec<String> {Vec::new()}
 fn default_vars() -> Vec<MatchVariable> {Vec::new()}
 fn default_word() -> bool {false}
 fn default_passive_only() -> bool {false}
@@ -185,7 +202,7 @@ pub enum TriggerEntry {
 }
 
 pub trait MatchReceiver {
-    fn on_match(&self, m: &Match, trailing_separator: Option<char>);
+    fn on_match(&self, m: &Match, trailing_separator: Option<char>, trigger_offset: usize);
     fn on_enable_update(&self, status: bool);
     fn on_passive(&self);
 }
@@ -281,10 +298,10 @@ mod tests {
 
         let _match : Match = serde_yaml::from_str(match_str).unwrap();
 
-        assert_eq!(_match._trigger_sequence[0], TriggerEntry::Char('t'));
-        assert_eq!(_match._trigger_sequence[1], TriggerEntry::Char('e'));
-        assert_eq!(_match._trigger_sequence[2], TriggerEntry::Char('s'));
-        assert_eq!(_match._trigger_sequence[3], TriggerEntry::Char('t'));
+        assert_eq!(_match._trigger_sequences[0][0], TriggerEntry::Char('t'));
+        assert_eq!(_match._trigger_sequences[0][1], TriggerEntry::Char('e'));
+        assert_eq!(_match._trigger_sequences[0][2], TriggerEntry::Char('s'));
+        assert_eq!(_match._trigger_sequences[0][3], TriggerEntry::Char('t'));
     }
 
     #[test]
@@ -297,11 +314,11 @@ mod tests {
 
         let _match : Match = serde_yaml::from_str(match_str).unwrap();
 
-        assert_eq!(_match._trigger_sequence[0], TriggerEntry::Char('t'));
-        assert_eq!(_match._trigger_sequence[1], TriggerEntry::Char('e'));
-        assert_eq!(_match._trigger_sequence[2], TriggerEntry::Char('s'));
-        assert_eq!(_match._trigger_sequence[3], TriggerEntry::Char('t'));
-        assert_eq!(_match._trigger_sequence[4], TriggerEntry::WordSeparator);
+        assert_eq!(_match._trigger_sequences[0][0], TriggerEntry::Char('t'));
+        assert_eq!(_match._trigger_sequences[0][1], TriggerEntry::Char('e'));
+        assert_eq!(_match._trigger_sequences[0][2], TriggerEntry::Char('s'));
+        assert_eq!(_match._trigger_sequences[0][3], TriggerEntry::Char('t'));
+        assert_eq!(_match._trigger_sequences[0][4], TriggerEntry::WordSeparator);
     }
 
     #[test]
@@ -321,5 +338,43 @@ mod tests {
                 assert!(false);
             },
         }
+    }
+
+    #[test]
+    fn test_match_trigger_populates_triggers_vector() {
+        let match_str = r###"
+        trigger: ":test"
+        replace: "This is a test"
+        "###;
+
+        let _match : Match = serde_yaml::from_str(match_str).unwrap();
+
+        assert_eq!(_match.triggers, vec![":test"])
+    }
+
+    #[test]
+    fn test_match_triggers_are_correctly_parsed() {
+        let match_str = r###"
+        triggers:
+          - ":test1"
+          - :test2
+        replace: "This is a test"
+        "###;
+
+        let _match : Match = serde_yaml::from_str(match_str).unwrap();
+
+        assert_eq!(_match.triggers, vec![":test1", ":test2"])
+    }
+
+    #[test]
+    fn test_match_triggers_are_correctly_parsed_square_brackets() {
+        let match_str = r###"
+        triggers: [":test1", ":test2"]
+        replace: "This is a test"
+        "###;
+
+        let _match : Match = serde_yaml::from_str(match_str).unwrap();
+
+        assert_eq!(_match.triggers, vec![":test1", ":test2"])
     }
 }
