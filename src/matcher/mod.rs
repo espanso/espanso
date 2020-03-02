@@ -218,8 +218,11 @@ pub struct MatchVariable {
     #[serde(rename = "type")]
     pub var_type: String,
 
+    #[serde(default = "default_params")]
     pub params: Mapping,
 }
+
+fn default_params() -> Mapping {Mapping::new()}
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub enum TriggerEntry {
