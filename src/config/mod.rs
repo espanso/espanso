@@ -253,10 +253,10 @@ impl Configs {
         let mut merged_matches = new_config.matches;
         let mut match_trigger_set = HashSet::new();
         merged_matches.iter().for_each(|m| {
-            match_trigger_set.insert(m.trigger.clone());
+            match_trigger_set.extend(m.triggers.clone());
         });
         let parent_matches : Vec<Match> = self.matches.iter().filter(|&m| {
-            !match_trigger_set.contains(&m.trigger)
+            !m.triggers.iter().any(|trigger| match_trigger_set.contains(trigger))
         }).cloned().collect();
 
         merged_matches.extend(parent_matches);
@@ -280,10 +280,10 @@ impl Configs {
         // Merge matches
         let mut match_trigger_set = HashSet::new();
         self.matches.iter().for_each(|m| {
-            match_trigger_set.insert(m.trigger.clone());
+            match_trigger_set.extend(m.triggers.clone());
         });
         let default_matches : Vec<Match> = default.matches.iter().filter(|&m| {
-            !match_trigger_set.contains(&m.trigger)
+            !m.triggers.iter().any(|trigger| match_trigger_set.contains(trigger))
         }).cloned().collect();
 
         self.matches.extend(default_matches);
@@ -465,16 +465,16 @@ impl ConfigSet {
     }
 
     fn has_conflicts(default: &Configs, specific: &Vec<Configs>) -> bool {
-        let mut sorted_triggers : Vec<String> = default.matches.iter().map(|t| {
-            t.trigger.clone()
+        let mut sorted_triggers : Vec<String> = default.matches.iter().flat_map(|t| {
+            t.triggers.clone()
         }).collect();
         sorted_triggers.sort();
 
         let mut has_conflicts = Self::list_has_conflicts(&sorted_triggers);
 
         for s in specific.iter() {
-            let mut specific_triggers : Vec<String> = s.matches.iter().map(|t| {
-                t.trigger.clone()
+            let mut specific_triggers : Vec<String> = s.matches.iter().flat_map(|t| {
+                t.triggers.clone()
             }).collect();
             specific_triggers.sort();
             has_conflicts |= Self::list_has_conflicts(&specific_triggers);
@@ -831,9 +831,9 @@ mod tests {
         assert_eq!(config_set.default.matches.len(), 2);
         assert_eq!(config_set.specific[0].matches.len(), 3);
 
-        assert!(config_set.specific[0].matches.iter().find(|x| x.trigger == "hello").is_some());
-        assert!(config_set.specific[0].matches.iter().find(|x| x.trigger == ":lol").is_some());
-        assert!(config_set.specific[0].matches.iter().find(|x| x.trigger == ":yess").is_some());
+        assert!(config_set.specific[0].matches.iter().find(|x| x.triggers[0] == "hello").is_some());
+        assert!(config_set.specific[0].matches.iter().find(|x| x.triggers[0] == ":lol").is_some());
+        assert!(config_set.specific[0].matches.iter().find(|x| x.triggers[0] == ":yess").is_some());
     }
 
     #[test]
@@ -860,12 +860,12 @@ mod tests {
 
         assert!(config_set.specific[0].matches.iter().find(|x| {
             if let MatchContentType::Text(content) = &x.content {
-                x.trigger == ":lol" && content.replace == "newstring"
+                x.triggers[0] == ":lol" && content.replace == "newstring"
             }else{
                 false
             }
         }).is_some());
-        assert!(config_set.specific[0].matches.iter().find(|x| x.trigger == ":yess").is_some());
+        assert!(config_set.specific[0].matches.iter().find(|x| x.triggers[0] == ":yess").is_some());
     }
 
     #[test]
@@ -894,7 +894,7 @@ mod tests {
 
         assert!(config_set.specific[0].matches.iter().find(|x| {
             if let MatchContentType::Text(content) = &x.content {
-                x.trigger == "hello" && content.replace == "newstring"
+                x.triggers[0] == "hello" && content.replace == "newstring"
             }else{
                 false
             }
@@ -962,8 +962,8 @@ mod tests {
         let config_set = ConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
         assert_eq!(config_set.specific.len(), 0);
         assert_eq!(config_set.default.matches.len(), 2);
-        assert!(config_set.default.matches.iter().any(|m| m.trigger == "hasta"));
-        assert!(config_set.default.matches.iter().any(|m| m.trigger == "hello"));
+        assert!(config_set.default.matches.iter().any(|m| m.triggers[0] == "hasta"));
+        assert!(config_set.default.matches.iter().any(|m| m.triggers[0] == "hello"));
     }
 
     #[test]
@@ -983,9 +983,9 @@ mod tests {
         let config_set = ConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
         assert_eq!(config_set.specific.len(), 1);
         assert_eq!(config_set.default.matches.len(), 1);
-        assert!(config_set.default.matches.iter().any(|m| m.trigger == "hasta"));
-        assert!(!config_set.default.matches.iter().any(|m| m.trigger == "hello"));
-        assert!(config_set.specific[0].matches.iter().any(|m| m.trigger == "hello"));
+        assert!(config_set.default.matches.iter().any(|m| m.triggers[0] == "hasta"));
+        assert!(!config_set.default.matches.iter().any(|m| m.triggers[0] == "hello"));
+        assert!(config_set.specific[0].matches.iter().any(|m| m.triggers[0] == "hello"));
     }
 
     #[test]
@@ -1016,9 +1016,9 @@ mod tests {
         let config_set = ConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
         assert_eq!(config_set.specific.len(), 0);
         assert_eq!(config_set.default.matches.len(), 3);
-        assert!(config_set.default.matches.iter().any(|m| m.trigger == "hasta"));
-        assert!(config_set.default.matches.iter().any(|m| m.trigger == "hello"));
-        assert!(config_set.default.matches.iter().any(|m| m.trigger == "super"));
+        assert!(config_set.default.matches.iter().any(|m| m.triggers[0] == "hasta"));
+        assert!(config_set.default.matches.iter().any(|m| m.triggers[0] == "hello"));
+        assert!(config_set.default.matches.iter().any(|m| m.triggers[0] == "super"));
     }
 
     #[test]
@@ -1042,7 +1042,7 @@ mod tests {
         assert_eq!(config_set.default.matches.len(), 1);
         assert!(config_set.default.matches.iter().any(|m| {
             if let MatchContentType::Text(content) = &m.content {
-                m.trigger == "hasta" && content.replace == "world"
+                m.triggers[0] == "hasta" && content.replace == "world"
             }else{
                 false
             }
@@ -1068,8 +1068,8 @@ mod tests {
         let config_set = ConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
         assert_eq!(config_set.specific.len(), 0);
         assert_eq!(config_set.default.matches.len(), 2);
-        assert!(config_set.default.matches.iter().any(|m| m.trigger == "hasta"));
-        assert!(config_set.default.matches.iter().any(|m| m.trigger == "harry"));
+        assert!(config_set.default.matches.iter().any(|m| m.triggers[0] == "hasta"));
+        assert!(config_set.default.matches.iter().any(|m| m.triggers[0] == "harry"));
     }
 
     #[test]
@@ -1089,8 +1089,8 @@ mod tests {
         let config_set = ConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
         assert_eq!(config_set.specific.len(), 1);
         assert_eq!(config_set.default.matches.len(), 1);
-        assert!(config_set.default.matches.iter().any(|m| m.trigger == "hasta"));
-        assert!(config_set.specific[0].matches.iter().any(|m| m.trigger == "harry"));
+        assert!(config_set.default.matches.iter().any(|m| m.triggers[0] == "hasta"));
+        assert!(config_set.specific[0].matches.iter().any(|m| m.triggers[0] == "harry"));
     }
 
     #[test]
@@ -1120,9 +1120,9 @@ mod tests {
         let config_set = ConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
         assert_eq!(config_set.specific.len(), 1);
         assert_eq!(config_set.default.matches.len(), 1);
-        assert!(config_set.default.matches.iter().any(|m| m.trigger == "hasta"));
-        assert!(config_set.specific[0].matches.iter().any(|m| m.trigger == "harry"));
-        assert!(config_set.specific[0].matches.iter().any(|m| m.trigger == "ron"));
+        assert!(config_set.default.matches.iter().any(|m| m.triggers[0] == "hasta"));
+        assert!(config_set.specific[0].matches.iter().any(|m| m.triggers[0] == "harry"));
+        assert!(config_set.specific[0].matches.iter().any(|m| m.triggers[0] == "ron"));
     }
 
     #[test]
