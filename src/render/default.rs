@@ -158,7 +158,46 @@ impl super::Renderer for DefaultRenderer {
                 // Render any argument that may be present
                 let target_string = utils::render_args(&target_string, &args);
 
-                // TODO: add case affect expansion here
+                // Handle case propagation
+                let target_string = if m.propagate_case {
+                    let trigger = &m.triggers[trigger_offset];
+                    let first_char = trigger.chars().nth(0);
+                    let second_char  = trigger.chars().nth(1);
+                    let mode: i32 = if let Some(first_char) = first_char {
+                        if first_char.is_uppercase() {
+                            if let Some(second_char) = second_char {
+                                if second_char.is_uppercase() {
+                                    2 // Full CAPITALIZATION
+                                }else{
+                                    1 // Only first letter capitalized: Capitalization
+                                }
+                            }else{
+                                2  // Single char, defaults to full CAPITALIZATION
+                            }
+                        }else{
+                            0  // Lowercase, no action
+                        }
+                    }else{
+                        0
+                    };
+
+                    match mode {
+                        1 => {
+                            // Capitalize the first letter
+                            let mut v: Vec<char> = target_string.chars().collect();
+                            v[0] = v[0].to_uppercase().nth(0).unwrap();
+                            v.into_iter().collect()
+                        },
+                        2 => { // Full capitalization
+                            target_string.to_uppercase()
+                        },
+                        _ => { // Noop
+                            target_string
+                        }
+                    }
+                }else{
+                    target_string
+                };
 
                 RenderResult::Text(target_string)
             },
@@ -559,5 +598,65 @@ mod tests {
         let rendered = renderer.render_passive(text, &config);
 
         verify_render(rendered, "Hi Jon");
+    }
+
+    #[test]
+    fn test_render_match_case_propagation_no_case() {
+        let config = get_config_for(r###"
+        matches:
+            - trigger: 'test'
+              replace: result
+              propagate_case: true
+        "###);
+
+        let renderer = get_renderer(config.clone());
+
+        let m = config.matches[0].clone();
+
+        let trigger_offset = m.triggers.iter().position(|x| x== "test").unwrap();
+
+        let rendered = renderer.render_match(&m, trigger_offset, &config, vec![]);
+
+        verify_render(rendered, "result");
+    }
+
+    #[test]
+    fn test_render_match_case_propagation_first_capital() {
+        let config = get_config_for(r###"
+        matches:
+            - trigger: 'test'
+              replace: result
+              propagate_case: true
+        "###);
+
+        let renderer = get_renderer(config.clone());
+
+        let m = config.matches[0].clone();
+
+        let trigger_offset = m.triggers.iter().position(|x| x== "Test").unwrap();
+
+        let rendered = renderer.render_match(&m, trigger_offset, &config, vec![]);
+
+        verify_render(rendered, "Result");
+    }
+
+    #[test]
+    fn test_render_match_case_propagation_all_capital() {
+        let config = get_config_for(r###"
+        matches:
+            - trigger: 'test'
+              replace: result
+              propagate_case: true
+        "###);
+
+        let renderer = get_renderer(config.clone());
+
+        let m = config.matches[0].clone();
+
+        let trigger_offset = m.triggers.iter().position(|x| x== "TEST").unwrap();
+
+        let rendered = renderer.render_match(&m, trigger_offset, &config, vec![]);
+
+        verify_render(rendered, "RESULT");
     }
 }

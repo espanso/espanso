@@ -459,4 +459,14 @@ mod tests {
         assert_eq!(_match._trigger_sequences[2][3], TriggerEntry::Char('T'));
         assert_eq!(_match._trigger_sequences[2][4], TriggerEntry::WordSeparator);
     }
+
+    #[test]
+    fn test_match_empty_replace_doesnt_crash() {
+        let match_str = r###"
+        trigger: "hello"
+        replace: ""
+        "###;
+
+        let _match : Match = serde_yaml::from_str(match_str).unwrap();
+    }
 }
