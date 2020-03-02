@@ -17,27 +17,33 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::config::ConfigSet;
 use std::path::Path;
 
-pub fn open_editor(config: &ConfigSet, file_path: &Path) -> bool {
+#[cfg(target_os = "linux")]
+fn default_editor() -> String{ "/bin/nano".to_owned() }
+#[cfg(target_os = "macos")]
+fn default_editor() -> String{ "/usr/bin/nano".to_owned() }
+#[cfg(target_os = "windows")]
+fn default_editor() -> String{ "C:\\Windows\\System32\\notepad.exe".to_owned() }
+
+pub fn open_editor(file_path: &Path) -> bool {
     use std::process::Command;
 
     // Check if another editor is defined in the environment variables
     let editor_var = std::env::var_os("EDITOR");
     let visual_var = std::env::var_os("VISUAL");
 
-    // Prioritize the editors specified by the environment variable, otherwise use the config
+    // Prioritize the editors specified by the environment variable, use the default one
     let editor : String = if let Some(editor_var) = editor_var {
         editor_var.to_string_lossy().to_string()
     }else if let Some(visual_var) = visual_var {
         visual_var.to_string_lossy().to_string()
     }else{
-        config.default.editor.clone()
+        default_editor()
     };
 
     // Start the editor and wait for its termination
-    let status = Command::new(editor)
+    let status = Command::new(&editor)
         .arg(file_path)
         .spawn();
 
@@ -51,7 +57,7 @@ pub fn open_editor(config: &ConfigSet, file_path: &Path) -> bool {
             false
         }
     }else{
-        println!("Error: could not start editor at: {}", config.default.editor);
+        println!("Error: could not start editor at: {}", &editor);
         false
     }
 }
