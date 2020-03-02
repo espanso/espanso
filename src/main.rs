@@ -344,7 +344,7 @@ fn daemon_background(receive_channel: Receiver<Event>, config_set: ConfigSet) {
 
     let keyboard_manager = keyboard::get_manager();
 
-    let extensions = extension::get_extensions();
+    let extensions = extension::get_extensions(Box::new(clipboard::get_manager()));
 
     let renderer = render::default::DefaultRenderer::new(extensions,
                                                           config_manager.default_config().clone());

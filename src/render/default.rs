@@ -271,7 +271,7 @@ mod tests {
     use super::*;
 
     fn get_renderer(config: Configs) -> DefaultRenderer {
-        DefaultRenderer::new(crate::extension::get_extensions(), config)
+        DefaultRenderer::new(vec![Box::new(crate::extension::dummy::DummyExtension::new())], config)
     }
 
     fn get_config_for(s: &str) -> Configs {
