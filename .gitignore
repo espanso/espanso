@@ -36,4 +36,3 @@ DerivedData
 *.snap
 
 venv/
-snapcraft.yaml
