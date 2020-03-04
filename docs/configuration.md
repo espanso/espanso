@@ -41,6 +41,65 @@ This location is now deprecated and, while being still supported for compatibili
 * Copy the contents of the `packages` folder into the new `packages` path ( you can find the new package 
 location with the `espanso path` command ).
 
+### Quick Editing
+
+Introduced in version 0.5.1, espanso now ships with the `edit` subcommand, which makes editing configuration files much more convenient. Let's see how it works:
+
+If you open a terminal and type:
+
+```
+espanso edit
+```
+
+the default system editor (Notepad on Windows and Nano on Unix systems) will be spawned, editing the `default.yml`.
+Then, after you saved the file and exited the editor, **espanso will automatically restart, loading the new changes**.
+
+#### Customizing the editor
+
+If you want to use another editor, customizing it is super easy, just specify your choice in the `EDITOR` (or `VISUAL`)
+envorionment variables, such as:
+
+```
+EDITOR=/usr/bin/vim
+```
+
+#### Editing files in the user/ directory
+
+If you invoke `espanso edit` without further arguments, it will open the `default.yml` file. But what if you want to edit
+files in the `user/*` directory? Luckily, you can simply specify the name as an additional argument (without the extension).
+
+For example, if you want to edit the `user/emails.yml` file, you can type:
+
+```
+espanso edit emails
+```
+
+Note that the last command also allows the user to create a new file in the `user/` directory if it doesn't already exist.
+
+### Organizing Matches
+
+After creating a lot of matches, you may wonder if there's a way to keep them organized in multiple files instead of creating a long list in the `default.yml` configuration.
+Luckily, you can split your matches into multiple files by placing them in the `user/` folder!
+
+Let's say you want to create a file for your email signatures. Create the `user/emails.yml` file with the following content:
+
+```yml
+name: emails
+parent: default
+
+matches:
+  - trigger: ":sig"
+    replace: |
+      Best regards,
+      Jon Snow
+```
+
+After restarting espanso (by using the `espanso restart` command), you can now use the `:sig` trigger as you would have done by inserting it into the `default.yml` configuration.
+
+This is made possible by the `parent: default` instruction, which tells espanso to merge the current matches into the default configuration.
+
+You can create as many files as you want, and keep all your matches well organized :)
+
 ### Application-Specific Configurations
 
 Sometimes you may need to make espanso behave **differently** with some applications. For example, you may want to have

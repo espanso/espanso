@@ -131,6 +131,8 @@ espanso restart
 
 Now try to type `:br` anywhere. If you did everything correctly, you should see `Best Regards` appear! 
 
+> In version 0.5.1, espanso introduced the `edit` subcommand which makes editing configuration files much easier. Take a look at [Quick Editing](/docs/configuration/#quick-editing) if you are interested. 
+
 ### Understanding Packages
 
 Custom matches are amazing, but sometimes it can be tedious to define Matches for every **common operation**,

@@ -437,3 +437,26 @@ You can use this feature by declaring a variable of type `random` and then passi
 {% endraw %}
 
 In this case, typing `:quote` will expand randomly to one of the tree quotes.
+
+### Clipboard Extension
+
+Introduced in version 0.5.1, the **Clipboard Extension** now allows to include the current clipboard content in a match, which can be useful in many situations.
+
+For example, let's imagine you want to create the ultimate HTML link shortcut:
+
+{% raw %}
+```yaml
+  - trigger: ":a"
+    replace: "<a href='{{clipboard}}' />$|$</a>"
+    vars:
+      - name: "clipboard"
+        type: "clipboard"
+```
+{% endraw %}
+
+If you now copy a link in the clipboard (for example by selecting it and then CTRL+C) and then type `:a`, you'll
+see the following replacement appear:
+
+```
+<a href='YOUR_COPIED_LINK'></a>
+```
