@@ -1,0 +1,70 @@
+name: espanso
+version: 0.5.1
+summary: A Cross-platform Text Expander written in Rust
+description: |
+  espanso is a Cross-platform, Text Expander written in Rust.
+
+  ## What is a Text Expander?
+
+  A text expander is a program that detects when you type
+  a specific keyword and replaces it with something else.
+  This is useful in many ways:
+  * Save a lot of typing, expanding common sentences.
+  * Create system-wide code snippets.
+  * Execute custom scripts
+  * Use emojis like a pro.
+  ___
+
+  ## Key Features
+
+  * Works on Windows, macOS and Linux
+  * Works with almost any program
+  * Works with Emojis 😄
+  * Works with Images
+  * Date expansion support
+  * Custom scripts support
+  * Shell commands support
+  * App-specific configurations
+  * Expandable with packages
+  * Built-in package manager for espanso hub: https://hub.espanso.org/
+  * File based configuration
+
+  ## Get Started
+
+  Visit the official documentation: https://espanso.org/docs/
+
+  ## Support
+
+  If you need some help to setup espanso, want to ask a question or simply get involved
+  in the community, Join the official Subreddit: https://www.reddit.com/r/espanso/
+
+confinement: classic
+base: core18
+
+parts:
+  espanso:
+    plugin: rust
+    source: .
+    build-packages:
+     - libssl-dev
+     - pkg-config
+     - cmake
+     - libxtst-dev
+     - libx11-dev
+     - libxdo-dev
+    stage-packages:
+     - libx11-6
+     - libxau6
+     - libxcb1
+     - libxdmcp6
+     - libxdo3
+     - libxext6
+     - libxinerama1
+     - libxkbcommon0
+     - libxtst6
+     - libnotify-bin
+     - xclip
+
+apps:
+  espanso:
+    command: bin/espanso

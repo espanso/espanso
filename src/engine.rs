@@ -22,7 +22,7 @@ use crate::keyboard::KeyboardManager;
 use crate::config::ConfigManager;
 use crate::config::BackendType;
 use crate::clipboard::ClipboardManager;
-use log::{info, warn, error};
+use log::{info, warn, debug, error};
 use crate::ui::{UIManager, MenuItem, MenuItemType};
 use crate::event::{ActionEventReceiver, ActionType};
 use crate::extension::Extension;
@@ -132,7 +132,7 @@ lazy_static! {
 impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIManager, R: Renderer>
     MatchReceiver for Engine<'a, S, C, M, U, R>{
 
-    fn on_match(&self, m: &Match, trailing_separator: Option<char>) {
+    fn on_match(&self, m: &Match, trailing_separator: Option<char>, trigger_offset: usize) {
         let config = self.config_manager.active_config();
 
         if !config.enable_active {
@@ -141,20 +141,21 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
 
         // avoid espanso reinterpreting its own actions
         if self.check_last_action_and_set(self.action_noop_interval) {
+            debug!("Last action was too near, nooping the action.");
             return;
         }
 
         let char_count = if trailing_separator.is_none() {
-            m.trigger.chars().count() as i32
+            m.triggers[trigger_offset].chars().count() as i32
         }else{
-            m.trigger.chars().count() as i32 + 1 // Count also the separator
+            m.triggers[trigger_offset].chars().count() as i32 + 1 // Count also the separator
         };
 
         self.keyboard_manager.delete_string(char_count);
 
         let mut previous_clipboard_content : Option<String> = None;
 
-        let rendered = self.renderer.render_match(m, config, vec![]);
+        let rendered = self.renderer.render_match(m, trigger_offset, config, vec![]);
 
         match rendered {
             RenderResult::Text(mut target_string) => {
@@ -233,7 +234,7 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
                 self.keyboard_manager.trigger_paste(&config.paste_shortcut);
             },
             RenderResult::Error => {
-                error!("Could not render match: {}", m.trigger);
+                error!("Could not render match: {}", m.triggers[trigger_offset]);
             },
         }
 
