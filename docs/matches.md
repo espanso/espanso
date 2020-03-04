@@ -216,6 +216,45 @@ Before | After |
 Is ther anyone else? | Is there anyone else? | `ther` is converted to `there`
 I have other interests | I have other interests | `other` is left unchanged
 
+### Multiple triggers
+
+Starting from version 0.5.1, espanso supports *multi-trigger* matches, which allows the user to specify multiple triggers to expand the same match.
+To use the feature, simply specify a list of triggers in the `triggers` field (instead of `trigger`):
+
+```yml
+- triggers: ["hello", "hi"]
+  replace: "world"
+```
+
+Now typing either `hello` or `hi` will be expanded to `world`.
+
+### Case propagation
+
+Starting from version 0.5.1, espanso supports *case-propagating* matches, which allows the user to expand a match so that the **trigger case style is preserved**.
+
+For example, imagine you want to speedup writing the word `although`. You can define a word match as:
+
+```yml
+  - trigger: "alh"
+    replace: "although"
+    word: true
+```
+
+As of now, this trigger will only be able to be expanded to the **lowercase** `although`. If we now add `propagate_case: true` to the match:
+
+```yml
+  - trigger: "alh"
+    replace: "although"
+    propagate_case: true
+    word: true
+```
+
+we are now able to propagate the case style to the match:
+* If you write `alh`, the match will be expanded to `although`. 
+* If you write `Alh`, the match will be expanded to `Although`.
+* If you write `ALH`, the match will be expanded to `ALTHOUGH`.
+
+
 ### Image Matches
 
 In version 0.4.0, espanso added the possibility to **expand matches into images**. 
