@@ -30,7 +30,6 @@ Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
 ChangesEnvironment=yes
-AlwaysRestart = yes
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -38,7 +37,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 [Files]
 Source: "{{{executable_path}}}"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{{{app_icon}}}"; DestDir: "{app}"; Flags: ignoreversion
-Source: "vc_redist.x64.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall
+{{{dll_include}}}
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
@@ -53,18 +52,13 @@ Name: "StartMenuEntry" ; Description: "Start espanso at Windows startup" ;
 const
     ModPathName = 'modifypath';
     ModPathType = 'user';
-
 function ModPathDir(): TArrayOfString;
 begin
     setArrayLength(Result, 1)
     Result[0] := ExpandConstant('{app}');
 end;
 #include "modpath.iss"
-
 [Run]
-Filename: {tmp}\vc_redist.x64.exe; \
-    Parameters: "/install /quiet /norestart"; \
-    StatusMsg: "Installing Visual C++ 2019 Redistributable";
 Filename: "{app}\{#MyAppExeName}"; Parameters: "start"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
 
 [UninstallRun]

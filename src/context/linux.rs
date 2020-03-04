@@ -23,7 +23,7 @@ use crate::event::*;
 use crate::event::KeyModifier::*;
 use crate::bridge::linux::*;
 use std::process::exit;
-use log::{error, info};
+use log::{debug, error, info};
 use std::ffi::CStr;
 use std::{thread, time};
 
@@ -97,7 +97,7 @@ extern fn keypress_callback(_self: *mut c_void, raw_buffer: *const u8, len: i32,
                     (*_self).send_channel.send(event).unwrap();
                 },
                 Err(e) => {
-                    error!("Unable to receive char: {}",e);
+                    debug!("Unable to receive char: {}",e);
                 },
             }
         }else{  // Modifier event

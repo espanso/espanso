@@ -1,7 +1,7 @@
 /*
  * This file is part of espanso.
  *
- * Copyright (C) 2019 Federico Terzi
+ * Copyright (C) 2020 Federico Terzi
  *
  * espanso is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,28 +17,27 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use serde_yaml::Mapping;
+use serde_yaml::{Mapping, Value};
 use crate::clipboard::ClipboardManager;
 
-mod date;
-mod shell;
-mod script;
-mod random;
-mod clipboard;
-pub mod dummy;
-
-pub trait Extension {
-    fn name(&self) -> String;
-    fn calculate(&self, params: &Mapping, args: &Vec<String>) -> Option<String>;
+pub struct ClipboardExtension {
+    clipboard_manager: Box<dyn ClipboardManager>,
 }
 
-pub fn get_extensions(clipboard_manager: Box<dyn ClipboardManager>) -> Vec<Box<dyn Extension>>{
-    vec![
-        Box::new(date::DateExtension::new()),
-        Box::new(shell::ShellExtension::new()),
-        Box::new(script::ScriptExtension::new()),
-        Box::new(random::RandomExtension::new()),
-        Box::new(dummy::DummyExtension::new()),
-        Box::new(clipboard::ClipboardExtension::new(clipboard_manager)),
-    ]
+impl ClipboardExtension {
+    pub fn new(clipboard_manager: Box<dyn ClipboardManager>) -> ClipboardExtension {
+        ClipboardExtension{
+            clipboard_manager
+        }
+    }
+}
+
+impl super::Extension for ClipboardExtension {
+    fn name(&self) -> String {
+        String::from("clipboard")
+    }
+
+    fn calculate(&self, params: &Mapping, _: &Vec<String>) -> Option<String> {
+        self.clipboard_manager.get_clipboard()
+    }
 }
