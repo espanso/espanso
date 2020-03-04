@@ -15,7 +15,29 @@ Currently espanso supports X11 systems only.
 
 ### Installing on Ubuntu / Debian
 
-You can install espanso in various ways on Debian-based systems. As of now, the recommended way is to use the `DEB` package method.
+You can install espanso in various ways on Debian-based systems. As of now, the recommended ways are either `SNAP` or the `DEB` package.
+
+#### Installing using SNAP
+
+If you are using Ubuntu, the easiest way to install espanso is by using [snap](https://snapcraft.io/).
+
+Open a terminal and type:
+
+```
+sudo snap install espanso --classic
+```
+
+> For more information about this method, check out the [snap page](https://snapcraft.io/espanso).
+
+You should now have espanso installed in your system. To start it, type the following command:
+
+```
+espanso start
+```
+
+If you now type `:espanso` in any text field, you should see "Hi there!" appear! 
+
+At this point, you are ready to read the [Getting Started](/docs/get-started/) tutorial.
 
 #### Installing using DEB package
 
