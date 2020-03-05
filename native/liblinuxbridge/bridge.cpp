@@ -495,6 +495,8 @@ int32_t is_current_window_special() {
             return 1;
         }else if (strstr(class_buffer, "Tilix") != NULL) {  // Tilix terminal
             return 1;
+        }else if (strstr(class_buffer, "kitty") != NULL) {  // kitty terminal
+            return 1;
         }
     }
 
