@@ -269,18 +269,18 @@ void event_callback(XPointer p, XRecordInterceptData *hook)
 }
 
 void send_string(const char * string) {
-    xdo_enter_text_window(xdo_context, CURRENTWINDOW, string, 12000);
+    xdo_enter_text_window(xdo_context, CURRENTWINDOW, string, 1000);
 }
 
 void delete_string(int32_t count) {
     for (int i = 0; i<count; i++) {
-        xdo_send_keysequence_window(xdo_context, CURRENTWINDOW, "BackSpace", 8000);
+        xdo_send_keysequence_window(xdo_context, CURRENTWINDOW, "BackSpace", 1000);
     }
 }
 
 void left_arrow(int32_t count) {
     for (int i = 0; i<count; i++) {
-        xdo_send_keysequence_window(xdo_context, CURRENTWINDOW, "Left", 8000);
+        xdo_send_keysequence_window(xdo_context, CURRENTWINDOW, "Left", 1000);
     }
 }
 
