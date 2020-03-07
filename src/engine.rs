@@ -33,6 +33,9 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use regex::{Regex, Captures};
 use std::time::SystemTime;
+use std::sync::Arc;
+use std::sync::atomic::AtomicBool;
+use std::sync::atomic::Ordering::{Relaxed, Release, Acquire, AcqRel, SeqCst};
 
 pub struct Engine<'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>,
                   U: UIManager, R: Renderer> {
@@ -41,29 +44,28 @@ pub struct Engine<'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<
     config_manager: &'a M,
     ui_manager: &'a U,
     renderer: &'a R,
+    is_injecting: Arc<AtomicBool>,
 
     enabled: RefCell<bool>,
     last_action_time: RefCell<SystemTime>,  // Used to block espanso from re-interpreting it's own inputs
-    action_noop_interval: u128,
 }
 
 impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIManager, R: Renderer>
     Engine<'a, S, C, M, U, R> {
     pub fn new(keyboard_manager: &'a S, clipboard_manager: &'a C,
                config_manager: &'a M, ui_manager: &'a U,
-               renderer: &'a R) -> Engine<'a, S, C, M, U, R> {
+               renderer: &'a R, is_injecting: Arc<AtomicBool>) -> Engine<'a, S, C, M, U, R> {
         let enabled = RefCell::new(true);
         let last_action_time = RefCell::new(SystemTime::now());
-        let action_noop_interval = config_manager.default_config().action_noop_interval;
 
         Engine{keyboard_manager,
             clipboard_manager,
             config_manager,
             ui_manager,
             renderer,
+            is_injecting,
             enabled,
             last_action_time,
-            action_noop_interval,
         }
     }
 
@@ -139,11 +141,8 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
             return;
         }
 
-        // avoid espanso reinterpreting its own actions
-        if self.check_last_action_and_set(self.action_noop_interval) {
-            debug!("Last action was too near, nooping the action.");
-            return;
-        }
+        // Block espanso from reinterpreting its own actions
+        self.is_injecting.store(true, Release);
 
         let char_count = if trailing_separator.is_none() {
             m.triggers[trigger_offset].chars().count() as i32
@@ -246,14 +245,12 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
 
             self.clipboard_manager.set_clipboard(&previous_clipboard_content);
         }
+
+        // Re-allow espanso to interpret actions
+        self.is_injecting.store(false, Release);
     }
 
     fn on_enable_update(&self, status: bool) {
-        // avoid espanso reinterpreting its own actions
-        if self.check_last_action_and_set(self.action_noop_interval) {
-            return;
-        }
-
         let message = if status {
             "espanso enabled"
         }else{
@@ -269,11 +266,6 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
     }
 
     fn on_passive(&self) {
-        // avoid espanso reinterpreting its own actions
-        if self.check_last_action_and_set(self.action_noop_interval) {
-            return;
-        }
-
         let config = self.config_manager.active_config();
 
         if !config.enable_passive {
