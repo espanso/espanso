@@ -26,14 +26,18 @@ use std::process::exit;
 use log::{debug, error, info};
 use std::ffi::CStr;
 use std::{thread, time};
+use std::sync::atomic::AtomicBool;
+use std::sync::Arc;
+use std::sync::atomic::Ordering::Acquire;
 
 #[repr(C)]
 pub struct LinuxContext {
-    pub send_channel: Sender<Event>
+    pub send_channel: Sender<Event>,
+    is_injecting: Arc<AtomicBool>,
 }
 
 impl LinuxContext {
-    pub fn new(send_channel: Sender<Event>) -> Box<LinuxContext> {
+    pub fn new(send_channel: Sender<Event>, is_injecting: Arc<AtomicBool>) -> Box<LinuxContext> {
         // Check if the X11 context is available
         let x11_available = unsafe {
             check_x11()
@@ -46,6 +50,7 @@ impl LinuxContext {
 
         let context = Box::new(LinuxContext {
             send_channel,
+            is_injecting
         });
 
         unsafe {
@@ -84,6 +89,14 @@ extern fn keypress_callback(_self: *mut c_void, raw_buffer: *const u8, len: i32,
                             is_modifier: i32, key_code: i32) {
     unsafe {
         let _self = _self as *mut LinuxContext;
+
+        // If espanso is currently injecting text, we should avoid processing
+        // external events, as it could happen that espanso reinterpret its
+        // own input.
+        if (*_self).is_injecting.load(Acquire) {
+            debug!("Input ignored while espanso is injecting text...");
+            return;
+        }
 
         if is_modifier == 0 {  // Char event
             // Convert the received buffer to a string
