@@ -254,7 +254,7 @@ void event_callback(XPointer p, XRecordInterceptData *hook)
 
     switch (event_type) {
         case KeyPress:
-            //printf ("%d %d %s\n", key_code, res, buffer.data());
+            //printf ("Press %d %d %s\n", key_code, res, buffer.data());
             if (res > 0 && key_code != 22) {  // Printable character, but not backspace
                 keypress_callback(context_instance, buffer.data(), buffer.size(), 0, key_code);
             }else{ // Modifier key
@@ -268,7 +268,30 @@ void event_callback(XPointer p, XRecordInterceptData *hook)
     XRecordFreeData(hook);
 }
 
+void release_all_keys() {
+    char keys[32];
+    XQueryKeymap(xdo_context->xdpy, keys);  // Get the current status of the keyboard
+    for (int i = 0; i<32; i++) {
+        // Only those that show a keypress should be changed
+        if (keys[i] != 0) {
+            for (int k = 0; k<8; k++) {
+                if ((keys[i] & (1 << k)) != 0) {  // Bit by bit check
+                    int key_code = i*8 + k;
+                    XTestFakeKeyEvent(xdo_context->xdpy, key_code, false, CurrentTime);
+                }
+            }
+        }
+    }
+}
+
 void send_string(const char * string) {
+    // It may happen that when an expansion is triggered, some keys are still pressed.
+    // This causes a problem if the expanded match contains that character, as the injection
+    // will not be able to register that keypress (as it is already pressed).
+    // To solve the problem, before an expansion we get which keys are currently pressed
+    // and inject a key_release event so that they can be further registered.
+    release_all_keys();
+
     xdo_enter_text_window(xdo_context, CURRENTWINDOW, string, 1000);
 }
 
