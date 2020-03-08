@@ -198,7 +198,20 @@ impl Configs {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum BackendType {
     Inject,
-    Clipboard
+    Clipboard,
+
+    // On Linux systems there is a long standing issue with text injection (which
+    // in general is better than Clipboard copy/pasting) that prevents certain
+    // apps from correctly handling special characters (such as emojis or accented letters)
+    // when injected. For this reason, espanso initially defaulted on the Clipboard
+    // backend on Linux, as it was the most reliable (working in 99% of cases),
+    // even though it was less efficient and with a few inconveniences (for example, the
+    // previous clipboard content being overwritten).
+    // The Auto backend tries to take it a step further, by automatically determining
+    // when an injection is possible (only ascii characters in the replacement), and falling
+    // back to the Clipboard backend otherwise.
+    // Should only be used on Linux systems.
+    Auto
 }
 impl Default for BackendType {
     // The default backend varies based on the operating system.
