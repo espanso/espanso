@@ -235,6 +235,10 @@ impl <'a, R: MatchReceiver, M: ConfigManager<'a>> super::Matcher for ScrollingMa
             let mut current_set_queue = self.current_set_queue.borrow_mut();
             current_set_queue.pop_back();
         }
+
+        // Consider modifiers as separators to improve word matches reliability
+        let mut was_previous_char_word_separator = self.was_previous_char_word_separator.borrow_mut();
+        *was_previous_char_word_separator = true;
     }
 
     fn handle_other(&self) {
