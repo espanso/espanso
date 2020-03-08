@@ -26,14 +26,18 @@ use std::process::exit;
 use log::{debug, error, info};
 use std::ffi::CStr;
 use std::{thread, time};
+use std::sync::atomic::AtomicBool;
+use std::sync::Arc;
+use std::sync::atomic::Ordering::Acquire;
 
 #[repr(C)]
 pub struct LinuxContext {
-    pub send_channel: Sender<Event>
+    pub send_channel: Sender<Event>,
+    is_injecting: Arc<AtomicBool>,
 }
 
 impl LinuxContext {
-    pub fn new(send_channel: Sender<Event>) -> Box<LinuxContext> {
+    pub fn new(send_channel: Sender<Event>, is_injecting: Arc<AtomicBool>) -> Box<LinuxContext> {
         // Check if the X11 context is available
         let x11_available = unsafe {
             check_x11()
@@ -46,6 +50,7 @@ impl LinuxContext {
 
         let context = Box::new(LinuxContext {
             send_channel,
+            is_injecting
         });
 
         unsafe {
@@ -81,11 +86,19 @@ impl Drop for LinuxContext {
 // Native bridge code
 
 extern fn keypress_callback(_self: *mut c_void, raw_buffer: *const u8, len: i32,
-                            is_modifier: i32, key_code: i32) {
+                            event_type: i32, key_code: i32) {
     unsafe {
         let _self = _self as *mut LinuxContext;
 
-        if is_modifier == 0 {  // Char event
+        // If espanso is currently injecting text, we should avoid processing
+        // external events, as it could happen that espanso reinterpret its
+        // own input.
+        if (*_self).is_injecting.load(Acquire) {
+            debug!("Input ignored while espanso is injecting text...");
+            return;
+        }
+
+        if event_type == 0 {  // Char event
             // Convert the received buffer to a string
             let c_str = CStr::from_ptr(raw_buffer as (*const c_char));
             let char_str = c_str.to_str();
@@ -100,7 +113,7 @@ extern fn keypress_callback(_self: *mut c_void, raw_buffer: *const u8, len: i32,
                     debug!("Unable to receive char: {}",e);
                 },
             }
-        }else{  // Modifier event
+        }else if event_type == 1 {  // Modifier event
             let modifier: Option<KeyModifier> = match key_code {
                 133 => Some(META),
                 50 => Some(SHIFT),
@@ -113,7 +126,13 @@ extern fn keypress_callback(_self: *mut c_void, raw_buffer: *const u8, len: i32,
             if let Some(modifier) = modifier {
                 let event = Event::Key(KeyEvent::Modifier(modifier));
                 (*_self).send_channel.send(event).unwrap();
+            }else{  // Not one of the default modifiers, send an "other" event
+                let event = Event::Key(KeyEvent::Other);
+                (*_self).send_channel.send(event).unwrap();
             }
+        }else{ // Other type of event
+            let event = Event::Key(KeyEvent::Other);
+            (*_self).send_channel.send(event).unwrap();
         }
     }
 }

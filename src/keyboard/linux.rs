@@ -35,7 +35,9 @@ impl super::KeyboardManager for LinuxKeyboardManager {
     }
 
     fn send_enter(&self) {
-        // On linux this is not needed, so NOOP
+        unsafe {
+            send_enter();
+        }
     }
 
     fn trigger_paste(&self, shortcut: &PasteShortcut) {

@@ -30,7 +30,8 @@ use std::sync::mpsc::Sender;
 use crate::event::Event;
 use std::path::PathBuf;
 use std::fs::create_dir_all;
-use std::sync::Once;
+use std::sync::{Once, Arc};
+use std::sync::atomic::AtomicBool;
 
 pub trait Context {
     fn eventloop(&self);
@@ -38,20 +39,20 @@ pub trait Context {
 
 // MAC IMPLEMENTATION
 #[cfg(target_os = "macos")]
-pub fn new(send_channel: Sender<Event>) -> Box<dyn Context> {
-    macos::MacContext::new(send_channel)
+pub fn new(send_channel: Sender<Event>, is_injecting: Arc<AtomicBool>) -> Box<dyn Context> {
+    macos::MacContext::new(send_channel, is_injecting)
 }
 
 // LINUX IMPLEMENTATION
 #[cfg(target_os = "linux")]
-pub fn new(send_channel: Sender<Event>) -> Box<dyn Context> {
-    linux::LinuxContext::new(send_channel)
+pub fn new(send_channel: Sender<Event>, is_injecting: Arc<AtomicBool>) -> Box<dyn Context> {
+    linux::LinuxContext::new(send_channel, is_injecting)
 }
 
 // WINDOWS IMPLEMENTATION
 #[cfg(target_os = "windows")]
-pub fn new(send_channel: Sender<Event>) -> Box<dyn Context> {
-    windows::WindowsContext::new(send_channel)
+pub fn new(send_channel: Sender<Event>, is_injecting: Arc<AtomicBool>) -> Box<dyn Context> {
+    windows::WindowsContext::new(send_channel, is_injecting)
 }
 
 // espanso directories
