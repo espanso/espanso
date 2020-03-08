@@ -189,7 +189,25 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
                     None
                 };
 
-                match config.backend {
+                let backend = if config.backend == BackendType::Auto {
+                    if cfg!(target_os = "linux") {
+                        let all_ascii = target_string.chars().all(|c| c.is_ascii());
+                        if all_ascii {
+                            debug!("All elements of the replacement are ascii, using Inject backend");
+                            &BackendType::Inject
+                        }else{
+                            debug!("There are non-ascii characters, using Clipboard backend");
+                            &BackendType::Clipboard
+                        }
+                    }else{
+                        warn!("Using Auto backend is only supported on Linux, falling back to Inject backend.");
+                        &BackendType::Inject
+                    }
+                }else{
+                    &config.backend
+                };
+
+                match backend {
                     BackendType::Inject => {
                         // Send the expected string. On linux, newlines are managed automatically
                         // while on windows and macos, we need to emulate a Enter key press.
@@ -217,6 +235,10 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
                         self.clipboard_manager.set_clipboard(&target_string);
                         self.keyboard_manager.trigger_paste(&config.paste_shortcut);
                     },
+                    _ => {
+                        error!("Unsupported backend type evaluation.");
+                        return;
+                    }
                 }
 
                 if let Some(moves) = cursor_rewind {
