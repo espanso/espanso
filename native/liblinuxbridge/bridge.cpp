@@ -137,7 +137,7 @@ int32_t initialize(void * _context_instance) {
         return -4;
     }
     record_range->device_events.first = KeyPress;
-    record_range->device_events.last = KeyRelease;
+    record_range->device_events.last = ButtonPress;
 
     // We want to get the keys from all clients
     XRecordClientSpec  client_spec;
@@ -261,6 +261,9 @@ void event_callback(XPointer p, XRecordInterceptData *hook)
                 keypress_callback(context_instance, NULL, 0, 1, key_code);
             }
             break;
+        case ButtonPress: // Send also mouse button presses as "other events"
+            //printf ("Press button %d\n", key_code);
+            keypress_callback(context_instance, NULL, 0, 2, key_code);
         default:
             break;
     }

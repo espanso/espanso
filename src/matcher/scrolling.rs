@@ -236,6 +236,13 @@ impl <'a, R: MatchReceiver, M: ConfigManager<'a>> super::Matcher for ScrollingMa
             current_set_queue.pop_back();
         }
     }
+
+    fn handle_other(&self) {
+        // When receiving "other" type of events, we mark them as valid separators.
+        // This dramatically improves the reliability of word matches
+        let mut was_previous_char_word_separator = self.was_previous_char_word_separator.borrow_mut();
+        *was_previous_char_word_separator = true;
+    }
 }
 
 impl <'a, R: MatchReceiver, M: ConfigManager<'a>> ActionEventReceiver for ScrollingMatcher<'a, R, M> {
