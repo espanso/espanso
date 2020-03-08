@@ -45,14 +45,14 @@ pub fn new(send_channel: Sender<Event>) -> Box<dyn Context> {
 
 // LINUX IMPLEMENTATION
 #[cfg(target_os = "linux")]
-pub fn new(send_channel: Sender<Event>, is_injecting: Arc<AtomicBool>,) -> Box<dyn Context> {
+pub fn new(send_channel: Sender<Event>, is_injecting: Arc<AtomicBool>) -> Box<dyn Context> {
     linux::LinuxContext::new(send_channel, is_injecting)
 }
 
 // WINDOWS IMPLEMENTATION
 #[cfg(target_os = "windows")]
-pub fn new(send_channel: Sender<Event>) -> Box<dyn Context> {
-    windows::WindowsContext::new(send_channel)
+pub fn new(send_channel: Sender<Event>, is_injecting: Arc<AtomicBool>) -> Box<dyn Context> {
+    windows::WindowsContext::new(send_channel, is_injecting)
 }
 
 // espanso directories
