@@ -51,7 +51,7 @@ fn default_conflict_check() -> bool{ true }
 fn default_ipc_server_port() -> i32 { 34982 }
 fn default_use_system_agent() -> bool { true }
 fn default_config_caching_interval() -> i32 { 800 }
-fn default_word_separators() -> Vec<char> { vec![' ', ',', '.', '\r', '\n', 22u8 as char] }
+fn default_word_separators() -> Vec<char> { vec![' ', ',', '.', '?', '!', '\r', '\n', 22u8 as char] }
 fn default_toggle_interval() -> u32 { 230 }
 fn default_toggle_key() -> KeyModifier { KeyModifier::ALT }
 fn default_preserve_clipboard() -> bool {true}
