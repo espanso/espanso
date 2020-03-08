@@ -200,7 +200,6 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
                             &BackendType::Clipboard
                         }
                     }else{
-                        warn!("Using Auto backend is only supported on Linux, falling back to Inject backend.");
                         &BackendType::Inject
                     }
                 }else{

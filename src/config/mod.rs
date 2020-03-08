@@ -326,6 +326,11 @@ impl ConfigSet {
         let default_file = config_dir.join(DEFAULT_CONFIG_FILE_NAME);
         let default = Configs::load_config(default_file.as_path())?;
 
+        // Check that a compatible backend is used, otherwise warn the user
+        if cfg!(not(target_os = "linux")) && default.backend == BackendType::Auto {
+            eprintln!("Warning: Using Auto backend is only supported on Linux, falling back to Inject backend.");
+        }
+
         // Analyze which config files has to be loaded
 
         let mut target_files = Vec::new();
