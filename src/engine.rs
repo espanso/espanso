@@ -209,22 +209,15 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
 
                 match backend {
                     BackendType::Inject => {
-                        // Send the expected string. On linux, newlines are managed automatically
-                        // while on windows and macos, we need to emulate a Enter key press.
+                        // To handle newlines, substitute each "\n" char with an Enter key press.
+                        let splits = target_string.split('\n');
 
-                        if cfg!(target_os = "linux") {
-                            self.keyboard_manager.send_string(&target_string);
-                        }else{
-                            // To handle newlines, substitute each "\n" char with an Enter key press.
-                            let splits = target_string.split('\n');
-
-                            for (i, split) in splits.enumerate() {
-                                if i > 0 {
-                                    self.keyboard_manager.send_enter();
-                                }
-
-                                self.keyboard_manager.send_string(split);
+                        for (i, split) in splits.enumerate() {
+                            if i > 0 {
+                                self.keyboard_manager.send_enter();
                             }
+
+                            self.keyboard_manager.send_string(split);
                         }
                     },
                     BackendType::Clipboard => {
