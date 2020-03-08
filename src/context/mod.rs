@@ -39,8 +39,8 @@ pub trait Context {
 
 // MAC IMPLEMENTATION
 #[cfg(target_os = "macos")]
-pub fn new(send_channel: Sender<Event>) -> Box<dyn Context> {
-    macos::MacContext::new(send_channel)
+pub fn new(send_channel: Sender<Event>, is_injecting: Arc<AtomicBool>) -> Box<dyn Context> {
+    macos::MacContext::new(send_channel, is_injecting)
 }
 
 // LINUX IMPLEMENTATION
