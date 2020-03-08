@@ -53,7 +53,8 @@ impl From<i32> for ActionType {
 #[derive(Debug, Clone)]
 pub enum KeyEvent {
     Char(String),
-    Modifier(KeyModifier)
+    Modifier(KeyModifier),
+    Other
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

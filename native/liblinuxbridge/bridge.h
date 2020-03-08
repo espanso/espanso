@@ -48,7 +48,7 @@ extern "C" void cleanup();
  * Called when a new keypress is made, the first argument is an char array,
  * while the second is the size of the array.
  */
-typedef void (*KeypressCallback)(void * self, const char *buffer, int32_t len, int32_t is_modifier, int32_t key_code);
+typedef void (*KeypressCallback)(void * self, const char *buffer, int32_t len, int32_t event_type, int32_t key_code);
 
 extern KeypressCallback keypress_callback;
 
@@ -66,6 +66,11 @@ extern "C" void send_string(const char * string);
  * Send the backspace keypress, *count* times.
  */
 extern "C" void delete_string(int32_t count);
+
+/*
+ * Send an Enter key press
+ */
+extern "C" void send_enter();
 
 /*
  * Send the left arrow keypress, *count* times.

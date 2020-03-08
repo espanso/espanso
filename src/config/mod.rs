@@ -51,7 +51,7 @@ fn default_conflict_check() -> bool{ true }
 fn default_ipc_server_port() -> i32 { 34982 }
 fn default_use_system_agent() -> bool { true }
 fn default_config_caching_interval() -> i32 { 800 }
-fn default_word_separators() -> Vec<char> { vec![' ', ',', '.', '\r', '\n', 22u8 as char] }
+fn default_word_separators() -> Vec<char> { vec![' ', ',', '.', '?', '!', '\r', '\n', 22u8 as char] }
 fn default_toggle_interval() -> u32 { 230 }
 fn default_toggle_key() -> KeyModifier { KeyModifier::ALT }
 fn default_preserve_clipboard() -> bool {true}
@@ -61,7 +61,6 @@ fn default_passive_arg_escape() -> char { '\\' }
 fn default_passive_key() -> KeyModifier { KeyModifier::OFF }
 fn default_enable_passive() -> bool { false }
 fn default_enable_active() -> bool { true }
-fn default_action_noop_interval() -> u128 { 500 }
 fn default_backspace_limit() -> i32 { 3 }
 fn default_restore_clipboard_delay() -> i32 { 300 }
 fn default_exclude_default_entries() -> bool {false}
@@ -130,9 +129,6 @@ pub struct Configs {
     #[serde(default = "default_enable_active")]
     pub enable_active: bool,
 
-    #[serde(default = "default_action_noop_interval")]
-    pub action_noop_interval: u128,
-
     #[serde(default)]
     pub paste_shortcut: PasteShortcut,
 
@@ -193,7 +189,6 @@ impl Configs {
         validate_field!(result, self.passive_arg_delimiter, default_passive_arg_delimiter());
         validate_field!(result, self.passive_arg_escape, default_passive_arg_escape());
         validate_field!(result, self.passive_key, default_passive_key());
-        validate_field!(result, self.action_noop_interval, default_action_noop_interval());
         validate_field!(result, self.restore_clipboard_delay, default_restore_clipboard_delay());
 
         result
@@ -203,7 +198,20 @@ impl Configs {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum BackendType {
     Inject,
-    Clipboard
+    Clipboard,
+
+    // On Linux systems there is a long standing issue with text injection (which
+    // in general is better than Clipboard copy/pasting) that prevents certain
+    // apps from correctly handling special characters (such as emojis or accented letters)
+    // when injected. For this reason, espanso initially defaulted on the Clipboard
+    // backend on Linux, as it was the most reliable (working in 99% of cases),
+    // even though it was less efficient and with a few inconveniences (for example, the
+    // previous clipboard content being overwritten).
+    // The Auto backend tries to take it a step further, by automatically determining
+    // when an injection is possible (only ascii characters in the replacement), and falling
+    // back to the Clipboard backend otherwise.
+    // Should only be used on Linux systems.
+    Auto
 }
 impl Default for BackendType {
     // The default backend varies based on the operating system.
@@ -317,6 +325,11 @@ impl ConfigSet {
         // Load default configuration
         let default_file = config_dir.join(DEFAULT_CONFIG_FILE_NAME);
         let default = Configs::load_config(default_file.as_path())?;
+
+        // Check that a compatible backend is used, otherwise warn the user
+        if cfg!(not(target_os = "linux")) && default.backend == BackendType::Auto {
+            eprintln!("Warning: Using Auto backend is only supported on Linux, falling back to Inject backend.");
+        }
 
         // Analyze which config files has to be loaded
 
