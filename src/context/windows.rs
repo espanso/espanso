@@ -108,7 +108,7 @@ impl super::Context for WindowsContext {
 // Native bridge code
 
 extern fn keypress_callback(_self: *mut c_void, raw_buffer: *const u16, len: i32,
-                            is_modifier: i32, key_code: i32, is_key_down: i32) {
+                            event_type: i32, key_code: i32, is_key_down: i32) {
     unsafe {
         let _self = _self as *mut WindowsContext;
 
@@ -121,7 +121,7 @@ extern fn keypress_callback(_self: *mut c_void, raw_buffer: *const u16, len: i32
         }
 
         if is_key_down != 0 {  // KEY DOWN EVENT
-            if is_modifier == 0 {  // Char event
+            if event_type == 0 {  // Char event
                 // Convert the received buffer to a string
                 let buffer = std::slice::from_raw_parts(raw_buffer, len as usize);
                 let c_string = U16CStr::from_slice_with_nul(buffer);
@@ -144,7 +144,7 @@ extern fn keypress_callback(_self: *mut c_void, raw_buffer: *const u16, len: i32
                 }
             }
         }else{  // KEY UP event
-            if is_modifier != 0 {  // Modifier event
+            if event_type == 1 {  // Modifier event
                 let modifier: Option<KeyModifier> = match key_code {
                     0x5B | 0x5C => Some(META),
                     0x10 => Some(SHIFT),
@@ -157,7 +157,14 @@ extern fn keypress_callback(_self: *mut c_void, raw_buffer: *const u16, len: i32
                 if let Some(modifier) = modifier {
                     let event = Event::Key(KeyEvent::Modifier(modifier));
                     (*_self).send_channel.send(event).unwrap();
+                }else{  // Not one of the default modifiers, send an "other" event
+                    let event = Event::Key(KeyEvent::Other);
+                    (*_self).send_channel.send(event).unwrap();
                 }
+            }else{
+                // Other type of event
+                let event = Event::Key(KeyEvent::Other);
+                (*_self).send_channel.send(event).unwrap();
             }
         }
     }
