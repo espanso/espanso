@@ -114,11 +114,16 @@ extern fn keypress_callback(_self: *mut c_void, raw_buffer: *const u8, len: i32,
                 },
             }
         }else if event_type == 1 {  // Modifier event
+
             let modifier: Option<KeyModifier> = match key_code {
-                133 => Some(META),
-                50 => Some(SHIFT),
-                64 => Some(ALT),
-                37 => Some(CTRL),
+                133 => Some(LEFT_META),
+                134 => Some(RIGHT_META),
+                50 => Some(LEFT_SHIFT),
+                62 => Some(RIGHT_SHIFT),
+                64 => Some(LEFT_ALT),
+                108 => Some(RIGHT_ALT),
+                37 => Some(LEFT_CTRL),
+                105 => Some(RIGHT_CTRL),
                 22 => Some(BACKSPACE),
                 _ => None,
             };
