@@ -29,6 +29,8 @@ sudo snap install espanso --classic
 
 > For more information about this method, check out the [snap page](https://snapcraft.io/espanso).
 
+> **Important**: if you are upgrading espanso, after the previous command, execute `espanso unregister` in the terminal.
+
 You should now have espanso installed in your system. To start it, type the following command:
 
 ```
@@ -36,6 +38,8 @@ espanso start
 ```
 
 If you now type `:espanso` in any text field, you should see "Hi there!" appear! 
+
+> **Note**: after executing the previous command, espanso will prompt the user to register a Systemd service. This is needed to automatically start espanso at system startup.
 
 At this point, you are ready to read the [Getting Started](/docs/get-started/) tutorial.
 
@@ -64,6 +68,8 @@ espanso start
 ```
 
 If you now type `:espanso` in any text field, you should see "Hi there!" appear! 
+
+> **Note**: after executing the previous command, espanso will prompt the user to register a Systemd service. This is needed to automatically start espanso at system startup.
 
 At this point, you are ready to read the [Getting Started](/docs/get-started/) tutorial.
 
@@ -101,6 +107,8 @@ espanso start
 
 If you now type `:espanso` in any text field, you should see "Hi there!" appear! 
 
+> **Note**: after executing the previous command, espanso will prompt the user to register a Systemd service. This is needed to automatically start espanso at system startup.
+
 At this point, you are ready to read the [Getting Started](/docs/get-started/) tutorial.
 
 ### Installing on Manjaro / Arch
@@ -126,6 +134,18 @@ git clone https://aur.archlinux.org/espanso-bin.git
 cd espanso-bin
 makepkg -si
 ```
+
+You should now have espanso installed in your system. To start it, type the following command:
+
+```
+espanso start
+```
+
+If you now type `:espanso` in any text field, you should see "Hi there!" appear! 
+
+> **Note**: after executing the previous command, espanso will prompt the user to register a Systemd service. This is needed to automatically start espanso at system startup.
+
+At this point, you are ready to read the [Getting Started](/docs/get-started/) tutorial.
  
 #### Installing from the prebuilt release
 
@@ -159,5 +179,7 @@ espanso start
 ```
 
 If you now type `:espanso` in any text field, you should see "Hi there!" appear! 
+
+> **Note**: after executing the previous command, espanso will prompt the user to register a Systemd service. This is needed to automatically start espanso at system startup.
 
 At this point, you are ready to read the [Getting Started](/docs/get-started/) tutorial.
