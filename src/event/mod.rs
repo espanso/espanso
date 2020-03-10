@@ -57,6 +57,7 @@ pub enum KeyEvent {
     Other
 }
 
+#[warn(non_camel_case_types)]
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum KeyModifier {
     CTRL,
@@ -65,6 +66,70 @@ pub enum KeyModifier {
     META,
     BACKSPACE,
     OFF,
+
+    // These are specific variants of the ones above. See issue: #117
+    // https://github.com/federico-terzi/espanso/issues/117
+    LEFT_CTRL,
+    RIGHT_CTRL,
+    LEFT_ALT,
+    RIGHT_ALT,
+    LEFT_META,
+    RIGHT_META,
+    LEFT_SHIFT,
+    RIGHT_SHIFT,
+}
+
+impl KeyModifier {
+    /// This function is used to compare KeyModifiers, considering the relations between
+    /// the generic modifier and the specific left/right variant
+    /// For example, CTRL will match with CTRL, LEFT_CTRL and RIGHT_CTRL;
+    /// but LEFT_CTRL will only match will LEFT_CTRL
+    pub fn shallow_equals(current: &KeyModifier, config: &KeyModifier) -> bool {
+        use KeyModifier::*;
+
+        match config {
+            KeyModifier::CTRL => {
+                current == &LEFT_CTRL || current == &RIGHT_CTRL || current == &CTRL
+            },
+            KeyModifier::SHIFT => {
+                current == &LEFT_SHIFT || current == &RIGHT_SHIFT || current == &SHIFT
+            },
+            KeyModifier::ALT => {
+                current == &LEFT_ALT || current == &RIGHT_ALT || current == &ALT
+            },
+            KeyModifier::META => {
+                current == &LEFT_META || current == &RIGHT_META || current == &META
+            },
+            KeyModifier::BACKSPACE => {
+                current == &BACKSPACE
+            },
+            KeyModifier::LEFT_CTRL => {
+                current == &LEFT_CTRL
+            },
+            KeyModifier::RIGHT_CTRL => {
+                current == &RIGHT_CTRL
+            },
+            KeyModifier::LEFT_ALT => {
+                current == &LEFT_ALT
+            },
+            KeyModifier::RIGHT_ALT => {
+                current == &RIGHT_ALT
+            },
+            KeyModifier::LEFT_META => {
+                current == &LEFT_META
+            },
+            KeyModifier::RIGHT_META => {
+                current == &RIGHT_META
+            },
+            KeyModifier::LEFT_SHIFT => {
+                current == &LEFT_SHIFT
+            },
+            KeyModifier::RIGHT_SHIFT => {
+                current == &RIGHT_SHIFT
+            },
+            _ => {false},
+        }
+    }
 }
 
 // Receivers
@@ -75,4 +140,65 @@ pub trait KeyEventReceiver {
 
 pub trait ActionEventReceiver {
     fn on_action_event(&self, e: ActionType);
+}
+
+// TESTS
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use super::KeyModifier::*;
+
+    #[test]
+    fn test_shallow_equals_ctrl() {
+        assert!(KeyModifier::shallow_equals(&CTRL, &CTRL));
+        assert!(KeyModifier::shallow_equals(&LEFT_CTRL, &CTRL));
+        assert!(KeyModifier::shallow_equals(&RIGHT_CTRL, &CTRL));
+
+        assert!(!KeyModifier::shallow_equals(&CTRL, &LEFT_CTRL));
+        assert!(!KeyModifier::shallow_equals(&CTRL, &RIGHT_CTRL));
+    }
+
+    #[test]
+    fn test_shallow_equals_shift() {
+        assert!(KeyModifier::shallow_equals(&SHIFT, &SHIFT));
+        assert!(KeyModifier::shallow_equals(&LEFT_SHIFT, &SHIFT));
+        assert!(KeyModifier::shallow_equals(&RIGHT_SHIFT, &SHIFT));
+
+        assert!(!KeyModifier::shallow_equals(&SHIFT, &LEFT_SHIFT));
+        assert!(!KeyModifier::shallow_equals(&SHIFT, &RIGHT_SHIFT));
+    }
+
+    #[test]
+    fn test_shallow_equals_alt() {
+        assert!(KeyModifier::shallow_equals(&ALT, &ALT));
+        assert!(KeyModifier::shallow_equals(&LEFT_ALT, &ALT));
+        assert!(KeyModifier::shallow_equals(&RIGHT_ALT, &ALT));
+
+        assert!(!KeyModifier::shallow_equals(&ALT, &LEFT_ALT));
+        assert!(!KeyModifier::shallow_equals(&ALT, &RIGHT_ALT));
+    }
+
+    #[test]
+    fn test_shallow_equals_meta() {
+        assert!(KeyModifier::shallow_equals(&META, &META));
+        assert!(KeyModifier::shallow_equals(&LEFT_META, &META));
+        assert!(KeyModifier::shallow_equals(&RIGHT_META, &META));
+
+        assert!(!KeyModifier::shallow_equals(&META, &LEFT_META));
+        assert!(!KeyModifier::shallow_equals(&META, &RIGHT_META));
+    }
+
+    #[test]
+    fn test_shallow_equals_backspace() {
+        assert!(KeyModifier::shallow_equals(&BACKSPACE, &BACKSPACE));
+    }
+
+    #[test]
+    fn test_shallow_equals_off() {
+        assert!(!KeyModifier::shallow_equals(&OFF, &CTRL));
+        assert!(!KeyModifier::shallow_equals(&OFF, &ALT));
+        assert!(!KeyModifier::shallow_equals(&OFF, &META));
+        assert!(!KeyModifier::shallow_equals(&OFF, &SHIFT));
+    }
 }

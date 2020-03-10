@@ -33,6 +33,7 @@
 
 #pragma comment( lib, "gdiplus.lib" )
 #include <gdiplus.h>
+#include <Windows.h>
 
 // How many milliseconds must pass between keystrokes to refresh the keyboard layout
 const long refreshKeyboardLayoutInterval = 2000;
@@ -258,16 +259,38 @@ LRESULT CALLBACK window_procedure(HWND window, unsigned int msg, WPARAM wp, LPAR
                     // We need to call the callback in two different ways based on the type of key
                     // The only modifier we use that has a result > 0 is the BACKSPACE, so we have to consider it.
                     if (result >= 1 && raw->data.keyboard.VKey != VK_BACK) {
-                        keypress_callback(manager_instance, reinterpret_cast<uint16_t*>(buffer.data()), buffer.size(), 0, raw->data.keyboard.VKey, is_key_down);
+                        keypress_callback(manager_instance, reinterpret_cast<uint16_t*>(buffer.data()), buffer.size(), 0, raw->data.keyboard.VKey, 0, is_key_down);
                     }else{
-                        keypress_callback(manager_instance, nullptr, 0, 1, raw->data.keyboard.VKey, is_key_down);
+                        //std::cout << raw->data.keyboard.MakeCode << " " << raw->data.keyboard.Flags << std::endl;
+                        int variant = 0;
+                        if (raw->data.keyboard.VKey == VK_SHIFT) {
+                            // To discriminate between the left and right shift, we need to employ a workaround.
+                            // See: https://stackoverflow.com/questions/5920301/distinguish-between-left-and-right-shift-keys-using-rawinput
+                            if (raw->data.keyboard.MakeCode == 42) { // Left shift
+                                variant = LEFT_VARIANT;
+                            }if (raw->data.keyboard.MakeCode == 54) { // Right shift
+                                variant = RIGHT_VARIANT;
+                            }
+                        }else{
+                            // Also the ALT and CTRL key are special cases
+                            // Check out the previous Stackoverflow question for more information
+                            if (raw->data.keyboard.VKey == VK_CONTROL || raw->data.keyboard.VKey == VK_MENU) {
+                                if ((raw->data.keyboard.Flags & RI_KEY_E0) != 0) {
+                                    variant = RIGHT_VARIANT;
+                                }else{
+                                    variant = LEFT_VARIANT;
+                                }
+                            }
+                        }
+
+                        keypress_callback(manager_instance, nullptr, 0, 1, raw->data.keyboard.VKey, variant, is_key_down);
                     }
                 }
             }else if (raw->header.dwType == RIM_TYPEMOUSE) // Mouse input, registered as "other" events. Needed to improve the reliability of word matches
             {
                 if ((raw->data.mouse.usButtonFlags & (RI_MOUSE_LEFT_BUTTON_DOWN | RI_MOUSE_RIGHT_BUTTON_DOWN | RI_MOUSE_MIDDLE_BUTTON_DOWN)) != 0) {
                     //std::cout << "mouse down" << std::endl;
-                    keypress_callback(manager_instance, nullptr, 0, 2, raw->data.mouse.usButtonFlags, 0);
+                    keypress_callback(manager_instance, nullptr, 0, 2, raw->data.mouse.usButtonFlags, 0, 0);
                 }
             }
 

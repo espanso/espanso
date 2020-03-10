@@ -212,7 +212,7 @@ impl <'a, R: MatchReceiver, M: ConfigManager<'a>> super::Matcher for ScrollingMa
         // TODO: at the moment, activating the passive key triggers the toggle key
         // study a mechanism to avoid this problem
 
-        if m == config.toggle_key {
+        if KeyModifier::shallow_equals(&m, &config.toggle_key)  {
             check_interval(&self.toggle_press_time,
                            u128::from(config.toggle_interval), || {
                 self.toggle();
@@ -223,7 +223,7 @@ impl <'a, R: MatchReceiver, M: ConfigManager<'a>> super::Matcher for ScrollingMa
                     self.current_set_queue.borrow_mut().clear();
                 }
             });
-        }else if m == config.passive_key {
+        }else if KeyModifier::shallow_equals(&m, &config.passive_key) {
             check_interval(&self.passive_press_time,
                            u128::from(config.toggle_interval), || {
                 self.receiver.on_passive();
