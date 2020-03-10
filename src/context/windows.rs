@@ -108,7 +108,7 @@ impl super::Context for WindowsContext {
 // Native bridge code
 
 extern fn keypress_callback(_self: *mut c_void, raw_buffer: *const u16, len: i32,
-                            event_type: i32, key_code: i32, is_key_down: i32) {
+                            event_type: i32, key_code: i32, variant: i32, is_key_down: i32) {
     unsafe {
         let _self = _self as *mut WindowsContext;
 
@@ -145,12 +145,16 @@ extern fn keypress_callback(_self: *mut c_void, raw_buffer: *const u16, len: i32
             }
         }else{  // KEY UP event
             if event_type == 1 {  // Modifier event
-                let modifier: Option<KeyModifier> = match key_code {
-                    0x5B | 0x5C => Some(META),
-                    0x10 => Some(SHIFT),
-                    0x12 => Some(ALT),
-                    0x11 => Some(CTRL),
-                    0x08  => Some(BACKSPACE),
+                let modifier: Option<KeyModifier> = match (key_code, variant) {
+                    (0x5B, _) => Some(LEFT_META),
+                    (0x5C, _) => Some(RIGHT_META),
+                    (0x10, 1) => Some(LEFT_SHIFT),
+                    (0x10, 2) => Some(RIGHT_SHIFT),
+                    (0x12, 1) => Some(LEFT_ALT),
+                    (0x12, 2) => Some(RIGHT_ALT),
+                    (0x11, 1) => Some(LEFT_CTRL),
+                    (0x11, 2) => Some(RIGHT_CTRL),
+                    (0x08, _)  => Some(BACKSPACE),
                     _ => None,
                 };
 
