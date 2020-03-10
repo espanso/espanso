@@ -239,6 +239,7 @@ pub trait MatchReceiver {
 pub trait Matcher : KeyEventReceiver {
     fn handle_char(&self, c: &str);
     fn handle_modifier(&self, m: KeyModifier);
+    fn handle_other(&self);
 }
 
 impl <M: Matcher> KeyEventReceiver for M {
@@ -249,6 +250,9 @@ impl <M: Matcher> KeyEventReceiver for M {
             },
             KeyEvent::Modifier(m) => {
                 self.handle_modifier(m);
+            },
+            KeyEvent::Other => {
+                self.handle_other();
             },
         }
     }

@@ -35,11 +35,14 @@ extern void * manager_instance;
  */
 extern "C" int32_t initialize(void * self, wchar_t * ico_path, wchar_t * bmp_path);
 
+#define LEFT_VARIANT 1
+#define RIGHT_VARIANT 2
+
 /*
  * Called when a new keypress is made, the first argument is an int array,
  * while the second is the size of the array.
  */
-typedef void (*KeypressCallback)(void * self, uint16_t *buffer, int32_t len, int32_t is_modifier, int32_t key_code, int32_t is_key_down);
+typedef void (*KeypressCallback)(void * self, uint16_t *buffer, int32_t len, int32_t event_type, int32_t key_code, int32_t variant, int32_t is_key_down);
 extern KeypressCallback keypress_callback;
 
 /*

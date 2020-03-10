@@ -51,7 +51,7 @@ extern {
 
     // KEYBOARD
     pub fn register_keypress_callback(cb: extern fn(_self: *mut c_void, *const u16,
-                                                i32, i32, i32, i32));
+                                                i32, i32, i32, i32, i32));
 
     pub fn eventloop();
     pub fn send_string(string: *const u16);

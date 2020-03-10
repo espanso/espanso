@@ -23,7 +23,7 @@ extern crate lazy_static;
 use std::thread;
 use std::fs::{File, OpenOptions};
 use std::process::exit;
-use std::sync::mpsc;
+use std::sync::{mpsc, Arc};
 use std::sync::mpsc::Receiver;
 use std::time::Duration;
 
@@ -44,6 +44,7 @@ use crate::protocol::*;
 use std::io::{BufReader, BufRead};
 use crate::package::default::DefaultPackageManager;
 use crate::package::{PackageManager, InstallResult, UpdateResult, RemoveResult};
+use std::sync::atomic::AtomicBool;
 
 mod ui;
 mod edit;
@@ -319,11 +320,15 @@ fn daemon_main(config_set: ConfigSet) {
 
     let (send_channel, receive_channel) = mpsc::channel();
 
-    let context = context::new(send_channel.clone());
+    // This atomic bool is used to "disable" espanso when espanding its own matches, otherwise
+    // we could reinterpret the characters we are injecting
+    let is_injecting = Arc::new(std::sync::atomic::AtomicBool::new(false));
+
+    let context = context::new(send_channel.clone(), is_injecting.clone());
 
     let config_set_copy = config_set.clone();
     thread::Builder::new().name("daemon_background".to_string()).spawn(move || {
-        daemon_background(receive_channel, config_set_copy);
+        daemon_background(receive_channel, config_set_copy, is_injecting);
     }).expect("Unable to spawn daemon background thread");
 
     let ipc_server = protocol::get_ipc_server(config_set, send_channel.clone());
@@ -333,7 +338,7 @@ fn daemon_main(config_set: ConfigSet) {
 }
 
 /// Background thread worker for the daemon
-fn daemon_background(receive_channel: Receiver<Event>, config_set: ConfigSet) {
+fn daemon_background(receive_channel: Receiver<Event>, config_set: ConfigSet, is_injecting: Arc<AtomicBool>) {
     let system_manager = system::get_manager();
     let config_manager = RuntimeConfigManager::new(config_set, system_manager);
 
@@ -354,6 +359,7 @@ fn daemon_background(receive_channel: Receiver<Event>, config_set: ConfigSet) {
                              &config_manager,
                              &ui_manager,
                              &renderer,
+                             is_injecting,
     );
 
     let matcher = ScrollingMatcher::new(&config_manager, &engine);

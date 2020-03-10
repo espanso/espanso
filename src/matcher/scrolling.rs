@@ -212,7 +212,7 @@ impl <'a, R: MatchReceiver, M: ConfigManager<'a>> super::Matcher for ScrollingMa
         // TODO: at the moment, activating the passive key triggers the toggle key
         // study a mechanism to avoid this problem
 
-        if m == config.toggle_key {
+        if KeyModifier::shallow_equals(&m, &config.toggle_key)  {
             check_interval(&self.toggle_press_time,
                            u128::from(config.toggle_interval), || {
                 self.toggle();
@@ -223,7 +223,7 @@ impl <'a, R: MatchReceiver, M: ConfigManager<'a>> super::Matcher for ScrollingMa
                     self.current_set_queue.borrow_mut().clear();
                 }
             });
-        }else if m == config.passive_key {
+        }else if KeyModifier::shallow_equals(&m, &config.passive_key) {
             check_interval(&self.passive_press_time,
                            u128::from(config.toggle_interval), || {
                 self.receiver.on_passive();
@@ -235,6 +235,17 @@ impl <'a, R: MatchReceiver, M: ConfigManager<'a>> super::Matcher for ScrollingMa
             let mut current_set_queue = self.current_set_queue.borrow_mut();
             current_set_queue.pop_back();
         }
+
+        // Consider modifiers as separators to improve word matches reliability
+        let mut was_previous_char_word_separator = self.was_previous_char_word_separator.borrow_mut();
+        *was_previous_char_word_separator = true;
+    }
+
+    fn handle_other(&self) {
+        // When receiving "other" type of events, we mark them as valid separators.
+        // This dramatically improves the reliability of word matches
+        let mut was_previous_char_word_separator = self.was_previous_char_word_separator.borrow_mut();
+        *was_previous_char_word_separator = true;
     }
 }
 

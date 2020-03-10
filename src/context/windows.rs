@@ -24,17 +24,21 @@ use crate::event::KeyModifier::*;
 use std::ffi::c_void;
 use std::{fs};
 use widestring::{U16CString, U16CStr};
-use log::{info, error};
+use log::{info, error, debug};
+use std::sync::atomic::AtomicBool;
+use std::sync::Arc;
+use std::sync::atomic::Ordering::Acquire;
 
 const BMP_BINARY : &[u8] = include_bytes!("../res/win/espanso.bmp");
 const ICO_BINARY : &[u8] = include_bytes!("../res/win/espanso.ico");
 
 pub struct WindowsContext {
     send_channel: Sender<Event>,
+    is_injecting: Arc<AtomicBool>,
 }
 
 impl WindowsContext {
-    pub fn new(send_channel: Sender<Event>) -> Box<WindowsContext> {
+    pub fn new(send_channel: Sender<Event>, is_injecting: Arc<AtomicBool>) -> Box<WindowsContext> {
         // Initialize image resources
 
         let espanso_dir = super::get_data_dir();
@@ -68,6 +72,7 @@ impl WindowsContext {
 
         let context = Box::new(WindowsContext{
             send_channel,
+            is_injecting,
         });
 
         unsafe {
@@ -103,11 +108,20 @@ impl super::Context for WindowsContext {
 // Native bridge code
 
 extern fn keypress_callback(_self: *mut c_void, raw_buffer: *const u16, len: i32,
-                            is_modifier: i32, key_code: i32, is_key_down: i32) {
+                            event_type: i32, key_code: i32, variant: i32, is_key_down: i32) {
     unsafe {
         let _self = _self as *mut WindowsContext;
+
+        // If espanso is currently injecting text, we should avoid processing
+        // external events, as it could happen that espanso reinterpret its
+        // own input.
+        if (*_self).is_injecting.load(Acquire) {
+            debug!("Input ignored while espanso is injecting text...");
+            return;
+        }
+
         if is_key_down != 0 {  // KEY DOWN EVENT
-            if is_modifier == 0 {  // Char event
+            if event_type == 0 {  // Char event
                 // Convert the received buffer to a string
                 let buffer = std::slice::from_raw_parts(raw_buffer, len as usize);
                 let c_string = U16CStr::from_slice_with_nul(buffer);
@@ -130,20 +144,31 @@ extern fn keypress_callback(_self: *mut c_void, raw_buffer: *const u16, len: i32
                 }
             }
         }else{  // KEY UP event
-            if is_modifier != 0 {  // Modifier event
-                let modifier: Option<KeyModifier> = match key_code {
-                    0x5B | 0x5C => Some(META),
-                    0x10 => Some(SHIFT),
-                    0x12 => Some(ALT),
-                    0x11 => Some(CTRL),
-                    0x08  => Some(BACKSPACE),
+            if event_type == 1 {  // Modifier event
+                let modifier: Option<KeyModifier> = match (key_code, variant) {
+                    (0x5B, _) => Some(LEFT_META),
+                    (0x5C, _) => Some(RIGHT_META),
+                    (0x10, 1) => Some(LEFT_SHIFT),
+                    (0x10, 2) => Some(RIGHT_SHIFT),
+                    (0x12, 1) => Some(LEFT_ALT),
+                    (0x12, 2) => Some(RIGHT_ALT),
+                    (0x11, 1) => Some(LEFT_CTRL),
+                    (0x11, 2) => Some(RIGHT_CTRL),
+                    (0x08, _)  => Some(BACKSPACE),
                     _ => None,
                 };
 
                 if let Some(modifier) = modifier {
                     let event = Event::Key(KeyEvent::Modifier(modifier));
                     (*_self).send_channel.send(event).unwrap();
+                }else{  // Not one of the default modifiers, send an "other" event
+                    let event = Event::Key(KeyEvent::Other);
+                    (*_self).send_channel.send(event).unwrap();
                 }
+            }else{
+                // Other type of event
+                let event = Event::Key(KeyEvent::Other);
+                (*_self).send_channel.send(event).unwrap();
             }
         }
     }
