@@ -33,6 +33,9 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use regex::{Regex, Captures};
 use std::time::SystemTime;
+use std::sync::Arc;
+use std::sync::atomic::AtomicBool;
+use std::sync::atomic::Ordering::{Relaxed, Release, Acquire, AcqRel, SeqCst};
 
 pub struct Engine<'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>,
                   U: UIManager, R: Renderer> {
@@ -41,29 +44,28 @@ pub struct Engine<'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<
     config_manager: &'a M,
     ui_manager: &'a U,
     renderer: &'a R,
+    is_injecting: Arc<AtomicBool>,
 
     enabled: RefCell<bool>,
     last_action_time: RefCell<SystemTime>,  // Used to block espanso from re-interpreting it's own inputs
-    action_noop_interval: u128,
 }
 
 impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIManager, R: Renderer>
     Engine<'a, S, C, M, U, R> {
     pub fn new(keyboard_manager: &'a S, clipboard_manager: &'a C,
                config_manager: &'a M, ui_manager: &'a U,
-               renderer: &'a R) -> Engine<'a, S, C, M, U, R> {
+               renderer: &'a R, is_injecting: Arc<AtomicBool>) -> Engine<'a, S, C, M, U, R> {
         let enabled = RefCell::new(true);
         let last_action_time = RefCell::new(SystemTime::now());
-        let action_noop_interval = config_manager.default_config().action_noop_interval;
 
         Engine{keyboard_manager,
             clipboard_manager,
             config_manager,
             ui_manager,
             renderer,
+            is_injecting,
             enabled,
             last_action_time,
-            action_noop_interval,
         }
     }
 
@@ -139,11 +141,8 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
             return;
         }
 
-        // avoid espanso reinterpreting its own actions
-        if self.check_last_action_and_set(self.action_noop_interval) {
-            debug!("Last action was too near, nooping the action.");
-            return;
-        }
+        // Block espanso from reinterpreting its own actions
+        self.is_injecting.store(true, Release);
 
         let char_count = if trailing_separator.is_none() {
             m.triggers[trigger_offset].chars().count() as i32
@@ -190,24 +189,34 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
                     None
                 };
 
-                match config.backend {
-                    BackendType::Inject => {
-                        // Send the expected string. On linux, newlines are managed automatically
-                        // while on windows and macos, we need to emulate a Enter key press.
-
-                        if cfg!(target_os = "linux") {
-                            self.keyboard_manager.send_string(&target_string);
+                let backend = if config.backend == BackendType::Auto {
+                    if cfg!(target_os = "linux") {
+                        let all_ascii = target_string.chars().all(|c| c.is_ascii());
+                        if all_ascii {
+                            debug!("All elements of the replacement are ascii, using Inject backend");
+                            &BackendType::Inject
                         }else{
-                            // To handle newlines, substitute each "\n" char with an Enter key press.
-                            let splits = target_string.split('\n');
+                            debug!("There are non-ascii characters, using Clipboard backend");
+                            &BackendType::Clipboard
+                        }
+                    }else{
+                        &BackendType::Inject
+                    }
+                }else{
+                    &config.backend
+                };
 
-                            for (i, split) in splits.enumerate() {
-                                if i > 0 {
-                                    self.keyboard_manager.send_enter();
-                                }
+                match backend {
+                    BackendType::Inject => {
+                        // To handle newlines, substitute each "\n" char with an Enter key press.
+                        let splits = target_string.split('\n');
 
-                                self.keyboard_manager.send_string(split);
+                        for (i, split) in splits.enumerate() {
+                            if i > 0 {
+                                self.keyboard_manager.send_enter();
                             }
+
+                            self.keyboard_manager.send_string(split);
                         }
                     },
                     BackendType::Clipboard => {
@@ -218,6 +227,10 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
                         self.clipboard_manager.set_clipboard(&target_string);
                         self.keyboard_manager.trigger_paste(&config.paste_shortcut);
                     },
+                    _ => {
+                        error!("Unsupported backend type evaluation.");
+                        return;
+                    }
                 }
 
                 if let Some(moves) = cursor_rewind {
@@ -246,14 +259,12 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
 
             self.clipboard_manager.set_clipboard(&previous_clipboard_content);
         }
+
+        // Re-allow espanso to interpret actions
+        self.is_injecting.store(false, Release);
     }
 
     fn on_enable_update(&self, status: bool) {
-        // avoid espanso reinterpreting its own actions
-        if self.check_last_action_and_set(self.action_noop_interval) {
-            return;
-        }
-
         let message = if status {
             "espanso enabled"
         }else{
@@ -269,11 +280,6 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
     }
 
     fn on_passive(&self) {
-        // avoid espanso reinterpreting its own actions
-        if self.check_last_action_and_set(self.action_noop_interval) {
-            return;
-        }
-
         let config = self.config_manager.active_config();
 
         if !config.enable_passive {

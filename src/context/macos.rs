@@ -24,17 +24,21 @@ use crate::event::{Event, KeyEvent, KeyModifier, ActionType};
 use crate::event::KeyModifier::*;
 use std::ffi::{CString, CStr};
 use std::fs;
-use log::{info, error};
+use log::{info, error, debug};
 use std::process::exit;
+use std::sync::atomic::AtomicBool;
+use std::sync::Arc;
+use std::sync::atomic::Ordering::Acquire;
 
 const STATUS_ICON_BINARY : &[u8] = include_bytes!("../res/mac/icon.png");
 
 pub struct MacContext {
-    pub send_channel: Sender<Event>
+    pub send_channel: Sender<Event>,
+    is_injecting: Arc<AtomicBool>,
 }
 
 impl MacContext {
-    pub fn new(send_channel: Sender<Event>) -> Box<MacContext> {
+    pub fn new(send_channel: Sender<Event>, is_injecting: Arc<AtomicBool>) -> Box<MacContext> {
         // Check accessibility
         unsafe {
             let res = prompt_accessibility();
@@ -48,7 +52,8 @@ impl MacContext {
         }
 
         let context = Box::new(MacContext {
-           send_channel
+            send_channel,
+            is_injecting
         });
 
         // Initialize the status icon path
@@ -89,11 +94,19 @@ impl super::Context for MacContext {
 // Native bridge code
 
 extern fn keypress_callback(_self: *mut c_void, raw_buffer: *const u8, len: i32,
-                             is_modifier: i32, key_code: i32) {
+                             event_type: i32, key_code: i32) {
     unsafe {
         let _self = _self as *mut MacContext;
 
-        if is_modifier == 0 {  // Char event
+        // If espanso is currently injecting text, we should avoid processing
+        // external events, as it could happen that espanso reinterpret its
+        // own input.
+        if (*_self).is_injecting.load(Acquire) {
+            debug!("Input ignored while espanso is injecting text...");
+            return;
+        }
+
+        if event_type == 0 {  // Char event
             // Convert the received buffer to a string
             let c_str = CStr::from_ptr(raw_buffer as (*const c_char));
             let char_str = c_str.to_str();
@@ -108,12 +121,16 @@ extern fn keypress_callback(_self: *mut c_void, raw_buffer: *const u8, len: i32,
                     error!("Unable to receive char: {}",e);
                 },
             }
-        }else{  // Modifier event
+        }else if event_type == 1 {  // Modifier event
             let modifier: Option<KeyModifier> = match key_code {
-                0x37 => Some(META),
-                0x38 => Some(SHIFT),
-                0x3A => Some(ALT),
-                0x3B => Some(CTRL),
+                0x37 => Some(LEFT_META),
+                0x36 => Some(RIGHT_META),
+                0x38 => Some(LEFT_SHIFT),
+                0x3C => Some(RIGHT_SHIFT),
+                0x3A => Some(LEFT_ALT),
+                0x3D => Some(RIGHT_ALT),
+                0x3B => Some(LEFT_CTRL),
+                0x3E => Some(RIGHT_CTRL),
                 0x33 => Some(BACKSPACE),
                 _ => None,
             };
@@ -121,7 +138,13 @@ extern fn keypress_callback(_self: *mut c_void, raw_buffer: *const u8, len: i32,
             if let Some(modifier) = modifier {
                 let event = Event::Key(KeyEvent::Modifier(modifier));
                 (*_self).send_channel.send(event).unwrap();
+            }else{  // Not one of the default modifiers, send an "other" event
+                let event = Event::Key(KeyEvent::Other);
+                (*_self).send_channel.send(event).unwrap();
             }
+        }else{ // Other type of event
+            let event = Event::Key(KeyEvent::Other);
+            (*_self).send_channel.send(event).unwrap();
         }
     }
 }

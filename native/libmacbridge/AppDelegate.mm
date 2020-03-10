@@ -36,16 +36,20 @@
     [myStatusItem.button setTarget:self];
 
     // Setup key listener
-    [NSEvent addGlobalMonitorForEventsMatchingMask:(NSEventMaskKeyDown | NSEventMaskFlagsChanged)
+    [NSEvent addGlobalMonitorForEventsMatchingMask:(NSEventMaskKeyDown | NSEventMaskFlagsChanged | NSEventMaskLeftMouseDown | NSEventMaskRightMouseDown)
             handler:^(NSEvent *event){
+
         if (event.type == NSEventTypeKeyDown
             && event.keyCode != 0x33) { // Send backspace as a modifier
 
-            const char * chars = [event.characters UTF8String];
+            const char *chars = [event.characters UTF8String];
             int len = event.characters.length;
 
             keypress_callback(context_instance, chars, len, 0, event.keyCode);
             //NSLog(@"keydown: %@, %d", event.characters, event.keyCode);
+        }else if (event.type == NSEventTypeLeftMouseDown || event.type == NSEventTypeRightMouseDown) {
+            // Send the mouse button clicks as "other" events, used to improve word matches reliability
+            keypress_callback(context_instance, NULL, 0, 2, event.buttonNumber);
         }else{
             // Because this event is triggered for both the press and release of a modifier, trigger the callback
             // only on release
