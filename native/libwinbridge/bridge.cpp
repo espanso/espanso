@@ -381,7 +381,7 @@ int32_t initialize(void * self, wchar_t * ico_path, wchar_t * bmp_path) {
 
         Rid[1].usUsagePage = 0x01;
         Rid[1].usUsage = 0x02;
-        Rid[1].dwFlags = RIDEV_NOLEGACY | RIDEV_INPUTSINK;   // adds HID mouse and also ignores legacy mouse messages
+        Rid[1].dwFlags = RIDEV_INPUTSINK;   // adds HID mouse and also ignores legacy mouse messages
         Rid[1].hwndTarget = window;
 
         if (RegisterRawInputDevices(Rid, 2, sizeof(Rid[0])) == FALSE) {  // Something went wrong, error.
