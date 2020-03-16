@@ -20,6 +20,7 @@
 // This functions are used to register/unregister espanso from the system daemon manager.
 
 use crate::config::ConfigSet;
+use crate::sysdaemon::VerifyResult::{EnabledAndValid, NotEnabled, EnabledButInvalidPath};
 
 // INSTALLATION
 
@@ -179,6 +180,54 @@ pub fn register(config_set: ConfigSet) {
     }else{
         println!("Error loading espanso service");
     }
+}
+
+pub enum VerifyResult {
+    EnabledAndValid,
+    EnabledButInvalidPath,
+    NotEnabled,
+}
+
+#[cfg(target_os = "linux")]
+pub fn verify() -> VerifyResult {
+    use regex::Regex;
+    use std::process::{Command, ExitStatus};
+
+    // Check if espanso service is already registered
+    let res = Command::new("systemctl")
+        .args(&["--user", "is-enabled", "espanso"])
+        .output();
+    if let Ok(res) = res {
+        let output = String::from_utf8_lossy(res.stdout.as_slice());
+        let output = output.trim();
+        if !res.status.success() || output != "enabled" {
+            return NotEnabled
+        }
+    }
+
+    lazy_static! {
+        static ref ExecPathRegex: Regex = Regex::new("ExecStart=(?P<path>.*?)\\s").unwrap();
+    }
+
+    // Check if the currently registered path is valid
+    let res = Command::new("systemctl")
+        .args(&["--user", "cat", "espanso"])
+        .output();
+    if let Ok(res) = res {
+        let output = String::from_utf8_lossy(res.stdout.as_slice());
+        let output = output.trim();
+        if res.status.success() {
+            let caps = ExecPathRegex.captures(output).unwrap();
+            let path = caps.get(1).map_or("", |m| m.as_str());
+            let espanso_path = std::env::current_exe().expect("Could not get espanso executable path");
+
+            if espanso_path.to_string_lossy() != path {
+                return EnabledButInvalidPath
+            }
+        }
+    }
+
+    EnabledAndValid
 }
 
 #[cfg(target_os = "linux")]
