@@ -47,6 +47,7 @@ use crate::package::{PackageManager, InstallResult, UpdateResult, RemoveResult, 
 use std::sync::atomic::AtomicBool;
 use crate::package::git::GitPackageResolver;
 use crate::package::zip::ZipPackageResolver;
+use crate::sysdaemon::{verify, VerifyResult};
 
 mod ui;
 mod edit;
@@ -452,25 +453,33 @@ fn start_daemon(config_set: ConfigSet) {
 
     if config_set.default.use_system_agent && !force_unmanaged {
         // Make sure espanso is currently registered in systemd
-        let res = Command::new("systemctl")
-            .args(&["--user", "is-enabled", "espanso.service"])
-            .output();
-        if !res.unwrap().status.success() {
-            use dialoguer::Confirmation;
-            if Confirmation::new()
-                .with_text("espanso must be registered to systemd (user level) first. Do you want to proceed?")
-                .default(true)
-                .show_default(true)
-                .interact().expect("Unable to read user answer") {
-
+        let res = verify();
+        match res {
+            VerifyResult::EnabledAndValid => {
+                // Do nothing, everything is ok!
+            },
+            VerifyResult::EnabledButInvalidPath => {
+                eprintln!("Updating espanso service file with new path...");
+                unregister_main(config_set.clone());
                 register_main(config_set);
-            }else{
-                eprintln!("Please register espanso to systemd with this command:");
-                eprintln!("   espanso register");
-                // TODO: enable flag to use non-managed daemon mode
+            },
+            VerifyResult::NotEnabled => {
+                use dialoguer::Confirmation;
+                if Confirmation::new()
+                    .with_text("espanso must be registered to systemd (user level) first. Do you want to proceed?")
+                    .default(true)
+                    .show_default(true)
+                    .interact().expect("Unable to read user answer") {
 
-                std::process::exit(4);
-            }
+                    register_main(config_set);
+                }else{
+                    eprintln!("Please register espanso to systemd with this command:");
+                    eprintln!("   espanso register");
+                    // TODO: enable flag to use non-managed daemon mode
+
+                    std::process::exit(4);
+                }
+            },
         }
 
         // Start the espanso service
