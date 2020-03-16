@@ -17,9 +17,13 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+pub(crate) mod git;
+pub(crate) mod zip;
 pub(crate) mod default;
+
 use serde::{Serialize, Deserialize};
 use std::error::Error;
+use tempfile::TempDir;
 
 pub trait PackageManager {
     fn is_index_outdated(&self) -> bool;
@@ -33,6 +37,10 @@ pub trait PackageManager {
     fn remove_package(&self, name: &str) -> Result<RemoveResult, Box<dyn Error>>;
 
     fn list_local_packages(&self) -> Vec<Package>;
+}
+
+pub trait PackageResolver {
+    fn clone_repo_to_temp(&self, repo_url: &str) -> Result<TempDir, Box<dyn Error>>;
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]

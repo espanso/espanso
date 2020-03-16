@@ -43,8 +43,10 @@ use crate::ui::UIManager;
 use crate::protocol::*;
 use std::io::{BufReader, BufRead};
 use crate::package::default::DefaultPackageManager;
-use crate::package::{PackageManager, InstallResult, UpdateResult, RemoveResult};
+use crate::package::{PackageManager, InstallResult, UpdateResult, RemoveResult, PackageResolver};
 use std::sync::atomic::AtomicBool;
+use crate::package::git::GitPackageResolver;
+use crate::package::zip::ZipPackageResolver;
 
 mod ui;
 mod edit;
@@ -71,6 +73,12 @@ const LOG_FILE: &str = "espanso.log";
 fn main() {
     let install_subcommand = SubCommand::with_name("install")
         .about("Install a package. Equivalent to 'espanso package install'")
+        .arg(Arg::with_name("no-git")
+            .short("g")
+            .long("no-git")
+            .required(false)
+            .takes_value(false)
+            .help("Install packages avoiding the GIT package provider. Try this flag if the default mode is not working."))
         .arg(Arg::with_name("package_name")
             .help("Package name"));
 
@@ -742,7 +750,14 @@ fn install_main(_config_set: ConfigSet, matches: &ArgMatches) {
         exit(1);
     });
 
-    let mut package_manager = DefaultPackageManager::new_default();
+    let package_resolver: Box<dyn PackageResolver> = if matches.is_present("no-git") {
+        println!("Using alternative package provider");
+        Box::new(ZipPackageResolver::new())
+    }else{
+        Box::new(GitPackageResolver::new())
+    };
+
+    let mut package_manager = DefaultPackageManager::new_default(Some(package_resolver));
 
     if package_manager.is_index_outdated() {
         println!("Updating package index...");
@@ -808,7 +823,7 @@ fn remove_package_main(_config_set: ConfigSet, matches: &ArgMatches) {
         exit(1);
     });
 
-    let package_manager = DefaultPackageManager::new_default();
+    let package_manager = DefaultPackageManager::new_default(None);
 
     let res = package_manager.remove_package(package_name);
 
@@ -833,7 +848,7 @@ fn remove_package_main(_config_set: ConfigSet, matches: &ArgMatches) {
 }
 
 fn update_index_main(_config_set: ConfigSet) {
-    let mut package_manager = DefaultPackageManager::new_default();
+    let mut package_manager = DefaultPackageManager::new_default(None);
 
     let res = package_manager.update_index(true);
 
@@ -856,7 +871,7 @@ fn update_index_main(_config_set: ConfigSet) {
 }
 
 fn list_package_main(_config_set: ConfigSet, matches: &ArgMatches) {
-    let package_manager = DefaultPackageManager::new_default();
+    let package_manager = DefaultPackageManager::new_default(None);
 
     let list = package_manager.list_local_packages();
 
