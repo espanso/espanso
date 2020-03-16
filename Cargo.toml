@@ -30,12 +30,10 @@ git2 = {version = "0.10.1", features = ["https"]}
 tempfile = "3.1.0"
 dialoguer = "0.4.0"
 rand = "0.7.2"
+zip = "0.5.3"
 
 [target.'cfg(unix)'.dependencies]
 libc = "0.2.62"
-
-[target.'cfg(target_os = "macos")'.dependencies]
-zip = "0.5.3"
 
 [build-dependencies]
 cmake = "0.1.31"

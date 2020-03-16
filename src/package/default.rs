@@ -18,7 +18,7 @@
  */
 
 use std::path::{PathBuf, Path};
-use crate::package::{PackageIndex, UpdateResult, Package, InstallResult, RemoveResult};
+use crate::package::{PackageIndex, UpdateResult, Package, InstallResult, RemoveResult, PackageResolver};
 use std::error::Error;
 use std::fs::{File, create_dir};
 use std::io::{BufReader, BufRead};
@@ -31,6 +31,7 @@ use git2::Repository;
 use regex::Regex;
 use crate::package::RemoveResult::Removed;
 use std::collections::HashMap;
+use super::git::GitPackageResolver;
 
 const DEFAULT_PACKAGE_INDEX_FILE : &str = "package_index.json";
 
@@ -38,24 +39,28 @@ pub struct DefaultPackageManager {
     package_dir: PathBuf,
     data_dir: PathBuf,
 
+    package_resolver: Option<Box<dyn PackageResolver>>,
+
     local_index: Option<PackageIndex>,
 }
 
 impl DefaultPackageManager {
-    pub fn new(package_dir: PathBuf, data_dir: PathBuf) -> DefaultPackageManager {
+    pub fn new(package_dir: PathBuf, data_dir: PathBuf, package_resolver: Option<Box<dyn PackageResolver>>) -> DefaultPackageManager {
         let local_index = Self::load_local_index(&data_dir);
 
         DefaultPackageManager{
             package_dir,
             data_dir,
+            package_resolver,
             local_index
         }
     }
 
-    pub fn new_default() -> DefaultPackageManager {
+    pub fn new_default(package_resolver: Option<Box<dyn PackageResolver>>) -> DefaultPackageManager {
         DefaultPackageManager::new(
             crate::context::get_package_dir(),
-            crate::context::get_data_dir()
+            crate::context::get_data_dir(),
+            package_resolver,
         )
     }
 
@@ -87,12 +92,6 @@ impl DefaultPackageManager {
         let index : PackageIndex = serde_json::from_str(&body)?;
 
         Ok(index)
-    }
-
-    fn clone_repo_to_temp(repo_url: &str) -> Result<TempDir, Box<dyn Error>> {
-        let temp_dir = TempDir::new()?;
-        let _repo = Repository::clone(repo_url, temp_dir.path())?;
-        Ok(temp_dir)
     }
 
     fn parse_package_from_readme(readme_path: &Path) -> Option<Package> {
@@ -248,7 +247,7 @@ impl super::PackageManager for DefaultPackageManager {
             return Ok(AlreadyInstalled);
         }
 
-        let temp_dir = Self::clone_repo_to_temp(repo_url)?;
+        let temp_dir = self.package_resolver.as_ref().unwrap().clone_repo_to_temp(repo_url)?;
 
         let temp_package_dir = temp_dir.path().join(name);
         if !temp_package_dir.exists() {
@@ -337,7 +336,8 @@ mod tests {
 
         let package_manager = DefaultPackageManager::new(
             package_dir.path().clone().to_path_buf(),
-            data_dir.path().clone().to_path_buf()
+            data_dir.path().clone().to_path_buf(),
+            Some(Box::new(GitPackageResolver::new())),
         );
 
         TempPackageManager {
@@ -463,12 +463,6 @@ mod tests {
         });
 
         assert_eq!(temp.package_manager.install_package("italian-accents").unwrap(), AlreadyInstalled);
-    }
-
-    #[test]
-    fn test_clone_temp_repository() {
-        let cloned_dir = DefaultPackageManager::clone_repo_to_temp("https://github.com/federico-terzi/espanso-hub-core").unwrap();
-        assert!(cloned_dir.path().join("LICENSE").exists());
     }
 
     #[test]
