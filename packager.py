@@ -82,10 +82,12 @@ def build_windows(package_info):
     msvc_dirs = glob.glob("C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\*\\VC\\Redist\\MSVC\\*")
     print("Found Redists: ", msvc_dirs)
 
-    msvc_dir = msvc_dirs[0]
-    print("Using: ",msvc_dir)
-    if len(msvc_dir) == 0:
+    if len(msvc_dirs) == 0:
         raise Exception("Cannot find redistributable dlls")
+
+    msvc_dir = msvc_dirs[-1]  # Take the most recent version of the toolchain
+    print("Using: ",msvc_dir)
+
     dll_files = glob.glob(msvc_dir + "\\x64\\*CRT\\*.dll")
 
     print("Found DLLs:")
