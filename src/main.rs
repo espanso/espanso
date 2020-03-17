@@ -47,7 +47,6 @@ use crate::package::{PackageManager, InstallResult, UpdateResult, RemoveResult, 
 use std::sync::atomic::AtomicBool;
 use crate::package::git::GitPackageResolver;
 use crate::package::zip::ZipPackageResolver;
-use crate::sysdaemon::{verify, VerifyResult};
 
 mod ui;
 mod edit;
@@ -435,6 +434,7 @@ fn start_daemon(config_set: ConfigSet) {
 #[cfg(target_os = "linux")]
 fn start_daemon(config_set: ConfigSet) {
     use std::process::{Command, Stdio};
+    use crate::sysdaemon::{verify, VerifyResult};
 
     // Check if Systemd is available in the system
     let status = Command::new("systemctl")
