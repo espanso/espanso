@@ -43,8 +43,10 @@ use crate::ui::UIManager;
 use crate::protocol::*;
 use std::io::{BufReader, BufRead};
 use crate::package::default::DefaultPackageManager;
-use crate::package::{PackageManager, InstallResult, UpdateResult, RemoveResult};
+use crate::package::{PackageManager, InstallResult, UpdateResult, RemoveResult, PackageResolver};
 use std::sync::atomic::AtomicBool;
+use crate::package::git::GitPackageResolver;
+use crate::package::zip::ZipPackageResolver;
 
 mod ui;
 mod edit;
@@ -71,6 +73,12 @@ const LOG_FILE: &str = "espanso.log";
 fn main() {
     let install_subcommand = SubCommand::with_name("install")
         .about("Install a package. Equivalent to 'espanso package install'")
+        .arg(Arg::with_name("no-git")
+            .short("g")
+            .long("no-git")
+            .required(false)
+            .takes_value(false)
+            .help("Install packages avoiding the GIT package provider. Try this flag if the default mode is not working."))
         .arg(Arg::with_name("package_name")
             .help("Package name"));
 
@@ -426,6 +434,7 @@ fn start_daemon(config_set: ConfigSet) {
 #[cfg(target_os = "linux")]
 fn start_daemon(config_set: ConfigSet) {
     use std::process::{Command, Stdio};
+    use crate::sysdaemon::{verify, VerifyResult};
 
     // Check if Systemd is available in the system
     let status = Command::new("systemctl")
@@ -444,25 +453,33 @@ fn start_daemon(config_set: ConfigSet) {
 
     if config_set.default.use_system_agent && !force_unmanaged {
         // Make sure espanso is currently registered in systemd
-        let res = Command::new("systemctl")
-            .args(&["--user", "is-enabled", "espanso.service"])
-            .output();
-        if !res.unwrap().status.success() {
-            use dialoguer::Confirmation;
-            if Confirmation::new()
-                .with_text("espanso must be registered to systemd (user level) first. Do you want to proceed?")
-                .default(true)
-                .show_default(true)
-                .interact().expect("Unable to read user answer") {
-
+        let res = verify();
+        match res {
+            VerifyResult::EnabledAndValid => {
+                // Do nothing, everything is ok!
+            },
+            VerifyResult::EnabledButInvalidPath => {
+                eprintln!("Updating espanso service file with new path...");
+                unregister_main(config_set.clone());
                 register_main(config_set);
-            }else{
-                eprintln!("Please register espanso to systemd with this command:");
-                eprintln!("   espanso register");
-                // TODO: enable flag to use non-managed daemon mode
+            },
+            VerifyResult::NotEnabled => {
+                use dialoguer::Confirmation;
+                if Confirmation::new()
+                    .with_text("espanso must be registered to systemd (user level) first. Do you want to proceed?")
+                    .default(true)
+                    .show_default(true)
+                    .interact().expect("Unable to read user answer") {
 
-                std::process::exit(4);
-            }
+                    register_main(config_set);
+                }else{
+                    eprintln!("Please register espanso to systemd with this command:");
+                    eprintln!("   espanso register");
+                    // TODO: enable flag to use non-managed daemon mode
+
+                    std::process::exit(4);
+                }
+            },
         }
 
         // Start the espanso service
@@ -742,7 +759,14 @@ fn install_main(_config_set: ConfigSet, matches: &ArgMatches) {
         exit(1);
     });
 
-    let mut package_manager = DefaultPackageManager::new_default();
+    let package_resolver: Box<dyn PackageResolver> = if matches.is_present("no-git") {
+        println!("Using alternative package provider");
+        Box::new(ZipPackageResolver::new())
+    }else{
+        Box::new(GitPackageResolver::new())
+    };
+
+    let mut package_manager = DefaultPackageManager::new_default(Some(package_resolver));
 
     if package_manager.is_index_outdated() {
         println!("Updating package index...");
@@ -808,7 +832,7 @@ fn remove_package_main(_config_set: ConfigSet, matches: &ArgMatches) {
         exit(1);
     });
 
-    let package_manager = DefaultPackageManager::new_default();
+    let package_manager = DefaultPackageManager::new_default(None);
 
     let res = package_manager.remove_package(package_name);
 
@@ -833,7 +857,7 @@ fn remove_package_main(_config_set: ConfigSet, matches: &ArgMatches) {
 }
 
 fn update_index_main(_config_set: ConfigSet) {
-    let mut package_manager = DefaultPackageManager::new_default();
+    let mut package_manager = DefaultPackageManager::new_default(None);
 
     let res = package_manager.update_index(true);
 
@@ -856,7 +880,7 @@ fn update_index_main(_config_set: ConfigSet) {
 }
 
 fn list_package_main(_config_set: ConfigSet, matches: &ArgMatches) {
-    let package_manager = DefaultPackageManager::new_default();
+    let package_manager = DefaultPackageManager::new_default(None);
 
     let list = package_manager.list_local_packages();
 
