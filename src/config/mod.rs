@@ -47,7 +47,7 @@ fn default_filter_title() -> String{ "".to_owned() }
 fn default_filter_class() -> String{ "".to_owned() }
 fn default_filter_exec() -> String{ "".to_owned() }
 fn default_log_level() -> i32 { 0 }
-fn default_conflict_check() -> bool{ true }
+fn default_conflict_check() -> bool{ false }
 fn default_ipc_server_port() -> i32 { 34982 }
 fn default_use_system_agent() -> bool { true }
 fn default_config_caching_interval() -> i32 { 800 }
