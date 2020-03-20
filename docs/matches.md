@@ -297,6 +297,7 @@ and store all your images there. Let's say I stored the `cat.png` image. We can 
 
 Introduced in version 0.5.0, *nested matches* allow to include the output of a match inside another one.
 
+{% raw %}
 ```yaml
 - trigger: ":one"
   replace: "nested"
@@ -309,6 +310,7 @@ Introduced in version 0.5.0, *nested matches* allow to include the output of a m
       params:
         trigger: ":one"
 ```
+{% endraw %}
 
 At this point, if you type `:nested` you'll see `This is a nested match appear`.
 
