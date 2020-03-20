@@ -397,6 +397,24 @@ This extension also supports bash **pipes** as your shell, such as:
 ```
 {% endraw %}
 
+#### Trimming the output
+
+When working with commands, it's very common to have outputs that also spawn a newline at the end. If you want to remove any 
+excess spaces/newlines, you can use the `trim` option:
+
+{% raw %}
+```yml
+- trigger: ":localip"
+  replace: "{{output}}"
+  vars:
+    - name: output
+      type: shell
+      params:
+        cmd: "ip a | grep 'inet 192' | awk '{ print $2 }'"
+        trim: true
+```
+{% endraw %}
+
 ### Date Extension
 
 The **Date Extension** can be used to include *date* and *time* information in a match. 
