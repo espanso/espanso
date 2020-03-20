@@ -47,4 +47,13 @@
         height: 60px;
         display: inline;
     }
+
+    .sponsor-pane {
+        text-align: center;
+        margin-top: 80px;
+
+        .btn {
+            background-color: $mainColor;
+        }
+    }
 }

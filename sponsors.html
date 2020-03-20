@@ -3,9 +3,11 @@ title: Sponsors
 layout: default
 showParticles: True
 ---
-Many people helped espanso along the way, allowing me to stay motivated and focused on our mission. Thank you, there are no words to say how much I appreciate your help :)
 
-<div class="mt-4">
+<div class="mt-4 sponsors">
+    <h5>A special thanks goes to all the wonderful people who supported espanso along the way</h5>
+    <p>Together, we will make espanso the first universal text expander, open to everyone.</p>
+
 {% for item in site.data.sponsors %}
     {% assign remainder = forloop.index0 | modulo: 6 %}
     {% if remainder == 0 %}
@@ -17,10 +19,20 @@ Many people helped espanso along the way, allowing me to stay motivated and focu
     {% endif %}
     <div class="col-md-2">
         <a href="{{item.link}}">
-            <img src="{{item.image}}" class="rounded-circle sponsor-img" alt="{{item.name}}">
+            {% if item.image != "" %}
+                <img src="/assets/images/sponsors/{{item.image}}" class="rounded-circle sponsor-img" alt="{{item.name}}">
+            {% else %}
+                <svg class="rounded-circle sponsor-img" data-jdenticon-value="{{item.name}}">
+                    Fallback text or image for browsers not supporting inline svg.
+                </svg>
+            {% endif %}
+            
             <p class="sponsor-name">{{item.name}}</p>
         </a>
     </div>
 {% endfor %}
 </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/jdenticon@2.2.0" async>
+</script>

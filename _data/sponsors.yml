@@ -1,3 +1,67 @@
-- name: Work in Progress
-  link: /install/
+- name: Andy Hunt
+  link: http://toolshed.com/
+  image: "andy.png"
+
+- name: Niklas Vest
+  link: ""
+  image: "niklas.jpg"
+
+- name: John Eriksen
+  link: ""
+  image: ""
+
+- name: DutchPete
+  link: ""
+  image: ""
+
+- name: Simon Wolf
+  link: https://www.swwritings.com/
+  image: ""
+
+- name: Christian Raunitschka
+  link: http://raunitschka.de/
+  image: "christian.jpg"
+
+- name: John Ennion
+  link: ""
+  image: ""
+
+- name: Gide Wilder
+  link: ""
+  image: "rigel.jpg"
+
+- name: mrgnw
+  link: https://github.com/mrgnw
+  image: "morgan.jpeg"
+
+- name: Raimund S.
+  link: http://mrsweb.de/
+  image: ""
+
+- name: William Luke
+  link: https://www.ordino.ai/
+  image: william.jpeg
+
+- name: Richard Lissimore
+  link: https://github.com/richardlissimore
+  image: "richard.png"
+
+- name: Marcelo Subtil Marcal
+  link: http://smarcal.com/
+  image: "marcelo.jpeg"
+
+- name: threeforks
+  link: ""
+  image: ""
+
+- name: Masayuki Higashino
+  link: http://msyk.hgsn.info/
+  image: "masayuki.png"
+
+- name: Scott Dillman
+  link: http://dreamcyclestudios.com/
+  image: "scott.jpeg"
+
+- name: Steven Schmutz
+  link: ""
   image: ""
