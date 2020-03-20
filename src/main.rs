@@ -79,6 +79,12 @@ fn main() {
             .required(false)
             .takes_value(false)
             .help("Install packages avoiding the GIT package provider. Try this flag if the default mode is not working."))
+        .arg(Arg::with_name("external")
+            .short("e")
+            .long("external")
+            .required(false)
+            .takes_value(false)
+            .help("Allow installing packages from non-verified repositories."))
         .arg(Arg::with_name("package_name")
             .help("Package name"));
 
@@ -766,6 +772,13 @@ fn install_main(_config_set: ConfigSet, matches: &ArgMatches) {
         Box::new(GitPackageResolver::new())
     };
 
+    let allow_external: bool = if matches.is_present("external") {
+        println!("Allowing external repositories");
+        true
+    }else{
+        false
+    };
+
     let mut package_manager = DefaultPackageManager::new_default(Some(package_resolver));
 
     if package_manager.is_index_outdated() {
@@ -792,7 +805,7 @@ fn install_main(_config_set: ConfigSet, matches: &ArgMatches) {
         println!("Using cached package index, run 'espanso package refresh' to update it.")
     }
 
-    let res = package_manager.install_package(package_name);
+    let res = package_manager.install_package(package_name, allow_external);
 
     match res {
         Ok(install_result) => {
@@ -812,6 +825,22 @@ fn install_main(_config_set: ConfigSet, matches: &ArgMatches) {
                 InstallResult::AlreadyInstalled => {
                     eprintln!("{} already installed!", package_name);
                 },
+                InstallResult::BlockedExternalPackage(repo_url) => {
+                    eprintln!("Warning: the requested package is hosted on an external repository:");
+                    eprintln!();
+                    eprintln!("{}", repo_url);
+                    eprintln!();
+                    eprintln!("and its contents may not have been verified by espanso.");
+                    eprintln!();
+                    eprintln!("For your security, espanso blocks packages that are not verified.");
+                    eprintln!("If you want to install the package anyway, you can force espanso");
+                    eprintln!("to install it with the following command, but please do it only");
+                    eprintln!("if you trust the source or you verified the contents of the package");
+                    eprintln!("by checking out the repository listed above.");
+                    eprintln!();
+                    eprintln!("espanso install {} --external", package_name);
+                    eprintln!();
+                }
                 InstallResult::Installed => {
                     println!("{} successfully installed!", package_name);
                     println!();

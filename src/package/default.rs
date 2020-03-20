@@ -24,7 +24,7 @@ use std::fs::{File, create_dir};
 use std::io::{BufReader, BufRead};
 use std::time::{SystemTime, UNIX_EPOCH};
 use crate::package::UpdateResult::{NotOutdated, Updated};
-use crate::package::InstallResult::{NotFoundInIndex, AlreadyInstalled};
+use crate::package::InstallResult::{NotFoundInIndex, AlreadyInstalled, BlockedExternalPackage};
 use std::fs;
 use tempfile::TempDir;
 use git2::Repository;
@@ -138,13 +138,31 @@ impl DefaultPackageManager {
                 return None
             }
 
+            let original_repo = if fields.contains_key("package_original_repo") {
+                fields.get("package_original_repo").unwrap().clone()
+            }else{
+                fields.get("package_repo").unwrap().clone()
+            };
+
+            let is_core = if fields.contains_key("is_core") {
+                match fields.get("is_core").unwrap().clone().as_ref() {
+                    "true" => true,
+                    "false" => false,
+                    _ => false,
+                }
+            }else{
+                false
+            };
+
             let package = Package {
                 name: fields.get("package_name").unwrap().clone(),
                 title: fields.get("package_title").unwrap().clone(),
                 version: fields.get("package_version").unwrap().clone(),
                 repo: fields.get("package_repo").unwrap().clone(),
                 desc: fields.get("package_desc").unwrap().clone(),
-                author: fields.get("package_author").unwrap().clone()
+                author: fields.get("package_author").unwrap().clone(),
+                is_core,
+                original_repo
             };
 
             Some(package)
@@ -228,11 +246,15 @@ impl super::PackageManager for DefaultPackageManager {
         None
     }
 
-    fn install_package(&self, name: &str) -> Result<InstallResult, Box<dyn Error>> {
+    fn install_package(&self, name: &str, allow_external: bool) -> Result<InstallResult, Box<dyn Error>> {
         let package = self.get_package(name);
         match package {
             Some(package) => {
-                self.install_package_from_repo(name, &package.repo)
+                if package.is_core || allow_external {
+                    self.install_package_from_repo(name, &package.repo)
+                }else{
+                    Ok(BlockedExternalPackage(package.original_repo))
+                }
             },
             None => {
                 Ok(NotFoundInIndex)
@@ -451,7 +473,7 @@ mod tests {
             std::fs::write(index_file, INSTALL_PACKAGE_INDEX);
         });
 
-        assert_eq!(temp.package_manager.install_package("doesnotexist").unwrap(), NotFoundInIndex);
+        assert_eq!(temp.package_manager.install_package("doesnotexist", false).unwrap(), NotFoundInIndex);
     }
 
     #[test]
@@ -462,7 +484,7 @@ mod tests {
             std::fs::write(index_file, INSTALL_PACKAGE_INDEX);
         });
 
-        assert_eq!(temp.package_manager.install_package("italian-accents").unwrap(), AlreadyInstalled);
+        assert_eq!(temp.package_manager.install_package("italian-accents", false).unwrap(), AlreadyInstalled);
     }
 
     #[test]
@@ -472,7 +494,7 @@ mod tests {
             std::fs::write(index_file, INSTALL_PACKAGE_INDEX);
         });
 
-        assert_eq!(temp.package_manager.install_package("dummy-package").unwrap(), Installed);
+        assert_eq!(temp.package_manager.install_package("dummy-package", false).unwrap(), Installed);
         assert!(temp.package_dir.path().join("dummy-package").exists());
         assert!(temp.package_dir.path().join("dummy-package/README.md").exists());
         assert!(temp.package_dir.path().join("dummy-package/package.yml").exists());
@@ -485,7 +507,7 @@ mod tests {
             std::fs::write(index_file, INSTALL_PACKAGE_INDEX);
         });
 
-        assert_eq!(temp.package_manager.install_package("not-existing").unwrap(), NotFoundInRepo);
+        assert_eq!(temp.package_manager.install_package("not-existing", false).unwrap(), NotFoundInRepo);
     }
 
     #[test]
@@ -495,7 +517,7 @@ mod tests {
             std::fs::write(index_file, INSTALL_PACKAGE_INDEX);
         });
 
-        assert_eq!(temp.package_manager.install_package("dummy-package2").unwrap(), MissingPackageVersion);
+        assert_eq!(temp.package_manager.install_package("dummy-package2", false).unwrap(), MissingPackageVersion);
     }
 
     #[test]
@@ -505,7 +527,7 @@ mod tests {
             std::fs::write(index_file, INSTALL_PACKAGE_INDEX);
         });
 
-        assert_eq!(temp.package_manager.install_package("dummy-package3").unwrap(), UnableToParsePackageInfo);
+        assert_eq!(temp.package_manager.install_package("dummy-package3", false).unwrap(), UnableToParsePackageInfo);
     }
 
     #[test]
@@ -515,7 +537,7 @@ mod tests {
             std::fs::write(index_file, INSTALL_PACKAGE_INDEX);
         });
 
-        assert_eq!(temp.package_manager.install_package("dummy-package4").unwrap(), UnableToParsePackageInfo);
+        assert_eq!(temp.package_manager.install_package("dummy-package4", false).unwrap(), UnableToParsePackageInfo);
     }
 
     #[test]
@@ -525,7 +547,7 @@ mod tests {
             std::fs::write(index_file, INSTALL_PACKAGE_INDEX);
         });
 
-        assert_eq!(temp.package_manager.install_package("dummy-package").unwrap(), Installed);
+        assert_eq!(temp.package_manager.install_package("dummy-package", false).unwrap(), Installed);
         assert!(temp.package_dir.path().join("dummy-package").exists());
         assert!(temp.package_dir.path().join("dummy-package/README.md").exists());
         assert!(temp.package_dir.path().join("dummy-package/package.yml").exists());
@@ -571,6 +593,7 @@ mod tests {
         package_version: "0.1.0"
         package_author: "Federico Terzi"
         package_repo: "https://github.com/federico-terzi/espanso-hub-core"
+        is_core: true
         ---
         "###);
 
@@ -582,7 +605,9 @@ mod tests {
             version: "0.1.0".to_string(),
             repo: "https://github.com/federico-terzi/espanso-hub-core".to_string(),
             desc: "Include Italian accents substitutions to espanso.".to_string(),
-            author: "Federico Terzi".to_string()
+            author: "Federico Terzi".to_string(),
+            original_repo: "https://github.com/federico-terzi/espanso-hub-core".to_string(),
+            is_core: true,
         };
 
         assert_eq!(package, target_package);
@@ -599,6 +624,7 @@ mod tests {
         package_version:"0.1.0"
         package_author:Federico Terzi
         package_repo: "https://github.com/federico-terzi/espanso-hub-core"
+        is_core: true
         ---
         Readme text
         "###);
@@ -611,7 +637,9 @@ mod tests {
             version: "0.1.0".to_string(),
             repo: "https://github.com/federico-terzi/espanso-hub-core".to_string(),
             desc: "Include Italian accents substitutions to espanso.".to_string(),
-            author: "Federico Terzi".to_string()
+            author: "Federico Terzi".to_string(),
+            original_repo: "https://github.com/federico-terzi/espanso-hub-core".to_string(),
+            is_core: true,
         };
 
         assert_eq!(package, target_package);
