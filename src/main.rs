@@ -1037,9 +1037,9 @@ fn release_lock(lock_file: File) {
     lock_file.unlock().unwrap()
 }
 
-/// Used to make sure all the required dependencies are present before starting espanso.
+/// Used to make sure all the required dependencies and conditions are satisfied before starting espanso.
 fn precheck_guard() {
-    let satisfied = check::check_dependencies();
+    let satisfied = check::check_preconditions();
     if !satisfied {
         println!();
         println!("Pre-check was not successful, espanso could not be started.");
