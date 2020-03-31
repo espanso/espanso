@@ -82,6 +82,7 @@ The really powerful thing is that you can **pass these arguments to the shell or
 
 This can be done by including `$0`, `$1` in the `cmd` parameter:
 
+{% raw %}
 ```yaml
 - trigger: ":rev"
   replace: "{{output}}"
@@ -93,6 +94,7 @@ This can be done by including `$0`, `$1` in the `cmd` parameter:
         cmd: "echo $0 | rev"
         trim: true
 ```
+{% endraw %}
 
 **For Windows users**: instead of `$0`, you must use `%0`.
 
@@ -100,6 +102,7 @@ This can be done by including `$0`, `$1` in the `cmd` parameter:
 
 Using the `inject_args` parameter, arguments will be appended to the given list when launching a program. For example:
 
+{% raw %}
 ```yaml
 - trigger: ":pyscript"
   replace: "{{output}}"
@@ -112,6 +115,7 @@ Using the `inject_args` parameter, arguments will be appended to the given list 
           - python
           - /path/to/your/script.py
 ```
+{% endraw %}
 
 At this point, if you expand `:pyscript/hello/`, your script will receive "hello" as the first argument.
 
