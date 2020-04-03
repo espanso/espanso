@@ -92,7 +92,7 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
 
         menu.push(MenuItem{
             item_type: MenuItemType::Button,
-            item_name: "Exit".to_owned(),
+            item_name: "Exit espanso".to_owned(),
             item_id: ActionType::Exit as i32,
         });
 
