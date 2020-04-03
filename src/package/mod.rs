@@ -17,7 +17,6 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub(crate) mod git;
 pub(crate) mod zip;
 pub(crate) mod default;
 

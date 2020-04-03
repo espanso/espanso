@@ -45,7 +45,6 @@ use std::io::{BufReader, BufRead};
 use crate::package::default::DefaultPackageManager;
 use crate::package::{PackageManager, InstallResult, UpdateResult, RemoveResult, PackageResolver};
 use std::sync::atomic::AtomicBool;
-use crate::package::git::GitPackageResolver;
 use crate::package::zip::ZipPackageResolver;
 
 mod ui;
@@ -73,12 +72,6 @@ const LOG_FILE: &str = "espanso.log";
 fn main() {
     let install_subcommand = SubCommand::with_name("install")
         .about("Install a package. Equivalent to 'espanso package install'")
-        .arg(Arg::with_name("no-git")
-            .short("g")
-            .long("no-git")
-            .required(false)
-            .takes_value(false)
-            .help("Install packages avoiding the GIT package provider. Try this flag if the default mode is not working."))
         .arg(Arg::with_name("external")
             .short("e")
             .long("external")
@@ -766,12 +759,7 @@ fn install_main(_config_set: ConfigSet, matches: &ArgMatches) {
         exit(1);
     });
 
-    let package_resolver: Box<dyn PackageResolver> = if matches.is_present("no-git") {
-        println!("Using alternative package provider");
-        Box::new(ZipPackageResolver::new())
-    }else{
-        Box::new(GitPackageResolver::new())
-    };
+    let package_resolver= Box::new(ZipPackageResolver::new());
 
     let allow_external: bool = if matches.is_present("external") {
         println!("Allowing external repositories");

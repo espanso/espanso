@@ -27,11 +27,9 @@ use crate::package::UpdateResult::{NotOutdated, Updated};
 use crate::package::InstallResult::{NotFoundInIndex, AlreadyInstalled, BlockedExternalPackage};
 use std::fs;
 use tempfile::TempDir;
-use git2::Repository;
 use regex::Regex;
 use crate::package::RemoveResult::Removed;
 use std::collections::HashMap;
-use super::git::GitPackageResolver;
 
 const DEFAULT_PACKAGE_INDEX_FILE : &str = "package_index.json";
 
@@ -338,6 +336,7 @@ mod tests {
     use std::fs::{create_dir, create_dir_all};
     use crate::package::InstallResult::*;
     use std::io::Write;
+    use crate::package::zip::ZipPackageResolver;
 
     const OUTDATED_INDEX_CONTENT : &str = include_str!("../res/test/outdated_index.json");
     const INDEX_CONTENT_WITHOUT_UPDATE: &str = include_str!("../res/test/index_without_update.json");
@@ -359,7 +358,7 @@ mod tests {
         let package_manager = DefaultPackageManager::new(
             package_dir.path().clone().to_path_buf(),
             data_dir.path().clone().to_path_buf(),
-            Some(Box::new(GitPackageResolver::new())),
+            Some(Box::new(ZipPackageResolver::new())),
         );
 
         TempPackageManager {
