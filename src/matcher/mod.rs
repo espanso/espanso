@@ -34,6 +34,7 @@ pub struct Match {
     pub word: bool,
     pub passive_only: bool,
     pub propagate_case: bool,
+    pub force_clipboard: bool,
 
     // Automatically calculated from the triggers, used by the matcher to check for correspondences.
     #[serde(skip_serializing)]
@@ -170,6 +171,7 @@ impl<'a> From<&'a AutoMatch> for Match{
             passive_only: other.passive_only,
             _trigger_sequences: trigger_sequences,
             propagate_case: other.propagate_case,
+            force_clipboard: other.force_clipboard,
         }
     }
 }
@@ -200,6 +202,9 @@ struct AutoMatch {
 
     #[serde(default = "default_propagate_case")]
     pub propagate_case: bool,
+
+    #[serde(default = "default_force_clipboard")]
+    pub force_clipboard: bool,
 }
 
 fn default_trigger() -> String {"".to_owned()}
@@ -210,6 +215,7 @@ fn default_passive_only() -> bool {false}
 fn default_replace() -> Option<String> {None}
 fn default_image_path() -> Option<String> {None}
 fn default_propagate_case() -> bool {false}
+fn default_force_clipboard() -> bool {false}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct MatchVariable {

@@ -189,7 +189,9 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
                     None
                 };
 
-                let backend = if config.backend == BackendType::Auto {
+                let backend = if m.force_clipboard {
+                    &BackendType::Clipboard
+                }else if config.backend == BackendType::Auto {
                     if cfg!(target_os = "linux") {
                         let all_ascii = target_string.chars().all(|c| c.is_ascii());
                         if all_ascii {
