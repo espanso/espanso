@@ -288,7 +288,16 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
             return;
         }
 
-        info!("Passive mode activated");
+        // Block espanso from reinterpreting its own actions
+        self.is_injecting.store(true, Release);
+
+        // In order to avoid pasting previous clipboard contents, we need to check if
+        // a new clipboard was effectively copied.
+        // See issue: https://github.com/federico-terzi/espanso/issues/213
+        let previous_clipboard = self.clipboard_manager.get_clipboard();
+
+        // Sleep for a while, giving time to effectively copy the text
+        std::thread::sleep(std::time::Duration::from_millis(100));  // TODO: avoid hardcoding
 
         // Trigger a copy shortcut to transfer the content of the selection to the clipboard
         self.keyboard_manager.trigger_copy();
@@ -300,22 +309,39 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
         let clipboard = self.clipboard_manager.get_clipboard();
 
         if let Some(clipboard) = clipboard {
-            let rendered = self.renderer.render_passive(&clipboard,
-                                                        &config);
+            // Don't expand empty clipboards, as usually they are the result of an empty passive selection
+            if clipboard.trim().is_empty() {
+                info!("Avoiding passive expansion, as the user didn't select anything");
+            }else{
+                if let Some(previous_content) = previous_clipboard {
+                    // Because of issue #213, we need to make sure the user selected something.
+                    if clipboard == previous_content {
+                        info!("Avoiding passive expansion, as the user didn't select anything");
+                    } else {
+                        info!("Passive mode activated");
 
-            match rendered {
-                RenderResult::Text(payload) => {
-                    // Paste back the result in the field
-                    self.clipboard_manager.set_clipboard(&payload);
+                        let rendered = self.renderer.render_passive(&clipboard,
+                                                                    &config);
 
-                    std::thread::sleep(std::time::Duration::from_millis(100)); // TODO: avoid hardcoding
-                    self.keyboard_manager.trigger_paste(&config.paste_shortcut);
-                },
-                _ => {
-                    warn!("Cannot expand passive match")
-                },
+                        match rendered {
+                            RenderResult::Text(payload) => {
+                                // Paste back the result in the field
+                                self.clipboard_manager.set_clipboard(&payload);
+
+                                std::thread::sleep(std::time::Duration::from_millis(100)); // TODO: avoid hardcoding
+                                self.keyboard_manager.trigger_paste(&config.paste_shortcut);
+                            },
+                            _ => {
+                                warn!("Cannot expand passive match")
+                            },
+                        }
+                    }
+                }
             }
         }
+
+        // Re-allow espanso to interpret actions
+        self.is_injecting.store(false, Release);
     }
 }
 
