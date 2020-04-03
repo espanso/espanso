@@ -31,17 +31,23 @@ pub struct WindowsUIManager {
 
 impl super::UIManager for WindowsUIManager {
     fn notify(&self, message: &str) {
+        self.notify_delay(message, 2000);
+    }
+
+    fn notify_delay(&self, message: &str, duration: i32) {
         let current_id: i32 = {
             let mut id = self.id.lock().unwrap();
             *id += 1;
             *id
         };
 
+        let step = duration / 10;
+
         // Setup a timeout to close the notification
         let id = Arc::clone(&self.id);
         let _ = thread::Builder::new().name("notification_thread".to_string()).spawn(move || {
             for _ in 1..10 {
-                let duration = time::Duration::from_millis(200);
+                let duration = time::Duration::from_millis(step as u64);
                 thread::sleep(duration);
 
                 let new_id = id.lock().unwrap();

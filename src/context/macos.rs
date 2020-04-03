@@ -20,25 +20,30 @@
 use std::sync::mpsc::Sender;
 use std::os::raw::{c_void, c_char};
 use crate::bridge::macos::*;
-use crate::event::{Event, KeyEvent, KeyModifier, ActionType};
+use crate::event::{Event, KeyEvent, KeyModifier, ActionType, SystemEvent};
 use crate::event::KeyModifier::*;
 use std::ffi::{CString, CStr};
-use std::fs;
+use std::{fs, thread};
 use log::{info, error, debug};
 use std::process::exit;
 use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
 use std::sync::atomic::Ordering::Acquire;
+use crate::config::Configs;
+use std::cell::RefCell;
+use crate::system::macos::MacSystemManager;
 
 const STATUS_ICON_BINARY : &[u8] = include_bytes!("../res/mac/icon.png");
 
 pub struct MacContext {
     pub send_channel: Sender<Event>,
     is_injecting: Arc<AtomicBool>,
+    secure_input_watcher_enabled: bool,
+    secure_input_watcher_interval: i32,
 }
 
 impl MacContext {
-    pub fn new(send_channel: Sender<Event>, is_injecting: Arc<AtomicBool>) -> Box<MacContext> {
+    pub fn new(config: Configs, send_channel: Sender<Event>, is_injecting: Arc<AtomicBool>) -> Box<MacContext> {
         // Check accessibility
         unsafe {
             let res = prompt_accessibility();
@@ -53,7 +58,9 @@ impl MacContext {
 
         let context = Box::new(MacContext {
             send_channel,
-            is_injecting
+            is_injecting,
+            secure_input_watcher_enabled: config.secure_input_watcher_enabled,
+            secure_input_watcher_interval: config.secure_input_watcher_interval,
         });
 
         // Initialize the status icon path
@@ -81,10 +88,59 @@ impl MacContext {
 
         context
     }
+
+    fn start_secure_input_watcher(&self) {
+        let send_channel = self.send_channel.clone();
+        let secure_input_watcher_interval = self.secure_input_watcher_interval as u64;
+
+        let secure_input_watcher = thread::Builder::new().name("secure_input_watcher".to_string()).spawn(move || {
+            let mut last_secure_input_pid: Option<i64> = None;
+            loop {
+                let pid = MacSystemManager::get_secure_input_pid();
+
+                if let Some(pid) = pid { // Some application is currently on SecureInput
+                    let should_notify = if let Some(old_pid) = last_secure_input_pid { // We already detected a SecureInput app
+                        if old_pid != pid { // The old app is different from the current one, we should take action
+                            true
+                        }else{ // We already notified this application before
+                            false
+                        }
+                    }else{ // First time we see this SecureInput app, we should take action
+                        true
+                    };
+
+                    if should_notify {
+                        let secure_input_app = crate::system::macos::MacSystemManager::get_secure_input_application();
+
+                        if let Some((app_name, path)) = secure_input_app {
+                            let event = Event::System(SystemEvent::SecureInputEnabled(app_name, path));
+                            send_channel.send(event);
+                        }
+                    }
+
+                    last_secure_input_pid = Some(pid);
+                }else{  // No app is currently keeping SecureInput
+                    if let Some(old_pid) = last_secure_input_pid {  // If there was an app with SecureInput, notify that is now free
+                        let event = Event::System(SystemEvent::SecureInputDisabled);
+                        send_channel.send(event);
+                    }
+
+                    last_secure_input_pid = None
+                }
+
+                thread::sleep(std::time::Duration::from_millis(secure_input_watcher_interval));
+            }
+        });
+    }
 }
 
 impl super::Context for MacContext {
     fn eventloop(&self) {
+        // Start the SecureInput watcher thread
+        if self.secure_input_watcher_enabled {
+            self.start_secure_input_watcher();
+        }
+
         unsafe {
             eventloop();
         }

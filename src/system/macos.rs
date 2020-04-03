@@ -20,7 +20,7 @@
 use std::os::raw::c_char;
 
 use std::ffi::CStr;
-use crate::bridge::macos::{get_active_app_bundle, get_active_app_identifier};
+use crate::bridge::macos::{get_active_app_bundle, get_active_app_identifier, get_secure_input_process, get_path_from_pid};
 
 pub struct MacSystemManager {
 
@@ -76,69 +76,64 @@ impl MacSystemManager {
     }
 
     /// Check whether an application is currently holding the Secure Input.
+    /// Return None if no application has claimed SecureInput, its PID otherwise.
+    pub fn get_secure_input_pid() -> Option<i64> {
+        unsafe {
+            let mut pid: i64 = -1;
+            let res = get_secure_input_process(&mut pid as *mut i64);
+
+            if res > 0{
+                Some(pid)
+            }else{
+                None
+            }
+        }
+    }
+
+    /// Check whether an application is currently holding the Secure Input.
     /// Return None if no application has claimed SecureInput, Some((AppName, AppPath)) otherwise.
     pub fn get_secure_input_application() -> Option<(String, String)> {
-        use std::process::Command;
         use regex::Regex;
-
-        let output = Command::new("ioreg")
-            .arg("-d")
-            .arg("1")
-            .arg("-k")
-            .arg("IOConsoleUsers")
-            .arg("-w")
-            .arg("0")
-            .output();
-
-        lazy_static! {
-            static ref PID_REGEX: Regex = Regex::new("\"kCGSSessionSecureInputPID\"=(\\d+)").unwrap();
-        };
 
         lazy_static! {
             static ref APP_REGEX: Regex = Regex::new("/([^/]+).app/").unwrap();
         };
 
-        if let Ok(output) = output {
-            let output_str = String::from_utf8_lossy(output.stdout.as_slice());
-            let caps = PID_REGEX.captures(&output_str);
+        unsafe {
+            let pid = MacSystemManager::get_secure_input_pid();
 
-            if let Some(caps) = caps {
-                // Get the PID of the process that is handling SecureInput
-                let pid_str = caps.get(1).map_or("", |m| m.as_str());
-                let pid = pid_str.parse::<i32>().expect("Invalid pid value");
+            if let Some(pid) = pid {
+                // Size of the buffer is ruled by the PROC_PIDPATHINFO_MAXSIZE constant.
+                // the underlying proc_pidpath REQUIRES a buffer of that dimension, otherwise it fail silently.
+                let mut buffer : [c_char; 4096] = [0; 4096];
+                let res = get_path_from_pid(pid, buffer.as_mut_ptr(), buffer.len() as i32);
 
-                // Find the process that is handling the SecureInput
-                let output = Command::new("ps")
-                    .arg("-p")
-                    .arg(pid.to_string())
-                    .arg("-o")
-                    .arg("command=")
-                    .output();
+                if res > 0 {
+                    let c_string = CStr::from_ptr(buffer.as_ptr());
+                    let string = c_string.to_str();
+                    if let Ok(path) = string {
+                        if !path.trim().is_empty() {
+                            let process = path.trim().to_string();
+                            let caps = APP_REGEX.captures(&process);
+                            let app_name = if let Some(caps) = caps {
+                                caps.get(1).map_or("", |m| m.as_str()).to_owned()
+                            }else{
+                                process.to_owned()
+                            };
 
-                if let Ok(output) = output {
-                    let output_str = String::from_utf8_lossy(output.stdout.as_slice());
-
-                    if !output_str.trim().is_empty() {
-                        let process = output_str.trim().to_string();
-                        let caps = APP_REGEX.captures(&process);
-                        let app_name = if let Some(caps) = caps {
-                            caps.get(1).map_or("", |m| m.as_str()).to_owned()
+                            Some((app_name, process))
                         }else{
-                            process.to_owned()
-                        };
-
-                        Some((app_name, process))
+                            None
+                        }
                     }else{
                         None
                     }
-                }else{  // Can't obtain process name
+                }else{
                     None
                 }
-            }else{ // No process is holding SecureInput
+            }else{
                 None
             }
-        }else{  // Can't execute the query to the IOKit registry
-            None
         }
     }
 }

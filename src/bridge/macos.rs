@@ -39,6 +39,8 @@ extern {
     pub fn open_settings_panel();
     pub fn get_active_app_bundle(buffer: *mut c_char, size: i32) -> i32;
     pub fn get_active_app_identifier(buffer: *mut c_char, size: i32) -> i32;
+    pub fn get_secure_input_process(pid:*mut i64) -> i32;
+    pub fn get_path_from_pid(pid:i64, buffer: *mut c_char, size: i32) -> i32;
 
     // Clipboard
     pub fn get_clipboard(buffer: *mut c_char, size: i32) -> i32;

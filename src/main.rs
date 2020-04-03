@@ -338,7 +338,7 @@ fn daemon_main(config_set: ConfigSet) {
     // we could reinterpret the characters we are injecting
     let is_injecting = Arc::new(std::sync::atomic::AtomicBool::new(false));
 
-    let context = context::new(send_channel.clone(), is_injecting.clone());
+    let context = context::new(config_set.default.clone(), send_channel.clone(), is_injecting.clone());
 
     let config_set_copy = config_set.clone();
     thread::Builder::new().name("daemon_background".to_string()).spawn(move || {
@@ -382,6 +382,7 @@ fn daemon_background(receive_channel: Receiver<Event>, config_set: ConfigSet, is
         receive_channel,
         vec!(&matcher),
         vec!(&engine, &matcher),
+        vec!(&engine),
     );
 
     info!("espanso is running!");

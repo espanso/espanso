@@ -29,7 +29,6 @@ use std::os::raw::c_char;
 use crate::context;
 
 const NOTIFY_HELPER_BINARY : &'static [u8] = include_bytes!("../res/mac/EspansoNotifyHelper.zip");
-const DEFAULT_NOTIFICATION_DELAY : f64 = 1.5;
 
 pub struct MacUIManager {
     notify_helper_path: PathBuf
@@ -37,12 +36,18 @@ pub struct MacUIManager {
 
 impl super::UIManager for MacUIManager {
     fn notify(&self, message: &str) {
+        self.notify_delay(message, 1500);
+    }
+
+    fn notify_delay(&self, message: &str, duration: i32) {
         let executable_path = self.notify_helper_path.join("Contents");
         let executable_path = executable_path.join("MacOS");
         let executable_path = executable_path.join("EspansoNotifyHelper");
 
+        let duration_float = duration as f64 / 1000.0;
+
         let res = Command::new(executable_path)
-            .args(&["espanso", message, &DEFAULT_NOTIFICATION_DELAY.to_string()])
+            .args(&["espanso", message, &duration_float.to_string()])
             .spawn();
 
         if let Err(e) = res {
