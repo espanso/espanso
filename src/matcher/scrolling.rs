@@ -18,7 +18,7 @@
  */
 
 use crate::matcher::{Match, MatchReceiver, TriggerEntry};
-use std::cell::{RefCell, Ref};
+use std::cell::{RefCell};
 use crate::event::{KeyModifier, ActionEventReceiver, ActionType};
 use crate::config::ConfigManager;
 use crate::event::KeyModifier::BACKSPACE;

@@ -1,9 +1,7 @@
 use tempfile::TempDir;
 use std::error::Error;
-use super::PackageResolver;
-use std::io::{Cursor, copy, Read};
+use std::io::{Cursor, copy};
 use std::{fs, io};
-use std::fs::File;
 use log::debug;
 
 pub struct ZipPackageResolver;
@@ -33,7 +31,7 @@ impl super::PackageResolver for ZipPackageResolver {
 
         // Find the root folder name
         let mut root_folder = {
-            let mut root_folder = archive.by_index(0).unwrap();
+            let root_folder = archive.by_index(0).unwrap();
             let root_folder = root_folder.sanitized_name();
             root_folder.to_str().unwrap().to_owned()
         };
@@ -77,7 +75,7 @@ impl super::PackageResolver for ZipPackageResolver {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tempfile::{TempDir, NamedTempFile};
+    use super::super::PackageResolver;
 
     #[test]
     fn test_clone_temp_repository() {

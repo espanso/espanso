@@ -427,12 +427,10 @@ impl ConfigSet {
         // Check if some triggers are conflicting with each other
         // For more information, see: https://github.com/federico-terzi/espanso/issues/135
         if default.conflict_check {
-            for s in specific.iter() {
-                let has_conflicts = Self::has_conflicts(&default, &specific);
-                if has_conflicts {
-                    eprintln!("Warning: some triggers had conflicts and may not behave as intended");
-                    eprintln!("To turn off this check, add \"conflict_check: false\" in the configuration");
-                }
+            let has_conflicts = Self::has_conflicts(&default, &specific);
+            if has_conflicts {
+                eprintln!("Warning: some triggers had conflicts and may not behave as intended");
+                eprintln!("To turn off this check, add \"conflict_check: false\" in the configuration");
             }
         }
 
@@ -583,8 +581,7 @@ mod tests {
     use super::*;
     use std::io::Write;
     use tempfile::{NamedTempFile, TempDir};
-    use std::any::Any;
-    use crate::matcher::{TextContent, MatchContentType};
+    use crate::matcher::{MatchContentType};
 
     const TEST_WORKING_CONFIG_FILE : &str = include_str!("../res/test/working_config.yml");
     const TEST_CONFIG_FILE_WITH_BAD_YAML : &str = include_str!("../res/test/config_with_bad_yaml.yml");
@@ -593,7 +590,7 @@ mod tests {
 
     fn create_tmp_file(string: &str) -> NamedTempFile {
         let file = NamedTempFile::new().unwrap();
-        file.as_file().write_all(string.as_bytes());
+        file.as_file().write_all(string.as_bytes()).unwrap();
         file
     }
 
@@ -716,7 +713,7 @@ mod tests {
         let package_dir = TempDir::new().expect("unable to create package directory");
 
         let default_path = data_dir.path().join(DEFAULT_CONFIG_FILE_NAME);
-        fs::write(default_path, default_content);
+        fs::write(default_path, default_content).unwrap();
 
         (data_dir, package_dir)
     }
@@ -724,7 +721,7 @@ mod tests {
     pub fn create_temp_file_in_dir(tmp_dir: &PathBuf, name: &str, content: &str) -> PathBuf {
         let user_defined_path = tmp_dir.join(name);
         let user_defined_path_copy = user_defined_path.clone();
-        fs::write(user_defined_path, content);
+        fs::write(user_defined_path, content).unwrap();
 
         user_defined_path_copy
     }
@@ -732,7 +729,7 @@ mod tests {
     pub fn create_user_config_file(tmp_dir: &Path, name: &str, content: &str) -> PathBuf {
         let user_config_dir = tmp_dir.join(USER_CONFIGS_FOLDER_NAME);
         if !user_config_dir.exists() {
-            create_dir_all(&user_config_dir);
+            create_dir_all(&user_config_dir).unwrap();
         }
 
         create_temp_file_in_dir(&user_config_dir, name, content)
@@ -741,7 +738,7 @@ mod tests {
     pub fn create_package_file(package_data_dir: &Path, package_name: &str, filename: &str, content: &str) -> PathBuf {
         let package_dir = package_data_dir.join(package_name);
         if !package_dir.exists() {
-            create_dir_all(&package_dir);
+            create_dir_all(&package_dir).unwrap();
         }
 
         create_temp_file_in_dir(&package_dir, filename, content)
@@ -824,11 +821,11 @@ mod tests {
     fn test_config_set_specific_file_duplicate_name() {
         let (data_dir, package_dir) = create_temp_espanso_directories();
 
-        let user_defined_path = create_user_config_file(data_dir.path(), "specific.yml", r###"
+        create_user_config_file(data_dir.path(), "specific.yml", r###"
         name: specific1
         "###);
 
-        let user_defined_path2 = create_user_config_file(data_dir.path(), "specific2.yml", r###"
+        create_user_config_file(data_dir.path(), "specific2.yml", r###"
         name: specific1
         "###);
 
@@ -847,7 +844,7 @@ mod tests {
               replace: "Bob"
         "###);
 
-        let user_defined_path = create_user_config_file(data_dir.path(), "specific1.yml", r###"
+        create_user_config_file(data_dir.path(), "specific1.yml", r###"
         name: specific1
 
         matches:
@@ -874,7 +871,7 @@ mod tests {
               replace: "Bob"
         "###);
 
-        let user_defined_path2 = create_user_config_file(data_dir.path(), "specific2.yml", r###"
+        create_user_config_file(data_dir.path(), "specific2.yml", r###"
         name: specific1
 
         matches:
@@ -906,7 +903,7 @@ mod tests {
               replace: "Bob"
         "###);
 
-        let user_defined_path2 = create_user_config_file(data_dir.path(), "specific2.yml", r###"
+        create_user_config_file(data_dir.path(), "specific2.yml", r###"
         name: specific1
 
         exclude_default_entries: true
@@ -941,7 +938,7 @@ mod tests {
             "###
         );
 
-        let user_defined_path2 = create_user_config_file(data_dir.path(), "specific.zzz", r###"
+        create_user_config_file(data_dir.path(), "specific.zzz", r###"
         name: specific1
 
         exclude_default_entries: true
@@ -959,11 +956,11 @@ mod tests {
     fn test_config_set_no_parent_configs_works_correctly() {
         let (data_dir, package_dir) = create_temp_espanso_directories();
 
-        let user_defined_path = create_user_config_file(data_dir.path(), "specific.yml", r###"
+        create_user_config_file(data_dir.path(), "specific.yml", r###"
         name: specific1
         "###);
 
-        let user_defined_path2 = create_user_config_file(data_dir.path(), "specific2.yml", r###"
+        create_user_config_file(data_dir.path(), "specific2.yml", r###"
         name: specific2
         "###);
 
@@ -979,7 +976,7 @@ mod tests {
               replace: Hasta la vista
         "###);
 
-        let user_defined_path = create_user_config_file(data_dir.path(), "specific.yml", r###"
+        create_user_config_file(data_dir.path(), "specific.yml", r###"
         parent: default
 
         matches:
@@ -1002,7 +999,7 @@ mod tests {
               replace: Hasta la vista
         "###);
 
-        let user_defined_path = create_user_config_file(data_dir.path(), "specific.yml", r###"
+        create_user_config_file(data_dir.path(), "specific.yml", r###"
         matches:
             - trigger: "hello"
               replace: "world"
@@ -1024,7 +1021,7 @@ mod tests {
               replace: Hasta la vista
         "###);
 
-        let user_defined_path = create_user_config_file(data_dir.path(), "specific.yml", r###"
+        create_user_config_file(data_dir.path(), "specific.yml", r###"
         name: custom1
         parent: default
 
@@ -1033,7 +1030,7 @@ mod tests {
               replace: "world"
         "###);
 
-        let user_defined_path2 = create_user_config_file(data_dir.path(), "specific2.yml", r###"
+        create_user_config_file(data_dir.path(), "specific2.yml", r###"
         parent: custom1
 
         matches:
@@ -1057,7 +1054,7 @@ mod tests {
               replace: Hasta la vista
         "###);
 
-        let user_defined_path = create_user_config_file(data_dir.path(), "specific.yml", r###"
+        create_user_config_file(data_dir.path(), "specific.yml", r###"
         parent: default
 
         matches:
@@ -1085,7 +1082,7 @@ mod tests {
               replace: Hasta la vista
         "###);
 
-        let package_path = create_package_file(package_dir.path(), "package1", "package.yml", r###"
+        create_package_file(package_dir.path(), "package1", "package.yml", r###"
         parent: default
 
         matches:
@@ -1108,7 +1105,7 @@ mod tests {
               replace: Hasta la vista
         "###);
 
-        let package_path = create_package_file(package_dir.path(), "package1", "package.yml", r###"
+        create_package_file(package_dir.path(), "package1", "package.yml", r###"
         matches:
             - trigger: "harry"
               replace: "potter"
@@ -1129,7 +1126,7 @@ mod tests {
               replace: Hasta la vista
         "###);
 
-        let package_path = create_package_file(package_dir.path(), "package1", "package.yml", r###"
+        create_package_file(package_dir.path(), "package1", "package.yml", r###"
         name: package1
 
         matches:
@@ -1137,7 +1134,7 @@ mod tests {
               replace: "potter"
         "###);
 
-        let package_path2 = create_package_file(package_dir.path(), "package1", "addon.yml", r###"
+        create_package_file(package_dir.path(), "package1", "addon.yml", r###"
         parent: package1
 
         matches:
@@ -1175,7 +1172,7 @@ mod tests {
               replace: Jon
         "###);
 
-        let user_defined_path = create_user_config_file(data_dir.path(), "specific.yml", r###"
+        create_user_config_file(data_dir.path(), "specific.yml", r###"
         name: specific1
 
         matches:
@@ -1199,7 +1196,7 @@ mod tests {
               replace: Error
         "###);
 
-        let user_defined_path = create_user_config_file(data_dir.path(), "specific.yml", r###"
+        create_user_config_file(data_dir.path(), "specific.yml", r###"
         name: specific1
 
         matches:
@@ -1221,7 +1218,7 @@ mod tests {
               replace: Jon
         "###);
 
-        let user_defined_path = create_user_config_file(data_dir.path(), "specific.yml", r###"
+        create_user_config_file(data_dir.path(), "specific.yml", r###"
         name: specific1
 
         matches:
@@ -1243,14 +1240,14 @@ mod tests {
               replace: Jon
         "###);
 
-        let user_defined_path = create_user_config_file(data_dir.path(), "specific.yml", r###"
+        create_user_config_file(data_dir.path(), "specific.yml", r###"
         name: specific1
 
         matches:
             - trigger: "bad"
               replace: "Conflict"
         "###);
-        let user_defined_path2 = create_user_config_file(data_dir.path(), "specific2.yml", r###"
+        create_user_config_file(data_dir.path(), "specific2.yml", r###"
         name: specific2
 
         matches:
@@ -1272,7 +1269,7 @@ mod tests {
                 format: "%m"
         "###);
 
-        let user_defined_path = create_user_config_file(data_dir.path(), "specific.yml", r###"
+        create_user_config_file(data_dir.path(), "specific.yml", r###"
          global_vars:
             - name: specificvar
               type: date
@@ -1298,7 +1295,7 @@ mod tests {
                 format: "%m"
         "###);
 
-        let user_defined_path = create_user_config_file(data_dir.path(), "specific.yml", r###"
+        create_user_config_file(data_dir.path(), "specific.yml", r###"
          parent: default
          global_vars:
             - name: specificvar
@@ -1324,7 +1321,7 @@ mod tests {
                 format: "%m"
         "###);
 
-        let user_defined_path = create_user_config_file(data_dir.path(), "specific.yml", r###"
+        create_user_config_file(data_dir.path(), "specific.yml", r###"
          exclude_default_entries: true
 
          global_vars:
