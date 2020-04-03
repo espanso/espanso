@@ -64,6 +64,9 @@ fn default_enable_active() -> bool { true }
 fn default_backspace_limit() -> i32 { 3 }
 fn default_restore_clipboard_delay() -> i32 { 300 }
 fn default_exclude_default_entries() -> bool {false}
+fn default_secure_input_watcher_enabled() -> bool {true}
+fn default_secure_input_notification() -> bool {true}
+fn default_secure_input_watcher_interval() -> i32 {5000}
 fn default_matches() -> Vec<Match> { Vec::new() }
 fn default_global_vars() -> Vec<MatchVariable> { Vec::new() }
 
@@ -138,6 +141,15 @@ pub struct Configs {
     #[serde(default = "default_restore_clipboard_delay")]
     pub restore_clipboard_delay: i32,
 
+    #[serde(default = "default_secure_input_watcher_enabled")]
+    pub secure_input_watcher_enabled: bool,
+
+    #[serde(default = "default_secure_input_watcher_interval")]
+    pub secure_input_watcher_interval: i32,
+
+    #[serde(default = "default_secure_input_notification")]
+    pub secure_input_notification: bool,
+
     #[serde(default)]
     pub backend: BackendType,
 
@@ -190,6 +202,9 @@ impl Configs {
         validate_field!(result, self.passive_arg_escape, default_passive_arg_escape());
         validate_field!(result, self.passive_key, default_passive_key());
         validate_field!(result, self.restore_clipboard_delay, default_restore_clipboard_delay());
+        validate_field!(result, self.secure_input_watcher_enabled, default_secure_input_watcher_enabled());
+        validate_field!(result, self.secure_input_watcher_interval, default_secure_input_watcher_interval());
+        validate_field!(result, self.secure_input_notification, default_secure_input_notification());
 
         result
     }

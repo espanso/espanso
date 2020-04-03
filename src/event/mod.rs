@@ -24,7 +24,8 @@ use serde::{Serialize, Deserialize};
 #[derive(Debug, Clone)]
 pub enum Event {
     Action(ActionType),
-    Key(KeyEvent)
+    Key(KeyEvent),
+    System(SystemEvent),
 }
 
 #[derive(Debug, Clone)]
@@ -132,6 +133,13 @@ impl KeyModifier {
     }
 }
 
+#[derive(Debug, Clone)]
+pub enum SystemEvent {
+    // MacOS specific
+    SecureInputEnabled(String, String),  // AppName, App Path
+    SecureInputDisabled,
+}
+
 // Receivers
 
 pub trait KeyEventReceiver {
@@ -140,6 +148,10 @@ pub trait KeyEventReceiver {
 
 pub trait ActionEventReceiver {
     fn on_action_event(&self, e: ActionType);
+}
+
+pub trait SystemEventReceiver {
+    fn on_system_event(&self, e: SystemEvent);
 }
 
 // TESTS

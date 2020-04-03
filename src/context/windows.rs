@@ -28,6 +28,7 @@ use log::{info, error, debug};
 use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
 use std::sync::atomic::Ordering::Acquire;
+use crate::config::Configs;
 
 const BMP_BINARY : &[u8] = include_bytes!("../res/win/espanso.bmp");
 const ICO_BINARY : &[u8] = include_bytes!("../res/win/espanso.ico");
@@ -38,7 +39,7 @@ pub struct WindowsContext {
 }
 
 impl WindowsContext {
-    pub fn new(send_channel: Sender<Event>, is_injecting: Arc<AtomicBool>) -> Box<WindowsContext> {
+    pub fn new(config: Configs, send_channel: Sender<Event>, is_injecting: Arc<AtomicBool>) -> Box<WindowsContext> {
         // Initialize image resources
 
         let espanso_dir = super::get_data_dir();

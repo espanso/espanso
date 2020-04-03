@@ -24,7 +24,7 @@ use crate::config::BackendType;
 use crate::clipboard::ClipboardManager;
 use log::{info, warn, debug, error};
 use crate::ui::{UIManager, MenuItem, MenuItemType};
-use crate::event::{ActionEventReceiver, ActionType};
+use crate::event::{ActionEventReceiver, ActionType, SystemEventReceiver, SystemEvent};
 use crate::extension::Extension;
 use crate::render::{Renderer, RenderResult};
 use std::cell::RefCell;
@@ -331,6 +331,26 @@ impl <'a, S: KeyboardManager, C: ClipboardManager,
                 exit(0);
             },
             _ => {}
+        }
+    }
+}
+
+impl <'a, S: KeyboardManager, C: ClipboardManager,
+    M: ConfigManager<'a>, U: UIManager, R: Renderer> SystemEventReceiver for Engine<'a, S, C, M, U, R>{
+
+    fn on_system_event(&self, e: SystemEvent) {
+        match e {
+            // MacOS specific
+            SystemEvent::SecureInputEnabled(app_name, path) => {
+                info!("SecureInput has been acquired by {}, preventing espanso from working correctly. Full path: {}", app_name, path);
+
+                if self.config_manager.default_config().secure_input_notification {
+                    self.ui_manager.notify_delay(&format!("{} has activated SecureInput. Espanso won't work until you disable it.", app_name), 5000);
+                }
+            },
+            SystemEvent::SecureInputDisabled => {
+                info!("SecureInput has been disabled.");
+            },
         }
     }
 }

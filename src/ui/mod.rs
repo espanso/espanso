@@ -28,6 +28,7 @@ mod macos;
 
 pub trait UIManager {
     fn notify(&self, message: &str);
+    fn notify_delay(&self, message: &str, duration: i32);
     fn show_menu(&self, menu: Vec<MenuItem>);
     fn cleanup(&self);
 }

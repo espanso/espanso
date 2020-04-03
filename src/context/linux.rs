@@ -29,6 +29,7 @@ use std::{thread, time};
 use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
 use std::sync::atomic::Ordering::Acquire;
+use crate::config::Configs;
 
 #[repr(C)]
 pub struct LinuxContext {
@@ -37,7 +38,7 @@ pub struct LinuxContext {
 }
 
 impl LinuxContext {
-    pub fn new(send_channel: Sender<Event>, is_injecting: Arc<AtomicBool>) -> Box<LinuxContext> {
+    pub fn new(config: Configs, send_channel: Sender<Event>, is_injecting: Arc<AtomicBool>) -> Box<LinuxContext> {
         // Check if the X11 context is available
         let x11_available = unsafe {
             check_x11()
