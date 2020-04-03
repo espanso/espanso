@@ -24,14 +24,11 @@ use std::fs::{File, create_dir};
 use std::io::{BufReader, BufRead};
 use std::time::{SystemTime, UNIX_EPOCH};
 use crate::package::UpdateResult::{NotOutdated, Updated};
-use crate::package::InstallResult::{NotFoundInIndex, AlreadyInstalled};
+use crate::package::InstallResult::{NotFoundInIndex, AlreadyInstalled, BlockedExternalPackage};
 use std::fs;
-use tempfile::TempDir;
-use git2::Repository;
 use regex::Regex;
 use crate::package::RemoveResult::Removed;
 use std::collections::HashMap;
-use super::git::GitPackageResolver;
 
 const DEFAULT_PACKAGE_INDEX_FILE : &str = "package_index.json";
 
@@ -138,13 +135,31 @@ impl DefaultPackageManager {
                 return None
             }
 
+            let original_repo = if fields.contains_key("package_original_repo") {
+                fields.get("package_original_repo").unwrap().clone()
+            }else{
+                fields.get("package_repo").unwrap().clone()
+            };
+
+            let is_core = if fields.contains_key("is_core") {
+                match fields.get("is_core").unwrap().clone().as_ref() {
+                    "true" => true,
+                    "false" => false,
+                    _ => false,
+                }
+            }else{
+                false
+            };
+
             let package = Package {
                 name: fields.get("package_name").unwrap().clone(),
                 title: fields.get("package_title").unwrap().clone(),
                 version: fields.get("package_version").unwrap().clone(),
                 repo: fields.get("package_repo").unwrap().clone(),
                 desc: fields.get("package_desc").unwrap().clone(),
-                author: fields.get("package_author").unwrap().clone()
+                author: fields.get("package_author").unwrap().clone(),
+                is_core,
+                original_repo
             };
 
             Some(package)
@@ -228,11 +243,15 @@ impl super::PackageManager for DefaultPackageManager {
         None
     }
 
-    fn install_package(&self, name: &str) -> Result<InstallResult, Box<dyn Error>> {
+    fn install_package(&self, name: &str, allow_external: bool) -> Result<InstallResult, Box<dyn Error>> {
         let package = self.get_package(name);
         match package {
             Some(package) => {
-                self.install_package_from_repo(name, &package.repo)
+                if package.is_core || allow_external {
+                    self.install_package_from_repo(name, &package.repo)
+                }else{
+                    Ok(BlockedExternalPackage(package.original_repo))
+                }
             },
             None => {
                 Ok(NotFoundInIndex)
@@ -315,7 +334,7 @@ mod tests {
     use crate::package::PackageManager;
     use std::fs::{create_dir, create_dir_all};
     use crate::package::InstallResult::*;
-    use std::io::Write;
+    use crate::package::zip::ZipPackageResolver;
 
     const OUTDATED_INDEX_CONTENT : &str = include_str!("../res/test/outdated_index.json");
     const INDEX_CONTENT_WITHOUT_UPDATE: &str = include_str!("../res/test/index_without_update.json");
@@ -337,7 +356,7 @@ mod tests {
         let package_manager = DefaultPackageManager::new(
             package_dir.path().clone().to_path_buf(),
             data_dir.path().clone().to_path_buf(),
-            Some(Box::new(GitPackageResolver::new())),
+            Some(Box::new(ZipPackageResolver::new())),
         );
 
         TempPackageManager {
@@ -349,7 +368,7 @@ mod tests {
 
     #[test]
     fn test_download_index() {
-        let temp = create_temp_package_manager(|_, _| {});
+        create_temp_package_manager(|_, _| {});
         let index = DefaultPackageManager::request_index();
 
         assert!(index.is_ok());
@@ -360,7 +379,7 @@ mod tests {
     fn test_outdated_index() {
         let temp = create_temp_package_manager(|_, data_dir| {
             let index_file = data_dir.join(DEFAULT_PACKAGE_INDEX_FILE);
-            std::fs::write(index_file, OUTDATED_INDEX_CONTENT);
+            std::fs::write(index_file, OUTDATED_INDEX_CONTENT).unwrap();
         });
 
         assert!(temp.package_manager.is_index_outdated());
@@ -373,7 +392,7 @@ mod tests {
             let current_time = SystemTime::now().duration_since(UNIX_EPOCH).expect("Time went backwards");
             let current_timestamp = current_time.as_secs();
             let new_contents = INDEX_CONTENT_WITHOUT_UPDATE.replace("XXXX", &format!("{}", current_timestamp));
-            std::fs::write(index_file, new_contents);
+            std::fs::write(index_file, new_contents).unwrap();
         });
 
         assert_eq!(temp.package_manager.update_index(false).unwrap(), UpdateResult::NotOutdated);
@@ -386,7 +405,7 @@ mod tests {
             let current_time = SystemTime::now().duration_since(UNIX_EPOCH).expect("Time went backwards");
             let current_timestamp = current_time.as_secs();
             let new_contents = INDEX_CONTENT_WITHOUT_UPDATE.replace("XXXX", &format!("{}", current_timestamp));
-            std::fs::write(index_file, new_contents);
+            std::fs::write(index_file, new_contents).unwrap();
         });
 
         assert_eq!(temp.package_manager.update_index(true).unwrap(), UpdateResult::Updated);
@@ -396,7 +415,7 @@ mod tests {
     fn test_outdated_index_should_be_updated() {
         let mut temp = create_temp_package_manager(|_, data_dir| {
             let index_file = data_dir.join(DEFAULT_PACKAGE_INDEX_FILE);
-            std::fs::write(index_file, OUTDATED_INDEX_CONTENT);
+            std::fs::write(index_file, OUTDATED_INDEX_CONTENT).unwrap();
         });
 
         assert_eq!(temp.package_manager.update_index(false).unwrap(), UpdateResult::Updated);
@@ -412,9 +431,9 @@ mod tests {
 
     #[test]
     fn test_get_package_should_be_found() {
-        let mut temp = create_temp_package_manager(|_, data_dir| {
+        let temp = create_temp_package_manager(|_, data_dir| {
             let index_file = data_dir.join(DEFAULT_PACKAGE_INDEX_FILE);
-            std::fs::write(index_file, GET_PACKAGE_INDEX);
+            std::fs::write(index_file, GET_PACKAGE_INDEX).unwrap();
         });
 
         assert_eq!(temp.package_manager.get_package("italian-accents").unwrap().title, "Italian Accents");
@@ -422,9 +441,9 @@ mod tests {
 
     #[test]
     fn test_get_package_should_not_be_found() {
-        let mut temp = create_temp_package_manager(|_, data_dir| {
+        let temp = create_temp_package_manager(|_, data_dir| {
             let index_file = data_dir.join(DEFAULT_PACKAGE_INDEX_FILE);
-            std::fs::write(index_file, GET_PACKAGE_INDEX);
+            std::fs::write(index_file, GET_PACKAGE_INDEX).unwrap();
         });
 
         assert!(temp.package_manager.get_package("not-existing").is_none());
@@ -432,10 +451,10 @@ mod tests {
 
     #[test]
     fn test_list_local_packages_names() {
-        let mut temp = create_temp_package_manager(|package_dir, _| {
-            create_dir(package_dir.join("package-1"));
-            create_dir(package_dir.join("package2"));
-            std::fs::write(package_dir.join("dummyfile.txt"), "test");
+        let temp = create_temp_package_manager(|package_dir, _| {
+            create_dir(package_dir.join("package-1")).unwrap();
+            create_dir(package_dir.join("package2")).unwrap();
+            std::fs::write(package_dir.join("dummyfile.txt"), "test").unwrap();
         });
 
         let packages = temp.package_manager.list_local_packages_names();
@@ -446,33 +465,33 @@ mod tests {
 
     #[test]
     fn test_install_package_not_found() {
-        let mut temp = create_temp_package_manager(|package_dir, data_dir| {
+        let temp = create_temp_package_manager(|_, data_dir| {
             let index_file = data_dir.join(DEFAULT_PACKAGE_INDEX_FILE);
-            std::fs::write(index_file, INSTALL_PACKAGE_INDEX);
+            std::fs::write(index_file, INSTALL_PACKAGE_INDEX).unwrap();
         });
 
-        assert_eq!(temp.package_manager.install_package("doesnotexist").unwrap(), NotFoundInIndex);
+        assert_eq!(temp.package_manager.install_package("doesnotexist", false).unwrap(), NotFoundInIndex);
     }
 
     #[test]
     fn test_install_package_already_installed() {
-        let mut temp = create_temp_package_manager(|package_dir, data_dir| {
-            create_dir(package_dir.join("italian-accents"));
+        let temp = create_temp_package_manager(|package_dir, data_dir| {
+            create_dir(package_dir.join("italian-accents")).unwrap();
             let index_file = data_dir.join(DEFAULT_PACKAGE_INDEX_FILE);
-            std::fs::write(index_file, INSTALL_PACKAGE_INDEX);
+            std::fs::write(index_file, INSTALL_PACKAGE_INDEX).unwrap();
         });
 
-        assert_eq!(temp.package_manager.install_package("italian-accents").unwrap(), AlreadyInstalled);
+        assert_eq!(temp.package_manager.install_package("italian-accents", false).unwrap(), AlreadyInstalled);
     }
 
     #[test]
     fn test_install_package() {
-        let mut temp = create_temp_package_manager(|_, data_dir| {
+        let temp = create_temp_package_manager(|_, data_dir| {
             let index_file = data_dir.join(DEFAULT_PACKAGE_INDEX_FILE);
-            std::fs::write(index_file, INSTALL_PACKAGE_INDEX);
+            std::fs::write(index_file, INSTALL_PACKAGE_INDEX).unwrap();
         });
 
-        assert_eq!(temp.package_manager.install_package("dummy-package").unwrap(), Installed);
+        assert_eq!(temp.package_manager.install_package("dummy-package", false).unwrap(), Installed);
         assert!(temp.package_dir.path().join("dummy-package").exists());
         assert!(temp.package_dir.path().join("dummy-package/README.md").exists());
         assert!(temp.package_dir.path().join("dummy-package/package.yml").exists());
@@ -480,52 +499,52 @@ mod tests {
 
     #[test]
     fn test_install_package_does_not_exist_in_repo() {
-        let mut temp = create_temp_package_manager(|_, data_dir| {
+        let temp = create_temp_package_manager(|_, data_dir| {
             let index_file = data_dir.join(DEFAULT_PACKAGE_INDEX_FILE);
-            std::fs::write(index_file, INSTALL_PACKAGE_INDEX);
+            std::fs::write(index_file, INSTALL_PACKAGE_INDEX).unwrap();
         });
 
-        assert_eq!(temp.package_manager.install_package("not-existing").unwrap(), NotFoundInRepo);
+        assert_eq!(temp.package_manager.install_package("not-existing", false).unwrap(), NotFoundInRepo);
     }
 
     #[test]
     fn test_install_package_missing_version() {
-        let mut temp = create_temp_package_manager(|_, data_dir| {
+        let temp = create_temp_package_manager(|_, data_dir| {
             let index_file = data_dir.join(DEFAULT_PACKAGE_INDEX_FILE);
-            std::fs::write(index_file, INSTALL_PACKAGE_INDEX);
+            std::fs::write(index_file, INSTALL_PACKAGE_INDEX).unwrap();
         });
 
-        assert_eq!(temp.package_manager.install_package("dummy-package2").unwrap(), MissingPackageVersion);
+        assert_eq!(temp.package_manager.install_package("dummy-package2", false).unwrap(), MissingPackageVersion);
     }
 
     #[test]
     fn test_install_package_missing_readme_unable_to_parse_package_info() {
-        let mut temp = create_temp_package_manager(|_, data_dir| {
+        let temp = create_temp_package_manager(|_, data_dir| {
             let index_file = data_dir.join(DEFAULT_PACKAGE_INDEX_FILE);
-            std::fs::write(index_file, INSTALL_PACKAGE_INDEX);
+            std::fs::write(index_file, INSTALL_PACKAGE_INDEX).unwrap();
         });
 
-        assert_eq!(temp.package_manager.install_package("dummy-package3").unwrap(), UnableToParsePackageInfo);
+        assert_eq!(temp.package_manager.install_package("dummy-package3", false).unwrap(), UnableToParsePackageInfo);
     }
 
     #[test]
     fn test_install_package_bad_readme_unable_to_parse_package_info() {
-        let mut temp = create_temp_package_manager(|_, data_dir| {
+        let temp = create_temp_package_manager(|_, data_dir| {
             let index_file = data_dir.join(DEFAULT_PACKAGE_INDEX_FILE);
-            std::fs::write(index_file, INSTALL_PACKAGE_INDEX);
+            std::fs::write(index_file, INSTALL_PACKAGE_INDEX).unwrap();
         });
 
-        assert_eq!(temp.package_manager.install_package("dummy-package4").unwrap(), UnableToParsePackageInfo);
+        assert_eq!(temp.package_manager.install_package("dummy-package4", false).unwrap(), UnableToParsePackageInfo);
     }
 
     #[test]
     fn test_list_local_packages() {
-        let mut temp = create_temp_package_manager(|_, data_dir| {
+        let temp = create_temp_package_manager(|_, data_dir| {
             let index_file = data_dir.join(DEFAULT_PACKAGE_INDEX_FILE);
-            std::fs::write(index_file, INSTALL_PACKAGE_INDEX);
+            std::fs::write(index_file, INSTALL_PACKAGE_INDEX).unwrap();
         });
 
-        assert_eq!(temp.package_manager.install_package("dummy-package").unwrap(), Installed);
+        assert_eq!(temp.package_manager.install_package("dummy-package", false).unwrap(), Installed);
         assert!(temp.package_dir.path().join("dummy-package").exists());
         assert!(temp.package_dir.path().join("dummy-package/README.md").exists());
         assert!(temp.package_dir.path().join("dummy-package/package.yml").exists());
@@ -537,11 +556,11 @@ mod tests {
 
     #[test]
     fn test_remove_package() {
-        let mut temp = create_temp_package_manager(|package_dir, _| {
+        let temp = create_temp_package_manager(|package_dir, _| {
             let dummy_package_dir = package_dir.join("dummy-package");
-            create_dir_all(&dummy_package_dir);
-            std::fs::write(dummy_package_dir.join("README.md"), "readme");
-            std::fs::write(dummy_package_dir.join("package.yml"), "name: package");
+            create_dir_all(&dummy_package_dir).unwrap();
+            std::fs::write(dummy_package_dir.join("README.md"), "readme").unwrap();
+            std::fs::write(dummy_package_dir.join("package.yml"), "name: package").unwrap();
         });
 
         assert!(temp.package_dir.path().join("dummy-package").exists());
@@ -555,7 +574,7 @@ mod tests {
 
     #[test]
     fn test_remove_package_not_found() {
-        let mut temp = create_temp_package_manager(|_, _| {});
+        let temp = create_temp_package_manager(|_, _| {});
 
         assert_eq!(temp.package_manager.remove_package("not-existing").unwrap(), RemoveResult::NotFound);
     }
@@ -571,8 +590,9 @@ mod tests {
         package_version: "0.1.0"
         package_author: "Federico Terzi"
         package_repo: "https://github.com/federico-terzi/espanso-hub-core"
+        is_core: true
         ---
-        "###);
+        "###).unwrap();
 
         let package = DefaultPackageManager::parse_package_from_readme(file.path()).unwrap();
 
@@ -582,7 +602,9 @@ mod tests {
             version: "0.1.0".to_string(),
             repo: "https://github.com/federico-terzi/espanso-hub-core".to_string(),
             desc: "Include Italian accents substitutions to espanso.".to_string(),
-            author: "Federico Terzi".to_string()
+            author: "Federico Terzi".to_string(),
+            original_repo: "https://github.com/federico-terzi/espanso-hub-core".to_string(),
+            is_core: true,
         };
 
         assert_eq!(package, target_package);
@@ -599,9 +621,10 @@ mod tests {
         package_version:"0.1.0"
         package_author:Federico Terzi
         package_repo: "https://github.com/federico-terzi/espanso-hub-core"
+        is_core: true
         ---
         Readme text
-        "###);
+        "###).unwrap();
 
         let package = DefaultPackageManager::parse_package_from_readme(file.path()).unwrap();
 
@@ -611,7 +634,9 @@ mod tests {
             version: "0.1.0".to_string(),
             repo: "https://github.com/federico-terzi/espanso-hub-core".to_string(),
             desc: "Include Italian accents substitutions to espanso.".to_string(),
-            author: "Federico Terzi".to_string()
+            author: "Federico Terzi".to_string(),
+            original_repo: "https://github.com/federico-terzi/espanso-hub-core".to_string(),
+            is_core: true,
         };
 
         assert_eq!(package, target_package);

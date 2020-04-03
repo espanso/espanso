@@ -17,8 +17,7 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use serde_yaml::{Mapping, Value};
-use std::path::PathBuf;
+use serde_yaml::{Value};
 use std::collections::HashMap;
 use regex::{Regex, Captures};
 use log::{warn, error};
@@ -50,7 +49,7 @@ impl DefaultRenderer {
         // Compile the regexes
         let passive_match_regex = Regex::new(&config.passive_match_regex)
                                         .unwrap_or_else(|e| {
-                                            panic!("Invalid passive match regex");
+                                            panic!("Invalid passive match regex: {:?}", e);
                                         });
 
         DefaultRenderer{

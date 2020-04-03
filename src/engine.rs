@@ -17,25 +17,21 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::matcher::{Match, MatchReceiver, MatchContentType};
+use crate::matcher::{Match, MatchReceiver};
 use crate::keyboard::KeyboardManager;
 use crate::config::ConfigManager;
 use crate::config::BackendType;
 use crate::clipboard::ClipboardManager;
 use log::{info, warn, debug, error};
 use crate::ui::{UIManager, MenuItem, MenuItemType};
-use crate::event::{ActionEventReceiver, ActionType};
-use crate::extension::Extension;
+use crate::event::{ActionEventReceiver, ActionType, SystemEventReceiver, SystemEvent};
 use crate::render::{Renderer, RenderResult};
 use std::cell::RefCell;
 use std::process::exit;
-use std::collections::HashMap;
-use std::path::PathBuf;
-use regex::{Regex, Captures};
-use std::time::SystemTime;
+use regex::{Regex};
 use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
-use std::sync::atomic::Ordering::{Relaxed, Release, Acquire, AcqRel, SeqCst};
+use std::sync::atomic::Ordering::Release;
 
 pub struct Engine<'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>,
                   U: UIManager, R: Renderer> {
@@ -47,7 +43,6 @@ pub struct Engine<'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<
     is_injecting: Arc<AtomicBool>,
 
     enabled: RefCell<bool>,
-    last_action_time: RefCell<SystemTime>,  // Used to block espanso from re-interpreting it's own inputs
 }
 
 impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIManager, R: Renderer>
@@ -56,7 +51,6 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
                config_manager: &'a M, ui_manager: &'a U,
                renderer: &'a R, is_injecting: Arc<AtomicBool>) -> Engine<'a, S, C, M, U, R> {
         let enabled = RefCell::new(true);
-        let last_action_time = RefCell::new(SystemTime::now());
 
         Engine{keyboard_manager,
             clipboard_manager,
@@ -65,7 +59,6 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
             renderer,
             is_injecting,
             enabled,
-            last_action_time,
         }
     }
 
@@ -92,7 +85,7 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
 
         menu.push(MenuItem{
             item_type: MenuItemType::Button,
-            item_name: "Exit".to_owned(),
+            item_name: "Exit espanso".to_owned(),
             item_id: ActionType::Exit as i32,
         });
 
@@ -110,20 +103,6 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
         }else {
             None
         }
-    }
-
-    /// Used to check if the last action has been executed within a specified interval.
-    /// If so, return true (blocking the action), otherwise false.
-    fn check_last_action_and_set(&self, interval: u128) -> bool {
-        let mut last_action_time = self.last_action_time.borrow_mut();
-        if let Ok(elapsed) = last_action_time.elapsed() {
-            if elapsed.as_millis() < interval {
-                return true;
-            }
-        }
-
-        (*last_action_time) = SystemTime::now();
-        return false;
     }
 }
 
@@ -189,7 +168,9 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
                     None
                 };
 
-                let backend = if config.backend == BackendType::Auto {
+                let backend = if m.force_clipboard {
+                    &BackendType::Clipboard
+                }else if config.backend == BackendType::Auto {
                     if cfg!(target_os = "linux") {
                         let all_ascii = target_string.chars().all(|c| c.is_ascii());
                         if all_ascii {
@@ -286,7 +267,16 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
             return;
         }
 
-        info!("Passive mode activated");
+        // Block espanso from reinterpreting its own actions
+        self.is_injecting.store(true, Release);
+
+        // In order to avoid pasting previous clipboard contents, we need to check if
+        // a new clipboard was effectively copied.
+        // See issue: https://github.com/federico-terzi/espanso/issues/213
+        let previous_clipboard = self.clipboard_manager.get_clipboard();
+
+        // Sleep for a while, giving time to effectively copy the text
+        std::thread::sleep(std::time::Duration::from_millis(100));  // TODO: avoid hardcoding
 
         // Trigger a copy shortcut to transfer the content of the selection to the clipboard
         self.keyboard_manager.trigger_copy();
@@ -298,22 +288,39 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
         let clipboard = self.clipboard_manager.get_clipboard();
 
         if let Some(clipboard) = clipboard {
-            let rendered = self.renderer.render_passive(&clipboard,
-                                                        &config);
+            // Don't expand empty clipboards, as usually they are the result of an empty passive selection
+            if clipboard.trim().is_empty() {
+                info!("Avoiding passive expansion, as the user didn't select anything");
+            }else{
+                if let Some(previous_content) = previous_clipboard {
+                    // Because of issue #213, we need to make sure the user selected something.
+                    if clipboard == previous_content {
+                        info!("Avoiding passive expansion, as the user didn't select anything");
+                    } else {
+                        info!("Passive mode activated");
 
-            match rendered {
-                RenderResult::Text(payload) => {
-                    // Paste back the result in the field
-                    self.clipboard_manager.set_clipboard(&payload);
+                        let rendered = self.renderer.render_passive(&clipboard,
+                                                                    &config);
 
-                    std::thread::sleep(std::time::Duration::from_millis(100)); // TODO: avoid hardcoding
-                    self.keyboard_manager.trigger_paste(&config.paste_shortcut);
-                },
-                _ => {
-                    warn!("Cannot expand passive match")
-                },
+                        match rendered {
+                            RenderResult::Text(payload) => {
+                                // Paste back the result in the field
+                                self.clipboard_manager.set_clipboard(&payload);
+
+                                std::thread::sleep(std::time::Duration::from_millis(100)); // TODO: avoid hardcoding
+                                self.keyboard_manager.trigger_paste(&config.paste_shortcut);
+                            },
+                            _ => {
+                                warn!("Cannot expand passive match")
+                            },
+                        }
+                    }
+                }
             }
         }
+
+        // Re-allow espanso to interpret actions
+        self.is_injecting.store(false, Release);
     }
 }
 
@@ -331,6 +338,26 @@ impl <'a, S: KeyboardManager, C: ClipboardManager,
                 exit(0);
             },
             _ => {}
+        }
+    }
+}
+
+impl <'a, S: KeyboardManager, C: ClipboardManager,
+    M: ConfigManager<'a>, U: UIManager, R: Renderer> SystemEventReceiver for Engine<'a, S, C, M, U, R>{
+
+    fn on_system_event(&self, e: SystemEvent) {
+        match e {
+            // MacOS specific
+            SystemEvent::SecureInputEnabled(app_name, path) => {
+                info!("SecureInput has been acquired by {}, preventing espanso from working correctly. Full path: {}", app_name, path);
+
+                if self.config_manager.default_config().secure_input_notification {
+                    self.ui_manager.notify_delay(&format!("{} has activated SecureInput. Espanso won't work until you disable it.", app_name), 5000);
+                }
+            },
+            SystemEvent::SecureInputDisabled => {
+                info!("SecureInput has been disabled.");
+            },
         }
     }
 }

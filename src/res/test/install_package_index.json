@@ -8,8 +8,8 @@
             "version": "0.1.0",
             "repo": "https://github.com/federico-terzi/espanso-hub-core",
             "desc": "Dummy package",
-            "author": "Federico Terzi"
-
+            "author": "Federico Terzi",
+            "is_core": true
         },
 
         {
@@ -18,7 +18,8 @@
             "version": "9.9.9",
             "repo": "https://github.com/federico-terzi/espanso-hub-core",
             "desc": "Dummy package",
-            "author": "Federico Terzi"
+            "author": "Federico Terzi",
+            "is_core": true
 
         },
 
@@ -28,7 +29,8 @@
             "version": "0.1.0",
             "repo": "https://github.com/federico-terzi/espanso-hub-core",
             "desc": "Dummy package",
-            "author": "Federico Terzi"
+            "author": "Federico Terzi",
+            "is_core": true
 
         },
 
@@ -38,7 +40,8 @@
             "version": "0.1.0",
             "repo": "https://github.com/federico-terzi/espanso-hub-core",
             "desc": "Dummy package",
-            "author": "Federico Terzi"
+            "author": "Federico Terzi",
+            "is_core": true
 
         },
 
@@ -49,7 +52,8 @@
             "version": "0.1.0",
             "repo": "https://github.com/federico-terzi/espanso-hub-core",
             "desc": "Include Italian accents substitutions to espanso.",
-            "author": "Federico Terzi"
+            "author": "Federico Terzi",
+            "is_core": true
 
         },
 
@@ -59,7 +63,8 @@
             "version": "0.1.0",
             "repo": "https://github.com/federico-terzi/espanso-hub-core",
             "desc": "Package that does not exist in the repo",
-            "author": "Federico Terzi"
+            "author": "Federico Terzi",
+            "is_core": true
 
         }
     ]}

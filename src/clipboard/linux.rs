@@ -19,7 +19,7 @@
 
 use std::process::{Command, Stdio};
 use std::io::{Write};
-use log::{error, warn};
+use log::{error};
 use std::path::Path;
 
 pub struct LinuxClipboardManager {}
@@ -86,6 +86,10 @@ impl super::ClipboardManager for LinuxClipboardManager {
         let res = Command::new("xclip")
             .args(&["-selection", "clipboard", "-t", mime, "-i", &image_path])
             .spawn();
+
+        if let Err(e) = res {
+            error!("Could not set image clipboard: {}", e);
+        }
     }
 }
 

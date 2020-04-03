@@ -108,9 +108,9 @@ const LINUX_SERVICE_CONTENT : &str = include_str!("res/linux/systemd.service");
 const LINUX_SERVICE_FILENAME : &str = "espanso.service";
 
 #[cfg(target_os = "linux")]
-pub fn register(config_set: ConfigSet) {
+pub fn register(_: ConfigSet) {
     use std::fs::create_dir_all;
-    use std::process::{Command, ExitStatus};
+    use std::process::{Command};
 
     // Check if espanso service is already registered
     let res = Command::new("systemctl")
@@ -191,7 +191,7 @@ pub enum VerifyResult {
 #[cfg(target_os = "linux")]
 pub fn verify() -> VerifyResult {
     use regex::Regex;
-    use std::process::{Command, ExitStatus};
+    use std::process::{Command};
 
     // Check if espanso service is already registered
     let res = Command::new("systemctl")
@@ -206,7 +206,7 @@ pub fn verify() -> VerifyResult {
     }
 
     lazy_static! {
-        static ref ExecPathRegex: Regex = Regex::new("ExecStart=(?P<path>.*?)\\s").unwrap();
+        static ref EXEC_PATH_REGEX: Regex = Regex::new("ExecStart=(?P<path>.*?)\\s").unwrap();
     }
 
     // Check if the currently registered path is valid
@@ -217,7 +217,7 @@ pub fn verify() -> VerifyResult {
         let output = String::from_utf8_lossy(res.stdout.as_slice());
         let output = output.trim();
         if res.status.success() {
-            let caps = ExecPathRegex.captures(output).unwrap();
+            let caps = EXEC_PATH_REGEX.captures(output).unwrap();
             let path = caps.get(1).map_or("", |m| m.as_str());
             let espanso_path = std::env::current_exe().expect("Could not get espanso executable path");
 
@@ -231,13 +231,13 @@ pub fn verify() -> VerifyResult {
 }
 
 #[cfg(target_os = "linux")]
-pub fn unregister(config_set: ConfigSet) {
-    use std::process::{Command, ExitStatus};
+pub fn unregister(_: ConfigSet) {
+    use std::process::{Command};
 
     // Disable the service first
-    let res = Command::new("systemctl")
+    Command::new("systemctl")
         .args(&["--user", "disable", "espanso"])
-        .status();
+        .status().expect("Unable to invoke systemctl");
 
     // Then delete the espanso.service entry
     let config_dir = dirs::config_dir().expect("Could not get configuration directory");

@@ -1,6 +1,6 @@
 [package]
 name = "espanso"
-version = "0.5.3"
+version = "0.5.4"
 authors = ["Federico Terzi <federicoterzi96@gmail.com>"]
 license = "GPL-3.0"
 description = "Cross-platform Text Expander written in Rust"
@@ -26,7 +26,6 @@ chrono = "0.4.9"
 lazy_static = "1.4.0"
 walkdir = "2.2.9"
 reqwest = "0.9.20"
-git2 = {version = "0.10.1", features = ["https"]}
 tempfile = "3.1.0"
 dialoguer = "0.4.0"
 rand = "0.7.2"

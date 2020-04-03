@@ -21,10 +21,12 @@ pub(crate) mod manager;
 
 use serde::{Serialize, Deserialize};
 
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub enum Event {
     Action(ActionType),
-    Key(KeyEvent)
+    Key(KeyEvent),
+    System(SystemEvent),
 }
 
 #[derive(Debug, Clone)]
@@ -57,7 +59,7 @@ pub enum KeyEvent {
     Other
 }
 
-#[warn(non_camel_case_types)]
+#[allow(non_camel_case_types)]
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum KeyModifier {
     CTRL,
@@ -132,6 +134,14 @@ impl KeyModifier {
     }
 }
 
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+pub enum SystemEvent {
+    // MacOS specific
+    SecureInputEnabled(String, String),  // AppName, App Path
+    SecureInputDisabled,
+}
+
 // Receivers
 
 pub trait KeyEventReceiver {
@@ -140,6 +150,10 @@ pub trait KeyEventReceiver {
 
 pub trait ActionEventReceiver {
     fn on_action_event(&self, e: ActionType);
+}
+
+pub trait SystemEventReceiver {
+    fn on_system_event(&self, e: SystemEvent);
 }
 
 // TESTS

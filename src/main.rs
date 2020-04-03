@@ -20,33 +20,32 @@
 #[macro_use]
 extern crate lazy_static;
 
-use std::thread;
 use std::fs::{File, OpenOptions};
+use std::io::{BufRead, BufReader};
 use std::process::exit;
-use std::sync::{mpsc, Arc};
+use std::sync::{Arc, mpsc};
+use std::sync::atomic::AtomicBool;
 use std::sync::mpsc::Receiver;
+use std::thread;
 use std::time::Duration;
 
-use clap::{App, Arg, SubCommand, ArgMatches};
+use clap::{App, Arg, ArgMatches, SubCommand};
 use fs2::FileExt;
-use log::{info, warn, LevelFilter};
+use log::{info, LevelFilter, warn};
 use simplelog::{CombinedLogger, SharedLogger, TerminalMode, TermLogger, WriteLogger};
 
-use crate::config::{ConfigSet, ConfigManager};
+use crate::config::{ConfigManager, ConfigSet};
 use crate::config::runtime::RuntimeConfigManager;
 use crate::engine::Engine;
 use crate::event::*;
 use crate::event::manager::{DefaultEventManager, EventManager};
 use crate::matcher::scrolling::ScrollingMatcher;
+use crate::package::{InstallResult, PackageManager, RemoveResult, UpdateResult};
+use crate::package::default::DefaultPackageManager;
+use crate::package::zip::ZipPackageResolver;
+use crate::protocol::*;
 use crate::system::SystemManager;
 use crate::ui::UIManager;
-use crate::protocol::*;
-use std::io::{BufReader, BufRead};
-use crate::package::default::DefaultPackageManager;
-use crate::package::{PackageManager, InstallResult, UpdateResult, RemoveResult, PackageResolver};
-use std::sync::atomic::AtomicBool;
-use crate::package::git::GitPackageResolver;
-use crate::package::zip::ZipPackageResolver;
 
 mod ui;
 mod edit;
@@ -73,12 +72,12 @@ const LOG_FILE: &str = "espanso.log";
 fn main() {
     let install_subcommand = SubCommand::with_name("install")
         .about("Install a package. Equivalent to 'espanso package install'")
-        .arg(Arg::with_name("no-git")
-            .short("g")
-            .long("no-git")
+        .arg(Arg::with_name("external")
+            .short("e")
+            .long("external")
             .required(false)
             .takes_value(false)
-            .help("Install packages avoiding the GIT package provider. Try this flag if the default mode is not working."))
+            .help("Allow installing packages from non-verified repositories."))
         .arg(Arg::with_name("package_name")
             .help("Package name"));
 
@@ -332,7 +331,7 @@ fn daemon_main(config_set: ConfigSet) {
     // we could reinterpret the characters we are injecting
     let is_injecting = Arc::new(std::sync::atomic::AtomicBool::new(false));
 
-    let context = context::new(send_channel.clone(), is_injecting.clone());
+    let context = context::new(config_set.default.clone(), send_channel.clone(), is_injecting.clone());
 
     let config_set_copy = config_set.clone();
     thread::Builder::new().name("daemon_background".to_string()).spawn(move || {
@@ -376,6 +375,7 @@ fn daemon_background(receive_channel: Receiver<Event>, config_set: ConfigSet, is
         receive_channel,
         vec!(&matcher),
         vec!(&engine, &matcher),
+        vec!(&engine),
     );
 
     info!("espanso is running!");
@@ -445,7 +445,7 @@ fn start_daemon(config_set: ConfigSet) {
 
     // If Systemd is not available in the system, espanso should default to unmanaged mode
     // See issue https://github.com/federico-terzi/espanso/issues/139
-    let force_unmanaged = if let Err(status) = status {
+    let force_unmanaged = if let Err(_) = status {
         true
     } else {
         false
@@ -759,11 +759,13 @@ fn install_main(_config_set: ConfigSet, matches: &ArgMatches) {
         exit(1);
     });
 
-    let package_resolver: Box<dyn PackageResolver> = if matches.is_present("no-git") {
-        println!("Using alternative package provider");
-        Box::new(ZipPackageResolver::new())
+    let package_resolver= Box::new(ZipPackageResolver::new());
+
+    let allow_external: bool = if matches.is_present("external") {
+        println!("Allowing external repositories");
+        true
     }else{
-        Box::new(GitPackageResolver::new())
+        false
     };
 
     let mut package_manager = DefaultPackageManager::new_default(Some(package_resolver));
@@ -792,7 +794,7 @@ fn install_main(_config_set: ConfigSet, matches: &ArgMatches) {
         println!("Using cached package index, run 'espanso package refresh' to update it.")
     }
 
-    let res = package_manager.install_package(package_name);
+    let res = package_manager.install_package(package_name, allow_external);
 
     match res {
         Ok(install_result) => {
@@ -812,6 +814,22 @@ fn install_main(_config_set: ConfigSet, matches: &ArgMatches) {
                 InstallResult::AlreadyInstalled => {
                     eprintln!("{} already installed!", package_name);
                 },
+                InstallResult::BlockedExternalPackage(repo_url) => {
+                    eprintln!("Warning: the requested package is hosted on an external repository:");
+                    eprintln!();
+                    eprintln!("{}", repo_url);
+                    eprintln!();
+                    eprintln!("and its contents may not have been verified by espanso.");
+                    eprintln!();
+                    eprintln!("For your security, espanso blocks packages that are not verified.");
+                    eprintln!("If you want to install the package anyway, you can force espanso");
+                    eprintln!("to install it with the following command, but please do it only");
+                    eprintln!("if you trust the source or you verified the contents of the package");
+                    eprintln!("by checking out the repository listed above.");
+                    eprintln!();
+                    eprintln!("espanso install {} --external", package_name);
+                    eprintln!();
+                }
                 InstallResult::Installed => {
                     println!("{} successfully installed!", package_name);
                     println!();
@@ -975,7 +993,7 @@ fn edit_main(matches: &ArgMatches) {
 
     if should_reload {
         // Load the configuration
-        let mut config_set = ConfigSet::load_default().unwrap_or_else(|e| {
+        let config_set = ConfigSet::load_default().unwrap_or_else(|e| {
             eprintln!("{}", e);
             eprintln!("Unable to reload espanso due to previous configuration error.");
             exit(1);
@@ -1008,9 +1026,9 @@ fn release_lock(lock_file: File) {
     lock_file.unlock().unwrap()
 }
 
-/// Used to make sure all the required dependencies are present before starting espanso.
+/// Used to make sure all the required dependencies and conditions are satisfied before starting espanso.
 fn precheck_guard() {
-    let satisfied = check::check_dependencies();
+    let satisfied = check::check_preconditions();
     if !satisfied {
         println!();
         println!("Pre-check was not successful, espanso could not be started.");

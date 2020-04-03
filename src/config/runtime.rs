@@ -204,12 +204,8 @@ impl <'a, S: SystemManager> super::ConfigManager<'a> for RuntimeConfigManager<'a
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tempfile::{NamedTempFile, TempDir};
-    use crate::config::{DEFAULT_CONFIG_FILE_NAME, DEFAULT_CONFIG_FILE_CONTENT};
-    use std::fs;
-    use std::path::PathBuf;
     use crate::config::ConfigManager;
-    use crate::config::tests::{create_temp_espanso_directories, create_temp_file_in_dir, create_user_config_file};
+    use crate::config::tests::{create_temp_espanso_directories, create_user_config_file};
 
     struct DummySystemManager {
         title: RefCell<String>,
@@ -251,18 +247,18 @@ mod tests {
     fn test_runtime_constructor_regex_load_correctly() {
         let (data_dir, package_dir) = create_temp_espanso_directories();
 
-        let specific_path = create_user_config_file(&data_dir.path(), "specific.yml", r###"
+        create_user_config_file(&data_dir.path(), "specific.yml", r###"
         name: myname1
         filter_exec: "Title"
         "###);
 
-        let specific_path2 = create_user_config_file(&data_dir.path(), "specific2.yml", r###"
+        create_user_config_file(&data_dir.path(), "specific2.yml", r###"
         name: myname2
         filter_title: "Yeah"
         filter_class: "Car"
         "###);
 
-        let specific_path3 = create_user_config_file(&data_dir.path(), "specific3.yml", r###"
+        create_user_config_file(&data_dir.path(), "specific3.yml", r###"
         name: myname3
         filter_title: "Nice"
         "###);
@@ -302,18 +298,18 @@ mod tests {
     fn test_runtime_constructor_malformed_regexes_are_ignored() {
         let (data_dir, package_dir) = create_temp_espanso_directories();
 
-        let specific_path = create_user_config_file(&data_dir.path(), "specific.yml", r###"
+        create_user_config_file(&data_dir.path(), "specific.yml", r###"
         name: myname1
         filter_exec: "[`-_]"
         "###);
 
-        let specific_path2 = create_user_config_file(&data_dir.path(), "specific2.yml", r###"
+        create_user_config_file(&data_dir.path(), "specific2.yml", r###"
         name: myname2
         filter_title: "[`-_]"
         filter_class: "Car"
         "###);
 
-        let specific_path3 = create_user_config_file(&data_dir.path(), "specific3.yml", r###"
+        create_user_config_file(&data_dir.path(), "specific3.yml", r###"
         name: myname3
         filter_title: "Nice"
         "###);
@@ -353,7 +349,7 @@ mod tests {
     fn test_runtime_calculate_active_config_specific_title_match() {
         let (data_dir, package_dir) = create_temp_espanso_directories();
 
-        let specific_path = create_user_config_file(&data_dir.path(), "specific.yml", r###"
+        create_user_config_file(&data_dir.path(), "specific.yml", r###"
         name: chrome
         filter_title: "Chrome"
         "###);
@@ -368,10 +364,11 @@ mod tests {
         assert_eq!(config_manager.calculate_active_config().name, "chrome");
     }
 
+    #[test]
     fn test_runtime_calculate_active_config_specific_class_match() {
         let (data_dir, package_dir) = create_temp_espanso_directories();
 
-        let specific_path = create_user_config_file(&data_dir.path(), "specific.yml", r###"
+        create_user_config_file(&data_dir.path(), "specific.yml", r###"
         name: chrome
         filter_class: "Chrome"
         "###);
@@ -386,10 +383,11 @@ mod tests {
         assert_eq!(config_manager.calculate_active_config().name, "chrome");
     }
 
+    #[test]
     fn test_runtime_calculate_active_config_specific_exec_match() {
         let (data_dir, package_dir) = create_temp_espanso_directories();
 
-        let specific_path = create_user_config_file(&data_dir.path(), "specific.yml", r###"
+        create_user_config_file(&data_dir.path(), "specific.yml", r###"
         name: chrome
         filter_exec: "chrome.exe"
         "###);
@@ -404,10 +402,11 @@ mod tests {
         assert_eq!(config_manager.calculate_active_config().name, "chrome");
     }
 
+    #[test]
     fn test_runtime_calculate_active_config_specific_multi_filter_match() {
         let (data_dir, package_dir) = create_temp_espanso_directories();
 
-        let specific_path = create_user_config_file(&data_dir.path(), "specific.yml", r###"
+        create_user_config_file(&data_dir.path(), "specific.yml", r###"
         name: chrome
         filter_class: Browser
         filter_exec: "firefox.exe"
@@ -427,7 +426,7 @@ mod tests {
     fn test_runtime_calculate_active_config_no_match() {
         let (data_dir, package_dir) = create_temp_espanso_directories();
 
-        let specific_path = create_user_config_file(&data_dir.path(), "specific.yml", r###"
+        create_user_config_file(&data_dir.path(), "specific.yml", r###"
         name: firefox
         filter_title: "Firefox"
         "###);
@@ -446,7 +445,7 @@ mod tests {
     fn test_runtime_active_config_cache() {
         let (data_dir, package_dir) = create_temp_espanso_directories();
 
-        let specific_path = create_user_config_file(&data_dir.path(), "specific.yml", r###"
+        create_user_config_file(&data_dir.path(), "specific.yml", r###"
         name: firefox
         filter_title: "Firefox"
         "###);
