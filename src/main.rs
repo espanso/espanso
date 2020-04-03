@@ -20,32 +20,32 @@
 #[macro_use]
 extern crate lazy_static;
 
-use std::thread;
 use std::fs::{File, OpenOptions};
+use std::io::{BufRead, BufReader};
 use std::process::exit;
-use std::sync::{mpsc, Arc};
+use std::sync::{Arc, mpsc};
+use std::sync::atomic::AtomicBool;
 use std::sync::mpsc::Receiver;
+use std::thread;
 use std::time::Duration;
 
-use clap::{App, Arg, SubCommand, ArgMatches};
+use clap::{App, Arg, ArgMatches, SubCommand};
 use fs2::FileExt;
-use log::{info, warn, LevelFilter};
+use log::{info, LevelFilter, warn};
 use simplelog::{CombinedLogger, SharedLogger, TerminalMode, TermLogger, WriteLogger};
 
-use crate::config::{ConfigSet, ConfigManager};
+use crate::config::{ConfigManager, ConfigSet};
 use crate::config::runtime::RuntimeConfigManager;
 use crate::engine::Engine;
 use crate::event::*;
 use crate::event::manager::{DefaultEventManager, EventManager};
 use crate::matcher::scrolling::ScrollingMatcher;
+use crate::package::{InstallResult, PackageManager, RemoveResult, UpdateResult};
+use crate::package::default::DefaultPackageManager;
+use crate::package::zip::ZipPackageResolver;
+use crate::protocol::*;
 use crate::system::SystemManager;
 use crate::ui::UIManager;
-use crate::protocol::*;
-use std::io::{BufReader, BufRead};
-use crate::package::default::DefaultPackageManager;
-use crate::package::{PackageManager, InstallResult, UpdateResult, RemoveResult, PackageResolver};
-use std::sync::atomic::AtomicBool;
-use crate::package::zip::ZipPackageResolver;
 
 mod ui;
 mod edit;
@@ -445,7 +445,7 @@ fn start_daemon(config_set: ConfigSet) {
 
     // If Systemd is not available in the system, espanso should default to unmanaged mode
     // See issue https://github.com/federico-terzi/espanso/issues/139
-    let force_unmanaged = if let Err(status) = status {
+    let force_unmanaged = if let Err(_) = status {
         true
     } else {
         false
@@ -993,7 +993,7 @@ fn edit_main(matches: &ArgMatches) {
 
     if should_reload {
         // Load the configuration
-        let mut config_set = ConfigSet::load_default().unwrap_or_else(|e| {
+        let config_set = ConfigSet::load_default().unwrap_or_else(|e| {
             eprintln!("{}", e);
             eprintln!("Unable to reload espanso due to previous configuration error.");
             exit(1);

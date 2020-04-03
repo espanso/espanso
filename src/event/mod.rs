@@ -21,6 +21,7 @@ pub(crate) mod manager;
 
 use serde::{Serialize, Deserialize};
 
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub enum Event {
     Action(ActionType),
@@ -58,7 +59,7 @@ pub enum KeyEvent {
     Other
 }
 
-#[warn(non_camel_case_types)]
+#[allow(non_camel_case_types)]
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum KeyModifier {
     CTRL,
@@ -133,6 +134,7 @@ impl KeyModifier {
     }
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub enum SystemEvent {
     // MacOS specific

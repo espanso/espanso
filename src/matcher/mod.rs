@@ -90,7 +90,7 @@ impl<'a> From<&'a AutoMatch> for Match{
         if other.propagate_case {
             // List with first letter capitalized
             let first_capitalized : Vec<String> = triggers.iter().map(|trigger| {
-                let mut capitalized = trigger.clone();
+                let capitalized = trigger.clone();
                 let mut v: Vec<char> = capitalized.chars().collect();
                 v[0] = v[0].to_uppercase().nth(0).unwrap();
                 v.into_iter().collect()

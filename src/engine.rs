@@ -17,7 +17,7 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::matcher::{Match, MatchReceiver, MatchContentType};
+use crate::matcher::{Match, MatchReceiver};
 use crate::keyboard::KeyboardManager;
 use crate::config::ConfigManager;
 use crate::config::BackendType;
@@ -25,17 +25,13 @@ use crate::clipboard::ClipboardManager;
 use log::{info, warn, debug, error};
 use crate::ui::{UIManager, MenuItem, MenuItemType};
 use crate::event::{ActionEventReceiver, ActionType, SystemEventReceiver, SystemEvent};
-use crate::extension::Extension;
 use crate::render::{Renderer, RenderResult};
 use std::cell::RefCell;
 use std::process::exit;
-use std::collections::HashMap;
-use std::path::PathBuf;
-use regex::{Regex, Captures};
-use std::time::SystemTime;
+use regex::{Regex};
 use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
-use std::sync::atomic::Ordering::{Relaxed, Release, Acquire, AcqRel, SeqCst};
+use std::sync::atomic::Ordering::Release;
 
 pub struct Engine<'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>,
                   U: UIManager, R: Renderer> {
@@ -47,7 +43,6 @@ pub struct Engine<'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<
     is_injecting: Arc<AtomicBool>,
 
     enabled: RefCell<bool>,
-    last_action_time: RefCell<SystemTime>,  // Used to block espanso from re-interpreting it's own inputs
 }
 
 impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIManager, R: Renderer>
@@ -56,7 +51,6 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
                config_manager: &'a M, ui_manager: &'a U,
                renderer: &'a R, is_injecting: Arc<AtomicBool>) -> Engine<'a, S, C, M, U, R> {
         let enabled = RefCell::new(true);
-        let last_action_time = RefCell::new(SystemTime::now());
 
         Engine{keyboard_manager,
             clipboard_manager,
@@ -65,7 +59,6 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
             renderer,
             is_injecting,
             enabled,
-            last_action_time,
         }
     }
 
@@ -110,20 +103,6 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
         }else {
             None
         }
-    }
-
-    /// Used to check if the last action has been executed within a specified interval.
-    /// If so, return true (blocking the action), otherwise false.
-    fn check_last_action_and_set(&self, interval: u128) -> bool {
-        let mut last_action_time = self.last_action_time.borrow_mut();
-        if let Ok(elapsed) = last_action_time.elapsed() {
-            if elapsed.as_millis() < interval {
-                return true;
-            }
-        }
-
-        (*last_action_time) = SystemTime::now();
-        return false;
     }
 }
 

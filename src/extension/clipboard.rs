@@ -17,7 +17,7 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use serde_yaml::{Mapping, Value};
+use serde_yaml::{Mapping};
 use crate::clipboard::ClipboardManager;
 
 pub struct ClipboardExtension {
@@ -37,7 +37,7 @@ impl super::Extension for ClipboardExtension {
         String::from("clipboard")
     }
 
-    fn calculate(&self, params: &Mapping, _: &Vec<String>) -> Option<String> {
+    fn calculate(&self, _: &Mapping, _: &Vec<String>) -> Option<String> {
         self.clipboard_manager.get_clipboard()
     }
 }

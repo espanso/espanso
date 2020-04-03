@@ -23,9 +23,8 @@ use crate::event::*;
 use crate::event::KeyModifier::*;
 use crate::bridge::linux::*;
 use std::process::exit;
-use log::{debug, error, info};
+use log::{debug, error};
 use std::ffi::CStr;
-use std::{thread, time};
 use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
 use std::sync::atomic::Ordering::Acquire;
@@ -38,7 +37,7 @@ pub struct LinuxContext {
 }
 
 impl LinuxContext {
-    pub fn new(config: Configs, send_channel: Sender<Event>, is_injecting: Arc<AtomicBool>) -> Box<LinuxContext> {
+    pub fn new(_: Configs, send_channel: Sender<Event>, is_injecting: Arc<AtomicBool>) -> Box<LinuxContext> {
         // Check if the X11 context is available
         let x11_available = unsafe {
             check_x11()
@@ -86,7 +85,7 @@ impl Drop for LinuxContext {
 
 // Native bridge code
 
-extern fn keypress_callback(_self: *mut c_void, raw_buffer: *const u8, len: i32,
+extern fn keypress_callback(_self: *mut c_void, raw_buffer: *const u8, _len: i32,
                             event_type: i32, key_code: i32) {
     unsafe {
         let _self = _self as *mut LinuxContext;
@@ -101,7 +100,7 @@ extern fn keypress_callback(_self: *mut c_void, raw_buffer: *const u8, len: i32,
 
         if event_type == 0 {  // Char event
             // Convert the received buffer to a string
-            let c_str = CStr::from_ptr(raw_buffer as (*const c_char));
+            let c_str = CStr::from_ptr(raw_buffer as *const c_char);
             let char_str = c_str.to_str();
 
             // Send the char through the channel

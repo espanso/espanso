@@ -51,14 +51,14 @@ mod tests {
         let dest_tmp_dir = TempDir::new().expect("Error creating temp directory");
 
         let source_dir = source_tmp_dir.path().join("source");
-        create_dir(&source_dir);
-        std::fs::write(source_dir.join("file1.txt"), "file1");
-        std::fs::write(source_dir.join("file2.txt"), "file2");
+        create_dir(&source_dir).unwrap();
+        std::fs::write(source_dir.join("file1.txt"), "file1").unwrap();
+        std::fs::write(source_dir.join("file2.txt"), "file2").unwrap();
 
         let target_dir = dest_tmp_dir.path().join("source");
-        create_dir(&target_dir);
+        create_dir(&target_dir).unwrap();
 
-        copy_dir(&source_dir, &target_dir);
+        copy_dir(&source_dir, &target_dir).unwrap();
 
         assert!(dest_tmp_dir.path().join("source").exists());
         assert!(dest_tmp_dir.path().join("source/file1.txt").exists());
@@ -71,17 +71,17 @@ mod tests {
         let dest_tmp_dir = TempDir::new().expect("Error creating temp directory");
 
         let source_dir = source_tmp_dir.path().join("source");
-        create_dir(&source_dir);
-        std::fs::write(source_dir.join("file1.txt"), "file1");
-        std::fs::write(source_dir.join("file2.txt"), "file2");
+        create_dir(&source_dir).unwrap();
+        std::fs::write(source_dir.join("file1.txt"), "file1").unwrap();
+        std::fs::write(source_dir.join("file2.txt"), "file2").unwrap();
         let nested_dir = source_dir.join("nested");
-        create_dir(&nested_dir);
-        std::fs::write(nested_dir.join("nestedfile.txt"), "nestedfile1");
+        create_dir(&nested_dir).unwrap();
+        std::fs::write(nested_dir.join("nestedfile.txt"), "nestedfile1").unwrap();
 
         let target_dir = dest_tmp_dir.path().join("source");
-        create_dir(&target_dir);
+        create_dir(&target_dir).unwrap();
 
-        copy_dir(&source_dir, &target_dir);
+        copy_dir(&source_dir, &target_dir).unwrap();
 
         assert!(dest_tmp_dir.path().join("source").exists());
         assert!(dest_tmp_dir.path().join("source/file1.txt").exists());
