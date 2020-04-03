@@ -17,11 +17,11 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// This functions are used to check if the required dependencies are satisfied
+// This functions are used to check if the required dependencies and conditions are satisfied
 // before starting espanso
 
 #[cfg(target_os = "linux")]
-pub fn check_dependencies() -> bool {
+pub fn check_preconditions() -> bool {
     use std::process::Command;
 
     let mut result = true;
@@ -48,13 +48,26 @@ pub fn check_dependencies() -> bool {
 }
 
 #[cfg(target_os = "macos")]
-pub fn check_dependencies() -> bool {
-    // Nothing to do here
+pub fn check_preconditions() -> bool {
+    // Make sure no app is currently using secure input.
+    let secure_input_app = crate::system::macos::MacSystemManager::get_secure_input_application();
+
+    if let Some((app_name, process)) = secure_input_app {
+        eprintln!("WARNING: An application is currently using SecureInput and might prevent espanso from working correctly.");
+        eprintln!();
+        eprintln!("APP: {}", app_name);
+        eprintln!("PROC: {}", process);
+        eprintln!();
+        eprintln!("Please close it or disable SecureInput for that application (most apps that use it have a");
+        eprintln!("setting to disable it).");
+        eprintln!("Until then, espanso might not work as expected.");
+    }
+
     true
 }
 
 #[cfg(target_os = "windows")]
-pub fn check_dependencies() -> bool {
+pub fn check_preconditions() -> bool {
     // Nothing needed on windows
     true
 }

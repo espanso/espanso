@@ -158,6 +158,15 @@ int32_t set_clipboard(char * text);
  */
 int32_t set_clipboard_image(char * path);
 
+/*
+ * If a process is currently holding SecureInput, then return 1 and set the pid pointer to the corresponding PID.
+ */
+int32_t get_secure_input_process(int64_t *pid);
+
+/*
+ * Find the executable path corresponding to the given PID, return 0 if no process was found.
+ */
+int32_t get_path_from_pid(int64_t pid, char *buff, int buff_size);
 
 };
 #endif //ESPANSO_BRIDGE_H

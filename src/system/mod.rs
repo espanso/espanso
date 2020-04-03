@@ -24,7 +24,7 @@ mod windows;
 mod linux;
 
 #[cfg(target_os = "macos")]
-mod macos;
+pub mod macos;
 
 pub trait SystemManager {
     fn get_current_window_title(&self) -> Option<String>;

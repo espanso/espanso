@@ -17,7 +17,6 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub(crate) mod git;
 pub(crate) mod zip;
 pub(crate) mod default;
 
@@ -31,7 +30,7 @@ pub trait PackageManager {
 
     fn get_package(&self, name: &str) -> Option<Package>;
 
-    fn install_package(&self, name: &str) -> Result<InstallResult, Box<dyn Error>>;
+    fn install_package(&self, name: &str, allow_external: bool) -> Result<InstallResult, Box<dyn Error>>;
     fn install_package_from_repo(&self, name: &str, repo_url: &str) -> Result<InstallResult, Box<dyn Error>>;
 
     fn remove_package(&self, name: &str) -> Result<RemoveResult, Box<dyn Error>>;
@@ -50,8 +49,16 @@ pub struct Package {
     pub version: String,
     pub repo: String,
     pub desc: String,
-    pub author: String
+    pub author: String,
+
+    #[serde(default = "default_is_core")]
+    pub is_core: bool,
+    #[serde(default = "default_original_repo")]
+    pub original_repo: String,
 }
+
+fn default_is_core() -> bool {false}
+fn default_original_repo() -> String {"".to_owned()}
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct PackageIndex {
@@ -75,7 +82,8 @@ pub enum InstallResult {
     UnableToParsePackageInfo,
     MissingPackageVersion,
     AlreadyInstalled,
-    Installed
+    Installed,
+    BlockedExternalPackage(String)
 }
 
 #[derive(Clone, Debug, PartialEq)]

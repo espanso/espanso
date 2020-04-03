@@ -44,6 +44,7 @@ fn print_config() {
     println!("cargo:rustc-link-lib=dylib=c++");
     println!("cargo:rustc-link-lib=static=macbridge");
     println!("cargo:rustc-link-lib=framework=Cocoa");
+    println!("cargo:rustc-link-lib=framework=IOKit");
 }
 
 fn main()

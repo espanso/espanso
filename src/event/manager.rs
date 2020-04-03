@@ -17,7 +17,7 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::event::{KeyEventReceiver, ActionEventReceiver, Event};
+use crate::event::{KeyEventReceiver, ActionEventReceiver, Event, SystemEventReceiver};
 use std::sync::mpsc::Receiver;
 
 pub trait EventManager {
@@ -28,15 +28,18 @@ pub struct DefaultEventManager<'a> {
     receive_channel: Receiver<Event>,
     key_receivers: Vec<&'a dyn KeyEventReceiver>,
     action_receivers: Vec<&'a dyn ActionEventReceiver>,
+    system_receivers: Vec<&'a dyn SystemEventReceiver>,
 }
 
 impl<'a> DefaultEventManager<'a> {
     pub fn new(receive_channel: Receiver<Event>, key_receivers: Vec<&'a dyn KeyEventReceiver>,
-               action_receivers: Vec<&'a dyn ActionEventReceiver>) -> DefaultEventManager<'a> {
+               action_receivers: Vec<&'a dyn ActionEventReceiver>,
+               system_receivers: Vec<&'a dyn SystemEventReceiver>) -> DefaultEventManager<'a> {
         DefaultEventManager {
             receive_channel,
             key_receivers,
             action_receivers,
+            system_receivers
         }
     }
 }
@@ -52,6 +55,9 @@ impl <'a> EventManager for DefaultEventManager<'a> {
                         },
                         Event::Action(action_event) => {
                             self.action_receivers.iter().for_each(|&receiver| receiver.on_action_event(action_event.clone()));
+                        }
+                        Event::System(system_event) => {
+                            self.system_receivers.iter().for_each(move |&receiver| receiver.on_system_event(system_event.clone()));
                         }
                     }
                 },

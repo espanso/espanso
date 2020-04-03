@@ -20,7 +20,7 @@
 use std::os::raw::c_char;
 
 use std::ffi::CStr;
-use crate::bridge::macos::{get_active_app_bundle, get_active_app_identifier};
+use crate::bridge::macos::{get_active_app_bundle, get_active_app_identifier, get_secure_input_process, get_path_from_pid};
 
 pub struct MacSystemManager {
 
@@ -72,6 +72,68 @@ impl MacSystemManager {
     pub fn new() -> MacSystemManager {
         MacSystemManager{
 
+        }
+    }
+
+    /// Check whether an application is currently holding the Secure Input.
+    /// Return None if no application has claimed SecureInput, its PID otherwise.
+    pub fn get_secure_input_pid() -> Option<i64> {
+        unsafe {
+            let mut pid: i64 = -1;
+            let res = get_secure_input_process(&mut pid as *mut i64);
+
+            if res > 0{
+                Some(pid)
+            }else{
+                None
+            }
+        }
+    }
+
+    /// Check whether an application is currently holding the Secure Input.
+    /// Return None if no application has claimed SecureInput, Some((AppName, AppPath)) otherwise.
+    pub fn get_secure_input_application() -> Option<(String, String)> {
+        use regex::Regex;
+
+        lazy_static! {
+            static ref APP_REGEX: Regex = Regex::new("/([^/]+).app/").unwrap();
+        };
+
+        unsafe {
+            let pid = MacSystemManager::get_secure_input_pid();
+
+            if let Some(pid) = pid {
+                // Size of the buffer is ruled by the PROC_PIDPATHINFO_MAXSIZE constant.
+                // the underlying proc_pidpath REQUIRES a buffer of that dimension, otherwise it fail silently.
+                let mut buffer : [c_char; 4096] = [0; 4096];
+                let res = get_path_from_pid(pid, buffer.as_mut_ptr(), buffer.len() as i32);
+
+                if res > 0 {
+                    let c_string = CStr::from_ptr(buffer.as_ptr());
+                    let string = c_string.to_str();
+                    if let Ok(path) = string {
+                        if !path.trim().is_empty() {
+                            let process = path.trim().to_string();
+                            let caps = APP_REGEX.captures(&process);
+                            let app_name = if let Some(caps) = caps {
+                                caps.get(1).map_or("", |m| m.as_str()).to_owned()
+                            }else{
+                                process.to_owned()
+                            };
+
+                            Some((app_name, process))
+                        }else{
+                            None
+                        }
+                    }else{
+                        None
+                    }
+                }else{
+                    None
+                }
+            }else{
+                None
+            }
         }
     }
 }

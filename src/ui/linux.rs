@@ -30,10 +30,14 @@ pub struct LinuxUIManager {
 
 impl super::UIManager for LinuxUIManager {
     fn notify(&self, message: &str) {
+        self.notify_delay(message, 2000);
+    }
+
+    fn notify_delay(&self, message: &str, duration: i32) {
         let res = Command::new("notify-send")
-                        .args(&["-i", self.icon_path.to_str().unwrap_or_default(),
-                            "-t", "2000", "espanso", message])
-                        .output();
+            .args(&["-i", self.icon_path.to_str().unwrap_or_default(),
+                "-t", &duration.to_string(), "espanso", message])
+            .output();
 
         if let Err(e) = res {
             error!("Could not send a notification, error: {}", e);
