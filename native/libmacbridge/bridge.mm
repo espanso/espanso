@@ -33,15 +33,17 @@ extern "C" {
 
 void * context_instance;
 char * icon_path;
+int32_t show_icon;
 AppDelegate * delegate_ptr;
 
 KeypressCallback keypress_callback;
 IconClickCallback icon_click_callback;
 ContextMenuClickCallback context_menu_click_callback;
 
-int32_t initialize(void * context, const char * _icon_path) {
+int32_t initialize(void * context, const char * _icon_path, int32_t _show_icon) {
     context_instance = context;
     icon_path = strdup(_icon_path);
+    show_icon = _show_icon;
 
     AppDelegate *delegate = [[AppDelegate alloc] init];
     delegate_ptr = delegate;

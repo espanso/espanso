@@ -24,16 +24,18 @@
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
 {
     // Setup status icon
-    myStatusItem = [[[NSStatusBar systemStatusBar] statusItemWithLength:NSSquareStatusItemLength] retain];
+    if (show_icon) {
+        myStatusItem = [[[NSStatusBar systemStatusBar] statusItemWithLength:NSSquareStatusItemLength] retain];
 
-    NSString *nsIconPath = [NSString stringWithUTF8String:icon_path];
-    NSImage *statusImage = [[NSImage alloc] initWithContentsOfFile:nsIconPath];
-    [statusImage setTemplate:YES];
+        NSString *nsIconPath = [NSString stringWithUTF8String:icon_path];
+        NSImage *statusImage = [[NSImage alloc] initWithContentsOfFile:nsIconPath];
+        [statusImage setTemplate:YES];
 
-    [myStatusItem.button setImage:statusImage];
-    [myStatusItem setHighlightMode:YES];
-    [myStatusItem.button setAction:@selector(statusIconClick:)];
-    [myStatusItem.button setTarget:self];
+        [myStatusItem.button setImage:statusImage];
+        [myStatusItem setHighlightMode:YES];
+        [myStatusItem.button setAction:@selector(statusIconClick:)];
+        [myStatusItem.button setTarget:self];
+    }
 
     // Setup key listener
     [NSEvent addGlobalMonitorForEventsMatchingMask:(NSEventMaskKeyDown | NSEventMaskFlagsChanged | NSEventMaskLeftMouseDown | NSEventMaskRightMouseDown)
