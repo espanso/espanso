@@ -18,6 +18,10 @@
   link: ""
   image: ""
 
+- name: Timo Runge
+  link: http://timorunge.com/
+  image: "timo.jpeg"
+
 - name: Simon Wolf
   link: https://www.swwritings.com/
   image: ""
@@ -71,5 +75,9 @@
   image: "scott.jpeg"
 
 - name: Steven Schmutz
+  link: ""
+  image: ""
+
+- name: Svellingen
   link: ""
   image: ""
