@@ -66,6 +66,8 @@ fn default_restore_clipboard_delay() -> i32 { 300 }
 fn default_exclude_default_entries() -> bool {false}
 fn default_secure_input_watcher_enabled() -> bool {true}
 fn default_secure_input_notification() -> bool {true}
+fn default_show_notifications() -> bool {true}
+fn default_show_icon() -> bool {true}
 fn default_secure_input_watcher_interval() -> i32 {5000}
 fn default_matches() -> Vec<Match> { Vec::new() }
 fn default_global_vars() -> Vec<MatchVariable> { Vec::new() }
@@ -156,6 +158,12 @@ pub struct Configs {
     #[serde(default = "default_exclude_default_entries")]
     pub exclude_default_entries: bool,
 
+    #[serde(default = "default_show_notifications")]
+    pub show_notifications: bool,
+
+    #[serde(default = "default_show_icon")]
+    pub show_icon: bool,
+
     #[serde(default = "default_matches")]
     pub matches: Vec<Match>,
 
@@ -205,6 +213,8 @@ impl Configs {
         validate_field!(result, self.secure_input_watcher_enabled, default_secure_input_watcher_enabled());
         validate_field!(result, self.secure_input_watcher_interval, default_secure_input_watcher_interval());
         validate_field!(result, self.secure_input_notification, default_secure_input_notification());
+        validate_field!(result, self.show_notifications, default_show_notifications());
+        validate_field!(result, self.show_icon, default_show_icon());
 
         result
     }
