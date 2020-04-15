@@ -267,6 +267,7 @@ impl Configs {
                 }
             }
         }else{
+            eprintln!("Error: Cannot load file {:?}", path);
             Err(ConfigLoadError::FileNotFound)
         }
     }
@@ -374,6 +375,11 @@ impl ConfigSet {
 
                 // Skip non-yaml config files
                 if path.extension().unwrap_or_default().to_str().unwrap_or_default() != "yml" {
+                    continue;
+                }
+
+                // Skip hidden files
+                if path.file_name().unwrap_or_default().to_str().unwrap_or_default().starts_with(".") {
                     continue;
                 }
 
@@ -939,6 +945,32 @@ mod tests {
         );
 
         create_user_config_file(data_dir.path(), "specific.zzz", r###"
+        name: specific1
+
+        exclude_default_entries: true
+
+        matches:
+            - trigger: "hello"
+              replace: "newstring"
+        "###);
+
+        let config_set = ConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
+        assert_eq!(config_set.specific.len(), 0);
+    }
+
+    #[test]
+    fn test_hidden_files_are_ignored() {
+        let (data_dir, package_dir) = create_temp_espanso_directories_with_default_content(
+            r###"
+            matches:
+                - trigger: ":lol"
+                  replace: "LOL"
+                - trigger: ":yess"
+                  replace: "Bob"
+            "###
+        );
+
+        create_user_config_file(data_dir.path(), ".specific.yml", r###"
         name: specific1
 
         exclude_default_entries: true
