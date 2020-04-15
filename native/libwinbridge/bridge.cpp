@@ -39,6 +39,7 @@
 const long refreshKeyboardLayoutInterval = 2000;
 
 void * manager_instance;
+int32_t show_icon;
 
 // Keyboard listening
 
@@ -298,14 +299,17 @@ LRESULT CALLBACK window_procedure(HWND window, unsigned int msg, WPARAM wp, LPAR
         }
         default:
             if (msg == WM_TASKBARCREATED) {  // Explorer crashed, recreate the icon
-                Shell_NotifyIcon(NIM_ADD, &nid);
+                if (show_icon) {
+                    Shell_NotifyIcon(NIM_ADD, &nid);
+                }
             }
             return DefWindowProc(window, msg, wp, lp);
     }
 }
 
-int32_t initialize(void * self, wchar_t * ico_path, wchar_t * bmp_path) {
+int32_t initialize(void * self, wchar_t * ico_path, wchar_t * bmp_path, int32_t _show_icon) {
     manager_instance = self;
+    show_icon = _show_icon;
 
     // Load the images
     g_espanso_bmp = (HBITMAP)LoadImage(NULL, bmp_path, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
@@ -440,7 +444,9 @@ int32_t initialize(void * self, wchar_t * ico_path, wchar_t * bmp_path) {
             StringCchCopy(nid.szTip, ARRAYSIZE(nid.szTip), L"espanso");
 
             // Show the notification.
-            Shell_NotifyIcon(NIM_ADD, &nid);
+            if (show_icon) {
+                Shell_NotifyIcon(NIM_ADD, &nid);
+            }
         }
     }else{
         // Something went wrong, error.

@@ -87,8 +87,14 @@ impl WindowsContext {
             let ico_file_c = U16CString::from_str(ico_icon).unwrap();
             let bmp_file_c = U16CString::from_str(bmp_icon).unwrap();
 
+            let show_icon = if config.show_icon {
+                1
+            }else{
+                0
+            };
+
             // Initialize the windows
-            let res = initialize(context_ptr, ico_file_c.as_ptr(), bmp_file_c.as_ptr());
+            let res = initialize(context_ptr, ico_file_c.as_ptr(), bmp_file_c.as_ptr(), show_icon);
             if res != 1 {
                 panic!("Can't initialize Windows context")
             }
