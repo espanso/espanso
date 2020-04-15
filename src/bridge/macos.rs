@@ -29,7 +29,7 @@ pub struct MacMenuItem {
 #[allow(improper_ctypes)]
 #[link(name="macbridge", kind="static")]
 extern {
-    pub fn initialize(s: *const c_void, icon_path: *const c_char);
+    pub fn initialize(s: *const c_void, icon_path: *const c_char, show_icon: i32);
     pub fn eventloop();
     pub fn headless_eventloop();
 

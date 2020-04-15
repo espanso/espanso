@@ -83,7 +83,13 @@ impl MacContext {
             register_context_menu_click_callback(context_menu_click_callback);
 
             let status_icon_path = CString::new(status_icon_target.to_str().unwrap_or_default()).unwrap_or_default();
-            initialize(context_ptr, status_icon_path.as_ptr());
+            let show_icon = if config.show_icon {
+                1
+            }else{
+                0
+            };
+
+            initialize(context_ptr, status_icon_path.as_ptr(), show_icon);
         }
 
         context
