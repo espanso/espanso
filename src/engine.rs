@@ -257,7 +257,11 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
         let mut enabled_ref = self.enabled.borrow_mut();
         *enabled_ref = status;
 
-        self.ui_manager.notify(message);
+        let config = self.config_manager.default_config();
+
+        if config.show_notifications {
+            self.ui_manager.notify(message);
+        }
     }
 
     fn on_passive(&self) {
@@ -351,7 +355,8 @@ impl <'a, S: KeyboardManager, C: ClipboardManager,
             SystemEvent::SecureInputEnabled(app_name, path) => {
                 info!("SecureInput has been acquired by {}, preventing espanso from working correctly. Full path: {}", app_name, path);
 
-                if self.config_manager.default_config().secure_input_notification {
+                let config = self.config_manager.default_config();
+                if config.secure_input_notification && config.show_notifications {
                     self.ui_manager.notify_delay(&format!("{} has activated SecureInput. Espanso won't work until you disable it.", app_name), 5000);
                 }
             },
