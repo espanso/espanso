@@ -21,6 +21,7 @@ use widestring::{U16CString};
 use crate::bridge::windows::*;
 use super::PasteShortcut;
 use log::error;
+use crate::config::Configs;
 
 pub struct WindowsKeyboardManager {
 }
