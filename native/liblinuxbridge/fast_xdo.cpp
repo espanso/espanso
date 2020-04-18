@@ -27,7 +27,6 @@ void fast_send_key(const xdo_t *xdo, Window window, charcodemap_t *key,
     /* Properly ensure the modstate is set by finding a key
      * that activates each bit in the modifier state */
     int mask = modstate | key->modmask;
-    int use_xtest = 0;
 
     /* Since key events have 'state' (shift, etc) in the event, we don't
          * need to worry about key press ordering. */
@@ -37,7 +36,7 @@ void fast_send_key(const xdo_t *xdo, Window window, charcodemap_t *key,
     xk.keycode = key->code;
     xk.state = mask | (key->group << 13);
     xk.type = (is_press ? KeyPress : KeyRelease);
-    XSendEvent(xdo->xdpy, xk.window, True, KeyPressMask, (XEvent *)&xk);
+    XSendEvent(xdo->xdpy, xk.window, True, 0, (XEvent *)&xk);
 
     /* Skipping the usleep if delay is 0 is much faster than calling usleep(0) */
     XFlush(xdo->xdpy);
