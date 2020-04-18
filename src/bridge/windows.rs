@@ -30,7 +30,7 @@ pub struct WindowsMenuItem {
 #[link(name="winbridge", kind="static")]
 extern {
     pub fn start_daemon_process() -> i32;
-    pub fn initialize(s: *const c_void, ico_path: *const u16, bmp_path: *const u16) -> i32;
+    pub fn initialize(s: *const c_void, ico_path: *const u16, bmp_path: *const u16, show_icon: i32) -> i32;
 
     // SYSTEM
     pub fn get_active_window_name(buffer: *mut u16, size: i32) -> i32;

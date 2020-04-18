@@ -18,6 +18,7 @@
  */
 
 #include "bridge.h"
+#include "fast_xdo.h"
 
 #include <locale.h>
 #include <stdio.h>
@@ -302,16 +303,80 @@ void send_enter() {
     xdo_send_keysequence_window(xdo_context, CURRENTWINDOW, "Return", 1000);
 }
 
+void fast_release_all_keys() {
+    Window focused;
+    int revert_to;
+    XGetInputFocus(xdo_context->xdpy, &focused, &revert_to);
+
+    char keys[32];
+    XQueryKeymap(xdo_context->xdpy, keys);  // Get the current status of the keyboard
+    for (int i = 0; i<32; i++) {
+        // Only those that show a keypress should be changed
+        if (keys[i] != 0) {
+            for (int k = 0; k<8; k++) {
+                if ((keys[i] & (1 << k)) != 0) {  // Bit by bit check
+                    int key_code = i*8 + k;
+                    fast_send_event(xdo_context, focused, key_code, 0);
+                }
+            }
+        }
+    }
+
+    XFlush(xdo_context->xdpy);
+}
+
+void fast_send_string(const char * string) {
+    // It may happen that when an expansion is triggered, some keys are still pressed.
+    // This causes a problem if the expanded match contains that character, as the injection
+    // will not be able to register that keypress (as it is already pressed).
+    // To solve the problem, before an expansion we get which keys are currently pressed
+    // and inject a key_release event so that they can be further registered.
+    fast_release_all_keys();
+
+    Window focused;
+    int revert_to;
+    XGetInputFocus(xdo_context->xdpy, &focused, &revert_to);
+
+    fast_enter_text_window(xdo_context, focused, string, 1);
+}
+
+void _fast_send_keycode_to_focused_window(int KeyCode, int32_t count) {
+    int keycode = XKeysymToKeycode(xdo_context->xdpy, KeyCode);
+
+    Window focused;
+    int revert_to;
+    XGetInputFocus(xdo_context->xdpy, &focused, &revert_to);
+
+    for (int i = 0; i<count; i++) {
+        fast_send_event(xdo_context, focused, keycode, 1);
+        fast_send_event(xdo_context, focused, keycode, 0);
+    }
+
+    XFlush(xdo_context->xdpy);
+}
+
+void fast_send_enter() {
+    _fast_send_keycode_to_focused_window(XK_Return, 1);
+}
+
 void delete_string(int32_t count) {
     for (int i = 0; i<count; i++) {
         xdo_send_keysequence_window(xdo_context, CURRENTWINDOW, "BackSpace", 1000);
     }
 }
 
+void fast_delete_string(int32_t count) {
+    _fast_send_keycode_to_focused_window(XK_BackSpace, count);
+}
+
 void left_arrow(int32_t count) {
     for (int i = 0; i<count; i++) {
         xdo_send_keysequence_window(xdo_context, CURRENTWINDOW, "Left", 1000);
     }
+}
+
+void fast_left_arrow(int32_t count) {
+    _fast_send_keycode_to_focused_window(XK_Left, count);
 }
 
 void trigger_paste() {

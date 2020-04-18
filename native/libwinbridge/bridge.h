@@ -33,7 +33,7 @@ extern void * manager_instance;
  * Initialize the Windows parameters
  * return: 1 if OK, -1 otherwise.
  */
-extern "C" int32_t initialize(void * self, wchar_t * ico_path, wchar_t * bmp_path);
+extern "C" int32_t initialize(void * self, wchar_t * ico_path, wchar_t * bmp_path, int32_t show_icon);
 
 #define LEFT_VARIANT 1
 #define RIGHT_VARIANT 2
