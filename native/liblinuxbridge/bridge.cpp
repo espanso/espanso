@@ -311,7 +311,11 @@ void fast_send_string(const char * string) {
     // and inject a key_release event so that they can be further registered.
     release_all_keys();
 
-    xdo_enter_text_window(xdo_context, CURRENTWINDOW, string, 1);
+    Window focused;
+    int revert_to;
+    XGetInputFocus(xdo_context->xdpy, &focused, &revert_to);
+
+    fast_enter_text_window(xdo_context, focused, string, 1);
 }
 
 void _fast_send_keycode_to_focused_window(int KeyCode, int32_t count) {
