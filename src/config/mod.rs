@@ -257,7 +257,7 @@ impl Default for BackendType {
 
     #[cfg(target_os = "linux")]
     fn default() -> Self {
-        BackendType::Clipboard
+        BackendType::Auto
     }
 }
 
