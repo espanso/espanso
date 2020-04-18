@@ -18,6 +18,7 @@
  */
 
 use serde::{Serialize, Deserialize};
+use crate::config::Configs;
 
 #[cfg(target_os = "windows")]
 mod windows;
@@ -29,12 +30,12 @@ mod linux;
 mod macos;
 
 pub trait KeyboardManager {
-    fn send_string(&self, s: &str);
-    fn send_enter(&self);
-    fn trigger_paste(&self, shortcut: &PasteShortcut);
-    fn delete_string(&self, count: i32);
-    fn move_cursor_left(&self, count: i32);
-    fn trigger_copy(&self);
+    fn send_string(&self, active_config: &Configs, s: &str);
+    fn send_enter(&self, active_config: &Configs);
+    fn trigger_paste(&self, active_config: &Configs);
+    fn delete_string(&self, active_config: &Configs, count: i32);
+    fn move_cursor_left(&self, active_config: &Configs, count: i32);
+    fn trigger_copy(&self, active_config: &Configs);
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

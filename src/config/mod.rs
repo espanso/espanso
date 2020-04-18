@@ -68,6 +68,7 @@ fn default_secure_input_watcher_enabled() -> bool {true}
 fn default_secure_input_notification() -> bool {true}
 fn default_show_notifications() -> bool {true}
 fn default_show_icon() -> bool {true}
+fn default_fast_inject() -> bool {false}
 fn default_secure_input_watcher_interval() -> i32 {5000}
 fn default_matches() -> Vec<Match> { Vec::new() }
 fn default_global_vars() -> Vec<MatchVariable> { Vec::new() }
@@ -163,6 +164,9 @@ pub struct Configs {
 
     #[serde(default = "default_show_icon")]
     pub show_icon: bool,
+
+    #[serde(default = "default_fast_inject")]
+    pub fast_inject: bool,
 
     #[serde(default = "default_matches")]
     pub matches: Vec<Match>,

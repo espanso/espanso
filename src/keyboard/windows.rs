@@ -26,7 +26,7 @@ pub struct WindowsKeyboardManager {
 }
 
 impl super::KeyboardManager for WindowsKeyboardManager {
-    fn send_string(&self, s: &str) {
+    fn send_string(&self, _: &Configs, s: &str) {
         let res = U16CString::from_str(s);
         match res {
             Ok(s) => {
@@ -39,16 +39,16 @@ impl super::KeyboardManager for WindowsKeyboardManager {
 
     }
 
-    fn send_enter(&self) {
+    fn send_enter(&self, _: &Configs) {
         unsafe {
             // Send the VK_RETURN key press
             send_vkey(0x0D);
         }
     }
 
-    fn trigger_paste(&self, shortcut: &PasteShortcut) {
+    fn trigger_paste(&self, active_config: &Configs) {
         unsafe {
-            match shortcut {
+            match active_config.paste_shortcut {
                 PasteShortcut::Default => {
                     unsafe {
                         trigger_paste();
@@ -61,20 +61,20 @@ impl super::KeyboardManager for WindowsKeyboardManager {
         }
     }
 
-    fn delete_string(&self, count: i32) {
+    fn delete_string(&self, _: &Configs, count: i32) {
         unsafe {
             delete_string(count)
         }
     }
 
-    fn move_cursor_left(&self, count: i32) {
+    fn move_cursor_left(&self, _: &Configs, count: i32) {
         unsafe {
             // Send the left arrow key multiple times
             send_multi_vkey(0x25, count)
         }
     }
 
-    fn trigger_copy(&self) {
+    fn trigger_copy(&self, _: &Configs) {
         unsafe {
             trigger_copy();
         }

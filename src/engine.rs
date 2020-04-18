@@ -129,7 +129,7 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
             m.triggers[trigger_offset].chars().count() as i32 + 1 // Count also the separator
         };
 
-        self.keyboard_manager.delete_string(char_count);
+        self.keyboard_manager.delete_string(&config, char_count);
 
         let mut previous_clipboard_content : Option<String> = None;
 
@@ -194,10 +194,10 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
 
                         for (i, split) in splits.enumerate() {
                             if i > 0 {
-                                self.keyboard_manager.send_enter();
+                                self.keyboard_manager.send_enter(&config);
                             }
 
-                            self.keyboard_manager.send_string(split);
+                            self.keyboard_manager.send_string(&config, split);
                         }
                     },
                     BackendType::Clipboard => {
@@ -206,7 +206,7 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
                         previous_clipboard_content = self.return_content_if_preserve_clipboard_is_enabled();
 
                         self.clipboard_manager.set_clipboard(&target_string);
-                        self.keyboard_manager.trigger_paste(&config.paste_shortcut);
+                        self.keyboard_manager.trigger_paste(&config);
                     },
                     _ => {
                         error!("Unsupported backend type evaluation.");
@@ -216,7 +216,7 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
 
                 if let Some(moves) = cursor_rewind {
                     // Simulate left arrow key presses to bring the cursor into the desired position
-                    self.keyboard_manager.move_cursor_left(moves);
+                    self.keyboard_manager.move_cursor_left(&config, moves);
                 }
             },
             RenderResult::Image(image_path) => {
@@ -225,7 +225,7 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
                 previous_clipboard_content = self.return_content_if_preserve_clipboard_is_enabled();
 
                 self.clipboard_manager.set_clipboard_image(&image_path);
-                self.keyboard_manager.trigger_paste(&config.paste_shortcut);
+                self.keyboard_manager.trigger_paste(&config);
             },
             RenderResult::Error => {
                 error!("Could not render match: {}", m.triggers[trigger_offset]);
@@ -283,7 +283,7 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
         std::thread::sleep(std::time::Duration::from_millis(100));  // TODO: avoid hardcoding
 
         // Trigger a copy shortcut to transfer the content of the selection to the clipboard
-        self.keyboard_manager.trigger_copy();
+        self.keyboard_manager.trigger_copy(&config);
 
         // Sleep for a while, giving time to effectively copy the text
         std::thread::sleep(std::time::Duration::from_millis(100));  // TODO: avoid hardcoding
@@ -312,7 +312,7 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
                                 self.clipboard_manager.set_clipboard(&payload);
 
                                 std::thread::sleep(std::time::Duration::from_millis(100)); // TODO: avoid hardcoding
-                                self.keyboard_manager.trigger_paste(&config.paste_shortcut);
+                                self.keyboard_manager.trigger_paste(&config);
                             },
                             _ => {
                                 warn!("Cannot expand passive match")

@@ -63,9 +63,19 @@ extern "C" void register_keypress_callback(KeypressCallback callback);
 extern "C" void send_string(const char * string);
 
 /*
+ * Type the given string by simulating Key Presses using a faster inject method
+ */
+extern "C" void fast_send_string(const char * string);
+
+/*
  * Send the backspace keypress, *count* times.
  */
 extern "C" void delete_string(int32_t count);
+
+/*
+ * Send the backspace keypress, *count* times using a faster inject method
+ */
+extern "C" void fast_delete_string(int32_t count);
 
 /*
  * Send an Enter key press
@@ -73,9 +83,19 @@ extern "C" void delete_string(int32_t count);
 extern "C" void send_enter();
 
 /*
+ * Send an Enter key press using a faster inject method
+ */
+extern "C" void fast_send_enter();
+
+/*
  * Send the left arrow keypress, *count* times.
  */
 extern "C" void left_arrow(int32_t count);
+
+/*
+ * Send the left arrow keypress, *count* times using a faster inject method
+ */
+extern "C" void fast_left_arrow(int32_t count);
 
 /*
  * Trigger normal paste ( Pressing CTRL+V )
