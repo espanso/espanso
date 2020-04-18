@@ -350,7 +350,9 @@ fn daemon_background(receive_channel: Receiver<Event>, config_set: ConfigSet, is
     let config_manager = RuntimeConfigManager::new(config_set, system_manager);
 
     let ui_manager = ui::get_uimanager();
-    ui_manager.notify("espanso is running!");
+    if config_manager.default_config().show_notifications {
+        ui_manager.notify("espanso is running!");
+    }
 
     let clipboard_manager = clipboard::get_manager();
 

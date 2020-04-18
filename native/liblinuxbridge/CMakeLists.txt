@@ -4,6 +4,6 @@ project(liblinuxbridge)
 set (CMAKE_CXX_STANDARD 14)
 set(CMAKE_REQUIRED_INCLUDES "/usr/local/include" "/usr/include")
 
-add_library(linuxbridge STATIC bridge.cpp bridge.h)
+add_library(linuxbridge STATIC bridge.cpp bridge.h fast_xdo.cpp fast_xdo.h)
 
 install(TARGETS linuxbridge DESTINATION .)

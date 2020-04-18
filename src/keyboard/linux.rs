@@ -21,28 +21,39 @@ use std::ffi::CString;
 use crate::bridge::linux::*;
 use super::PasteShortcut;
 use log::error;
+use crate::config::Configs;
 
 pub struct LinuxKeyboardManager {
 }
 
 impl super::KeyboardManager for LinuxKeyboardManager {
-    fn send_string(&self, s: &str) {
+    fn send_string(&self, active_config: &Configs, s: &str) {
         let res = CString::new(s);
         match res {
-            Ok(cstr) => unsafe { send_string(cstr.as_ptr()); }
+            Ok(cstr) => unsafe {
+                if active_config.fast_inject {
+                    fast_send_string(cstr.as_ptr());
+                }else{
+                    send_string(cstr.as_ptr());
+                }
+            }
             Err(e) => panic!(e.to_string())
         }
     }
 
-    fn send_enter(&self) {
+    fn send_enter(&self, active_config: &Configs) {
         unsafe {
-            send_enter();
+            if active_config.fast_inject {
+                fast_send_enter();
+            }else{
+                send_enter();
+            }
         }
     }
 
-    fn trigger_paste(&self, shortcut: &PasteShortcut) {
+    fn trigger_paste(&self, active_config: &Configs) {
         unsafe {
-            match shortcut {
+            match active_config.paste_shortcut {
                 PasteShortcut::Default => {
                     let is_special = is_current_window_special();
 
@@ -79,17 +90,27 @@ impl super::KeyboardManager for LinuxKeyboardManager {
         }
     }
 
-    fn delete_string(&self, count: i32) {
-        unsafe {delete_string(count)}
-    }
-
-    fn move_cursor_left(&self, count: i32) {
+    fn delete_string(&self, active_config: &Configs, count: i32) {
         unsafe {
-            left_arrow(count);
+            if active_config.fast_inject {
+                fast_delete_string(count);
+            }else{
+                delete_string(count)
+            }
         }
     }
 
-    fn trigger_copy(&self) {
+    fn move_cursor_left(&self, active_config: &Configs, count: i32) {
+        unsafe {
+            if active_config.fast_inject {
+                fast_left_arrow(count);
+            }else{
+                left_arrow(count);
+            }
+        }
+    }
+
+    fn trigger_copy(&self, _: &Configs) {
         unsafe {
             trigger_copy();
         }

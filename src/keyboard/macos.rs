@@ -21,12 +21,13 @@ use std::ffi::CString;
 use crate::bridge::macos::*;
 use super::PasteShortcut;
 use log::error;
+use crate::config::Configs;
 
 pub struct MacKeyboardManager {
 }
 
 impl super::KeyboardManager for MacKeyboardManager {
-    fn send_string(&self, s: &str) {
+    fn send_string(&self, _: &Configs, s: &str) {
         let res = CString::new(s);
         match res {
             Ok(cstr) => unsafe { send_string(cstr.as_ptr()); }
@@ -34,16 +35,16 @@ impl super::KeyboardManager for MacKeyboardManager {
         }
     }
 
-    fn send_enter(&self) {
+    fn send_enter(&self, _: &Configs) {
         unsafe {
             // Send the kVK_Return key press
             send_vkey(0x24);
         }
     }
 
-    fn trigger_paste(&self, shortcut: &PasteShortcut) {
+    fn trigger_paste(&self, active_config: &Configs) {
         unsafe {
-            match shortcut {
+            match active_config.paste_shortcut {
                 PasteShortcut::Default => {
                     unsafe {
                         trigger_paste();
@@ -56,17 +57,17 @@ impl super::KeyboardManager for MacKeyboardManager {
         }
     }
 
-    fn trigger_copy(&self) {
+    fn trigger_copy(&self, _: &Configs) {
         unsafe {
             trigger_copy();
         }
     }
 
-    fn delete_string(&self, count: i32) {
+    fn delete_string(&self, _: &Configs, count: i32) {
         unsafe {delete_string(count)}
     }
 
-    fn move_cursor_left(&self, count: i32) {
+    fn move_cursor_left(&self, _: &Configs, count: i32) {
         unsafe {
             // Simulate the Left arrow count times
             send_multi_vkey(0x7B, count);

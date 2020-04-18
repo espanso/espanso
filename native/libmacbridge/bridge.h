@@ -26,11 +26,12 @@ extern "C" {
 
 extern void * context_instance;
 extern char * icon_path;
+extern int32_t show_icon;
 
 /*
 * Initialize the AppDelegate and check for accessibility permissions
 */
-int32_t initialize(void * context, const char * icon_path);
+int32_t initialize(void * context, const char * icon_path, int32_t show_icon);
 
 /*
  * Start the event loop indefinitely. Blocking call.

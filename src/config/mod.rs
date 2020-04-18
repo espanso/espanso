@@ -66,6 +66,9 @@ fn default_restore_clipboard_delay() -> i32 { 300 }
 fn default_exclude_default_entries() -> bool {false}
 fn default_secure_input_watcher_enabled() -> bool {true}
 fn default_secure_input_notification() -> bool {true}
+fn default_show_notifications() -> bool {true}
+fn default_show_icon() -> bool {true}
+fn default_fast_inject() -> bool {false}
 fn default_secure_input_watcher_interval() -> i32 {5000}
 fn default_matches() -> Vec<Match> { Vec::new() }
 fn default_global_vars() -> Vec<MatchVariable> { Vec::new() }
@@ -156,6 +159,15 @@ pub struct Configs {
     #[serde(default = "default_exclude_default_entries")]
     pub exclude_default_entries: bool,
 
+    #[serde(default = "default_show_notifications")]
+    pub show_notifications: bool,
+
+    #[serde(default = "default_show_icon")]
+    pub show_icon: bool,
+
+    #[serde(default = "default_fast_inject")]
+    pub fast_inject: bool,
+
     #[serde(default = "default_matches")]
     pub matches: Vec<Match>,
 
@@ -205,6 +217,8 @@ impl Configs {
         validate_field!(result, self.secure_input_watcher_enabled, default_secure_input_watcher_enabled());
         validate_field!(result, self.secure_input_watcher_interval, default_secure_input_watcher_interval());
         validate_field!(result, self.secure_input_notification, default_secure_input_notification());
+        validate_field!(result, self.show_notifications, default_show_notifications());
+        validate_field!(result, self.show_icon, default_show_icon());
 
         result
     }
@@ -243,7 +257,7 @@ impl Default for BackendType {
 
     #[cfg(target_os = "linux")]
     fn default() -> Self {
-        BackendType::Clipboard
+        BackendType::Auto
     }
 }
 
@@ -267,6 +281,7 @@ impl Configs {
                 }
             }
         }else{
+            eprintln!("Error: Cannot load file {:?}", path);
             Err(ConfigLoadError::FileNotFound)
         }
     }
@@ -374,6 +389,11 @@ impl ConfigSet {
 
                 // Skip non-yaml config files
                 if path.extension().unwrap_or_default().to_str().unwrap_or_default() != "yml" {
+                    continue;
+                }
+
+                // Skip hidden files
+                if path.file_name().unwrap_or_default().to_str().unwrap_or_default().starts_with(".") {
                     continue;
                 }
 
@@ -939,6 +959,32 @@ mod tests {
         );
 
         create_user_config_file(data_dir.path(), "specific.zzz", r###"
+        name: specific1
+
+        exclude_default_entries: true
+
+        matches:
+            - trigger: "hello"
+              replace: "newstring"
+        "###);
+
+        let config_set = ConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
+        assert_eq!(config_set.specific.len(), 0);
+    }
+
+    #[test]
+    fn test_hidden_files_are_ignored() {
+        let (data_dir, package_dir) = create_temp_espanso_directories_with_default_content(
+            r###"
+            matches:
+                - trigger: ":lol"
+                  replace: "LOL"
+                - trigger: ":yess"
+                  replace: "Bob"
+            "###
+        );
+
+        create_user_config_file(data_dir.path(), ".specific.yml", r###"
         name: specific1
 
         exclude_default_entries: true

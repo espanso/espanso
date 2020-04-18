@@ -47,4 +47,9 @@ extern {
     pub fn trigger_alt_shift_ins_paste();
     pub fn trigger_ctrl_alt_paste();
     pub fn trigger_copy();
+
+    pub fn fast_send_string(string: *const c_char);
+    pub fn fast_delete_string(count: i32);
+    pub fn fast_left_arrow(count: i32);
+    pub fn fast_send_enter();
 }
