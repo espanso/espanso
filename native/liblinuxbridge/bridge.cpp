@@ -316,7 +316,7 @@ void fast_release_all_keys() {
             for (int k = 0; k<8; k++) {
                 if ((keys[i] & (1 << k)) != 0) {  // Bit by bit check
                     int key_code = i*8 + k;
-                    fast_send_event(xdo_context, focused, keycode, 0);
+                    fast_send_event(xdo_context, focused, key_code, 0);
                 }
             }
         }
