@@ -54,6 +54,10 @@
   link: https://github.com/richardlissimore
   image: "richard.png"
 
+- name: Donald Brady
+  link: https://bradydonald.github.io/
+  image: "donald.jpeg"
+
 - name: Marcelo Subtil Marcal
   link: http://smarcal.com/
   image: "marcelo.jpeg"
@@ -75,6 +79,10 @@
   image: "scott.jpeg"
 
 - name: Steven Schmutz
+  link: ""
+  image: ""
+
+- name: sjs2109
   link: ""
   image: ""
 
