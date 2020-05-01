@@ -39,7 +39,7 @@ Matches are very flexible and powerful to solve many tasks. You can learn all ab
 
 ![Match](/assets/images/match2.png)
 
-espanso ships with very few built-in Matches to give you the maximum flexibility, but you can expand it's capabilities
+espanso ships with very few built-in Matches to give you the maximum flexibility, but you can expand its capabilities
 in two ways: creating your own **custom matches** or **installing packages**. Both of these possibilities are introduced below.
 
 ### Configuration

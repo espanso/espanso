@@ -27,6 +27,16 @@ Then don't forget to **restart** espanso using:
 espanso restart
 ```
 
+#### External Packages
+
+Some packages (namely the bigger ones that would make the core repository too large) are now considered external, and espanso will block the installation by default, prompting the user to verify the source of the package (the repository).
+
+In case the user wants to proceed with the installation, a the `--external` flag could be used:
+
+```
+espanso install <package> --external
+```
+
 #### From a Repository
 
 Currently packages can only be installed from the [espanso hub](https://hub.espanso.org/), but direct 

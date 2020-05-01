@@ -2,7 +2,7 @@
 title: Configuration
 layout: docs
 ---
-Following a Unix-like philosophy, **espanso uses files to manage it's configuration**
+Following a Unix-like philosophy, **espanso uses files to manage its configuration**
 instead of GUIs. This has many advantages, such as the capability to easily sync your
 configurations between machines using [Git](https://git-scm.com/) or cloud services
 such as [Dropbox](https://www.dropbox.com/) or [Google Drive](https://www.google.com/drive/).
@@ -170,12 +170,15 @@ Here's a list of all options available for the configuration file:
 
 Option | Description | Possible Values | Default | App-Specific 
 --- | --- | --- | --- | ---
-`backend` | The typing engine used. `Inject` simulate keypresses, `Clipboard` simulates a copy/paste | `Clipboard` or `Inject` | `Inject` on Win and macOS, `Clipboard` on Linux | Yes
+`backend` | The typing engine used. `Inject` simulate keypresses, `Clipboard` simulates a copy/paste, `Auto` is available on Linux only and combines the two previous. | `Clipboard`, `Inject` or `Auto` (Linux only) | `Inject` on Win and macOS, `Auto` on Linux | Yes
 `backspace_limit` | How many backspace espanso tracks to correct misspelled keywords | int | `3` | No
-`enable_active` | Disable the active mode for the current configuration | `True`/`False` | `True` | Yes
-`enable_passive` | Disable the passive mode for the current configuration | `True`/`False` | `False` | Yes
+`enable_active` | Disable the active mode for the current configuration | `true`/`false` | `true` | Yes
+`enable_passive` | Disable the passive mode for the current configuration | `true`/`false` | `false` | Yes
 `parent` | The target for the current configuration file, mainly used in packages | string | `self` | Yes
 `ipc_server_port` | Windows only. Set the daemon listening port | int | `34982` | No
-`exclude_default_entries` | Used in app-specific configs, avoid parent matches and global variables | `True`/`False` | `False` | Yes
-`toggle_key` | Change the key used to toggle espanso active mode | `CTRL`, `ALT`, `SHIFT`, `META` | `ALT` | No
-`passive_key` | Change the key used to trigger passive mode | `CTRL`, `ALT`, `SHIFT`, `META` | `OFF` | No
+`exclude_default_entries` | Used in app-specific configs, avoid parent matches and global variables | `true`/`false` | `false` | Yes
+`toggle_key` | Change the key used to toggle espanso active mode | `CTRL`, `ALT`, `SHIFT`, `META`, `LEFT_CTRL`, `LEFT_ALT`, `LEFT_SHIFT`, `LEFT_META`, `RIGHT_CTRL`, `RIGHT_ALT`, `RIGHT_SHIFT`, `RIGHT_META`, `OFF`| `ALT` | No
+`passive_key` | Change the key used to trigger passive mode | `CTRL`, `ALT`, `SHIFT`, `META`, `LEFT_CTRL`, `LEFT_ALT`, `LEFT_SHIFT`, `LEFT_META`, `RIGHT_CTRL`, `RIGHT_ALT`, `RIGHT_SHIFT`, `RIGHT_META`, `OFF`| `OFF` | No
+`secure_input_notification` | Enable/Disable the Secure Input notification on macOS | `true`/`false` | `true` | No
+`show_icon` | Show/Hide the icon in the status bar on macOS and Windows | `true`/`false` | `true` | No
+`show_notifications` | Show/Hide the notifications| `true`/`false` | `true` | No
