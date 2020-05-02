@@ -127,8 +127,8 @@ extern fn keypress_callback(_self: *mut c_void, raw_buffer: *const u16, len: i32
             return;
         }
 
-        if is_key_down != 0 {  // KEY DOWN EVENT
-            if event_type == 0 {  // Char event
+        if event_type == 0 {  // Char event
+            if is_key_down != 0 { // KEY DOWN EVENT
                 // Convert the received buffer to a string
                 let buffer = std::slice::from_raw_parts(raw_buffer, len as usize);
                 let c_string = U16CStr::from_slice_with_nul(buffer);
@@ -143,15 +143,15 @@ extern fn keypress_callback(_self: *mut c_void, raw_buffer: *const u16, len: i32
                             (*_self).send_channel.send(event).unwrap();
                         },
                         Err(e) => {
-                            error!("Unable to receive char: {}",e);
+                            error!("Unable to receive char: {}", e);
                         },
                     }
-                }else{
+                } else {
                     error!("unable to decode widechar");
                 }
             }
-        }else{  // KEY UP event
-            if event_type == 1 {  // Modifier event
+        }else if event_type == 1 {  // Modifier event
+            if is_key_down == 1 {  // Keyup event
                 let modifier: Option<KeyModifier> = match (key_code, variant) {
                     (0x5B, _) => Some(LEFT_META),
                     (0x5C, _) => Some(RIGHT_META),
@@ -172,11 +172,11 @@ extern fn keypress_callback(_self: *mut c_void, raw_buffer: *const u16, len: i32
                     let event = Event::Key(KeyEvent::Other);
                     (*_self).send_channel.send(event).unwrap();
                 }
-            }else{
-                // Other type of event
-                let event = Event::Key(KeyEvent::Other);
-                (*_self).send_channel.send(event).unwrap();
             }
+        }else{
+            // Other type of event
+            let event = Event::Key(KeyEvent::Other);
+            (*_self).send_channel.send(event).unwrap();
         }
     }
 }
