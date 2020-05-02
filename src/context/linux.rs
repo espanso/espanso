@@ -125,6 +125,7 @@ extern fn keypress_callback(_self: *mut c_void, raw_buffer: *const u8, _len: i32
                 37 => Some(LEFT_CTRL),
                 105 => Some(RIGHT_CTRL),
                 22 => Some(BACKSPACE),
+                66 => Some(CAPS_LOCK),
                 _ => None,
             };
 
