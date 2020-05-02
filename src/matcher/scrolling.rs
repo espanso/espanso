@@ -21,7 +21,7 @@ use crate::matcher::{Match, MatchReceiver, TriggerEntry};
 use std::cell::{RefCell};
 use crate::event::{KeyModifier, ActionEventReceiver, ActionType};
 use crate::config::ConfigManager;
-use crate::event::KeyModifier::BACKSPACE;
+use crate::event::KeyModifier::{BACKSPACE, LEFT_SHIFT, RIGHT_SHIFT, CAPS_LOCK};
 use std::time::SystemTime;
 use std::collections::VecDeque;
 
@@ -237,8 +237,10 @@ impl <'a, R: MatchReceiver, M: ConfigManager<'a>> super::Matcher for ScrollingMa
         }
 
         // Consider modifiers as separators to improve word matches reliability
-        let mut was_previous_char_word_separator = self.was_previous_char_word_separator.borrow_mut();
-        *was_previous_char_word_separator = true;
+        if m != LEFT_SHIFT && m != RIGHT_SHIFT && m != CAPS_LOCK {
+            let mut was_previous_char_word_separator = self.was_previous_char_word_separator.borrow_mut();
+            *was_previous_char_word_separator = true;
+        }
     }
 
     fn handle_other(&self) {

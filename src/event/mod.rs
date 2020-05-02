@@ -79,6 +79,9 @@ pub enum KeyModifier {
     RIGHT_META,
     LEFT_SHIFT,
     RIGHT_SHIFT,
+
+    // Special cases, should not be used in config
+    CAPS_LOCK,
 }
 
 impl KeyModifier {
