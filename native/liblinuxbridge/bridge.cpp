@@ -340,7 +340,7 @@ void fast_send_string(const char * string) {
     fast_enter_text_window(xdo_context, focused, string, 1);
 }
 
-void _fast_send_keycode_to_focused_window(int KeyCode, int32_t count) {
+void _fast_send_keycode_to_focused_window(int KeyCode, int32_t count, int32_t delay) {
     int keycode = XKeysymToKeycode(xdo_context->xdpy, KeyCode);
 
     Window focused;
@@ -350,13 +350,18 @@ void _fast_send_keycode_to_focused_window(int KeyCode, int32_t count) {
     for (int i = 0; i<count; i++) {
         fast_send_event(xdo_context, focused, keycode, 1);
         fast_send_event(xdo_context, focused, keycode, 0);
+
+        if (delay > 0) {
+            usleep(delay * 1000);
+            XFlush(xdo_context->xdpy);
+        }
     }
 
     XFlush(xdo_context->xdpy);
 }
 
 void fast_send_enter() {
-    _fast_send_keycode_to_focused_window(XK_Return, 1);
+    _fast_send_keycode_to_focused_window(XK_Return, 1, 0);
 }
 
 void delete_string(int32_t count) {
@@ -365,8 +370,8 @@ void delete_string(int32_t count) {
     }
 }
 
-void fast_delete_string(int32_t count) {
-    _fast_send_keycode_to_focused_window(XK_BackSpace, count);
+void fast_delete_string(int32_t count, int32_t delay) {
+    _fast_send_keycode_to_focused_window(XK_BackSpace, count, delay);
 }
 
 void left_arrow(int32_t count) {
@@ -376,7 +381,7 @@ void left_arrow(int32_t count) {
 }
 
 void fast_left_arrow(int32_t count) {
-    _fast_send_keycode_to_focused_window(XK_Left, count);
+    _fast_send_keycode_to_focused_window(XK_Left, count, 0);
 }
 
 void trigger_paste() {

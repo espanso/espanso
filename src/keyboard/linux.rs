@@ -93,7 +93,7 @@ impl super::KeyboardManager for LinuxKeyboardManager {
     fn delete_string(&self, active_config: &Configs, count: i32) {
         unsafe {
             if active_config.fast_inject {
-                fast_delete_string(count);
+                fast_delete_string(count, active_config.backspace_delay);
             }else{
                 delete_string(count)
             }
