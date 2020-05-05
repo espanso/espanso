@@ -32,7 +32,7 @@ impl super::KeyboardManager for LinuxKeyboardManager {
         match res {
             Ok(cstr) => unsafe {
                 if active_config.fast_inject {
-                    fast_send_string(cstr.as_ptr());
+                    fast_send_string(cstr.as_ptr(), active_config.inject_delay);
                 }else{
                     send_string(cstr.as_ptr());
                 }
