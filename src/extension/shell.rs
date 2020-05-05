@@ -63,8 +63,8 @@ impl super::Extension for ShellExtension {
         }).to_string();
 
         let output = if cfg!(target_os = "windows") {
-            Command::new("cmd")
-                .args(&["/C", &cmd])
+            Command::new("powershell")
+                .args(&["-Command", &cmd])
                 .output()
         } else {
             Command::new("sh")
@@ -77,6 +77,14 @@ impl super::Extension for ShellExtension {
             Ok(output) => {
                 let output_str = String::from_utf8_lossy(output.stdout.as_slice());
                 let mut output_str = output_str.into_owned();
+                let error_str = String::from_utf8_lossy(output.stderr.as_slice());
+                let error_str = error_str.to_string();
+                let error_str = error_str.trim();
+
+                // Print stderror if present
+                if !error_str.is_empty() {
+                    warn!("Shell command reported error: \n{}", error_str);
+                }
 
                 // If specified, trim the output
                 let trim_opt = params.get(&Value::from("trim"));
