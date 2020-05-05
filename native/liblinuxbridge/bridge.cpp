@@ -338,7 +338,7 @@ void fast_send_string(const char * string, int32_t delay) {
     XGetInputFocus(xdo_context->xdpy, &focused, &revert_to);
 
     int actual_delay = 1;
-    if delay > 0 {
+    if (delay > 0) {
         actual_delay = delay * 1000;
     }
 
