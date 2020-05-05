@@ -495,8 +495,12 @@ void send_string(const wchar_t * string) {
 /*
  * Send the backspace keypress, *count* times.
  */
-void delete_string(int32_t count) {
-    send_multi_vkey(VK_BACK, count);
+void delete_string(int32_t count, int32_t delay) {
+    if (delay != 0) {
+        send_multi_vkey_with_delay(VK_BACK, count, delay);
+    }else{
+        send_multi_vkey(VK_BACK, count);
+    }
 }
 
 void send_vkey(int32_t vk) {
@@ -537,6 +541,27 @@ void send_multi_vkey(int32_t vk, int32_t count) {
     }
 
     SendInput(vec.size(), vec.data(), sizeof(INPUT));
+}
+
+void send_multi_vkey_with_delay(int32_t vk, int32_t count, int32_t delay) {
+    for (int i = 0; i < count; i++) {
+        INPUT input = { 0 };
+
+        input.type = INPUT_KEYBOARD;
+        input.ki.wScan = 0;
+        input.ki.time = 0;
+        input.ki.dwExtraInfo = 0;
+        input.ki.wVk = vk;
+        input.ki.dwFlags = 0; // 0 for key press
+        SendInput(1, &input, sizeof(INPUT));
+
+        Sleep(delay);
+
+        input.ki.dwFlags = KEYEVENTF_KEYUP; // KEYEVENTF_KEYUP for key release
+        SendInput(1, &input, sizeof(INPUT));
+
+        Sleep(delay);
+    }
 }
 
 void trigger_paste() {
