@@ -108,7 +108,14 @@ fn main() {
         .subcommand(SubCommand::with_name("edit")
             .about("Open the default text editor to edit config files and reload them automatically when exiting")
             .arg(Arg::with_name("config")
-                .help("Defaults to \"default\". The configuration file name to edit (without the .yml extension).")))
+                .help("Defaults to \"default\". The configuration file name to edit (without the .yml extension)."))
+            .arg(Arg::with_name("norestart")
+                .short("n")
+                .long("norestart")
+                .required(false)
+                .takes_value(false)
+                .help("Avoid restarting espanso after editing the file"))
+        )
         .subcommand(SubCommand::with_name("dump")
             .about("Prints all current configuration options."))
         .subcommand(SubCommand::with_name("detect")
@@ -993,7 +1000,14 @@ fn edit_main(matches: &ArgMatches) {
         }
     };
 
-    if should_reload {
+    let no_restart: bool = if matches.is_present("norestart") {
+        println!("Avoiding automatic restart");
+        true
+    }else{
+        false
+    };
+
+    if should_reload && !no_restart{
         // Load the configuration
         let config_set = ConfigSet::load_default().unwrap_or_else(|e| {
             eprintln!("{}", e);
