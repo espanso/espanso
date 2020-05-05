@@ -177,7 +177,7 @@ If you now type `:div`, you get the `<div></div>` expansion, with the cursor bet
 * This feature should be used with care in **multiline** expansions, as it may yield
   **unexpected results** when using it in code editors that support **auto indenting**. 
   This is due to the way the feature is implemented: espanso simulates a series of `left arrow`
-  key-presses to position the cursor in the right position. This works perfectly in single line
+  key-presses to position the cursor in the correct position. This works perfectly in single line
   replacements or in non-autoindenting fields, but can be problematic in code editors, as they
   automatically insert indentations that modify the number of required presses in a way
   espanso is not capable to detect.
