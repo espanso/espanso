@@ -62,9 +62,9 @@ impl super::KeyboardManager for WindowsKeyboardManager {
         }
     }
 
-    fn delete_string(&self, _: &Configs, count: i32) {
+    fn delete_string(&self, config: &Configs, count: i32) {
         unsafe {
-            delete_string(count)
+            delete_string(count, config.backspace_delay)
         }
     }
 
