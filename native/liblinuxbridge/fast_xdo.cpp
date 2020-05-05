@@ -215,8 +215,7 @@ int fast_enter_text_window(const xdo_t *xdo, Window window, const char *string, 
         key.needs_binding = 0;
         fast_send_keysequence_window_list_do(xdo, window, &key, 1, False, NULL, delay / 2);
 
-        /* XXX: Flush here or at the end? or never? */
-        //XFlush(xdo->xdpy);
+        XFlush(xdo->xdpy);
     } /* walk string generating a keysequence */
 
     //free(keys);

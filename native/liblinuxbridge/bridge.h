@@ -65,7 +65,7 @@ extern "C" void send_string(const char * string);
 /*
  * Type the given string by simulating Key Presses using a faster inject method
  */
-extern "C" void fast_send_string(const char * string);
+extern "C" void fast_send_string(const char * string, int32_t delay);
 
 /*
  * Send the backspace keypress, *count* times.

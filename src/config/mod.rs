@@ -63,6 +63,7 @@ fn default_enable_passive() -> bool { false }
 fn default_enable_active() -> bool { true }
 fn default_backspace_limit() -> i32 { 3 }
 fn default_backspace_delay() -> i32 { 0 }
+fn default_inject_delay() -> i32 { 0 }
 fn default_restore_clipboard_delay() -> i32 { 300 }
 fn default_exclude_default_entries() -> bool {false}
 fn default_secure_input_watcher_enabled() -> bool {true}
@@ -171,6 +172,9 @@ pub struct Configs {
 
     #[serde(default = "default_backspace_delay")]
     pub backspace_delay: i32,
+
+    #[serde(default = "default_inject_delay")]
+    pub inject_delay: i32,
 
     #[serde(default = "default_matches")]
     pub matches: Vec<Match>,
