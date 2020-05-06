@@ -18,7 +18,7 @@
  */
 
 use serde_yaml::{Mapping, Value};
-use std::process::Command;
+use std::process::{Command, Output};
 use log::{warn, error};
 use regex::{Regex, Captures};
 
@@ -28,6 +28,71 @@ lazy_static! {
     }else{
         Regex::new("\\$(?P<pos>\\d+)").unwrap()
     };
+}
+
+pub enum Shell {
+    Cmd,
+    Powershell,
+    WSL,
+    Bash,
+    Sh,
+}
+
+impl Shell {
+    fn execute_cmd(&self, cmd: &str) -> std::io::Result<Output>{
+        match self {
+            Shell::Cmd => {
+                Command::new("cmd")
+                    .args(&["/C", &cmd])
+                    .output()
+            },
+            Shell::Powershell => {
+                Command::new("powershell")
+                    .args(&["-Command", &cmd])
+                    .output()
+            },
+            Shell::WSL => {
+                Command::new("wsl")
+                    .args(&["bash", "-c", &cmd])
+                    .output()
+            },
+            Shell::Bash => {
+                Command::new("bash")
+                    .args(&["-c", &cmd])
+                    .output()
+            },
+            Shell::Sh => {
+                Command::new("sh")
+                    .args(&["-c", &cmd])
+                    .output()
+            },
+        }
+    }
+
+    fn from_string(shell: &str) -> Option<Shell> {
+        match shell {
+            "cmd" => Some(Shell::Cmd),
+            "powershell" => Some(Shell::Powershell),
+            "wsl" => Some(Shell::WSL),
+            "bash" => Some(Shell::Bash),
+            "sh" => Some(Shell::Sh),
+            _ => None
+        }
+    }
+}
+
+impl Default for Shell {
+    fn default() -> Shell {
+        if cfg!(target_os = "windows") {
+            Shell::Powershell
+        }else if cfg!(target_os = "macos") {
+            Shell::Sh
+        }else if cfg!(target_os = "linux") {
+            Shell::Bash
+        }else{
+            panic!("invalid target os for shell")
+        }
+    }
 }
 
 pub struct ShellExtension {}
@@ -62,16 +127,22 @@ impl super::Extension for ShellExtension {
             }
         }).to_string();
 
-        let output = if cfg!(target_os = "windows") {
-            Command::new("powershell")
-                .args(&["-Command", &cmd])
-                .output()
-        } else {
-            Command::new("sh")
-                .arg("-c")
-                .arg(&cmd)
-                .output()
+        let shell_param = params.get(&Value::from("shell"));
+        let shell = if let Some(shell_param) = shell_param {
+            let shell_param = shell_param.as_str().expect("invalid shell parameter");
+            let shell = Shell::from_string(shell_param);
+
+            if shell.is_none() {
+                error!("Invalid shell parameter, please select a valid one.");
+                return None;
+            }
+
+            shell.unwrap()
+        }else{
+            Shell::default()
         };
+
+        let output = shell.execute_cmd(&cmd);
 
         match output {
             Ok(output) => {
@@ -115,7 +186,7 @@ mod tests {
     #[test]
     fn test_shell_basic() {
         let mut params = Mapping::new();
-        params.insert(Value::from("cmd"), Value::from("echo hello world"));
+        params.insert(Value::from("cmd"), Value::from("echo \"hello world\""));
 
         let extension = ShellExtension::new();
         let output = extension.calculate(&params, &vec![]);
@@ -132,7 +203,7 @@ mod tests {
     #[test]
     fn test_shell_trimmed() {
         let mut params = Mapping::new();
-        params.insert(Value::from("cmd"), Value::from("echo hello world"));
+        params.insert(Value::from("cmd"), Value::from("echo \"hello world\""));
         params.insert(Value::from("trim"), Value::from(true));
 
         let extension = ShellExtension::new();
@@ -145,11 +216,7 @@ mod tests {
     #[test]
     fn test_shell_trimmed_2() {
         let mut params = Mapping::new();
-        if cfg!(target_os = "windows") {
-            params.insert(Value::from("cmd"), Value::from("echo    hello world     "));
-        }else{
-            params.insert(Value::from("cmd"), Value::from("echo \"   hello world     \""));
-        }
+        params.insert(Value::from("cmd"), Value::from("echo \"   hello world     \""));
 
         params.insert(Value::from("trim"), Value::from(true));
 
@@ -163,7 +230,7 @@ mod tests {
     #[test]
     fn test_shell_trimmed_malformed() {
         let mut params = Mapping::new();
-        params.insert(Value::from("cmd"), Value::from("echo hello world"));
+        params.insert(Value::from("cmd"), Value::from("echo \"hello world\""));
         params.insert(Value::from("trim"), Value::from("error"));
 
         let extension = ShellExtension::new();
