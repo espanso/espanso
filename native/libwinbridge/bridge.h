@@ -164,4 +164,8 @@ extern "C" int32_t set_clipboard(wchar_t * text);
  */
 extern "C" int32_t set_clipboard_image(wchar_t * path);
 
+// PROCESSES
+
+extern "C" int32_t start_process(wchar_t * cmd);
+
 #endif //ESPANSO_BRIDGE_H

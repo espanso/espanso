@@ -710,6 +710,35 @@ int32_t start_daemon_process() {
     return 1;
 }
 
+
+int32_t start_process(wchar_t * _cmd) {
+    wchar_t cmd[MAX_PATH];
+    swprintf(cmd, MAX_PATH, _cmd);
+
+    STARTUPINFO si = { sizeof(si) };
+    PROCESS_INFORMATION pi;
+
+    // Documentation: https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-createprocessw
+    BOOL res = CreateProcess(
+            NULL,
+            cmd,
+            NULL,
+            NULL,
+            FALSE,
+            DETACHED_PROCESS,
+            NULL,
+            NULL,
+            &si,
+            &pi
+    );
+
+    if (!res) {
+        return -1;
+    }
+
+    return 1;
+}
+
 // CLIPBOARD
 
 int32_t set_clipboard(wchar_t *text) {
