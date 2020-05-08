@@ -69,6 +69,7 @@ fn default_exclude_default_entries() -> bool {false}
 fn default_secure_input_watcher_enabled() -> bool {true}
 fn default_secure_input_notification() -> bool {true}
 fn default_show_notifications() -> bool {true}
+fn default_auto_restart() -> bool {false}
 fn default_show_icon() -> bool {true}
 fn default_fast_inject() -> bool {true}
 fn default_secure_input_watcher_interval() -> i32 {5000}
@@ -175,6 +176,9 @@ pub struct Configs {
 
     #[serde(default = "default_inject_delay")]
     pub inject_delay: i32,
+
+    #[serde(default = "default_auto_restart")]
+    pub auto_restart: bool,
 
     #[serde(default = "default_matches")]
     pub matches: Vec<Match>,

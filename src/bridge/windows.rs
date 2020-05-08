@@ -60,4 +60,8 @@ extern {
     pub fn delete_string(count: i32, delay: i32);
     pub fn trigger_paste();
     pub fn trigger_copy();
+
+    // PROCESSES
+
+    pub fn start_process(cmd: *const u16) -> i32;
 }

@@ -28,6 +28,7 @@ use std::sync::atomic::AtomicBool;
 use std::sync::mpsc::Receiver;
 use std::thread;
 use std::time::Duration;
+use std::process::{Command, Stdio};
 
 use clap::{App, Arg, ArgMatches, SubCommand};
 use fs2::FileExt;
@@ -59,6 +60,7 @@ mod render;
 mod system;
 mod context;
 mod matcher;
+mod process;
 mod package;
 mod keyboard;
 mod protocol;
@@ -161,6 +163,8 @@ fn main() {
             .subcommand(SubCommand::with_name("refresh")
                 .about("Update espanso package index"))
         )
+        .subcommand(SubCommand::with_name("watch")
+            .about("Wait until one of the config files is changed, then restart espanso."))
         .subcommand(install_subcommand)
         .subcommand(uninstall_subcommand);
 
@@ -275,6 +279,11 @@ fn main() {
         }
     }
 
+    if matches.subcommand_matches("watch").is_some() {
+        watch_main(config_set);
+        return;
+    }
+
     // Defaults help print
     clap_instance.print_long_help().expect("Unable to print help");
     println!();
@@ -344,6 +353,12 @@ fn daemon_main(config_set: ConfigSet) {
     thread::Builder::new().name("daemon_background".to_string()).spawn(move || {
         daemon_background(receive_channel, config_set_copy, is_injecting);
     }).expect("Unable to spawn daemon background thread");
+
+    if config_set.default.auto_restart {
+        info!("starting auto-restart daemon...");
+        let espanso_path = std::env::current_exe().expect("unable to obtain espanso path location");
+        crate::process::spawn_process(&espanso_path.to_string_lossy().to_string(), &vec!("watch".to_owned()));
+    }
 
     let ipc_server = protocol::get_ipc_server(config_set, send_channel.clone());
     ipc_server.start();
@@ -1019,9 +1034,80 @@ fn edit_main(matches: &ArgMatches) {
     }
 }
 
+fn watch_main(_: ConfigSet) {
+    // Make sure only one watch is running
+    let lock_file = acquire_custom_lock("watcher.lock");
+    if lock_file.is_none() {
+        eprintln!("Another watcher is already running, terminating...");
+        std::process::exit(2);
+    }
+
+    use notify::{RecommendedWatcher, Watcher, RecursiveMode, DebouncedEvent};
+    use std::sync::mpsc::channel;
+    use std::time::Duration;
+
+    // Create a channel to receive the events.
+    let (tx, rx) = channel();
+
+    let mut watcher: RecommendedWatcher = Watcher::new(tx, Duration::from_secs(1)).expect("unable to create file watcher");
+
+    let config_path = crate::context::get_config_dir();
+    watcher.watch(&config_path, RecursiveMode::Recursive).expect("unable to start watcher");
+
+    println!("Watching for changes in path: {:?}", config_path);
+
+    loop {
+        let should_reload = match rx.recv() {
+            Ok(event) => {
+                let path = match event {
+                    DebouncedEvent::Create(path) => Some(path),
+                    DebouncedEvent::Write(path) => Some(path),
+                    DebouncedEvent::Remove(path) => Some(path),
+                    DebouncedEvent::Rename(_, path) => Some(path),
+                    _ => None,
+                };
+
+                if let Some(path) = path {
+                    if path.extension().unwrap_or_default() == "yml" { // Only load yml files
+                        true
+                    }else{
+                        false
+                    }
+                }else{
+                    false
+                }
+            },
+            Err(e) => {
+                eprintln!("error while watching files: {:?}", e);
+                false
+            }
+        };
+
+        if should_reload {
+            println!("change detected, restarting espanso");
+
+            let mut config_set = ConfigSet::load_default();
+
+            match config_set {
+                Ok(config_set) => {
+                    restart_main(config_set);
+                    std::process::exit(0);
+                },
+                Err(error) => {
+                    // TODO: send notification to user
+                }
+            }
+        }
+    }
+}
+
 fn acquire_lock() -> Option<File> {
+    acquire_custom_lock("espanso.lock")
+}
+
+fn acquire_custom_lock(name: &str) -> Option<File> {
     let espanso_dir = context::get_data_dir();
-    let lock_file_path = espanso_dir.join("espanso.lock");
+    let lock_file_path = espanso_dir.join(name);
     let file = OpenOptions::new()
         .read(true)
         .write(true)
