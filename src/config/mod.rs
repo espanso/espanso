@@ -49,6 +49,7 @@ fn default_filter_exec() -> String{ "".to_owned() }
 fn default_log_level() -> i32 { 0 }
 fn default_conflict_check() -> bool{ false }
 fn default_ipc_server_port() -> i32 { 34982 }
+fn default_worker_ipc_server_port() -> i32 { 34983 }
 fn default_use_system_agent() -> bool { true }
 fn default_config_caching_interval() -> i32 { 800 }
 fn default_word_separators() -> Vec<char> { vec![' ', ',', '.', '?', '!', '\r', '\n', 22u8 as char] }
@@ -101,6 +102,9 @@ pub struct Configs {
 
     #[serde(default = "default_ipc_server_port")]
     pub ipc_server_port: i32,
+
+    #[serde(default = "default_worker_ipc_server_port")]
+    pub worker_ipc_server_port: i32,
 
     #[serde(default = "default_use_system_agent")]
     pub use_system_agent: bool,

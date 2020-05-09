@@ -337,7 +337,7 @@ impl <'a, S: KeyboardManager, C: ClipboardManager,
                 self.ui_manager.show_menu(self.build_menu());
             },
             ActionType::Exit => {
-                info!("Terminating espanso.");
+                info!("terminating worker process");
                 self.ui_manager.cleanup();
                 exit(0);
             },
@@ -362,6 +362,12 @@ impl <'a, S: KeyboardManager, C: ClipboardManager,
             },
             SystemEvent::SecureInputDisabled => {
                 info!("SecureInput has been disabled.");
+            },
+            SystemEvent::NotifyRequest(message) => {
+                let config = self.config_manager.default_config();
+                if config.show_notifications {
+                    self.ui_manager.notify(&message);
+                }
             },
         }
     }

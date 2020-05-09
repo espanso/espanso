@@ -37,6 +37,7 @@ pub enum ActionType {
     IconClick = 3,
     Enable = 4,
     Disable = 5,
+    RestartWorker = 6,
 }
 
 impl From<i32> for ActionType {
@@ -47,6 +48,7 @@ impl From<i32> for ActionType {
             3 => ActionType::IconClick,
             4 => ActionType::Enable,
             5 => ActionType::Disable,
+            6 => ActionType::RestartWorker,
             _ => ActionType::Noop,
         }
     }
@@ -143,6 +145,9 @@ pub enum SystemEvent {
     // MacOS specific
     SecureInputEnabled(String, String),  // AppName, App Path
     SecureInputDisabled,
+
+    // Notification
+    NotifyRequest(String)
 }
 
 // Receivers
