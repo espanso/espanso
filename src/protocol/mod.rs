@@ -19,12 +19,12 @@
 
 use serde::{Deserialize, Serialize};
 use std::sync::mpsc::Sender;
-use crate::event::Event;
+use crate::event::{Event, SystemEvent};
 use crate::event::ActionType;
 use std::io::{BufReader, Read, Write};
 use std::error::Error;
 use log::error;
-use crate::config::ConfigSet;
+use crate::config::Configs;
 
 #[cfg(target_os = "windows")]
 mod windows;
@@ -63,6 +63,20 @@ impl IPCCommand {
             "disable" => {
                 Some(Event::Action(ActionType::Disable))
             },
+            "notify" => {
+                Some(Event::System(SystemEvent::NotifyRequest(self.payload.clone())))
+            },
+            _ => None
+        }
+    }
+
+    pub fn from(event: Event) -> Option<IPCCommand> {
+        match event {
+            Event::Action(ActionType::Exit) => Some(IPCCommand{id: "exit".to_owned(), payload: "".to_owned()}),
+            Event::Action(ActionType::Toggle) => Some(IPCCommand{id: "toggle".to_owned(), payload: "".to_owned()}),
+            Event::Action(ActionType::Enable) => Some(IPCCommand{id: "enable".to_owned(), payload: "".to_owned()}),
+            Event::Action(ActionType::Disable) => Some(IPCCommand{id: "disable".to_owned(), payload: "".to_owned()}),
+            Event::System(SystemEvent::NotifyRequest(message)) => Some(IPCCommand{id: "notify".to_owned(), payload: message}),
             _ => None
         }
     }
@@ -115,24 +129,29 @@ fn send_command<W: Write, E: Error>(command: IPCCommand, stream: Result<W, E>) -
     Err("Can't send command".to_owned())
 }
 
+pub enum Service {
+    Daemon,
+    Worker,
+}
+
 // UNIX IMPLEMENTATION
 #[cfg(not(target_os = "windows"))]
-pub fn get_ipc_server(_: ConfigSet, event_channel: Sender<Event>) -> impl IPCServer {
-    unix::UnixIPCServer::new(event_channel)
+pub fn get_ipc_server(service: Service, _: Configs, event_channel: Sender<Event>) -> impl IPCServer {
+    unix::UnixIPCServer::new(service, event_channel)
 }
 
 #[cfg(not(target_os = "windows"))]
-pub fn get_ipc_client(_: ConfigSet) -> impl IPCClient {
-    unix::UnixIPCClient::new()
+pub fn get_ipc_client(service: Service, _: Configs) -> impl IPCClient {
+    unix::UnixIPCClient::new(service)
 }
 
 // WINDOWS IMPLEMENTATION
 #[cfg(target_os = "windows")]
-pub fn get_ipc_server(config_set: ConfigSet, event_channel: Sender<Event>) -> impl IPCServer {
+pub fn get_ipc_server(config_set: Configs, event_channel: Sender<Event>) -> impl IPCServer {
     windows::WindowsIPCServer::new(config_set, event_channel)
 }
 
 #[cfg(target_os = "windows")]
-pub fn get_ipc_client(config_set: ConfigSet) -> impl IPCClient {
+pub fn get_ipc_client(config_set: Configs) -> impl IPCClient {
     windows::WindowsIPCClient::new(config_set)
 }

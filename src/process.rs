@@ -44,5 +44,5 @@ pub fn spawn_process(cmd: &str, args: &Vec<String>) {
 pub fn spawn_process(cmd: &str, args: &Vec<String>) {
     use std::process::{Command, Stdio};
 
-    Command::new(cmd).args(args).stdout(Stdio::null()).spawn();
+    Command::new(cmd).args(args).spawn();
 }

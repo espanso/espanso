@@ -25,25 +25,39 @@ use super::IPCCommand;
 use crate::context;
 use crate::event::*;
 use crate::protocol::{process_event, send_command};
+use super::Service;
 
-const UNIX_SOCKET_NAME : &str = "espanso.sock";
+const DAEMON_UNIX_SOCKET_NAME : &str = "espanso.sock";
+const WORKER_UNIX_SOCKET_NAME : &str = "worker.sock";
 
 pub struct UnixIPCServer {
+    service: Service,
     event_channel: Sender<Event>,
 }
 
 impl UnixIPCServer {
-    pub fn new(event_channel: Sender<Event>) -> UnixIPCServer {
-        UnixIPCServer {event_channel}
+    pub fn new(service: Service, event_channel: Sender<Event>) -> UnixIPCServer {
+        UnixIPCServer {
+            service,
+            event_channel
+        }
+    }
+}
+
+fn get_unix_name(service: &Service) -> String{
+    match service {
+        Service::Daemon => {DAEMON_UNIX_SOCKET_NAME.to_owned()},
+        Service::Worker => {WORKER_UNIX_SOCKET_NAME.to_owned()},
     }
 }
 
 impl super::IPCServer for UnixIPCServer {
     fn start(&self) {
         let event_channel = self.event_channel.clone();
+        let socket_name = get_unix_name(&self.service);
         std::thread::Builder::new().name("ipc_server".to_string()).spawn(move || {
             let espanso_dir = context::get_data_dir();
-            let unix_socket = espanso_dir.join(UNIX_SOCKET_NAME);
+            let unix_socket = espanso_dir.join(socket_name);
 
             std::fs::remove_file(unix_socket.clone()).unwrap_or_else(|e| {
                 warn!("Unable to delete Unix socket: {}", e);
@@ -60,19 +74,20 @@ impl super::IPCServer for UnixIPCServer {
 }
 
 pub struct UnixIPCClient {
-
+    service: Service,
 }
 
 impl UnixIPCClient {
-    pub fn new() -> UnixIPCClient {
-        UnixIPCClient{}
+    pub fn new(service: Service) -> UnixIPCClient {
+        UnixIPCClient{service}
     }
 }
 
 impl super::IPCClient for UnixIPCClient {
     fn send_command(&self, command: IPCCommand) -> Result<(), String> {
         let espanso_dir = context::get_data_dir();
-        let unix_socket = espanso_dir.join(UNIX_SOCKET_NAME);
+        let socket_name = get_unix_name(&self.service);
+        let unix_socket = espanso_dir.join(socket_name);
 
         // Open the stream
         let stream = UnixStream::connect(unix_socket);
