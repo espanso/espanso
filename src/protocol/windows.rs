@@ -23,24 +23,33 @@ use std::net::{TcpListener, TcpStream};
 use super::IPCCommand;
 
 use crate::event::*;
-use crate::protocol::{process_event, send_command};
-use crate::config::ConfigSet;
+use crate::protocol::{process_event, send_command, Service};
+use crate::config::{Configs};
 
 pub struct WindowsIPCServer {
-    config_set: ConfigSet,
+    service: Service,
+    config: Configs,
     event_channel: Sender<Event>,
 }
 
+fn to_port(config: &Configs, service: &Service) -> u16 {
+    let port = match service {
+        Service::Daemon => {config.ipc_server_port},
+        Service::Worker => {config.worker_ipc_server_port},
+    };
+    port as u16
+}
+
 impl WindowsIPCServer {
-    pub fn new(config_set: ConfigSet, event_channel: Sender<Event>) -> WindowsIPCServer {
-        WindowsIPCServer {config_set, event_channel}
+    pub fn new(service: Service, config: Configs, event_channel: Sender<Event>) -> WindowsIPCServer {
+        WindowsIPCServer {service, config, event_channel}
     }
 }
 
 impl super::IPCServer for WindowsIPCServer {
     fn start(&self) {
         let event_channel = self.event_channel.clone();
-        let server_port = self.config_set.default.ipc_server_port;
+        let server_port = to_port(&self.config, &self.service);
         std::thread::Builder::new().name("ipc_server".to_string()).spawn(move || {
             let listener = TcpListener::bind(
                 format!("127.0.0.1:{}", server_port)
@@ -56,19 +65,21 @@ impl super::IPCServer for WindowsIPCServer {
 }
 
 pub struct WindowsIPCClient {
-    config_set: ConfigSet,
+    service: Service,
+    config: Configs,
 }
 
 impl WindowsIPCClient {
-    pub fn new(config_set: ConfigSet) -> WindowsIPCClient {
-        WindowsIPCClient{config_set}
+    pub fn new(service: Service, config: Configs) -> WindowsIPCClient {
+        WindowsIPCClient{service, config}
     }
 }
 
 impl super::IPCClient for WindowsIPCClient {
     fn send_command(&self, command: IPCCommand) -> Result<(), String> {
+        let port = to_port(&self.config, &self.service);
         let stream = TcpStream::connect(
-            ("127.0.0.1", self.config_set.default.ipc_server_port as u16)
+            ("127.0.0.1", port)
         );
 
         send_command(command, stream)

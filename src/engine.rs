@@ -32,6 +32,7 @@ use regex::{Regex};
 use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering::Release;
+use crate::protocol::{Service, IPCCommand, send_command_or_warn};
 
 pub struct Engine<'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>,
                   U: UIManager, R: Renderer> {
@@ -75,6 +76,18 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
             item_type: MenuItemType::Button,
             item_name: toggle_text,
             item_id: ActionType::Toggle as i32,
+        });
+
+        menu.push(MenuItem{
+            item_type: MenuItemType::Separator,
+            item_name: "".to_owned(),
+            item_id: 998,
+        });
+
+        menu.push(MenuItem{
+            item_type: MenuItemType::Button,
+            item_name: "Reload configs".to_owned(),
+            item_id: ActionType::RestartWorker as i32,
         });
 
         menu.push(MenuItem{
@@ -332,14 +345,21 @@ impl <'a, S: KeyboardManager, C: ClipboardManager,
     M: ConfigManager<'a>, U: UIManager, R: Renderer> ActionEventReceiver for Engine<'a, S, C, M, U, R>{
 
     fn on_action_event(&self, e: ActionType) {
+        let config = self.config_manager.default_config();
         match e {
             ActionType::IconClick => {
                 self.ui_manager.show_menu(self.build_menu());
             },
-            ActionType::Exit => {
+            ActionType::ExitWorker => {
                 info!("terminating worker process");
                 self.ui_manager.cleanup();
                 exit(0);
+            },
+            ActionType::Exit => {
+                send_command_or_warn(Service::Daemon, config.clone(), IPCCommand::exit());
+            },
+            ActionType::RestartWorker => {
+                send_command_or_warn(Service::Daemon, config.clone(), IPCCommand::restart_worker());
             },
             _ => {}
         }

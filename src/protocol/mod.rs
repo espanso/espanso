@@ -40,6 +40,14 @@ pub trait IPCClient {
     fn send_command(&self, command: IPCCommand) -> Result<(), String>;
 }
 
+pub fn send_command_or_warn(service: Service, configs: Configs, command: IPCCommand) {
+    let ipc_client = get_ipc_client(service, configs);
+    if let Err(e) = ipc_client.send_command(command) {
+        error!("unable to send command to IPC server");
+    }
+}
+
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct IPCCommand {
     pub id: String,
@@ -54,6 +62,9 @@ impl IPCCommand {
             "exit" => {
                 Some(Event::Action(ActionType::Exit))
             },
+            "wexit" => {
+                Some(Event::Action(ActionType::ExitWorker))
+            },
             "toggle" => {
                 Some(Event::Action(ActionType::Toggle))
             },
@@ -62,6 +73,9 @@ impl IPCCommand {
             },
             "disable" => {
                 Some(Event::Action(ActionType::Disable))
+            },
+            "restartworker" => {
+                Some(Event::Action(ActionType::RestartWorker))
             },
             "notify" => {
                 Some(Event::System(SystemEvent::NotifyRequest(self.payload.clone())))
@@ -73,11 +87,34 @@ impl IPCCommand {
     pub fn from(event: Event) -> Option<IPCCommand> {
         match event {
             Event::Action(ActionType::Exit) => Some(IPCCommand{id: "exit".to_owned(), payload: "".to_owned()}),
+            Event::Action(ActionType::ExitWorker) => Some(IPCCommand{id: "wexit".to_owned(), payload: "".to_owned()}),
             Event::Action(ActionType::Toggle) => Some(IPCCommand{id: "toggle".to_owned(), payload: "".to_owned()}),
             Event::Action(ActionType::Enable) => Some(IPCCommand{id: "enable".to_owned(), payload: "".to_owned()}),
             Event::Action(ActionType::Disable) => Some(IPCCommand{id: "disable".to_owned(), payload: "".to_owned()}),
+            Event::Action(ActionType::RestartWorker) => Some(IPCCommand{id: "restartworker".to_owned(), payload: "".to_owned()}),
             Event::System(SystemEvent::NotifyRequest(message)) => Some(IPCCommand{id: "notify".to_owned(), payload: message}),
             _ => None
+        }
+    }
+
+    pub fn exit() -> IPCCommand {
+        Self {
+            id: "exit".to_owned(),
+            payload: "".to_owned(),
+        }
+    }
+
+    pub fn exit_worker() -> IPCCommand {
+        Self {
+            id: "wexit".to_owned(),
+            payload: "".to_owned(),
+        }
+    }
+
+    pub fn restart_worker() -> IPCCommand {
+        Self {
+            id: "restartworker".to_owned(),
+            payload: "".to_owned(),
         }
     }
 }
@@ -147,11 +184,11 @@ pub fn get_ipc_client(service: Service, _: Configs) -> impl IPCClient {
 
 // WINDOWS IMPLEMENTATION
 #[cfg(target_os = "windows")]
-pub fn get_ipc_server(config_set: Configs, event_channel: Sender<Event>) -> impl IPCServer {
-    windows::WindowsIPCServer::new(config_set, event_channel)
+pub fn get_ipc_server(service: Service, config: Configs, event_channel: Sender<Event>) -> impl IPCServer {
+    windows::WindowsIPCServer::new(service, config, event_channel)
 }
 
 #[cfg(target_os = "windows")]
-pub fn get_ipc_client(config_set: Configs) -> impl IPCClient {
-    windows::WindowsIPCClient::new(config_set)
+pub fn get_ipc_client(service: Service, config: Configs) -> impl IPCClient {
+    windows::WindowsIPCClient::new(service, config)
 }
