@@ -18,7 +18,7 @@
  */
 
 use serde_yaml::{Value};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use regex::{Regex, Captures};
 use log::{warn, error};
 use super::*;
@@ -82,11 +82,24 @@ impl super::Renderer for DefaultRenderer {
         match &m.content {
             // Text Match
             MatchContentType::Text(content) => {
-                let target_string = if content._has_vars || !config.global_vars.is_empty(){
+                // Find all the variables that are required by the current match
+                let mut target_vars = HashSet::new();
+
+                for caps in VAR_REGEX.captures_iter(&content.replace) {
+                    let var_name = caps.name("name").unwrap().as_str();
+                    target_vars.insert(var_name.to_owned());
+                };
+
+                let target_string = if target_vars.len() > 0 {
                     let mut output_map = HashMap::new();
 
                     // Cycle through both the local and global variables
                     for variable in config.global_vars.iter().chain(&content.vars) {
+                        // Skip all non-required variables
+                        if !target_vars.contains(&variable.name) {
+                            continue;
+                        }
+
                         // In case of variables of type match, we need to recursively call
                         // the render function
                         if variable.var_type == "match" {
