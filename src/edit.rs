@@ -43,9 +43,19 @@ pub fn open_editor(file_path: &Path) -> bool {
     };
 
     // Start the editor and wait for its termination
-    let status = Command::new(&editor)
-        .arg(file_path)
-        .spawn();
+    let status = if cfg!(target_os = "windows") {
+        Command::new(&editor)
+            .arg(file_path)
+            .spawn()
+    }else{
+        // On Unix, spawn the editor using the shell so that it can
+        // accept parameters. See issue #245
+        Command::new("/bin/bash")
+            .arg("-c")
+            .arg(format!("{} '{}'", editor, file_path.to_string_lossy()))
+            .spawn()
+    };
+
 
     if let Ok(mut child) = status {
         // Wait for the user to edit the configuration
