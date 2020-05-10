@@ -20,6 +20,7 @@
 use serde_yaml::{Mapping, Value};
 use std::process::Command;
 use log::{warn, error};
+use std::path::PathBuf;
 
 pub struct ScriptExtension {}
 
@@ -53,6 +54,24 @@ impl super::Extension for ScriptExtension {
                 str_args.extend(user_args.clone());
             }
 
+            // Replace %HOME% with current user home directory to
+            // create cross-platform paths. See issue #265
+            let home_dir = dirs::home_dir().unwrap_or_default();
+            str_args.iter_mut().for_each(|arg| {
+                if arg.contains("%HOME%") {
+                    *arg = arg.replace("%HOME%", &home_dir.to_string_lossy().to_string());
+                }
+
+                // On Windows, correct paths separators
+                if cfg!(target_os = "windows") {
+                    let path = PathBuf::from(&arg);
+                    if path.exists() {
+                        *arg = path.to_string_lossy().to_string()
+                    }
+                }
+            });
+
+
             let output = if str_args.len() > 1 {
                 Command::new(&str_args[0])
                     .args(&str_args[1..])
@@ -62,10 +81,18 @@ impl super::Extension for ScriptExtension {
                     .output()
             };
 
-            println!("{:?}", output);
+
             match output {
                 Ok(output) => {
                     let output_str = String::from_utf8_lossy(output.stdout.as_slice());
+                    let error_str = String::from_utf8_lossy(output.stderr.as_slice());
+                    let error_str = error_str.to_string();
+                    let error_str = error_str.trim();
+
+                    // Print stderror if present
+                    if !error_str.is_empty() {
+                        warn!("Script command reported error: \n{}", error_str);
+                    }
 
                     return Some(output_str.into_owned())
                 },
