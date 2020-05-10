@@ -17,15 +17,15 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use serde_yaml::{Mapping, Value};
+use log::{error, warn};
 use rand::seq::SliceRandom;
-use log::{warn, error};
+use serde_yaml::{Mapping, Value};
 
 pub struct RandomExtension {}
 
 impl RandomExtension {
     pub fn new() -> RandomExtension {
-        RandomExtension{}
+        RandomExtension {}
     }
 }
 
@@ -38,13 +38,14 @@ impl super::Extension for RandomExtension {
         let choices = params.get(&Value::from("choices"));
         if choices.is_none() {
             warn!("No 'choices' parameter specified for random variable");
-            return None
+            return None;
         }
         let choices = choices.unwrap().as_sequence();
         if let Some(choices) = choices {
-            let str_choices = choices.iter().map(|arg| {
-                arg.as_str().unwrap_or_default().to_string()
-            }).collect::<Vec<String>>();
+            let str_choices = choices
+                .iter()
+                .map(|arg| arg.as_str().unwrap_or_default().to_string())
+                .collect::<Vec<String>>();
 
             // Select a random choice between the possibilities
             let choice = str_choices.choose(&mut rand::thread_rng());
@@ -54,14 +55,13 @@ impl super::Extension for RandomExtension {
                     // Render arguments
                     let output = crate::render::utils::render_args(output, args);
 
-                    return Some(output)
-                },
+                    return Some(output);
+                }
                 None => {
                     error!("Could not select a random choice.");
-                    return None
-                },
+                    return None;
+                }
             }
-
         }
 
         error!("choices array have an invalid format '{:?}'", choices);
@@ -77,11 +77,7 @@ mod tests {
     #[test]
     fn test_random_basic() {
         let mut params = Mapping::new();
-        let choices = vec!(
-            "first",
-            "second",
-            "third",
-        );
+        let choices = vec!["first", "second", "third"];
         params.insert(Value::from("choices"), Value::from(choices.clone()));
 
         let extension = RandomExtension::new();
@@ -97,11 +93,7 @@ mod tests {
     #[test]
     fn test_random_with_args() {
         let mut params = Mapping::new();
-        let choices = vec!(
-            "first $0$",
-            "second $0$",
-            "$0$ third",
-        );
+        let choices = vec!["first $0$", "second $0$", "$0$ third"];
         params.insert(Value::from("choices"), Value::from(choices.clone()));
 
         let extension = RandomExtension::new();
@@ -111,11 +103,7 @@ mod tests {
 
         let output = output.unwrap();
 
-        let rendered_choices = vec!(
-            "first test",
-            "second test",
-            "test third",
-        );
+        let rendered_choices = vec!["first test", "second test", "test third"];
 
         assert!(rendered_choices.iter().any(|x| x == &output));
     }

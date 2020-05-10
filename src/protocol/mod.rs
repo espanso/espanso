@@ -17,14 +17,14 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use serde::{Deserialize, Serialize};
-use std::sync::mpsc::Sender;
-use crate::event::{Event, SystemEvent};
-use crate::event::ActionType;
-use std::io::{BufReader, Read, Write};
-use std::error::Error;
-use log::error;
 use crate::config::Configs;
+use crate::event::ActionType;
+use crate::event::{Event, SystemEvent};
+use log::error;
+use serde::{Deserialize, Serialize};
+use std::error::Error;
+use std::io::{BufReader, Read, Write};
+use std::sync::mpsc::Sender;
 
 #[cfg(target_os = "windows")]
 mod windows;
@@ -47,7 +47,6 @@ pub fn send_command_or_warn(service: Service, configs: Configs, command: IPCComm
     }
 }
 
-
 #[derive(Serialize, Deserialize, Debug)]
 pub struct IPCCommand {
     pub id: String,
@@ -59,41 +58,50 @@ pub struct IPCCommand {
 impl IPCCommand {
     fn to_event(&self) -> Option<Event> {
         match self.id.as_ref() {
-            "exit" => {
-                Some(Event::Action(ActionType::Exit))
-            },
-            "wexit" => {
-                Some(Event::Action(ActionType::ExitWorker))
-            },
-            "toggle" => {
-                Some(Event::Action(ActionType::Toggle))
-            },
-            "enable" => {
-                Some(Event::Action(ActionType::Enable))
-            },
-            "disable" => {
-                Some(Event::Action(ActionType::Disable))
-            },
-            "restartworker" => {
-                Some(Event::Action(ActionType::RestartWorker))
-            },
-            "notify" => {
-                Some(Event::System(SystemEvent::NotifyRequest(self.payload.clone())))
-            },
-            _ => None
+            "exit" => Some(Event::Action(ActionType::Exit)),
+            "wexit" => Some(Event::Action(ActionType::ExitWorker)),
+            "toggle" => Some(Event::Action(ActionType::Toggle)),
+            "enable" => Some(Event::Action(ActionType::Enable)),
+            "disable" => Some(Event::Action(ActionType::Disable)),
+            "restartworker" => Some(Event::Action(ActionType::RestartWorker)),
+            "notify" => Some(Event::System(SystemEvent::NotifyRequest(
+                self.payload.clone(),
+            ))),
+            _ => None,
         }
     }
 
     pub fn from(event: Event) -> Option<IPCCommand> {
         match event {
-            Event::Action(ActionType::Exit) => Some(IPCCommand{id: "exit".to_owned(), payload: "".to_owned()}),
-            Event::Action(ActionType::ExitWorker) => Some(IPCCommand{id: "wexit".to_owned(), payload: "".to_owned()}),
-            Event::Action(ActionType::Toggle) => Some(IPCCommand{id: "toggle".to_owned(), payload: "".to_owned()}),
-            Event::Action(ActionType::Enable) => Some(IPCCommand{id: "enable".to_owned(), payload: "".to_owned()}),
-            Event::Action(ActionType::Disable) => Some(IPCCommand{id: "disable".to_owned(), payload: "".to_owned()}),
-            Event::Action(ActionType::RestartWorker) => Some(IPCCommand{id: "restartworker".to_owned(), payload: "".to_owned()}),
-            Event::System(SystemEvent::NotifyRequest(message)) => Some(IPCCommand{id: "notify".to_owned(), payload: message}),
-            _ => None
+            Event::Action(ActionType::Exit) => Some(IPCCommand {
+                id: "exit".to_owned(),
+                payload: "".to_owned(),
+            }),
+            Event::Action(ActionType::ExitWorker) => Some(IPCCommand {
+                id: "wexit".to_owned(),
+                payload: "".to_owned(),
+            }),
+            Event::Action(ActionType::Toggle) => Some(IPCCommand {
+                id: "toggle".to_owned(),
+                payload: "".to_owned(),
+            }),
+            Event::Action(ActionType::Enable) => Some(IPCCommand {
+                id: "enable".to_owned(),
+                payload: "".to_owned(),
+            }),
+            Event::Action(ActionType::Disable) => Some(IPCCommand {
+                id: "disable".to_owned(),
+                payload: "".to_owned(),
+            }),
+            Event::Action(ActionType::RestartWorker) => Some(IPCCommand {
+                id: "restartworker".to_owned(),
+                payload: "".to_owned(),
+            }),
+            Event::System(SystemEvent::NotifyRequest(message)) => Some(IPCCommand {
+                id: "notify".to_owned(),
+                payload: message,
+            }),
+            _ => None,
         }
     }
 
@@ -122,22 +130,23 @@ impl IPCCommand {
 fn process_event<R: Read, E: Error>(event_channel: &Sender<Event>, stream: Result<R, E>) {
     match stream {
         Ok(stream) => {
-            let mut json_str= String::new();
+            let mut json_str = String::new();
             let mut buf_reader = BufReader::new(stream);
             let res = buf_reader.read_to_string(&mut json_str);
 
             if res.is_ok() {
-                let command : Result<IPCCommand, serde_json::Error> = serde_json::from_str(&json_str);
+                let command: Result<IPCCommand, serde_json::Error> =
+                    serde_json::from_str(&json_str);
                 match command {
                     Ok(command) => {
                         let event = command.to_event();
                         if let Some(event) = event {
                             event_channel.send(event).expect("Broken event channel");
                         }
-                    },
+                    }
                     Err(e) => {
                         error!("Error deserializing JSON command: {}", e);
-                    },
+                    }
                 }
             }
         }
@@ -147,7 +156,10 @@ fn process_event<R: Read, E: Error>(event_channel: &Sender<Event>, stream: Resul
     }
 }
 
-fn send_command<W: Write, E: Error>(command: IPCCommand, stream: Result<W, E>) -> Result<(), String>{
+fn send_command<W: Write, E: Error>(
+    command: IPCCommand,
+    stream: Result<W, E>,
+) -> Result<(), String> {
     match stream {
         Ok(mut stream) => {
             let json_str = serde_json::to_string(&command);
@@ -155,12 +167,10 @@ fn send_command<W: Write, E: Error>(command: IPCCommand, stream: Result<W, E>) -
                 stream.write_all(json_str.as_bytes()).unwrap_or_else(|e| {
                     println!("Can't write to IPC socket: {}", e);
                 });
-                return Ok(())
+                return Ok(());
             }
-        },
-        Err(e) => {
-            return Err(format!("Can't connect to daemon: {}", e))
         }
+        Err(e) => return Err(format!("Can't connect to daemon: {}", e)),
     }
 
     Err("Can't send command".to_owned())
@@ -173,7 +183,11 @@ pub enum Service {
 
 // UNIX IMPLEMENTATION
 #[cfg(not(target_os = "windows"))]
-pub fn get_ipc_server(service: Service, _: Configs, event_channel: Sender<Event>) -> impl IPCServer {
+pub fn get_ipc_server(
+    service: Service,
+    _: Configs,
+    event_channel: Sender<Event>,
+) -> impl IPCServer {
     unix::UnixIPCServer::new(service, event_channel)
 }
 
@@ -184,7 +198,11 @@ pub fn get_ipc_client(service: Service, _: Configs) -> impl IPCClient {
 
 // WINDOWS IMPLEMENTATION
 #[cfg(target_os = "windows")]
-pub fn get_ipc_server(service: Service, config: Configs, event_channel: Sender<Event>) -> impl IPCServer {
+pub fn get_ipc_server(
+    service: Service,
+    config: Configs,
+    event_channel: Sender<Event>,
+) -> impl IPCServer {
     windows::WindowsIPCServer::new(service, config, event_channel)
 }
 

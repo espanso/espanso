@@ -17,18 +17,18 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::os::unix::net::{UnixStream,UnixListener};
-use log::{info, warn};
-use std::sync::mpsc::Sender;
 use super::IPCCommand;
+use log::{info, warn};
+use std::os::unix::net::{UnixListener, UnixStream};
+use std::sync::mpsc::Sender;
 
+use super::Service;
 use crate::context;
 use crate::event::*;
 use crate::protocol::{process_event, send_command};
-use super::Service;
 
-const DAEMON_UNIX_SOCKET_NAME : &str = "espanso.sock";
-const WORKER_UNIX_SOCKET_NAME : &str = "worker.sock";
+const DAEMON_UNIX_SOCKET_NAME: &str = "espanso.sock";
+const WORKER_UNIX_SOCKET_NAME: &str = "worker.sock";
 
 pub struct UnixIPCServer {
     service: Service,
@@ -39,15 +39,15 @@ impl UnixIPCServer {
     pub fn new(service: Service, event_channel: Sender<Event>) -> UnixIPCServer {
         UnixIPCServer {
             service,
-            event_channel
+            event_channel,
         }
     }
 }
 
-fn get_unix_name(service: &Service) -> String{
+fn get_unix_name(service: &Service) -> String {
     match service {
-        Service::Daemon => {DAEMON_UNIX_SOCKET_NAME.to_owned()},
-        Service::Worker => {WORKER_UNIX_SOCKET_NAME.to_owned()},
+        Service::Daemon => DAEMON_UNIX_SOCKET_NAME.to_owned(),
+        Service::Worker => WORKER_UNIX_SOCKET_NAME.to_owned(),
     }
 }
 
@@ -55,21 +55,28 @@ impl super::IPCServer for UnixIPCServer {
     fn start(&self) {
         let event_channel = self.event_channel.clone();
         let socket_name = get_unix_name(&self.service);
-        std::thread::Builder::new().name("ipc_server".to_string()).spawn(move || {
-            let espanso_dir = context::get_data_dir();
-            let unix_socket = espanso_dir.join(socket_name);
+        std::thread::Builder::new()
+            .name("ipc_server".to_string())
+            .spawn(move || {
+                let espanso_dir = context::get_data_dir();
+                let unix_socket = espanso_dir.join(socket_name);
 
-            std::fs::remove_file(unix_socket.clone()).unwrap_or_else(|e| {
-                warn!("Unable to delete Unix socket: {}", e);
-            });
-            let listener = UnixListener::bind(unix_socket.clone()).expect("Can't bind to Unix Socket");
+                std::fs::remove_file(unix_socket.clone()).unwrap_or_else(|e| {
+                    warn!("Unable to delete Unix socket: {}", e);
+                });
+                let listener =
+                    UnixListener::bind(unix_socket.clone()).expect("Can't bind to Unix Socket");
 
-            info!("Binded to IPC unix socket: {}", unix_socket.as_path().display());
+                info!(
+                    "Binded to IPC unix socket: {}",
+                    unix_socket.as_path().display()
+                );
 
-            for stream in listener.incoming() {
-                process_event(&event_channel, stream);
-            }
-        }).expect("Unable to spawn IPC server thread");
+                for stream in listener.incoming() {
+                    process_event(&event_channel, stream);
+                }
+            })
+            .expect("Unable to spawn IPC server thread");
     }
 }
 
@@ -79,7 +86,7 @@ pub struct UnixIPCClient {
 
 impl UnixIPCClient {
     pub fn new(service: Service) -> UnixIPCClient {
-        UnixIPCClient{service}
+        UnixIPCClient { service }
     }
 }
 

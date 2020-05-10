@@ -17,9 +17,9 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::path::Path;
 use std::error::Error;
 use std::fs::create_dir;
+use std::path::Path;
 
 pub fn copy_dir(source_dir: &Path, dest_dir: &Path) -> Result<(), Box<dyn Error>> {
     for entry in std::fs::read_dir(source_dir)? {
@@ -30,8 +30,9 @@ pub fn copy_dir(source_dir: &Path, dest_dir: &Path) -> Result<(), Box<dyn Error>
             let target_dir = dest_dir.join(name);
             create_dir(&target_dir)?;
             copy_dir(&entry, &target_dir)?;
-        }else if entry.is_file() {
-            let target_entry = dest_dir.join(entry.file_name().expect("Error obtaining the filename"));
+        } else if entry.is_file() {
+            let target_entry =
+                dest_dir.join(entry.file_name().expect("Error obtaining the filename"));
             std::fs::copy(entry, target_entry)?;
         }
     }
@@ -42,8 +43,8 @@ pub fn copy_dir(source_dir: &Path, dest_dir: &Path) -> Result<(), Box<dyn Error>
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tempfile::TempDir;
     use std::fs::create_dir;
+    use tempfile::TempDir;
 
     #[test]
     fn test_copy_dir_into() {
@@ -88,7 +89,9 @@ mod tests {
         assert!(dest_tmp_dir.path().join("source/file2.txt").exists());
 
         assert!(dest_tmp_dir.path().join("source/nested").exists());
-        assert!(dest_tmp_dir.path().join("source/nested/nestedfile.txt").exists());
+        assert!(dest_tmp_dir
+            .path()
+            .join("source/nested/nestedfile.txt")
+            .exists());
     }
-
 }

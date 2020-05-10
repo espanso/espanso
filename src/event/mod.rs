@@ -19,7 +19,7 @@
 
 pub(crate) mod manager;
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[allow(dead_code)]
 #[derive(Debug, Clone)]
@@ -60,7 +60,7 @@ impl From<i32> for ActionType {
 pub enum KeyEvent {
     Char(String),
     Modifier(KeyModifier),
-    Other
+    Other,
 }
 
 #[allow(non_camel_case_types)]
@@ -99,44 +99,24 @@ impl KeyModifier {
         match config {
             KeyModifier::CTRL => {
                 current == &LEFT_CTRL || current == &RIGHT_CTRL || current == &CTRL
-            },
+            }
             KeyModifier::SHIFT => {
                 current == &LEFT_SHIFT || current == &RIGHT_SHIFT || current == &SHIFT
-            },
-            KeyModifier::ALT => {
-                current == &LEFT_ALT || current == &RIGHT_ALT || current == &ALT
-            },
+            }
+            KeyModifier::ALT => current == &LEFT_ALT || current == &RIGHT_ALT || current == &ALT,
             KeyModifier::META => {
                 current == &LEFT_META || current == &RIGHT_META || current == &META
-            },
-            KeyModifier::BACKSPACE => {
-                current == &BACKSPACE
-            },
-            KeyModifier::LEFT_CTRL => {
-                current == &LEFT_CTRL
-            },
-            KeyModifier::RIGHT_CTRL => {
-                current == &RIGHT_CTRL
-            },
-            KeyModifier::LEFT_ALT => {
-                current == &LEFT_ALT
-            },
-            KeyModifier::RIGHT_ALT => {
-                current == &RIGHT_ALT
-            },
-            KeyModifier::LEFT_META => {
-                current == &LEFT_META
-            },
-            KeyModifier::RIGHT_META => {
-                current == &RIGHT_META
-            },
-            KeyModifier::LEFT_SHIFT => {
-                current == &LEFT_SHIFT
-            },
-            KeyModifier::RIGHT_SHIFT => {
-                current == &RIGHT_SHIFT
-            },
-            _ => {false},
+            }
+            KeyModifier::BACKSPACE => current == &BACKSPACE,
+            KeyModifier::LEFT_CTRL => current == &LEFT_CTRL,
+            KeyModifier::RIGHT_CTRL => current == &RIGHT_CTRL,
+            KeyModifier::LEFT_ALT => current == &LEFT_ALT,
+            KeyModifier::RIGHT_ALT => current == &RIGHT_ALT,
+            KeyModifier::LEFT_META => current == &LEFT_META,
+            KeyModifier::RIGHT_META => current == &RIGHT_META,
+            KeyModifier::LEFT_SHIFT => current == &LEFT_SHIFT,
+            KeyModifier::RIGHT_SHIFT => current == &RIGHT_SHIFT,
+            _ => false,
         }
     }
 }
@@ -145,11 +125,11 @@ impl KeyModifier {
 #[derive(Debug, Clone)]
 pub enum SystemEvent {
     // MacOS specific
-    SecureInputEnabled(String, String),  // AppName, App Path
+    SecureInputEnabled(String, String), // AppName, App Path
     SecureInputDisabled,
 
     // Notification
-    NotifyRequest(String)
+    NotifyRequest(String),
 }
 
 // Receivers
@@ -170,8 +150,8 @@ pub trait SystemEventReceiver {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use super::KeyModifier::*;
+    use super::*;
 
     #[test]
     fn test_shallow_equals_ctrl() {

@@ -17,16 +17,16 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use log::{error, warn};
 use serde_yaml::{Mapping, Value};
-use std::process::Command;
-use log::{warn, error};
 use std::path::PathBuf;
+use std::process::Command;
 
 pub struct ScriptExtension {}
 
 impl ScriptExtension {
     pub fn new() -> ScriptExtension {
-        ScriptExtension{}
+        ScriptExtension {}
     }
 }
 
@@ -39,17 +39,21 @@ impl super::Extension for ScriptExtension {
         let args = params.get(&Value::from("args"));
         if args.is_none() {
             warn!("No 'args' parameter specified for script variable");
-            return None
+            return None;
         }
         let args = args.unwrap().as_sequence();
         if let Some(args) = args {
-            let mut str_args = args.iter().map(|arg| {
-               arg.as_str().unwrap_or_default().to_string()
-            }).collect::<Vec<String>>();
+            let mut str_args = args
+                .iter()
+                .map(|arg| arg.as_str().unwrap_or_default().to_string())
+                .collect::<Vec<String>>();
 
             // The user has to enable argument concatenation explicitly
-            let inject_args = params.get(&Value::from("inject_args"))
-                .unwrap_or(&Value::from(false)).as_bool().unwrap_or(false);
+            let inject_args = params
+                .get(&Value::from("inject_args"))
+                .unwrap_or(&Value::from(false))
+                .as_bool()
+                .unwrap_or(false);
             if inject_args {
                 str_args.extend(user_args.clone());
             }
@@ -71,16 +75,11 @@ impl super::Extension for ScriptExtension {
                 }
             });
 
-
             let output = if str_args.len() > 1 {
-                Command::new(&str_args[0])
-                    .args(&str_args[1..])
-                    .output()
-            }else{
-                Command::new(&str_args[0])
-                    .output()
+                Command::new(&str_args[0]).args(&str_args[1..]).output()
+            } else {
+                Command::new(&str_args[0]).output()
             };
-
 
             match output {
                 Ok(output) => {
@@ -94,12 +93,12 @@ impl super::Extension for ScriptExtension {
                         warn!("Script command reported error: \n{}", error_str);
                     }
 
-                    return Some(output_str.into_owned())
-                },
+                    return Some(output_str.into_owned());
+                }
                 Err(e) => {
                     error!("Could not execute script '{:?}', error: {}", args, e);
-                    return None
-                },
+                    return None;
+                }
             }
         }
 
@@ -117,7 +116,10 @@ mod tests {
     #[cfg(not(target_os = "windows"))]
     fn test_script_basic() {
         let mut params = Mapping::new();
-        params.insert(Value::from("args"), Value::from(vec!["echo", "hello world"]));
+        params.insert(
+            Value::from("args"),
+            Value::from(vec!["echo", "hello world"]),
+        );
 
         let extension = ScriptExtension::new();
         let output = extension.calculate(&params, &vec![]);
@@ -130,7 +132,10 @@ mod tests {
     #[cfg(not(target_os = "windows"))]
     fn test_script_inject_args_off() {
         let mut params = Mapping::new();
-        params.insert(Value::from("args"), Value::from(vec!["echo", "hello world"]));
+        params.insert(
+            Value::from("args"),
+            Value::from(vec!["echo", "hello world"]),
+        );
 
         let extension = ScriptExtension::new();
         let output = extension.calculate(&params, &vec!["jon".to_owned()]);
@@ -143,7 +148,10 @@ mod tests {
     #[cfg(not(target_os = "windows"))]
     fn test_script_inject_args_on() {
         let mut params = Mapping::new();
-        params.insert(Value::from("args"), Value::from(vec!["echo", "hello world"]));
+        params.insert(
+            Value::from("args"),
+            Value::from(vec!["echo", "hello world"]),
+        );
         params.insert(Value::from("inject_args"), Value::from(true));
 
         let extension = ScriptExtension::new();

@@ -17,24 +17,22 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use widestring::U16CString;
-use crate::bridge::windows::{set_clipboard, get_clipboard, set_clipboard_image};
+use crate::bridge::windows::{get_clipboard, set_clipboard, set_clipboard_image};
 use std::path::Path;
+use widestring::U16CString;
 
-pub struct WindowsClipboardManager {
-
-}
+pub struct WindowsClipboardManager {}
 
 impl WindowsClipboardManager {
     pub fn new() -> WindowsClipboardManager {
-        WindowsClipboardManager{}
+        WindowsClipboardManager {}
     }
 }
 
 impl super::ClipboardManager for WindowsClipboardManager {
-    fn get_clipboard(&self) -> Option<String>  {
+    fn get_clipboard(&self) -> Option<String> {
         unsafe {
-            let mut buffer : [u16; 2000] = [0; 2000];
+            let mut buffer: [u16; 2000] = [0; 2000];
             let res = get_clipboard(buffer.as_mut_ptr(), buffer.len() as i32);
 
             if res > 0 {

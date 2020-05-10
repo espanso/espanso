@@ -17,13 +17,13 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::matcher::{Match, MatchReceiver, TriggerEntry};
-use std::cell::{RefCell};
-use crate::event::{KeyModifier, ActionEventReceiver, ActionType};
 use crate::config::ConfigManager;
-use crate::event::KeyModifier::{BACKSPACE, LEFT_SHIFT, RIGHT_SHIFT, CAPS_LOCK};
-use std::time::SystemTime;
+use crate::event::KeyModifier::{BACKSPACE, CAPS_LOCK, LEFT_SHIFT, RIGHT_SHIFT};
+use crate::event::{ActionEventReceiver, ActionType, KeyModifier};
+use crate::matcher::{Match, MatchReceiver, TriggerEntry};
+use std::cell::RefCell;
 use std::collections::VecDeque;
+use std::time::SystemTime;
 
 pub struct ScrollingMatcher<'a, R: MatchReceiver, M: ConfigManager<'a>> {
     config_manager: &'a M,
@@ -40,16 +40,16 @@ struct MatchEntry<'a> {
     start: usize,
     count: usize,
     trigger_offset: usize, // The index of the trigger in the Match that matched
-    _match: &'a Match
+    _match: &'a Match,
 }
 
-impl <'a, R: MatchReceiver, M: ConfigManager<'a>> ScrollingMatcher<'a, R, M> {
+impl<'a, R: MatchReceiver, M: ConfigManager<'a>> ScrollingMatcher<'a, R, M> {
     pub fn new(config_manager: &'a M, receiver: &'a R) -> ScrollingMatcher<'a, R, M> {
         let current_set_queue = RefCell::new(VecDeque::new());
         let toggle_press_time = RefCell::new(SystemTime::now());
         let passive_press_time = RefCell::new(SystemTime::now());
 
-        ScrollingMatcher{
+        ScrollingMatcher {
             config_manager,
             receiver,
             current_set_queue,
@@ -74,19 +74,21 @@ impl <'a, R: MatchReceiver, M: ConfigManager<'a>> ScrollingMatcher<'a, R, M> {
         self.receiver.on_enable_update(*is_enabled);
     }
 
-    fn is_matching(mtc: &Match, current_char: &str, start: usize, trigger_offset: usize, is_current_word_separator: bool) -> bool {
+    fn is_matching(
+        mtc: &Match,
+        current_char: &str,
+        start: usize,
+        trigger_offset: usize,
+        is_current_word_separator: bool,
+    ) -> bool {
         match mtc._trigger_sequences[trigger_offset][start] {
-            TriggerEntry::Char(c) => {
-                current_char.starts_with(c)
-            },
-            TriggerEntry::WordSeparator => {
-                is_current_word_separator
-            },
+            TriggerEntry::Char(c) => current_char.starts_with(c),
+            TriggerEntry::WordSeparator => is_current_word_separator,
         }
     }
 }
 
-impl <'a, R: MatchReceiver, M: ConfigManager<'a>> super::Matcher for ScrollingMatcher<'a, R, M> {
+impl<'a, R: MatchReceiver, M: ConfigManager<'a>> super::Matcher for ScrollingMatcher<'a, R, M> {
     fn handle_char(&self, c: &str) {
         // if not enabled, avoid any processing
         if !*(self.is_enabled.borrow()) {
@@ -98,9 +100,9 @@ impl <'a, R: MatchReceiver, M: ConfigManager<'a>> super::Matcher for ScrollingMa
         let active_config = self.config_manager.active_config();
 
         // Check if the current char is a word separator
-        let mut is_current_word_separator = active_config.word_separators.contains(
-            &c.chars().nth(0).unwrap_or_default()
-        );
+        let mut is_current_word_separator = active_config
+            .word_separators
+            .contains(&c.chars().nth(0).unwrap_or_default());
 
         // Workaround needed on macos to consider espanso replacement key presses as separators.
         if cfg!(target_os = "macos") {
@@ -118,22 +120,23 @@ impl <'a, R: MatchReceiver, M: ConfigManager<'a>> super::Matcher for ScrollingMa
         for m in active_config.matches.iter() {
             // only active-enabled matches are considered
             if m.passive_only {
-                continue
+                continue;
             }
 
             for trigger_offset in 0..m._trigger_sequences.len() {
-                let mut result = Self::is_matching(m, c, 0, trigger_offset, is_current_word_separator);
+                let mut result =
+                    Self::is_matching(m, c, 0, trigger_offset, is_current_word_separator);
 
                 if m.word {
                     result = result && *was_previous_word_separator
                 }
 
                 if result {
-                    new_matches.push(MatchEntry{
+                    new_matches.push(MatchEntry {
                         start: 1,
                         count: m._trigger_sequences[trigger_offset].len(),
                         trigger_offset,
-                        _match: &m
+                        _match: &m,
                     });
                 }
             }
@@ -142,22 +145,29 @@ impl <'a, R: MatchReceiver, M: ConfigManager<'a>> super::Matcher for ScrollingMa
 
         let combined_matches: Vec<MatchEntry> = match current_set_queue.back_mut() {
             Some(last_matches) => {
-                let mut updated: Vec<MatchEntry> = last_matches.iter()
+                let mut updated: Vec<MatchEntry> = last_matches
+                    .iter()
                     .filter(|&x| {
-                        Self::is_matching(x._match, c, x.start, x.trigger_offset, is_current_word_separator)
+                        Self::is_matching(
+                            x._match,
+                            c,
+                            x.start,
+                            x.trigger_offset,
+                            is_current_word_separator,
+                        )
                     })
-                    .map(|x | MatchEntry{
-                        start: x.start+1,
+                    .map(|x| MatchEntry {
+                        start: x.start + 1,
                         count: x.count,
                         trigger_offset: x.trigger_offset,
-                        _match: &x._match
+                        _match: &x._match,
                     })
                     .collect();
 
                 updated.extend(new_matches);
                 updated
-            },
-            None => {new_matches},
+            }
+            None => new_matches,
         };
 
         let mut found_entry = None;
@@ -171,7 +181,9 @@ impl <'a, R: MatchReceiver, M: ConfigManager<'a>> super::Matcher for ScrollingMa
 
         current_set_queue.push_back(combined_matches);
 
-        if current_set_queue.len() as i32 > (self.config_manager.default_config().backspace_limit + 1) {
+        if current_set_queue.len() as i32
+            > (self.config_manager.default_config().backspace_limit + 1)
+        {
             current_set_queue.pop_front();
         }
 
@@ -189,20 +201,21 @@ impl <'a, R: MatchReceiver, M: ConfigManager<'a>> super::Matcher for ScrollingMa
                 None
             } else if !is_current_word_separator {
                 None
-            }else{
+            } else {
                 let as_char = c.chars().nth(0);
                 match as_char {
                     Some(c) => {
                         Some(c) // Current char is the trailing separator
-                    },
-                    None => {None},
+                    }
+                    None => None,
                 }
             };
 
             // Force espanso to consider the last char as a separator
             *was_previous_word_separator = true;
 
-            self.receiver.on_match(mtc, trailing_separator, entry.trigger_offset);
+            self.receiver
+                .on_match(mtc, trailing_separator, entry.trigger_offset);
         }
     }
 
@@ -212,22 +225,28 @@ impl <'a, R: MatchReceiver, M: ConfigManager<'a>> super::Matcher for ScrollingMa
         // TODO: at the moment, activating the passive key triggers the toggle key
         // study a mechanism to avoid this problem
 
-        if KeyModifier::shallow_equals(&m, &config.toggle_key)  {
-            check_interval(&self.toggle_press_time,
-                           u128::from(config.toggle_interval), || {
-                self.toggle();
+        if KeyModifier::shallow_equals(&m, &config.toggle_key) {
+            check_interval(
+                &self.toggle_press_time,
+                u128::from(config.toggle_interval),
+                || {
+                    self.toggle();
 
-                let is_enabled = self.is_enabled.borrow();
+                    let is_enabled = self.is_enabled.borrow();
 
-                if !*is_enabled {
-                    self.current_set_queue.borrow_mut().clear();
-                }
-            });
-        }else if KeyModifier::shallow_equals(&m, &config.passive_key) {
-            check_interval(&self.passive_press_time,
-                           u128::from(config.toggle_interval), || {
-                self.receiver.on_passive();
-            });
+                    if !*is_enabled {
+                        self.current_set_queue.borrow_mut().clear();
+                    }
+                },
+            );
+        } else if KeyModifier::shallow_equals(&m, &config.passive_key) {
+            check_interval(
+                &self.passive_press_time,
+                u128::from(config.toggle_interval),
+                || {
+                    self.receiver.on_passive();
+                },
+            );
         }
 
         // Backspace handling, basically "rewinding history"
@@ -238,7 +257,8 @@ impl <'a, R: MatchReceiver, M: ConfigManager<'a>> super::Matcher for ScrollingMa
 
         // Consider modifiers as separators to improve word matches reliability
         if m != LEFT_SHIFT && m != RIGHT_SHIFT && m != CAPS_LOCK {
-            let mut was_previous_char_word_separator = self.was_previous_char_word_separator.borrow_mut();
+            let mut was_previous_char_word_separator =
+                self.was_previous_char_word_separator.borrow_mut();
             *was_previous_char_word_separator = true;
         }
     }
@@ -246,29 +266,35 @@ impl <'a, R: MatchReceiver, M: ConfigManager<'a>> super::Matcher for ScrollingMa
     fn handle_other(&self) {
         // When receiving "other" type of events, we mark them as valid separators.
         // This dramatically improves the reliability of word matches
-        let mut was_previous_char_word_separator = self.was_previous_char_word_separator.borrow_mut();
+        let mut was_previous_char_word_separator =
+            self.was_previous_char_word_separator.borrow_mut();
         *was_previous_char_word_separator = true;
     }
 }
 
-impl <'a, R: MatchReceiver, M: ConfigManager<'a>> ActionEventReceiver for ScrollingMatcher<'a, R, M> {
+impl<'a, R: MatchReceiver, M: ConfigManager<'a>> ActionEventReceiver
+    for ScrollingMatcher<'a, R, M>
+{
     fn on_action_event(&self, e: ActionType) {
         match e {
             ActionType::Toggle => {
                 self.toggle();
-            },
+            }
             ActionType::Enable => {
                 self.set_enabled(true);
-            },
+            }
             ActionType::Disable => {
                 self.set_enabled(false);
-            },
+            }
             _ => {}
         }
     }
 }
 
-fn check_interval<F>(state_var: &RefCell<SystemTime>, interval: u128, elapsed_callback: F) where F:Fn() {
+fn check_interval<F>(state_var: &RefCell<SystemTime>, interval: u128, elapsed_callback: F)
+where
+    F: Fn(),
+{
     let mut press_time = state_var.borrow_mut();
     if let Ok(elapsed) = press_time.elapsed() {
         if elapsed.as_millis() < interval {

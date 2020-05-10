@@ -17,8 +17,8 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use serde::{Serialize, Deserialize};
 use crate::config::Configs;
+use serde::{Deserialize, Serialize};
 
 #[cfg(target_os = "windows")]
 mod windows;
@@ -40,15 +40,15 @@ pub trait KeyboardManager {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum PasteShortcut {
-    Default,        // Default one for the current system
-    CtrlV,          // Classic Ctrl+V shortcut
-    CtrlShiftV,     // Could be used to paste without formatting in many applications
-    ShiftInsert,    // Often used in Linux systems
-    CtrlAltV,       // Used in some Linux terminals (urxvt)
-    MetaV,          // Corresponding to Win+V on Windows and Linux, CMD+V on macOS
+    Default,     // Default one for the current system
+    CtrlV,       // Classic Ctrl+V shortcut
+    CtrlShiftV,  // Could be used to paste without formatting in many applications
+    ShiftInsert, // Often used in Linux systems
+    CtrlAltV,    // Used in some Linux terminals (urxvt)
+    MetaV,       // Corresponding to Win+V on Windows and Linux, CMD+V on macOS
 }
 
-impl Default for PasteShortcut{
+impl Default for PasteShortcut {
     fn default() -> Self {
         PasteShortcut::Default
     }
@@ -57,17 +57,17 @@ impl Default for PasteShortcut{
 // WINDOWS IMPLEMENTATION
 #[cfg(target_os = "windows")]
 pub fn get_manager() -> impl KeyboardManager {
-    windows::WindowsKeyboardManager{}
+    windows::WindowsKeyboardManager {}
 }
 
 // LINUX IMPLEMENTATION
 #[cfg(target_os = "linux")]
 pub fn get_manager() -> impl KeyboardManager {
-    linux::LinuxKeyboardManager{}
+    linux::LinuxKeyboardManager {}
 }
 
 // MAC IMPLEMENTATION
 #[cfg(target_os = "macos")]
 pub fn get_manager() -> impl KeyboardManager {
-    macos::MacKeyboardManager{}
+    macos::MacKeyboardManager {}
 }
