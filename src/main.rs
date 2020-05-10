@@ -382,11 +382,7 @@ fn daemon_main(config_set: ConfigSet) {
                 match event {
                     Event::Action(ActionType::RestartWorker) => {
                         // Terminate the worker process
-                        let ipc_client = protocol::get_ipc_client(Service::Worker, config_set.default.clone());
-                        ipc_client.send_command(IPCCommand {
-                            id: "exit".to_owned(),
-                            payload: "".to_owned(),
-                        });
+                        send_command_or_warn(Service::Worker, config_set.default.clone(), IPCCommand::exit_worker());
 
                         std::thread::sleep(Duration::from_millis(500));
 
@@ -394,11 +390,7 @@ fn daemon_main(config_set: ConfigSet) {
                         crate::process::spawn_process(&espanso_path.to_string_lossy().to_string(), &vec!("worker".to_owned(), "--reload".to_owned()));
                     },
                     Event::Action(ActionType::Exit) => {
-                        let ipc_client = protocol::get_ipc_client(Service::Worker, config_set.default.clone());
-                        ipc_client.send_command(IPCCommand {
-                            id: "exit".to_owned(),
-                            payload: "".to_owned(),
-                        });
+                        send_command_or_warn(Service::Worker, config_set.default.clone(), IPCCommand::exit_worker());
 
                         std::thread::sleep(Duration::from_millis(200));
 
@@ -408,9 +400,8 @@ fn daemon_main(config_set: ConfigSet) {
                     _ => {
                         // Forward the command to the worker
                         let command = IPCCommand::from(event);
-                        let ipc_client = protocol::get_ipc_client(Service::Worker, config_set.default.clone());
                         if let Some(command) = command {
-                            ipc_client.send_command(command);
+                            send_command_or_warn(Service::Worker, config_set.default.clone(), command);
                         }
                     }
                 }
@@ -431,7 +422,7 @@ fn watcher_background(sender: Sender<Event>) {
     let config_path = crate::context::get_config_dir();
     watcher.watch(&config_path, RecursiveMode::Recursive).expect("unable to start watcher");
 
-    info!("watching for changes in path: {:?}", config_path);
+    info!("watching for changes in path: {}", config_path.to_string_lossy());
 
 
     loop {
@@ -558,7 +549,7 @@ fn worker_background(receive_channel: Receiver<Event>, config_set: ConfigSet, is
         vec!(&engine),
     );
 
-    info!("espanso is running!");
+    info!("worker is running!");
 
     event_manager.eventloop();
 }
@@ -742,17 +733,7 @@ fn stop_main(config_set: ConfigSet) {
         exit(3);
     }
 
-    let res = send_command(Service::Daemon, config_set.default, IPCCommand{
-        id: "exit".to_owned(),
-        payload: "".to_owned(),
-    });
-
-    if let Err(e) = res {
-        println!("{}", e);
-        exit(1);
-    }else{
-        exit(0);
-    }
+    send_command_or_warn(Service::Daemon, config_set.default, IPCCommand::exit());
 }
 
 /// Kill the daemon if running and start it again
@@ -761,10 +742,7 @@ fn restart_main(config_set: ConfigSet) {
     let lock_file = acquire_lock();
     if lock_file.is_none() {
         // Terminate the current espanso daemon
-        send_command(Service::Daemon, config_set.default.clone(), IPCCommand {
-            id: "exit".to_owned(),
-            payload: "".to_owned(),
-        });
+        send_command_or_warn(Service::Daemon, config_set.default.clone(), IPCCommand::exit());
     }else{
         release_lock(lock_file.unwrap());
     }
@@ -859,10 +837,7 @@ fn detect_main() {
 /// Send the given command to the espanso daemon
 fn cmd_main(config_set: ConfigSet, matches: &ArgMatches) {
     let command = if matches.subcommand_matches("exit").is_some() {
-        Some(IPCCommand {
-            id: String::from("exit"),
-            payload: String::from(""),
-        })
+        Some(IPCCommand::exit())
     }else if matches.subcommand_matches("toggle").is_some() {
         Some(IPCCommand {
             id: String::from("toggle"),
@@ -883,21 +858,10 @@ fn cmd_main(config_set: ConfigSet, matches: &ArgMatches) {
     };
 
     if let Some(command) = command {
-        let res = send_command(Service::Daemon, config_set.default, command);
-
-        if res.is_ok() {
-            exit(0);
-        }else{
-            println!("{}", res.unwrap_err());
-        }
+        send_command_or_warn(Service::Daemon, config_set.default, command);
     }
 
     exit(1);
-}
-
-fn send_command(service: Service, config: Configs, command: IPCCommand) -> Result<(), String> {
-    let ipc_client = protocol::get_ipc_client(service, config);
-    ipc_client.send_command(command)
 }
 
 fn log_main() {

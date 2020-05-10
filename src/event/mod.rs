@@ -38,6 +38,7 @@ pub enum ActionType {
     Enable = 4,
     Disable = 5,
     RestartWorker = 6,
+    ExitWorker = 7,
 }
 
 impl From<i32> for ActionType {
@@ -49,6 +50,7 @@ impl From<i32> for ActionType {
             4 => ActionType::Enable,
             5 => ActionType::Disable,
             6 => ActionType::RestartWorker,
+            7 => ActionType::ExitWorker,
             _ => ActionType::Noop,
         }
     }
