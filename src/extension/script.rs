@@ -17,15 +17,16 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use log::{error, warn};
 use serde_yaml::{Mapping, Value};
+use std::path::PathBuf;
 use std::process::Command;
-use log::{warn, error};
 
 pub struct ScriptExtension {}
 
 impl ScriptExtension {
     pub fn new() -> ScriptExtension {
-        ScriptExtension{}
+        ScriptExtension {}
     }
 }
 
@@ -38,41 +39,66 @@ impl super::Extension for ScriptExtension {
         let args = params.get(&Value::from("args"));
         if args.is_none() {
             warn!("No 'args' parameter specified for script variable");
-            return None
+            return None;
         }
         let args = args.unwrap().as_sequence();
         if let Some(args) = args {
-            let mut str_args = args.iter().map(|arg| {
-               arg.as_str().unwrap_or_default().to_string()
-            }).collect::<Vec<String>>();
+            let mut str_args = args
+                .iter()
+                .map(|arg| arg.as_str().unwrap_or_default().to_string())
+                .collect::<Vec<String>>();
 
             // The user has to enable argument concatenation explicitly
-            let inject_args = params.get(&Value::from("inject_args"))
-                .unwrap_or(&Value::from(false)).as_bool().unwrap_or(false);
+            let inject_args = params
+                .get(&Value::from("inject_args"))
+                .unwrap_or(&Value::from(false))
+                .as_bool()
+                .unwrap_or(false);
             if inject_args {
                 str_args.extend(user_args.clone());
             }
 
+            // Replace %HOME% with current user home directory to
+            // create cross-platform paths. See issue #265
+            let home_dir = dirs::home_dir().unwrap_or_default();
+            str_args.iter_mut().for_each(|arg| {
+                if arg.contains("%HOME%") {
+                    *arg = arg.replace("%HOME%", &home_dir.to_string_lossy().to_string());
+                }
+
+                // On Windows, correct paths separators
+                if cfg!(target_os = "windows") {
+                    let path = PathBuf::from(&arg);
+                    if path.exists() {
+                        *arg = path.to_string_lossy().to_string()
+                    }
+                }
+            });
+
             let output = if str_args.len() > 1 {
-                Command::new(&str_args[0])
-                    .args(&str_args[1..])
-                    .output()
-            }else{
-                Command::new(&str_args[0])
-                    .output()
+                Command::new(&str_args[0]).args(&str_args[1..]).output()
+            } else {
+                Command::new(&str_args[0]).output()
             };
 
-            println!("{:?}", output);
             match output {
                 Ok(output) => {
                     let output_str = String::from_utf8_lossy(output.stdout.as_slice());
+                    let error_str = String::from_utf8_lossy(output.stderr.as_slice());
+                    let error_str = error_str.to_string();
+                    let error_str = error_str.trim();
 
-                    return Some(output_str.into_owned())
-                },
+                    // Print stderror if present
+                    if !error_str.is_empty() {
+                        warn!("Script command reported error: \n{}", error_str);
+                    }
+
+                    return Some(output_str.into_owned());
+                }
                 Err(e) => {
                     error!("Could not execute script '{:?}', error: {}", args, e);
-                    return None
-                },
+                    return None;
+                }
             }
         }
 
@@ -90,7 +116,10 @@ mod tests {
     #[cfg(not(target_os = "windows"))]
     fn test_script_basic() {
         let mut params = Mapping::new();
-        params.insert(Value::from("args"), Value::from(vec!["echo", "hello world"]));
+        params.insert(
+            Value::from("args"),
+            Value::from(vec!["echo", "hello world"]),
+        );
 
         let extension = ScriptExtension::new();
         let output = extension.calculate(&params, &vec![]);
@@ -103,7 +132,10 @@ mod tests {
     #[cfg(not(target_os = "windows"))]
     fn test_script_inject_args_off() {
         let mut params = Mapping::new();
-        params.insert(Value::from("args"), Value::from(vec!["echo", "hello world"]));
+        params.insert(
+            Value::from("args"),
+            Value::from(vec!["echo", "hello world"]),
+        );
 
         let extension = ScriptExtension::new();
         let output = extension.calculate(&params, &vec!["jon".to_owned()]);
@@ -116,7 +148,10 @@ mod tests {
     #[cfg(not(target_os = "windows"))]
     fn test_script_inject_args_on() {
         let mut params = Mapping::new();
-        params.insert(Value::from("args"), Value::from(vec!["echo", "hello world"]));
+        params.insert(
+            Value::from("args"),
+            Value::from(vec!["echo", "hello world"]),
+        );
         params.insert(Value::from("inject_args"), Value::from(true));
 
         let extension = ScriptExtension::new();

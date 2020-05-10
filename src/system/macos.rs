@@ -19,12 +19,12 @@
 
 use std::os::raw::c_char;
 
+use crate::bridge::macos::{
+    get_active_app_bundle, get_active_app_identifier, get_path_from_pid, get_secure_input_process,
+};
 use std::ffi::CStr;
-use crate::bridge::macos::{get_active_app_bundle, get_active_app_identifier, get_secure_input_process, get_path_from_pid};
 
-pub struct MacSystemManager {
-
-}
+pub struct MacSystemManager {}
 
 impl super::SystemManager for MacSystemManager {
     fn get_current_window_title(&self) -> Option<String> {
@@ -33,7 +33,7 @@ impl super::SystemManager for MacSystemManager {
 
     fn get_current_window_class(&self) -> Option<String> {
         unsafe {
-            let mut buffer : [c_char; 250] = [0; 250];
+            let mut buffer: [c_char; 250] = [0; 250];
             let res = get_active_app_identifier(buffer.as_mut_ptr(), buffer.len() as i32);
 
             if res > 0 {
@@ -51,7 +51,7 @@ impl super::SystemManager for MacSystemManager {
 
     fn get_current_window_executable(&self) -> Option<String> {
         unsafe {
-            let mut buffer : [c_char; 250] = [0; 250];
+            let mut buffer: [c_char; 250] = [0; 250];
             let res = get_active_app_bundle(buffer.as_mut_ptr(), buffer.len() as i32);
 
             if res > 0 {
@@ -70,9 +70,7 @@ impl super::SystemManager for MacSystemManager {
 
 impl MacSystemManager {
     pub fn new() -> MacSystemManager {
-        MacSystemManager{
-
-        }
+        MacSystemManager {}
     }
 
     /// Check whether an application is currently holding the Secure Input.
@@ -82,9 +80,9 @@ impl MacSystemManager {
             let mut pid: i64 = -1;
             let res = get_secure_input_process(&mut pid as *mut i64);
 
-            if res > 0{
+            if res > 0 {
                 Some(pid)
-            }else{
+            } else {
                 None
             }
         }
@@ -105,7 +103,7 @@ impl MacSystemManager {
             if let Some(pid) = pid {
                 // Size of the buffer is ruled by the PROC_PIDPATHINFO_MAXSIZE constant.
                 // the underlying proc_pidpath REQUIRES a buffer of that dimension, otherwise it fail silently.
-                let mut buffer : [c_char; 4096] = [0; 4096];
+                let mut buffer: [c_char; 4096] = [0; 4096];
                 let res = get_path_from_pid(pid, buffer.as_mut_ptr(), buffer.len() as i32);
 
                 if res > 0 {
@@ -117,21 +115,21 @@ impl MacSystemManager {
                             let caps = APP_REGEX.captures(&process);
                             let app_name = if let Some(caps) = caps {
                                 caps.get(1).map_or("", |m| m.as_str()).to_owned()
-                            }else{
+                            } else {
                                 process.to_owned()
                             };
 
                             Some((app_name, process))
-                        }else{
+                        } else {
                             None
                         }
-                    }else{
+                    } else {
                         None
                     }
-                }else{
+                } else {
                     None
                 }
-            }else{
+            } else {
                 None
             }
         }

@@ -325,7 +325,7 @@ void fast_release_all_keys() {
     XFlush(xdo_context->xdpy);
 }
 
-void fast_send_string(const char * string) {
+void fast_send_string(const char * string, int32_t delay) {
     // It may happen that when an expansion is triggered, some keys are still pressed.
     // This causes a problem if the expanded match contains that character, as the injection
     // will not be able to register that keypress (as it is already pressed).
@@ -337,10 +337,15 @@ void fast_send_string(const char * string) {
     int revert_to;
     XGetInputFocus(xdo_context->xdpy, &focused, &revert_to);
 
-    fast_enter_text_window(xdo_context, focused, string, 1);
+    int actual_delay = 1;
+    if (delay > 0) {
+        actual_delay = delay * 1000;
+    }
+
+    fast_enter_text_window(xdo_context, focused, string, actual_delay);
 }
 
-void _fast_send_keycode_to_focused_window(int KeyCode, int32_t count) {
+void _fast_send_keycode_to_focused_window(int KeyCode, int32_t count, int32_t delay) {
     int keycode = XKeysymToKeycode(xdo_context->xdpy, KeyCode);
 
     Window focused;
@@ -350,13 +355,18 @@ void _fast_send_keycode_to_focused_window(int KeyCode, int32_t count) {
     for (int i = 0; i<count; i++) {
         fast_send_event(xdo_context, focused, keycode, 1);
         fast_send_event(xdo_context, focused, keycode, 0);
+
+        if (delay > 0) {
+            usleep(delay * 1000);
+            XFlush(xdo_context->xdpy);
+        }
     }
 
     XFlush(xdo_context->xdpy);
 }
 
 void fast_send_enter() {
-    _fast_send_keycode_to_focused_window(XK_Return, 1);
+    _fast_send_keycode_to_focused_window(XK_Return, 1, 0);
 }
 
 void delete_string(int32_t count) {
@@ -365,8 +375,8 @@ void delete_string(int32_t count) {
     }
 }
 
-void fast_delete_string(int32_t count) {
-    _fast_send_keycode_to_focused_window(XK_BackSpace, count);
+void fast_delete_string(int32_t count, int32_t delay) {
+    _fast_send_keycode_to_focused_window(XK_BackSpace, count, delay);
 }
 
 void left_arrow(int32_t count) {
@@ -376,7 +386,7 @@ void left_arrow(int32_t count) {
 }
 
 void fast_left_arrow(int32_t count) {
-    _fast_send_keycode_to_focused_window(XK_Left, count);
+    _fast_send_keycode_to_focused_window(XK_Left, count, 0);
 }
 
 void trigger_paste() {

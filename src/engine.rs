@@ -17,24 +17,31 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::matcher::{Match, MatchReceiver};
-use crate::keyboard::KeyboardManager;
-use crate::config::ConfigManager;
-use crate::config::BackendType;
 use crate::clipboard::ClipboardManager;
-use log::{info, warn, debug, error};
-use crate::ui::{UIManager, MenuItem, MenuItemType};
-use crate::event::{ActionEventReceiver, ActionType, SystemEventReceiver, SystemEvent};
-use crate::render::{Renderer, RenderResult};
+use crate::config::BackendType;
+use crate::config::ConfigManager;
+use crate::event::{ActionEventReceiver, ActionType, SystemEvent, SystemEventReceiver};
+use crate::keyboard::KeyboardManager;
+use crate::matcher::{Match, MatchReceiver};
+use crate::protocol::{send_command_or_warn, IPCCommand, Service};
+use crate::render::{RenderResult, Renderer};
+use crate::ui::{MenuItem, MenuItemType, UIManager};
+use log::{debug, error, info, warn};
+use regex::Regex;
 use std::cell::RefCell;
 use std::process::exit;
-use regex::{Regex};
-use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering::Release;
+use std::sync::Arc;
 
-pub struct Engine<'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>,
-                  U: UIManager, R: Renderer> {
+pub struct Engine<
+    'a,
+    S: KeyboardManager,
+    C: ClipboardManager,
+    M: ConfigManager<'a>,
+    U: UIManager,
+    R: Renderer,
+> {
     keyboard_manager: &'a S,
     clipboard_manager: &'a C,
     config_manager: &'a M,
@@ -45,14 +52,27 @@ pub struct Engine<'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<
     enabled: RefCell<bool>,
 }
 
-impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIManager, R: Renderer>
-    Engine<'a, S, C, M, U, R> {
-    pub fn new(keyboard_manager: &'a S, clipboard_manager: &'a C,
-               config_manager: &'a M, ui_manager: &'a U,
-               renderer: &'a R, is_injecting: Arc<AtomicBool>) -> Engine<'a, S, C, M, U, R> {
+impl<
+        'a,
+        S: KeyboardManager,
+        C: ClipboardManager,
+        M: ConfigManager<'a>,
+        U: UIManager,
+        R: Renderer,
+    > Engine<'a, S, C, M, U, R>
+{
+    pub fn new(
+        keyboard_manager: &'a S,
+        clipboard_manager: &'a C,
+        config_manager: &'a M,
+        ui_manager: &'a U,
+        renderer: &'a R,
+        is_injecting: Arc<AtomicBool>,
+    ) -> Engine<'a, S, C, M, U, R> {
         let enabled = RefCell::new(true);
 
-        Engine{keyboard_manager,
+        Engine {
+            keyboard_manager,
             clipboard_manager,
             config_manager,
             ui_manager,
@@ -66,24 +86,32 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
         let mut menu = Vec::new();
 
         let enabled = self.enabled.borrow();
-        let toggle_text = if *enabled {
-            "Disable"
-        }else{
-            "Enable"
-        }.to_owned();
-        menu.push(MenuItem{
+        let toggle_text = if *enabled { "Disable" } else { "Enable" }.to_owned();
+        menu.push(MenuItem {
             item_type: MenuItemType::Button,
             item_name: toggle_text,
             item_id: ActionType::Toggle as i32,
         });
 
-        menu.push(MenuItem{
+        menu.push(MenuItem {
+            item_type: MenuItemType::Separator,
+            item_name: "".to_owned(),
+            item_id: 998,
+        });
+
+        menu.push(MenuItem {
+            item_type: MenuItemType::Button,
+            item_name: "Reload configs".to_owned(),
+            item_id: ActionType::RestartWorker as i32,
+        });
+
+        menu.push(MenuItem {
             item_type: MenuItemType::Separator,
             item_name: "".to_owned(),
             item_id: 999,
         });
 
-        menu.push(MenuItem{
+        menu.push(MenuItem {
             item_type: MenuItemType::Button,
             item_name: "Exit espanso".to_owned(),
             item_id: ActionType::Exit as i32,
@@ -97,10 +125,10 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
         // clipboard content in order to restore it later.
         if self.config_manager.default_config().preserve_clipboard {
             match self.clipboard_manager.get_clipboard() {
-                Some(clipboard) => {Some(clipboard)},
-                None => {None},
+                Some(clipboard) => Some(clipboard),
+                None => None,
             }
-        }else {
+        } else {
             None
         }
     }
@@ -110,9 +138,15 @@ lazy_static! {
     static ref VAR_REGEX: Regex = Regex::new("\\{\\{\\s*(?P<name>\\w+)\\s*\\}\\}").unwrap();
 }
 
-impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIManager, R: Renderer>
-    MatchReceiver for Engine<'a, S, C, M, U, R>{
-
+impl<
+        'a,
+        S: KeyboardManager,
+        C: ClipboardManager,
+        M: ConfigManager<'a>,
+        U: UIManager,
+        R: Renderer,
+    > MatchReceiver for Engine<'a, S, C, M, U, R>
+{
     fn on_match(&self, m: &Match, trailing_separator: Option<char>, trigger_offset: usize) {
         let config = self.config_manager.active_config();
 
@@ -125,23 +159,26 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
 
         let char_count = if trailing_separator.is_none() {
             m.triggers[trigger_offset].chars().count() as i32
-        }else{
+        } else {
             m.triggers[trigger_offset].chars().count() as i32 + 1 // Count also the separator
         };
 
         self.keyboard_manager.delete_string(&config, char_count);
 
-        let mut previous_clipboard_content : Option<String> = None;
+        let mut previous_clipboard_content: Option<String> = None;
 
-        let rendered = self.renderer.render_match(m, trigger_offset, config, vec![]);
+        let rendered = self
+            .renderer
+            .render_match(m, trigger_offset, config, vec![]);
 
         match rendered {
             RenderResult::Text(mut target_string) => {
                 // If a trailing separator was counted in the match, add it back to the target string
                 if let Some(trailing_separator) = trailing_separator {
-                    if trailing_separator == '\r' {   // If the trailing separator is a carriage return,
-                        target_string.push('\n');   // convert it to new line
-                    }else{
+                    if trailing_separator == '\r' {
+                        // If the trailing separator is a carriage return,
+                        target_string.push('\n'); // convert it to new line
+                    } else {
                         target_string.push(trailing_separator);
                     }
                 }
@@ -164,26 +201,28 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
                     // Subtract also 3, equal to the number of chars of the placeholder "$|$"
                     let moves = (total_size - char_index - 3) as i32;
                     Some(moves)
-                }else{
+                } else {
                     None
                 };
 
                 let backend = if m.force_clipboard {
                     &BackendType::Clipboard
-                }else if config.backend == BackendType::Auto {
+                } else if config.backend == BackendType::Auto {
                     if cfg!(target_os = "linux") {
                         let all_ascii = target_string.chars().all(|c| c.is_ascii());
                         if all_ascii {
-                            debug!("All elements of the replacement are ascii, using Inject backend");
+                            debug!(
+                                "All elements of the replacement are ascii, using Inject backend"
+                            );
                             &BackendType::Inject
-                        }else{
+                        } else {
                             debug!("There are non-ascii characters, using Clipboard backend");
                             &BackendType::Clipboard
                         }
-                    }else{
+                    } else {
                         &BackendType::Inject
                     }
-                }else{
+                } else {
                     &config.backend
                 };
 
@@ -199,15 +238,16 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
 
                             self.keyboard_manager.send_string(&config, split);
                         }
-                    },
+                    }
                     BackendType::Clipboard => {
                         // If the preserve_clipboard option is enabled, save the current
                         // clipboard content to restore it later.
-                        previous_clipboard_content = self.return_content_if_preserve_clipboard_is_enabled();
+                        previous_clipboard_content =
+                            self.return_content_if_preserve_clipboard_is_enabled();
 
                         self.clipboard_manager.set_clipboard(&target_string);
                         self.keyboard_manager.trigger_paste(&config);
-                    },
+                    }
                     _ => {
                         error!("Unsupported backend type evaluation.");
                         return;
@@ -218,7 +258,7 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
                     // Simulate left arrow key presses to bring the cursor into the desired position
                     self.keyboard_manager.move_cursor_left(&config, moves);
                 }
-            },
+            }
             RenderResult::Image(image_path) => {
                 // If the preserve_clipboard option is enabled, save the current
                 // clipboard content to restore it later.
@@ -226,19 +266,22 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
 
                 self.clipboard_manager.set_clipboard_image(&image_path);
                 self.keyboard_manager.trigger_paste(&config);
-            },
+            }
             RenderResult::Error => {
                 error!("Could not render match: {}", m.triggers[trigger_offset]);
-            },
+            }
         }
 
         // Restore previous clipboard content
         if let Some(previous_clipboard_content) = previous_clipboard_content {
             // Sometimes an expansion gets overwritten before pasting by the previous content
             // A delay is needed to mitigate the problem
-            std::thread::sleep(std::time::Duration::from_millis(config.restore_clipboard_delay as u64));
+            std::thread::sleep(std::time::Duration::from_millis(
+                config.restore_clipboard_delay as u64,
+            ));
 
-            self.clipboard_manager.set_clipboard(&previous_clipboard_content);
+            self.clipboard_manager
+                .set_clipboard(&previous_clipboard_content);
         }
 
         // Re-allow espanso to interpret actions
@@ -248,7 +291,7 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
     fn on_enable_update(&self, status: bool) {
         let message = if status {
             "espanso enabled"
-        }else{
+        } else {
             "espanso disabled"
         };
 
@@ -280,13 +323,13 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
         let previous_clipboard = self.clipboard_manager.get_clipboard();
 
         // Sleep for a while, giving time to effectively copy the text
-        std::thread::sleep(std::time::Duration::from_millis(100));  // TODO: avoid hardcoding
+        std::thread::sleep(std::time::Duration::from_millis(100)); // TODO: avoid hardcoding
 
         // Trigger a copy shortcut to transfer the content of the selection to the clipboard
         self.keyboard_manager.trigger_copy(&config);
 
         // Sleep for a while, giving time to effectively copy the text
-        std::thread::sleep(std::time::Duration::from_millis(100));  // TODO: avoid hardcoding
+        std::thread::sleep(std::time::Duration::from_millis(100)); // TODO: avoid hardcoding
 
         // Then get the text from the clipboard and render the match output
         let clipboard = self.clipboard_manager.get_clipboard();
@@ -295,7 +338,7 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
             // Don't expand empty clipboards, as usually they are the result of an empty passive selection
             if clipboard.trim().is_empty() {
                 info!("Avoiding passive expansion, as the user didn't select anything");
-            }else{
+            } else {
                 if let Some(previous_content) = previous_clipboard {
                     // Because of issue #213, we need to make sure the user selected something.
                     if clipboard == previous_content {
@@ -303,8 +346,7 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
                     } else {
                         info!("Passive mode activated");
 
-                        let rendered = self.renderer.render_passive(&clipboard,
-                                                                    &config);
+                        let rendered = self.renderer.render_passive(&clipboard, &config);
 
                         match rendered {
                             RenderResult::Text(payload) => {
@@ -313,10 +355,8 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
 
                                 std::thread::sleep(std::time::Duration::from_millis(100)); // TODO: avoid hardcoding
                                 self.keyboard_manager.trigger_paste(&config);
-                            },
-                            _ => {
-                                warn!("Cannot expand passive match")
-                            },
+                            }
+                            _ => warn!("Cannot expand passive match"),
                         }
                     }
                 }
@@ -328,27 +368,50 @@ impl <'a, S: KeyboardManager, C: ClipboardManager, M: ConfigManager<'a>, U: UIMa
     }
 }
 
-impl <'a, S: KeyboardManager, C: ClipboardManager,
-    M: ConfigManager<'a>, U: UIManager, R: Renderer> ActionEventReceiver for Engine<'a, S, C, M, U, R>{
-
+impl<
+        'a,
+        S: KeyboardManager,
+        C: ClipboardManager,
+        M: ConfigManager<'a>,
+        U: UIManager,
+        R: Renderer,
+    > ActionEventReceiver for Engine<'a, S, C, M, U, R>
+{
     fn on_action_event(&self, e: ActionType) {
+        let config = self.config_manager.default_config();
         match e {
             ActionType::IconClick => {
                 self.ui_manager.show_menu(self.build_menu());
-            },
-            ActionType::Exit => {
-                info!("Terminating espanso.");
+            }
+            ActionType::ExitWorker => {
+                info!("terminating worker process");
                 self.ui_manager.cleanup();
                 exit(0);
-            },
+            }
+            ActionType::Exit => {
+                send_command_or_warn(Service::Daemon, config.clone(), IPCCommand::exit());
+            }
+            ActionType::RestartWorker => {
+                send_command_or_warn(
+                    Service::Daemon,
+                    config.clone(),
+                    IPCCommand::restart_worker(),
+                );
+            }
             _ => {}
         }
     }
 }
 
-impl <'a, S: KeyboardManager, C: ClipboardManager,
-    M: ConfigManager<'a>, U: UIManager, R: Renderer> SystemEventReceiver for Engine<'a, S, C, M, U, R>{
-
+impl<
+        'a,
+        S: KeyboardManager,
+        C: ClipboardManager,
+        M: ConfigManager<'a>,
+        U: UIManager,
+        R: Renderer,
+    > SystemEventReceiver for Engine<'a, S, C, M, U, R>
+{
     fn on_system_event(&self, e: SystemEvent) {
         match e {
             // MacOS specific
@@ -359,10 +422,16 @@ impl <'a, S: KeyboardManager, C: ClipboardManager,
                 if config.secure_input_notification && config.show_notifications {
                     self.ui_manager.notify_delay(&format!("{} has activated SecureInput. Espanso won't work until you disable it.", app_name), 5000);
                 }
-            },
+            }
             SystemEvent::SecureInputDisabled => {
                 info!("SecureInput has been disabled.");
-            },
+            }
+            SystemEvent::NotifyRequest(message) => {
+                let config = self.config_manager.default_config();
+                if config.show_notifications {
+                    self.ui_manager.notify(&message);
+                }
+            }
         }
     }
 }

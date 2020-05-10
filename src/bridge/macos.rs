@@ -17,7 +17,7 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::os::raw::{c_void, c_char};
+use std::os::raw::{c_char, c_void};
 
 #[repr(C)]
 pub struct MacMenuItem {
@@ -27,8 +27,8 @@ pub struct MacMenuItem {
 }
 
 #[allow(improper_ctypes)]
-#[link(name="macbridge", kind="static")]
-extern {
+#[link(name = "macbridge", kind = "static")]
+extern "C" {
     pub fn initialize(s: *const c_void, icon_path: *const c_char, show_icon: i32);
     pub fn eventloop();
     pub fn headless_eventloop();
@@ -39,8 +39,8 @@ extern {
     pub fn open_settings_panel();
     pub fn get_active_app_bundle(buffer: *mut c_char, size: i32) -> i32;
     pub fn get_active_app_identifier(buffer: *mut c_char, size: i32) -> i32;
-    pub fn get_secure_input_process(pid:*mut i64) -> i32;
-    pub fn get_path_from_pid(pid:i64, buffer: *mut c_char, size: i32) -> i32;
+    pub fn get_secure_input_process(pid: *mut i64) -> i32;
+    pub fn get_path_from_pid(pid: i64, buffer: *mut c_char, size: i32) -> i32;
 
     // Clipboard
     pub fn get_clipboard(buffer: *mut c_char, size: i32) -> i32;
@@ -48,13 +48,14 @@ extern {
     pub fn set_clipboard_image(path: *const c_char) -> i32;
 
     // UI
-    pub fn register_icon_click_callback(cb: extern fn(_self: *mut c_void));
+    pub fn register_icon_click_callback(cb: extern "C" fn(_self: *mut c_void));
     pub fn show_context_menu(items: *const MacMenuItem, count: i32) -> i32;
-    pub fn register_context_menu_click_callback(cb: extern fn(_self: *mut c_void, id: i32));
+    pub fn register_context_menu_click_callback(cb: extern "C" fn(_self: *mut c_void, id: i32));
 
     // Keyboard
-    pub fn register_keypress_callback(cb: extern fn(_self: *mut c_void, *const u8,
-                                                i32, i32, i32));
+    pub fn register_keypress_callback(
+        cb: extern "C" fn(_self: *mut c_void, *const u8, i32, i32, i32),
+    );
 
     pub fn send_string(string: *const c_char);
     pub fn send_vkey(vk: i32);

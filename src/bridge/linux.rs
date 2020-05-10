@@ -17,11 +17,11 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::os::raw::{c_void, c_char};
+use std::os::raw::{c_char, c_void};
 
 #[allow(improper_ctypes)]
-#[link(name="linuxbridge", kind="static")]
-extern {
+#[link(name = "linuxbridge", kind = "static")]
+extern "C" {
     pub fn check_x11() -> i32;
     pub fn initialize(s: *const c_void) -> i32;
     pub fn eventloop();
@@ -34,8 +34,9 @@ extern {
     pub fn is_current_window_special() -> i32;
 
     // Keyboard
-    pub fn register_keypress_callback(cb: extern fn(_self: *mut c_void, *const u8,
-                                                i32, i32, i32));
+    pub fn register_keypress_callback(
+        cb: extern "C" fn(_self: *mut c_void, *const u8, i32, i32, i32),
+    );
 
     pub fn send_string(string: *const c_char);
     pub fn delete_string(count: i32);
@@ -48,8 +49,8 @@ extern {
     pub fn trigger_ctrl_alt_paste();
     pub fn trigger_copy();
 
-    pub fn fast_send_string(string: *const c_char);
-    pub fn fast_delete_string(count: i32);
+    pub fn fast_send_string(string: *const c_char, delay: i32);
+    pub fn fast_delete_string(count: i32, delay: i32);
     pub fn fast_left_arrow(count: i32);
     pub fn fast_send_enter();
 }

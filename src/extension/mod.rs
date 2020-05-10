@@ -17,22 +17,22 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use serde_yaml::Mapping;
 use crate::clipboard::ClipboardManager;
+use serde_yaml::Mapping;
 
-mod date;
-mod shell;
-mod script;
-mod random;
 mod clipboard;
+mod date;
 pub mod dummy;
+mod random;
+mod script;
+mod shell;
 
 pub trait Extension {
     fn name(&self) -> String;
     fn calculate(&self, params: &Mapping, args: &Vec<String>) -> Option<String>;
 }
 
-pub fn get_extensions(clipboard_manager: Box<dyn ClipboardManager>) -> Vec<Box<dyn Extension>>{
+pub fn get_extensions(clipboard_manager: Box<dyn ClipboardManager>) -> Vec<Box<dyn Extension>> {
     vec![
         Box::new(date::DateExtension::new()),
         Box::new(shell::ShellExtension::new()),

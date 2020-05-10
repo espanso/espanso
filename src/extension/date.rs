@@ -17,14 +17,14 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use serde_yaml::{Mapping, Value};
 use chrono::{DateTime, Local};
+use serde_yaml::{Mapping, Value};
 
 pub struct DateExtension {}
 
 impl DateExtension {
     pub fn new() -> DateExtension {
-        DateExtension{}
+        DateExtension {}
     }
 }
 
@@ -40,7 +40,7 @@ impl super::Extension for DateExtension {
 
         let date = if let Some(format) = format {
             now.format(format.as_str().unwrap()).to_string()
-        }else{
+        } else {
             now.to_rfc2822()
         };
 

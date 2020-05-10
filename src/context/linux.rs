@@ -17,18 +17,18 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::sync::mpsc::Sender;
-use std::os::raw::{c_void, c_char};
-use crate::event::*;
-use crate::event::KeyModifier::*;
 use crate::bridge::linux::*;
-use std::process::exit;
+use crate::config::Configs;
+use crate::event::KeyModifier::*;
+use crate::event::*;
 use log::{debug, error};
 use std::ffi::CStr;
+use std::os::raw::{c_char, c_void};
+use std::process::exit;
 use std::sync::atomic::AtomicBool;
-use std::sync::Arc;
 use std::sync::atomic::Ordering::Acquire;
-use crate::config::Configs;
+use std::sync::mpsc::Sender;
+use std::sync::Arc;
 
 #[repr(C)]
 pub struct LinuxContext {
@@ -37,11 +37,13 @@ pub struct LinuxContext {
 }
 
 impl LinuxContext {
-    pub fn new(_: Configs, send_channel: Sender<Event>, is_injecting: Arc<AtomicBool>) -> Box<LinuxContext> {
+    pub fn new(
+        _: Configs,
+        send_channel: Sender<Event>,
+        is_injecting: Arc<AtomicBool>,
+    ) -> Box<LinuxContext> {
         // Check if the X11 context is available
-        let x11_available = unsafe {
-            check_x11()
-        };
+        let x11_available = unsafe { check_x11() };
 
         if x11_available < 0 {
             error!("Error, can't connect to X11 context");
@@ -50,7 +52,7 @@ impl LinuxContext {
 
         let context = Box::new(LinuxContext {
             send_channel,
-            is_injecting
+            is_injecting,
         });
 
         unsafe {
@@ -79,14 +81,21 @@ impl super::Context for LinuxContext {
 
 impl Drop for LinuxContext {
     fn drop(&mut self) {
-        unsafe { cleanup(); }
+        unsafe {
+            cleanup();
+        }
     }
 }
 
 // Native bridge code
 
-extern fn keypress_callback(_self: *mut c_void, raw_buffer: *const u8, _len: i32,
-                            event_type: i32, key_code: i32) {
+extern "C" fn keypress_callback(
+    _self: *mut c_void,
+    raw_buffer: *const u8,
+    _len: i32,
+    event_type: i32,
+    key_code: i32,
+) {
     unsafe {
         let _self = _self as *mut LinuxContext;
 
@@ -98,7 +107,8 @@ extern fn keypress_callback(_self: *mut c_void, raw_buffer: *const u8, _len: i32
             return;
         }
 
-        if event_type == 0 {  // Char event
+        if event_type == 0 {
+            // Char event
             // Convert the received buffer to a string
             let c_str = CStr::from_ptr(raw_buffer as *const c_char);
             let char_str = c_str.to_str();
@@ -108,12 +118,13 @@ extern fn keypress_callback(_self: *mut c_void, raw_buffer: *const u8, _len: i32
                 Ok(char_str) => {
                     let event = Event::Key(KeyEvent::Char(char_str.to_owned()));
                     (*_self).send_channel.send(event).unwrap();
-                },
+                }
                 Err(e) => {
-                    debug!("Unable to receive char: {}",e);
-                },
+                    debug!("Unable to receive char: {}", e);
+                }
             }
-        }else if event_type == 1 {  // Modifier event
+        } else if event_type == 1 {
+            // Modifier event
 
             let modifier: Option<KeyModifier> = match key_code {
                 133 => Some(LEFT_META),
@@ -125,17 +136,20 @@ extern fn keypress_callback(_self: *mut c_void, raw_buffer: *const u8, _len: i32
                 37 => Some(LEFT_CTRL),
                 105 => Some(RIGHT_CTRL),
                 22 => Some(BACKSPACE),
+                66 => Some(CAPS_LOCK),
                 _ => None,
             };
 
             if let Some(modifier) = modifier {
                 let event = Event::Key(KeyEvent::Modifier(modifier));
                 (*_self).send_channel.send(event).unwrap();
-            }else{  // Not one of the default modifiers, send an "other" event
+            } else {
+                // Not one of the default modifiers, send an "other" event
                 let event = Event::Key(KeyEvent::Other);
                 (*_self).send_channel.send(event).unwrap();
             }
-        }else{ // Other type of event
+        } else {
+            // Other type of event
             let event = Event::Key(KeyEvent::Other);
             (*_self).send_channel.send(event).unwrap();
         }
