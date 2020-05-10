@@ -17,16 +17,22 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::path::PathBuf;
-use crate::matcher::{Match};
 use crate::config::Configs;
+use crate::matcher::Match;
+use std::path::PathBuf;
 
 pub(crate) mod default;
 pub(crate) mod utils;
 
 pub trait Renderer {
     // Render a match output
-    fn render_match(&self, m: &Match, trigger_offset: usize, config: &Configs, args: Vec<String>) -> RenderResult;
+    fn render_match(
+        &self,
+        m: &Match,
+        trigger_offset: usize,
+        config: &Configs,
+        args: Vec<String>,
+    ) -> RenderResult;
 
     // Render a passive expansion text
     fn render_passive(&self, text: &str, config: &Configs) -> RenderResult;
@@ -35,5 +41,5 @@ pub trait Renderer {
 pub enum RenderResult {
     Text(String),
     Image(PathBuf),
-    Error
+    Error,
 }

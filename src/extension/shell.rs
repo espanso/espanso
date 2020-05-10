@@ -17,15 +17,15 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use log::{error, warn};
+use regex::{Captures, Regex};
 use serde_yaml::{Mapping, Value};
 use std::process::{Command, Output};
-use log::{warn, error};
-use regex::{Regex, Captures};
 
 lazy_static! {
     static ref POS_ARG_REGEX: Regex = if cfg!(target_os = "windows") {
         Regex::new("%(?P<pos>\\d+)").unwrap()
-    }else{
+    } else {
         Regex::new("\\$(?P<pos>\\d+)").unwrap()
     };
 }
@@ -39,33 +39,15 @@ pub enum Shell {
 }
 
 impl Shell {
-    fn execute_cmd(&self, cmd: &str) -> std::io::Result<Output>{
+    fn execute_cmd(&self, cmd: &str) -> std::io::Result<Output> {
         match self {
-            Shell::Cmd => {
-                Command::new("cmd")
-                    .args(&["/C", &cmd])
-                    .output()
-            },
-            Shell::Powershell => {
-                Command::new("powershell")
-                    .args(&["-Command", &cmd])
-                    .output()
-            },
-            Shell::WSL => {
-                Command::new("wsl")
-                    .args(&["bash", "-c", &cmd])
-                    .output()
-            },
-            Shell::Bash => {
-                Command::new("bash")
-                    .args(&["-c", &cmd])
-                    .output()
-            },
-            Shell::Sh => {
-                Command::new("sh")
-                    .args(&["-c", &cmd])
-                    .output()
-            },
+            Shell::Cmd => Command::new("cmd").args(&["/C", &cmd]).output(),
+            Shell::Powershell => Command::new("powershell")
+                .args(&["-Command", &cmd])
+                .output(),
+            Shell::WSL => Command::new("wsl").args(&["bash", "-c", &cmd]).output(),
+            Shell::Bash => Command::new("bash").args(&["-c", &cmd]).output(),
+            Shell::Sh => Command::new("sh").args(&["-c", &cmd]).output(),
         }
     }
 
@@ -76,7 +58,7 @@ impl Shell {
             "wsl" => Some(Shell::WSL),
             "bash" => Some(Shell::Bash),
             "sh" => Some(Shell::Sh),
-            _ => None
+            _ => None,
         }
     }
 }
@@ -85,11 +67,11 @@ impl Default for Shell {
     fn default() -> Shell {
         if cfg!(target_os = "windows") {
             Shell::Powershell
-        }else if cfg!(target_os = "macos") {
+        } else if cfg!(target_os = "macos") {
             Shell::Sh
-        }else if cfg!(target_os = "linux") {
+        } else if cfg!(target_os = "linux") {
             Shell::Bash
-        }else{
+        } else {
             panic!("invalid target os for shell")
         }
     }
@@ -99,7 +81,7 @@ pub struct ShellExtension {}
 
 impl ShellExtension {
     pub fn new() -> ShellExtension {
-        ShellExtension{}
+        ShellExtension {}
     }
 }
 
@@ -112,20 +94,22 @@ impl super::Extension for ShellExtension {
         let cmd = params.get(&Value::from("cmd"));
         if cmd.is_none() {
             warn!("No 'cmd' parameter specified for shell variable");
-            return None
+            return None;
         }
         let cmd = cmd.unwrap().as_str().unwrap();
 
         // Render positional parameters in args
-        let cmd = POS_ARG_REGEX.replace_all(&cmd, |caps: &Captures| {
-            let position_str  = caps.name("pos").unwrap().as_str();
-            let position = position_str.parse::<i32>().unwrap_or(-1);
-            if position >= 0 && position < args.len() as i32 {
-                args[position as usize].to_owned()
-            }else{
-                "".to_owned()
-            }
-        }).to_string();
+        let cmd = POS_ARG_REGEX
+            .replace_all(&cmd, |caps: &Captures| {
+                let position_str = caps.name("pos").unwrap().as_str();
+                let position = position_str.parse::<i32>().unwrap_or(-1);
+                if position >= 0 && position < args.len() as i32 {
+                    args[position as usize].to_owned()
+                } else {
+                    "".to_owned()
+                }
+            })
+            .to_string();
 
         let shell_param = params.get(&Value::from("shell"));
         let shell = if let Some(shell_param) = shell_param {
@@ -138,7 +122,7 @@ impl super::Extension for ShellExtension {
             }
 
             shell.unwrap()
-        }else{
+        } else {
             Shell::default()
         };
 
@@ -169,11 +153,11 @@ impl super::Extension for ShellExtension {
                 }
 
                 Some(output_str)
-            },
+            }
             Err(e) => {
                 error!("Could not execute cmd '{}', error: {}", cmd, e);
                 None
-            },
+            }
         }
     }
 }
@@ -195,7 +179,7 @@ mod tests {
 
         if cfg!(target_os = "windows") {
             assert_eq!(output.unwrap(), "hello world\r\n");
-        }else{
+        } else {
             assert_eq!(output.unwrap(), "hello world\n");
         }
     }
@@ -216,7 +200,10 @@ mod tests {
     #[test]
     fn test_shell_trimmed_2() {
         let mut params = Mapping::new();
-        params.insert(Value::from("cmd"), Value::from("echo \"   hello world     \""));
+        params.insert(
+            Value::from("cmd"),
+            Value::from("echo \"   hello world     \""),
+        );
 
         params.insert(Value::from("trim"), Value::from(true));
 
@@ -239,7 +226,7 @@ mod tests {
         assert!(output.is_some());
         if cfg!(target_os = "windows") {
             assert_eq!(output.unwrap(), "hello world\r\n");
-        }else{
+        } else {
             assert_eq!(output.unwrap(), "hello world\n");
         }
     }

@@ -17,23 +17,23 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::sync::mpsc::Sender;
-use std::os::raw::{c_void, c_char};
 use crate::bridge::macos::*;
-use crate::event::{Event, KeyEvent, KeyModifier, ActionType, SystemEvent};
+use crate::config::Configs;
 use crate::event::KeyModifier::*;
-use std::ffi::{CString, CStr};
-use std::{fs, thread};
-use log::{info, error, debug};
+use crate::event::{ActionType, Event, KeyEvent, KeyModifier, SystemEvent};
+use crate::system::macos::MacSystemManager;
+use log::{debug, error, info};
+use std::cell::RefCell;
+use std::ffi::{CStr, CString};
+use std::os::raw::{c_char, c_void};
 use std::process::exit;
 use std::sync::atomic::AtomicBool;
-use std::sync::Arc;
 use std::sync::atomic::Ordering::Acquire;
-use crate::config::Configs;
-use std::cell::RefCell;
-use crate::system::macos::MacSystemManager;
+use std::sync::mpsc::Sender;
+use std::sync::Arc;
+use std::{fs, thread};
 
-const STATUS_ICON_BINARY : &[u8] = include_bytes!("../res/mac/icon.png");
+const STATUS_ICON_BINARY: &[u8] = include_bytes!("../res/mac/icon.png");
 
 pub struct MacContext {
     pub send_channel: Sender<Event>,
@@ -43,14 +43,20 @@ pub struct MacContext {
 }
 
 impl MacContext {
-    pub fn new(config: Configs, send_channel: Sender<Event>, is_injecting: Arc<AtomicBool>) -> Box<MacContext> {
+    pub fn new(
+        config: Configs,
+        send_channel: Sender<Event>,
+        is_injecting: Arc<AtomicBool>,
+    ) -> Box<MacContext> {
         // Check accessibility
         unsafe {
             let res = prompt_accessibility();
 
             if res == 0 {
                 error!("Accessibility must be enabled to make espanso work on MacOS.");
-                error!("Please allow espanso in the Security & Privacy panel, then restart espanso.");
+                error!(
+                    "Please allow espanso in the Security & Privacy panel, then restart espanso."
+                );
                 error!("For more information: https://espanso.org/install/mac/");
                 exit(1);
             }
@@ -69,9 +75,12 @@ impl MacContext {
 
         if status_icon_target.exists() {
             info!("Status icon already initialized, skipping.");
-        }else {
+        } else {
             fs::write(&status_icon_target, STATUS_ICON_BINARY).unwrap_or_else(|e| {
-               error!("Error copying the Status Icon to the espanso data directory: {}", e);
+                error!(
+                    "Error copying the Status Icon to the espanso data directory: {}",
+                    e
+                );
             });
         }
 
@@ -82,12 +91,9 @@ impl MacContext {
             register_icon_click_callback(icon_click_callback);
             register_context_menu_click_callback(context_menu_click_callback);
 
-            let status_icon_path = CString::new(status_icon_target.to_str().unwrap_or_default()).unwrap_or_default();
-            let show_icon = if config.show_icon {
-                1
-            }else{
-                0
-            };
+            let status_icon_path =
+                CString::new(status_icon_target.to_str().unwrap_or_default()).unwrap_or_default();
+            let show_icon = if config.show_icon { 1 } else { 0 };
 
             initialize(context_ptr, status_icon_path.as_ptr(), show_icon);
         }
@@ -155,8 +161,13 @@ impl super::Context for MacContext {
 
 // Native bridge code
 
-extern fn keypress_callback(_self: *mut c_void, raw_buffer: *const u8, len: i32,
-                             event_type: i32, key_code: i32) {
+extern "C" fn keypress_callback(
+    _self: *mut c_void,
+    raw_buffer: *const u8,
+    len: i32,
+    event_type: i32,
+    key_code: i32,
+) {
     unsafe {
         let _self = _self as *mut MacContext;
 
@@ -168,7 +179,8 @@ extern fn keypress_callback(_self: *mut c_void, raw_buffer: *const u8, len: i32,
             return;
         }
 
-        if event_type == 0 {  // Char event
+        if event_type == 0 {
+            // Char event
             // Convert the received buffer to a string
             let c_str = CStr::from_ptr(raw_buffer as (*const c_char));
             let char_str = c_str.to_str();
@@ -178,12 +190,13 @@ extern fn keypress_callback(_self: *mut c_void, raw_buffer: *const u8, len: i32,
                 Ok(char_str) => {
                     let event = Event::Key(KeyEvent::Char(char_str.to_owned()));
                     (*_self).send_channel.send(event).unwrap();
-                },
+                }
                 Err(e) => {
-                    error!("Unable to receive char: {}",e);
-                },
+                    error!("Unable to receive char: {}", e);
+                }
             }
-        }else if event_type == 1 {  // Modifier event
+        } else if event_type == 1 {
+            // Modifier event
             let modifier: Option<KeyModifier> = match key_code {
                 0x37 => Some(LEFT_META),
                 0x36 => Some(RIGHT_META),
@@ -201,18 +214,20 @@ extern fn keypress_callback(_self: *mut c_void, raw_buffer: *const u8, len: i32,
             if let Some(modifier) = modifier {
                 let event = Event::Key(KeyEvent::Modifier(modifier));
                 (*_self).send_channel.send(event).unwrap();
-            }else{  // Not one of the default modifiers, send an "other" event
+            } else {
+                // Not one of the default modifiers, send an "other" event
                 let event = Event::Key(KeyEvent::Other);
                 (*_self).send_channel.send(event).unwrap();
             }
-        }else{ // Other type of event
+        } else {
+            // Other type of event
             let event = Event::Key(KeyEvent::Other);
             (*_self).send_channel.send(event).unwrap();
         }
     }
 }
 
-extern fn icon_click_callback(_self: *mut c_void) {
+extern "C" fn icon_click_callback(_self: *mut c_void) {
     unsafe {
         let _self = _self as *mut MacContext;
 
@@ -221,7 +236,7 @@ extern fn icon_click_callback(_self: *mut c_void) {
     }
 }
 
-extern fn context_menu_click_callback(_self: *mut c_void, id: i32) {
+extern "C" fn context_menu_click_callback(_self: *mut c_void, id: i32) {
     unsafe {
         let _self = _self as *mut MacContext;
 

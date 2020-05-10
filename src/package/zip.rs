@@ -1,14 +1,14 @@
-use tempfile::TempDir;
-use std::error::Error;
-use std::io::{Cursor, copy};
-use std::{fs, io};
 use log::debug;
+use std::error::Error;
+use std::io::{copy, Cursor};
+use std::{fs, io};
+use tempfile::TempDir;
 
 pub struct ZipPackageResolver;
 
 impl ZipPackageResolver {
     pub fn new() -> ZipPackageResolver {
-        return ZipPackageResolver{};
+        return ZipPackageResolver {};
     }
 }
 
@@ -54,10 +54,19 @@ impl super::PackageResolver for ZipPackageResolver {
             }
 
             if (&*file.name()).ends_with('/') {
-                debug!("File {} extracted to \"{}\"", i, outpath.as_path().display());
+                debug!(
+                    "File {} extracted to \"{}\"",
+                    i,
+                    outpath.as_path().display()
+                );
                 fs::create_dir_all(&outpath).unwrap();
             } else {
-                debug!("File {} extracted to \"{}\" ({} bytes)", i, outpath.as_path().display(), file.size());
+                debug!(
+                    "File {} extracted to \"{}\" ({} bytes)",
+                    i,
+                    outpath.as_path().display(),
+                    file.size()
+                );
                 if let Some(p) = outpath.parent() {
                     if !p.exists() {
                         fs::create_dir_all(&p).unwrap();
@@ -74,13 +83,15 @@ impl super::PackageResolver for ZipPackageResolver {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use super::super::PackageResolver;
+    use super::*;
 
     #[test]
     fn test_clone_temp_repository() {
         let resolver = ZipPackageResolver::new();
-        let cloned_dir = resolver.clone_repo_to_temp("https://github.com/federico-terzi/espanso-hub-core").unwrap();
+        let cloned_dir = resolver
+            .clone_repo_to_temp("https://github.com/federico-terzi/espanso-hub-core")
+            .unwrap();
         assert!(cloned_dir.path().join("LICENSE").exists());
     }
 }

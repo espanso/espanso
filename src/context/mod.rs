@@ -26,13 +26,13 @@ mod linux;
 #[cfg(target_os = "macos")]
 pub(crate) mod macos;
 
-use std::sync::mpsc::Sender;
-use crate::event::Event;
-use std::path::PathBuf;
-use std::fs::create_dir_all;
-use std::sync::{Once, Arc};
-use std::sync::atomic::AtomicBool;
 use crate::config::Configs;
+use crate::event::Event;
+use std::fs::create_dir_all;
+use std::path::PathBuf;
+use std::sync::atomic::AtomicBool;
+use std::sync::mpsc::Sender;
+use std::sync::{Arc, Once};
 
 pub trait Context {
     fn eventloop(&self);
@@ -40,25 +40,37 @@ pub trait Context {
 
 // MAC IMPLEMENTATION
 #[cfg(target_os = "macos")]
-pub fn new(config: Configs, send_channel: Sender<Event>, is_injecting: Arc<AtomicBool>) -> Box<dyn Context> {
+pub fn new(
+    config: Configs,
+    send_channel: Sender<Event>,
+    is_injecting: Arc<AtomicBool>,
+) -> Box<dyn Context> {
     macos::MacContext::new(config, send_channel, is_injecting)
 }
 
 // LINUX IMPLEMENTATION
 #[cfg(target_os = "linux")]
-pub fn new(config: Configs, send_channel: Sender<Event>, is_injecting: Arc<AtomicBool>) -> Box<dyn Context> {
+pub fn new(
+    config: Configs,
+    send_channel: Sender<Event>,
+    is_injecting: Arc<AtomicBool>,
+) -> Box<dyn Context> {
     linux::LinuxContext::new(config, send_channel, is_injecting)
 }
 
 // WINDOWS IMPLEMENTATION
 #[cfg(target_os = "windows")]
-pub fn new(config: Configs, send_channel: Sender<Event>, is_injecting: Arc<AtomicBool>) -> Box<dyn Context> {
+pub fn new(
+    config: Configs,
+    send_channel: Sender<Event>,
+    is_injecting: Arc<AtomicBool>,
+) -> Box<dyn Context> {
     windows::WindowsContext::new(config, send_channel, is_injecting)
 }
 
 // espanso directories
 
-static WARING_INIT : Once = Once::new();
+static WARING_INIT: Once = Once::new();
 
 pub fn get_data_dir() -> PathBuf {
     let data_dir = dirs::data_local_dir().expect("Can't obtain data_local_dir(), terminating.");
@@ -75,7 +87,10 @@ pub fn get_config_dir() -> PathBuf {
     if let Some(parent) = exe_dir {
         let config_dir = parent.join(".espanso");
         if config_dir.exists() {
-            println!("PORTABLE MODE, using config folder: '{}'", config_dir.to_string_lossy());
+            println!(
+                "PORTABLE MODE, using config folder: '{}'",
+                config_dir.to_string_lossy()
+            );
             return config_dir;
         }
     }
@@ -110,7 +125,7 @@ pub fn get_config_dir() -> PathBuf {
     espanso_dir
 }
 
-const PACKAGES_FOLDER_NAME : &str = "packages";
+const PACKAGES_FOLDER_NAME: &str = "packages";
 
 pub fn get_package_dir() -> PathBuf {
     // Deprecated $HOME/.espanso/packages directory compatibility check

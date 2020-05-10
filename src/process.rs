@@ -22,9 +22,7 @@ use widestring::WideCString;
 
 #[cfg(target_os = "windows")]
 pub fn spawn_process(cmd: &str, args: &Vec<String>) {
-    let quoted_args: Vec<String> = args.iter().map(|arg| {
-        format!("\"{}\"", arg)
-    }).collect();
+    let quoted_args: Vec<String> = args.iter().map(|arg| format!("\"{}\"", arg)).collect();
     let quoted_args = quoted_args.join(" ");
     let final_cmd = format!("\"{}\" {}", cmd, quoted_args);
     unsafe {
@@ -34,7 +32,7 @@ pub fn spawn_process(cmd: &str, args: &Vec<String>) {
             if res < 0 {
                 warn!("unable to start process: {}", final_cmd);
             }
-        }else{
+        } else {
             warn!("unable to convert process string into wide format")
         }
     }

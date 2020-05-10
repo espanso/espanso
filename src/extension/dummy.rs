@@ -23,7 +23,7 @@ pub struct DummyExtension {}
 
 impl DummyExtension {
     pub fn new() -> DummyExtension {
-        DummyExtension{}
+        DummyExtension {}
     }
 }
 
@@ -37,7 +37,7 @@ impl super::Extension for DummyExtension {
 
         if let Some(echo) = echo {
             Some(echo.as_str().unwrap_or_default().to_owned())
-        }else{
+        } else {
             None
         }
     }

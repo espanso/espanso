@@ -17,21 +17,21 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::{fs, io};
-use std::io::{Cursor};
+use crate::bridge::macos::{show_context_menu, MacMenuItem};
+use crate::context;
+use crate::ui::{MenuItem, MenuItemType};
+use log::{debug, info, warn};
 use std::ffi::CString;
-use log::{info, warn, debug};
+use std::io::Cursor;
+use std::os::raw::c_char;
 use std::path::PathBuf;
 use std::process::Command;
-use crate::ui::{MenuItem, MenuItemType};
-use crate::bridge::macos::{MacMenuItem, show_context_menu};
-use std::os::raw::c_char;
-use crate::context;
+use std::{fs, io};
 
-const NOTIFY_HELPER_BINARY : &'static [u8] = include_bytes!("../res/mac/EspansoNotifyHelper.zip");
+const NOTIFY_HELPER_BINARY: &'static [u8] = include_bytes!("../res/mac/EspansoNotifyHelper.zip");
 
 pub struct MacUIManager {
-    notify_helper_path: PathBuf
+    notify_helper_path: PathBuf,
 }
 
 impl super::UIManager for MacUIManager {
@@ -60,14 +60,14 @@ impl super::UIManager for MacUIManager {
 
         for item in menu.iter() {
             let text = CString::new(item.item_name.clone()).unwrap_or_default();
-            let mut str_buff : [c_char; 100] = [0; 100];
+            let mut str_buff: [c_char; 100] = [0; 100];
             unsafe {
                 std::ptr::copy(text.as_ptr(), str_buff.as_mut_ptr(), item.item_name.len());
             }
 
             let menu_type = match item.item_type {
-                MenuItemType::Button => {1},
-                MenuItemType::Separator => {2},
+                MenuItemType::Button => 1,
+                MenuItemType::Separator => 2,
             };
 
             let raw_item = MacMenuItem {
@@ -79,7 +79,9 @@ impl super::UIManager for MacUIManager {
             raw_menu.push(raw_item);
         }
 
-        unsafe { show_context_menu(raw_menu.as_ptr(), raw_menu.len() as i32); }
+        unsafe {
+            show_context_menu(raw_menu.as_ptr(), raw_menu.len() as i32);
+        }
     }
 
     fn cleanup(&self) {
@@ -91,21 +93,22 @@ impl MacUIManager {
     pub fn new() -> MacUIManager {
         let notify_helper_path = MacUIManager::initialize_notify_helper();
 
-        MacUIManager{
-            notify_helper_path
-        }
+        MacUIManager { notify_helper_path }
     }
 
     fn initialize_notify_helper() -> PathBuf {
         let espanso_dir = context::get_data_dir();
 
-        info!("Initializing EspansoNotifyHelper in {}", espanso_dir.as_path().display());
+        info!(
+            "Initializing EspansoNotifyHelper in {}",
+            espanso_dir.as_path().display()
+        );
 
         let espanso_target = espanso_dir.join("EspansoNotifyHelper.app");
 
         if espanso_target.exists() {
             info!("EspansoNotifyHelper already initialized, skipping.");
-        }else{
+        } else {
             // Extract zip file
             let reader = Cursor::new(NOTIFY_HELPER_BINARY);
 
@@ -123,10 +126,19 @@ impl MacUIManager {
                 }
 
                 if (&*file.name()).ends_with('/') {
-                    debug!("File {} extracted to \"{}\"", i, outpath.as_path().display());
+                    debug!(
+                        "File {} extracted to \"{}\"",
+                        i,
+                        outpath.as_path().display()
+                    );
                     fs::create_dir_all(&outpath).unwrap();
                 } else {
-                    debug!("File {} extracted to \"{}\" ({} bytes)", i, outpath.as_path().display(), file.size());
+                    debug!(
+                        "File {} extracted to \"{}\" ({} bytes)",
+                        i,
+                        outpath.as_path().display(),
+                        file.size()
+                    );
                     if let Some(p) = outpath.parent() {
                         if !p.exists() {
                             fs::create_dir_all(&p).unwrap();

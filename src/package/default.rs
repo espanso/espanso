@@ -17,20 +17,22 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::path::{PathBuf, Path};
-use crate::package::{PackageIndex, UpdateResult, Package, InstallResult, RemoveResult, PackageResolver};
-use std::error::Error;
-use std::fs::{File, create_dir};
-use std::io::{BufReader, BufRead};
-use std::time::{SystemTime, UNIX_EPOCH};
-use crate::package::UpdateResult::{NotOutdated, Updated};
-use crate::package::InstallResult::{NotFoundInIndex, AlreadyInstalled, BlockedExternalPackage};
-use std::fs;
-use regex::Regex;
+use crate::package::InstallResult::{AlreadyInstalled, BlockedExternalPackage, NotFoundInIndex};
 use crate::package::RemoveResult::Removed;
+use crate::package::UpdateResult::{NotOutdated, Updated};
+use crate::package::{
+    InstallResult, Package, PackageIndex, PackageResolver, RemoveResult, UpdateResult,
+};
+use regex::Regex;
 use std::collections::HashMap;
+use std::error::Error;
+use std::fs;
+use std::fs::{create_dir, File};
+use std::io::{BufRead, BufReader};
+use std::path::{Path, PathBuf};
+use std::time::{SystemTime, UNIX_EPOCH};
 
-const DEFAULT_PACKAGE_INDEX_FILE : &str = "package_index.json";
+const DEFAULT_PACKAGE_INDEX_FILE: &str = "package_index.json";
 
 pub struct DefaultPackageManager {
     package_dir: PathBuf,
@@ -42,18 +44,24 @@ pub struct DefaultPackageManager {
 }
 
 impl DefaultPackageManager {
-    pub fn new(package_dir: PathBuf, data_dir: PathBuf, package_resolver: Option<Box<dyn PackageResolver>>) -> DefaultPackageManager {
+    pub fn new(
+        package_dir: PathBuf,
+        data_dir: PathBuf,
+        package_resolver: Option<Box<dyn PackageResolver>>,
+    ) -> DefaultPackageManager {
         let local_index = Self::load_local_index(&data_dir);
 
-        DefaultPackageManager{
+        DefaultPackageManager {
             package_dir,
             data_dir,
             package_resolver,
-            local_index
+            local_index,
         }
     }
 
-    pub fn new_default(package_resolver: Option<Box<dyn PackageResolver>>) -> DefaultPackageManager {
+    pub fn new_default(
+        package_resolver: Option<Box<dyn PackageResolver>>,
+    ) -> DefaultPackageManager {
         DefaultPackageManager::new(
             crate::context::get_package_dir(),
             crate::context::get_data_dir(),
@@ -72,7 +80,7 @@ impl DefaultPackageManager {
             let local_index = serde_json::from_reader(reader);
 
             if let Ok(local_index) = local_index {
-                return local_index
+                return local_index;
             }
         }
 
@@ -81,19 +89,21 @@ impl DefaultPackageManager {
 
     fn request_index() -> Result<super::PackageIndex, Box<dyn Error>> {
         let client = reqwest::Client::new();
-        let request = client.get("https://hub.espanso.org/json/")
+        let request = client
+            .get("https://hub.espanso.org/json/")
             .header("User-Agent", format!("espanso/{}", crate::VERSION));
 
         let mut res = request.send()?;
         let body = res.text()?;
-        let index : PackageIndex = serde_json::from_str(&body)?;
+        let index: PackageIndex = serde_json::from_str(&body)?;
 
         Ok(index)
     }
 
     fn parse_package_from_readme(readme_path: &Path) -> Option<Package> {
         lazy_static! {
-            static ref FIELD_REGEX: Regex = Regex::new(r###"^\s*(.*?)\s*:\s*"?(.*?)"?$"###).unwrap();
+            static ref FIELD_REGEX: Regex =
+                Regex::new(r###"^\s*(.*?)\s*:\s*"?(.*?)"?$"###).unwrap();
         }
 
         // Read readme line by line
@@ -101,7 +111,7 @@ impl DefaultPackageManager {
         if let Ok(file) = file {
             let reader = BufReader::new(file);
 
-            let mut fields :HashMap<String, String> = HashMap::new();
+            let mut fields: HashMap<String, String> = HashMap::new();
 
             let mut started = false;
 
@@ -109,35 +119,38 @@ impl DefaultPackageManager {
                 let line = line.unwrap();
                 if line.contains("---") {
                     if started {
-                        break
-                    }else{
+                        break;
+                    } else {
                         started = true;
                     }
-                }else if started {
+                } else if started {
                     let caps = FIELD_REGEX.captures(&line);
                     if let Some(caps) = caps {
                         let property = caps.get(1);
                         let value = caps.get(2);
                         if property.is_some() && value.is_some() {
-                            fields.insert(property.unwrap().as_str().to_owned(),
-                                          value.unwrap().as_str().to_owned());
+                            fields.insert(
+                                property.unwrap().as_str().to_owned(),
+                                value.unwrap().as_str().to_owned(),
+                            );
                         }
                     }
                 }
             }
 
-            if !fields.contains_key("package_name") ||
-               !fields.contains_key("package_title") ||
-               !fields.contains_key("package_version") ||
-               !fields.contains_key("package_repo") ||
-               !fields.contains_key("package_desc") ||
-               !fields.contains_key("package_author") {
-                return None
+            if !fields.contains_key("package_name")
+                || !fields.contains_key("package_title")
+                || !fields.contains_key("package_version")
+                || !fields.contains_key("package_repo")
+                || !fields.contains_key("package_desc")
+                || !fields.contains_key("package_author")
+            {
+                return None;
             }
 
             let original_repo = if fields.contains_key("package_original_repo") {
                 fields.get("package_original_repo").unwrap().clone()
-            }else{
+            } else {
                 fields.get("package_repo").unwrap().clone()
             };
 
@@ -147,7 +160,7 @@ impl DefaultPackageManager {
                     "false" => false,
                     _ => false,
                 }
-            }else{
+            } else {
                 false
             };
 
@@ -159,18 +172,18 @@ impl DefaultPackageManager {
                 desc: fields.get("package_desc").unwrap().clone(),
                 author: fields.get("package_author").unwrap().clone(),
                 is_core,
-                original_repo
+                original_repo,
             };
 
             Some(package)
-        }else{
+        } else {
             None
         }
     }
 
     fn local_index_timestamp(&self) -> u64 {
         if let Some(local_index) = &self.local_index {
-            return local_index.last_update
+            return local_index.last_update;
         }
 
         0
@@ -198,7 +211,8 @@ impl DefaultPackageManager {
 
     fn cache_local_index(&self) {
         if let Some(local_index) = &self.local_index {
-            let serialized = serde_json::to_string(local_index).expect("Unable to serialize local index");
+            let serialized =
+                serde_json::to_string(local_index).expect("Unable to serialize local index");
             let local_index_file = self.data_dir.join(DEFAULT_PACKAGE_INDEX_FILE);
             std::fs::write(local_index_file, serialized).expect("Unable to cache local index");
         }
@@ -207,13 +221,15 @@ impl DefaultPackageManager {
 
 impl super::PackageManager for DefaultPackageManager {
     fn is_index_outdated(&self) -> bool {
-        let current_time = SystemTime::now().duration_since(UNIX_EPOCH).expect("Time went backwards");
+        let current_time = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("Time went backwards");
         let current_timestamp = current_time.as_secs();
 
         let local_index_timestamp = self.local_index_timestamp();
 
         // Local index is outdated if older than a day
-        local_index_timestamp + 60*60*24 < current_timestamp
+        local_index_timestamp + 60 * 60 * 24 < current_timestamp
     }
 
     fn update_index(&mut self, force: bool) -> Result<UpdateResult, Box<dyn Error>> {
@@ -225,48 +241,60 @@ impl super::PackageManager for DefaultPackageManager {
             self.cache_local_index();
 
             Ok(Updated)
-        }else{
+        } else {
             Ok(NotOutdated)
         }
     }
 
     fn get_package(&self, name: &str) -> Option<Package> {
         if let Some(local_index) = &self.local_index {
-            let result = local_index.packages.iter().find(|package| {
-                package.name == name
-            });
+            let result = local_index
+                .packages
+                .iter()
+                .find(|package| package.name == name);
             if let Some(package) = result {
-                return Some(package.clone())
+                return Some(package.clone());
             }
         }
 
         None
     }
 
-    fn install_package(&self, name: &str, allow_external: bool) -> Result<InstallResult, Box<dyn Error>> {
+    fn install_package(
+        &self,
+        name: &str,
+        allow_external: bool,
+    ) -> Result<InstallResult, Box<dyn Error>> {
         let package = self.get_package(name);
         match package {
             Some(package) => {
                 if package.is_core || allow_external {
                     self.install_package_from_repo(name, &package.repo)
-                }else{
+                } else {
                     Ok(BlockedExternalPackage(package.original_repo))
                 }
-            },
-            None => {
-                Ok(NotFoundInIndex)
-            },
+            }
+            None => Ok(NotFoundInIndex),
         }
     }
 
-    fn install_package_from_repo(&self, name: &str, repo_url: &str) -> Result<InstallResult, Box<dyn Error>> {
+    fn install_package_from_repo(
+        &self,
+        name: &str,
+        repo_url: &str,
+    ) -> Result<InstallResult, Box<dyn Error>> {
         // Check if package is already installed
         let packages = self.list_local_packages_names();
-        if packages.iter().any(|p| p == name) {  // Package already installed
+        if packages.iter().any(|p| p == name) {
+            // Package already installed
             return Ok(AlreadyInstalled);
         }
 
-        let temp_dir = self.package_resolver.as_ref().unwrap().clone_repo_to_temp(repo_url)?;
+        let temp_dir = self
+            .package_resolver
+            .as_ref()
+            .unwrap()
+            .clone_repo_to_temp(repo_url)?;
 
         let temp_package_dir = temp_dir.path().join(name);
         if !temp_package_dir.exists() {
@@ -329,15 +357,16 @@ impl super::PackageManager for DefaultPackageManager {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tempfile::{TempDir, NamedTempFile};
-    use std::path::Path;
+    use crate::package::zip::ZipPackageResolver;
+    use crate::package::InstallResult::*;
     use crate::package::PackageManager;
     use std::fs::{create_dir, create_dir_all};
-    use crate::package::InstallResult::*;
-    use crate::package::zip::ZipPackageResolver;
+    use std::path::Path;
+    use tempfile::{NamedTempFile, TempDir};
 
-    const OUTDATED_INDEX_CONTENT : &str = include_str!("../res/test/outdated_index.json");
-    const INDEX_CONTENT_WITHOUT_UPDATE: &str = include_str!("../res/test/index_without_update.json");
+    const OUTDATED_INDEX_CONTENT: &str = include_str!("../res/test/outdated_index.json");
+    const INDEX_CONTENT_WITHOUT_UPDATE: &str =
+        include_str!("../res/test/index_without_update.json");
     const GET_PACKAGE_INDEX: &str = include_str!("../res/test/get_package_index.json");
     const INSTALL_PACKAGE_INDEX: &str = include_str!("../res/test/install_package_index.json");
 
@@ -347,7 +376,10 @@ mod tests {
         package_manager: DefaultPackageManager,
     }
 
-    fn create_temp_package_manager<F>(setup: F) -> TempPackageManager where F: Fn(&Path, &Path) -> (){
+    fn create_temp_package_manager<F>(setup: F) -> TempPackageManager
+    where
+        F: Fn(&Path, &Path) -> (),
+    {
         let package_dir = TempDir::new().expect("unable to create temp directory");
         let data_dir = TempDir::new().expect("unable to create temp directory");
 
@@ -362,7 +394,7 @@ mod tests {
         TempPackageManager {
             package_dir,
             data_dir,
-            package_manager
+            package_manager,
         }
     }
 
@@ -389,26 +421,38 @@ mod tests {
     fn test_up_to_date_index_should_not_be_updated() {
         let mut temp = create_temp_package_manager(|_, data_dir| {
             let index_file = data_dir.join(DEFAULT_PACKAGE_INDEX_FILE);
-            let current_time = SystemTime::now().duration_since(UNIX_EPOCH).expect("Time went backwards");
+            let current_time = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .expect("Time went backwards");
             let current_timestamp = current_time.as_secs();
-            let new_contents = INDEX_CONTENT_WITHOUT_UPDATE.replace("XXXX", &format!("{}", current_timestamp));
+            let new_contents =
+                INDEX_CONTENT_WITHOUT_UPDATE.replace("XXXX", &format!("{}", current_timestamp));
             std::fs::write(index_file, new_contents).unwrap();
         });
 
-        assert_eq!(temp.package_manager.update_index(false).unwrap(), UpdateResult::NotOutdated);
+        assert_eq!(
+            temp.package_manager.update_index(false).unwrap(),
+            UpdateResult::NotOutdated
+        );
     }
 
     #[test]
     fn test_up_to_date_index_with_force_should_be_updated() {
         let mut temp = create_temp_package_manager(|_, data_dir| {
             let index_file = data_dir.join(DEFAULT_PACKAGE_INDEX_FILE);
-            let current_time = SystemTime::now().duration_since(UNIX_EPOCH).expect("Time went backwards");
+            let current_time = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .expect("Time went backwards");
             let current_timestamp = current_time.as_secs();
-            let new_contents = INDEX_CONTENT_WITHOUT_UPDATE.replace("XXXX", &format!("{}", current_timestamp));
+            let new_contents =
+                INDEX_CONTENT_WITHOUT_UPDATE.replace("XXXX", &format!("{}", current_timestamp));
             std::fs::write(index_file, new_contents).unwrap();
         });
 
-        assert_eq!(temp.package_manager.update_index(true).unwrap(), UpdateResult::Updated);
+        assert_eq!(
+            temp.package_manager.update_index(true).unwrap(),
+            UpdateResult::Updated
+        );
     }
 
     #[test]
@@ -418,15 +462,25 @@ mod tests {
             std::fs::write(index_file, OUTDATED_INDEX_CONTENT).unwrap();
         });
 
-        assert_eq!(temp.package_manager.update_index(false).unwrap(), UpdateResult::Updated);
+        assert_eq!(
+            temp.package_manager.update_index(false).unwrap(),
+            UpdateResult::Updated
+        );
     }
 
     #[test]
     fn test_update_index_should_create_file() {
         let mut temp = create_temp_package_manager(|_, _| {});
 
-        assert_eq!(temp.package_manager.update_index(false).unwrap(), UpdateResult::Updated);
-        assert!(temp.data_dir.path().join(DEFAULT_PACKAGE_INDEX_FILE).exists())
+        assert_eq!(
+            temp.package_manager.update_index(false).unwrap(),
+            UpdateResult::Updated
+        );
+        assert!(temp
+            .data_dir
+            .path()
+            .join(DEFAULT_PACKAGE_INDEX_FILE)
+            .exists())
     }
 
     #[test]
@@ -436,7 +490,13 @@ mod tests {
             std::fs::write(index_file, GET_PACKAGE_INDEX).unwrap();
         });
 
-        assert_eq!(temp.package_manager.get_package("italian-accents").unwrap().title, "Italian Accents");
+        assert_eq!(
+            temp.package_manager
+                .get_package("italian-accents")
+                .unwrap()
+                .title,
+            "Italian Accents"
+        );
     }
 
     #[test]
@@ -470,7 +530,12 @@ mod tests {
             std::fs::write(index_file, INSTALL_PACKAGE_INDEX).unwrap();
         });
 
-        assert_eq!(temp.package_manager.install_package("doesnotexist", false).unwrap(), NotFoundInIndex);
+        assert_eq!(
+            temp.package_manager
+                .install_package("doesnotexist", false)
+                .unwrap(),
+            NotFoundInIndex
+        );
     }
 
     #[test]
@@ -481,7 +546,12 @@ mod tests {
             std::fs::write(index_file, INSTALL_PACKAGE_INDEX).unwrap();
         });
 
-        assert_eq!(temp.package_manager.install_package("italian-accents", false).unwrap(), AlreadyInstalled);
+        assert_eq!(
+            temp.package_manager
+                .install_package("italian-accents", false)
+                .unwrap(),
+            AlreadyInstalled
+        );
     }
 
     #[test]
@@ -491,10 +561,23 @@ mod tests {
             std::fs::write(index_file, INSTALL_PACKAGE_INDEX).unwrap();
         });
 
-        assert_eq!(temp.package_manager.install_package("dummy-package", false).unwrap(), Installed);
+        assert_eq!(
+            temp.package_manager
+                .install_package("dummy-package", false)
+                .unwrap(),
+            Installed
+        );
         assert!(temp.package_dir.path().join("dummy-package").exists());
-        assert!(temp.package_dir.path().join("dummy-package/README.md").exists());
-        assert!(temp.package_dir.path().join("dummy-package/package.yml").exists());
+        assert!(temp
+            .package_dir
+            .path()
+            .join("dummy-package/README.md")
+            .exists());
+        assert!(temp
+            .package_dir
+            .path()
+            .join("dummy-package/package.yml")
+            .exists());
     }
 
     #[test]
@@ -504,7 +587,12 @@ mod tests {
             std::fs::write(index_file, INSTALL_PACKAGE_INDEX).unwrap();
         });
 
-        assert_eq!(temp.package_manager.install_package("not-existing", false).unwrap(), NotFoundInRepo);
+        assert_eq!(
+            temp.package_manager
+                .install_package("not-existing", false)
+                .unwrap(),
+            NotFoundInRepo
+        );
     }
 
     #[test]
@@ -514,7 +602,12 @@ mod tests {
             std::fs::write(index_file, INSTALL_PACKAGE_INDEX).unwrap();
         });
 
-        assert_eq!(temp.package_manager.install_package("dummy-package2", false).unwrap(), MissingPackageVersion);
+        assert_eq!(
+            temp.package_manager
+                .install_package("dummy-package2", false)
+                .unwrap(),
+            MissingPackageVersion
+        );
     }
 
     #[test]
@@ -524,7 +617,12 @@ mod tests {
             std::fs::write(index_file, INSTALL_PACKAGE_INDEX).unwrap();
         });
 
-        assert_eq!(temp.package_manager.install_package("dummy-package3", false).unwrap(), UnableToParsePackageInfo);
+        assert_eq!(
+            temp.package_manager
+                .install_package("dummy-package3", false)
+                .unwrap(),
+            UnableToParsePackageInfo
+        );
     }
 
     #[test]
@@ -534,7 +632,12 @@ mod tests {
             std::fs::write(index_file, INSTALL_PACKAGE_INDEX).unwrap();
         });
 
-        assert_eq!(temp.package_manager.install_package("dummy-package4", false).unwrap(), UnableToParsePackageInfo);
+        assert_eq!(
+            temp.package_manager
+                .install_package("dummy-package4", false)
+                .unwrap(),
+            UnableToParsePackageInfo
+        );
     }
 
     #[test]
@@ -544,10 +647,23 @@ mod tests {
             std::fs::write(index_file, INSTALL_PACKAGE_INDEX).unwrap();
         });
 
-        assert_eq!(temp.package_manager.install_package("dummy-package", false).unwrap(), Installed);
+        assert_eq!(
+            temp.package_manager
+                .install_package("dummy-package", false)
+                .unwrap(),
+            Installed
+        );
         assert!(temp.package_dir.path().join("dummy-package").exists());
-        assert!(temp.package_dir.path().join("dummy-package/README.md").exists());
-        assert!(temp.package_dir.path().join("dummy-package/package.yml").exists());
+        assert!(temp
+            .package_dir
+            .path()
+            .join("dummy-package/README.md")
+            .exists());
+        assert!(temp
+            .package_dir
+            .path()
+            .join("dummy-package/package.yml")
+            .exists());
 
         let list = temp.package_manager.list_local_packages();
         assert_eq!(list.len(), 1);
@@ -564,25 +680,51 @@ mod tests {
         });
 
         assert!(temp.package_dir.path().join("dummy-package").exists());
-        assert!(temp.package_dir.path().join("dummy-package/README.md").exists());
-        assert!(temp.package_dir.path().join("dummy-package/package.yml").exists());
-        assert_eq!(temp.package_manager.remove_package("dummy-package").unwrap(), RemoveResult::Removed);
+        assert!(temp
+            .package_dir
+            .path()
+            .join("dummy-package/README.md")
+            .exists());
+        assert!(temp
+            .package_dir
+            .path()
+            .join("dummy-package/package.yml")
+            .exists());
+        assert_eq!(
+            temp.package_manager
+                .remove_package("dummy-package")
+                .unwrap(),
+            RemoveResult::Removed
+        );
         assert!(!temp.package_dir.path().join("dummy-package").exists());
-        assert!(!temp.package_dir.path().join("dummy-package/README.md").exists());
-        assert!(!temp.package_dir.path().join("dummy-package/package.yml").exists());
+        assert!(!temp
+            .package_dir
+            .path()
+            .join("dummy-package/README.md")
+            .exists());
+        assert!(!temp
+            .package_dir
+            .path()
+            .join("dummy-package/package.yml")
+            .exists());
     }
 
     #[test]
     fn test_remove_package_not_found() {
         let temp = create_temp_package_manager(|_, _| {});
 
-        assert_eq!(temp.package_manager.remove_package("not-existing").unwrap(), RemoveResult::NotFound);
+        assert_eq!(
+            temp.package_manager.remove_package("not-existing").unwrap(),
+            RemoveResult::NotFound
+        );
     }
 
     #[test]
     fn test_parse_package_from_readme() {
         let file = NamedTempFile::new().unwrap();
-        fs::write(file.path(), r###"
+        fs::write(
+            file.path(),
+            r###"
         ---
         package_name: "italian-accents"
         package_title: "Italian Accents"
@@ -592,7 +734,9 @@ mod tests {
         package_repo: "https://github.com/federico-terzi/espanso-hub-core"
         is_core: true
         ---
-        "###).unwrap();
+        "###,
+        )
+        .unwrap();
 
         let package = DefaultPackageManager::parse_package_from_readme(file.path()).unwrap();
 
@@ -613,7 +757,9 @@ mod tests {
     #[test]
     fn test_parse_package_from_readme_with_bad_metadata() {
         let file = NamedTempFile::new().unwrap();
-        fs::write(file.path(), r###"
+        fs::write(
+            file.path(),
+            r###"
         ---
         package_name: italian-accents
         package_title: "Italian Accents"
@@ -624,7 +770,9 @@ mod tests {
         is_core: true
         ---
         Readme text
-        "###).unwrap();
+        "###,
+        )
+        .unwrap();
 
         let package = DefaultPackageManager::parse_package_from_readme(file.path()).unwrap();
 

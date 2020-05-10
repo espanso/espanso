@@ -17,7 +17,7 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use regex::{Regex, Captures};
+use regex::{Captures, Regex};
 
 lazy_static! {
     static ref ARG_REGEX: Regex = Regex::new("\\$(?P<pos>\\d+)\\$").unwrap();
@@ -25,12 +25,12 @@ lazy_static! {
 
 pub fn render_args(text: &str, args: &Vec<String>) -> String {
     let result = ARG_REGEX.replace_all(text, |caps: &Captures| {
-        let position_str  = caps.name("pos").unwrap().as_str();
+        let position_str = caps.name("pos").unwrap().as_str();
         let position = position_str.parse::<i32>().unwrap_or(-1);
 
         if position >= 0 && position < args.len() as i32 {
             args[position as usize].to_owned()
-        }else{
+        } else {
             "".to_owned()
         }
     });
@@ -43,24 +43,24 @@ pub fn split_args(text: &str, delimiter: char, escape: char) -> Vec<String> {
 
     // Make sure the text is not empty
     if text.is_empty() {
-        return output
+        return output;
     }
 
     let mut last = String::from("");
-    let mut previous : char = char::from(0);
+    let mut previous: char = char::from(0);
     text.chars().into_iter().for_each(|c| {
         if c == delimiter {
             if previous != escape {
                 output.push(last.clone());
                 last = String::from("");
-            }else{
+            } else {
                 last.push(c);
             }
-        }else if c == escape {
+        } else if c == escape {
             if previous == escape {
                 last.push(c);
             }
-        }else{
+        } else {
             last.push(c);
         }
         previous = c;
@@ -80,25 +80,28 @@ mod tests {
 
     #[test]
     fn test_render_args_no_args() {
-        let args = vec!("hello".to_owned());
+        let args = vec!["hello".to_owned()];
         assert_eq!(render_args("no args", &args), "no args")
     }
 
     #[test]
     fn test_render_args_one_arg() {
-        let args = vec!("jon".to_owned());
+        let args = vec!["jon".to_owned()];
         assert_eq!(render_args("hello $0$", &args), "hello jon")
     }
 
     #[test]
     fn test_render_args_one_multiple_args() {
-        let args = vec!("jon".to_owned(), "snow".to_owned());
-        assert_eq!(render_args("hello $0$, the $1$ is white", &args), "hello jon, the snow is white")
+        let args = vec!["jon".to_owned(), "snow".to_owned()];
+        assert_eq!(
+            render_args("hello $0$, the $1$ is white", &args),
+            "hello jon, the snow is white"
+        )
     }
 
     #[test]
     fn test_render_args_out_of_range() {
-        let args = vec!("jon".to_owned());
+        let args = vec!["jon".to_owned()];
         assert_eq!(render_args("hello $10$", &args), "hello ")
     }
 
@@ -124,7 +127,7 @@ mod tests {
 
     #[test]
     fn test_split_args_empty() {
-        let empty_vec : Vec<String> = vec![];
+        let empty_vec: Vec<String> = vec![];
         assert_eq!(split_args("", '/', '\\'), empty_vec)
     }
 }

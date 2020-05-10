@@ -17,14 +17,13 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::ffi::CString;
-use crate::bridge::linux::*;
 use super::PasteShortcut;
-use log::error;
+use crate::bridge::linux::*;
 use crate::config::Configs;
+use log::error;
+use std::ffi::CString;
 
-pub struct LinuxKeyboardManager {
-}
+pub struct LinuxKeyboardManager {}
 
 impl super::KeyboardManager for LinuxKeyboardManager {
     fn send_string(&self, active_config: &Configs, s: &str) {
@@ -33,11 +32,11 @@ impl super::KeyboardManager for LinuxKeyboardManager {
             Ok(cstr) => unsafe {
                 if active_config.fast_inject {
                     fast_send_string(cstr.as_ptr(), active_config.inject_delay);
-                }else{
+                } else {
                     send_string(cstr.as_ptr());
                 }
-            }
-            Err(e) => panic!(e.to_string())
+            },
+            Err(e) => panic!(e.to_string()),
         }
     }
 
@@ -45,7 +44,7 @@ impl super::KeyboardManager for LinuxKeyboardManager {
         unsafe {
             if active_config.fast_inject {
                 fast_send_enter();
-            }else{
+            } else {
                 send_enter();
             }
         }
@@ -94,7 +93,7 @@ impl super::KeyboardManager for LinuxKeyboardManager {
         unsafe {
             if active_config.fast_inject {
                 fast_delete_string(count, active_config.backspace_delay);
-            }else{
+            } else {
                 delete_string(count)
             }
         }
@@ -104,7 +103,7 @@ impl super::KeyboardManager for LinuxKeyboardManager {
         unsafe {
             if active_config.fast_inject {
                 fast_left_arrow(count);
-            }else{
+            } else {
                 left_arrow(count);
             }
         }

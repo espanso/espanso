@@ -20,11 +20,17 @@
 use std::path::Path;
 
 #[cfg(target_os = "linux")]
-fn default_editor() -> String{ "/bin/nano".to_owned() }
+fn default_editor() -> String {
+    "/bin/nano".to_owned()
+}
 #[cfg(target_os = "macos")]
-fn default_editor() -> String{ "/usr/bin/nano".to_owned() }
+fn default_editor() -> String {
+    "/usr/bin/nano".to_owned()
+}
 #[cfg(target_os = "windows")]
-fn default_editor() -> String{ "C:\\Windows\\System32\\notepad.exe".to_owned() }
+fn default_editor() -> String {
+    "C:\\Windows\\System32\\notepad.exe".to_owned()
+}
 
 pub fn open_editor(file_path: &Path) -> bool {
     use std::process::Command;
@@ -34,20 +40,18 @@ pub fn open_editor(file_path: &Path) -> bool {
     let visual_var = std::env::var_os("VISUAL");
 
     // Prioritize the editors specified by the environment variable, use the default one
-    let editor : String = if let Some(editor_var) = editor_var {
+    let editor: String = if let Some(editor_var) = editor_var {
         editor_var.to_string_lossy().to_string()
-    }else if let Some(visual_var) = visual_var {
+    } else if let Some(visual_var) = visual_var {
         visual_var.to_string_lossy().to_string()
-    }else{
+    } else {
         default_editor()
     };
 
     // Start the editor and wait for its termination
     let status = if cfg!(target_os = "windows") {
-        Command::new(&editor)
-            .arg(file_path)
-            .spawn()
-    }else{
+        Command::new(&editor).arg(file_path).spawn()
+    } else {
         // On Unix, spawn the editor using the shell so that it can
         // accept parameters. See issue #245
         Command::new("/bin/bash")
@@ -56,17 +60,16 @@ pub fn open_editor(file_path: &Path) -> bool {
             .spawn()
     };
 
-
     if let Ok(mut child) = status {
         // Wait for the user to edit the configuration
         let result = child.wait();
 
         if let Ok(exit_status) = result {
             exit_status.success()
-        }else{
+        } else {
             false
         }
-    }else{
+    } else {
         println!("Error: could not start editor at: {}", &editor);
         false
     }
