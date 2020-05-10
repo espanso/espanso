@@ -31,6 +31,7 @@ use std::time::Duration;
 use std::process::{Command, Stdio};
 use notify::{RecommendedWatcher, Watcher, RecursiveMode, DebouncedEvent};
 use std::sync::mpsc::channel;
+use regex::Regex;
 
 use clap::{App, Arg, ArgMatches, SubCommand, AppSettings};
 use fs2::FileExt;
@@ -83,7 +84,12 @@ fn main() {
             .takes_value(false)
             .help("Allow installing packages from non-verified repositories."))
         .arg(Arg::with_name("package_name")
-            .help("Package name"));
+            .help("Package name"))
+        .arg(Arg::with_name("repository_url")
+            .help("(Optional) Link to GitHub repository")
+            .required(false)
+            .default_value("hub")
+        );
 
     let uninstall_subcommand = SubCommand::with_name("uninstall")
         .about("Remove an installed package. Equivalent to 'espanso package uninstall'")
@@ -903,6 +909,8 @@ fn install_main(_config_set: ConfigSet, matches: &ArgMatches) {
         exit(1);
     });
 
+    let repository = matches.value_of("repository_url").unwrap_or("hub");
+
     let package_resolver= Box::new(ZipPackageResolver::new());
 
     let allow_external: bool = if matches.is_present("external") {
@@ -914,31 +922,50 @@ fn install_main(_config_set: ConfigSet, matches: &ArgMatches) {
 
     let mut package_manager = DefaultPackageManager::new_default(Some(package_resolver));
 
-    if package_manager.is_index_outdated() {
-        println!("Updating package index...");
-        let res = package_manager.update_index(false);
+    let res = if repository == "hub" { // Installation from the Hub
+        if package_manager.is_index_outdated() {
+            println!("Updating package index...");
+            let res = package_manager.update_index(false);
 
-        match res {
-            Ok(update_result) => {
-                match update_result {
-                    UpdateResult::NotOutdated => {
-                        eprintln!("Index was already up to date");
-                    },
-                    UpdateResult::Updated => {
-                        println!("Index updated!");
-                    },
-                }
-            },
-            Err(e) => {
-                eprintln!("{}", e);
-                exit(2);
-            },
+            match res {
+                Ok(update_result) => {
+                    match update_result {
+                        UpdateResult::NotOutdated => {
+                            eprintln!("Index was already up to date");
+                        },
+                        UpdateResult::Updated => {
+                            println!("Index updated!");
+                        },
+                    }
+                },
+                Err(e) => {
+                    eprintln!("{}", e);
+                    exit(2);
+                },
+            }
+        }else{
+            println!("Using cached package index, run 'espanso package refresh' to update it.")
         }
-    }else{
-        println!("Using cached package index, run 'espanso package refresh' to update it.")
-    }
 
-    let res = package_manager.install_package(package_name, allow_external);
+        package_manager.install_package(package_name, allow_external)
+    }else{
+        // Make sure the repo is a valid github url
+        lazy_static! {
+            static ref GITHUB_REGEX: Regex = Regex::new(r#"https://github\.com/\S*/\S*"#).unwrap();
+        };
+
+        if !GITHUB_REGEX.is_match(repository) {
+            eprintln!("repository url is not valid, it should be an HTTPS GitHub url in the following format:");
+            eprintln!("https://github.com/user/repo");
+            exit(3);
+        }
+
+        if !allow_external {
+            Ok(InstallResult::BlockedExternalPackage(repository.to_owned()))
+        }else{
+            package_manager.install_package_from_repo(package_name, repository)
+        }
+    };
 
     match res {
         Ok(install_result) => {
@@ -971,7 +998,12 @@ fn install_main(_config_set: ConfigSet, matches: &ArgMatches) {
                     eprintln!("if you trust the source or you verified the contents of the package");
                     eprintln!("by checking out the repository listed above.");
                     eprintln!();
-                    eprintln!("espanso install {} --external", package_name);
+
+                    if repository == "hub" {
+                        eprintln!("espanso install {} --external", package_name);
+                    }else{
+                        eprintln!("espanso install {} {} --external", package_name, repository);
+                    }
                     eprintln!();
                 }
                 InstallResult::Installed => {
