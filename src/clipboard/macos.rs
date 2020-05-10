@@ -17,20 +17,18 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::os::raw::c_char;
 use crate::bridge::macos::*;
-use std::ffi::{CStr, CString};
-use std::path::Path;
 use log::{error, warn};
+use std::ffi::{CStr, CString};
+use std::os::raw::c_char;
+use std::path::Path;
 
-pub struct MacClipboardManager {
-
-}
+pub struct MacClipboardManager {}
 
 impl super::ClipboardManager for MacClipboardManager {
-    fn get_clipboard(&self) -> Option<String>  {
+    fn get_clipboard(&self) -> Option<String> {
         unsafe {
-            let mut buffer : [c_char; 2000] = [0; 2000];
+            let mut buffer: [c_char; 2000] = [0; 2000];
             let res = get_clipboard(buffer.as_mut_ptr(), buffer.len() as i32);
 
             if res > 0 {
@@ -71,6 +69,6 @@ impl super::ClipboardManager for MacClipboardManager {
 
 impl MacClipboardManager {
     pub fn new() -> MacClipboardManager {
-        MacClipboardManager{}
+        MacClipboardManager {}
     }
 }

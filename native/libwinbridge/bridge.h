@@ -73,9 +73,14 @@ extern "C" void send_vkey(int32_t vk);
 extern "C" void send_multi_vkey(int32_t vk, int32_t count);
 
 /*
+ * Send the given Virtual Key press multiple times adding a delay between each keypress
+ */
+extern "C" void send_multi_vkey_with_delay(int32_t vk, int32_t count, int32_t delay);
+
+/*
  * Send the backspace keypress, *count* times.
  */
-extern "C" void delete_string(int32_t count);
+extern "C" void delete_string(int32_t count, int32_t delay);
 
 /*
  * Send the Paste keyboard shortcut (CTRL+V)
@@ -158,5 +163,9 @@ extern "C" int32_t set_clipboard(wchar_t * text);
  * Set the clipboard image to the given path
  */
 extern "C" int32_t set_clipboard_image(wchar_t * path);
+
+// PROCESSES
+
+extern "C" int32_t start_process(wchar_t * cmd);
 
 #endif //ESPANSO_BRIDGE_H

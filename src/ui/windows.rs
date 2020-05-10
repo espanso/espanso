@@ -17,16 +17,18 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::bridge::windows::{show_notification, close_notification, WindowsMenuItem, show_context_menu, cleanup_ui};
-use widestring::U16CString;
-use std::{thread, time};
-use log::{debug};
-use std::sync::Mutex;
-use std::sync::Arc;
+use crate::bridge::windows::{
+    cleanup_ui, close_notification, show_context_menu, show_notification, WindowsMenuItem,
+};
 use crate::ui::{MenuItem, MenuItemType};
+use log::debug;
+use std::sync::Arc;
+use std::sync::Mutex;
+use std::{thread, time};
+use widestring::U16CString;
 
 pub struct WindowsUIManager {
-    id: Arc<Mutex<i32>>
+    id: Arc<Mutex<i32>>,
 }
 
 impl super::UIManager for WindowsUIManager {
@@ -45,29 +47,30 @@ impl super::UIManager for WindowsUIManager {
 
         // Setup a timeout to close the notification
         let id = Arc::clone(&self.id);
-        let _ = thread::Builder::new().name("notification_thread".to_string()).spawn(move || {
-            for _ in 1..10 {
-                let duration = time::Duration::from_millis(step as u64);
-                thread::sleep(duration);
+        let _ = thread::Builder::new()
+            .name("notification_thread".to_string())
+            .spawn(move || {
+                for _ in 1..10 {
+                    let duration = time::Duration::from_millis(step as u64);
+                    thread::sleep(duration);
 
-                let new_id = id.lock().unwrap();
-                if *new_id != current_id {
-                    debug!("Cancelling notification close event with id {}", current_id);
-                    return;
+                    let new_id = id.lock().unwrap();
+                    if *new_id != current_id {
+                        debug!("Cancelling notification close event with id {}", current_id);
+                        return;
+                    }
                 }
-            }
 
-            unsafe {
-                close_notification();
-            }
-        });
+                unsafe {
+                    close_notification();
+                }
+            });
 
         // Create and show a window notification
         unsafe {
             let message = U16CString::from_str(message).unwrap();
             show_notification(message.as_ptr());
         }
-
     }
 
     fn show_menu(&self, menu: Vec<MenuItem>) {
@@ -75,14 +78,14 @@ impl super::UIManager for WindowsUIManager {
 
         for item in menu.iter() {
             let text = U16CString::from_str(item.item_name.clone()).unwrap_or_default();
-            let mut str_buff : [u16; 100] = [0; 100];
+            let mut str_buff: [u16; 100] = [0; 100];
             unsafe {
                 std::ptr::copy(text.as_ptr(), str_buff.as_mut_ptr(), text.len());
             }
 
             let menu_type = match item.item_type {
-                MenuItemType::Button => {1},
-                MenuItemType::Separator => {2},
+                MenuItemType::Button => 1,
+                MenuItemType::Separator => 2,
             };
 
             let raw_item = WindowsMenuItem {
@@ -94,7 +97,9 @@ impl super::UIManager for WindowsUIManager {
             raw_menu.push(raw_item);
         }
 
-        unsafe { show_context_menu(raw_menu.as_ptr(), raw_menu.len() as i32); }
+        unsafe {
+            show_context_menu(raw_menu.as_ptr(), raw_menu.len() as i32);
+        }
     }
 
     fn cleanup(&self) {
@@ -108,9 +113,7 @@ impl WindowsUIManager {
     pub fn new() -> WindowsUIManager {
         let id = Arc::new(Mutex::new(0));
 
-        let manager = WindowsUIManager {
-            id
-        };
+        let manager = WindowsUIManager { id };
 
         manager
     }

@@ -17,10 +17,10 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub(crate) mod zip;
 pub(crate) mod default;
+pub(crate) mod zip;
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use std::error::Error;
 use tempfile::TempDir;
 
@@ -30,8 +30,16 @@ pub trait PackageManager {
 
     fn get_package(&self, name: &str) -> Option<Package>;
 
-    fn install_package(&self, name: &str, allow_external: bool) -> Result<InstallResult, Box<dyn Error>>;
-    fn install_package_from_repo(&self, name: &str, repo_url: &str) -> Result<InstallResult, Box<dyn Error>>;
+    fn install_package(
+        &self,
+        name: &str,
+        allow_external: bool,
+    ) -> Result<InstallResult, Box<dyn Error>>;
+    fn install_package_from_repo(
+        &self,
+        name: &str,
+        repo_url: &str,
+    ) -> Result<InstallResult, Box<dyn Error>>;
 
     fn remove_package(&self, name: &str) -> Result<RemoveResult, Box<dyn Error>>;
 
@@ -57,17 +65,20 @@ pub struct Package {
     pub original_repo: String,
 }
 
-fn default_is_core() -> bool {false}
-fn default_original_repo() -> String {"".to_owned()}
+fn default_is_core() -> bool {
+    false
+}
+fn default_original_repo() -> String {
+    "".to_owned()
+}
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct PackageIndex {
     #[serde(rename = "lastUpdate")]
     pub last_update: u64,
 
-    pub packages: Vec<Package>
+    pub packages: Vec<Package>,
 }
-
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum UpdateResult {
@@ -83,11 +94,11 @@ pub enum InstallResult {
     MissingPackageVersion,
     AlreadyInstalled,
     Installed,
-    BlockedExternalPackage(String)
+    BlockedExternalPackage(String),
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum RemoveResult {
     NotFound,
-    Removed
+    Removed,
 }

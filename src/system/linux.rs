@@ -19,7 +19,9 @@
 
 use std::os::raw::c_char;
 
-use crate::bridge::linux::{get_active_window_name, get_active_window_class, get_active_window_executable};
+use crate::bridge::linux::{
+    get_active_window_class, get_active_window_executable, get_active_window_name,
+};
 use std::ffi::CStr;
 
 pub struct LinuxSystemManager {}
@@ -27,7 +29,7 @@ pub struct LinuxSystemManager {}
 impl super::SystemManager for LinuxSystemManager {
     fn get_current_window_title(&self) -> Option<String> {
         unsafe {
-            let mut buffer : [c_char; 100] = [0; 100];
+            let mut buffer: [c_char; 100] = [0; 100];
             let res = get_active_window_name(buffer.as_mut_ptr(), buffer.len() as i32);
 
             if res > 0 {
@@ -39,13 +41,13 @@ impl super::SystemManager for LinuxSystemManager {
                 }
             }
         }
-        
+
         None
     }
 
     fn get_current_window_class(&self) -> Option<String> {
         unsafe {
-            let mut buffer : [c_char; 100] = [0; 100];
+            let mut buffer: [c_char; 100] = [0; 100];
             let res = get_active_window_class(buffer.as_mut_ptr(), buffer.len() as i32);
 
             if res > 0 {
@@ -63,7 +65,7 @@ impl super::SystemManager for LinuxSystemManager {
 
     fn get_current_window_executable(&self) -> Option<String> {
         unsafe {
-            let mut buffer : [c_char; 100] = [0; 100];
+            let mut buffer: [c_char; 100] = [0; 100];
             let res = get_active_window_executable(buffer.as_mut_ptr(), buffer.len() as i32);
 
             if res > 0 {
@@ -82,6 +84,6 @@ impl super::SystemManager for LinuxSystemManager {
 
 impl LinuxSystemManager {
     pub fn new() -> LinuxSystemManager {
-        LinuxSystemManager{}
+        LinuxSystemManager {}
     }
 }

@@ -17,8 +17,8 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use serde_yaml::{Mapping};
 use crate::clipboard::ClipboardManager;
+use serde_yaml::Mapping;
 
 pub struct ClipboardExtension {
     clipboard_manager: Box<dyn ClipboardManager>,
@@ -26,9 +26,7 @@ pub struct ClipboardExtension {
 
 impl ClipboardExtension {
     pub fn new(clipboard_manager: Box<dyn ClipboardManager>) -> ClipboardExtension {
-        ClipboardExtension{
-            clipboard_manager
-        }
+        ClipboardExtension { clipboard_manager }
     }
 }
 

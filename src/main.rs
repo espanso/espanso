@@ -20,51 +20,56 @@
 #[macro_use]
 extern crate lazy_static;
 
+use notify::{DebouncedEvent, RecommendedWatcher, RecursiveMode, Watcher};
+use regex::Regex;
 use std::fs::{File, OpenOptions};
 use std::io::{BufRead, BufReader};
 use std::process::exit;
-use std::sync::{Arc, mpsc};
+use std::process::{Command, Stdio};
 use std::sync::atomic::AtomicBool;
-use std::sync::mpsc::Receiver;
+use std::sync::mpsc::channel;
+use std::sync::mpsc::{Receiver, RecvError, Sender};
+use std::sync::{mpsc, Arc};
 use std::thread;
 use std::time::Duration;
 
-use clap::{App, Arg, ArgMatches, SubCommand};
+use clap::{App, AppSettings, Arg, ArgMatches, SubCommand};
 use fs2::FileExt;
-use log::{info, LevelFilter, warn};
-use simplelog::{CombinedLogger, SharedLogger, TerminalMode, TermLogger, WriteLogger};
+use log::{error, info, warn, LevelFilter};
+use simplelog::{CombinedLogger, SharedLogger, TermLogger, TerminalMode, WriteLogger};
 
-use crate::config::{ConfigManager, ConfigSet};
 use crate::config::runtime::RuntimeConfigManager;
+use crate::config::{ConfigManager, ConfigSet, Configs};
 use crate::engine::Engine;
-use crate::event::*;
 use crate::event::manager::{DefaultEventManager, EventManager};
+use crate::event::*;
 use crate::matcher::scrolling::ScrollingMatcher;
-use crate::package::{InstallResult, PackageManager, RemoveResult, UpdateResult};
 use crate::package::default::DefaultPackageManager;
 use crate::package::zip::ZipPackageResolver;
+use crate::package::{InstallResult, PackageManager, RemoveResult, UpdateResult};
 use crate::protocol::*;
 use crate::system::SystemManager;
 use crate::ui::UIManager;
 
-mod ui;
-mod edit;
-mod event;
-mod check;
-mod utils;
 mod bridge;
-mod engine;
+mod check;
+mod clipboard;
 mod config;
-mod render;
-mod system;
 mod context;
+mod edit;
+mod engine;
+mod event;
+mod extension;
+mod keyboard;
 mod matcher;
 mod package;
-mod keyboard;
+mod process;
 mod protocol;
-mod clipboard;
-mod extension;
+mod render;
 mod sysdaemon;
+mod system;
+mod ui;
+mod utils;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 const LOG_FILE: &str = "espanso.log";
@@ -72,19 +77,25 @@ const LOG_FILE: &str = "espanso.log";
 fn main() {
     let install_subcommand = SubCommand::with_name("install")
         .about("Install a package. Equivalent to 'espanso package install'")
-        .arg(Arg::with_name("external")
-            .short("e")
-            .long("external")
-            .required(false)
-            .takes_value(false)
-            .help("Allow installing packages from non-verified repositories."))
-        .arg(Arg::with_name("package_name")
-            .help("Package name"));
+        .arg(
+            Arg::with_name("external")
+                .short("e")
+                .long("external")
+                .required(false)
+                .takes_value(false)
+                .help("Allow installing packages from non-verified repositories."),
+        )
+        .arg(Arg::with_name("package_name").help("Package name"))
+        .arg(
+            Arg::with_name("repository_url")
+                .help("(Optional) Link to GitHub repository")
+                .required(false)
+                .default_value("hub"),
+        );
 
     let uninstall_subcommand = SubCommand::with_name("uninstall")
         .about("Remove an installed package. Equivalent to 'espanso package uninstall'")
-        .arg(Arg::with_name("package_name")
-            .help("Package name"));
+        .arg(Arg::with_name("package_name").help("Package name"));
 
     let mut clap_instance = App::new("espanso")
         .version(VERSION)
@@ -108,7 +119,14 @@ fn main() {
         .subcommand(SubCommand::with_name("edit")
             .about("Open the default text editor to edit config files and reload them automatically when exiting")
             .arg(Arg::with_name("config")
-                .help("Defaults to \"default\". The configuration file name to edit (without the .yml extension).")))
+                .help("Defaults to \"default\". The configuration file name to edit (without the .yml extension)."))
+            .arg(Arg::with_name("norestart")
+                .short("n")
+                .long("norestart")
+                .required(false)
+                .takes_value(false)
+                .help("Avoid restarting espanso after editing the file"))
+        )
         .subcommand(SubCommand::with_name("dump")
             .about("Prints all current configuration options."))
         .subcommand(SubCommand::with_name("detect")
@@ -154,6 +172,14 @@ fn main() {
             .subcommand(SubCommand::with_name("refresh")
                 .about("Update espanso package index"))
         )
+        .subcommand(SubCommand::with_name("worker")
+            .setting(AppSettings::Hidden)
+            .arg(Arg::with_name("reload")
+                .short("r")
+                .long("reload")
+                .required(false)
+                .takes_value(false))
+        )
         .subcommand(install_subcommand)
         .subcommand(uninstall_subcommand);
 
@@ -165,7 +191,6 @@ fn main() {
         edit_main(matches);
         return;
     }
-
 
     let log_level = matches.occurrences_of("v") as i32;
 
@@ -268,9 +293,57 @@ fn main() {
         }
     }
 
+    if let Some(matches) = matches.subcommand_matches("worker") {
+        worker_main(config_set, matches);
+        return;
+    }
+
     // Defaults help print
-    clap_instance.print_long_help().expect("Unable to print help");
+    clap_instance
+        .print_long_help()
+        .expect("Unable to print help");
     println!();
+}
+
+fn init_logger(config_set: &ConfigSet, reset: bool) {
+    // Initialize log
+    let log_level = match config_set.default.log_level {
+        0 => LevelFilter::Warn,
+        1 => LevelFilter::Info,
+        2 | _ => LevelFilter::Debug,
+    };
+
+    let mut log_outputs: Vec<Box<dyn SharedLogger>> = Vec::new();
+
+    // Initialize terminal output
+    let terminal_out =
+        TermLogger::new(log_level, simplelog::Config::default(), TerminalMode::Mixed);
+    if let Some(terminal_out) = terminal_out {
+        log_outputs.push(terminal_out);
+    }
+
+    // Initialize log file output
+    let espanso_dir = context::get_data_dir();
+    let log_file_path = espanso_dir.join(LOG_FILE);
+
+    if reset && log_file_path.exists() {
+        std::fs::remove_file(&log_file_path).expect("unable to remove log file");
+    }
+
+    let log_file = OpenOptions::new()
+        .read(true)
+        .write(true)
+        .create(true)
+        .append(true)
+        .open(log_file_path)
+        .expect("Cannot create log file.");
+    let file_out = WriteLogger::new(LevelFilter::Info, simplelog::Config::default(), log_file);
+    log_outputs.push(file_out);
+
+    CombinedLogger::init(log_outputs).expect("Error opening log destination");
+
+    // Activate logging for panics
+    log_panics::init();
 }
 
 /// Daemon subcommand, start the event loop and spawn a background thread worker
@@ -284,46 +357,182 @@ fn daemon_main(config_set: ConfigSet) {
 
     precheck_guard();
 
-    // Initialize log
-    let log_level = match config_set.default.log_level {
-        0 => LevelFilter::Warn,
-        1 => LevelFilter::Info,
-        2 | _ => LevelFilter::Debug,
-    };
-
-    let mut log_outputs: Vec<Box<dyn SharedLogger>> = Vec::new();
-
-    // Initialize terminal output
-    let terminal_out = TermLogger::new(log_level,
-                                       simplelog::Config::default(), TerminalMode::Mixed);
-    if let Some(terminal_out) = terminal_out {
-        log_outputs.push(terminal_out);
-    }
-
-    // Initialize log file output
-    let espanso_dir = context::get_data_dir();
-    let log_file_path = espanso_dir.join(LOG_FILE);
-    let log_file = OpenOptions::new()
-        .read(true)
-        .write(true)
-        .create(true)
-        .truncate(true)
-        .open(log_file_path)
-        .expect("Cannot create log file.");
-    let file_out = WriteLogger::new(LevelFilter::Info, simplelog::Config::default(), log_file);
-    log_outputs.push(file_out);
-
-    CombinedLogger::init(
-        log_outputs
-    ).expect("Error opening log destination");
-
-    // Activate logging for panics
-    log_panics::init();
+    init_logger(&config_set, true);
 
     info!("espanso version {}", VERSION);
-    info!("using config path: {}", context::get_config_dir().to_string_lossy());
-    info!("using package path: {}", context::get_package_dir().to_string_lossy());
-    info!("starting daemon...");
+    info!(
+        "using config path: {}",
+        context::get_config_dir().to_string_lossy()
+    );
+    info!(
+        "using package path: {}",
+        context::get_package_dir().to_string_lossy()
+    );
+
+    let (send_channel, receive_channel) = mpsc::channel();
+
+    let ipc_server = protocol::get_ipc_server(
+        Service::Daemon,
+        config_set.default.clone(),
+        send_channel.clone(),
+    );
+    ipc_server.start();
+
+    info!("spawning worker process...");
+
+    let espanso_path = std::env::current_exe().expect("unable to obtain espanso path location");
+    crate::process::spawn_process(
+        &espanso_path.to_string_lossy().to_string(),
+        &vec!["worker".to_owned()],
+    );
+
+    std::thread::sleep(Duration::from_millis(200));
+
+    if config_set.default.auto_restart {
+        let send_channel_clone = send_channel.clone();
+        thread::Builder::new()
+            .name("watcher_background".to_string())
+            .spawn(move || {
+                watcher_background(send_channel_clone);
+            })
+            .expect("Unable to spawn watcher background thread");
+    }
+
+    loop {
+        match receive_channel.recv() {
+            Ok(event) => {
+                match event {
+                    Event::Action(ActionType::RestartWorker) => {
+                        // Terminate the worker process
+                        send_command_or_warn(
+                            Service::Worker,
+                            config_set.default.clone(),
+                            IPCCommand::exit_worker(),
+                        );
+
+                        std::thread::sleep(Duration::from_millis(500));
+
+                        // Restart the worker process
+                        crate::process::spawn_process(
+                            &espanso_path.to_string_lossy().to_string(),
+                            &vec!["worker".to_owned(), "--reload".to_owned()],
+                        );
+                    }
+                    Event::Action(ActionType::Exit) => {
+                        send_command_or_warn(
+                            Service::Worker,
+                            config_set.default.clone(),
+                            IPCCommand::exit_worker(),
+                        );
+
+                        std::thread::sleep(Duration::from_millis(200));
+
+                        info!("terminating espanso.");
+                        std::process::exit(0);
+                    }
+                    _ => {
+                        // Forward the command to the worker
+                        let command = IPCCommand::from(event);
+                        if let Some(command) = command {
+                            send_command_or_warn(
+                                Service::Worker,
+                                config_set.default.clone(),
+                                command,
+                            );
+                        }
+                    }
+                }
+            }
+            Err(e) => {
+                warn!("error while reading event in daemon process: {}", e);
+            }
+        }
+    }
+}
+
+fn watcher_background(sender: Sender<Event>) {
+    // Create a channel to receive the events.
+    let (tx, rx) = channel();
+
+    let mut watcher: RecommendedWatcher =
+        Watcher::new(tx, Duration::from_secs(1)).expect("unable to create file watcher");
+
+    let config_path = crate::context::get_config_dir();
+    watcher
+        .watch(&config_path, RecursiveMode::Recursive)
+        .expect("unable to start watcher");
+
+    info!(
+        "watching for changes in path: {}",
+        config_path.to_string_lossy()
+    );
+
+    loop {
+        let should_reload = match rx.recv() {
+            Ok(event) => {
+                let path = match event {
+                    DebouncedEvent::Create(path) => Some(path),
+                    DebouncedEvent::Write(path) => Some(path),
+                    DebouncedEvent::Remove(path) => Some(path),
+                    DebouncedEvent::Rename(_, path) => Some(path),
+                    _ => None,
+                };
+
+                if let Some(path) = path {
+                    if path.extension().unwrap_or_default() == "yml" {
+                        // Only load yml files
+                        true
+                    } else {
+                        false
+                    }
+                } else {
+                    false
+                }
+            }
+            Err(e) => {
+                warn!("error while watching files: {:?}", e);
+                false
+            }
+        };
+
+        if should_reload {
+            info!("change detected, restarting worker process...");
+
+            let mut config_set = ConfigSet::load_default();
+
+            match config_set {
+                Ok(config_set) => {
+                    let event = Event::Action(ActionType::RestartWorker);
+                    sender.send(event).unwrap_or_else(|e| {
+                        warn!("unable to communicate with daemon thread: {}", e);
+                    })
+                }
+                Err(error) => {
+                    error!("Unable to reload configuration due to an error: {}", error);
+                    let event = Event::System(SystemEvent::NotifyRequest(
+                        "Unable to reload config due to an error, see the logs for more details."
+                            .to_owned(),
+                    ));
+                    sender.send(event).unwrap_or_else(|e| {
+                        warn!("unable to communicate with daemon thread: {}", e);
+                    })
+                }
+            }
+        }
+    }
+}
+
+/// Worker process main which does the actual work
+fn worker_main(config_set: ConfigSet, matches: &ArgMatches) {
+    init_logger(&config_set, false);
+
+    info!("initializing worker process...");
+
+    let is_reloading: bool = if matches.is_present("reload") {
+        true
+    } else {
+        false
+    };
 
     let (send_channel, receive_channel) = mpsc::channel();
 
@@ -331,27 +540,44 @@ fn daemon_main(config_set: ConfigSet) {
     // we could reinterpret the characters we are injecting
     let is_injecting = Arc::new(std::sync::atomic::AtomicBool::new(false));
 
-    let context = context::new(config_set.default.clone(), send_channel.clone(), is_injecting.clone());
+    let context = context::new(
+        config_set.default.clone(),
+        send_channel.clone(),
+        is_injecting.clone(),
+    );
 
     let config_set_copy = config_set.clone();
-    thread::Builder::new().name("daemon_background".to_string()).spawn(move || {
-        daemon_background(receive_channel, config_set_copy, is_injecting);
-    }).expect("Unable to spawn daemon background thread");
+    thread::Builder::new()
+        .name("daemon_background".to_string())
+        .spawn(move || {
+            worker_background(receive_channel, config_set_copy, is_injecting, is_reloading);
+        })
+        .expect("Unable to spawn daemon background thread");
 
-    let ipc_server = protocol::get_ipc_server(config_set, send_channel.clone());
+    let ipc_server =
+        protocol::get_ipc_server(Service::Worker, config_set.default, send_channel.clone());
     ipc_server.start();
 
     context.eventloop();
 }
 
 /// Background thread worker for the daemon
-fn daemon_background(receive_channel: Receiver<Event>, config_set: ConfigSet, is_injecting: Arc<AtomicBool>) {
+fn worker_background(
+    receive_channel: Receiver<Event>,
+    config_set: ConfigSet,
+    is_injecting: Arc<AtomicBool>,
+    is_reloading: bool,
+) {
     let system_manager = system::get_manager();
     let config_manager = RuntimeConfigManager::new(config_set, system_manager);
 
     let ui_manager = ui::get_uimanager();
     if config_manager.default_config().show_notifications {
-        ui_manager.notify("espanso is running!");
+        if !is_reloading {
+            ui_manager.notify("espanso is running!");
+        } else {
+            ui_manager.notify("Reloaded config!");
+        }
     }
 
     let clipboard_manager = clipboard::get_manager();
@@ -360,27 +586,28 @@ fn daemon_background(receive_channel: Receiver<Event>, config_set: ConfigSet, is
 
     let extensions = extension::get_extensions(Box::new(clipboard::get_manager()));
 
-    let renderer = render::default::DefaultRenderer::new(extensions,
-                                                          config_manager.default_config().clone());
+    let renderer =
+        render::default::DefaultRenderer::new(extensions, config_manager.default_config().clone());
 
-    let engine = Engine::new(&keyboard_manager,
-                             &clipboard_manager,
-                             &config_manager,
-                             &ui_manager,
-                             &renderer,
-                             is_injecting,
+    let engine = Engine::new(
+        &keyboard_manager,
+        &clipboard_manager,
+        &config_manager,
+        &ui_manager,
+        &renderer,
+        is_injecting,
     );
 
     let matcher = ScrollingMatcher::new(&config_manager, &engine);
 
     let event_manager = DefaultEventManager::new(
         receive_channel,
-        vec!(&matcher),
-        vec!(&engine, &matcher),
-        vec!(&engine),
+        vec![&matcher],
+        vec![&engine, &matcher],
+        vec![&engine],
     );
 
-    info!("espanso is running!");
+    info!("worker is running!");
 
     event_manager.eventloop();
 }
@@ -422,21 +649,21 @@ fn start_daemon(config_set: ConfigSet) {
         if let Ok(status) = res {
             if status.success() {
                 println!("Daemon started correctly!")
-            }else{
+            } else {
                 eprintln!("Error starting launchd daemon with status: {}", status);
             }
-        }else{
+        } else {
             eprintln!("Error starting launchd daemon: {}", res.unwrap_err());
         }
-    }else{
+    } else {
         fork_daemon(config_set);
     }
 }
 
 #[cfg(target_os = "linux")]
 fn start_daemon(config_set: ConfigSet) {
-    use std::process::{Command, Stdio};
     use crate::sysdaemon::{verify, VerifyResult};
+    use std::process::{Command, Stdio};
 
     // Check if Systemd is available in the system
     let status = Command::new("systemctl")
@@ -447,11 +674,7 @@ fn start_daemon(config_set: ConfigSet) {
 
     // If Systemd is not available in the system, espanso should default to unmanaged mode
     // See issue https://github.com/federico-terzi/espanso/issues/139
-    let force_unmanaged = if let Err(_) = status {
-        true
-    } else {
-        false
-    };
+    let force_unmanaged = if let Err(_) = status { true } else { false };
 
     if config_set.default.use_system_agent && !force_unmanaged {
         // Make sure espanso is currently registered in systemd
@@ -459,12 +682,12 @@ fn start_daemon(config_set: ConfigSet) {
         match res {
             VerifyResult::EnabledAndValid => {
                 // Do nothing, everything is ok!
-            },
+            }
             VerifyResult::EnabledButInvalidPath => {
                 eprintln!("Updating espanso service file with new path...");
                 unregister_main(config_set.clone());
                 register_main(config_set);
-            },
+            }
             VerifyResult::NotEnabled => {
                 use dialoguer::Confirmation;
                 if Confirmation::new()
@@ -481,7 +704,7 @@ fn start_daemon(config_set: ConfigSet) {
 
                     std::process::exit(4);
                 }
-            },
+            }
         }
 
         // Start the espanso service
@@ -492,13 +715,13 @@ fn start_daemon(config_set: ConfigSet) {
         if let Ok(status) = res {
             if status.success() {
                 println!("Daemon started correctly!")
-            }else{
+            } else {
                 eprintln!("Error starting systemd daemon with status: {}", status);
             }
-        }else{
+        } else {
             eprintln!("Error starting systemd daemon: {}", res.unwrap_err());
         }
-    }else{
+    } else {
         if force_unmanaged {
             eprintln!("Systemd is not available in this system, switching to unmanaged mode.");
         }
@@ -515,7 +738,8 @@ fn fork_daemon(config_set: ConfigSet) {
             println!("Unable to fork.");
             exit(4);
         }
-        if pid > 0 {  // Parent process exit
+        if pid > 0 {
+            // Parent process exit
             println!("daemon started!");
             exit(0);
         }
@@ -548,11 +772,10 @@ fn status_main() {
         println!("espanso is not running");
 
         release_lock(lock_file);
-    }else{
+    } else {
         println!("espanso is running");
     }
 }
-
 
 /// Stop subcommand, used to stop the daemon.
 fn stop_main(config_set: ConfigSet) {
@@ -564,17 +787,7 @@ fn stop_main(config_set: ConfigSet) {
         exit(3);
     }
 
-    let res = send_command(config_set, IPCCommand{
-        id: "exit".to_owned(),
-        payload: "".to_owned(),
-    });
-
-    if let Err(e) = res {
-        println!("{}", e);
-        exit(1);
-    }else{
-        exit(0);
-    }
+    send_command_or_warn(Service::Daemon, config_set.default, IPCCommand::exit());
 }
 
 /// Kill the daemon if running and start it again
@@ -583,15 +796,16 @@ fn restart_main(config_set: ConfigSet) {
     let lock_file = acquire_lock();
     if lock_file.is_none() {
         // Terminate the current espanso daemon
-        send_command(config_set.clone(), IPCCommand{
-            id: "exit".to_owned(),
-            payload: "".to_owned(),
-        }).unwrap_or_else(|e| warn!("Unable to send IPC command to daemon: {}", e));
-    }else{
+        send_command_or_warn(
+            Service::Daemon,
+            config_set.default.clone(),
+            IPCCommand::exit(),
+        );
+    } else {
         release_lock(lock_file.unwrap());
     }
 
-    std::thread::sleep(Duration::from_millis(300));
+    std::thread::sleep(Duration::from_millis(500));
 
     // Restart the daemon
     start_main(config_set);
@@ -606,14 +820,20 @@ fn detect_main() {
     println!("Listening for changes, now focus the window you want to analyze.");
     println!("You can terminate with CTRL+C\n");
 
-    let mut last_title : String = "".to_owned();
-    let mut last_class : String = "".to_owned();
-    let mut last_exec : String = "".to_owned();
+    let mut last_title: String = "".to_owned();
+    let mut last_class: String = "".to_owned();
+    let mut last_exec: String = "".to_owned();
 
     loop {
-        let curr_title = system_manager.get_current_window_title().unwrap_or_default();
-        let curr_class = system_manager.get_current_window_class().unwrap_or_default();
-        let curr_exec = system_manager.get_current_window_executable().unwrap_or_default();
+        let curr_title = system_manager
+            .get_current_window_title()
+            .unwrap_or_default();
+        let curr_class = system_manager
+            .get_current_window_class()
+            .unwrap_or_default();
+        let curr_exec = system_manager
+            .get_current_window_executable()
+            .unwrap_or_default();
 
         // Check if a change occurred
         if curr_title != last_title || curr_class != last_class || curr_exec != last_exec {
@@ -638,23 +858,31 @@ fn detect_main() {
 #[cfg(target_os = "macos")]
 fn detect_main() {
     thread::spawn(|| {
-        use std::io::Write;
         use std::io::stdout;
+        use std::io::Write;
 
         let system_manager = system::get_manager();
 
         println!("Listening for changes, now focus the window you want to analyze.");
-        println!("Warning: stay on the window for a few seconds, as it may take a while to register.");
+        println!(
+            "Warning: stay on the window for a few seconds, as it may take a while to register."
+        );
         println!("You can terminate with CTRL+C\n");
 
-        let mut last_title : String = "".to_owned();
-        let mut last_class : String = "".to_owned();
-        let mut last_exec : String = "".to_owned();
+        let mut last_title: String = "".to_owned();
+        let mut last_class: String = "".to_owned();
+        let mut last_exec: String = "".to_owned();
 
         loop {
-            let curr_title = system_manager.get_current_window_title().unwrap_or_default();
-            let curr_class = system_manager.get_current_window_class().unwrap_or_default();
-            let curr_exec = system_manager.get_current_window_executable().unwrap_or_default();
+            let curr_title = system_manager
+                .get_current_window_title()
+                .unwrap_or_default();
+            let curr_class = system_manager
+                .get_current_window_class()
+                .unwrap_or_default();
+            let curr_exec = system_manager
+                .get_current_window_executable()
+                .unwrap_or_default();
 
             // Check if a change occurred
             if curr_title != last_title || curr_class != last_class || curr_exec != last_exec {
@@ -681,45 +909,31 @@ fn detect_main() {
 /// Send the given command to the espanso daemon
 fn cmd_main(config_set: ConfigSet, matches: &ArgMatches) {
     let command = if matches.subcommand_matches("exit").is_some() {
-        Some(IPCCommand {
-            id: String::from("exit"),
-            payload: String::from(""),
-        })
-    }else if matches.subcommand_matches("toggle").is_some() {
+        Some(IPCCommand::exit())
+    } else if matches.subcommand_matches("toggle").is_some() {
         Some(IPCCommand {
             id: String::from("toggle"),
             payload: String::from(""),
         })
-    }else if matches.subcommand_matches("enable").is_some() {
+    } else if matches.subcommand_matches("enable").is_some() {
         Some(IPCCommand {
             id: String::from("enable"),
             payload: String::from(""),
         })
-    }else if matches.subcommand_matches("disable").is_some() {
+    } else if matches.subcommand_matches("disable").is_some() {
         Some(IPCCommand {
             id: String::from("disable"),
             payload: String::from(""),
         })
-    }else{
+    } else {
         None
     };
 
     if let Some(command) = command {
-        let res = send_command(config_set, command);
-
-        if res.is_ok() {
-            exit(0);
-        }else{
-            println!("{}", res.unwrap_err());
-        }
+        send_command_or_warn(Service::Daemon, config_set.default, command);
     }
 
     exit(1);
-}
-
-fn send_command(config_set: ConfigSet, command: IPCCommand) -> Result<(), String> {
-    let ipc_client = protocol::get_ipc_client(config_set);
-    ipc_client.send_command(command)
 }
 
 fn log_main() {
@@ -741,7 +955,7 @@ fn log_main() {
         }
 
         exit(0);
-    }else{
+    } else {
         println!("Error reading log file");
         exit(1);
     }
@@ -761,88 +975,113 @@ fn install_main(_config_set: ConfigSet, matches: &ArgMatches) {
         exit(1);
     });
 
-    let package_resolver= Box::new(ZipPackageResolver::new());
+    let repository = matches.value_of("repository_url").unwrap_or("hub");
+
+    let package_resolver = Box::new(ZipPackageResolver::new());
 
     let allow_external: bool = if matches.is_present("external") {
         println!("Allowing external repositories");
         true
-    }else{
+    } else {
         false
     };
 
     let mut package_manager = DefaultPackageManager::new_default(Some(package_resolver));
 
-    if package_manager.is_index_outdated() {
-        println!("Updating package index...");
-        let res = package_manager.update_index(false);
+    let res = if repository == "hub" {
+        // Installation from the Hub
+        if package_manager.is_index_outdated() {
+            println!("Updating package index...");
+            let res = package_manager.update_index(false);
 
-        match res {
-            Ok(update_result) => {
-                match update_result {
+            match res {
+                Ok(update_result) => match update_result {
                     UpdateResult::NotOutdated => {
                         eprintln!("Index was already up to date");
-                    },
+                    }
                     UpdateResult::Updated => {
                         println!("Index updated!");
-                    },
+                    }
+                },
+                Err(e) => {
+                    eprintln!("{}", e);
+                    exit(2);
                 }
-            },
-            Err(e) => {
-                eprintln!("{}", e);
-                exit(2);
-            },
+            }
+        } else {
+            println!("Using cached package index, run 'espanso package refresh' to update it.")
         }
-    }else{
-        println!("Using cached package index, run 'espanso package refresh' to update it.")
-    }
 
-    let res = package_manager.install_package(package_name, allow_external);
+        package_manager.install_package(package_name, allow_external)
+    } else {
+        // Make sure the repo is a valid github url
+        lazy_static! {
+            static ref GITHUB_REGEX: Regex = Regex::new(r#"https://github\.com/\S*/\S*"#).unwrap();
+        };
+
+        if !GITHUB_REGEX.is_match(repository) {
+            eprintln!("repository url is not valid, it should be an HTTPS GitHub url in the following format:");
+            eprintln!("https://github.com/user/repo");
+            exit(3);
+        }
+
+        if !allow_external {
+            Ok(InstallResult::BlockedExternalPackage(repository.to_owned()))
+        } else {
+            package_manager.install_package_from_repo(package_name, repository)
+        }
+    };
 
     match res {
-        Ok(install_result) => {
-            match install_result {
-                InstallResult::NotFoundInIndex => {
-                    eprintln!("Package not found");
-                },
-                InstallResult::NotFoundInRepo => {
-                    eprintln!("Package not found in repository, are you sure the folder exist in the repo?");
-                },
-                InstallResult::UnableToParsePackageInfo => {
-                    eprintln!("Unable to parse Package info from README.md");
-                },
-                InstallResult::MissingPackageVersion => {
-                    eprintln!("Missing package version");
-                },
-                InstallResult::AlreadyInstalled => {
-                    eprintln!("{} already installed!", package_name);
-                },
-                InstallResult::BlockedExternalPackage(repo_url) => {
-                    eprintln!("Warning: the requested package is hosted on an external repository:");
-                    eprintln!();
-                    eprintln!("{}", repo_url);
-                    eprintln!();
-                    eprintln!("and its contents may not have been verified by espanso.");
-                    eprintln!();
-                    eprintln!("For your security, espanso blocks packages that are not verified.");
-                    eprintln!("If you want to install the package anyway, you can force espanso");
-                    eprintln!("to install it with the following command, but please do it only");
-                    eprintln!("if you trust the source or you verified the contents of the package");
-                    eprintln!("by checking out the repository listed above.");
-                    eprintln!();
+        Ok(install_result) => match install_result {
+            InstallResult::NotFoundInIndex => {
+                eprintln!("Package not found");
+            }
+            InstallResult::NotFoundInRepo => {
+                eprintln!(
+                    "Package not found in repository, are you sure the folder exist in the repo?"
+                );
+            }
+            InstallResult::UnableToParsePackageInfo => {
+                eprintln!("Unable to parse Package info from README.md");
+            }
+            InstallResult::MissingPackageVersion => {
+                eprintln!("Missing package version");
+            }
+            InstallResult::AlreadyInstalled => {
+                eprintln!("{} already installed!", package_name);
+            }
+            InstallResult::BlockedExternalPackage(repo_url) => {
+                eprintln!("Warning: the requested package is hosted on an external repository:");
+                eprintln!();
+                eprintln!("{}", repo_url);
+                eprintln!();
+                eprintln!("and its contents may not have been verified by espanso.");
+                eprintln!();
+                eprintln!("For your security, espanso blocks packages that are not verified.");
+                eprintln!("If you want to install the package anyway, you can force espanso");
+                eprintln!("to install it with the following command, but please do it only");
+                eprintln!("if you trust the source or you verified the contents of the package");
+                eprintln!("by checking out the repository listed above.");
+                eprintln!();
+
+                if repository == "hub" {
                     eprintln!("espanso install {} --external", package_name);
-                    eprintln!();
+                } else {
+                    eprintln!("espanso install {} {} --external", package_name, repository);
                 }
-                InstallResult::Installed => {
-                    println!("{} successfully installed!", package_name);
-                    println!();
-                    println!("You need to restart espanso for changes to take effect, using:");
-                    println!("  espanso restart");
-                },
+                eprintln!();
+            }
+            InstallResult::Installed => {
+                println!("{} successfully installed!", package_name);
+                println!();
+                println!("You need to restart espanso for changes to take effect, using:");
+                println!("  espanso restart");
             }
         },
         Err(e) => {
             eprintln!("{}", e);
-        },
+        }
     }
 }
 
@@ -857,22 +1096,20 @@ fn remove_package_main(_config_set: ConfigSet, matches: &ArgMatches) {
     let res = package_manager.remove_package(package_name);
 
     match res {
-        Ok(remove_result) => {
-            match remove_result {
-                RemoveResult::NotFound => {
-                    eprintln!("{} package was not installed.", package_name);
-                },
-                RemoveResult::Removed => {
-                    println!("{} successfully removed!", package_name);
-                    println!();
-                    println!("You need to restart espanso for changes to take effect, using:");
-                    println!("  espanso restart");
-                },
+        Ok(remove_result) => match remove_result {
+            RemoveResult::NotFound => {
+                eprintln!("{} package was not installed.", package_name);
+            }
+            RemoveResult::Removed => {
+                println!("{} successfully removed!", package_name);
+                println!();
+                println!("You need to restart espanso for changes to take effect, using:");
+                println!("  espanso restart");
             }
         },
         Err(e) => {
             eprintln!("{}", e);
-        },
+        }
     }
 }
 
@@ -882,20 +1119,18 @@ fn update_index_main(_config_set: ConfigSet) {
     let res = package_manager.update_index(true);
 
     match res {
-        Ok(update_result) => {
-            match update_result {
-                UpdateResult::NotOutdated => {
-                    eprintln!("Index was already up to date");
-                },
-                UpdateResult::Updated => {
-                    println!("Index updated!");
-                },
+        Ok(update_result) => match update_result {
+            UpdateResult::NotOutdated => {
+                eprintln!("Index was already up to date");
+            }
+            UpdateResult::Updated => {
+                println!("Index updated!");
             }
         },
         Err(e) => {
             eprintln!("{}", e);
             exit(2);
-        },
+        }
     }
 }
 
@@ -908,7 +1143,7 @@ fn list_package_main(_config_set: ConfigSet, matches: &ArgMatches) {
         for package in list.iter() {
             println!("{:?}", package);
         }
-    }else{
+    } else {
         for package in list.iter() {
             println!("{} - {}", package.name, package.version);
         }
@@ -922,14 +1157,14 @@ fn path_main(_config_set: ConfigSet, matches: &ArgMatches) {
 
     if matches.subcommand_matches("config").is_some() {
         println!("{}", config.to_string_lossy());
-    }else if matches.subcommand_matches("packages").is_some() {
+    } else if matches.subcommand_matches("packages").is_some() {
         println!("{}", packages.to_string_lossy());
-    }else if matches.subcommand_matches("data").is_some() {
+    } else if matches.subcommand_matches("data").is_some() {
         println!("{}", data.to_string_lossy());
-    }else if matches.subcommand_matches("default").is_some() {
+    } else if matches.subcommand_matches("default").is_some() {
         let default_file = config.join(crate::config::DEFAULT_CONFIG_FILE_NAME);
         println!("{}", default_file.to_string_lossy());
-    }else{
+    } else {
         println!("Config: {}", config.to_string_lossy());
         println!("Packages: {}", packages.to_string_lossy());
         println!("Data: {}", data.to_string_lossy());
@@ -943,11 +1178,11 @@ fn edit_main(matches: &ArgMatches) {
     let config_dir = crate::context::get_config_dir();
 
     let config_path = match config {
-        "default" => {
-            config_dir.join(crate::config::DEFAULT_CONFIG_FILE_NAME)
-        },
-        name => { // Otherwise, search in the user/ config folder
-            config_dir.join(crate::config::USER_CONFIGS_FOLDER_NAME)
+        "default" => config_dir.join(crate::config::DEFAULT_CONFIG_FILE_NAME),
+        name => {
+            // Otherwise, search in the user/ config folder
+            config_dir
+                .join(crate::config::USER_CONFIGS_FOLDER_NAME)
                 .join(name.to_owned() + ".yml")
         }
     };
@@ -956,44 +1191,56 @@ fn edit_main(matches: &ArgMatches) {
 
     // Based on the fact that the file already exists or not, we should detect in different
     // ways if a reload is needed
-    let should_reload =if config_path.exists() {
+    let should_reload = if config_path.exists() {
         // Get the last modified date, so that we can detect if the user actually edits the file
         // before reloading
         let metadata = std::fs::metadata(&config_path).expect("cannot gather file metadata");
-        let last_modified = metadata.modified().expect("cannot read file last modified date");
+        let last_modified = metadata
+            .modified()
+            .expect("cannot read file last modified date");
 
         let result = crate::edit::open_editor(&config_path);
         if result {
-            let new_metadata = std::fs::metadata(&config_path).expect("cannot gather file metadata");
-            let new_last_modified = new_metadata.modified().expect("cannot read file last modified date");
+            let new_metadata =
+                std::fs::metadata(&config_path).expect("cannot gather file metadata");
+            let new_last_modified = new_metadata
+                .modified()
+                .expect("cannot read file last modified date");
 
             if last_modified != new_last_modified {
                 println!("File has been modified, reloading configuration");
                 true
-            }else{
+            } else {
                 println!("File has not been modified, avoiding reload");
                 false
             }
-        }else{
+        } else {
             false
         }
-    }else{
+    } else {
         let result = crate::edit::open_editor(&config_path);
         if result {
             // If the file has been created, we should reload the espanso config
             if config_path.exists() {
                 println!("A new file has been created, reloading configuration");
                 true
-            }else{
+            } else {
                 println!("No file has been created, avoiding reload");
                 false
             }
-        }else{
+        } else {
             false
         }
     };
 
-    if should_reload {
+    let no_restart: bool = if matches.is_present("norestart") {
+        println!("Avoiding automatic restart");
+        true
+    } else {
+        false
+    };
+
+    if should_reload && !no_restart {
         // Load the configuration
         let config_set = ConfigSet::load_default().unwrap_or_else(|e| {
             eprintln!("{}", e);
@@ -1006,8 +1253,12 @@ fn edit_main(matches: &ArgMatches) {
 }
 
 fn acquire_lock() -> Option<File> {
+    acquire_custom_lock("espanso.lock")
+}
+
+fn acquire_custom_lock(name: &str) -> Option<File> {
     let espanso_dir = context::get_data_dir();
-    let lock_file_path = espanso_dir.join("espanso.lock");
+    let lock_file_path = espanso_dir.join(name);
     let file = OpenOptions::new()
         .read(true)
         .write(true)
@@ -1018,7 +1269,7 @@ fn acquire_lock() -> Option<File> {
     let res = file.try_lock_exclusive();
 
     if res.is_ok() {
-        return Some(file)
+        return Some(file);
     }
 
     None

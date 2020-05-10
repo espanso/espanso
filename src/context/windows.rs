@@ -17,21 +17,21 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::sync::mpsc::Sender;
 use crate::bridge::windows::*;
-use crate::event::{Event, KeyEvent, KeyModifier, ActionType};
-use crate::event::KeyModifier::*;
-use std::ffi::c_void;
-use std::{fs};
-use widestring::{U16CString, U16CStr};
-use log::{info, error, debug};
-use std::sync::atomic::AtomicBool;
-use std::sync::Arc;
-use std::sync::atomic::Ordering::Acquire;
 use crate::config::Configs;
+use crate::event::KeyModifier::*;
+use crate::event::{ActionType, Event, KeyEvent, KeyModifier};
+use log::{debug, error, info};
+use std::ffi::c_void;
+use std::fs;
+use std::sync::atomic::AtomicBool;
+use std::sync::atomic::Ordering::Acquire;
+use std::sync::mpsc::Sender;
+use std::sync::Arc;
+use widestring::{U16CStr, U16CString};
 
-const BMP_BINARY : &[u8] = include_bytes!("../res/win/espanso.bmp");
-const ICO_BINARY : &[u8] = include_bytes!("../res/win/espanso.ico");
+const BMP_BINARY: &[u8] = include_bytes!("../res/win/espanso.bmp");
+const ICO_BINARY: &[u8] = include_bytes!("../res/win/espanso.ico");
 
 pub struct WindowsContext {
     send_channel: Sender<Event>,
@@ -39,31 +39,42 @@ pub struct WindowsContext {
 }
 
 impl WindowsContext {
-    pub fn new(config: Configs, send_channel: Sender<Event>, is_injecting: Arc<AtomicBool>) -> Box<WindowsContext> {
+    pub fn new(
+        config: Configs,
+        send_channel: Sender<Event>,
+        is_injecting: Arc<AtomicBool>,
+    ) -> Box<WindowsContext> {
         // Initialize image resources
 
         let espanso_dir = super::get_data_dir();
 
-        info!("Initializing Espanso resources in {}", espanso_dir.as_path().display());
+        info!(
+            "Initializing Espanso resources in {}",
+            espanso_dir.as_path().display()
+        );
 
         let espanso_bmp_image = espanso_dir.join("espansoicon.bmp");
         if espanso_bmp_image.exists() {
             info!("BMP already initialized, skipping.");
-        }else {
-            fs::write(&espanso_bmp_image, BMP_BINARY)
-                .expect("Unable to write windows bmp file");
+        } else {
+            fs::write(&espanso_bmp_image, BMP_BINARY).expect("Unable to write windows bmp file");
 
-            info!("Extracted bmp icon to: {}", espanso_bmp_image.to_str().unwrap_or("error"));
+            info!(
+                "Extracted bmp icon to: {}",
+                espanso_bmp_image.to_str().unwrap_or("error")
+            );
         }
 
         let espanso_ico_image = espanso_dir.join("espanso.ico");
         if espanso_ico_image.exists() {
             info!("ICO already initialized, skipping.");
-        }else {
-            fs::write(&espanso_ico_image, ICO_BINARY)
-                .expect("Unable to write windows ico file");
+        } else {
+            fs::write(&espanso_ico_image, ICO_BINARY).expect("Unable to write windows ico file");
 
-            info!("Extracted 'ico' icon to: {}", espanso_ico_image.to_str().unwrap_or("error"));
+            info!(
+                "Extracted 'ico' icon to: {}",
+                espanso_ico_image.to_str().unwrap_or("error")
+            );
         }
 
         let bmp_icon = espanso_bmp_image.to_str().unwrap_or_default();
@@ -71,7 +82,7 @@ impl WindowsContext {
 
         let send_channel = send_channel;
 
-        let context = Box::new(WindowsContext{
+        let context = Box::new(WindowsContext {
             send_channel,
             is_injecting,
         });
@@ -87,14 +98,15 @@ impl WindowsContext {
             let ico_file_c = U16CString::from_str(ico_icon).unwrap();
             let bmp_file_c = U16CString::from_str(bmp_icon).unwrap();
 
-            let show_icon = if config.show_icon {
-                1
-            }else{
-                0
-            };
+            let show_icon = if config.show_icon { 1 } else { 0 };
 
             // Initialize the windows
-            let res = initialize(context_ptr, ico_file_c.as_ptr(), bmp_file_c.as_ptr(), show_icon);
+            let res = initialize(
+                context_ptr,
+                ico_file_c.as_ptr(),
+                bmp_file_c.as_ptr(),
+                show_icon,
+            );
             if res != 1 {
                 panic!("Can't initialize Windows context")
             }
@@ -114,8 +126,15 @@ impl super::Context for WindowsContext {
 
 // Native bridge code
 
-extern fn keypress_callback(_self: *mut c_void, raw_buffer: *const u16, len: i32,
-                            event_type: i32, key_code: i32, variant: i32, is_key_down: i32) {
+extern "C" fn keypress_callback(
+    _self: *mut c_void,
+    raw_buffer: *const u16,
+    len: i32,
+    event_type: i32,
+    key_code: i32,
+    variant: i32,
+    is_key_down: i32,
+) {
     unsafe {
         let _self = _self as *mut WindowsContext;
 
@@ -127,8 +146,10 @@ extern fn keypress_callback(_self: *mut c_void, raw_buffer: *const u16, len: i32
             return;
         }
 
-        if is_key_down != 0 {  // KEY DOWN EVENT
-            if event_type == 0 {  // Char event
+        if event_type == 0 {
+            // Char event
+            if is_key_down != 0 {
+                // KEY DOWN EVENT
                 // Convert the received buffer to a string
                 let buffer = std::slice::from_raw_parts(raw_buffer, len as usize);
                 let c_string = U16CStr::from_slice_with_nul(buffer);
@@ -141,17 +162,19 @@ extern fn keypress_callback(_self: *mut c_void, raw_buffer: *const u16, len: i32
                         Ok(string) => {
                             let event = Event::Key(KeyEvent::Char(string));
                             (*_self).send_channel.send(event).unwrap();
-                        },
+                        }
                         Err(e) => {
-                            error!("Unable to receive char: {}",e);
-                        },
+                            error!("Unable to receive char: {}", e);
+                        }
                     }
-                }else{
+                } else {
                     error!("unable to decode widechar");
                 }
             }
-        }else{  // KEY UP event
-            if event_type == 1 {  // Modifier event
+        } else if event_type == 1 {
+            // Modifier event
+            if is_key_down == 1 {
+                // Keyup event
                 let modifier: Option<KeyModifier> = match (key_code, variant) {
                     (0x5B, _) => Some(LEFT_META),
                     (0x5C, _) => Some(RIGHT_META),
@@ -161,27 +184,29 @@ extern fn keypress_callback(_self: *mut c_void, raw_buffer: *const u16, len: i32
                     (0x12, 2) => Some(RIGHT_ALT),
                     (0x11, 1) => Some(LEFT_CTRL),
                     (0x11, 2) => Some(RIGHT_CTRL),
-                    (0x08, _)  => Some(BACKSPACE),
+                    (0x08, _) => Some(BACKSPACE),
+                    (0x14, _) => Some(CAPS_LOCK),
                     _ => None,
                 };
 
                 if let Some(modifier) = modifier {
                     let event = Event::Key(KeyEvent::Modifier(modifier));
                     (*_self).send_channel.send(event).unwrap();
-                }else{  // Not one of the default modifiers, send an "other" event
+                } else {
+                    // Not one of the default modifiers, send an "other" event
                     let event = Event::Key(KeyEvent::Other);
                     (*_self).send_channel.send(event).unwrap();
                 }
-            }else{
-                // Other type of event
-                let event = Event::Key(KeyEvent::Other);
-                (*_self).send_channel.send(event).unwrap();
             }
+        } else {
+            // Other type of event
+            let event = Event::Key(KeyEvent::Other);
+            (*_self).send_channel.send(event).unwrap();
         }
     }
 }
 
-extern fn icon_click_callback(_self: *mut c_void) {
+extern "C" fn icon_click_callback(_self: *mut c_void) {
     unsafe {
         let _self = _self as *mut WindowsContext;
 
@@ -190,8 +215,7 @@ extern fn icon_click_callback(_self: *mut c_void) {
     }
 }
 
-
-extern fn context_menu_click_callback(_self: *mut c_void, id: i32) {
+extern "C" fn context_menu_click_callback(_self: *mut c_void, id: i32) {
     unsafe {
         let _self = _self as *mut WindowsContext;
 
