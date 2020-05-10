@@ -92,7 +92,14 @@ impl<'a> From<&'a AutoMatch> for Match{
             let first_capitalized : Vec<String> = triggers.iter().map(|trigger| {
                 let capitalized = trigger.clone();
                 let mut v: Vec<char> = capitalized.chars().collect();
-                v[0] = v[0].to_uppercase().nth(0).unwrap();
+
+                // Capitalize the first alphabetic letter
+                // See issue #244
+                let first_alphabetic = v.iter().position(|c| {
+                    c.is_alphabetic()
+                }).unwrap_or(0);
+
+                v[first_alphabetic] = v[first_alphabetic].to_uppercase().nth(0).unwrap();
                 v.into_iter().collect()
             }).collect();
 
@@ -481,5 +488,31 @@ mod tests {
         "###;
 
         let _match : Match = serde_yaml::from_str(match_str).unwrap();
+    }
+
+    #[test]
+    fn test_match_propagate_case_with_prefix_symbol() {
+        let match_str = r###"
+        trigger: ":hello"
+        replace: "This is a test"
+        propagate_case: true
+        "###;
+
+        let _match : Match = serde_yaml::from_str(match_str).unwrap();
+
+        assert_eq!(_match.triggers, vec![":hello", ":Hello", ":HELLO"])
+    }
+
+    #[test]
+    fn test_match_propagate_case_non_alphabetic_should_not_crash() {
+        let match_str = r###"
+        trigger: ":.."
+        replace: "This is a test"
+        propagate_case: true
+        "###;
+
+        let _match : Match = serde_yaml::from_str(match_str).unwrap();
+
+        assert_eq!(_match.triggers, vec![":..", ":..", ":.."])
     }
 }

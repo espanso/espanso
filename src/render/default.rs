@@ -173,8 +173,16 @@ impl super::Renderer for DefaultRenderer {
                 // Handle case propagation
                 let target_string = if m.propagate_case {
                     let trigger = &m.triggers[trigger_offset];
-                    let first_char = trigger.chars().nth(0);
-                    let second_char  = trigger.chars().nth(1);
+
+                    // The check should be carried out from the position of the first
+                    // alphabetic letter
+                    // See issue #244
+                    let first_alphabetic = trigger.chars().position(|c| {
+                        c.is_alphabetic()
+                    }).unwrap_or(0);
+
+                    let first_char = trigger.chars().nth(first_alphabetic);
+                    let second_char  = trigger.chars().nth(first_alphabetic + 1);
                     let mode: i32 = if let Some(first_char) = first_char {
                         if first_char.is_uppercase() {
                             if let Some(second_char) = second_char {
