@@ -53,6 +53,8 @@ The first step is moving this folder in your Dropbox folder, for example in:
 
 Now you need to create a **symbolic link**. Open the Terminal and type the following command, making sure you specify the correct paths:
 
+> Note: Before running the following command, make sure that there is no folder called `espanso` in the `Preferences` folder, as otherwise it will create another nested folder `espanso/espanso` (which is wrong).
+
 ```
 ln -s "/Users/user/Dropbox/espanso" "/Users/user/Library/Preferences/espanso"
 ```

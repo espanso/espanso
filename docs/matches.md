@@ -381,6 +381,12 @@ IP from [ipify](https://www.ipify.org/).
 As always, restart espanso with `espanso restart`. Now everytime you type `:ip`, it gets expanded to your public
 IP address!
 
+#### For macOS users
+
+On macOS the shell extension does not read the `PATH` env variable (because it is managed by `launchd`). Therefore, **you need to specify the full path for the commands you are using**. For example, if you are using `jq`, you should write `/usr/local/bin/jq` instead.
+
+This will probably change in the future.
+
 #### Bash pipes
 
 This extension also supports bash **pipes** as your shell, such as:

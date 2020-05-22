@@ -62,6 +62,14 @@
   link: http://smarcal.com/
   image: "marcelo.jpeg"
 
+- name: "Floutsch"
+  link: http://floutsch.de/
+  image: "bf.png"
+
+- name: Happy Munday Podcast
+  link: https://anchor.fm/happy-munday-podcast
+  image: "hmp.jpg"
+
 - name: threeforks
   link: ""
   image: ""
