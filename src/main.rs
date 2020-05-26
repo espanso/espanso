@@ -384,7 +384,8 @@ fn daemon_main(config_set: ConfigSet) {
     let mut child = crate::process::spawn_process(
         &espanso_path.to_string_lossy().to_string(),
         &vec!["worker".to_owned()],
-    ).expect("unable to create worker process");
+    )
+    .expect("unable to create worker process");
 
     // Create a monitor thread that will exit with the same non-zero code if
     // the worker thread exits
@@ -395,7 +396,10 @@ fn daemon_main(config_set: ConfigSet) {
             if let Ok(status) = result {
                 if let Some(code) = status.code() {
                     if code != 0 {
-                        error!("worker process exited with non-zero code: {}, exiting", code);
+                        error!(
+                            "worker process exited with non-zero code: {}, exiting",
+                            code
+                        );
                         std::process::exit(code);
                     }
                 }
