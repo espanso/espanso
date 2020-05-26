@@ -18,10 +18,13 @@
  */
 
 use log::warn;
+use std::process::{Command, Stdio, Child};
 use widestring::WideCString;
+use std::io;
 
 #[cfg(target_os = "windows")]
 pub fn spawn_process(cmd: &str, args: &Vec<String>) {
+    // TODO: modify with https://doc.rust-lang.org/std/os/windows/process/trait.CommandExt.html
     let quoted_args: Vec<String> = args.iter().map(|arg| format!("\"{}\"", arg)).collect();
     let quoted_args = quoted_args.join(" ");
     let final_cmd = format!("\"{}\" {}", cmd, quoted_args);
@@ -39,8 +42,6 @@ pub fn spawn_process(cmd: &str, args: &Vec<String>) {
 }
 
 #[cfg(not(target_os = "windows"))]
-pub fn spawn_process(cmd: &str, args: &Vec<String>) {
-    use std::process::{Command, Stdio};
-
-    Command::new(cmd).args(args).spawn();
+pub fn spawn_process(cmd: &str, args: &Vec<String>) -> io::Result<Child> {
+    Command::new(cmd).args(args).spawn()
 }
