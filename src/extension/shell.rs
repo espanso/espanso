@@ -143,13 +143,15 @@ impl super::Extension for ShellExtension {
 
                 // If specified, trim the output
                 let trim_opt = params.get(&Value::from("trim"));
-                if let Some(value) = trim_opt {
+                let should_trim = if let Some(value) = trim_opt {
                     let val = value.as_bool();
-                    if let Some(val) = val {
-                        if val {
-                            output_str = output_str.trim().to_owned()
-                        }
-                    }
+                    val.unwrap_or(true)
+                }else{
+                    true
+                };
+
+                if should_trim {
+                    output_str = output_str.trim().to_owned()
                 }
 
                 Some(output_str)
@@ -168,9 +170,10 @@ mod tests {
     use crate::extension::Extension;
 
     #[test]
-    fn test_shell_basic() {
+    fn test_shell_not_trimmed() {
         let mut params = Mapping::new();
         params.insert(Value::from("cmd"), Value::from("echo \"hello world\""));
+        params.insert(Value::from("trim"), Value::from(false));
 
         let extension = ShellExtension::new();
         let output = extension.calculate(&params, &vec![]);
@@ -185,10 +188,9 @@ mod tests {
     }
 
     #[test]
-    fn test_shell_trimmed() {
+    fn test_shell_basic() {
         let mut params = Mapping::new();
         params.insert(Value::from("cmd"), Value::from("echo \"hello world\""));
-        params.insert(Value::from("trim"), Value::from(true));
 
         let extension = ShellExtension::new();
         let output = extension.calculate(&params, &vec![]);
@@ -204,8 +206,6 @@ mod tests {
             Value::from("cmd"),
             Value::from("echo \"   hello world     \""),
         );
-
-        params.insert(Value::from("trim"), Value::from(true));
 
         let extension = ShellExtension::new();
         let output = extension.calculate(&params, &vec![]);
@@ -224,11 +224,7 @@ mod tests {
         let output = extension.calculate(&params, &vec![]);
 
         assert!(output.is_some());
-        if cfg!(target_os = "windows") {
-            assert_eq!(output.unwrap(), "hello world\r\n");
-        } else {
-            assert_eq!(output.unwrap(), "hello world\n");
-        }
+        assert_eq!(output.unwrap(), "hello world");
     }
 
     #[test]
@@ -256,7 +252,7 @@ mod tests {
 
         assert!(output.is_some());
 
-        assert_eq!(output.unwrap(), "hello\n");
+        assert_eq!(output.unwrap(), "hello");
     }
 
     #[test]
@@ -270,6 +266,6 @@ mod tests {
 
         assert!(output.is_some());
 
-        assert_eq!(output.unwrap(), "hello\r\n");
+        assert_eq!(output.unwrap(), "hello");
     }
 }
