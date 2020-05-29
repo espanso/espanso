@@ -40,15 +40,38 @@ pub enum Shell {
 
 impl Shell {
     fn execute_cmd(&self, cmd: &str) -> std::io::Result<Output> {
-        match self {
-            Shell::Cmd => Command::new("cmd").args(&["/C", &cmd]).output(),
-            Shell::Powershell => Command::new("powershell")
-                .args(&["-Command", &cmd])
-                .output(),
-            Shell::WSL => Command::new("wsl").args(&["bash", "-c", &cmd]).output(),
-            Shell::Bash => Command::new("bash").args(&["-c", &cmd]).output(),
-            Shell::Sh => Command::new("sh").args(&["-c", &cmd]).output(),
-        }
+        let mut command = match self {
+            Shell::Cmd => {
+                let mut command = Command::new("cmd");
+                command.args(&["/C", &cmd]);
+                command
+            },
+            Shell::Powershell => {
+                let mut command = Command::new("powershell");
+                command.args(&["-Command", &cmd]);
+                command
+            },
+            Shell::WSL => {
+                let mut command = Command::new("wsl");
+                command.args(&["bash", "-c", &cmd]);
+                command
+            },
+            Shell::Bash => {
+                let mut command = Command::new("bash");
+                command.args(&["-c", &cmd]);
+                command
+            },
+            Shell::Sh => {
+                let mut command = Command::new("sh");
+                command.args(&["-c", &cmd]);
+                command
+            },
+        };
+
+        // Inject the $CONFIG variable
+        command.env("CONFIG", crate::context::get_config_dir());
+
+        command.output()
     }
 
     fn from_string(shell: &str) -> Option<Shell> {
