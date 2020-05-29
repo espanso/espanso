@@ -31,7 +31,7 @@ use std::fs;
 use std::fs::{create_dir_all, File};
 use std::io::Read;
 use std::path::{Path, PathBuf};
-use walkdir::WalkDir;
+use walkdir::{DirEntry, WalkDir};
 
 pub(crate) mod runtime;
 
@@ -409,7 +409,7 @@ impl Configs {
         }
     }
 
-    fn merge_config(&mut self, new_config: Configs) {
+    fn merge_overwrite(&mut self, new_config: Configs) {
         // Merge matches
         let mut merged_matches = new_config.matches;
         let mut match_trigger_set = HashSet::new();
@@ -447,7 +447,7 @@ impl Configs {
         self.global_vars = merged_global_vars;
     }
 
-    fn merge_default(&mut self, default: &Configs) {
+    fn merge_no_overwrite(&mut self, default: &Configs) {
         // Merge matches
         let mut match_trigger_set = HashSet::new();
         self.matches.iter().for_each(|m| {
@@ -503,7 +503,7 @@ impl ConfigSet {
             eprintln!("Warning: Using Auto backend is only supported on Linux, falling back to Inject backend.");
         }
 
-        // Analyze which config files has to be loaded
+        // Analyze which config files have to be loaded
 
         let mut target_files = Vec::new();
 
@@ -513,82 +513,108 @@ impl ConfigSet {
             target_files.extend(dir_entry);
         }
 
-        if package_dir.exists() {
+        let package_files = if package_dir.exists() {
             let dir_entry = WalkDir::new(package_dir);
-            target_files.extend(dir_entry);
-        }
+            dir_entry.into_iter().collect()
+        } else {
+            vec![]
+        };
 
         // Load the user defined config files
 
         let mut name_set = HashSet::new();
         let mut children_map: HashMap<String, Vec<Configs>> = HashMap::new();
+        let mut package_map: HashMap<String, Vec<Configs>> = HashMap::new();
         let mut root_configs = Vec::new();
         root_configs.push(default);
 
-        for entry in target_files {
-            if let Ok(entry) = entry {
-                let path = entry.path();
+        let mut file_loader = |entry: walkdir::Result<DirEntry>,
+                               dest_map: &mut HashMap<String, Vec<Configs>>|
+         -> Result<(), ConfigLoadError> {
+            match entry {
+                Ok(entry) => {
+                    let path = entry.path();
 
-                // Skip non-yaml config files
-                if path
-                    .extension()
-                    .unwrap_or_default()
-                    .to_str()
-                    .unwrap_or_default()
-                    != "yml"
-                {
-                    continue;
+                    // Skip non-yaml config files
+                    if path
+                        .extension()
+                        .unwrap_or_default()
+                        .to_str()
+                        .unwrap_or_default()
+                        != "yml"
+                    {
+                        return Ok(());
+                    }
+
+                    // Skip hidden files
+                    if path
+                        .file_name()
+                        .unwrap_or_default()
+                        .to_str()
+                        .unwrap_or_default()
+                        .starts_with(".")
+                    {
+                        return Ok(());
+                    }
+
+                    let mut config = Configs::load_config(&path)?;
+
+                    // Make sure the config does not contain reserved fields
+                    if !config.validate_user_defined_config() {
+                        return Err(ConfigLoadError::InvalidParameter(path.to_owned()));
+                    }
+
+                    // No name specified, defaulting to the path name
+                    if config.name == "default" {
+                        config.name = path.to_str().unwrap_or_default().to_owned();
+                    }
+
+                    if name_set.contains(&config.name) {
+                        return Err(ConfigLoadError::NameDuplicate(path.to_owned()));
+                    }
+
+                    name_set.insert(config.name.clone());
+
+                    if config.parent == "self" {
+                        // No parent, root config
+                        root_configs.push(config);
+                    } else {
+                        // Children config
+                        let children_vec = dest_map.entry(config.parent.clone()).or_default();
+                        children_vec.push(config);
+                    }
                 }
-
-                // Skip hidden files
-                if path
-                    .file_name()
-                    .unwrap_or_default()
-                    .to_str()
-                    .unwrap_or_default()
-                    .starts_with(".")
-                {
-                    continue;
+                Err(e) => {
+                    eprintln!("Warning: Unable to read config file: {}", e);
                 }
-
-                let mut config = Configs::load_config(&path)?;
-
-                // Make sure the config does not contain reserved fields
-                if !config.validate_user_defined_config() {
-                    return Err(ConfigLoadError::InvalidParameter(path.to_owned()));
-                }
-
-                // No name specified, defaulting to the path name
-                if config.name == "default" {
-                    config.name = path.to_str().unwrap_or_default().to_owned();
-                }
-
-                if name_set.contains(&config.name) {
-                    return Err(ConfigLoadError::NameDuplicate(path.to_owned()));
-                }
-
-                name_set.insert(config.name.clone());
-
-                if config.parent == "self" {
-                    // No parent, root config
-                    root_configs.push(config);
-                } else {
-                    // Children config
-                    let children_vec = children_map.entry(config.parent.clone()).or_default();
-                    children_vec.push(config);
-                }
-            } else {
-                eprintln!(
-                    "Warning: Unable to read config file: {}",
-                    entry.unwrap_err()
-                )
             }
+
+            Ok(())
+        };
+
+        // Load the default and user specific configs
+        for entry in target_files {
+            file_loader(entry, &mut children_map)?;
+        }
+
+        // Load the package related configs
+        for entry in package_files {
+            file_loader(entry, &mut package_map)?;
         }
 
         // Merge the children config files
-        let mut configs = Vec::new();
+        let mut configs_without_packages = Vec::new();
         for root_config in root_configs {
-            let config = ConfigSet::reduce_configs(root_config, &children_map);
+            let config = ConfigSet::reduce_configs(root_config, &children_map, true);
+            configs_without_packages.push(config);
+        }
+
+        // Merge package files
+        // Note: we need two different steps as the packages have a lower priority
+        //       than configs.
+        let mut configs = Vec::new();
+        for root_config in configs_without_packages {
+            let config = ConfigSet::reduce_configs(root_config, &package_map, false);
             configs.push(config);
         }
 
@@ -599,7 +625,7 @@ impl ConfigSet {
         // Add default entries to specific configs when needed
         for config in specific.iter_mut() {
             if !config.exclude_default_entries {
-                config.merge_default(&default);
+                config.merge_no_overwrite(&default);
             }
         }
 
@@ -618,12 +644,21 @@ impl ConfigSet {
         Ok(ConfigSet { default, specific })
     }
 
-    fn reduce_configs(target: Configs, children_map: &HashMap<String, Vec<Configs>>) -> Configs {
+    fn reduce_configs(
+        target: Configs,
+        children_map: &HashMap<String, Vec<Configs>>,
+        higher_priority: bool,
+    ) -> Configs {
         if children_map.contains_key(&target.name) {
             let mut target = target;
             for children in children_map.get(&target.name).unwrap() {
-                let children = Self::reduce_configs(children.clone(), children_map);
-                target.merge_config(children);
+                let children =
+                    Self::reduce_configs(children.clone(), children_map, higher_priority);
+                if higher_priority {
+                    target.merge_overwrite(children);
+                } else {
+                    target.merge_no_overwrite(&children);
+                }
             }
             target
         } else {
@@ -1478,6 +1513,40 @@ mod tests {
             .matches
             .iter()
             .any(|m| m.triggers[0] == "harry"));
+    }
+
+    #[test]
+    fn test_config_set_package_configs_lower_priority_than_user() {
+        let (data_dir, package_dir) = create_temp_espanso_directories_with_default_content(
+            r###"
+        matches:
+            - trigger: hasta
+              replace: Hasta la vista
+        "###,
+        );
+
+        create_package_file(
+            package_dir.path(),
+            "package1",
+            "package.yml",
+            r###"
+        parent: default
+
+        matches:
+            - trigger: "hasta"
+              replace: "potter"
+        "###,
+        );
+
+        let config_set = ConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
+        assert_eq!(config_set.specific.len(), 0);
+        assert_eq!(config_set.default.matches.len(), 1);
+        if let MatchContentType::Text(content) = config_set.default.matches[0].content.clone() {
+            assert_eq!(config_set.default.matches[0].triggers[0], "hasta");
+            assert_eq!(content.replace, "Hasta la vista")
+        } else {
+            panic!("invalid content");
+        }
     }
 
     #[test]

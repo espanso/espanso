@@ -75,10 +75,15 @@ impl super::Extension for ScriptExtension {
                 }
             });
 
+            let mut command = Command::new(&str_args[0]);
+
+            // Inject the $CONFIG variable
+            command.env("CONFIG", crate::context::get_config_dir());
+
             let output = if str_args.len() > 1 {
-                Command::new(&str_args[0]).args(&str_args[1..]).output()
+                command.args(&str_args[1..]).output()
             } else {
-                Command::new(&str_args[0]).output()
+                command.output()
             };
 
             match output {
