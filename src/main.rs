@@ -381,10 +381,31 @@ fn daemon_main(config_set: ConfigSet) {
     info!("spawning worker process...");
 
     let espanso_path = std::env::current_exe().expect("unable to obtain espanso path location");
-    crate::process::spawn_process(
+    let mut child = crate::process::spawn_process(
         &espanso_path.to_string_lossy().to_string(),
         &vec!["worker".to_owned()],
-    );
+    )
+    .expect("unable to create worker process");
+
+    // Create a monitor thread that will exit with the same non-zero code if
+    // the worker thread exits
+    thread::Builder::new()
+        .name("worker monitor".to_string())
+        .spawn(move || {
+            let result = child.wait();
+            if let Ok(status) = result {
+                if let Some(code) = status.code() {
+                    if code != 0 {
+                        error!(
+                            "worker process exited with non-zero code: {}, exiting",
+                            code
+                        );
+                        std::process::exit(code);
+                    }
+                }
+            }
+        })
+        .expect("Unable to spawn worker monitor thread");
 
     std::thread::sleep(Duration::from_millis(200));
 

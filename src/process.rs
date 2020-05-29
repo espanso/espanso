@@ -18,29 +18,19 @@
  */
 
 use log::warn;
-use widestring::WideCString;
+use std::io;
+use std::process::{Child, Command, Stdio};
 
 #[cfg(target_os = "windows")]
-pub fn spawn_process(cmd: &str, args: &Vec<String>) {
-    let quoted_args: Vec<String> = args.iter().map(|arg| format!("\"{}\"", arg)).collect();
-    let quoted_args = quoted_args.join(" ");
-    let final_cmd = format!("\"{}\" {}", cmd, quoted_args);
-    unsafe {
-        let cmd_wstr = WideCString::from_str(&final_cmd);
-        if let Ok(string) = cmd_wstr {
-            let res = crate::bridge::windows::start_process(string.as_ptr());
-            if res < 0 {
-                warn!("unable to start process: {}", final_cmd);
-            }
-        } else {
-            warn!("unable to convert process string into wide format")
-        }
-    }
+pub fn spawn_process(cmd: &str, args: &Vec<String>) -> io::Result<Child> {
+    use std::os::windows::process::CommandExt;
+    Command::new(cmd)
+        .creation_flags(0x00000008) // Detached Process
+        .args(args)
+        .spawn()
 }
 
 #[cfg(not(target_os = "windows"))]
-pub fn spawn_process(cmd: &str, args: &Vec<String>) {
-    use std::process::{Command, Stdio};
-
-    Command::new(cmd).args(args).spawn();
+pub fn spawn_process(cmd: &str, args: &Vec<String>) -> io::Result<Child> {
+    Command::new(cmd).args(args).spawn()
 }
