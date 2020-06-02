@@ -210,16 +210,18 @@ LRESULT CALLBACK window_procedure(HWND window, unsigned int msg, WPARAM wp, LPAR
 
             // Convert the input data
             RAWINPUT* raw = reinterpret_cast<RAWINPUT*>(lpb.data());
-
             // Make sure it's a keyboard type event, relative to a key press.
             if (raw->header.dwType == RIM_TYPEKEYBOARD)
             {
                 // We only want KEY UP AND KEY DOWN events
-                if (raw->data.keyboard.Message != WM_KEYDOWN && raw->data.keyboard.Message != WM_KEYUP) {
+                if (raw->data.keyboard.Message != WM_KEYDOWN && raw->data.keyboard.Message != WM_KEYUP &&
+                    raw->data.keyboard.Message != WM_SYSKEYDOWN) {
                     return 0;
                 }
 
-                int is_key_down = raw->data.keyboard.Message == WM_KEYDOWN;
+                // The alt key sends a SYSKEYDOWN instead of KEYDOWN event
+                int is_key_down = raw->data.keyboard.Message == WM_KEYDOWN ||
+                                  raw->data.keyboard.Message == WM_SYSKEYDOWN;
 
                 DWORD currentTick = GetTickCount();
 
