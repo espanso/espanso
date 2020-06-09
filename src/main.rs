@@ -407,6 +407,32 @@ fn daemon_main(config_set: ConfigSet) {
         })
         .expect("Unable to spawn worker monitor thread");
 
+    if !cfg!(target_os = "windows") {
+        // On Unix, also listen for signals so that we can terminate the
+        // worker if the daemon receives a signal
+        use signal_hook::{iterator::Signals, SIGTERM, SIGINT};
+        let signals = Signals::new(&[SIGTERM, SIGINT]).expect("unable to register for signals");
+        let config_set = config_set.clone();
+        thread::Builder::new()
+            .name("signal monitor".to_string())
+            .spawn(move || {
+                for signal in signals.forever() {
+                    info!("Received signal: {:?}, terminating worker", signal);
+                    send_command_or_warn(
+                        Service::Worker,
+                        config_set.default.clone(),
+                        IPCCommand::exit_worker(),
+                    );
+
+                    std::thread::sleep(Duration::from_millis(200));
+
+                    info!("terminating espanso.");
+                    std::process::exit(0);
+                }
+            })
+            .expect("Unable to spawn worker monitor thread");
+    }
+
     std::thread::sleep(Duration::from_millis(200));
 
     if config_set.default.auto_restart {
