@@ -160,6 +160,7 @@ extern "C" fn keypress_callback(
                     // Send the char through the channel
                     match string {
                         Ok(string) => {
+                            println!("{}", string);
                             let event = Event::Key(KeyEvent::Char(string));
                             (*_self).send_channel.send(event).unwrap();
                         }
