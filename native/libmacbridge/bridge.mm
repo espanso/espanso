@@ -87,6 +87,16 @@ void send_string(const char * string) {
 
         // Send the event
 
+        // Check if the shift key is down, and if so, release it
+        // To see why: https://github.com/federico-terzi/espanso/issues/279
+        if (CGEventSourceKeyState(kCGEventSourceStateHIDSystemState, 0x38)) {
+            CGEventRef e2 = CGEventCreateKeyboardEvent(NULL, 0x38, false);
+            CGEventPost(kCGHIDEventTap, e2);
+            CFRelease(e2);
+
+            usleep(2000);
+        }
+
         // Because of a bug ( or undocumented limit ) of the CGEventKeyboardSetUnicodeString method
         // the string gets truncated after 20 characters, so we need to send multiple events.
 
