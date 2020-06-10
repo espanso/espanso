@@ -61,6 +61,12 @@ pub fn register(_config_set: ConfigSet) {
             espanso_path.to_str().unwrap_or_default(),
         );
 
+        // Copy the user PATH variable and inject it in the Plist file so that
+        // it gets loaded by Launchd.
+        // To see why this is necessary: https://github.com/federico-terzi/espanso/issues/233
+        let user_path = std::env::var("PATH").unwrap_or("".to_owned());
+        let plist_content = plist_content.replace("{{{PATH}}}", &user_path);
+
         std::fs::write(plist_file.clone(), plist_content).expect("Unable to write plist file");
 
         println!("Entry created correctly!")
