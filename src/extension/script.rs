@@ -88,7 +88,7 @@ impl super::Extension for ScriptExtension {
 
             match output {
                 Ok(output) => {
-                    let output_str = String::from_utf8_lossy(output.stdout.as_slice());
+                    let mut output_str = String::from_utf8_lossy(output.stdout.as_slice()).to_string();
                     let error_str = String::from_utf8_lossy(output.stderr.as_slice());
                     let error_str = error_str.to_string();
                     let error_str = error_str.trim();
@@ -98,7 +98,20 @@ impl super::Extension for ScriptExtension {
                         warn!("Script command reported error: \n{}", error_str);
                     }
 
-                    return Some(output_str.into_owned());
+                    // If specified, trim the output
+                    let trim_opt = params.get(&Value::from("trim"));
+                    let should_trim = if let Some(value) = trim_opt {
+                        let val = value.as_bool();
+                        val.unwrap_or(true)
+                    }else{
+                        true
+                    };
+
+                    if should_trim {
+                        output_str = output_str.trim().to_owned()
+                    }
+
+                    return Some(output_str);
                 }
                 Err(e) => {
                     error!("Could not execute script '{:?}', error: {}", args, e);
@@ -130,6 +143,26 @@ mod tests {
         let output = extension.calculate(&params, &vec![]);
 
         assert!(output.is_some());
+        assert_eq!(output.unwrap(), "hello world");
+    }
+
+    #[test]
+    #[cfg(not(target_os = "windows"))]
+    fn test_script_basic_no_trim() {
+        let mut params = Mapping::new();
+        params.insert(
+            Value::from("args"),
+            Value::from(vec!["echo", "hello world"]),
+        );
+        params.insert(
+            Value::from("trim"),
+            Value::from(false),
+        );
+
+        let extension = ScriptExtension::new();
+        let output = extension.calculate(&params, &vec![]);
+
+        assert!(output.is_some());
         assert_eq!(output.unwrap(), "hello world\n");
     }
 
@@ -146,7 +179,7 @@ mod tests {
         let output = extension.calculate(&params, &vec!["jon".to_owned()]);
 
         assert!(output.is_some());
-        assert_eq!(output.unwrap(), "hello world\n");
+        assert_eq!(output.unwrap(), "hello world");
     }
 
     #[test]
@@ -163,6 +196,6 @@ mod tests {
         let output = extension.calculate(&params, &vec!["jon".to_owned()]);
 
         assert!(output.is_some());
-        assert_eq!(output.unwrap(), "hello world jon\n");
+        assert_eq!(output.unwrap(), "hello world jon");
     }
 }
