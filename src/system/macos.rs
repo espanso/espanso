@@ -91,12 +91,6 @@ impl MacSystemManager {
     /// Check whether an application is currently holding the Secure Input.
     /// Return None if no application has claimed SecureInput, Some((AppName, AppPath)) otherwise.
     pub fn get_secure_input_application() -> Option<(String, String)> {
-        use regex::Regex;
-
-        lazy_static! {
-            static ref APP_REGEX: Regex = Regex::new("/([^/]+).app/").unwrap();
-        };
-
         unsafe {
             let pid = MacSystemManager::get_secure_input_pid();
 
@@ -112,26 +106,59 @@ impl MacSystemManager {
                     if let Ok(path) = string {
                         if !path.trim().is_empty() {
                             let process = path.trim().to_string();
-                            let caps = APP_REGEX.captures(&process);
-                            let app_name = if let Some(caps) = caps {
-                                caps.get(1).map_or("", |m| m.as_str()).to_owned()
+                            let app_name = if let Some(name) = Self::get_app_name_from_path(&process) {
+                                name
                             } else {
                                 process.to_owned()
                             };
 
-                            Some((app_name, process))
-                        } else {
-                            None
+                            return Some((app_name, process));
                         }
-                    } else {
-                        None
                     }
-                } else {
-                    None
                 }
-            } else {
-                None
             }
+
+            None
+        }
+    }
+
+    fn get_app_name_from_path(path: &str) -> Option<String> {
+        use regex::Regex;
+
+        lazy_static! {
+            static ref APP_REGEX: Regex = Regex::new("/([^/]+).(app|bundle)/").unwrap();
+        };
+
+        let caps = APP_REGEX.captures(&path);
+        if let Some(caps) = caps {
+            Some(caps.get(1).map_or("", |m| m.as_str()).to_owned())
+        } else {
+            None
         }
     }
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_get_app_name_from_path() {
+        let app_name = MacSystemManager::get_app_name_from_path("/Applications/iTerm.app/Contents/MacOS/iTerm2");
+        assert_eq!(app_name.unwrap(), "iTerm")
+    }
+
+    #[test]
+    fn test_get_app_name_from_path_no_app_name() {
+        let app_name = MacSystemManager::get_app_name_from_path("/another/directory");
+        assert!(app_name.is_none())
+    }
+
+    #[test]
+    fn test_get_app_name_from_path_security_bundle() {
+        let app_name = MacSystemManager::get_app_name_from_path("/System/Library/Frameworks/Security.framework/Versions/A/MachServices/SecurityAgent.bundle/Contents/MacOS/SecurityAgent");
+        assert_eq!(app_name.unwrap(), "SecurityAgent")
+    }
+}
+
