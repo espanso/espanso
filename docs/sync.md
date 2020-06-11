@@ -10,8 +10,8 @@ or even GitHub!
 
 The general idea, which applies to all operating systems, is the following:
 
-* Move the espanso configuration folder inside your Dropbox folder (also a subdirectory is perfectly file)
-* Create a **symbolic link** in the original position, pointing to the synched folder.
+* Move the espanso configuration folder inside your Dropbox folder (also a subdirectory is perfectly fine)
+* Create a **symbolic link** in the original position, pointing to the synced folder.
 
 The specific commands depend on you OS:
 
@@ -32,7 +32,7 @@ C:\Users\user\Dropbox\espanso
 Now you need to create a **symbolic link**. Open the Command Prompt and type the following command, making sure you specify the correct paths:
 
 ```
-mklink /J "C:\Users\user\AppData\Roaming\espanso" "C:\user\Freddy\Dropbox\espanso"
+mklink /J "C:\Users\user\AppData\Roaming\espanso" "C:\Users\user\Dropbox\espanso"
 ```
 
 Now restart espanso and you should be ready to go!
