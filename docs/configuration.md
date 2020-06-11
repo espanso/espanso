@@ -57,7 +57,7 @@ Then, after you saved the file and exited the editor, **espanso will automatical
 #### Customizing the editor
 
 If you want to use another editor, customizing it is super easy, just specify your choice in the `EDITOR` (or `VISUAL`)
-envorionment variables, such as:
+environment variables, such as:
 
 ```
 EDITOR=/usr/bin/vim
