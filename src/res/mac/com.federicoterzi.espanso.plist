@@ -4,6 +4,11 @@
 <dict>
     <key>Label</key>
     <string>com.federicoterzi.espanso</string>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>{{{PATH}}}</string>
+    </dict>
     <key>ProgramArguments</key>
     <array>
         <string>{{{espanso_path}}}</string>
