@@ -34,6 +34,7 @@ pub enum Shell {
     Cmd,
     Powershell,
     WSL,
+    WSL2,
     Bash,
     Sh,
 }
@@ -52,6 +53,11 @@ impl Shell {
                 command
             },
             Shell::WSL => {
+                let mut command = Command::new("bash");
+                command.args(&["-c", &cmd]);
+                command
+            },
+            Shell::WSL2 => {
                 let mut command = Command::new("wsl");
                 command.args(&["bash", "-c", &cmd]);
                 command
@@ -79,6 +85,7 @@ impl Shell {
             "cmd" => Some(Shell::Cmd),
             "powershell" => Some(Shell::Powershell),
             "wsl" => Some(Shell::WSL),
+            "wsl2" => Some(Shell::WSL2),
             "bash" => Some(Shell::Bash),
             "sh" => Some(Shell::Sh),
             _ => None,
