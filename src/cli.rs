@@ -21,7 +21,7 @@ use serde::Serialize;
 use crate::config::ConfigSet;
 use crate::matcher::{Match, MatchContentType};
 
-pub fn list_matches(config_set: ConfigSet, onlytriggers: bool) {
+pub fn list_matches(config_set: ConfigSet, onlytriggers: bool, preserve_newlines: bool) {
     let matches = filter_matches(config_set);
 
     for m in matches {
@@ -31,7 +31,12 @@ pub fn list_matches(config_set: ConfigSet, onlytriggers: bool) {
             }else {
                 match m.content {
                     MatchContentType::Text(ref text) => {
-                        println!("{} - {}", trigger, text.replace)
+                        let replace = if preserve_newlines {
+                            text.replace.to_owned()
+                        }else{
+                            text.replace.replace("\n", " ")
+                        };
+                        println!("{} - {}", trigger, replace)
                     },
                     MatchContentType::Image(_) => {
                         // Skip image matches for now
