@@ -132,22 +132,20 @@ impl<
             None
         }
     }
-}
 
-lazy_static! {
-    static ref VAR_REGEX: Regex = Regex::new("\\{\\{\\s*(?P<name>\\w+)\\s*\\}\\}").unwrap();
-}
+    fn find_match_by_trigger(&self, trigger: &str) -> Option<Match> {
+        let config = self.config_manager.active_config();
 
-impl<
-        'a,
-        S: KeyboardManager,
-        C: ClipboardManager,
-        M: ConfigManager<'a>,
-        U: UIManager,
-        R: Renderer,
-    > MatchReceiver for Engine<'a, S, C, M, U, R>
-{
-    fn on_match(&self, m: &Match, trailing_separator: Option<char>, trigger_offset: usize) {
+        if let Some(m) = config.matches.iter().find(|m|
+            m.triggers.iter().any(|t| t == trigger)
+        ) {
+            Some(m.clone())
+        }else{
+            None
+        }
+    }
+
+    fn inject_match(&self, m: &Match, trailing_separator: Option<char>, trigger_offset: usize, skip_delete: bool) {
         let config = self.config_manager.active_config();
 
         if !config.enable_active {
@@ -163,7 +161,9 @@ impl<
             m.triggers[trigger_offset].chars().count() as i32 + 1 // Count also the separator
         };
 
-        self.keyboard_manager.delete_string(&config, char_count);
+        if !skip_delete {
+            self.keyboard_manager.delete_string(&config, char_count);
+        }
 
         let mut previous_clipboard_content: Option<String> = None;
 
@@ -286,6 +286,24 @@ impl<
 
         // Re-allow espanso to interpret actions
         self.is_injecting.store(false, Release);
+    }
+}
+
+lazy_static! {
+    static ref VAR_REGEX: Regex = Regex::new("\\{\\{\\s*(?P<name>\\w+)\\s*\\}\\}").unwrap();
+}
+
+impl<
+        'a,
+        S: KeyboardManager,
+        C: ClipboardManager,
+        M: ConfigManager<'a>,
+        U: UIManager,
+        R: Renderer,
+    > MatchReceiver for Engine<'a, S, C, M, U, R>
+{
+    fn on_match(&self, m: &Match, trailing_separator: Option<char>, trigger_offset: usize) {
+        self.inject_match(m, trailing_separator, trigger_offset, false);
     }
 
     fn on_enable_update(&self, status: bool) {
@@ -430,6 +448,17 @@ impl<
                 let config = self.config_manager.default_config();
                 if config.show_notifications {
                     self.ui_manager.notify(&message);
+                }
+            }
+            SystemEvent::Trigger(trigger) => {
+                let m = self.find_match_by_trigger(&trigger);
+                match m {
+                    Some(m) => {
+                        self.inject_match(&m, None, 0, true);
+                    },
+                    None => {
+                        warn!("No match found with trigger: {}", trigger)
+                    },
                 }
             }
         }

@@ -67,6 +67,9 @@ impl IPCCommand {
             "notify" => Some(Event::System(SystemEvent::NotifyRequest(
                 self.payload.clone(),
             ))),
+            "trigger" => Some(Event::System(SystemEvent::Trigger(
+                self.payload.clone(),
+            ))),
             _ => None,
         }
     }
@@ -101,6 +104,10 @@ impl IPCCommand {
                 id: "notify".to_owned(),
                 payload: message,
             }),
+            Event::System(SystemEvent::Trigger(trigger)) => Some(IPCCommand {
+                id: "trigger".to_owned(),
+                payload: trigger,
+            }),
             _ => None,
         }
     }
@@ -123,6 +130,13 @@ impl IPCCommand {
         Self {
             id: "restartworker".to_owned(),
             payload: "".to_owned(),
+        }
+    }
+
+    pub fn trigger(trigger: &str) -> IPCCommand {
+        Self {
+            id: "trigger".to_owned(),
+            payload: trigger.to_owned(),
         }
     }
 }
