@@ -177,6 +177,13 @@ fn main() {
                     .required(false)
                     .takes_value(false)
                 )
+                .arg(Arg::with_name("preservenewlines")
+                    .short("n")
+                    .long("preservenewlines")
+                    .help("Preserve newlines when printing replacements")
+                    .required(false)
+                    .takes_value(false)
+                )
             )
             .subcommand(SubCommand::with_name("exec")
                 .about("Triggers the expansion of the given match")
@@ -1266,9 +1273,10 @@ fn match_main(config_set: ConfigSet, matches: &ArgMatches) {
     if let Some(matches) = matches.subcommand_matches("list") {
         let json = matches.is_present("json");
         let onlytriggers = matches.is_present("onlytriggers");
+        let preserve_newlines = matches.is_present("preservenewlines");
 
         if !json {
-            crate::cli::list_matches(config_set, onlytriggers);
+            crate::cli::list_matches(config_set, onlytriggers, preserve_newlines);
         }else{
             crate::cli::list_matches_as_json(config_set);
         }
