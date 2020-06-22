@@ -69,6 +69,7 @@ mod render;
 mod sysdaemon;
 mod system;
 mod ui;
+mod cli;
 mod utils;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -157,6 +158,32 @@ fn main() {
                 .about("Print the current data folder path."))
             .subcommand(SubCommand::with_name("default")
                 .about("Print the default configuration file path."))
+        )
+        .subcommand(SubCommand::with_name("match")
+            .about("List and execute matches from the CLI")
+            .subcommand(SubCommand::with_name("list")
+                .about("Print all matches to standard output")
+                .arg(Arg::with_name("json")
+                    .short("j")
+                    .long("json")
+                    .help("Return the matches as json")
+                    .required(false)
+                    .takes_value(false)
+                )
+                .arg(Arg::with_name("onlytriggers")
+                    .short("t")
+                    .long("onlytriggers")
+                    .help("Print only triggers without replacement")
+                    .required(false)
+                    .takes_value(false)
+                )
+            )
+            .subcommand(SubCommand::with_name("exec")
+                .about("Triggers the expansion of the given match")
+                .arg(Arg::with_name("trigger")
+                    .help("The trigger of the match to be expanded")
+                )
+            )
         )
         // Package manager
         .subcommand(SubCommand::with_name("package")
@@ -271,6 +298,11 @@ fn main() {
 
     if let Some(matches) = matches.subcommand_matches("path") {
         path_main(config_set, matches);
+        return;
+    }
+
+    if let Some(matches) = matches.subcommand_matches("match") {
+        match_main(config_set, matches);
         return;
     }
 
@@ -1226,6 +1258,31 @@ fn path_main(_config_set: ConfigSet, matches: &ArgMatches) {
         println!("Config: {}", config.to_string_lossy());
         println!("Packages: {}", packages.to_string_lossy());
         println!("Data: {}", data.to_string_lossy());
+    }
+}
+
+
+fn match_main(config_set: ConfigSet, matches: &ArgMatches) {
+    if let Some(matches) = matches.subcommand_matches("list") {
+        let json = matches.is_present("json");
+        let onlytriggers = matches.is_present("onlytriggers");
+
+        if !json {
+            crate::cli::list_matches(config_set, onlytriggers);
+        }else{
+            crate::cli::list_matches_as_json(config_set);
+        }
+    }else if let Some(matches) = matches.subcommand_matches("exec") {
+        let trigger = matches.value_of("trigger").unwrap_or_else(|| {
+            eprintln!("missing trigger");
+            exit(1);
+        });
+
+        send_command_or_warn(
+            Service::Worker,
+            config_set.default.clone(),
+            IPCCommand::trigger(trigger),
+        );
     }
 }
 
