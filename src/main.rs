@@ -1027,7 +1027,13 @@ fn install_main(_config_set: ConfigSet, matches: &ArgMatches) {
         exit(1);
     });
 
-    let repository = matches.value_of("repository_url").unwrap_or("hub");
+    let mut repository = matches.value_of("repository_url").unwrap_or("hub");
+
+    // Remove trailing .git string if present
+    // See: https://github.com/federico-terzi/espanso/issues/326
+    if repository.ends_with(".git") {
+        repository = repository.trim_end_matches(".git")
+    }
 
     let package_resolver = Box::new(ZipPackageResolver::new());
 
