@@ -77,12 +77,18 @@ xdo_t * xdo_context;
 
 // Callback invoked when a new key event occur.
 void event_callback (XPointer, XRecordInterceptData*);
+int error_callback(Display *display, XErrorEvent *error);
 
 KeypressCallback keypress_callback;
+X11ErrorCallback x11_error_callback;
 void * context_instance;
 
 void register_keypress_callback(KeypressCallback callback) {
     keypress_callback = callback;
+}
+
+void register_error_callback(X11ErrorCallback callback) {
+    x11_error_callback = callback;
 }
 
 int32_t check_x11() {
@@ -155,6 +161,9 @@ int32_t initialize(void * _context_instance) {
     }
 
     xdo_context = xdo_new(NULL);
+
+    // Setup a custom error handler
+    XSetErrorHandler(&error_callback);
 
     /**
      * Note: We might never get a MappingNotify event if the
@@ -270,6 +279,11 @@ void event_callback(XPointer p, XRecordInterceptData *hook)
     }
 
     XRecordFreeData(hook);
+}
+
+int error_callback(Display *display, XErrorEvent *error) {
+    x11_error_callback(context_instance, error->error_code, error->request_code, error->minor_code);
+    return 0;
 }
 
 void release_all_keys() {
