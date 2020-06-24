@@ -88,6 +88,11 @@ extern "C" void delete_string(int32_t count, int32_t delay);
 extern "C" void trigger_paste();
 
 /*
+ * Send the Paste keyboard shortcut (CTRL+SHIFT+V)
+ */
+extern "C" void trigger_shift_paste();
+
+/*
  * Send the copy keyboard shortcut (CTRL+C)
  */
 extern "C" void trigger_copy();
