@@ -214,13 +214,13 @@ pub fn get_ipc_client(service: Service, _: Configs) -> impl IPCClient {
 #[cfg(target_os = "windows")]
 pub fn get_ipc_server(
     service: Service,
-    config: Configs,
+    _: Configs,
     event_channel: Sender<Event>,
 ) -> impl IPCServer {
-    windows::WindowsIPCServer::new(service, config, event_channel)
+    windows::WindowsIPCServer::new(service, event_channel)
 }
 
 #[cfg(target_os = "windows")]
-pub fn get_ipc_client(service: Service, config: Configs) -> impl IPCClient {
-    windows::WindowsIPCClient::new(service, config)
+pub fn get_ipc_client(service: Service, _: Configs) -> impl IPCClient {
+    windows::WindowsIPCClient::new(service)
 }

@@ -25,30 +25,35 @@ use std::sync::mpsc::Sender;
 use crate::config::Configs;
 use crate::event::*;
 use crate::protocol::{process_event, send_command, Service};
+use named_pipe::{PipeOptions, PipeServer, PipeClient};
+use crate::context;
+use std::io::Error;
+use std::path::PathBuf;
+
+const DAEMON_WIN_PIPE_NAME: &str = "\\\\.\\pipe\\espansodaemon";
+const WORKER_WIN_PIPE_NAME: &str = "\\\\.\\pipe\\espansoworker";
+const CLIENT_TIMEOUT: u32 = 2000;
 
 pub struct WindowsIPCServer {
     service: Service,
-    config: Configs,
     event_channel: Sender<Event>,
 }
 
-fn to_port(config: &Configs, service: &Service) -> u16 {
-    let port = match service {
-        Service::Daemon => config.ipc_server_port,
-        Service::Worker => config.worker_ipc_server_port,
-    };
-    port as u16
+fn get_pipe_name(service: &Service) -> String {
+    match service {
+        Service::Daemon => DAEMON_WIN_PIPE_NAME.to_owned(),
+        Service::Worker => WORKER_WIN_PIPE_NAME.to_owned(),
+    }
 }
+
 
 impl WindowsIPCServer {
     pub fn new(
         service: Service,
-        config: Configs,
         event_channel: Sender<Event>,
     ) -> WindowsIPCServer {
         WindowsIPCServer {
             service,
-            config,
             event_channel,
         }
     }
@@ -57,20 +62,21 @@ impl WindowsIPCServer {
 impl super::IPCServer for WindowsIPCServer {
     fn start(&self) {
         let event_channel = self.event_channel.clone();
-        let server_port = to_port(&self.config, &self.service);
+        let pipe_name = get_pipe_name(&self.service);
         std::thread::Builder::new()
             .name("ipc_server".to_string())
             .spawn(move || {
-                let listener = TcpListener::bind(format!("127.0.0.1:{}", server_port))
-                    .expect("Error binding to IPC server port");
+                let options = PipeOptions::new(&pipe_name);
 
                 info!(
-                    "Binded to IPC tcp socket: {}",
-                    listener.local_addr().unwrap().to_string()
+                    "Binding to named pipe: {}",
+                    pipe_name
                 );
 
-                for stream in listener.incoming() {
-                    process_event(&event_channel, stream);
+                loop {
+                    let server = options.single().expect("unable to initialize IPC named pipe");
+                    let pipe_server = server.wait();
+                    process_event(&event_channel, pipe_server);
                 }
             })
             .expect("Unable to spawn IPC server thread");
@@ -79,20 +85,19 @@ impl super::IPCServer for WindowsIPCServer {
 
 pub struct WindowsIPCClient {
     service: Service,
-    config: Configs,
 }
 
 impl WindowsIPCClient {
-    pub fn new(service: Service, config: Configs) -> WindowsIPCClient {
-        WindowsIPCClient { service, config }
+    pub fn new(service: Service) -> WindowsIPCClient {
+        WindowsIPCClient { service }
     }
 }
 
 impl super::IPCClient for WindowsIPCClient {
     fn send_command(&self, command: IPCCommand) -> Result<(), String> {
-        let port = to_port(&self.config, &self.service);
-        let stream = TcpStream::connect(("127.0.0.1", port));
+        let pipe_name = get_pipe_name(&self.service);
+        let client = PipeClient::connect_ms(pipe_name, CLIENT_TIMEOUT);
 
-        send_command(command, stream)
+        send_command(command, client)
     }
 }
