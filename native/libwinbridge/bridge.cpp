@@ -566,6 +566,38 @@ void send_multi_vkey_with_delay(int32_t vk, int32_t count, int32_t delay) {
     }
 }
 
+
+void trigger_shift_paste() {
+    std::vector<INPUT> vec;
+
+    INPUT input = { 0 };
+
+    input.type = INPUT_KEYBOARD;
+    input.ki.wScan = 0;
+    input.ki.time = 0;
+    input.ki.dwExtraInfo = 0;
+    input.ki.wVk = VK_CONTROL;
+    input.ki.dwFlags = 0; // 0 for key press
+    vec.push_back(input);
+
+    input.ki.wVk = VK_SHIFT;  // SHIFT KEY
+    vec.push_back(input);
+
+    input.ki.wVk = 0x56;  // V KEY
+    vec.push_back(input);
+
+    input.ki.dwFlags = KEYEVENTF_KEYUP; // KEYEVENTF_KEYUP for key release
+    vec.push_back(input);
+
+    input.ki.wVk = VK_SHIFT;  // SHIFT KEY
+    vec.push_back(input);
+
+    input.ki.wVk = VK_CONTROL;
+    vec.push_back(input);
+
+    SendInput(vec.size(), vec.data(), sizeof(INPUT));
+}
+
 void trigger_paste() {
     std::vector<INPUT> vec;
 
