@@ -136,16 +136,24 @@ impl<
     fn find_match_by_trigger(&self, trigger: &str) -> Option<Match> {
         let config = self.config_manager.active_config();
 
-        if let Some(m) = config.matches.iter().find(|m|
-            m.triggers.iter().any(|t| t == trigger)
-        ) {
+        if let Some(m) = config
+            .matches
+            .iter()
+            .find(|m| m.triggers.iter().any(|t| t == trigger))
+        {
             Some(m.clone())
-        }else{
+        } else {
             None
         }
     }
 
-    fn inject_match(&self, m: &Match, trailing_separator: Option<char>, trigger_offset: usize, skip_delete: bool) {
+    fn inject_match(
+        &self,
+        m: &Match,
+        trailing_separator: Option<char>,
+        trigger_offset: usize,
+        skip_delete: bool,
+    ) {
         let config = self.config_manager.active_config();
 
         if !config.enable_active {
@@ -455,10 +463,8 @@ impl<
                 match m {
                     Some(m) => {
                         self.inject_match(&m, None, 0, true);
-                    },
-                    None => {
-                        warn!("No match found with trigger: {}", trigger)
-                    },
+                    }
+                    None => warn!("No match found with trigger: {}", trigger),
                 }
             }
         }

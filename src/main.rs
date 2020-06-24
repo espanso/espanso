@@ -53,6 +53,7 @@ use crate::ui::UIManager;
 
 mod bridge;
 mod check;
+mod cli;
 mod clipboard;
 mod config;
 mod context;
@@ -69,7 +70,6 @@ mod render;
 mod sysdaemon;
 mod system;
 mod ui;
-mod cli;
 mod utils;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -519,18 +519,14 @@ fn register_signals(_: Configs) {}
 fn register_signals(config: Configs) {
     // On Unix, also listen for signals so that we can terminate the
     // worker if the daemon receives a signal
-    use signal_hook::{iterator::Signals, SIGTERM, SIGINT};
+    use signal_hook::{iterator::Signals, SIGINT, SIGTERM};
     let signals = Signals::new(&[SIGTERM, SIGINT]).expect("unable to register for signals");
     thread::Builder::new()
         .name("signal monitor".to_string())
         .spawn(move || {
             for signal in signals.forever() {
                 info!("Received signal: {:?}, terminating worker", signal);
-                send_command_or_warn(
-                    Service::Worker,
-                    config,
-                    IPCCommand::exit_worker(),
-                );
+                send_command_or_warn(Service::Worker, config, IPCCommand::exit_worker());
 
                 std::thread::sleep(Duration::from_millis(200));
 
@@ -1268,7 +1264,6 @@ fn path_main(_config_set: ConfigSet, matches: &ArgMatches) {
     }
 }
 
-
 fn match_main(config_set: ConfigSet, matches: &ArgMatches) {
     if let Some(matches) = matches.subcommand_matches("list") {
         let json = matches.is_present("json");
@@ -1277,10 +1272,10 @@ fn match_main(config_set: ConfigSet, matches: &ArgMatches) {
 
         if !json {
             crate::cli::list_matches(config_set, onlytriggers, preserve_newlines);
-        }else{
+        } else {
             crate::cli::list_matches_as_json(config_set);
         }
-    }else if let Some(matches) = matches.subcommand_matches("exec") {
+    } else if let Some(matches) = matches.subcommand_matches("exec") {
         let trigger = matches.value_of("trigger").unwrap_or_else(|| {
             eprintln!("missing trigger");
             exit(1);
