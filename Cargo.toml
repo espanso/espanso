@@ -36,6 +36,9 @@ notify = "4.0.13"
 libc = "0.2.62"
 signal-hook = "0.1.15"
 
+[target.'cfg(windows)'.dependencies]
+named_pipe = "0.4.1"
+
 [build-dependencies]
 cmake = "0.1.31"
 
