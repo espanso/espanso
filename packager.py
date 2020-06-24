@@ -82,11 +82,24 @@ def build_windows(package_info):
     msvc_dirs = glob.glob("C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\*\\VC\\Redist\\MSVC\\*")
     print("Found Redists: ", msvc_dirs)
 
+    print("Determining best redist...")
+
     if len(msvc_dirs) == 0:
         raise Exception("Cannot find redistributable dlls")
 
-    msvc_dir = msvc_dirs[-1]  # Take the most recent version of the toolchain
-    print("Using: ",msvc_dir)
+    msvc_dir = None
+
+    for curr_dir in msvc_dirs:
+        dll_files = glob.glob(curr_dir + "\\x64\\*CRT\\*.dll")
+        print("Found dlls", dll_files, "in", curr_dir)
+        if any("vcruntime140_1.dll" in x.lower() for x in dll_files):
+            msvc_dir = curr_dir
+            break
+
+    if msvc_dir is None:
+        raise Exception("Cannot find redist with VCRUNTIME140_1.dll")
+
+    print("Using: ", msvc_dir)
 
     dll_files = glob.glob(msvc_dir + "\\x64\\*CRT\\*.dll")
 
