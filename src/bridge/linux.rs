@@ -33,7 +33,12 @@ extern "C" {
     pub fn get_active_window_executable(buffer: *mut c_char, size: i32) -> i32;
     pub fn is_current_window_special() -> i32;
     pub fn register_error_callback(
-        cb: extern "C" fn(_self: *mut c_void, error_code: c_char, request_code: c_char, minor_code: c_char),
+        cb: extern "C" fn(
+            _self: *mut c_void,
+            error_code: c_char,
+            request_code: c_char,
+            minor_code: c_char,
+        ),
     );
 
     // Keyboard

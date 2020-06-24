@@ -23,10 +23,10 @@ use std::net::{TcpListener, TcpStream};
 use std::sync::mpsc::Sender;
 
 use crate::config::Configs;
+use crate::context;
 use crate::event::*;
 use crate::protocol::{process_event, send_command, Service};
-use named_pipe::{PipeOptions, PipeServer, PipeClient};
-use crate::context;
+use named_pipe::{PipeClient, PipeOptions, PipeServer};
 use std::io::Error;
 use std::path::PathBuf;
 
@@ -46,12 +46,8 @@ fn get_pipe_name(service: &Service) -> String {
     }
 }
 
-
 impl WindowsIPCServer {
-    pub fn new(
-        service: Service,
-        event_channel: Sender<Event>,
-    ) -> WindowsIPCServer {
+    pub fn new(service: Service, event_channel: Sender<Event>) -> WindowsIPCServer {
         WindowsIPCServer {
             service,
             event_channel,
@@ -68,13 +64,12 @@ impl super::IPCServer for WindowsIPCServer {
             .spawn(move || {
                 let options = PipeOptions::new(&pipe_name);
 
-                info!(
-                    "Binding to named pipe: {}",
-                    pipe_name
-                );
+                info!("Binding to named pipe: {}", pipe_name);
 
                 loop {
-                    let server = options.single().expect("unable to initialize IPC named pipe");
+                    let server = options
+                        .single()
+                        .expect("unable to initialize IPC named pipe");
                     let pipe_server = server.wait();
                     process_event(&event_channel, pipe_server);
                 }

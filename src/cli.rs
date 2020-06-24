@@ -17,9 +17,9 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use serde::Serialize;
 use crate::config::ConfigSet;
 use crate::matcher::{Match, MatchContentType};
+use serde::Serialize;
 
 pub fn list_matches(config_set: ConfigSet, onlytriggers: bool, preserve_newlines: bool) {
     let matches = filter_matches(config_set);
@@ -28,19 +28,19 @@ pub fn list_matches(config_set: ConfigSet, onlytriggers: bool, preserve_newlines
         for trigger in m.triggers.iter() {
             if onlytriggers {
                 println!("{}", trigger);
-            }else {
+            } else {
                 match m.content {
                     MatchContentType::Text(ref text) => {
                         let replace = if preserve_newlines {
                             text.replace.to_owned()
-                        }else{
+                        } else {
                             text.replace.replace("\n", " ")
                         };
                         println!("{} - {}", trigger, replace)
-                    },
+                    }
                     MatchContentType::Image(_) => {
                         // Skip image matches for now
-                    },
+                    }
                 }
             }
         }
@@ -60,15 +60,13 @@ pub fn list_matches_as_json(config_set: ConfigSet) {
 
     for m in matches {
         match m.content {
-            MatchContentType::Text(ref text) => {
-                entries.push(JsonMatchEntry {
-                    triggers: m.triggers,
-                    replace: text.replace.clone(),
-                })
-            },
+            MatchContentType::Text(ref text) => entries.push(JsonMatchEntry {
+                triggers: m.triggers,
+                replace: text.replace.clone(),
+            }),
             MatchContentType::Image(_) => {
                 // Skip image matches for now
-            },
+            }
         }
     }
 
@@ -82,8 +80,8 @@ fn filter_matches(config_set: ConfigSet) -> Vec<Match> {
     output.extend(config_set.default.matches);
 
     // TODO: consider specific matches by class, title or exe path
-//    for specific in config_set.specific {
-//        output.extend(specific.matches)
-//    }
+    //    for specific in config_set.specific {
+    //        output.extend(specific.matches)
+    //    }
     output
 }

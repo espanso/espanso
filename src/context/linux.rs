@@ -163,5 +163,8 @@ extern "C" fn error_callback(
     request_code: c_char,
     minor_code: c_char,
 ) {
-    warn!("X11 reported an error code: {}, request_code: {} and minor_code: {}", error_code, request_code, minor_code);
+    warn!(
+        "X11 reported an error code: {}, request_code: {} and minor_code: {}",
+        error_code, request_code, minor_code
+    );
 }

@@ -88,7 +88,8 @@ impl super::Extension for ScriptExtension {
 
             match output {
                 Ok(output) => {
-                    let mut output_str = String::from_utf8_lossy(output.stdout.as_slice()).to_string();
+                    let mut output_str =
+                        String::from_utf8_lossy(output.stdout.as_slice()).to_string();
                     let error_str = String::from_utf8_lossy(output.stderr.as_slice());
                     let error_str = error_str.to_string();
                     let error_str = error_str.trim();
@@ -103,7 +104,7 @@ impl super::Extension for ScriptExtension {
                     let should_trim = if let Some(value) = trim_opt {
                         let val = value.as_bool();
                         val.unwrap_or(true)
-                    }else{
+                    } else {
                         true
                     };
 
@@ -154,10 +155,7 @@ mod tests {
             Value::from("args"),
             Value::from(vec!["echo", "hello world"]),
         );
-        params.insert(
-            Value::from("trim"),
-            Value::from(false),
-        );
+        params.insert(Value::from("trim"), Value::from(false));
 
         let extension = ScriptExtension::new();
         let output = extension.calculate(&params, &vec![]);

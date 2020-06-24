@@ -67,9 +67,7 @@ impl IPCCommand {
             "notify" => Some(Event::System(SystemEvent::NotifyRequest(
                 self.payload.clone(),
             ))),
-            "trigger" => Some(Event::System(SystemEvent::Trigger(
-                self.payload.clone(),
-            ))),
+            "trigger" => Some(Event::System(SystemEvent::Trigger(self.payload.clone()))),
             _ => None,
         }
     }
