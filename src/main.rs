@@ -53,6 +53,7 @@ use crate::ui::UIManager;
 
 mod bridge;
 mod check;
+mod cli;
 mod clipboard;
 mod config;
 mod context;
@@ -157,6 +158,39 @@ fn main() {
                 .about("Print the current data folder path."))
             .subcommand(SubCommand::with_name("default")
                 .about("Print the default configuration file path."))
+        )
+        .subcommand(SubCommand::with_name("match")
+            .about("List and execute matches from the CLI")
+            .subcommand(SubCommand::with_name("list")
+                .about("Print all matches to standard output")
+                .arg(Arg::with_name("json")
+                    .short("j")
+                    .long("json")
+                    .help("Return the matches as json")
+                    .required(false)
+                    .takes_value(false)
+                )
+                .arg(Arg::with_name("onlytriggers")
+                    .short("t")
+                    .long("onlytriggers")
+                    .help("Print only triggers without replacement")
+                    .required(false)
+                    .takes_value(false)
+                )
+                .arg(Arg::with_name("preservenewlines")
+                    .short("n")
+                    .long("preservenewlines")
+                    .help("Preserve newlines when printing replacements")
+                    .required(false)
+                    .takes_value(false)
+                )
+            )
+            .subcommand(SubCommand::with_name("exec")
+                .about("Triggers the expansion of the given match")
+                .arg(Arg::with_name("trigger")
+                    .help("The trigger of the match to be expanded")
+                )
+            )
         )
         // Package manager
         .subcommand(SubCommand::with_name("package")
@@ -271,6 +305,11 @@ fn main() {
 
     if let Some(matches) = matches.subcommand_matches("path") {
         path_main(config_set, matches);
+        return;
+    }
+
+    if let Some(matches) = matches.subcommand_matches("match") {
+        match_main(config_set, matches);
         return;
     }
 
@@ -480,18 +519,14 @@ fn register_signals(_: Configs) {}
 fn register_signals(config: Configs) {
     // On Unix, also listen for signals so that we can terminate the
     // worker if the daemon receives a signal
-    use signal_hook::{iterator::Signals, SIGTERM, SIGINT};
+    use signal_hook::{iterator::Signals, SIGINT, SIGTERM};
     let signals = Signals::new(&[SIGTERM, SIGINT]).expect("unable to register for signals");
     thread::Builder::new()
         .name("signal monitor".to_string())
         .spawn(move || {
             for signal in signals.forever() {
                 info!("Received signal: {:?}, terminating worker", signal);
-                send_command_or_warn(
-                    Service::Worker,
-                    config,
-                    IPCCommand::exit_worker(),
-                );
+                send_command_or_warn(Service::Worker, config, IPCCommand::exit_worker());
 
                 std::thread::sleep(Duration::from_millis(200));
 
@@ -1027,7 +1062,13 @@ fn install_main(_config_set: ConfigSet, matches: &ArgMatches) {
         exit(1);
     });
 
-    let repository = matches.value_of("repository_url").unwrap_or("hub");
+    let mut repository = matches.value_of("repository_url").unwrap_or("hub");
+
+    // Remove trailing .git string if present
+    // See: https://github.com/federico-terzi/espanso/issues/326
+    if repository.ends_with(".git") {
+        repository = repository.trim_end_matches(".git")
+    }
 
     let package_resolver = Box::new(ZipPackageResolver::new());
 
@@ -1220,6 +1261,31 @@ fn path_main(_config_set: ConfigSet, matches: &ArgMatches) {
         println!("Config: {}", config.to_string_lossy());
         println!("Packages: {}", packages.to_string_lossy());
         println!("Data: {}", data.to_string_lossy());
+    }
+}
+
+fn match_main(config_set: ConfigSet, matches: &ArgMatches) {
+    if let Some(matches) = matches.subcommand_matches("list") {
+        let json = matches.is_present("json");
+        let onlytriggers = matches.is_present("onlytriggers");
+        let preserve_newlines = matches.is_present("preservenewlines");
+
+        if !json {
+            crate::cli::list_matches(config_set, onlytriggers, preserve_newlines);
+        } else {
+            crate::cli::list_matches_as_json(config_set);
+        }
+    } else if let Some(matches) = matches.subcommand_matches("exec") {
+        let trigger = matches.value_of("trigger").unwrap_or_else(|| {
+            eprintln!("missing trigger");
+            exit(1);
+        });
+
+        send_command_or_warn(
+            Service::Worker,
+            config_set.default.clone(),
+            IPCCommand::trigger(trigger),
+        );
     }
 }
 

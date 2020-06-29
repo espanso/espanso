@@ -34,6 +34,7 @@ pub enum Shell {
     Cmd,
     Powershell,
     WSL,
+    WSL2,
     Bash,
     Sh,
 }
@@ -45,27 +46,32 @@ impl Shell {
                 let mut command = Command::new("cmd");
                 command.args(&["/C", &cmd]);
                 command
-            },
+            }
             Shell::Powershell => {
                 let mut command = Command::new("powershell");
                 command.args(&["-Command", &cmd]);
                 command
-            },
+            }
             Shell::WSL => {
+                let mut command = Command::new("bash");
+                command.args(&["-c", &cmd]);
+                command
+            }
+            Shell::WSL2 => {
                 let mut command = Command::new("wsl");
                 command.args(&["bash", "-c", &cmd]);
                 command
-            },
+            }
             Shell::Bash => {
                 let mut command = Command::new("bash");
                 command.args(&["-c", &cmd]);
                 command
-            },
+            }
             Shell::Sh => {
                 let mut command = Command::new("sh");
                 command.args(&["-c", &cmd]);
                 command
-            },
+            }
         };
 
         // Inject the $CONFIG variable
@@ -79,6 +85,7 @@ impl Shell {
             "cmd" => Some(Shell::Cmd),
             "powershell" => Some(Shell::Powershell),
             "wsl" => Some(Shell::WSL),
+            "wsl2" => Some(Shell::WSL2),
             "bash" => Some(Shell::Bash),
             "sh" => Some(Shell::Sh),
             _ => None,
@@ -169,7 +176,7 @@ impl super::Extension for ShellExtension {
                 let should_trim = if let Some(value) = trim_opt {
                     let val = value.as_bool();
                     val.unwrap_or(true)
-                }else{
+                } else {
                     true
                 };
 

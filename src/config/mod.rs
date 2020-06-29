@@ -129,7 +129,7 @@ fn default_show_notifications() -> bool {
     true
 }
 fn default_auto_restart() -> bool {
-   true
+    true
 }
 fn default_show_icon() -> bool {
     true

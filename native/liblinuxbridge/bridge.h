@@ -49,13 +49,23 @@ extern "C" void cleanup();
  * while the second is the size of the array.
  */
 typedef void (*KeypressCallback)(void * self, const char *buffer, int32_t len, int32_t event_type, int32_t key_code);
-
 extern KeypressCallback keypress_callback;
 
 /*
  * Register the callback that will be called when a keypress was made
  */
 extern "C" void register_keypress_callback(KeypressCallback callback);
+
+/*
+ * Called when a X11 error occurs
+ */
+typedef void (*X11ErrorCallback)(void * self, char error_code, char request_code, char minor_code);
+extern X11ErrorCallback x11_error_callback;
+
+/*
+ * Register the callback that will be called when an X11 error occurs
+ */
+extern "C" void register_error_callback(X11ErrorCallback callback);
 
 /*
  * Type the given string by simulating Key Presses
