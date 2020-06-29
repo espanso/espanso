@@ -70,7 +70,8 @@ Many people helped the project along the way, thanks to all of you. In particula
 
 ## Remarks
 
-* Special thanks to the [ModifyPath](https://www.legroom.net/software/modpath)
+* Thanks to [libxdo](https://github.com/jordansissel/xdotool) and [xclip](https://github.com/astrand/xclip), used to implement the Linux port.
+* Thanks to the ModifyPath
   script, used by espanso to improve the Windows installer.
 
 ## License
