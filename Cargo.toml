@@ -1,6 +1,6 @@
 [package]
 name = "espanso"
-version = "0.6.2"
+version = "0.6.3"
 authors = ["Federico Terzi <federicoterzi96@gmail.com>"]
 license = "GPL-3.0"
 description = "Cross-platform Text Expander written in Rust"
@@ -35,6 +35,9 @@ notify = "4.0.13"
 [target.'cfg(unix)'.dependencies]
 libc = "0.2.62"
 signal-hook = "0.1.15"
+
+[target.'cfg(windows)'.dependencies]
+named_pipe = "0.4.1"
 
 [build-dependencies]
 cmake = "0.1.31"

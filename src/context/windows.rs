@@ -173,8 +173,7 @@ extern "C" fn keypress_callback(
             }
         } else if event_type == 1 {
             // Modifier event
-            if is_key_down == 1 {
-                // Keyup event
+            if is_key_down == 0 {
                 let modifier: Option<KeyModifier> = match (key_code, variant) {
                     (0x5B, _) => Some(LEFT_META),
                     (0x5C, _) => Some(RIGHT_META),

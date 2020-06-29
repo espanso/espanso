@@ -130,6 +130,9 @@ pub enum SystemEvent {
 
     // Notification
     NotifyRequest(String),
+
+    // Trigger an expansion from IPC
+    Trigger(String),
 }
 
 // Receivers

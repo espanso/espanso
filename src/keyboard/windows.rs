@@ -51,6 +51,9 @@ impl super::KeyboardManager for WindowsKeyboardManager {
                         trigger_paste();
                     }
                 },
+                PasteShortcut::CtrlShiftV => {
+                    trigger_shift_paste();
+                },
                 _ => {
                     error!("Windows backend does not support this Paste Shortcut, please open an issue on GitHub if you need it.")
                 }

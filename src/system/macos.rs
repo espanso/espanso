@@ -106,11 +106,12 @@ impl MacSystemManager {
                     if let Ok(path) = string {
                         if !path.trim().is_empty() {
                             let process = path.trim().to_string();
-                            let app_name = if let Some(name) = Self::get_app_name_from_path(&process) {
-                                name
-                            } else {
-                                process.to_owned()
-                            };
+                            let app_name =
+                                if let Some(name) = Self::get_app_name_from_path(&process) {
+                                    name
+                                } else {
+                                    process.to_owned()
+                                };
 
                             return Some((app_name, process));
                         }
@@ -138,14 +139,15 @@ impl MacSystemManager {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
     fn test_get_app_name_from_path() {
-        let app_name = MacSystemManager::get_app_name_from_path("/Applications/iTerm.app/Contents/MacOS/iTerm2");
+        let app_name = MacSystemManager::get_app_name_from_path(
+            "/Applications/iTerm.app/Contents/MacOS/iTerm2",
+        );
         assert_eq!(app_name.unwrap(), "iTerm")
     }
 
@@ -161,4 +163,3 @@ mod tests {
         assert_eq!(app_name.unwrap(), "SecurityAgent")
     }
 }
-

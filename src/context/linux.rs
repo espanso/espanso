@@ -21,7 +21,7 @@ use crate::bridge::linux::*;
 use crate::config::Configs;
 use crate::event::KeyModifier::*;
 use crate::event::*;
-use log::{debug, error};
+use log::{debug, error, warn};
 use std::ffi::CStr;
 use std::os::raw::{c_char, c_void};
 use std::process::exit;
@@ -59,6 +59,7 @@ impl LinuxContext {
             let context_ptr = &*context as *const LinuxContext as *const c_void;
 
             register_keypress_callback(keypress_callback);
+            register_error_callback(error_callback);
 
             let res = initialize(context_ptr);
             if res <= 0 {
@@ -154,4 +155,16 @@ extern "C" fn keypress_callback(
             (*_self).send_channel.send(event).unwrap();
         }
     }
+}
+
+extern "C" fn error_callback(
+    _self: *mut c_void,
+    error_code: c_char,
+    request_code: c_char,
+    minor_code: c_char,
+) {
+    warn!(
+        "X11 reported an error code: {}, request_code: {} and minor_code: {}",
+        error_code, request_code, minor_code
+    );
 }
