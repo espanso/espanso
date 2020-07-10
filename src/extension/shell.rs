@@ -123,7 +123,7 @@ impl super::Extension for ShellExtension {
     fn calculate(&self, params: &Mapping, args: &Vec<String>) -> Option<String> {
         let cmd = params.get(&Value::from("cmd"));
         if cmd.is_none() {
-            warn!("No 'cmd' parameter specified for shell variable");
+            warn!("No 'cmd' parameter specified for shell `iable");
             return None;
         }
         let cmd = cmd.unwrap().as_str().unwrap();
@@ -169,6 +169,19 @@ impl super::Extension for ShellExtension {
                 // Print stderror if present
                 if !error_str.is_empty() {
                     warn!("Shell command reported error: \n{}", error_str);
+                }
+
+                // Check if debug flag set, provide additional context when an error occurs.
+                let debug_opt = params.get(&Value::from("debug"));
+                let with_debug = if let Some(value) = debug_opt {
+                    let val = value.as_bool();
+                    val.unwrap_or(false)
+                }else{
+                    false
+                };
+                
+                if with_debug {
+                    error!("debug for shell cmd '{}', exit_status '{}', stdout '{}', stderr '{}'", cmd, output.status, output_str, error_str);
                 }
 
                 // If specified, trim the output
