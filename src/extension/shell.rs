@@ -123,7 +123,7 @@ impl super::Extension for ShellExtension {
     fn calculate(&self, params: &Mapping, args: &Vec<String>) -> Option<String> {
         let cmd = params.get(&Value::from("cmd"));
         if cmd.is_none() {
-            warn!("No 'cmd' parameter specified for shell `iable");
+            warn!("No 'cmd' parameter specified for shell variable");
             return None;
         }
         let cmd = cmd.unwrap().as_str().unwrap();
