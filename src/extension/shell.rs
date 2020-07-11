@@ -17,7 +17,7 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use log::{info, error, warn};
+use log::{error, info, warn};
 use regex::{Captures, Regex};
 use serde_yaml::{Mapping, Value};
 use std::process::{Command, Output};
@@ -126,11 +126,12 @@ impl super::Extension for ShellExtension {
             warn!("No 'cmd' parameter specified for shell variable");
             return None;
         }
-        let cmd = cmd.unwrap().as_str().unwrap();
+
+        let original_cmd = cmd.unwrap().as_str().unwrap();
 
         // Render positional parameters in args
         let cmd = POS_ARG_REGEX
-            .replace_all(&cmd, |caps: &Captures| {
+            .replace_all(&original_cmd, |caps: &Captures| {
                 let position_str = caps.name("pos").unwrap().as_str();
                 let position = position_str.parse::<i32>().unwrap_or(-1);
                 if position >= 0 && position < args.len() as i32 {
@@ -176,12 +177,15 @@ impl super::Extension for ShellExtension {
                 let with_debug = if let Some(value) = debug_opt {
                     let val = value.as_bool();
                     val.unwrap_or(false)
-                }else{
+                } else {
                     false
                 };
-                
+
                 if with_debug {
-                    info!("debug for shell cmd '{}', exit_status '{}', stdout '{}', stderr '{}'", cmd, output.status, output_str, error_str);
+                    info!(
+                        "debug for shell cmd '{}', exit_status '{}', stdout '{}', stderr '{}'",
+                        original_cmd, output.status, output_str, error_str
+                    );
                 }
 
                 // If specified, trim the output
