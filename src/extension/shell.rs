@@ -17,7 +17,7 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use log::{error, warn};
+use log::{info, error, warn};
 use regex::{Captures, Regex};
 use serde_yaml::{Mapping, Value};
 use std::process::{Command, Output};
@@ -181,7 +181,7 @@ impl super::Extension for ShellExtension {
                 };
                 
                 if with_debug {
-                    error!("debug for shell cmd '{}', exit_status '{}', stdout '{}', stderr '{}'", cmd, output.status, output_str, error_str);
+                    info!("debug for shell cmd '{}', exit_status '{}', stdout '{}', stderr '{}'", cmd, output.status, output_str, error_str);
                 }
 
                 // If specified, trim the output
