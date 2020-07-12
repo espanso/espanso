@@ -136,6 +136,49 @@ Now try to type `:br` anywhere. If you did everything correctly, you should see 
 
 > In version 0.5.1, espanso introduced the `edit` subcommand which makes editing configuration files much easier. Take a look at [Quick Editing](/docs/configuration/#quick-editing) if you are interested.
 
+### Customizing the Toggle Key
+
+By default, espanso can be temporarily disabled & enabled by pressing the Alt key twice, resulting in a notification saying "espanso disabled." Pressing Alt twice again will enable it, and you'll receive a notification saying "espanso enabled." This does not turn off espanso, it simply disables it until you enable it again.
+
+If you'd like to customize this behavior, simply add the `toggle_key` option to your previously mentioned `default.yml` and set it to `OFF` or one of the available options:
+
+|              |             |               |              |
+|--------------|-------------|---------------|--------------|
+| `CTRL`       | `ALT`       | `SHIFT`       | `META`       |
+| `LEFT_CTRL`  | `LEFT_ALT`  | `LEFT_SHIFT`  | `LEFT_META`  |
+| `RIGHT_CTRL` | `RIGHT_ALT` | `RIGHT_SHIFT` | `RIGHT_META` |
+
+Using the above example `default.yml`, if I wanted to make it so espanso is disabled/enabled when I press the left control key twice. To do this, I add `toggle_key: LEFT_CTRL` to the file like so, and then pressing the left control key twice disables/enables espanso:
+
+```yml
+# espanso configuration file
+
+# This is the default configuration file, change it as you like it
+# You can refer to the official documentation:
+# https://espanso.org/docs/
+toggle_key: LEFT_CTRL
+
+# Matches are the substitution rules, when you type the "trigger" string
+# it gets replaced by the "replace" string.
+matches:
+  # Simple text replacement
+  - trigger: ":espanso"
+    replace: "Hi there!"
+
+  - trigger: ":br"
+    replace: "Best Regards,\nJon Snow"
+
+...
+```
+
+And if you'd rather it not be possible to disable it on accident, just turn it off like so:
+
+```yml
+toggle_key: OFF
+```
+
+After the changes are made, if you used `espanso edit` it will automatically restart. If not, issue a `espanso restart` and you'll be ready to go!
+
 ### Understanding Packages
 
 Custom matches are amazing, but sometimes it can be tedious to define Matches for every **common operation**,
