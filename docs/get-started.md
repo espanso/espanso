@@ -136,7 +136,48 @@ Now try to type `:br` anywhere. If you did everything correctly, you should see 
 
 > In version 0.5.1, espanso introduced the `edit` subcommand which makes editing configuration files much easier. Take a look at [Quick Editing](/docs/configuration/#quick-editing) if you are interested.
 
-### Customizing the Toggle Key
+### Understanding Packages
+
+Custom matches are amazing, but sometimes it can be tedious to define Matches for every **common operation**,
+and even more when you want to **share them with other people**.
+
+espanso offers an easy way to **share and reuse matches** with other people, **packages**. In fact, they are so important that espanso includes a **build-in package manager** and a **store**, the [espanso hub](https://hub.espanso.org/).
+
+If you are lucky enough, someone might have already written a **package** to include the matches you need!
+Otherwise, you can create a package and publish it on the hub, for more information check out the [Packages](/docs/packages/) documentation.
+
+### Installing a Package
+
+Let's say you want to **add some emojis** to espanso, such that when you type `:ok` it gets expanded to 👍.
+
+A solution would be to install the [Basic Emojis](https://hub.espanso.org/packages/basic-emojis/) package from the
+[espanso hub](https://hub.espanso.org/) store. Open a terminal and type:
+
+```bash
+espanso install basic-emojis
+```
+
+At this point, as we did with custom matches, we need to **restart espanso**. We can do so with the command:
+
+```bash
+espanso restart
+```
+
+If you now type `:ook` into any text field, you should see 👍👍👍👍 appear!
+
+### Useful shortcuts
+
+Let's conclude this introduction with the most important shortcut espanso offers, the **toggle shortcut**:
+
+There are times when you may want to **disable espanso to avoid an unwanted expansion**. This can be
+easily accomplished by quickly **double pressing the `ALT` key** ( Option on MacOS ). You should then see a notification showing "Espanso disabled".
+
+At this point, espanso will be disabled and will not expand any match.
+
+To **re-enable** it, double press the `ALT` key again.
+
+
+#### Customizing the Toggle Key
 
 By default, espanso can be temporarily disabled & enabled by pressing the Alt key twice, resulting in a notification saying "espanso disabled." Pressing Alt twice again will enable it, and you'll receive a notification saying "espanso enabled." This does not turn off espanso, it simply disables it until you enable it again.
 
@@ -179,42 +220,3 @@ toggle_key: OFF
 
 After the changes are made, if you used `espanso edit` it will automatically restart. If not, issue a `espanso restart` and you'll be ready to go!
 
-### Understanding Packages
-
-Custom matches are amazing, but sometimes it can be tedious to define Matches for every **common operation**,
-and even more when you want to **share them with other people**.
-
-espanso offers an easy way to **share and reuse matches** with other people, **packages**. In fact, they are so important that espanso includes a **build-in package manager** and a **store**, the [espanso hub](https://hub.espanso.org/).
-
-If you are lucky enough, someone might have already written a **package** to include the matches you need!
-Otherwise, you can create a package and publish it on the hub, for more information check out the [Packages](/docs/packages/) documentation.
-
-### Installing a Package
-
-Let's say you want to **add some emojis** to espanso, such that when you type `:ok` it gets expanded to 👍.
-
-A solution would be to install the [Basic Emojis](https://hub.espanso.org/packages/basic-emojis/) package from the
-[espanso hub](https://hub.espanso.org/) store. Open a terminal and type:
-
-```bash
-espanso install basic-emojis
-```
-
-At this point, as we did with custom matches, we need to **restart espanso**. We can do so with the command:
-
-```bash
-espanso restart
-```
-
-If you now type `:ook` into any text field, you should see 👍👍👍👍 appear!
-
-### Useful shortcuts
-
-Let's conclude this introduction with the most important shortcut espanso offers, the **toggle shortcut**:
-
-There are times when you may want to **disable espanso to avoid an unwanted expansion**. This can be
-easily accomplished by quickly **double pressing the `ALT` key** ( Option on MacOS ). You should then see a notification showing "Espanso disabled".
-
-At this point, espanso will be disabled and will not expand any match.
-
-To **re-enable** it, double press the `ALT` key again.
