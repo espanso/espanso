@@ -366,6 +366,7 @@ impl<
                 info!("Avoiding passive expansion, as the user didn't select anything");
             } else {
                 if let Some(previous_content) = previous_clipboard {
+                    self.clipboard_manager.set_clipboard(&previous_content);
                     // Because of issue #213, we need to make sure the user selected something.
                     if clipboard == previous_content {
                         info!("Avoiding passive expansion, as the user didn't select anything");
