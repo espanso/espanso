@@ -1,5 +1,5 @@
 name: espanso
-version: 0.6.3
+version: 0.6.4
 summary: A Cross-platform Text Expander written in Rust
 description: |
   espanso is a Cross-platform, Text Expander written in Rust.
