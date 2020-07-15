@@ -349,22 +349,22 @@ impl<
         let previous_clipboard = self.clipboard_manager.get_clipboard().unwrap_or_default();
 
         // Sleep for a while, giving time to effectively copy the text
-        std::thread::sleep(std::time::Duration::from_millis(100)); // TODO: avoid hardcoding
+        std::thread::sleep(std::time::Duration::from_millis(config.passive_delay));
 
         // Clear the clipboard, for new-content detection later
         self.clipboard_manager.set_clipboard("");
+
+        // Sleep for a while, giving time to effectively copy the text
+        std::thread::sleep(std::time::Duration::from_millis(config.passive_delay));
 
         // Trigger a copy shortcut to transfer the content of the selection to the clipboard
         self.keyboard_manager.trigger_copy(&config);
 
         // Sleep for a while, giving time to effectively copy the text
-        std::thread::sleep(std::time::Duration::from_millis(100)); // TODO: avoid hardcoding
+        std::thread::sleep(std::time::Duration::from_millis(config.passive_delay));
 
         // Then get the text from the clipboard and render the match output
         let clipboard = self.clipboard_manager.get_clipboard();
-
-        // Restore original clipboard now, in case expansion doesn't happen at all
-        self.clipboard_manager.set_clipboard(&previous_clipboard);
 
         if let Some(clipboard) = clipboard {
             // Don't expand empty clipboards, as usually they are the result of an empty passive selection
@@ -380,15 +380,18 @@ impl<
                         // Paste back the result in the field
                         self.clipboard_manager.set_clipboard(&payload);
 
-                        std::thread::sleep(std::time::Duration::from_millis(100)); // TODO: avoid hardcoding
+                        std::thread::sleep(std::time::Duration::from_millis(config.passive_delay));
                         self.keyboard_manager.trigger_paste(&config);
-
-                        self.clipboard_manager.set_clipboard(&previous_clipboard);
                     }
                     _ => warn!("Cannot expand passive match"),
                 }
             }
         }
+
+        std::thread::sleep(std::time::Duration::from_millis(config.passive_delay));
+
+        // Restore original clipboard
+        self.clipboard_manager.set_clipboard(&previous_clipboard);
 
         // Re-allow espanso to interpret actions
         self.is_injecting.store(false, Release);
