@@ -373,6 +373,9 @@ impl<
             } else {
                 info!("Passive mode activated");
 
+                // Restore original clipboard in case it's used during render
+                self.clipboard_manager.set_clipboard(&previous_clipboard);
+
                 let rendered = self.renderer.render_passive(&clipboard, &config);
 
                 match rendered {
