@@ -19,6 +19,7 @@
 
 use crate::clipboard::ClipboardManager;
 use serde_yaml::Mapping;
+use std::collections::HashMap;
 
 mod clipboard;
 mod date;
@@ -26,10 +27,19 @@ pub mod dummy;
 mod random;
 mod script;
 mod shell;
+pub mod multiecho;
+pub mod vardummy;
+mod utils;
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum ExtensionResult {
+    Single(String),
+    Multiple(HashMap<String, String>),
+}
 
 pub trait Extension {
     fn name(&self) -> String;
-    fn calculate(&self, params: &Mapping, args: &Vec<String>) -> Option<String>;
+    fn calculate(&self, params: &Mapping, args: &Vec<String>, current_vars: &HashMap<String, ExtensionResult>) -> Option<ExtensionResult>;
 }
 
 pub fn get_extensions(clipboard_manager: Box<dyn ClipboardManager>) -> Vec<Box<dyn Extension>> {
@@ -38,7 +48,9 @@ pub fn get_extensions(clipboard_manager: Box<dyn ClipboardManager>) -> Vec<Box<d
         Box::new(shell::ShellExtension::new()),
         Box::new(script::ScriptExtension::new()),
         Box::new(random::RandomExtension::new()),
-        Box::new(dummy::DummyExtension::new()),
+        Box::new(multiecho::MultiEchoExtension::new()),
+        Box::new(dummy::DummyExtension::new("dummy")),
+        Box::new(dummy::DummyExtension::new("echo")),
         Box::new(clipboard::ClipboardExtension::new(clipboard_manager)),
     ]
 }

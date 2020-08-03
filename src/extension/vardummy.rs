@@ -17,29 +17,29 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::clipboard::ClipboardManager;
-use serde_yaml::Mapping;
-use crate::extension::ExtensionResult;
+use serde_yaml::{Mapping, Value};
 use std::collections::HashMap;
+use crate::extension::ExtensionResult;
 
-pub struct ClipboardExtension {
-    clipboard_manager: Box<dyn ClipboardManager>,
-}
+pub struct VarDummyExtension {}
 
-impl ClipboardExtension {
-    pub fn new(clipboard_manager: Box<dyn ClipboardManager>) -> ClipboardExtension {
-        ClipboardExtension { clipboard_manager }
+impl VarDummyExtension {
+    pub fn new() -> Self {
+        Self {}
     }
 }
 
-impl super::Extension for ClipboardExtension {
+impl super::Extension for VarDummyExtension {
     fn name(&self) -> String {
-        String::from("clipboard")
+        "vardummy".to_owned()
     }
 
-    fn calculate(&self, _: &Mapping, _: &Vec<String>, _: &HashMap<String, ExtensionResult>) -> Option<ExtensionResult> {
-        if let Some(clipboard) = self.clipboard_manager.get_clipboard() {
-            Some(ExtensionResult::Single(clipboard))
+    fn calculate(&self, params: &Mapping, _: &Vec<String>, vars: &HashMap<String, ExtensionResult>) -> Option<ExtensionResult> {
+        let target = params.get(&Value::from("target"));
+
+        if let Some(target) = target {
+            let value = vars.get(target.as_str().unwrap_or_default());
+            Some(value.unwrap().clone())
         } else {
             None
         }

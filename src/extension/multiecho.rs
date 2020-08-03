@@ -17,31 +17,32 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::clipboard::ClipboardManager;
-use serde_yaml::Mapping;
-use crate::extension::ExtensionResult;
+use serde_yaml::{Mapping, Value};
 use std::collections::HashMap;
+use crate::extension::ExtensionResult;
 
-pub struct ClipboardExtension {
-    clipboard_manager: Box<dyn ClipboardManager>,
-}
+pub struct MultiEchoExtension {}
 
-impl ClipboardExtension {
-    pub fn new(clipboard_manager: Box<dyn ClipboardManager>) -> ClipboardExtension {
-        ClipboardExtension { clipboard_manager }
+impl MultiEchoExtension {
+    pub fn new() -> MultiEchoExtension {
+        MultiEchoExtension {}
     }
 }
 
-impl super::Extension for ClipboardExtension {
+impl super::Extension for MultiEchoExtension {
     fn name(&self) -> String {
-        String::from("clipboard")
+        "multiecho".to_owned()
     }
 
-    fn calculate(&self, _: &Mapping, _: &Vec<String>, _: &HashMap<String, ExtensionResult>) -> Option<ExtensionResult> {
-        if let Some(clipboard) = self.clipboard_manager.get_clipboard() {
-            Some(ExtensionResult::Single(clipboard))
-        } else {
-            None
+    fn calculate(&self, params: &Mapping, _: &Vec<String>, _: &HashMap<String, ExtensionResult>) -> Option<ExtensionResult> {
+        let mut output: HashMap<String, String> = HashMap::new();
+        for (key, value) in params.iter() {
+            if let Some(key) = key.as_str() {
+                if let Some(value) = value.as_str() {
+                    output.insert(key.to_owned(), value.to_owned());
+                }
+            }
         }
+        Some(ExtensionResult::Multiple(output))
     }
 }
