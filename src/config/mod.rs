@@ -146,6 +146,9 @@ fn default_matches() -> Vec<Match> {
 fn default_global_vars() -> Vec<MatchVariable> {
     Vec::new()
 }
+fn default_modulo_path() -> Option<String> {
+    None
+}
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Configs {
@@ -259,6 +262,9 @@ pub struct Configs {
 
     #[serde(default = "default_global_vars")]
     pub global_vars: Vec<MatchVariable>,
+
+    #[serde(default = "default_modulo_path")]
+    pub modulo_path: Option<String>
 }
 
 // Macro used to validate config fields

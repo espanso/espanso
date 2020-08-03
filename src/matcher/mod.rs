@@ -74,7 +74,7 @@ impl<'de> serde::Deserialize<'de> for Match {
 impl<'a> From<&'a AutoMatch> for Match {
     fn from(other: &'a AutoMatch) -> Self {
         lazy_static! {
-            static ref VAR_REGEX: Regex = Regex::new("\\{\\{\\s*(\\w+)\\s*\\}\\}").unwrap();
+            static ref VAR_REGEX: Regex = Regex::new("\\{\\{\\s*(\\w+)(\\.\\w+)?\\s*\\}\\}").unwrap();
         };
 
         let mut triggers = if !other.triggers.is_empty() {

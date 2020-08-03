@@ -19,6 +19,8 @@
 
 use chrono::{DateTime, Local};
 use serde_yaml::{Mapping, Value};
+use std::collections::HashMap;
+use crate::extension::ExtensionResult;
 
 pub struct DateExtension {}
 
@@ -33,7 +35,7 @@ impl super::Extension for DateExtension {
         String::from("date")
     }
 
-    fn calculate(&self, params: &Mapping, _: &Vec<String>) -> Option<String> {
+    fn calculate(&self, params: &Mapping, _: &Vec<String>, _: &HashMap<String, ExtensionResult>) -> Option<ExtensionResult> {
         let now: DateTime<Local> = Local::now();
 
         let format = params.get(&Value::from("format"));
@@ -44,6 +46,6 @@ impl super::Extension for DateExtension {
             now.to_rfc2822()
         };
 
-        Some(date)
+        Some(ExtensionResult::Single(date))
     }
 }
