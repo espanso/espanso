@@ -171,6 +171,7 @@ Here's a list of all options available for the configuration file:
 Option | Description | Possible Values | Default | App-Specific 
 --- | --- | --- | --- | ---
 `backend` | The typing engine used. `Inject` simulate keypresses, `Clipboard` simulates a copy/paste, `Auto` is available on Linux only and combines the two previous. | `Clipboard`, `Inject` or `Auto` (Linux only) | `Inject` on Win and macOS, `Auto` on Linux | Yes
+`auto_restart` | Restart when the configuration changes | `true`/`false` | `true` | No
 `backspace_limit` | How many backspace espanso tracks to correct misspelled keywords | int | `3` | No
 `enable_active` | Disable the active mode for the current configuration | `true`/`false` | `true` | Yes
 `enable_passive` | Disable the passive mode for the current configuration | `true`/`false` | `false` | Yes
