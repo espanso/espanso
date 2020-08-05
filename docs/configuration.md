@@ -182,3 +182,4 @@ Option | Description | Possible Values | Default | App-Specific
 `secure_input_notification` | Enable/Disable the Secure Input notification on macOS | `true`/`false` | `true` | No
 `show_icon` | Show/Hide the icon in the status bar on macOS and Windows | `true`/`false` | `true` | No
 `show_notifications` | Show/Hide the notifications| `true`/`false` | `true` | No
+`fast_inject` | Use improved text injection mechanism | `true`/`false` | `true`| No
