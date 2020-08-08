@@ -164,6 +164,14 @@ Detected change, current window has properties:
 These are the parameters espanso detected for your target application, so you can now use them to create the 
 perfect filter.
 
+### macOS Notification for SecureInput
+
+On macOS there is a security feature known as `SecureInput`, which blocks text expanders from detecting input when entering text in sensitive areas, such as password fields (but also other apps, even the Terminal if configured).
+
+As a result, espanso will not work in those situations, and espanso will trigger a notification (as well as logging it) to warn the user if an app triggers SecureInput.  If you want to disable the notification, just add the following line in your config file:
+
+`secure_input_notification: false`
+
 ### Options
 
 Here's a list of all options available for the configuration file:
