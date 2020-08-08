@@ -33,6 +33,7 @@ pub struct ScrollingMatcher<'a, R: MatchReceiver, M: ConfigManager<'a>> {
     passive_press_time: RefCell<SystemTime>,
     is_enabled: RefCell<bool>,
     was_previous_char_word_separator: RefCell<bool>,
+    was_previous_char_a_match: RefCell<bool>,
 }
 
 #[derive(Clone)]
@@ -57,6 +58,7 @@ impl<'a, R: MatchReceiver, M: ConfigManager<'a>> ScrollingMatcher<'a, R, M> {
             passive_press_time,
             is_enabled: RefCell::new(true),
             was_previous_char_word_separator: RefCell::new(true),
+            was_previous_char_a_match: RefCell::new(true),
         }
     }
 
@@ -110,6 +112,9 @@ impl<'a, R: MatchReceiver, M: ConfigManager<'a>> super::Matcher for ScrollingMat
                 is_current_word_separator = true;
             }
         }
+
+        let mut was_previous_char_a_match = self.was_previous_char_a_match.borrow_mut(); 
+        (*was_previous_char_a_match) = false;
 
         let mut was_previous_word_separator = self.was_previous_char_word_separator.borrow_mut();
 
@@ -192,9 +197,7 @@ impl<'a, R: MatchReceiver, M: ConfigManager<'a>> super::Matcher for ScrollingMat
         if let Some(entry) = found_entry {
             let mtc = entry._match;
 
-            if let Some(last) = current_set_queue.back_mut() {
-                last.clear();
-            }
+            current_set_queue.clear();
 
             let trailing_separator = if !mtc.word {
                 // If it's not a word match, it cannot have a trailing separator
@@ -216,11 +219,16 @@ impl<'a, R: MatchReceiver, M: ConfigManager<'a>> super::Matcher for ScrollingMat
 
             self.receiver
                 .on_match(mtc, trailing_separator, entry.trigger_offset);
+            
+           
+            (*was_previous_char_a_match) = true;
         }
     }
 
     fn handle_modifier(&self, m: KeyModifier) {
         let config = self.config_manager.default_config();
+
+        let mut was_previous_char_a_match = self.was_previous_char_a_match.borrow_mut(); 
 
         // TODO: at the moment, activating the passive key triggers the toggle key
         // study a mechanism to avoid this problem
@@ -253,7 +261,15 @@ impl<'a, R: MatchReceiver, M: ConfigManager<'a>> super::Matcher for ScrollingMat
         if m == BACKSPACE {
             let mut current_set_queue = self.current_set_queue.borrow_mut();
             current_set_queue.pop_back();
+
+            if (*was_previous_char_a_match) {
+                current_set_queue.clear();
+                self.receiver.on_undo();
+            }
         }
+
+        // Disable the "backspace undo" feature
+        (*was_previous_char_a_match) = false;
 
         // Consider modifiers as separators to improve word matches reliability
         if m != LEFT_SHIFT && m != RIGHT_SHIFT && m != CAPS_LOCK {
@@ -269,6 +285,10 @@ impl<'a, R: MatchReceiver, M: ConfigManager<'a>> super::Matcher for ScrollingMat
         let mut was_previous_char_word_separator =
             self.was_previous_char_word_separator.borrow_mut();
         *was_previous_char_word_separator = true;
+
+        // Disable the "backspace undo" feature
+        let mut was_previous_char_a_match = self.was_previous_char_a_match.borrow_mut(); 
+        (*was_previous_char_a_match) = false;
     }
 }
 
