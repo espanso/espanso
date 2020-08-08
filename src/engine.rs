@@ -271,7 +271,10 @@ impl<
 
                 self.inject_text(&config, &target_string, m.force_clipboard);
 
-                expansion_data = Some((m.triggers[trigger_offset].clone(), target_string.chars().count() as i32));
+                // Disallow undo backspace if cursor positioning is used
+                if cursor_rewind.is_none() {
+                    expansion_data = Some((m.triggers[trigger_offset].clone(), target_string.chars().count() as i32));
+                }
 
                 if let Some(moves) = cursor_rewind {
                     // Simulate left arrow key presses to bring the cursor into the desired position
