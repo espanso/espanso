@@ -12,10 +12,13 @@ pub struct ModuloManager {
 impl ModuloManager {
     pub fn new(config: &Configs) -> Self {
         let mut modulo_path: Option<String> = None;
-        if let Some(ref _modulo_path) = config.modulo_path {
+        // Check if the `MODULO_PATH` env variable is configured
+        if let Some(_modulo_path) = std::env::var_os("MODULO_PATH") {
+            modulo_path = Some(_modulo_path.to_string_lossy().to_string())
+        } else if let Some(ref _modulo_path) = config.modulo_path { // Check the configs
             modulo_path = Some(_modulo_path.to_owned());
         }else{
-            // First check in the same directory of espanso
+            // Check in the same directory of espanso
             if let Ok(exe_path) = std::env::current_exe() {
                 if let Some(parent) = exe_path.parent() {
                     let possible_path = parent.join("modulo");
@@ -59,16 +62,18 @@ impl ModuloManager {
         None
     }
 
-    fn invoke(&self, args: &[&str], body: &str) -> Option<String> {
+    pub fn invoke(&self, args: &[&str], body: &str) -> Option<String> {
         if self.modulo_path.is_none() {
             error!("Attempt to invoke modulo even though it's not configured");
             return None;
         }
 
         if let Some(ref modulo_path) = self.modulo_path {
-            let mut child = Command::new(modulo_path)
+            let child = Command::new(modulo_path)
                 .args(args)
                 .stdin(std::process::Stdio::piped())
+                .stdout(std::process::Stdio::piped())
+                .stderr(std::process::Stdio::piped())
                 .spawn();
 
             match child {
