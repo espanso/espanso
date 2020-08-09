@@ -43,6 +43,8 @@ pub enum Shell {
 
 impl Shell {
     fn execute_cmd(&self, cmd: &str, vars: &HashMap<String, String>) -> std::io::Result<Output> {
+        let mut is_wsl = false;
+
         let mut command = match self {
             Shell::Cmd => {
                 let mut command = Command::new("cmd");
@@ -55,11 +57,13 @@ impl Shell {
                 command
             }
             Shell::WSL => {
+                is_wsl = true;
                 let mut command = Command::new("bash");
                 command.args(&["-c", &cmd]);
                 command
             }
             Shell::WSL2 => {
+                is_wsl = true;
                 let mut command = Command::new("wsl");
                 command.args(&["bash", "-c", &cmd]);
                 command
@@ -82,6 +86,22 @@ impl Shell {
         // Inject all the previous variables
         for (key, value) in vars.iter() {
             command.env(key, value);
+        }
+
+        // In WSL environment, we have to specify which ENV variables
+        // should be passed to linux.
+        // For more information: https://devblogs.microsoft.com/commandline/share-environment-vars-between-wsl-and-windows/
+        if is_wsl {
+            let mut tokens: Vec<&str> = Vec::new();
+            tokens.push("CONFIG/p");
+
+            // Add all the previous variables
+            for (key, _) in vars.iter() {
+                tokens.push(key);
+            }
+
+            let wsl_env = tokens.join(":");
+            command.env("WSLENV", wsl_env);
         }
 
         command.output()
