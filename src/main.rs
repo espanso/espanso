@@ -671,7 +671,7 @@ fn worker_background(
 
     let keyboard_manager = keyboard::get_manager();
 
-    let extensions = extension::get_extensions(Box::new(clipboard::get_manager()));
+    let extensions = extension::get_extensions(config_manager.default_config(), Box::new(clipboard::get_manager()));
 
     let renderer =
         render::default::DefaultRenderer::new(extensions, config_manager.default_config().clone());

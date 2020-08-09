@@ -119,8 +119,6 @@ impl super::Renderer for DefaultRenderer {
                     // Then the ones explicitly specified, in the given order
                     variables.extend(&content.vars);
 
-                    println!("{:?}", variables);
-
                     // Replace variable type "global" with the actual reference
                     let variables: Vec<&MatchVariable> = variables.into_iter().map(|variable| {
                         if variable.var_type == "global" {
@@ -130,8 +128,6 @@ impl super::Renderer for DefaultRenderer {
                         }
                         variable
                     }).collect();
-
-                    println!("{:?}", variables);
 
                     let mut output_map: HashMap<String, ExtensionResult> = HashMap::new();
 
