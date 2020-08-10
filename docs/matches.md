@@ -405,8 +405,8 @@ This extension also supports bash **pipes** as your shell, such as:
 
 #### Trimming the output
 
-When working with commands, it's very common to have outputs that also spawn a newline at the end. If you want to remove any 
-excess spaces/newlines, you can use the `trim` option:
+It's very common for commands to have outputs that also spawn a newline at the end. By default a trim option is enabled to remove any 
+excess spaces/newlines. You can optionally disable the `trim` option:
 
 {% raw %}
 ```yml
@@ -417,7 +417,7 @@ excess spaces/newlines, you can use the `trim` option:
       type: shell
       params:
         cmd: "ip a | grep 'inet 192' | awk '{ print $2 }'"
-        trim: true
+        trim: false
 ```
 {% endraw %}
 

@@ -121,7 +121,6 @@ but you can also install it manually from the [prebuilt executables](#installing
 The official way to install espanso on Arch-based systems is by using one of the AUR packages, currently maintained by [Scrumplex](https://scrumplex.net/). There are multiple options available:
 
 * [espanso](https://aur.archlinux.org/packages/espanso/) - Builds from the latest (stable) release.
-* [espanso-bin](https://aur.archlinux.org/packages/espanso-bin/) - Pre-compiled version for x64 systems.
 * [espanso-git](https://aur.archlinux.org/packages/espanso-git/) - Builds from latest commit ( in master branch ).
 
 When you are ready, you can install espanso with:

@@ -164,6 +164,14 @@ Detected change, current window has properties:
 These are the parameters espanso detected for your target application, so you can now use them to create the 
 perfect filter.
 
+### macOS Notification for SecureInput
+
+On macOS there is a security feature known as `SecureInput`, which blocks text expanders from detecting input when entering text in sensitive areas, such as password fields (but also other apps, even the Terminal if configured).
+
+As a result, espanso will not work in those situations, and espanso will trigger a notification (as well as logging it) to warn the user if an app triggers SecureInput.  If you want to disable the notification, just add the following line in your config file:
+
+`secure_input_notification: false`
+
 ### Options
 
 Here's a list of all options available for the configuration file:
@@ -171,6 +179,7 @@ Here's a list of all options available for the configuration file:
 Option | Description | Possible Values | Default | App-Specific 
 --- | --- | --- | --- | ---
 `backend` | The typing engine used. `Inject` simulate keypresses, `Clipboard` simulates a copy/paste, `Auto` is available on Linux only and combines the two previous. | `Clipboard`, `Inject` or `Auto` (Linux only) | `Inject` on Win and macOS, `Auto` on Linux | Yes
+`auto_restart` | Restart when the configuration changes | `true`/`false` | `true` | No
 `backspace_limit` | How many backspace espanso tracks to correct misspelled keywords | int | `3` | No
 `enable_active` | Disable the active mode for the current configuration | `true`/`false` | `true` | Yes
 `enable_passive` | Disable the passive mode for the current configuration | `true`/`false` | `false` | Yes
@@ -183,3 +192,4 @@ Option | Description | Possible Values | Default | App-Specific
 `show_icon` | Show/Hide the icon in the status bar on macOS and Windows | `true`/`false` | `true` | No
 `show_notifications` | Show/Hide the notifications| `true`/`false` | `true` | No
 `fast_inject` |  Use a faster injection mechanism (Linux only). It uses XSendEvent API rather than XTestFakeKeyEvent API, which is faster but incompatible with some applications.| `true`/`false` | `true`| Yes
+
