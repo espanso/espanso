@@ -28,6 +28,41 @@ espanso --version
 
 At this point, you have to [Enable Accessibility](#enabling-accessibility) to use espanso.
 
+### Manually
+
+Download `espanso-mac.tar.gz` from the [Releases page](https://github.com/federico-terzi/espanso/releases):
+
+```
+curl -sOL https://github.com/federico-terzi/espanso/releases/latest/download/espanso-mac.tar.gz
+```
+
+Extract the binary:
+
+```
+tar -xzf espanso-mac.tar.gz
+```
+
+Create a folder to house the binary:
+
+```
+sudo mkdir -p /usr/local/espanso/bin
+sudo cp espanso /usr/local/espanso/bin/espanso
+```
+
+Create a symbolic link in your `/usr/local/bin` folder:
+
+```
+sudo ln -s /usr/local/espanso/bin/espanso /usr/local/bin
+```
+
+To make sure that espanso was correctly installed, you can open a terminal and type:
+
+```
+espanso --version
+```
+
+At this point, you have to [Enable Accessibility](#enabling-accessibility) to use espanso.
+
 ### Enabling Accessibility
 
 Because espanso uses the macOS [Accessibility API](https://developer.apple.com/library/archive/documentation/Accessibility/Conceptual/AccessibilityMacOSX/)
