@@ -211,7 +211,7 @@ mod tests {
         let mut params = Mapping::new();
         params.insert(
             Value::from("args"),
-            Value::from(vec!["echo", "$ESPANSO_VAR1 $ESPANSO_FORM1_NAME"]),
+            Value::from(vec!["bash", "-c", "echo $ESPANSO_VAR1 $ESPANSO_FORM1_NAME"]),
         );
 
         let mut vars: HashMap<String, ExtensionResult> = HashMap::new();
@@ -221,9 +221,9 @@ mod tests {
         vars.insert("var1".to_owned(), ExtensionResult::Single("hello".to_owned()));
 
         let extension = ScriptExtension::new();
-        let output = extension.calculate(&params, &vec![]);
+        let output = extension.calculate(&params, &vec![], &vars);
 
         assert!(output.is_some());
-        assert_eq!(output.unwrap(), "hello Jon");
+        assert_eq!(output.unwrap(), ExtensionResult::Single("hello John".to_owned()));
     }
 }

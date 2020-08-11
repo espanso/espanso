@@ -1,6 +1,6 @@
 use crate::config::Configs;
 use std::process::{Command, Child, Output};
-use log::{error};
+use log::{error, info};
 use std::io::{Error, Write};
 
 pub mod form;
@@ -40,6 +40,10 @@ impl ModuloManager {
                     }
                 }
             }
+        }
+
+        if let Some(ref modulo_path) = modulo_path {
+            info!("Using modulo at {:?}", modulo_path);
         }
 
         Self {
