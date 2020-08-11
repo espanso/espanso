@@ -74,25 +74,81 @@
   link: https://anchor.fm/happy-munday-podcast
   image: "hmp.jpg"
 
+- name: Luigi Mozzillo
+  link: http://mozzillo.com/
+  image: "luigi.jpeg"
+
 - name: threeforks
   link: ""
   image: ""
+
+- name: John Kyle
+  link: https://www.johnkyle.com/
+  image: "john.png"
+
+- name: "Kristopher Paulsen"
+  link: https://github.com/KristopherPaulsen
+  image: "kristopher.jpeg"
 
 - name: Masayuki Higashino
   link: http://msyk.hgsn.info/
   image: "masayuki.png"
 
+- name: Brady Joslin
+  link: https://bradyjoslin.com/
+  image: "brady.png"
+
 - name: fattymembrane
   link: https://github.com/fattymembrane
   image: ""
+
+- name: Bob Goedert
+  link: ""
+  image: ""
+
+- name: "Kars Hamstra"
+  link: https://kars.me/espanso
+  image: "kars.jpg"
+
+- name: "Bradley Sawler"
+  link: ""
+  image: "bradley.jpg"
+
+- name: "Enno Nagel"
+  link: http://ongel.de/
+  image: "enno.jpg"
+
+- name: "George Entenman"
+  link: ""
+  image: george.jpeg
+
+- name: "Helena"
+  link: https://twitter.com/herrowna
+  image: "helena.jpg"
 
 - name: Scott Dillman
   link: http://dreamcyclestudios.com/
   image: "scott.jpeg"
 
+- name: Scott Kostojohn
+  link: https://github.com/skostojohn
+  image: "scott2.jpeg"
+
+- name: David Williams 
+  link: http://www.pacificera.com/
+  image: "david.jpeg"
+
+- name: Wesley Moore
+  link: https://github.com/wezm
+  image: "wesley.jpeg"
+
 - name: Steven Schmutz
   link: ""
   image: ""
+
+- name: "Felix Breuer"
+  link: https://breuer.dev/
+  image: felix.jpeg
 
 - name: sjs2109
   link: ""
