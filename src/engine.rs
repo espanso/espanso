@@ -19,7 +19,7 @@
 
 use crate::clipboard::ClipboardManager;
 use crate::config::BackendType;
-use crate::config::ConfigManager;
+use crate::config::{Configs, ConfigManager};
 use crate::event::{ActionEventReceiver, ActionType, SystemEvent, SystemEventReceiver};
 use crate::keyboard::KeyboardManager;
 use crate::matcher::{Match, MatchReceiver};
@@ -50,6 +50,8 @@ pub struct Engine<
     is_injecting: Arc<AtomicBool>,
 
     enabled: RefCell<bool>,
+    // Trigger string and injected text len pair
+    last_expansion_data: RefCell<Option<(String, i32)>>,
 }
 
 impl<
@@ -70,6 +72,7 @@ impl<
         is_injecting: Arc<AtomicBool>,
     ) -> Engine<'a, S, C, M, U, R> {
         let enabled = RefCell::new(true);
+        let last_expansion_data = RefCell::new(None);
 
         Engine {
             keyboard_manager,
@@ -79,6 +82,7 @@ impl<
             renderer,
             is_injecting,
             enabled,
+            last_expansion_data,
         }
     }
 
@@ -147,17 +151,63 @@ impl<
         }
     }
 
+    fn inject_text(&self, config: &Configs, target_string: &str, force_clipboard: bool) {
+        let backend = if force_clipboard {
+            &BackendType::Clipboard
+        } else if config.backend == BackendType::Auto {
+            if cfg!(target_os = "linux") {
+                let all_ascii = target_string.chars().all(|c| c.is_ascii());
+                if all_ascii {
+                    debug!(
+                        "All elements of the replacement are ascii, using Inject backend"
+                    );
+                    &BackendType::Inject
+                } else {
+                    debug!("There are non-ascii characters, using Clipboard backend");
+                    &BackendType::Clipboard
+                }
+            } else {
+                &BackendType::Inject
+            }
+        } else {
+            &config.backend
+        };
+
+        match backend {
+            BackendType::Inject => {
+                // To handle newlines, substitute each "\n" char with an Enter key press.
+                let splits = target_string.split('\n');
+
+                for (i, split) in splits.enumerate() {
+                    if i > 0 {
+                        self.keyboard_manager.send_enter(&config);
+                    }
+
+                    self.keyboard_manager.send_string(&config, split);
+                }
+            }
+            BackendType::Clipboard => {
+                self.clipboard_manager.set_clipboard(&target_string);
+                self.keyboard_manager.trigger_paste(&config);
+            }
+            _ => {
+                error!("Unsupported backend type evaluation.");
+                return;
+            }
+        }
+    }
+
     fn inject_match(
         &self,
         m: &Match,
         trailing_separator: Option<char>,
         trigger_offset: usize,
         skip_delete: bool,
-    ) {
+    ) -> Option<(String, i32)> {
         let config = self.config_manager.active_config();
 
         if !config.enable_active {
-            return;
+            return None;
         }
 
         // Block espanso from reinterpreting its own actions
@@ -178,6 +228,8 @@ impl<
         let rendered = self
             .renderer
             .render_match(m, trigger_offset, config, vec![]);
+
+        let mut expansion_data: Option<(String, i32)> = None;
 
         match rendered {
             RenderResult::Text(mut target_string) => {
@@ -213,53 +265,15 @@ impl<
                     None
                 };
 
-                let backend = if m.force_clipboard {
-                    &BackendType::Clipboard
-                } else if config.backend == BackendType::Auto {
-                    if cfg!(target_os = "linux") {
-                        let all_ascii = target_string.chars().all(|c| c.is_ascii());
-                        if all_ascii {
-                            debug!(
-                                "All elements of the replacement are ascii, using Inject backend"
-                            );
-                            &BackendType::Inject
-                        } else {
-                            debug!("There are non-ascii characters, using Clipboard backend");
-                            &BackendType::Clipboard
-                        }
-                    } else {
-                        &BackendType::Inject
-                    }
-                } else {
-                    &config.backend
-                };
+                // If the preserve_clipboard option is enabled, save the current
+                // clipboard content to restore it later.
+                previous_clipboard_content = self.return_content_if_preserve_clipboard_is_enabled();
 
-                match backend {
-                    BackendType::Inject => {
-                        // To handle newlines, substitute each "\n" char with an Enter key press.
-                        let splits = target_string.split('\n');
+                self.inject_text(&config, &target_string, m.force_clipboard);
 
-                        for (i, split) in splits.enumerate() {
-                            if i > 0 {
-                                self.keyboard_manager.send_enter(&config);
-                            }
-
-                            self.keyboard_manager.send_string(&config, split);
-                        }
-                    }
-                    BackendType::Clipboard => {
-                        // If the preserve_clipboard option is enabled, save the current
-                        // clipboard content to restore it later.
-                        previous_clipboard_content =
-                            self.return_content_if_preserve_clipboard_is_enabled();
-
-                        self.clipboard_manager.set_clipboard(&target_string);
-                        self.keyboard_manager.trigger_paste(&config);
-                    }
-                    _ => {
-                        error!("Unsupported backend type evaluation.");
-                        return;
-                    }
+                // Disallow undo backspace if cursor positioning is used
+                if cursor_rewind.is_none() {
+                    expansion_data = Some((m.triggers[trigger_offset].clone(), target_string.chars().count() as i32));
                 }
 
                 if let Some(moves) = cursor_rewind {
@@ -292,8 +306,17 @@ impl<
                 .set_clipboard(&previous_clipboard_content);
         }
 
+        // On macOS, because the keyinjection is async, we need to wait a bit before
+        // giving back the control. Otherwise, the injected actions will be handled back
+        // by espanso itself.
+        if cfg!(target_os = "macos") {
+            std::thread::sleep(std::time::Duration::from_millis(config.mac_post_inject_delay));
+        }
+
         // Re-allow espanso to interpret actions
         self.is_injecting.store(false, Release);
+
+        expansion_data
     }
 }
 
@@ -311,7 +334,26 @@ impl<
     > MatchReceiver for Engine<'a, S, C, M, U, R>
 {
     fn on_match(&self, m: &Match, trailing_separator: Option<char>, trigger_offset: usize) {
-        self.inject_match(m, trailing_separator, trigger_offset, false);
+        let expansion_data = self.inject_match(m, trailing_separator, trigger_offset, false);
+        let mut last_expansion_data = self.last_expansion_data.borrow_mut();
+        (*last_expansion_data) = expansion_data;
+    }
+
+    fn on_undo(&self) {
+        let config = self.config_manager.active_config();
+
+        if !config.undo_backspace {
+            return;
+        }
+
+        let last_expansion_data = self.last_expansion_data.borrow();
+        if let Some(ref last_expansion_data) = *last_expansion_data {
+            let (trigger_string, injected_text_len) = last_expansion_data;
+            // Delete the previously injected text, minus one character as it has been consumed by the backspace
+            self.keyboard_manager.delete_string(&config, *injected_text_len - 1);
+            // Restore previous text
+            self.inject_text(&config, trigger_string, false);
+        }
     }
 
     fn on_enable_update(&self, status: bool) {

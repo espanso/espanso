@@ -320,6 +320,7 @@ pub trait MatchReceiver {
     fn on_match(&self, m: &Match, trailing_separator: Option<char>, trigger_offset: usize);
     fn on_enable_update(&self, status: bool);
     fn on_passive(&self);
+    fn on_undo(&self);
 }
 
 pub trait Matcher: KeyEventReceiver {
