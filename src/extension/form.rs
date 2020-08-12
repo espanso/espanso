@@ -20,7 +20,7 @@
 use serde_yaml::{Mapping, Value};
 use std::collections::HashMap;
 use crate::{ui::modulo::ModuloManager, extension::ExtensionResult, config::Configs};
-use log::error;
+use log::{error, warn};
 
 pub struct FormExtension {
     manager: ModuloManager,
@@ -59,6 +59,10 @@ impl super::Extension for FormExtension {
         let serialized_config: String = serde_yaml::to_string(&form_config).expect("unable to serialize form config");
 
         let output = self.manager.invoke(&["form", "-i", "-"], &serialized_config);
+        
+        // On macOS, after the form closes we have to wait until the user releases the modifier keys
+        on_form_close();
+        
         if let Some(output) = output {
             let json: Result<HashMap<String, String>, _> = serde_json::from_str(&output);
             match json {
@@ -74,5 +78,18 @@ impl super::Extension for FormExtension {
             error!("modulo form didn't return any output");
             return None;
         }        
+    }
+}
+
+#[cfg(not(target_os = "macos"))]
+fn on_form_close() {
+    // NOOP on Windows and Linux
+}
+
+#[cfg(target_os = "macos")]
+fn on_form_close() {
+    let released = crate::keyboard::macos::wait_for_modifiers_release();
+    if !released {
+        warn!("Wait for modifiers release timed out! Please after closing the form, release your modifiers keys (CTRL, CMD, ALT, SHIFT)");
     }
 }
