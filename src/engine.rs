@@ -306,6 +306,13 @@ impl<
                 .set_clipboard(&previous_clipboard_content);
         }
 
+        // On macOS, because the keyinjection is async, we need to wait a bit before
+        // giving back the control. Otherwise, the injected actions will be handled back
+        // by espanso itself.
+        if cfg!(target_os = "macos") {
+            std::thread::sleep(std::time::Duration::from_millis(config.mac_post_inject_delay));
+        }
+
         // Re-allow espanso to interpret actions
         self.is_injecting.store(false, Release);
 

@@ -106,13 +106,6 @@ impl<'a, R: MatchReceiver, M: ConfigManager<'a>> super::Matcher for ScrollingMat
             .word_separators
             .contains(&c.chars().nth(0).unwrap_or_default());
 
-        // Workaround needed on macos to consider espanso replacement key presses as separators.
-        if cfg!(target_os = "macos") {
-            if c.len() > 1 {
-                is_current_word_separator = true;
-            }
-        }
-
         let mut was_previous_char_a_match = self.was_previous_char_a_match.borrow_mut(); 
         (*was_previous_char_a_match) = false;
 
