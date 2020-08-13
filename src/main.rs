@@ -566,8 +566,9 @@ fn watcher_background(sender: Sender<Event>) {
                 };
 
                 if let Some(path) = path {
-                    if path.extension().unwrap_or_default() == "yml" {
-                        // Only load yml files
+                    if path.extension().unwrap_or_default() == "yml" && 
+                      !path.file_name().unwrap_or_default().to_string_lossy().starts_with("."){
+                        // Only load non-hidden yml files
                         true
                     } else {
                         false
