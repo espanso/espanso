@@ -95,6 +95,9 @@ fn default_passive_arg_delimiter() -> char {
 fn default_passive_arg_escape() -> char {
     '\\'
 }
+fn default_passive_delay() -> u64 {
+    100
+}
 fn default_passive_key() -> KeyModifier {
     KeyModifier::OFF
 }
@@ -214,6 +217,9 @@ pub struct Configs {
 
     #[serde(default = "default_passive_key")]
     pub passive_key: KeyModifier,
+
+    #[serde(default = "default_passive_delay")]
+    pub passive_delay: u64,
 
     #[serde(default = "default_enable_passive")]
     pub enable_passive: bool,
