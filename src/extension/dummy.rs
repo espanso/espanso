@@ -17,9 +17,9 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::extension::ExtensionResult;
 use serde_yaml::{Mapping, Value};
 use std::collections::HashMap;
-use crate::extension::ExtensionResult;
 
 pub struct DummyExtension {
     name: String,
@@ -38,11 +38,18 @@ impl super::Extension for DummyExtension {
         self.name.clone()
     }
 
-    fn calculate(&self, params: &Mapping, _: &Vec<String>, _: &HashMap<String, ExtensionResult>) -> Option<ExtensionResult> {
+    fn calculate(
+        &self,
+        params: &Mapping,
+        _: &Vec<String>,
+        _: &HashMap<String, ExtensionResult>,
+    ) -> Option<ExtensionResult> {
         let echo = params.get(&Value::from("echo"));
 
         if let Some(echo) = echo {
-            Some(ExtensionResult::Single(echo.as_str().unwrap_or_default().to_owned()))
+            Some(ExtensionResult::Single(
+                echo.as_str().unwrap_or_default().to_owned(),
+            ))
         } else {
             None
         }

@@ -17,12 +17,12 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::extension::ExtensionResult;
 use log::{error, info, warn};
 use regex::{Captures, Regex};
 use serde_yaml::{Mapping, Value};
-use std::process::{Command, Output};
 use std::collections::HashMap;
-use crate::extension::ExtensionResult;
+use std::process::{Command, Output};
 
 lazy_static! {
     static ref POS_ARG_REGEX: Regex = if cfg!(target_os = "windows") {
@@ -150,7 +150,12 @@ impl super::Extension for ShellExtension {
         String::from("shell")
     }
 
-    fn calculate(&self, params: &Mapping, args: &Vec<String>, vars: &HashMap<String, ExtensionResult>) -> Option<ExtensionResult> {
+    fn calculate(
+        &self,
+        params: &Mapping,
+        args: &Vec<String>,
+        vars: &HashMap<String, ExtensionResult>,
+    ) -> Option<ExtensionResult> {
         let cmd = params.get(&Value::from("cmd"));
         if cmd.is_none() {
             warn!("No 'cmd' parameter specified for shell variable");
@@ -260,9 +265,15 @@ mod tests {
         assert!(output.is_some());
 
         if cfg!(target_os = "windows") {
-            assert_eq!(output.unwrap(), ExtensionResult::Single("hello world\r\n".to_owned()));
+            assert_eq!(
+                output.unwrap(),
+                ExtensionResult::Single("hello world\r\n".to_owned())
+            );
         } else {
-            assert_eq!(output.unwrap(), ExtensionResult::Single("hello world\n".to_owned()));
+            assert_eq!(
+                output.unwrap(),
+                ExtensionResult::Single("hello world\n".to_owned())
+            );
         }
     }
 
@@ -275,7 +286,10 @@ mod tests {
         let output = extension.calculate(&params, &vec![], &HashMap::new());
 
         assert!(output.is_some());
-        assert_eq!(output.unwrap(), ExtensionResult::Single("hello world".to_owned()));
+        assert_eq!(
+            output.unwrap(),
+            ExtensionResult::Single("hello world".to_owned())
+        );
     }
 
     #[test]
@@ -290,7 +304,10 @@ mod tests {
         let output = extension.calculate(&params, &vec![], &HashMap::new());
 
         assert!(output.is_some());
-        assert_eq!(output.unwrap(), ExtensionResult::Single("hello world".to_owned()));
+        assert_eq!(
+            output.unwrap(),
+            ExtensionResult::Single("hello world".to_owned())
+        );
     }
 
     #[test]
@@ -303,7 +320,10 @@ mod tests {
         let output = extension.calculate(&params, &vec![], &HashMap::new());
 
         assert!(output.is_some());
-        assert_eq!(output.unwrap(), ExtensionResult::Single("hello world".to_owned()));
+        assert_eq!(
+            output.unwrap(),
+            ExtensionResult::Single("hello world".to_owned())
+        );
     }
 
     #[test]
@@ -317,7 +337,10 @@ mod tests {
         let output = extension.calculate(&params, &vec![], &HashMap::new());
 
         assert!(output.is_some());
-        assert_eq!(output.unwrap(), ExtensionResult::Single("hello world".to_owned()));
+        assert_eq!(
+            output.unwrap(),
+            ExtensionResult::Single("hello world".to_owned())
+        );
     }
 
     #[test]
@@ -354,13 +377,16 @@ mod tests {
         if cfg!(target_os = "windows") {
             params.insert(Value::from("cmd"), Value::from("echo %ESPANSO_VAR1%"));
             params.insert(Value::from("shell"), Value::from("cmd"));
-        }else{
+        } else {
             params.insert(Value::from("cmd"), Value::from("echo $ESPANSO_VAR1"));
         }
 
         let extension = ShellExtension::new();
         let mut vars: HashMap<String, ExtensionResult> = HashMap::new();
-        vars.insert("var1".to_owned(), ExtensionResult::Single("hello".to_owned()));
+        vars.insert(
+            "var1".to_owned(),
+            ExtensionResult::Single("hello".to_owned()),
+        );
         let output = extension.calculate(&params, &vec![], &vars);
 
         assert!(output.is_some());
@@ -373,7 +399,7 @@ mod tests {
         if cfg!(target_os = "windows") {
             params.insert(Value::from("cmd"), Value::from("echo %ESPANSO_FORM1_NAME%"));
             params.insert(Value::from("shell"), Value::from("cmd"));
-        }else{
+        } else {
             params.insert(Value::from("cmd"), Value::from("echo $ESPANSO_FORM1_NAME"));
         }
 

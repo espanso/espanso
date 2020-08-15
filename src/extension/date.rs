@@ -17,10 +17,10 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use chrono::{DateTime, Local, Duration};
+use crate::extension::ExtensionResult;
+use chrono::{DateTime, Duration, Local};
 use serde_yaml::{Mapping, Value};
 use std::collections::HashMap;
-use crate::extension::ExtensionResult;
 
 pub struct DateExtension {}
 
@@ -35,13 +35,18 @@ impl super::Extension for DateExtension {
         String::from("date")
     }
 
-    fn calculate(&self, params: &Mapping, _: &Vec<String>, _: &HashMap<String, ExtensionResult>) -> Option<ExtensionResult> {
+    fn calculate(
+        &self,
+        params: &Mapping,
+        _: &Vec<String>,
+        _: &HashMap<String, ExtensionResult>,
+    ) -> Option<ExtensionResult> {
         let mut now: DateTime<Local> = Local::now();
 
         // Compute the given offset
         let offset = params.get(&Value::from("offset"));
         if let Some(offset) = offset {
-            let seconds = offset.as_i64().unwrap_or_else(|| { 0 });
+            let seconds = offset.as_i64().unwrap_or_else(|| 0);
             let offset = Duration::seconds(seconds);
             now = now + offset;
         }

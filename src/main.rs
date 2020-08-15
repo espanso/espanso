@@ -17,7 +17,7 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
- #![cfg_attr(not(test), windows_subsystem = "windows")]
+#![cfg_attr(not(test), windows_subsystem = "windows")]
 
 #[macro_use]
 extern crate lazy_static;
@@ -352,7 +352,7 @@ fn main() {
 fn attach_console() {
     // When using the windows subsystem we loose the terminal output.
     // Therefore we try to attach to the current console if available.
-    unsafe {winapi::um::wincon::AttachConsole(0xFFFFFFFF)};
+    unsafe { winapi::um::wincon::AttachConsole(0xFFFFFFFF) };
 }
 
 #[cfg(not(target_os = "windows"))]
@@ -582,8 +582,13 @@ fn watcher_background(sender: Sender<Event>) {
                 };
 
                 if let Some(path) = path {
-                    if path.extension().unwrap_or_default() == "yml" && 
-                      !path.file_name().unwrap_or_default().to_string_lossy().starts_with("."){
+                    if path.extension().unwrap_or_default() == "yml"
+                        && !path
+                            .file_name()
+                            .unwrap_or_default()
+                            .to_string_lossy()
+                            .starts_with(".")
+                    {
                         // Only load non-hidden yml files
                         true
                     } else {
@@ -688,7 +693,10 @@ fn worker_background(
 
     let keyboard_manager = keyboard::get_manager();
 
-    let extensions = extension::get_extensions(config_manager.default_config(), Box::new(clipboard::get_manager()));
+    let extensions = extension::get_extensions(
+        config_manager.default_config(),
+        Box::new(clipboard::get_manager()),
+    );
 
     let renderer =
         render::default::DefaultRenderer::new(extensions, config_manager.default_config().clone());

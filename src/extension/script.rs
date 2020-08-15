@@ -17,12 +17,12 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::extension::ExtensionResult;
 use log::{error, warn};
 use serde_yaml::{Mapping, Value};
+use std::collections::HashMap;
 use std::path::PathBuf;
 use std::process::Command;
-use std::collections::HashMap;
-use crate::extension::ExtensionResult;
 
 pub struct ScriptExtension {}
 
@@ -37,7 +37,12 @@ impl super::Extension for ScriptExtension {
         String::from("script")
     }
 
-    fn calculate(&self, params: &Mapping, user_args: &Vec<String>, vars: &HashMap<String, ExtensionResult>) -> Option<ExtensionResult> {
+    fn calculate(
+        &self,
+        params: &Mapping,
+        user_args: &Vec<String>,
+        vars: &HashMap<String, ExtensionResult>,
+    ) -> Option<ExtensionResult> {
         let args = params.get(&Value::from("args"));
         if args.is_none() {
             warn!("No 'args' parameter specified for script variable");
@@ -69,10 +74,20 @@ impl super::Extension for ScriptExtension {
                     *arg = arg.replace("%HOME%", &home_dir.to_string_lossy().to_string());
                 }
                 if arg.contains("%CONFIG%") {
-                    *arg = arg.replace("%CONFIG%", &crate::context::get_config_dir().to_string_lossy().to_string());
+                    *arg = arg.replace(
+                        "%CONFIG%",
+                        &crate::context::get_config_dir()
+                            .to_string_lossy()
+                            .to_string(),
+                    );
                 }
                 if arg.contains("%PACKAGES%") {
-                    *arg = arg.replace("%PACKAGES%", &crate::context::get_package_dir().to_string_lossy().to_string());
+                    *arg = arg.replace(
+                        "%PACKAGES%",
+                        &crate::context::get_package_dir()
+                            .to_string_lossy()
+                            .to_string(),
+                    );
                 }
 
                 // On Windows, correct paths separators
@@ -162,7 +177,10 @@ mod tests {
         let output = extension.calculate(&params, &vec![], &HashMap::new());
 
         assert!(output.is_some());
-        assert_eq!(output.unwrap(), ExtensionResult::Single("hello world".to_owned()));
+        assert_eq!(
+            output.unwrap(),
+            ExtensionResult::Single("hello world".to_owned())
+        );
     }
 
     #[test]
@@ -179,7 +197,10 @@ mod tests {
         let output = extension.calculate(&params, &vec![], &HashMap::new());
 
         assert!(output.is_some());
-        assert_eq!(output.unwrap(), ExtensionResult::Single("hello world\n".to_owned()));
+        assert_eq!(
+            output.unwrap(),
+            ExtensionResult::Single("hello world\n".to_owned())
+        );
     }
 
     #[test]
@@ -195,7 +216,10 @@ mod tests {
         let output = extension.calculate(&params, &vec!["jon".to_owned()], &HashMap::new());
 
         assert!(output.is_some());
-        assert_eq!(output.unwrap(), ExtensionResult::Single("hello world".to_owned()));
+        assert_eq!(
+            output.unwrap(),
+            ExtensionResult::Single("hello world".to_owned())
+        );
     }
 
     #[test]
@@ -212,7 +236,10 @@ mod tests {
         let output = extension.calculate(&params, &vec!["jon".to_owned()], &HashMap::new());
 
         assert!(output.is_some());
-        assert_eq!(output.unwrap(), ExtensionResult::Single("hello world jon".to_owned()));
+        assert_eq!(
+            output.unwrap(),
+            ExtensionResult::Single("hello world jon".to_owned())
+        );
     }
 
     #[test]
@@ -228,12 +255,18 @@ mod tests {
         let mut subvars = HashMap::new();
         subvars.insert("name".to_owned(), "John".to_owned());
         vars.insert("form1".to_owned(), ExtensionResult::Multiple(subvars));
-        vars.insert("var1".to_owned(), ExtensionResult::Single("hello".to_owned()));
+        vars.insert(
+            "var1".to_owned(),
+            ExtensionResult::Single("hello".to_owned()),
+        );
 
         let extension = ScriptExtension::new();
         let output = extension.calculate(&params, &vec![], &vars);
 
         assert!(output.is_some());
-        assert_eq!(output.unwrap(), ExtensionResult::Single("hello John".to_owned()));
+        assert_eq!(
+            output.unwrap(),
+            ExtensionResult::Single("hello John".to_owned())
+        );
     }
 }

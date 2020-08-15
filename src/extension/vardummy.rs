@@ -17,9 +17,9 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::extension::ExtensionResult;
 use serde_yaml::{Mapping, Value};
 use std::collections::HashMap;
-use crate::extension::ExtensionResult;
 
 pub struct VarDummyExtension {}
 
@@ -34,7 +34,12 @@ impl super::Extension for VarDummyExtension {
         "vardummy".to_owned()
     }
 
-    fn calculate(&self, params: &Mapping, _: &Vec<String>, vars: &HashMap<String, ExtensionResult>) -> Option<ExtensionResult> {
+    fn calculate(
+        &self,
+        params: &Mapping,
+        _: &Vec<String>,
+        vars: &HashMap<String, ExtensionResult>,
+    ) -> Option<ExtensionResult> {
         let target = params.get(&Value::from("target"));
 
         if let Some(target) = target {

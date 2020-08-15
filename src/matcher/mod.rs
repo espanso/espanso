@@ -75,7 +75,8 @@ impl<'de> serde::Deserialize<'de> for Match {
 impl<'a> From<&'a AutoMatch> for Match {
     fn from(other: &'a AutoMatch) -> Self {
         lazy_static! {
-            static ref VAR_REGEX: Regex = Regex::new("\\{\\{\\s*(\\w+)(\\.\\w+)?\\s*\\}\\}").unwrap();
+            static ref VAR_REGEX: Regex =
+                Regex::new("\\{\\{\\s*(\\w+)(\\.\\w+)?\\s*\\}\\}").unwrap();
         };
 
         let mut triggers = if !other.triggers.is_empty() {
@@ -145,14 +146,15 @@ impl<'a> From<&'a AutoMatch> for Match {
             };
 
             MatchContentType::Text(content)
-        } else if let Some(form) = &other.form { // Form shorthand
+        } else if let Some(form) = &other.form {
+            // Form shorthand
             // Replace all the form fields with actual variables
             let new_replace = VAR_REGEX.replace_all(&form, |caps: &Captures| {
                 let var_name = caps.get(1).unwrap().as_str();
                 format!("{{{{form1.{}}}}}", var_name)
             });
             let new_replace = new_replace.to_string();
-            
+
             // Convert the form data to valid variables
             let mut params = Mapping::new();
             if let Some(fields) = &other.form_fields {
@@ -163,14 +165,12 @@ impl<'a> From<&'a AutoMatch> for Match {
                 params.insert(Value::from("fields"), Value::from(mapping_fields));
             }
             params.insert(Value::from("layout"), Value::from(form.to_owned()));
-    
-            let vars = vec![
-                MatchVariable {
-                    name: "form1".to_owned(),
-                    var_type: "form".to_owned(),
-                    params,
-                }
-            ];
+
+            let vars = vec![MatchVariable {
+                name: "form1".to_owned(),
+                var_type: "form".to_owned(),
+                params,
+            }];
 
             let content = TextContent {
                 replace: new_replace,
@@ -241,7 +241,7 @@ struct AutoMatch {
 
     #[serde(default = "default_form")]
     pub form: Option<String>,
-    
+
     #[serde(default = "default_form_fields")]
     pub form_fields: Option<HashMap<String, Value>>,
 
@@ -603,20 +603,24 @@ mod tests {
         match _match.content {
             MatchContentType::Text(content) => {
                 let mut mapping = Mapping::new();
-                mapping.insert(Value::from("layout"), Value::from("Hey {{name}}, how are you? {{greet}}"));
-                assert_eq!(content, TextContent {
-                    replace: "Hey {{form1.name}}, how are you? {{form1.greet}}".to_owned(),
-                    _has_vars: true,
-                    vars: vec![
-                        MatchVariable {
+                mapping.insert(
+                    Value::from("layout"),
+                    Value::from("Hey {{name}}, how are you? {{greet}}"),
+                );
+                assert_eq!(
+                    content,
+                    TextContent {
+                        replace: "Hey {{form1.name}}, how are you? {{form1.greet}}".to_owned(),
+                        _has_vars: true,
+                        vars: vec![MatchVariable {
                             name: "form1".to_owned(),
                             var_type: "form".to_owned(),
                             params: mapping,
-                        }
-                    ]
-                });
-            },
-            _ => panic!("wrong content")
+                        }]
+                    }
+                );
+            }
+            _ => panic!("wrong content"),
         }
     }
 
@@ -639,20 +643,24 @@ mod tests {
                 submapping.insert(Value::from("name"), Value::from(name_mapping));
                 let mut mapping = Mapping::new();
                 mapping.insert(Value::from("fields"), Value::from(submapping));
-                mapping.insert(Value::from("layout"), Value::from("Hey {{name}}, how are you? {{greet}}"));
-                assert_eq!(content, TextContent {
-                    replace: "Hey {{form1.name}}, how are you? {{form1.greet}}".to_owned(),
-                    _has_vars: true,
-                    vars: vec![
-                        MatchVariable {
+                mapping.insert(
+                    Value::from("layout"),
+                    Value::from("Hey {{name}}, how are you? {{greet}}"),
+                );
+                assert_eq!(
+                    content,
+                    TextContent {
+                        replace: "Hey {{form1.name}}, how are you? {{form1.greet}}".to_owned(),
+                        _has_vars: true,
+                        vars: vec![MatchVariable {
                             name: "form1".to_owned(),
                             var_type: "form".to_owned(),
                             params: mapping,
-                        }
-                    ]
-                });
-            },
-            _ => panic!("wrong content")
+                        }]
+                    }
+                );
+            }
+            _ => panic!("wrong content"),
         }
     }
 }
