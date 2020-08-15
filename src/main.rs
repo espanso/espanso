@@ -17,7 +17,7 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#![windows_subsystem = "windows"]
+ #![cfg_attr(not(test), windows_subsystem = "windows")]
 
 #[macro_use]
 extern crate lazy_static;
