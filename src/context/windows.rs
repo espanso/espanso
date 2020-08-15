@@ -32,6 +32,7 @@ use widestring::{U16CStr, U16CString};
 
 const BMP_BINARY: &[u8] = include_bytes!("../res/win/espanso.bmp");
 const ICO_BINARY: &[u8] = include_bytes!("../res/win/espanso.ico");
+const RED_ICO_BINARY: &[u8] = include_bytes!("../res/win/espansored.ico");
 
 pub struct WindowsContext {
     send_channel: Sender<Event>,
@@ -77,8 +78,22 @@ impl WindowsContext {
             );
         }
 
+        let espanso_red_ico_image = espanso_dir.join("espansored.ico");
+        if espanso_red_ico_image.exists() {
+            info!("red ICO already initialized, skipping.");
+        } else {
+            fs::write(&espanso_red_ico_image, RED_ICO_BINARY)
+                .expect("Unable to write windows ico file");
+
+            info!(
+                "Extracted 'red ico' icon to: {}",
+                espanso_red_ico_image.to_str().unwrap_or("error")
+            );
+        }
+
         let bmp_icon = espanso_bmp_image.to_str().unwrap_or_default();
         let ico_icon = espanso_ico_image.to_str().unwrap_or_default();
+        let red_ico_icon = espanso_red_ico_image.to_str().unwrap_or_default();
 
         let send_channel = send_channel;
 
@@ -96,6 +111,7 @@ impl WindowsContext {
             register_context_menu_click_callback(context_menu_click_callback);
 
             let ico_file_c = U16CString::from_str(ico_icon).unwrap();
+            let red_ico_file_c = U16CString::from_str(red_ico_icon).unwrap();
             let bmp_file_c = U16CString::from_str(bmp_icon).unwrap();
 
             let show_icon = if config.show_icon { 1 } else { 0 };
@@ -104,6 +120,7 @@ impl WindowsContext {
             let res = initialize(
                 context_ptr,
                 ico_file_c.as_ptr(),
+                red_ico_file_c.as_ptr(),
                 bmp_file_c.as_ptr(),
                 show_icon,
             );
@@ -125,6 +142,12 @@ impl super::Context for WindowsContext {
 }
 
 // Native bridge code
+
+pub fn update_icon(enabled: bool) {
+    unsafe {
+        crate::bridge::windows::update_tray_icon(if enabled { 1 } else { 0 });
+    }
+}
 
 extern "C" fn keypress_callback(
     _self: *mut c_void,

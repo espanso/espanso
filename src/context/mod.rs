@@ -48,6 +48,11 @@ pub fn new(
     macos::MacContext::new(config, send_channel, is_injecting)
 }
 
+#[cfg(target_os = "macos")]
+pub fn update_icon(enabled: bool) {
+    // TODO: add update icon on macOS
+}
+
 // LINUX IMPLEMENTATION
 #[cfg(target_os = "linux")]
 pub fn new(
@@ -58,6 +63,11 @@ pub fn new(
     linux::LinuxContext::new(config, send_channel, is_injecting)
 }
 
+#[cfg(target_os = "linux")]
+pub fn update_icon(enabled: bool) {
+    // No icon on Linux
+}
+
 // WINDOWS IMPLEMENTATION
 #[cfg(target_os = "windows")]
 pub fn new(
@@ -66,6 +76,11 @@ pub fn new(
     is_injecting: Arc<AtomicBool>,
 ) -> Box<dyn Context> {
     windows::WindowsContext::new(config, send_channel, is_injecting)
+}
+
+#[cfg(target_os = "windows")]
+pub fn update_icon(enabled: bool) {
+    windows::update_icon(enabled);
 }
 
 // espanso directories

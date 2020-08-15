@@ -377,6 +377,9 @@ impl<
         if config.show_notifications {
             self.ui_manager.notify(message);
         }
+
+        // Update the icon on supported OSes.
+        crate::context::update_icon(status);
     }
 
     fn on_passive(&self) {

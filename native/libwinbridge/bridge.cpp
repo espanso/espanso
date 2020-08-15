@@ -62,6 +62,7 @@ HWND nw = NULL;
 HWND hwnd_st_u = NULL;
 HBITMAP g_espanso_bmp = NULL;
 HICON g_espanso_ico = NULL;
+HICON g_espanso_red_ico = NULL;
 NOTIFYICONDATA nid = {};
 
 UINT WM_TASKBARCREATED = RegisterWindowMessage(L"TaskbarCreated");
@@ -309,13 +310,14 @@ LRESULT CALLBACK window_procedure(HWND window, unsigned int msg, WPARAM wp, LPAR
     }
 }
 
-int32_t initialize(void * self, wchar_t * ico_path, wchar_t * bmp_path, int32_t _show_icon) {
+int32_t initialize(void * self, wchar_t * ico_path, wchar_t * red_ico_path, wchar_t * bmp_path, int32_t _show_icon) {
     manager_instance = self;
     show_icon = _show_icon;
 
     // Load the images
     g_espanso_bmp = (HBITMAP)LoadImage(NULL, bmp_path, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
     g_espanso_ico = (HICON)LoadImage(NULL, ico_path, IMAGE_ICON, 0, 0, LR_DEFAULTCOLOR | LR_SHARED | LR_DEFAULTSIZE | LR_LOADFROMFILE);
+    g_espanso_red_ico = (HICON)LoadImage(NULL, red_ico_path, IMAGE_ICON, 0, 0, LR_DEFAULTCOLOR | LR_SHARED | LR_DEFAULTSIZE | LR_LOADFROMFILE);
 
     // Make the notification capable of handling different screen definitions
     SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE);
@@ -470,6 +472,19 @@ void eventloop() {
     }
 
     // Something went wrong, this should have been an infinite loop.
+}
+
+void update_tray_icon(int32_t enabled) {
+    if (enabled) {
+        nid.hIcon = g_espanso_ico;
+    }else{
+        nid.hIcon = g_espanso_red_ico;
+    }
+
+    // Update the icon
+    if (show_icon) {
+        Shell_NotifyIcon(NIM_MODIFY, &nid);
+    }
 }
 
 /*

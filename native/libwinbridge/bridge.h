@@ -33,7 +33,7 @@ extern void * manager_instance;
  * Initialize the Windows parameters
  * return: 1 if OK, -1 otherwise.
  */
-extern "C" int32_t initialize(void * self, wchar_t * ico_path, wchar_t * bmp_path, int32_t show_icon);
+extern "C" int32_t initialize(void * self, wchar_t * ico_path, wchar_t * red_ico_path, wchar_t * bmp_path, int32_t show_icon);
 
 #define LEFT_VARIANT 1
 #define RIGHT_VARIANT 2
@@ -151,6 +151,11 @@ extern "C" int32_t show_notification(wchar_t * message);
  * Close the notification if present
  */
 extern "C" void close_notification();
+
+/*
+ * Update the tray icon status
+ */
+extern "C" void update_tray_icon(int32_t enabled);
 
 // CLIPBOARD
 
