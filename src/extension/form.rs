@@ -17,10 +17,10 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::{config::Configs, extension::ExtensionResult, ui::modulo::ModuloManager};
+use log::{error, warn};
 use serde_yaml::{Mapping, Value};
 use std::collections::HashMap;
-use crate::{ui::modulo::ModuloManager, extension::ExtensionResult, config::Configs};
-use log::{error, warn};
 
 pub struct FormExtension {
     manager: ModuloManager,
@@ -29,9 +29,7 @@ pub struct FormExtension {
 impl FormExtension {
     pub fn new(config: &Configs) -> FormExtension {
         let manager = ModuloManager::new(config);
-        FormExtension {
-            manager,
-        }
+        FormExtension { manager }
     }
 }
 
@@ -40,7 +38,12 @@ impl super::Extension for FormExtension {
         "form".to_owned()
     }
 
-    fn calculate(&self, params: &Mapping, _: &Vec<String>, _: &HashMap<String, ExtensionResult>) -> Option<ExtensionResult> {
+    fn calculate(
+        &self,
+        params: &Mapping,
+        _: &Vec<String>,
+        _: &HashMap<String, ExtensionResult>,
+    ) -> Option<ExtensionResult> {
         let layout = params.get(&Value::from("layout"));
         let layout = if let Some(value) = layout {
             value.as_str().unwrap_or_default().to_string()
@@ -48,21 +51,24 @@ impl super::Extension for FormExtension {
             error!("invoking form extension without specifying a layout");
             return None;
         };
-        
+
         let mut form_config = Mapping::new();
         form_config.insert(Value::from("layout"), Value::from(layout));
-        
-        if let Some(fields) = params.get(&Value::from("fields")) {
-            form_config.insert(Value::from("fields"), fields.clone());    
-        }
-        
-        let serialized_config: String = serde_yaml::to_string(&form_config).expect("unable to serialize form config");
 
-        let output = self.manager.invoke(&["form", "-i", "-"], &serialized_config);
-        
+        if let Some(fields) = params.get(&Value::from("fields")) {
+            form_config.insert(Value::from("fields"), fields.clone());
+        }
+
+        let serialized_config: String =
+            serde_yaml::to_string(&form_config).expect("unable to serialize form config");
+
+        let output = self
+            .manager
+            .invoke(&["form", "-i", "-"], &serialized_config);
+
         // On macOS, after the form closes we have to wait until the user releases the modifier keys
         on_form_close();
-        
+
         if let Some(output) = output {
             let json: Result<HashMap<String, String>, _> = serde_json::from_str(&output);
             match json {
@@ -77,7 +83,7 @@ impl super::Extension for FormExtension {
         } else {
             error!("modulo form didn't return any output");
             return None;
-        }        
+        }
     }
 }
 

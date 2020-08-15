@@ -1,8 +1,10 @@
+use crate::extension::ExtensionResult;
 use std::collections::HashMap;
 use std::process::Command;
-use crate::extension::ExtensionResult;
 
-pub fn convert_to_env_variables(original_vars: &HashMap<String, ExtensionResult>) -> HashMap<String, String> {
+pub fn convert_to_env_variables(
+    original_vars: &HashMap<String, ExtensionResult>,
+) -> HashMap<String, String> {
     let mut output = HashMap::new();
 
     for (key, result) in original_vars.iter() {
@@ -10,13 +12,13 @@ pub fn convert_to_env_variables(original_vars: &HashMap<String, ExtensionResult>
             ExtensionResult::Single(value) => {
                 let name = format!("ESPANSO_{}", key.to_uppercase());
                 output.insert(name, value.clone());
-            },
+            }
             ExtensionResult::Multiple(values) => {
                 for (sub_key, sub_value) in values.iter() {
                     let name = format!("ESPANSO_{}_{}", key.to_uppercase(), sub_key.to_uppercase());
                     output.insert(name, sub_value.clone());
                 }
-            },
+            }
         }
     }
 
@@ -36,7 +38,6 @@ pub fn set_command_flags(command: &mut Command) {
     // NOOP on Linux and macOS
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -49,7 +50,10 @@ mod tests {
         subvars.insert("name".to_owned(), "John".to_owned());
         subvars.insert("lastname".to_owned(), "Snow".to_owned());
         vars.insert("form1".to_owned(), ExtensionResult::Multiple(subvars));
-        vars.insert("var1".to_owned(), ExtensionResult::Single("test".to_owned()));
+        vars.insert(
+            "var1".to_owned(),
+            ExtensionResult::Single("test".to_owned()),
+        );
 
         let output = convert_to_env_variables(&vars);
         assert_eq!(output.get("ESPANSO_FORM1_NAME").unwrap(), "John");

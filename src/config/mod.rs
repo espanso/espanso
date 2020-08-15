@@ -244,7 +244,7 @@ pub struct Configs {
 
     #[serde(default = "default_secure_input_watcher_interval")]
     pub secure_input_watcher_interval: i32,
-    
+
     #[serde(default = "default_mac_post_inject_delay")]
     pub mac_post_inject_delay: u64,
 
@@ -282,7 +282,7 @@ pub struct Configs {
     pub global_vars: Vec<MatchVariable>,
 
     #[serde(default = "default_modulo_path")]
-    pub modulo_path: Option<String>
+    pub modulo_path: Option<String>,
 }
 
 // Macro used to validate config fields

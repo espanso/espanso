@@ -17,9 +17,9 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::extension::ExtensionResult;
 use serde_yaml::{Mapping, Value};
 use std::collections::HashMap;
-use crate::extension::ExtensionResult;
 
 pub struct MultiEchoExtension {}
 
@@ -34,7 +34,12 @@ impl super::Extension for MultiEchoExtension {
         "multiecho".to_owned()
     }
 
-    fn calculate(&self, params: &Mapping, _: &Vec<String>, _: &HashMap<String, ExtensionResult>) -> Option<ExtensionResult> {
+    fn calculate(
+        &self,
+        params: &Mapping,
+        _: &Vec<String>,
+        _: &HashMap<String, ExtensionResult>,
+    ) -> Option<ExtensionResult> {
         let mut output: HashMap<String, String> = HashMap::new();
         for (key, value) in params.iter() {
             if let Some(key) = key.as_str() {

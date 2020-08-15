@@ -27,7 +27,8 @@ use serde_yaml::Value;
 use std::collections::{HashMap, HashSet};
 
 lazy_static! {
-    static ref VAR_REGEX: Regex = Regex::new(r"\{\{\s*((?P<name>\w+)(\.(?P<subname>(\w+)))?)\s*\}\}").unwrap();
+    static ref VAR_REGEX: Regex =
+        Regex::new(r"\{\{\s*((?P<name>\w+)(\.(?P<subname>(\w+)))?)\s*\}\}").unwrap();
     static ref UNKNOWN_VARIABLE: String = "".to_string();
 }
 
@@ -95,9 +96,8 @@ impl super::Renderer for DefaultRenderer {
                         target_vars.insert(var_name.to_owned());
                     }
 
-                    let match_variables: HashSet<&String> = content.vars.iter().map(|var| {
-                        &var.name
-                    }).collect();
+                    let match_variables: HashSet<&String> =
+                        content.vars.iter().map(|var| &var.name).collect();
 
                     // Find the global variables that are not specified in the var list
                     let mut missing_globals = Vec::new();
@@ -106,7 +106,7 @@ impl super::Renderer for DefaultRenderer {
                         if target_vars.contains(&global_var.name) {
                             if match_variables.contains(&global_var.name) {
                                 specified_globals.insert(global_var.name.clone(), &global_var);
-                            }else {
+                            } else {
                                 missing_globals.push(global_var);
                             }
                         }
@@ -120,14 +120,18 @@ impl super::Renderer for DefaultRenderer {
                     variables.extend(&content.vars);
 
                     // Replace variable type "global" with the actual reference
-                    let variables: Vec<&MatchVariable> = variables.into_iter().map(|variable| {
-                        if variable.var_type == "global" {
-                            if let Some(actual_variable) = specified_globals.get(&variable.name) {
-                                return actual_variable.clone();
+                    let variables: Vec<&MatchVariable> = variables
+                        .into_iter()
+                        .map(|variable| {
+                            if variable.var_type == "global" {
+                                if let Some(actual_variable) = specified_globals.get(&variable.name)
+                                {
+                                    return actual_variable.clone();
+                                }
                             }
-                        }
-                        variable
-                    }).collect();
+                            variable
+                        })
+                        .collect();
 
                     let mut output_map: HashMap<String, ExtensionResult> = HashMap::new();
 
@@ -178,11 +182,15 @@ impl super::Renderer for DefaultRenderer {
                             // Normal extension variables
                             let extension = self.extension_map.get(&variable.var_type);
                             if let Some(extension) = extension {
-                                let ext_out = extension.calculate(&variable.params, &args, &output_map);
+                                let ext_out =
+                                    extension.calculate(&variable.params, &args, &output_map);
                                 if let Some(output) = ext_out {
                                     output_map.insert(variable.name.clone(), output);
                                 } else {
-                                    output_map.insert(variable.name.clone(), ExtensionResult::Single("".to_owned()));
+                                    output_map.insert(
+                                        variable.name.clone(),
+                                        ExtensionResult::Single("".to_owned()),
+                                    );
                                     warn!(
                                         "Could not generate output for variable: {}",
                                         variable.name
@@ -202,28 +210,23 @@ impl super::Renderer for DefaultRenderer {
                         let var_name = caps.name("name").unwrap().as_str();
                         let var_subname = caps.name("subname");
                         match output_map.get(var_name) {
-                            Some(result) => {
-                                match result {
-                                    ExtensionResult::Single(output) => {
-                                        output
-                                    },
-                                    ExtensionResult::Multiple(results) => {
-                                        match var_subname {
-                                            Some(var_subname) => {
-                                                let var_subname = var_subname.as_str();
-                                                results.get(var_subname).unwrap_or(&UNKNOWN_VARIABLE)
-                                            },
-                                            None => {
-                                                error!("nested name missing from multi-value variable: {}", var_name);
-                                                &UNKNOWN_VARIABLE
-                                            },
-                                        }
-                                    },
-                                }
+                            Some(result) => match result {
+                                ExtensionResult::Single(output) => output,
+                                ExtensionResult::Multiple(results) => match var_subname {
+                                    Some(var_subname) => {
+                                        let var_subname = var_subname.as_str();
+                                        results.get(var_subname).unwrap_or(&UNKNOWN_VARIABLE)
+                                    }
+                                    None => {
+                                        error!(
+                                            "nested name missing from multi-value variable: {}",
+                                            var_name
+                                        );
+                                        &UNKNOWN_VARIABLE
+                                    }
+                                },
                             },
-                            None => {
-                                &UNKNOWN_VARIABLE
-                            },
+                            None => &UNKNOWN_VARIABLE,
                         }
                     });
 
@@ -792,8 +795,6 @@ mod tests {
 
         verify_render(rendered, "RESULT");
     }
-
-
 
     #[test]
     fn test_render_variable_order() {

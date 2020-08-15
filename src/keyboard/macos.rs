@@ -20,7 +20,7 @@
 use super::PasteShortcut;
 use crate::bridge::macos::*;
 use crate::config::Configs;
-use log::{error};
+use log::error;
 use std::ffi::CString;
 
 pub struct MacKeyboardManager {}
@@ -78,10 +78,10 @@ impl super::KeyboardManager for MacKeyboardManager {
 
 pub fn wait_for_modifiers_release() -> bool {
     let start = std::time::SystemTime::now();
-    while start.elapsed().unwrap_or_default().as_millis() < 3000  {
+    while start.elapsed().unwrap_or_default().as_millis() < 3000 {
         let pressed = unsafe { crate::bridge::macos::are_modifiers_pressed() };
         if pressed == 0 {
-            return true
+            return true;
         }
         std::thread::sleep(std::time::Duration::from_millis(100));
     }

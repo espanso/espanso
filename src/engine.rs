@@ -19,7 +19,7 @@
 
 use crate::clipboard::ClipboardManager;
 use crate::config::BackendType;
-use crate::config::{Configs, ConfigManager};
+use crate::config::{ConfigManager, Configs};
 use crate::event::{ActionEventReceiver, ActionType, SystemEvent, SystemEventReceiver};
 use crate::keyboard::KeyboardManager;
 use crate::matcher::{Match, MatchReceiver};
@@ -158,9 +158,7 @@ impl<
             if cfg!(target_os = "linux") {
                 let all_ascii = target_string.chars().all(|c| c.is_ascii());
                 if all_ascii {
-                    debug!(
-                        "All elements of the replacement are ascii, using Inject backend"
-                    );
+                    debug!("All elements of the replacement are ascii, using Inject backend");
                     &BackendType::Inject
                 } else {
                     debug!("There are non-ascii characters, using Clipboard backend");
@@ -273,7 +271,10 @@ impl<
 
                 // Disallow undo backspace if cursor positioning is used
                 if cursor_rewind.is_none() {
-                    expansion_data = Some((m.triggers[trigger_offset].clone(), target_string.chars().count() as i32));
+                    expansion_data = Some((
+                        m.triggers[trigger_offset].clone(),
+                        target_string.chars().count() as i32,
+                    ));
                 }
 
                 if let Some(moves) = cursor_rewind {
@@ -310,7 +311,9 @@ impl<
         // giving back the control. Otherwise, the injected actions will be handled back
         // by espanso itself.
         if cfg!(target_os = "macos") {
-            std::thread::sleep(std::time::Duration::from_millis(config.mac_post_inject_delay));
+            std::thread::sleep(std::time::Duration::from_millis(
+                config.mac_post_inject_delay,
+            ));
         }
 
         // Re-allow espanso to interpret actions
@@ -350,7 +353,8 @@ impl<
         if let Some(ref last_expansion_data) = *last_expansion_data {
             let (trigger_string, injected_text_len) = last_expansion_data;
             // Delete the previously injected text, minus one character as it has been consumed by the backspace
-            self.keyboard_manager.delete_string(&config, *injected_text_len - 1);
+            self.keyboard_manager
+                .delete_string(&config, *injected_text_len - 1);
             // Restore previous text
             self.inject_text(&config, trigger_string, false);
         }

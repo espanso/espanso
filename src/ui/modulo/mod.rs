@@ -1,7 +1,7 @@
 use crate::config::Configs;
-use std::process::{Command, Child, Output};
 use log::{error, info};
 use std::io::{Error, Write};
+use std::process::{Child, Command, Output};
 
 pub mod form;
 
@@ -15,9 +15,10 @@ impl ModuloManager {
         // Check if the `MODULO_PATH` env variable is configured
         if let Some(_modulo_path) = std::env::var_os("MODULO_PATH") {
             modulo_path = Some(_modulo_path.to_string_lossy().to_string())
-        } else if let Some(ref _modulo_path) = config.modulo_path { // Check the configs
+        } else if let Some(ref _modulo_path) = config.modulo_path {
+            // Check the configs
             modulo_path = Some(_modulo_path.to_owned());
-        }else{
+        } else {
             // Check in the same directory of espanso
             if let Ok(exe_path) = std::env::current_exe() {
                 if let Some(parent) = exe_path.parent() {
@@ -46,9 +47,7 @@ impl ModuloManager {
             info!("Using modulo at {:?}", modulo_path);
         }
 
-        Self {
-            modulo_path,
-        }
+        Self { modulo_path }
     }
 
     pub fn is_valid(&self) -> bool {
@@ -97,23 +96,23 @@ impl ModuloManager {
                                         }
 
                                         return Some(output.to_string());
-                                    },
+                                    }
                                     Err(error) => {
                                         error!("error while getting output from modulo: {}", error);
-                                    },
+                                    }
                                 }
-                            },
+                            }
                             Err(error) => {
                                 error!("error while sending body to modulo");
-                            },
+                            }
                         }
-                    }else{
+                    } else {
                         error!("unable to open stdin to modulo");
                     }
-                },
+                }
                 Err(error) => {
                     error!("error reported when invoking modulo: {}", error);
-                },
+                }
             }
         }
 

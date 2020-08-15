@@ -106,7 +106,7 @@ impl<'a, R: MatchReceiver, M: ConfigManager<'a>> super::Matcher for ScrollingMat
             .word_separators
             .contains(&c.chars().nth(0).unwrap_or_default());
 
-        let mut was_previous_char_a_match = self.was_previous_char_a_match.borrow_mut(); 
+        let mut was_previous_char_a_match = self.was_previous_char_a_match.borrow_mut();
         (*was_previous_char_a_match) = false;
 
         let mut was_previous_word_separator = self.was_previous_char_word_separator.borrow_mut();
@@ -212,8 +212,7 @@ impl<'a, R: MatchReceiver, M: ConfigManager<'a>> super::Matcher for ScrollingMat
 
             self.receiver
                 .on_match(mtc, trailing_separator, entry.trigger_offset);
-            
-           
+
             (*was_previous_char_a_match) = true;
         }
     }
@@ -221,7 +220,7 @@ impl<'a, R: MatchReceiver, M: ConfigManager<'a>> super::Matcher for ScrollingMat
     fn handle_modifier(&self, m: KeyModifier) {
         let config = self.config_manager.default_config();
 
-        let mut was_previous_char_a_match = self.was_previous_char_a_match.borrow_mut(); 
+        let mut was_previous_char_a_match = self.was_previous_char_a_match.borrow_mut();
 
         // TODO: at the moment, activating the passive key triggers the toggle key
         // study a mechanism to avoid this problem
@@ -280,7 +279,7 @@ impl<'a, R: MatchReceiver, M: ConfigManager<'a>> super::Matcher for ScrollingMat
         *was_previous_char_word_separator = true;
 
         // Disable the "backspace undo" feature
-        let mut was_previous_char_a_match = self.was_previous_char_a_match.borrow_mut(); 
+        let mut was_previous_char_a_match = self.was_previous_char_a_match.borrow_mut();
         (*was_previous_char_a_match) = false;
     }
 }

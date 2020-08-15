@@ -17,11 +17,11 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::extension::ExtensionResult;
 use log::{error, warn};
 use rand::seq::SliceRandom;
 use serde_yaml::{Mapping, Value};
 use std::collections::HashMap;
-use crate::extension::ExtensionResult;
 
 pub struct RandomExtension {}
 
@@ -36,7 +36,12 @@ impl super::Extension for RandomExtension {
         String::from("random")
     }
 
-    fn calculate(&self, params: &Mapping, args: &Vec<String>, _: &HashMap<String, ExtensionResult>) -> Option<ExtensionResult> {
+    fn calculate(
+        &self,
+        params: &Mapping,
+        args: &Vec<String>,
+        _: &HashMap<String, ExtensionResult>,
+    ) -> Option<ExtensionResult> {
         let choices = params.get(&Value::from("choices"));
         if choices.is_none() {
             warn!("No 'choices' parameter specified for random variable");
@@ -89,7 +94,9 @@ mod tests {
 
         let output = output.unwrap();
 
-        assert!(choices.into_iter().any(|x| ExtensionResult::Single(x.to_owned()) == output));
+        assert!(choices
+            .into_iter()
+            .any(|x| ExtensionResult::Single(x.to_owned()) == output));
     }
 
     #[test]
@@ -107,6 +114,8 @@ mod tests {
 
         let rendered_choices = vec!["first test", "second test", "test third"];
 
-        assert!(rendered_choices.into_iter().any(|x| ExtensionResult::Single(x.to_owned()) == output));
+        assert!(rendered_choices
+            .into_iter()
+            .any(|x| ExtensionResult::Single(x.to_owned()) == output));
     }
 }
