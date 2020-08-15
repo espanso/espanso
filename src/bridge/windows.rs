@@ -33,6 +33,7 @@ extern "C" {
     pub fn initialize(
         s: *const c_void,
         ico_path: *const u16,
+        red_ico_path: *const u16,
         bmp_path: *const u16,
         show_icon: i32,
     ) -> i32;
@@ -48,6 +49,7 @@ extern "C" {
     pub fn register_icon_click_callback(cb: extern "C" fn(_self: *mut c_void));
     pub fn register_context_menu_click_callback(cb: extern "C" fn(_self: *mut c_void, id: i32));
     pub fn cleanup_ui();
+    pub fn update_tray_icon(enabled: i32);
 
     // CLIPBOARD
     pub fn get_clipboard(buffer: *mut u16, size: i32) -> i32;
