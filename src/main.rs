@@ -17,6 +17,8 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#![windows_subsystem = "windows"]
+
 #[macro_use]
 extern crate lazy_static;
 
@@ -76,6 +78,8 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 const LOG_FILE: &str = "espanso.log";
 
 fn main() {
+    attach_console();
+
     let install_subcommand = SubCommand::with_name("install")
         .about("Install a package. Equivalent to 'espanso package install'")
         .arg(
@@ -342,6 +346,18 @@ fn main() {
         .print_long_help()
         .expect("Unable to print help");
     println!();
+}
+
+#[cfg(target_os = "windows")]
+fn attach_console() {
+    // When using the windows subsystem we loose the terminal output.
+    // Therefore we try to attach to the current console if available.
+    unsafe {winapi::um::wincon::AttachConsole(0xFFFFFFFF)};
+}
+
+#[cfg(not(target_os = "windows"))]
+fn attach_console() {
+    // Not necessary on Linux and macOS
 }
 
 fn init_logger(config_set: &ConfigSet, reset: bool) {

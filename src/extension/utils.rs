@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::process::Command;
 use crate::extension::ExtensionResult;
 
 pub fn convert_to_env_variables(original_vars: &HashMap<String, ExtensionResult>) -> HashMap<String, String> {
@@ -22,6 +23,18 @@ pub fn convert_to_env_variables(original_vars: &HashMap<String, ExtensionResult>
     output
 }
 
+#[cfg(target_os = "windows")]
+pub fn set_command_flags(command: &mut Command) {
+    use std::os::windows::process::CommandExt;
+    // Avoid showing the shell window
+    // See: https://github.com/federico-terzi/espanso/issues/249
+    command.creation_flags(0x08000000);
+}
+
+#[cfg(not(target_os = "windows"))]
+pub fn set_command_flags(command: &mut Command) {
+    // NOOP on Linux and macOS
+}
 
 
 #[cfg(test)]

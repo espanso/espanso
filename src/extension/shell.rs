@@ -80,6 +80,9 @@ impl Shell {
             }
         };
 
+        // Set the OS-specific flags
+        super::utils::set_command_flags(&mut command);
+
         // Inject the $CONFIG variable
         command.env("CONFIG", crate::context::get_config_dir());
 

@@ -62,10 +62,17 @@ impl super::Extension for ScriptExtension {
 
             // Replace %HOME% with current user home directory to
             // create cross-platform paths. See issue #265
+            // Also replace %CONFIG% and %PACKAGES% path. See issue #380
             let home_dir = dirs::home_dir().unwrap_or_default();
             str_args.iter_mut().for_each(|arg| {
                 if arg.contains("%HOME%") {
                     *arg = arg.replace("%HOME%", &home_dir.to_string_lossy().to_string());
+                }
+                if arg.contains("%CONFIG%") {
+                    *arg = arg.replace("%CONFIG%", &crate::context::get_config_dir().to_string_lossy().to_string());
+                }
+                if arg.contains("%PACKAGES%") {
+                    *arg = arg.replace("%PACKAGES%", &crate::context::get_package_dir().to_string_lossy().to_string());
                 }
 
                 // On Windows, correct paths separators
@@ -78,6 +85,9 @@ impl super::Extension for ScriptExtension {
             });
 
             let mut command = Command::new(&str_args[0]);
+
+            // Set the OS-specific flags
+            super::utils::set_command_flags(&mut command);
 
             // Inject the $CONFIG variable
             command.env("CONFIG", crate::context::get_config_dir());
