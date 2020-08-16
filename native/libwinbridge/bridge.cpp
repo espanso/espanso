@@ -745,7 +745,7 @@ int32_t start_daemon_process() {
             NULL,
             NULL,
             FALSE,
-            DETACHED_PROCESS,
+            DETACHED_PROCESS | CREATE_NO_WINDOW,
             NULL,
             NULL,
             &si,

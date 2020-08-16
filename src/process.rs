@@ -25,7 +25,7 @@ use std::process::{Child, Command, Stdio};
 pub fn spawn_process(cmd: &str, args: &Vec<String>) -> io::Result<Child> {
     use std::os::windows::process::CommandExt;
     Command::new(cmd)
-        .creation_flags(0x00000008) // Detached Process
+        .creation_flags(0x08000008) // Detached Process without window
         .args(args)
         .spawn()
 }

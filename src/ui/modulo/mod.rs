@@ -3,8 +3,6 @@ use log::{error, info};
 use std::io::{Error, Write};
 use std::process::{Child, Command, Output};
 
-pub mod form;
-
 pub struct ModuloManager {
     modulo_path: Option<String>,
 }
@@ -72,12 +70,15 @@ impl ModuloManager {
         }
 
         if let Some(ref modulo_path) = self.modulo_path {
-            let child = Command::new(modulo_path)
-                .args(args)
+            let mut command = Command::new(modulo_path);
+            command.args(args)   
                 .stdin(std::process::Stdio::piped())
                 .stdout(std::process::Stdio::piped())
-                .stderr(std::process::Stdio::piped())
-                .spawn();
+                .stderr(std::process::Stdio::piped());
+
+            crate::utils::set_command_flags(&mut command);
+
+            let child = command.spawn();
 
             match child {
                 Ok(mut child) => {
