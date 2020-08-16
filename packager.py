@@ -211,6 +211,16 @@ def build_mac(package_info):
         with open(hash_file, "w") as hf:
             hf.write(sha256_hash.hexdigest())
 
+    modulo_sha_url = "https://github.com/federico-terzi/modulo/releases/download/v{0}/modulo-mac.sha256.txt".format(package_info.modulo_version)
+    print("Pulling SHA signature from:", modulo_sha_url)
+    modulo_sha_file = os.path.join(TARGET_DIR, "modulo.sha256")
+    urllib.request.urlretrieve(modulo_sha_url, modulo_sha_file)
+    modulo_sha = None
+    with open(modulo_sha_file, "r") as sha_f:
+        modulo_sha = sha_f.read()
+    if modulo_sha is None:
+        raise Exception("Cannot determine modulo SHA")
+
     print("Processing Homebrew formula template")
     with open("packager/mac/espanso.rb", "r") as formula_template:
         content = formula_template.read()
@@ -219,6 +229,8 @@ def build_mac(package_info):
         content = content.replace("{{{app_desc}}}", package_info.description)
         content = content.replace("{{{app_url}}}", package_info.url)
         content = content.replace("{{{app_version}}}", package_info.version)
+        content = content.replace("{{{modulo_version}}}", package_info.modulo_version)
+        content = content.replace("{{{modulo_sha}}}", modulo_sha)
 
         # Calculate hash
         with open(archive_target, "rb") as f:
