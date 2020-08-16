@@ -4,11 +4,18 @@
 class Espanso < Formula
   desc "{{{app_desc}}}"
   homepage "{{{app_url}}}"
-  url "https://github.com/federico-terzi/espanso/releases/latest/download/espanso-mac.tar.gz"
+  url "https://github.com/federico-terzi/espanso/releases/v{{{app_version}}}/download/espanso-mac.tar.gz"
   sha256 "{{{release_hash}}}"
   version "{{{app_version}}}"
 
+  resource "modulo" do
+    url "https://github.com/federico-terzi/modulo/releases/download/v{{{modulo_version}}}/modulo-mac"
+    sha256 "{{{modulo_sha}}}"
+  end
+
   def install
     bin.install "espanso"
-  end
+
+    resource("modulo").stage { bin.install "modulo-mac" => "modulo" }
+  end  
 end
