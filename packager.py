@@ -133,7 +133,7 @@ def build_windows(package_info):
         include_list.append("Source: \""+dll+"\"; DestDir: \"{app}\"; Flags: ignoreversion")
 
     print("Including modulo")
-    include_list.append("Source: \""+modulo_target_file+"\"; DestDir: \"{app}\"; Flags: ignoreversion")
+    include_list.append("Source: \""+os.path.abspath(modulo_target_file)+"\"; DestDir: \"{app}\"; Flags: ignoreversion")
 
     include = "\r\n".join(include_list)
 
