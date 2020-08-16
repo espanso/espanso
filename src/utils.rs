@@ -20,6 +20,7 @@
 use std::error::Error;
 use std::fs::create_dir;
 use std::path::Path;
+use std::process::Command;
 
 pub fn copy_dir(source_dir: &Path, dest_dir: &Path) -> Result<(), Box<dyn Error>> {
     for entry in std::fs::read_dir(source_dir)? {
@@ -38,6 +39,19 @@ pub fn copy_dir(source_dir: &Path, dest_dir: &Path) -> Result<(), Box<dyn Error>
     }
 
     Ok(())
+}
+
+#[cfg(target_os = "windows")]
+pub fn set_command_flags(command: &mut Command) {
+    use std::os::windows::process::CommandExt;
+    // Avoid showing the shell window
+    // See: https://github.com/federico-terzi/espanso/issues/249
+    command.creation_flags(0x08000000);
+}
+
+#[cfg(not(target_os = "windows"))]
+pub fn set_command_flags(command: &mut Command) {
+    // NOOP on Linux and macOS
 }
 
 #[cfg(test)]
