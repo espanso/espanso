@@ -28,6 +28,7 @@ use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering::Acquire;
 use std::sync::mpsc::Sender;
 use std::sync::Arc;
+use std::path::{Path, PathBuf};
 use widestring::{U16CStr, U16CString};
 
 const BMP_BINARY: &[u8] = include_bytes!("../res/win/espanso.bmp");
@@ -66,7 +67,7 @@ impl WindowsContext {
             );
         }
 
-        let espanso_ico_image = espanso_dir.join("espanso.ico");
+        let espanso_ico_image = get_icon_path(&espanso_dir);
         if espanso_ico_image.exists() {
             info!("ICO already initialized, skipping.");
         } else {
@@ -139,6 +140,10 @@ impl super::Context for WindowsContext {
             eventloop();
         }
     }
+}
+
+pub fn get_icon_path(espanso_dir: &Path) -> PathBuf {
+    espanso_dir.join("espanso.ico")
 }
 
 // Native bridge code

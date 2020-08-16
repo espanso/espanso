@@ -104,7 +104,7 @@ impl ModuloManager {
                                 }
                             }
                             Err(error) => {
-                                error!("error while sending body to modulo");
+                                error!("error while sending body to modulo: {}", error);
                             }
                         }
                     } else {
