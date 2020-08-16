@@ -53,10 +53,15 @@ impl super::Extension for FormExtension {
         };
 
         let mut form_config = Mapping::new();
+        form_config.insert(Value::from("title"), Value::from("espanso"));
         form_config.insert(Value::from("layout"), Value::from(layout));
 
         if let Some(fields) = params.get(&Value::from("fields")) {
             form_config.insert(Value::from("fields"), fields.clone());
+        }
+
+        if let Some(icon_path) = crate::context::get_icon_path() {
+            form_config.insert(Value::from("icon"), Value::from(icon_path.to_string_lossy().to_string()));
         }
 
         let serialized_config: String =

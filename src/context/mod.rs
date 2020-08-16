@@ -53,6 +53,11 @@ pub fn update_icon(enabled: bool) {
     // TODO: add update icon on macOS
 }
 
+#[cfg(target_os = "macos")]
+pub fn get_icon_path() -> Option<PathBuf> {
+    None
+}
+
 // LINUX IMPLEMENTATION
 #[cfg(target_os = "linux")]
 pub fn new(
@@ -68,6 +73,11 @@ pub fn update_icon(enabled: bool) {
     // No icon on Linux
 }
 
+#[cfg(target_os = "linux")]
+pub fn get_icon_path() -> Option<PathBuf> {
+    None
+}
+
 // WINDOWS IMPLEMENTATION
 #[cfg(target_os = "windows")]
 pub fn new(
@@ -81,6 +91,11 @@ pub fn new(
 #[cfg(target_os = "windows")]
 pub fn update_icon(enabled: bool) {
     windows::update_icon(enabled);
+}
+
+#[cfg(target_os = "windows")]
+pub fn get_icon_path() -> Option<PathBuf> {
+    Some(windows::get_icon_path(&get_data_dir()))
 }
 
 // espanso directories
