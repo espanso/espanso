@@ -102,7 +102,7 @@ impl super::Extension for ScriptExtension {
             let mut command = Command::new(&str_args[0]);
 
             // Set the OS-specific flags
-            super::utils::set_command_flags(&mut command);
+            crate::utils::set_command_flags(&mut command);
 
             // Inject the $CONFIG variable
             command.env("CONFIG", crate::context::get_config_dir());
