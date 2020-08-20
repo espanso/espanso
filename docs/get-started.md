@@ -55,8 +55,8 @@ reside in the `espanso` directory, whose location depends on the current OS:
 * macOS: `$HOME/Library/Preferences/espanso` (e.g. `/Users/user/Library/Preferences/espanso`)
 * Windows: `{FOLDERID_RoamingAppData}\espanso` (e.g. `C:\Users\user\AppData\Roaming\espanso`)
 
-By default, configuration folder is hidden in most systems. To open it, copy path of your
-configuration folder and paste it in the address bar (aka path bar) of your file manager/explorer.
+> By default, configuration folder is hidden in most systems. To open it, copy path of your configuration folder and paste it in the address bar (aka path bar) of your file manager/explorer.
+
 A quick way to find the path of your configuration folder is by using the following command:
 
 ```bash
@@ -84,7 +84,7 @@ Jon Snow
 
 By now you should know that we need to **define a Match**.
 
-With your favourite text editor, open the `.espanso/default.yml` file, introduced previously in the 
+With your favourite text editor, open the `espanso/default.yml` file, introduced previously in the 
 [Configuration](#configuration) section. You should see something like:
 
 ```yml
