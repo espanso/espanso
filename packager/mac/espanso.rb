@@ -4,7 +4,7 @@
 class Espanso < Formula
   desc "{{{app_desc}}}"
   homepage "{{{app_url}}}"
-  url "https://github.com/federico-terzi/espanso/releases/v{{{app_version}}}/download/espanso-mac.tar.gz"
+  url "https://github.com/federico-terzi/espanso/releases/download/v{{{app_version}}}/espanso-mac.tar.gz"
   sha256 "{{{release_hash}}}"
   version "{{{app_version}}}"
 
@@ -17,5 +17,5 @@ class Espanso < Formula
     bin.install "espanso"
 
     resource("modulo").stage { bin.install "modulo-mac" => "modulo" }
-  end  
+  end
 end
