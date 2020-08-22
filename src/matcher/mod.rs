@@ -1,5 +1,5 @@
 /*
- * This file is part of espanso.
+ * This file is part of espans{ name: (), var_type: (), params: ()}
  *
  * Copyright (C) 2019 Federico Terzi
  *
@@ -19,9 +19,10 @@
 
 use crate::event::KeyEventReceiver;
 use crate::event::{KeyEvent, KeyModifier};
-use regex::Regex;
+use regex::{Captures, Regex};
 use serde::{Deserialize, Deserializer, Serialize};
-use serde_yaml::Mapping;
+use serde_yaml::{Mapping, Value};
+use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
 
@@ -47,7 +48,7 @@ pub enum MatchContentType {
     Image(ImageContent),
 }
 
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, Serialize, Clone, PartialEq)]
 pub struct TextContent {
     pub replace: String,
     pub vars: Vec<MatchVariable>,
@@ -74,7 +75,8 @@ impl<'de> serde::Deserialize<'de> for Match {
 impl<'a> From<&'a AutoMatch> for Match {
     fn from(other: &'a AutoMatch) -> Self {
         lazy_static! {
-            static ref VAR_REGEX: Regex = Regex::new("\\{\\{\\s*(\\w+)\\s*\\}\\}").unwrap();
+            static ref VAR_REGEX: Regex =
+                Regex::new("\\{\\{\\s*(\\w+)(\\.\\w+)?\\s*\\}\\}").unwrap();
         };
 
         let mut triggers = if !other.triggers.is_empty() {
@@ -144,6 +146,39 @@ impl<'a> From<&'a AutoMatch> for Match {
             };
 
             MatchContentType::Text(content)
+        } else if let Some(form) = &other.form {
+            // Form shorthand
+            // Replace all the form fields with actual variables
+            let new_replace = VAR_REGEX.replace_all(&form, |caps: &Captures| {
+                let var_name = caps.get(1).unwrap().as_str();
+                format!("{{{{form1.{}}}}}", var_name)
+            });
+            let new_replace = new_replace.to_string();
+
+            // Convert the form data to valid variables
+            let mut params = Mapping::new();
+            if let Some(fields) = &other.form_fields {
+                let mut mapping_fields = Mapping::new();
+                fields.iter().for_each(|(key, value)| {
+                    mapping_fields.insert(Value::from(key.to_owned()), Value::from(value.clone()));
+                });
+                params.insert(Value::from("fields"), Value::from(mapping_fields));
+            }
+            params.insert(Value::from("layout"), Value::from(form.to_owned()));
+
+            let vars = vec![MatchVariable {
+                name: "form1".to_owned(),
+                var_type: "form".to_owned(),
+                params,
+            }];
+
+            let content = TextContent {
+                replace: new_replace,
+                vars,
+                _has_vars: true,
+            };
+
+            MatchContentType::Text(content)
         } else if let Some(image_path) = &other.image_path {
             // Image match
             // On Windows, we have to replace the forward / with the backslash \ in the path
@@ -173,7 +208,7 @@ impl<'a> From<&'a AutoMatch> for Match {
 
             MatchContentType::Image(content)
         } else {
-            eprintln!("ERROR: no action specified for match {}, please specify either 'replace' or 'image_path'", other.trigger);
+            eprintln!("ERROR: no action specified for match {}, please specify either 'replace', 'image_path' or 'form'", other.trigger);
             std::process::exit(2);
         };
 
@@ -203,6 +238,12 @@ struct AutoMatch {
 
     #[serde(default = "default_image_path")]
     pub image_path: Option<String>,
+
+    #[serde(default = "default_form")]
+    pub form: Option<String>,
+
+    #[serde(default = "default_form_fields")]
+    pub form_fields: Option<HashMap<String, Value>>,
 
     #[serde(default = "default_vars")]
     pub vars: Vec<MatchVariable>,
@@ -238,6 +279,12 @@ fn default_passive_only() -> bool {
 fn default_replace() -> Option<String> {
     None
 }
+fn default_form() -> Option<String> {
+    None
+}
+fn default_form_fields() -> Option<HashMap<String, Value>> {
+    None
+}
 fn default_image_path() -> Option<String> {
     None
 }
@@ -248,7 +295,7 @@ fn default_force_clipboard() -> bool {
     false
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct MatchVariable {
     pub name: String,
 
@@ -273,6 +320,7 @@ pub trait MatchReceiver {
     fn on_match(&self, m: &Match, trailing_separator: Option<char>, trigger_offset: usize);
     fn on_enable_update(&self, status: bool);
     fn on_passive(&self);
+    fn on_undo(&self);
 }
 
 pub trait Matcher: KeyEventReceiver {
@@ -542,5 +590,77 @@ mod tests {
         let _match: Match = serde_yaml::from_str(match_str).unwrap();
 
         assert_eq!(_match.triggers, vec![":..", ":..", ":.."])
+    }
+
+    #[test]
+    fn test_match_form_translated_correctly() {
+        let match_str = r###"
+        trigger: ":test"
+        form: "Hey {{name}}, how are you? {{greet}}"
+        "###;
+
+        let _match: Match = serde_yaml::from_str(match_str).unwrap();
+        match _match.content {
+            MatchContentType::Text(content) => {
+                let mut mapping = Mapping::new();
+                mapping.insert(
+                    Value::from("layout"),
+                    Value::from("Hey {{name}}, how are you? {{greet}}"),
+                );
+                assert_eq!(
+                    content,
+                    TextContent {
+                        replace: "Hey {{form1.name}}, how are you? {{form1.greet}}".to_owned(),
+                        _has_vars: true,
+                        vars: vec![MatchVariable {
+                            name: "form1".to_owned(),
+                            var_type: "form".to_owned(),
+                            params: mapping,
+                        }]
+                    }
+                );
+            }
+            _ => panic!("wrong content"),
+        }
+    }
+
+    #[test]
+    fn test_match_form_with_fields_translated_correctly() {
+        let match_str = r###"
+        trigger: ":test"
+        form: "Hey {{name}}, how are you? {{greet}}"
+        form_fields:
+          name:
+            multiline: true
+        "###;
+
+        let _match: Match = serde_yaml::from_str(match_str).unwrap();
+        match _match.content {
+            MatchContentType::Text(content) => {
+                let mut name_mapping = Mapping::new();
+                name_mapping.insert(Value::from("multiline"), Value::Bool(true));
+                let mut submapping = Mapping::new();
+                submapping.insert(Value::from("name"), Value::from(name_mapping));
+                let mut mapping = Mapping::new();
+                mapping.insert(Value::from("fields"), Value::from(submapping));
+                mapping.insert(
+                    Value::from("layout"),
+                    Value::from("Hey {{name}}, how are you? {{greet}}"),
+                );
+                assert_eq!(
+                    content,
+                    TextContent {
+                        replace: "Hey {{form1.name}}, how are you? {{form1.greet}}".to_owned(),
+                        _has_vars: true,
+                        vars: vec![MatchVariable {
+                            name: "form1".to_owned(),
+                            var_type: "form".to_owned(),
+                            params: mapping,
+                        }]
+                    }
+                );
+            }
+            _ => panic!("wrong content"),
+        }
     }
 }

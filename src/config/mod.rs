@@ -95,6 +95,9 @@ fn default_passive_arg_delimiter() -> char {
 fn default_passive_arg_escape() -> char {
     '\\'
 }
+fn default_passive_delay() -> u64 {
+    100
+}
 fn default_passive_key() -> KeyModifier {
     KeyModifier::OFF
 }
@@ -131,6 +134,9 @@ fn default_show_notifications() -> bool {
 fn default_auto_restart() -> bool {
     true
 }
+fn default_undo_backspace() -> bool {
+    true
+}
 fn default_show_icon() -> bool {
     true
 }
@@ -145,6 +151,12 @@ fn default_matches() -> Vec<Match> {
 }
 fn default_global_vars() -> Vec<MatchVariable> {
     Vec::new()
+}
+fn default_modulo_path() -> Option<String> {
+    None
+}
+fn default_mac_post_inject_delay() -> u64 {
+    100
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -206,11 +218,17 @@ pub struct Configs {
     #[serde(default = "default_passive_key")]
     pub passive_key: KeyModifier,
 
+    #[serde(default = "default_passive_delay")]
+    pub passive_delay: u64,
+
     #[serde(default = "default_enable_passive")]
     pub enable_passive: bool,
 
     #[serde(default = "default_enable_active")]
     pub enable_active: bool,
+
+    #[serde(default = "default_undo_backspace")]
+    pub undo_backspace: bool,
 
     #[serde(default)]
     pub paste_shortcut: PasteShortcut,
@@ -226,6 +244,9 @@ pub struct Configs {
 
     #[serde(default = "default_secure_input_watcher_interval")]
     pub secure_input_watcher_interval: i32,
+
+    #[serde(default = "default_mac_post_inject_delay")]
+    pub mac_post_inject_delay: u64,
 
     #[serde(default = "default_secure_input_notification")]
     pub secure_input_notification: bool,
@@ -259,6 +280,9 @@ pub struct Configs {
 
     #[serde(default = "default_global_vars")]
     pub global_vars: Vec<MatchVariable>,
+
+    #[serde(default = "default_modulo_path")]
+    pub modulo_path: Option<String>,
 }
 
 // Macro used to validate config fields

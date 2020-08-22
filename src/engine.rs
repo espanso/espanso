@@ -19,7 +19,7 @@
 
 use crate::clipboard::ClipboardManager;
 use crate::config::BackendType;
-use crate::config::ConfigManager;
+use crate::config::{ConfigManager, Configs};
 use crate::event::{ActionEventReceiver, ActionType, SystemEvent, SystemEventReceiver};
 use crate::keyboard::KeyboardManager;
 use crate::matcher::{Match, MatchReceiver};
@@ -50,6 +50,8 @@ pub struct Engine<
     is_injecting: Arc<AtomicBool>,
 
     enabled: RefCell<bool>,
+    // Trigger string and injected text len pair
+    last_expansion_data: RefCell<Option<(String, i32)>>,
 }
 
 impl<
@@ -70,6 +72,7 @@ impl<
         is_injecting: Arc<AtomicBool>,
     ) -> Engine<'a, S, C, M, U, R> {
         let enabled = RefCell::new(true);
+        let last_expansion_data = RefCell::new(None);
 
         Engine {
             keyboard_manager,
@@ -79,6 +82,7 @@ impl<
             renderer,
             is_injecting,
             enabled,
+            last_expansion_data,
         }
     }
 
@@ -147,17 +151,61 @@ impl<
         }
     }
 
+    fn inject_text(&self, config: &Configs, target_string: &str, force_clipboard: bool) {
+        let backend = if force_clipboard {
+            &BackendType::Clipboard
+        } else if config.backend == BackendType::Auto {
+            if cfg!(target_os = "linux") {
+                let all_ascii = target_string.chars().all(|c| c.is_ascii());
+                if all_ascii {
+                    debug!("All elements of the replacement are ascii, using Inject backend");
+                    &BackendType::Inject
+                } else {
+                    debug!("There are non-ascii characters, using Clipboard backend");
+                    &BackendType::Clipboard
+                }
+            } else {
+                &BackendType::Inject
+            }
+        } else {
+            &config.backend
+        };
+
+        match backend {
+            BackendType::Inject => {
+                // To handle newlines, substitute each "\n" char with an Enter key press.
+                let splits = target_string.split('\n');
+
+                for (i, split) in splits.enumerate() {
+                    if i > 0 {
+                        self.keyboard_manager.send_enter(&config);
+                    }
+
+                    self.keyboard_manager.send_string(&config, split);
+                }
+            }
+            BackendType::Clipboard => {
+                self.clipboard_manager.set_clipboard(&target_string);
+                self.keyboard_manager.trigger_paste(&config);
+            }
+            _ => {
+                error!("Unsupported backend type evaluation.");
+                return;
+            }
+        }
+    }
+
     fn inject_match(
         &self,
         m: &Match,
         trailing_separator: Option<char>,
         trigger_offset: usize,
         skip_delete: bool,
-    ) {
+    ) -> Option<(String, i32)> {
         let config = self.config_manager.active_config();
 
         if !config.enable_active {
-            return;
+            return None;
         }
 
         // Block espanso from reinterpreting its own actions
@@ -178,6 +226,8 @@ impl<
         let rendered = self
             .renderer
             .render_match(m, trigger_offset, config, vec![]);
+
+        let mut expansion_data: Option<(String, i32)> = None;
 
         match rendered {
             RenderResult::Text(mut target_string) => {
@@ -213,53 +263,18 @@ impl<
                     None
                 };
 
-                let backend = if m.force_clipboard {
-                    &BackendType::Clipboard
-                } else if config.backend == BackendType::Auto {
-                    if cfg!(target_os = "linux") {
-                        let all_ascii = target_string.chars().all(|c| c.is_ascii());
-                        if all_ascii {
-                            debug!(
-                                "All elements of the replacement are ascii, using Inject backend"
-                            );
-                            &BackendType::Inject
-                        } else {
-                            debug!("There are non-ascii characters, using Clipboard backend");
-                            &BackendType::Clipboard
-                        }
-                    } else {
-                        &BackendType::Inject
-                    }
-                } else {
-                    &config.backend
-                };
+                // If the preserve_clipboard option is enabled, save the current
+                // clipboard content to restore it later.
+                previous_clipboard_content = self.return_content_if_preserve_clipboard_is_enabled();
 
-                match backend {
-                    BackendType::Inject => {
-                        // To handle newlines, substitute each "\n" char with an Enter key press.
-                        let splits = target_string.split('\n');
+                self.inject_text(&config, &target_string, m.force_clipboard);
 
-                        for (i, split) in splits.enumerate() {
-                            if i > 0 {
-                                self.keyboard_manager.send_enter(&config);
-                            }
-
-                            self.keyboard_manager.send_string(&config, split);
-                        }
-                    }
-                    BackendType::Clipboard => {
-                        // If the preserve_clipboard option is enabled, save the current
-                        // clipboard content to restore it later.
-                        previous_clipboard_content =
-                            self.return_content_if_preserve_clipboard_is_enabled();
-
-                        self.clipboard_manager.set_clipboard(&target_string);
-                        self.keyboard_manager.trigger_paste(&config);
-                    }
-                    _ => {
-                        error!("Unsupported backend type evaluation.");
-                        return;
-                    }
+                // Disallow undo backspace if cursor positioning is used
+                if cursor_rewind.is_none() {
+                    expansion_data = Some((
+                        m.triggers[trigger_offset].clone(),
+                        target_string.chars().count() as i32,
+                    ));
                 }
 
                 if let Some(moves) = cursor_rewind {
@@ -292,8 +307,19 @@ impl<
                 .set_clipboard(&previous_clipboard_content);
         }
 
+        // On macOS, because the keyinjection is async, we need to wait a bit before
+        // giving back the control. Otherwise, the injected actions will be handled back
+        // by espanso itself.
+        if cfg!(target_os = "macos") {
+            std::thread::sleep(std::time::Duration::from_millis(
+                config.mac_post_inject_delay,
+            ));
+        }
+
         // Re-allow espanso to interpret actions
         self.is_injecting.store(false, Release);
+
+        expansion_data
     }
 }
 
@@ -311,7 +337,27 @@ impl<
     > MatchReceiver for Engine<'a, S, C, M, U, R>
 {
     fn on_match(&self, m: &Match, trailing_separator: Option<char>, trigger_offset: usize) {
-        self.inject_match(m, trailing_separator, trigger_offset, false);
+        let expansion_data = self.inject_match(m, trailing_separator, trigger_offset, false);
+        let mut last_expansion_data = self.last_expansion_data.borrow_mut();
+        (*last_expansion_data) = expansion_data;
+    }
+
+    fn on_undo(&self) {
+        let config = self.config_manager.active_config();
+
+        if !config.undo_backspace {
+            return;
+        }
+
+        let last_expansion_data = self.last_expansion_data.borrow();
+        if let Some(ref last_expansion_data) = *last_expansion_data {
+            let (trigger_string, injected_text_len) = last_expansion_data;
+            // Delete the previously injected text, minus one character as it has been consumed by the backspace
+            self.keyboard_manager
+                .delete_string(&config, *injected_text_len - 1);
+            // Restore previous text
+            self.inject_text(&config, trigger_string, false);
+        }
     }
 
     fn on_enable_update(&self, status: bool) {
@@ -331,6 +377,9 @@ impl<
         if config.show_notifications {
             self.ui_manager.notify(message);
         }
+
+        // Update the icon on supported OSes.
+        crate::context::update_icon(status);
     }
 
     fn on_passive(&self) {
@@ -346,16 +395,22 @@ impl<
         // In order to avoid pasting previous clipboard contents, we need to check if
         // a new clipboard was effectively copied.
         // See issue: https://github.com/federico-terzi/espanso/issues/213
-        let previous_clipboard = self.clipboard_manager.get_clipboard();
+        let previous_clipboard = self.clipboard_manager.get_clipboard().unwrap_or_default();
 
         // Sleep for a while, giving time to effectively copy the text
-        std::thread::sleep(std::time::Duration::from_millis(100)); // TODO: avoid hardcoding
+        std::thread::sleep(std::time::Duration::from_millis(config.passive_delay));
+
+        // Clear the clipboard, for new-content detection later
+        self.clipboard_manager.set_clipboard("");
+
+        // Sleep for a while, giving time to effectively copy the text
+        std::thread::sleep(std::time::Duration::from_millis(config.passive_delay));
 
         // Trigger a copy shortcut to transfer the content of the selection to the clipboard
         self.keyboard_manager.trigger_copy(&config);
 
         // Sleep for a while, giving time to effectively copy the text
-        std::thread::sleep(std::time::Duration::from_millis(100)); // TODO: avoid hardcoding
+        std::thread::sleep(std::time::Duration::from_millis(config.passive_delay));
 
         // Then get the text from the clipboard and render the match output
         let clipboard = self.clipboard_manager.get_clipboard();
@@ -365,29 +420,30 @@ impl<
             if clipboard.trim().is_empty() {
                 info!("Avoiding passive expansion, as the user didn't select anything");
             } else {
-                if let Some(previous_content) = previous_clipboard {
-                    // Because of issue #213, we need to make sure the user selected something.
-                    if clipboard == previous_content {
-                        info!("Avoiding passive expansion, as the user didn't select anything");
-                    } else {
-                        info!("Passive mode activated");
+                info!("Passive mode activated");
 
-                        let rendered = self.renderer.render_passive(&clipboard, &config);
+                // Restore original clipboard in case it's used during render
+                self.clipboard_manager.set_clipboard(&previous_clipboard);
 
-                        match rendered {
-                            RenderResult::Text(payload) => {
-                                // Paste back the result in the field
-                                self.clipboard_manager.set_clipboard(&payload);
+                let rendered = self.renderer.render_passive(&clipboard, &config);
 
-                                std::thread::sleep(std::time::Duration::from_millis(100)); // TODO: avoid hardcoding
-                                self.keyboard_manager.trigger_paste(&config);
-                            }
-                            _ => warn!("Cannot expand passive match"),
-                        }
+                match rendered {
+                    RenderResult::Text(payload) => {
+                        // Paste back the result in the field
+                        self.clipboard_manager.set_clipboard(&payload);
+
+                        std::thread::sleep(std::time::Duration::from_millis(config.passive_delay));
+                        self.keyboard_manager.trigger_paste(&config);
                     }
+                    _ => warn!("Cannot expand passive match"),
                 }
             }
         }
+
+        std::thread::sleep(std::time::Duration::from_millis(config.passive_delay));
+
+        // Restore original clipboard
+        self.clipboard_manager.set_clipboard(&previous_clipboard);
 
         // Re-allow espanso to interpret actions
         self.is_injecting.store(false, Release);

@@ -17,26 +17,39 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::extension::ExtensionResult;
 use serde_yaml::{Mapping, Value};
+use std::collections::HashMap;
 
-pub struct DummyExtension {}
+pub struct DummyExtension {
+    name: String,
+}
 
 impl DummyExtension {
-    pub fn new() -> DummyExtension {
-        DummyExtension {}
+    pub fn new(name: &str) -> DummyExtension {
+        DummyExtension {
+            name: name.to_owned(),
+        }
     }
 }
 
 impl super::Extension for DummyExtension {
     fn name(&self) -> String {
-        String::from("dummy")
+        self.name.clone()
     }
 
-    fn calculate(&self, params: &Mapping, _: &Vec<String>) -> Option<String> {
+    fn calculate(
+        &self,
+        params: &Mapping,
+        _: &Vec<String>,
+        _: &HashMap<String, ExtensionResult>,
+    ) -> Option<ExtensionResult> {
         let echo = params.get(&Value::from("echo"));
 
         if let Some(echo) = echo {
-            Some(echo.as_str().unwrap_or_default().to_owned())
+            Some(ExtensionResult::Single(
+                echo.as_str().unwrap_or_default().to_owned(),
+            ))
         } else {
             None
         }

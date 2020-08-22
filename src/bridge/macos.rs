@@ -63,4 +63,5 @@ extern "C" {
     pub fn delete_string(count: i32);
     pub fn trigger_paste();
     pub fn trigger_copy();
+    pub fn are_modifiers_pressed() -> i32;
 }

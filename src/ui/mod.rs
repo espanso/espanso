@@ -26,6 +26,8 @@ mod linux;
 #[cfg(target_os = "macos")]
 mod macos;
 
+pub mod modulo;
+
 pub trait UIManager {
     fn notify(&self, message: &str);
     fn notify_delay(&self, message: &str, duration: i32);

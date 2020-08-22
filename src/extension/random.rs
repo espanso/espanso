@@ -17,9 +17,11 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::extension::ExtensionResult;
 use log::{error, warn};
 use rand::seq::SliceRandom;
 use serde_yaml::{Mapping, Value};
+use std::collections::HashMap;
 
 pub struct RandomExtension {}
 
@@ -34,7 +36,12 @@ impl super::Extension for RandomExtension {
         String::from("random")
     }
 
-    fn calculate(&self, params: &Mapping, args: &Vec<String>) -> Option<String> {
+    fn calculate(
+        &self,
+        params: &Mapping,
+        args: &Vec<String>,
+        _: &HashMap<String, ExtensionResult>,
+    ) -> Option<ExtensionResult> {
         let choices = params.get(&Value::from("choices"));
         if choices.is_none() {
             warn!("No 'choices' parameter specified for random variable");
@@ -55,7 +62,7 @@ impl super::Extension for RandomExtension {
                     // Render arguments
                     let output = crate::render::utils::render_args(output, args);
 
-                    return Some(output);
+                    return Some(ExtensionResult::Single(output));
                 }
                 None => {
                     error!("Could not select a random choice.");
@@ -81,13 +88,15 @@ mod tests {
         params.insert(Value::from("choices"), Value::from(choices.clone()));
 
         let extension = RandomExtension::new();
-        let output = extension.calculate(&params, &vec![]);
+        let output = extension.calculate(&params, &vec![], &HashMap::new());
 
         assert!(output.is_some());
 
         let output = output.unwrap();
 
-        assert!(choices.iter().any(|x| x == &output));
+        assert!(choices
+            .into_iter()
+            .any(|x| ExtensionResult::Single(x.to_owned()) == output));
     }
 
     #[test]
@@ -97,7 +106,7 @@ mod tests {
         params.insert(Value::from("choices"), Value::from(choices.clone()));
 
         let extension = RandomExtension::new();
-        let output = extension.calculate(&params, &vec!["test".to_owned()]);
+        let output = extension.calculate(&params, &vec!["test".to_owned()], &HashMap::new());
 
         assert!(output.is_some());
 
@@ -105,6 +114,8 @@ mod tests {
 
         let rendered_choices = vec!["first test", "second test", "test third"];
 
-        assert!(rendered_choices.iter().any(|x| x == &output));
+        assert!(rendered_choices
+            .into_iter()
+            .any(|x| ExtensionResult::Single(x.to_owned()) == output));
     }
 }

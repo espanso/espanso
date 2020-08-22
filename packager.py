@@ -20,6 +20,7 @@ class PackageInfo:
     description: str
     publisher: str
     url: str
+    modulo_version: str
 
 @click.group()
 def cli():
@@ -44,7 +45,8 @@ def build(skipcargo):
                                cargo_info["package"]["version"],
                                cargo_info["package"]["description"],
                                cargo_info["package"]["authors"][0],
-                               cargo_info["package"]["homepage"])
+                               cargo_info["package"]["homepage"],
+                               cargo_info["modulo"]["version"])
     print(package_info)
 
     if not skipcargo:
@@ -58,6 +60,11 @@ def build(skipcargo):
     elif TARGET_OS == "macos":
         build_mac(package_info)
 
+def calculate_sha256(file):
+    with open(file, "rb") as f:
+        b = f.read() # read entire file as bytes
+        readable_hash = hashlib.sha256(b).hexdigest()
+        return readable_hash
 
 def build_windows(package_info):
     print("Starting packaging process for Windows...")
@@ -77,6 +84,22 @@ def build_windows(package_info):
 
     TARGET_DIR = os.path.join(PACKAGER_TARGET_DIR, "win")
     os.makedirs(TARGET_DIR, exist_ok=True)
+
+    modulo_url = "https://github.com/federico-terzi/modulo/releases/download/v{0}/modulo-win.exe".format(package_info.modulo_version)
+    modulo_sha_url = "https://github.com/federico-terzi/modulo/releases/download/v{0}/modulo-win.exe.sha256.txt".format(package_info.modulo_version)
+    print("Pulling modulo depencency from:", modulo_url)
+    modulo_target_file = os.path.join(TARGET_DIR, "modulo.exe")
+    urllib.request.urlretrieve(modulo_url, modulo_target_file)
+    print("Pulling SHA signature from:", modulo_sha_url)
+    modulo_sha_file = os.path.join(TARGET_DIR, "modulo.sha256")
+    urllib.request.urlretrieve(modulo_sha_url, modulo_sha_file)
+    print("Checking signatures...")
+    expected_sha = None
+    with open(modulo_sha_file, "r") as sha_f:
+        expected_sha = sha_f.read()
+    actual_sha = calculate_sha256(modulo_target_file)
+    if actual_sha != expected_sha:
+        raise Exception("Modulo SHA256 is not matching")
 
     print("Gathering CRT DLLs...")
     msvc_dirs = glob.glob("C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\*\\VC\\Redist\\MSVC\\*")
@@ -104,12 +127,15 @@ def build_windows(package_info):
     dll_files = glob.glob(msvc_dir + "\\x64\\*CRT\\*.dll")
 
     print("Found DLLs:")
-    dll_include_list = []
+    include_list = []
     for dll in dll_files:
         print("Including: "+dll)
-        dll_include_list.append("Source: \""+dll+"\"; DestDir: \"{app}\"; Flags: ignoreversion")
+        include_list.append("Source: \""+dll+"\"; DestDir: \"{app}\"; Flags: ignoreversion")
 
-    dll_include = "\r\n".join(dll_include_list)
+    print("Including modulo")
+    include_list.append("Source: \""+os.path.abspath(modulo_target_file)+"\"; DestDir: \"{app}\"; Flags: ignoreversion")
+
+    include = "\r\n".join(include_list)
 
     INSTALLER_NAME = f"espanso-win-installer"
 
@@ -130,7 +156,7 @@ def build_windows(package_info):
         content = content.replace("{{{executable_path}}}",  os.path.abspath("target/release/espanso.exe"))
         content = content.replace("{{{output_dir}}}",  os.path.abspath(TARGET_DIR))
         content = content.replace("{{{output_name}}}",  INSTALLER_NAME)
-        content = content.replace("{{{dll_include}}}",  dll_include)
+        content = content.replace("{{{dll_include}}}",  include)
 
         with open(os.path.join(TARGET_DIR, "setupscript.iss"), "w") as output_script:
             output_script.write(content)
@@ -185,6 +211,16 @@ def build_mac(package_info):
         with open(hash_file, "w") as hf:
             hf.write(sha256_hash.hexdigest())
 
+    modulo_sha_url = "https://github.com/federico-terzi/modulo/releases/download/v{0}/modulo-mac.sha256.txt".format(package_info.modulo_version)
+    print("Pulling SHA signature from:", modulo_sha_url)
+    modulo_sha_file = os.path.join(TARGET_DIR, "modulo.sha256")
+    urllib.request.urlretrieve(modulo_sha_url, modulo_sha_file)
+    modulo_sha = None
+    with open(modulo_sha_file, "r") as sha_f:
+        modulo_sha = sha_f.read()
+    if modulo_sha is None:
+        raise Exception("Cannot determine modulo SHA")
+
     print("Processing Homebrew formula template")
     with open("packager/mac/espanso.rb", "r") as formula_template:
         content = formula_template.read()
@@ -193,6 +229,8 @@ def build_mac(package_info):
         content = content.replace("{{{app_desc}}}", package_info.description)
         content = content.replace("{{{app_url}}}", package_info.url)
         content = content.replace("{{{app_version}}}", package_info.version)
+        content = content.replace("{{{modulo_version}}}", package_info.modulo_version)
+        content = content.replace("{{{modulo_sha}}}", modulo_sha)
 
         # Calculate hash
         with open(archive_target, "rb") as f:

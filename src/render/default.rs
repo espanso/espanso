@@ -19,15 +19,16 @@
 
 use super::*;
 use crate::config::Configs;
-use crate::extension::Extension;
-use crate::matcher::{Match, MatchContentType};
+use crate::extension::{Extension, ExtensionResult};
+use crate::matcher::{Match, MatchContentType, MatchVariable};
 use log::{error, warn};
 use regex::{Captures, Regex};
 use serde_yaml::Value;
 use std::collections::{HashMap, HashSet};
 
 lazy_static! {
-    static ref VAR_REGEX: Regex = Regex::new("\\{\\{\\s*(?P<name>\\w+)\\s*\\}\\}").unwrap();
+    static ref VAR_REGEX: Regex =
+        Regex::new(r"\{\{\s*((?P<name>\w+)(\.(?P<subname>(\w+)))?)\s*\}\}").unwrap();
     static ref UNKNOWN_VARIABLE: String = "".to_string();
 }
 
@@ -86,24 +87,55 @@ impl super::Renderer for DefaultRenderer {
         match &m.content {
             // Text Match
             MatchContentType::Text(content) => {
-                // Find all the variables that are required by the current match
-                let mut target_vars = HashSet::new();
+                let target_string = if content._has_vars {
+                    // Find all the variables that are required by the current match
+                    let mut target_vars: HashSet<String> = HashSet::new();
 
-                for caps in VAR_REGEX.captures_iter(&content.replace) {
-                    let var_name = caps.name("name").unwrap().as_str();
-                    target_vars.insert(var_name.to_owned());
-                }
+                    for caps in VAR_REGEX.captures_iter(&content.replace) {
+                        let var_name = caps.name("name").unwrap().as_str();
+                        target_vars.insert(var_name.to_owned());
+                    }
 
-                let target_string = if target_vars.len() > 0 {
-                    let mut output_map = HashMap::new();
+                    let match_variables: HashSet<&String> =
+                        content.vars.iter().map(|var| &var.name).collect();
 
-                    // Cycle through both the local and global variables
-                    for variable in config.global_vars.iter().chain(&content.vars) {
-                        // Skip all non-required variables
-                        if !target_vars.contains(&variable.name) {
-                            continue;
+                    // Find the global variables that are not specified in the var list
+                    let mut missing_globals = Vec::new();
+                    let mut specified_globals: HashMap<String, &MatchVariable> = HashMap::new();
+                    for global_var in config.global_vars.iter() {
+                        if target_vars.contains(&global_var.name) {
+                            if match_variables.contains(&global_var.name) {
+                                specified_globals.insert(global_var.name.clone(), &global_var);
+                            } else {
+                                missing_globals.push(global_var);
+                            }
                         }
+                    }
 
+                    // Determine the variable evaluation order
+                    let mut variables: Vec<&MatchVariable> = Vec::new();
+                    // First place the global that are not explicitly specified
+                    variables.extend(missing_globals);
+                    // Then the ones explicitly specified, in the given order
+                    variables.extend(&content.vars);
+
+                    // Replace variable type "global" with the actual reference
+                    let variables: Vec<&MatchVariable> = variables
+                        .into_iter()
+                        .map(|variable| {
+                            if variable.var_type == "global" {
+                                if let Some(actual_variable) = specified_globals.get(&variable.name)
+                                {
+                                    return actual_variable.clone();
+                                }
+                            }
+                            variable
+                        })
+                        .collect();
+
+                    let mut output_map: HashMap<String, ExtensionResult> = HashMap::new();
+
+                    for variable in variables.into_iter() {
                         // In case of variables of type match, we need to recursively call
                         // the render function
                         if variable.var_type == "match" {
@@ -140,7 +172,7 @@ impl super::Renderer for DefaultRenderer {
                             // Inner matches are only supported for text-expansions, warn the user otherwise
                             match result {
                                 RenderResult::Text(inner_content) => {
-                                    output_map.insert(variable.name.clone(), inner_content);
+                                    output_map.insert(variable.name.clone(), ExtensionResult::Single(inner_content));
                                 },
                                 _ => {
                                     warn!("Inner matches must be of TEXT type. Mixing images is not supported yet.")
@@ -150,11 +182,15 @@ impl super::Renderer for DefaultRenderer {
                             // Normal extension variables
                             let extension = self.extension_map.get(&variable.var_type);
                             if let Some(extension) = extension {
-                                let ext_out = extension.calculate(&variable.params, &args);
+                                let ext_out =
+                                    extension.calculate(&variable.params, &args, &output_map);
                                 if let Some(output) = ext_out {
                                     output_map.insert(variable.name.clone(), output);
                                 } else {
-                                    output_map.insert(variable.name.clone(), "".to_owned());
+                                    output_map.insert(
+                                        variable.name.clone(),
+                                        ExtensionResult::Single("".to_owned()),
+                                    );
                                     warn!(
                                         "Could not generate output for variable: {}",
                                         variable.name
@@ -172,8 +208,26 @@ impl super::Renderer for DefaultRenderer {
                     // Replace the variables
                     let result = VAR_REGEX.replace_all(&content.replace, |caps: &Captures| {
                         let var_name = caps.name("name").unwrap().as_str();
-                        let output = output_map.get(var_name);
-                        output.unwrap_or(&UNKNOWN_VARIABLE)
+                        let var_subname = caps.name("subname");
+                        match output_map.get(var_name) {
+                            Some(result) => match result {
+                                ExtensionResult::Single(output) => output,
+                                ExtensionResult::Multiple(results) => match var_subname {
+                                    Some(var_subname) => {
+                                        let var_subname = var_subname.as_str();
+                                        results.get(var_subname).unwrap_or(&UNKNOWN_VARIABLE)
+                                    }
+                                    None => {
+                                        error!(
+                                            "nested name missing from multi-value variable: {}",
+                                            var_name
+                                        );
+                                        &UNKNOWN_VARIABLE
+                                    }
+                                },
+                            },
+                            None => &UNKNOWN_VARIABLE,
+                        }
                     });
 
                     result.to_string()
@@ -311,7 +365,11 @@ mod tests {
 
     fn get_renderer(config: Configs) -> DefaultRenderer {
         DefaultRenderer::new(
-            vec![Box::new(crate::extension::dummy::DummyExtension::new())],
+            vec![
+                Box::new(crate::extension::dummy::DummyExtension::new("dummy")),
+                Box::new(crate::extension::vardummy::VarDummyExtension::new()),
+                Box::new(crate::extension::multiecho::MultiEchoExtension::new()),
+            ],
             config,
         )
     }
@@ -736,5 +794,83 @@ mod tests {
         let rendered = renderer.render_match(&m, trigger_offset, &config, vec![]);
 
         verify_render(rendered, "RESULT");
+    }
+
+    #[test]
+    fn test_render_variable_order() {
+        let config = get_config_for(
+            r###"
+        matches:
+            - trigger: 'test'
+              replace: "{{output}}"
+              vars:
+                - name: first
+                  type: dummy
+                  params:
+                    echo: "hello"
+                - name: output
+                  type: vardummy
+                  params:
+                    target: "first"
+        "###,
+        );
+
+        let renderer = get_renderer(config.clone());
+        let m = config.matches[0].clone();
+        let rendered = renderer.render_match(&m, 0, &config, vec![]);
+        verify_render(rendered, "hello");
+    }
+
+    #[test]
+    fn test_render_global_variable_order() {
+        let config = get_config_for(
+            r###"
+        global_vars:
+          - name: hello
+            type: dummy
+            params:
+              echo: "hello"
+        matches:
+            - trigger: 'test'
+              replace: "{{hello}} {{output}}"
+              vars:
+                - name: first
+                  type: dummy
+                  params:
+                    echo: "world"
+                - name: output
+                  type: vardummy
+                  params:
+                    target: "first"
+                - name: hello
+                  type: global
+        "###,
+        );
+
+        let renderer = get_renderer(config.clone());
+        let m = config.matches[0].clone();
+        let rendered = renderer.render_match(&m, 0, &config, vec![]);
+        verify_render(rendered, "hello world");
+    }
+
+    #[test]
+    fn test_render_multiple_results() {
+        let config = get_config_for(
+            r###"
+        matches:
+            - trigger: 'test'
+              replace: "hello {{var1.name}}"
+              vars:
+                - name: var1
+                  type: multiecho
+                  params:
+                    name: "world"
+        "###,
+        );
+
+        let renderer = get_renderer(config.clone());
+        let m = config.matches[0].clone();
+        let rendered = renderer.render_match(&m, 0, &config, vec![]);
+        verify_render(rendered, "hello world");
     }
 }
