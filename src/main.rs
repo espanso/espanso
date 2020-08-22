@@ -17,6 +17,8 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#![cfg_attr(not(test), windows_subsystem = "windows")]
+
 #[macro_use]
 extern crate lazy_static;
 
@@ -76,6 +78,8 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 const LOG_FILE: &str = "espanso.log";
 
 fn main() {
+    attach_console();
+
     let install_subcommand = SubCommand::with_name("install")
         .about("Install a package. Equivalent to 'espanso package install'")
         .arg(
@@ -344,6 +348,18 @@ fn main() {
     println!();
 }
 
+#[cfg(target_os = "windows")]
+fn attach_console() {
+    // When using the windows subsystem we loose the terminal output.
+    // Therefore we try to attach to the current console if available.
+    unsafe { winapi::um::wincon::AttachConsole(0xFFFFFFFF) };
+}
+
+#[cfg(not(target_os = "windows"))]
+fn attach_console() {
+    // Not necessary on Linux and macOS
+}
+
 fn init_logger(config_set: &ConfigSet, reset: bool) {
     // Initialize log
     let log_level = match config_set.default.log_level {
@@ -566,8 +582,14 @@ fn watcher_background(sender: Sender<Event>) {
                 };
 
                 if let Some(path) = path {
-                    if path.extension().unwrap_or_default() == "yml" {
-                        // Only load yml files
+                    if path.extension().unwrap_or_default() == "yml"
+                        && !path
+                            .file_name()
+                            .unwrap_or_default()
+                            .to_string_lossy()
+                            .starts_with(".")
+                    {
+                        // Only load non-hidden yml files
                         true
                     } else {
                         false
@@ -671,7 +693,10 @@ fn worker_background(
 
     let keyboard_manager = keyboard::get_manager();
 
-    let extensions = extension::get_extensions(Box::new(clipboard::get_manager()));
+    let extensions = extension::get_extensions(
+        config_manager.default_config(),
+        Box::new(clipboard::get_manager()),
+    );
 
     let renderer =
         render::default::DefaultRenderer::new(extensions, config_manager.default_config().clone());

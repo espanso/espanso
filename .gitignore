@@ -36,3 +36,5 @@ DerivedData
 *.snap
 
 venv/
+
+.vscode/

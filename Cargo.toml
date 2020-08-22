@@ -1,6 +1,6 @@
 [package]
 name = "espanso"
-version = "0.6.3"
+version = "0.7.0"
 authors = ["Federico Terzi <federicoterzi96@gmail.com>"]
 license = "GPL-3.0"
 description = "Cross-platform Text Expander written in Rust"
@@ -8,6 +8,9 @@ readme = "README.md"
 homepage = "https://github.com/federico-terzi/espanso"
 edition = "2018"
 build="build.rs"
+
+[modulo]
+version = "0.1.0"
 
 [dependencies]
 widestring = "0.4.0"
@@ -38,6 +41,7 @@ signal-hook = "0.1.15"
 
 [target.'cfg(windows)'.dependencies]
 named_pipe = "0.4.1"
+winapi = { version = "0.3.9", features = ["wincon"] }
 
 [build-dependencies]
 cmake = "0.1.31"

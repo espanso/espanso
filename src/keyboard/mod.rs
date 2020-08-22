@@ -27,7 +27,7 @@ mod windows;
 mod linux;
 
 #[cfg(target_os = "macos")]
-mod macos;
+pub mod macos;
 
 pub trait KeyboardManager {
     fn send_string(&self, active_config: &Configs, s: &str);

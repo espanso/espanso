@@ -1,7 +1,7 @@
 /*
  * This file is part of espanso.
  *
- * Copyright (C) 2019-2020 Federico Terzi
+ * Copyright (C) 2020 Federico Terzi
  *
  * espanso is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,47 +18,35 @@
  */
 
 use crate::extension::ExtensionResult;
-use chrono::{DateTime, Duration, Local};
 use serde_yaml::{Mapping, Value};
 use std::collections::HashMap;
 
-pub struct DateExtension {}
+pub struct VarDummyExtension {}
 
-impl DateExtension {
-    pub fn new() -> DateExtension {
-        DateExtension {}
+impl VarDummyExtension {
+    pub fn new() -> Self {
+        Self {}
     }
 }
 
-impl super::Extension for DateExtension {
+impl super::Extension for VarDummyExtension {
     fn name(&self) -> String {
-        String::from("date")
+        "vardummy".to_owned()
     }
 
     fn calculate(
         &self,
         params: &Mapping,
         _: &Vec<String>,
-        _: &HashMap<String, ExtensionResult>,
+        vars: &HashMap<String, ExtensionResult>,
     ) -> Option<ExtensionResult> {
-        let mut now: DateTime<Local> = Local::now();
+        let target = params.get(&Value::from("target"));
 
-        // Compute the given offset
-        let offset = params.get(&Value::from("offset"));
-        if let Some(offset) = offset {
-            let seconds = offset.as_i64().unwrap_or_else(|| 0);
-            let offset = Duration::seconds(seconds);
-            now = now + offset;
-        }
-
-        let format = params.get(&Value::from("format"));
-
-        let date = if let Some(format) = format {
-            now.format(format.as_str().unwrap()).to_string()
+        if let Some(target) = target {
+            let value = vars.get(target.as_str().unwrap_or_default());
+            Some(value.unwrap().clone())
         } else {
-            now.to_rfc2822()
-        };
-
-        Some(ExtensionResult::Single(date))
+            None
+        }
     }
 }

@@ -77,6 +77,11 @@ void send_multi_vkey(int32_t vk, int32_t count);
 void delete_string(int32_t count);
 
 /*
+ * Check whether keyboard modifiers (CTRL, CMD, SHIFT, ecc) are pressed
+ */
+int32_t are_modifiers_pressed();
+
+/*
  * Trigger normal paste ( Pressing CMD+V )
  */
 void trigger_paste();

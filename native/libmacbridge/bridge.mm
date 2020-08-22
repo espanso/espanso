@@ -235,6 +235,14 @@ void trigger_copy() {
     });
 }
 
+int32_t are_modifiers_pressed() {
+    if ((NSEventModifierFlagControl | NSEventModifierFlagOption | 
+         NSEventModifierFlagCommand | NSEventModifierFlagShift) & [NSEvent modifierFlags]) {
+        return 1;
+    }
+    return 0;
+}
+
 int32_t get_active_app_bundle(char * buffer, int32_t size) {
     NSRunningApplication *frontApp = [[NSWorkspace sharedWorkspace] frontmostApplication];
     NSString *bundlePath = [frontApp bundleURL].path;

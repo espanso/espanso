@@ -17,28 +17,50 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::clipboard::ClipboardManager;
+use crate::{clipboard::ClipboardManager, config::Configs};
 use serde_yaml::Mapping;
+use std::collections::HashMap;
 
 mod clipboard;
 mod date;
 pub mod dummy;
+mod form;
+pub mod multiecho;
 mod random;
 mod script;
 mod shell;
+mod utils;
+pub mod vardummy;
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum ExtensionResult {
+    Single(String),
+    Multiple(HashMap<String, String>),
+}
 
 pub trait Extension {
     fn name(&self) -> String;
-    fn calculate(&self, params: &Mapping, args: &Vec<String>) -> Option<String>;
+    fn calculate(
+        &self,
+        params: &Mapping,
+        args: &Vec<String>,
+        current_vars: &HashMap<String, ExtensionResult>,
+    ) -> Option<ExtensionResult>;
 }
 
-pub fn get_extensions(clipboard_manager: Box<dyn ClipboardManager>) -> Vec<Box<dyn Extension>> {
+pub fn get_extensions(
+    config: &Configs,
+    clipboard_manager: Box<dyn ClipboardManager>,
+) -> Vec<Box<dyn Extension>> {
     vec![
         Box::new(date::DateExtension::new()),
         Box::new(shell::ShellExtension::new()),
         Box::new(script::ScriptExtension::new()),
         Box::new(random::RandomExtension::new()),
-        Box::new(dummy::DummyExtension::new()),
+        Box::new(multiecho::MultiEchoExtension::new()),
+        Box::new(dummy::DummyExtension::new("dummy")),
+        Box::new(dummy::DummyExtension::new("echo")),
         Box::new(clipboard::ClipboardExtension::new(clipboard_manager)),
+        Box::new(form::FormExtension::new(config)),
     ]
 }

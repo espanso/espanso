@@ -1,7 +1,7 @@
 /*
  * This file is part of espanso.
  *
- * Copyright (C) 2019-2020 Federico Terzi
+ * Copyright (C) 2020 Federico Terzi
  *
  * espanso is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,21 +18,20 @@
  */
 
 use crate::extension::ExtensionResult;
-use chrono::{DateTime, Duration, Local};
 use serde_yaml::{Mapping, Value};
 use std::collections::HashMap;
 
-pub struct DateExtension {}
+pub struct MultiEchoExtension {}
 
-impl DateExtension {
-    pub fn new() -> DateExtension {
-        DateExtension {}
+impl MultiEchoExtension {
+    pub fn new() -> MultiEchoExtension {
+        MultiEchoExtension {}
     }
 }
 
-impl super::Extension for DateExtension {
+impl super::Extension for MultiEchoExtension {
     fn name(&self) -> String {
-        String::from("date")
+        "multiecho".to_owned()
     }
 
     fn calculate(
@@ -41,24 +40,14 @@ impl super::Extension for DateExtension {
         _: &Vec<String>,
         _: &HashMap<String, ExtensionResult>,
     ) -> Option<ExtensionResult> {
-        let mut now: DateTime<Local> = Local::now();
-
-        // Compute the given offset
-        let offset = params.get(&Value::from("offset"));
-        if let Some(offset) = offset {
-            let seconds = offset.as_i64().unwrap_or_else(|| 0);
-            let offset = Duration::seconds(seconds);
-            now = now + offset;
+        let mut output: HashMap<String, String> = HashMap::new();
+        for (key, value) in params.iter() {
+            if let Some(key) = key.as_str() {
+                if let Some(value) = value.as_str() {
+                    output.insert(key.to_owned(), value.to_owned());
+                }
+            }
         }
-
-        let format = params.get(&Value::from("format"));
-
-        let date = if let Some(format) = format {
-            now.format(format.as_str().unwrap()).to_string()
-        } else {
-            now.to_rfc2822()
-        };
-
-        Some(ExtensionResult::Single(date))
+        Some(ExtensionResult::Multiple(output))
     }
 }
