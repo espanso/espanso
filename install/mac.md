@@ -61,6 +61,8 @@ To make sure that espanso was correctly installed, you can open a terminal and t
 espanso --version
 ```
 
+**Important:** Some of the most recent espanso features require also `modulo`, so make sure to follow the installation instructions from the [modulo docs](https://github.com/federico-terzi/modulo#macos).
+
 At this point, you have to [Enable Accessibility](#enabling-accessibility) to use espanso.
 
 ### Enabling Accessibility

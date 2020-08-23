@@ -112,10 +112,6 @@ allowed)
 #### Publishing on espanso hub
 
 After following all these steps, you can request to publish your package to [espanso hub](http://hub.espanso.org)
-by opening an [Issue](https://github.com/federico-terzi/espanso-hub/issues) with the following format:
-* Title: 'New package - <package name>'
-* Body:
-    * The package **repository** url
-    * A short description of your package
-    * List of replacements and optionally, their descriptions
-    * Requirements/Dependencies, if any
+by opening an [Issue](https://github.com/federico-terzi/espanso-hub/issues) with the following information:
+
+* The repository **url**

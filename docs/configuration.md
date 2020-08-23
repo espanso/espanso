@@ -32,15 +32,6 @@ you will be working with. You can find a list of all the possible options in the
 
 The `user` folder is used to store more advanced user configurations, such as [Application-specific](#application-specific-configurations) configs.
 
-#### Migrating from versions prior to v0.3.0
-
-Prior to version v0.3.0, espanso located all configurations in the user home directory, into the `.espanso` folder.
-This location is now deprecated and, while being still supported for compatibility purposes, you should migrate to the new one with the following steps:
-
-* Copy the `default.yml` and the `user/` directory in the new `espanso` config folder ( you can find the new config location with the `espanso path` command ).
-* Copy the contents of the `packages` folder into the new `packages` path ( you can find the new package 
-location with the `espanso path` command ).
-
 ### Quick Editing
 
 Introduced in version 0.5.1, espanso now ships with the `edit` subcommand, which makes editing configuration files much more convenient. Let's see how it works:
@@ -141,7 +132,7 @@ Filter | Description | Windows Support | MacOS Support | Linux Support
 `filter_exec` | Filter based on the current application executable path | Full support | Full support | Partial support
 `filter_class` | Filter based on the current Window class | Uses the application executable path instead | Uses the App identifier instead | Full support
 
-The `filter_title`, `filter_exec` and `filter_class` filters support a full **regex** as parameter.
+The `filter_title`, `filter_exec` and `filter_class` filters support a full **regex** as parameter, but make sure to escape the special characters properly.
 
 #### Finding the right filters
 
@@ -163,6 +154,45 @@ Detected change, current window has properties:
 
 These are the parameters espanso detected for your target application, so you can now use them to create the 
 perfect filter.
+
+### Customizing the Toggle Key
+
+By default, espanso can be temporarily disabled and enabled by pressing the Alt key twice, resulting in a
+notification saying "espanso disabled." Pressing Alt twice again will enable it, and you'll receive a
+notification saying "espanso enabled."
+
+If you'd like to customize the key, simply add the `toggle_key` option to your
+`default.yml` configuration and set it to one of the available options:
+
+|              |             |               |              |
+|--------------|-------------|---------------|--------------|
+| `CTRL`       | `ALT`       | `SHIFT`       | `META`       |
+| `LEFT_CTRL`  | `LEFT_ALT`  | `LEFT_SHIFT`  | `LEFT_META`  |
+| `RIGHT_CTRL` | `RIGHT_ALT` | `RIGHT_SHIFT` | `RIGHT_META` |
+
+And if you'd rather turn it off, you can do so with:
+
+```yml
+toggle_key: OFF
+```
+
+### Hiding the Icon
+
+You can hide the espanso icon on macOS and Windows by adding the following option to your `default.yml` file:
+
+```yaml
+show_icon: false
+```
+
+### Hiding the Notifications
+
+You can hide the espanso notifications by adding the following option to your `default.yml` config:
+
+```yaml
+show_notifications: false
+```
+
+**Note for macOS users:** if you only want to hide the *SecureInput* notifications, please read the following section.1
 
 ### macOS Notification for SecureInput
 
@@ -191,5 +221,6 @@ Option | Description | Possible Values | Default | App-Specific
 `secure_input_notification` | Enable/Disable the Secure Input notification on macOS | `true`/`false` | `true` | No
 `show_icon` | Show/Hide the icon in the status bar on macOS and Windows | `true`/`false` | `true` | No
 `show_notifications` | Show/Hide the notifications| `true`/`false` | `true` | No
+`undo_backspace` | Enable/Disable the Backspace-To-Undo feature | `true`/`false` | `true`| Yes
 `fast_inject` |  Use a faster injection mechanism (Linux only). It uses XSendEvent API rather than XTestFakeKeyEvent API, which is faster but incompatible with some applications.| `true`/`false` | `true`| Yes
 

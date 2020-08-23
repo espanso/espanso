@@ -7,6 +7,9 @@
 - name: Matches
   link: /docs/matches/
   desc: This sections will cover Matches in detail, showing their features and options.
+- name: Forms
+  link: /docs/forms/
+  desc: An introduction to Forms, a powerful feature to create customizable prompts.
 - name: Packages
   link: /docs/packages/
   desc: This section will cover the basics and the creation of espanso packages.
@@ -19,3 +22,6 @@
 - name: Synchronization
   link: /docs/sync/
   desc: Keep espanso in sync using Dropbox, Google Drive or GitHub.
+- name: CLI
+  link: /docs/cli/
+  desc: Some useful terminal commands to interact with espanso.

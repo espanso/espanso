@@ -11,7 +11,7 @@ have many problems making it work on others.
 
 #### Wayland support
 
-Currently espanso supports X11 systems only.
+Currently espanso supports X11 systems only, but future support for Wayland is being investigated. Follow [this issue](https://github.com/federico-terzi/espanso/issues/287) to stay updated.
 
 ### Installing on Ubuntu / Debian
 
@@ -41,7 +41,7 @@ If you now type `:espanso` in any text field, you should see "Hi there!" appear!
 
 > **Note**: after executing the previous command, espanso will prompt the user to register a Systemd service. This is needed to automatically start espanso at system startup.
 
-At this point, you are ready to read the [Getting Started](/docs/get-started/) tutorial.
+At this point, you should [install `modulo`](#installing-modulo) to enable the GUI features.
 
 #### Installing using DEB package
 
@@ -71,7 +71,7 @@ If you now type `:espanso` in any text field, you should see "Hi there!" appear!
 
 > **Note**: after executing the previous command, espanso will prompt the user to register a Systemd service. This is needed to automatically start espanso at system startup.
 
-At this point, you are ready to read the [Getting Started](/docs/get-started/) tutorial.
+At this point, you should [install `modulo`](#installing-modulo) to enable the GUI features.
 
 #### Manual installation
 
@@ -109,7 +109,7 @@ If you now type `:espanso` in any text field, you should see "Hi there!" appear!
 
 > **Note**: after executing the previous command, espanso will prompt the user to register a Systemd service. This is needed to automatically start espanso at system startup.
 
-At this point, you are ready to read the [Getting Started](/docs/get-started/) tutorial.
+At this point, you should [install `modulo`](#installing-modulo) to enable the GUI features.
 
 ### Installing on Manjaro / Arch
 
@@ -141,7 +141,7 @@ If you now type `:espanso` in any text field, you should see "Hi there!" appear!
 
 > **Note**: after executing the previous command, espanso will prompt the user to register a Systemd service. This is needed to automatically start espanso at system startup.
 
-At this point, you are ready to read the [Getting Started](/docs/get-started/) tutorial.
+At this point, you should [install `modulo`](#installing-modulo) to enable the GUI features.
  
 #### Installing from the prebuilt release
 
@@ -177,5 +177,26 @@ espanso start
 If you now type `:espanso` in any text field, you should see "Hi there!" appear! 
 
 > **Note**: after executing the previous command, espanso will prompt the user to register a Systemd service. This is needed to automatically start espanso at system startup.
+
+At this point, you should [install `modulo`](#installing-modulo) to enable the GUI features.
+
+### Installing Modulo
+
+Since version 0.7.0, espanso introduced a few gui-related features that require [modulo](https://github.com/federico-terzi/modulo) to be installed in your system. **While not strictly required, it's highly suggested to install it enable some very useful features, such as Forms.**.
+
+Installing modulo is pretty straight forward, being it packaged as an AppImage. Here's the list of suggested steps:
+
+```bash
+# Download the latest Modulo AppImage in the $HOME/opt
+wget https://github.com/federico-terzi/modulo/releases/latest/download/modulo-x86_64.AppImage -O $HOME/opt/modulo.AppImage
+
+# Make it executable:
+chmod u+x $HOME/opt/modulo.AppImage
+
+# Create a link to make modulo available as "modulo"
+sudo ln -s $HOME/opt/modulo.AppImage /usr/bin/modulo
+```
+
+Note that these steps can be changed in many ways, the only requirement is that the modulo binary is available as `modulo` in the PATH.
 
 At this point, you are ready to read the [Getting Started](/docs/get-started/) tutorial.

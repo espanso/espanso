@@ -48,8 +48,6 @@ There are a number of characters that are special (or reserved) and cannot be us
 
 These kind of expansions are simple text replacements and are *static*.
 
-> Special thanks to [@muhlinux](https://github.com/muhlinux) for the help with this section.
-
 ### Dynamic Matches
 
 Static matches are suitable for many tasks, but can be problematic when we need an **expansion that changes dynamically**. For those situations, espanso introduces the concepts of **variables** and **extensions**.
@@ -138,10 +136,12 @@ global_vars:
 
 At this point, you can use `global1` and `greet` in all your matches:
 
+{% raw %}
 ```yaml
 - trigger: ":hello"
   replace: "{{greet}} Jon"
 ```
+{% endraw %}
 
 And typing `:hello` will result in `Hey Jon`.
 
@@ -173,7 +173,7 @@ If you now type `:div`, you get the `<div></div>` expansion, with the cursor bet
 
 #### Things to keep in mind
 
-* You can only define **one cursor hint** per match. Multiple hints will be ignored.
+* You can only define **one cursor hint** per match. Multiple hints will be ignored. If you need multiple hints, a decent replacement would be to use [Forms](/docs/forms/)
 * This feature should be used with care in **multiline** expansions, as it may yield
   **unexpected results** when using it in code editors that support **auto indenting**. 
   This is due to the way the feature is implemented: espanso simulates a series of `left arrow`
@@ -314,6 +314,16 @@ Introduced in version 0.5.0, *nested matches* allow to include the output of a m
 
 At this point, if you type `:nested` you'll see `This is a nested match appear`.
 
+### Forms
+
+Since version 0.7.0, espanso is capable of creating arbirarly complex input forms.
+
+![Espanso Form](/assets/images/macform.png)
+
+These open up a world of possibilities, allowing the user to create matches with many arguments, as well as injecting those values into custom Scripts or Shell commands.
+
+For more informations, visit the [Forms section](/docs/forms/).
+
 ### Script Extension
 
 There will be tasks for which espanso was not designed for. For those cases, espanso offers the
@@ -350,16 +360,45 @@ If you now try to type `:pyscript` anywhere, you should see `Hello from python` 
 
 You can do the same thing with any programming language, just change the `args` array accordingly.
 
+#### Script Placement
+
+The current best-practice when creating Script matches is to create a `scripts` directory in the `espanso` directory and store the scripts there.
+
+That way, you can use the `%CONFIG%` wildcard to automatically replace the config directory with the correct path, such as:
+
+{% raw %}
+```yaml
+- trigger: ":pyscript"
+  replace: "{{output}}"
+  vars:
+    - name: output
+      type: script
+      params:
+        args:
+          - python
+          - "%CONFIG%/scripts/script.py"
+```
+{% endraw %}
+
+This makes it easier to create matches that work across many machines.
+
 #### A note on performance
 
 Because of the execution time, you should limit yourself to fast-running scripts to avoid
 any lag.
 
+#### Useful Environment Variables
+
+When triggering the shell command, espanso also injects a few useful Environment Variables that you can use:
+
+* `CONFIG`: Points to the path of the espanso config directory
+* All the values of the previously evaluated match variables. For more information, look at the [Advanced topics](#advanced-topics) section.
+
 ### Shell Extension
 
 The **Shell Extension** is similar to the [Script Extension](#script-extension), but instead of executing
 a script, it executes **shell commands**. This offers a lot of flexibility on Unix systems thanks to the
-`bash` shell.
+`bash` shell (and thanks to WSL support also on Windows).
 
 Let's say you regularly send your IP address to your coworkers. You can setup a match to fetch your public
 IP from [ipify](https://www.ipify.org/).
@@ -381,15 +420,38 @@ IP from [ipify](https://www.ipify.org/).
 As always, restart espanso with `espanso restart`. Now everytime you type `:ip`, it gets expanded to your public
 IP address!
 
-#### For macOS users
+#### Choosing the Shell
 
-On macOS the shell extension does not read the `PATH` env variable (because it is managed by `launchd`). Therefore, **you need to specify the full path for the commands you are using**. For example, if you are using `jq`, you should write `/usr/local/bin/jq` instead.
+The shell extension supports many different shells out of the box. By default it uses:
 
-This will probably change in the future.
+* `Powershell` on Windows
+* `bash` on Linux
+* `sh` on macOS
+
+You can also specify different shells by using the `shell` param. For example, let's say we want to use bash on Windows through the `Windows Subsystem for Linux`. We would use:
+
+{% raw %}
+```yml
+- trigger: ":ip"
+  replace: "{{output}}"
+  vars:
+    - name: output
+      type: shell
+      params:
+        cmd: "curl 'https://api.ipify.org'"
+        shell: wsl
+```
+{% endraw %}
+
+Other possible values for the `shell` parameter are:
+
+* On Windows: `cmd`, `powershell`, `wsl`
+* On macOS: `sh`, `bash`
+* On Linux: `sh`, `bash`
 
 #### Bash pipes
 
-This extension also supports bash **pipes** as your shell, such as:
+This extension also supports bash **pipes** as your shell does, such as:
 
 {% raw %}
 ```yml
@@ -420,6 +482,36 @@ excess spaces/newlines. You can optionally disable the `trim` option:
         trim: false
 ```
 {% endraw %}
+
+#### Useful Environment Variables
+
+When triggering the shell command, espanso also injects a few useful Environment Variables that you can use:
+
+* `CONFIG`: Points to the path of the espanso config directory
+* All the values of the previously evaluated match variables. For more information, look at the [Advanced topics](#advanced-topics) section.
+
+#### Using Linux commands on Windows
+
+As you might have already understood from previous sections, espanso supports the [Windows Subsystem for Linux](https://docs.microsoft.com/en-us/windows/wsl/install-win10) through the `shell: wsl` parameter. This allows Windows users to execute Linux commands from their machine.
+
+#### Debugging
+
+Sometimes it's useful to understand what get's executed exactly, what are the return codes and error messages returned by the command. In order to do that, you can use the `debug: true` option:
+
+{% raw %}
+```yml
+- trigger: ":localip"
+  replace: "{{output}}"
+  vars:
+    - name: output
+      type: shell
+      params:
+        cmd: "ip a | grep 'inet 192' | awk '{ print $2 }'"
+        debug: true
+```
+{% endraw %}
+
+At this point, after triggering a match, the logs will be populated with useful information. Too see them, use the `espanso log` command.
 
 ### Date Extension
 
@@ -486,3 +578,68 @@ see the following replacement appear:
 ```
 <a href='YOUR_COPIED_LINK'></a>
 ```
+
+### Advanced Topics
+
+Starting from version 0.7.0, most variables can now *use* the value of other (previously declared) variables in their body.
+
+Not all variable types support variable injection, but notably Shell and Script extensions do through the use of ad-hoc environment variables. Take the following example:
+
+Let's say we want to reverse the string produced by the Date Extension:
+
+```yaml
+- trigger: ":reversed"
+  replace: "Reversed {{myshell}}"
+  vars:
+    - name: mytime
+      type: date
+      params:
+        format: "%H:%M"
+    - name: myshell
+      type: shell
+      params:
+        cmd: "echo $ESPANSO_MYTIME | rev"
+```
+
+This match produces the result we expected. If the current time was `11:54`, it produces:
+
+```
+Reversed 45:11
+```
+
+Let's analyze it step by step:
+
+1. Variable `mytime` is evaluated first (as it's the first declared in the `vars` list).
+2. It's output is injected in the `myshell` shell command, in particular through the `$ESPANSO_MYTIME` env variable.
+3. The result is piped through the unix `rev` command
+4. Finally the output is included in the `replace` text and expanded.
+
+As you might have already guessed, the previous variables are injected in the Shell variable (and the Script extension works in the same way) with the naming `ESPANSO_UPPERCASE-VAR-NAME`.
+
+> Make sure to avoid spaces in the variable names, as they can become problematic in this situation
+
+If you are using **global variables**, you have to be careful in this case, as they are implicitly evaluated before the local ones.
+
+If you need to evaluate a global variable **after** a local one (which might be necessary if you want to inject another variable value inside it), you can do so as follows:
+
+```yaml
+# Considering the following global variable
+global_vars:
+  - name: "reversed"
+    type: shell
+    params:
+      cmd: "echo $ESPANSO_VARNAME | rev"
+
+matches:
+  - trigger: ":rev"
+    replace: "{{reversed}}"
+    vars:
+      - name: "varname"
+        type: echo
+        params:
+          echo: "hello"
+      - name: "reversed"
+        type: "global"
+```
+
+The key element here is the `global` type, which tells espanso to evaluate variable `reversed` only at that point, and not before `varname`.

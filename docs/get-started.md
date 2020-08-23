@@ -7,9 +7,9 @@ Make sure to [install espanso](/install) before diving into the next sections.
 
 ### Starting espanso
 
-If you followed the [Windows](/install/win/) or [MacOS](/install/mac/) installation correctly, 
+If you followed the installation correctly, 
 **espanso will be automatically started** when you power up your computer. There are times, 
-however, when you may need to start espanso explicitly, such as when you're using Linux.
+however, when you may need to start espanso explicitly.
 
 It's very easy to check if espanso is currently running: if you're using **MacOS** or **Windows**, 
 you should see the **icon in the status bar**. If you don't see it, or if you're using **Linux**, 
@@ -55,13 +55,13 @@ reside in the `espanso` directory, whose location depends on the current OS:
 * macOS: `$HOME/Library/Preferences/espanso` (e.g. `/Users/user/Library/Preferences/espanso`)
 * Windows: `{FOLDERID_RoamingAppData}\espanso` (e.g. `C:\Users\user\AppData\Roaming\espanso`)
 
-> By default, configuration folder is hidden in most systems. To open it, copy path of your configuration folder and paste it in the address bar (aka path bar) of your file manager/explorer.
-
 A quick way to find the path of your configuration folder is by using the following command:
 
 ```bash
 espanso path
 ```
+
+> By default, configuration folder is hidden in most systems. To open it, copy path of your configuration folder and paste it in the address bar (aka path bar) of your file manager/explorer.
 
 While this folder may contain many different files, let's focus on the most important one: `default.yml`.
 
@@ -133,7 +133,7 @@ matches:
 ...
 ```
 
-We're almost there! After every configuration change, **espanso must be restarted**. Open a terminal and type:
+We're almost there! After every configuration change, **espanso must be restarted**. Recent versions **automatically restart when a file change is detected**, but if you disabled that option, you'll need to do so manually by opening a terminal and typing:
 
 ```bash
 espanso restart
@@ -141,12 +141,21 @@ espanso restart
 
 Now try to type `:br` anywhere. If you did everything correctly, you should see `Best Regards` appear!
 
-> In version 0.5.1, espanso introduced the `edit` subcommand which makes editing configuration files much easier. 
-Take a look at [Quick Editing](/docs/configuration/#quick-editing) if you are interested.
+#### Quick Editing
+
+If you are comfortable using the terminal to edit your configs, you can also use the much quicker:
+
+```
+espanso edit
+```
+
+command in the terminal, which spawns an instance of the system-default text editor and automatically restarts espanso on exit.
+
+By default it uses Nano on Unix and Notepad on Windows, but you can customize it as you like. Take a look at [Quick Editing](/docs/configuration/#quick-editing) for more information.
 
 ### Understanding Packages
 
-Custom matches are amazing, but sometimes it can be tedious to define Matches for every **common operation**,
+Custom matches are amazing, but sometimes it can be tedious to define Matches for every common operation,
 and even more when you want to **share them with other people**.
 
 espanso offers an easy way to **share and reuse matches** with other people, **packages**. In fact,
@@ -178,63 +187,29 @@ If you now type `:ook` into any text field, you should see 👍👍👍👍 appe
 
 ### Useful shortcuts
 
-Let's conclude this introduction with the most important shortcut espanso offers, the **toggle shortcut**:
+Let's conclude this introduction with the most important shortcuts espanso offers, the **toggle shortcut** and the **backspace undo**.
+
+#### Toggle Key
 
 There are times when you may want to **disable espanso to avoid an unwanted expansion**. This can be
 easily accomplished by quickly **double pressing the `ALT` key** ( Option on MacOS ). You should then 
 see a notification showing "Espanso disabled".
 
-At this point, espanso will be disabled and will not expand any match.
+At this point, espanso will be disabled and will not expand any match. To **re-enable** it, double press the `ALT` key again.
 
-To **re-enable** it, double press the `ALT` key again.
-
-
-#### Customizing the Toggle Key
-
-By default, espanso can be temporarily disabled & enabled by pressing the Alt key twice, resulting in a
-notification saying "espanso disabled." Pressing Alt twice again will enable it, and you'll receive a
-notification saying "espanso enabled." This does not turn off espanso, it simply disables it until
-you enable it again.
-
-If you'd like to customize this behavior, simply add the `toggle_key` option to your previously mentioned
-`default.yml` and set it to `OFF` or one of the available options:
-
-|              |             |               |              |
-|--------------|-------------|---------------|--------------|
-| `CTRL`       | `ALT`       | `SHIFT`       | `META`       |
-| `LEFT_CTRL`  | `LEFT_ALT`  | `LEFT_SHIFT`  | `LEFT_META`  |
-| `RIGHT_CTRL` | `RIGHT_ALT` | `RIGHT_SHIFT` | `RIGHT_META` |
+**You can disable or change the toggle key**. Take a look at [Customizing the Toggle Key](/docs/configuration/#customizing-the-toggle-key)
 
 
-Using the above example `default.yml`, if I wanted to make it so espanso is disabled/enabled when I press
-the left control key twice, I add `toggle_key: LEFT_CTRL` to the file like so, and then, pressing
-the left control key twice disables/enables espanso.
+#### Backspace Undo
 
-```yml
-# espanso configuration file
+> This feature was introduced in version 0.7.0, so make sure to have an up-to-date version.
 
-# This is the default configuration file, change it as you like it
-# You can refer to the official documentation:
-# https://espanso.org/docs/
-toggle_key: LEFT_CTRL
+It might happen to accidentally trigger an expansion, even though that was not intended. If you immediately press the `BACKSPACE` key after the expansion, the action is reverted and the trigger recovered.
 
-# Matches are the substitution rules, when you type the "trigger" string
-# it gets replaced by the "replace" string.
-matches:
-  # Simple text replacement
-  - trigger: ":espanso"
-    replace: "Hi there!"
+You can also disable this behavior by adding the following line on your `default.yml` file:
 
-  - trigger: ":br"
-    replace: "Best Regards,\nJon Snow"
-
-...
+```yaml
+undo_backspace: false
 ```
 
-And if you'd rather it not be possible to disable it on accident, just turn it off like so:
-
-```yml
-toggle_key: OFF
-```
-
-After the changes are made, if you used `espanso edit` it will automatically restart. If not, issue a `espanso restart` and you'll be ready to go!
+> Note that backspace undo is not available for every match, namely the ones that specify a [Cursor Hint](/docs/matches/#cursor-hints)
