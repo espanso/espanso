@@ -791,6 +791,7 @@ int32_t start_process(wchar_t * _cmd) {
 // CLIPBOARD
 
 int32_t set_clipboard(wchar_t *text) {
+    int32_t result = 0;
     const size_t len = wcslen(text) + 1;
     HGLOBAL hMem =  GlobalAlloc(GMEM_MOVEABLE, len * sizeof(wchar_t));
     memcpy(GlobalLock(hMem), text, len * sizeof(wchar_t));
@@ -800,12 +801,14 @@ int32_t set_clipboard(wchar_t *text) {
     }
     EmptyClipboard();
     if (!SetClipboardData(CF_UNICODETEXT, hMem)) {
-        return -2;
+        result = -2;
     }
     CloseClipboard();
+    return result;
 }
 
 int32_t get_clipboard(wchar_t *buffer, int32_t size) {
+    int32_t result = 0;
     if (!OpenClipboard(NULL)) {
         return -1;
     }
@@ -813,19 +816,19 @@ int32_t get_clipboard(wchar_t *buffer, int32_t size) {
     // Get handle of clipboard object for ANSI text
     HANDLE hData = GetClipboardData(CF_UNICODETEXT);
     if (!hData) {
-        return -2;
+        result = -2;
+    }else{
+        HGLOBAL hMem = GlobalLock(hData);
+        if (!hMem) {
+            result = -3;
+        }else{
+            GlobalUnlock(hMem);
+            swprintf(buffer, size, L"%s", hMem);
+        }
     }
-
-    HGLOBAL hMem = GlobalLock(hData);
-    if (!hMem) {
-        return -3;
-    }
-
-    GlobalUnlock(hMem);
-
-    swprintf(buffer, size, L"%s", hMem);
 
     CloseClipboard();
+    return result;
 }
 
 int32_t set_clipboard_image(wchar_t *path) {
