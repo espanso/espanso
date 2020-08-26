@@ -25,7 +25,10 @@ use crate::keyboard::KeyboardManager;
 use crate::matcher::{Match, MatchReceiver};
 use crate::protocol::{send_command_or_warn, IPCCommand, Service};
 use crate::render::{RenderResult, Renderer};
-use crate::ui::{MenuItem, MenuItemType, UIManager};
+use crate::{
+    guard::InjectGuard,
+    ui::{MenuItem, MenuItemType, UIManager},
+};
 use log::{debug, error, info, warn};
 use regex::Regex;
 use std::cell::RefCell;
@@ -209,7 +212,7 @@ impl<
         }
 
         // Block espanso from reinterpreting its own actions
-        self.is_injecting.store(true, Release);
+        let _inject_guard = InjectGuard::new(self.is_injecting.clone(), &config);
 
         let char_count = if trailing_separator.is_none() {
             m.triggers[trigger_offset].chars().count() as i32
@@ -307,18 +310,6 @@ impl<
                 .set_clipboard(&previous_clipboard_content);
         }
 
-        // On macOS, because the keyinjection is async, we need to wait a bit before
-        // giving back the control. Otherwise, the injected actions will be handled back
-        // by espanso itself.
-        if cfg!(target_os = "macos") {
-            std::thread::sleep(std::time::Duration::from_millis(
-                config.mac_post_inject_delay,
-            ));
-        }
-
-        // Re-allow espanso to interpret actions
-        self.is_injecting.store(false, Release);
-
         expansion_data
     }
 }
@@ -348,6 +339,9 @@ impl<
         if !config.undo_backspace {
             return;
         }
+
+        // Block espanso from reinterpreting its own actions
+        let _inject_guard = InjectGuard::new(self.is_injecting.clone(), &config);
 
         let last_expansion_data = self.last_expansion_data.borrow();
         if let Some(ref last_expansion_data) = *last_expansion_data {

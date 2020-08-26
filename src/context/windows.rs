@@ -24,11 +24,11 @@ use crate::event::{ActionType, Event, KeyEvent, KeyModifier};
 use log::{debug, error, info};
 use std::ffi::c_void;
 use std::fs;
+use std::path::{Path, PathBuf};
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering::Acquire;
 use std::sync::mpsc::Sender;
 use std::sync::Arc;
-use std::path::{Path, PathBuf};
 use widestring::{U16CStr, U16CString};
 
 const BMP_BINARY: &[u8] = include_bytes!("../res/win/espanso.bmp");

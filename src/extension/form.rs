@@ -61,7 +61,10 @@ impl super::Extension for FormExtension {
         }
 
         if let Some(icon_path) = crate::context::get_icon_path() {
-            form_config.insert(Value::from("icon"), Value::from(icon_path.to_string_lossy().to_string()));
+            form_config.insert(
+                Value::from("icon"),
+                Value::from(icon_path.to_string_lossy().to_string()),
+            );
         }
 
         let serialized_config: String =
