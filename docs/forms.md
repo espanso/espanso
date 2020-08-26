@@ -198,8 +198,7 @@ If you want to use other Controls in a form specified using the above (verbose) 
       - name: "form1"
         type: form
         params:
-          layout: "Name: {{name}} \n
-Fruit: {{fruit}}"
+          layout: "Name: {{name}} \nFruit: {{fruit}}"
           fields:
             name:
               multiline: true
