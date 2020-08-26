@@ -193,15 +193,23 @@ If you want to use other Controls in a form specified using the above (verbose) 
 {% raw %}
 ```yaml
   - trigger: ":form"
-    replace: "Hey {{form1.name}}, how are you?"
+    replace: "Hey {{form1.name}}, how are you? Do you like {{form1.fruit}}?"
     vars:
       - name: "form1"
         type: form
         params:
-          layout: "Hey {{name}}, how are you?"
+          layout: "Name: {{name}} \n
+Fruit: {{fruit}}"
           fields:
             name:
               multiline: true
+            fruit:
+              type: list # or `choice`
+              values:
+                - Apples
+                - Bananas
+                - Oranges
+                - Peaches
 ```
 {% endraw %}
 
