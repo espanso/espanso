@@ -155,7 +155,7 @@ fn default_global_vars() -> Vec<MatchVariable> {
 fn default_modulo_path() -> Option<String> {
     None
 }
-fn default_mac_post_inject_delay() -> u64 {
+fn default_post_inject_delay() -> u64 {
     100
 }
 
@@ -245,8 +245,8 @@ pub struct Configs {
     #[serde(default = "default_secure_input_watcher_interval")]
     pub secure_input_watcher_interval: i32,
 
-    #[serde(default = "default_mac_post_inject_delay")]
-    pub mac_post_inject_delay: u64,
+    #[serde(default = "default_post_inject_delay")]
+    pub post_inject_delay: u64,
 
     #[serde(default = "default_secure_input_notification")]
     pub secure_input_notification: bool,

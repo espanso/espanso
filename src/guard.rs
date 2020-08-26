@@ -5,7 +5,7 @@ use std::sync::{atomic::AtomicBool, Arc};
 
 pub struct InjectGuard {
     is_injecting: Arc<AtomicBool>,
-    mac_post_inject_delay: u64,
+    post_inject_delay: u64,
 }
 
 impl InjectGuard {
@@ -17,21 +17,19 @@ impl InjectGuard {
 
         Self {
             is_injecting,
-            mac_post_inject_delay: config.mac_post_inject_delay,
+            post_inject_delay: config.post_inject_delay,
         }
     }
 }
 
 impl Drop for InjectGuard {
     fn drop(&mut self) {
-        debug!("releasing inject guard");
-
-        // On macOS, because the keyinjection is async, we need to wait a bit before
+        // Because the keyinjection is async, we need to wait a bit before
         // giving back the control. Otherwise, the injected actions will be handled back
         // by espanso itself.
-        if cfg!(target_os = "macos") {
-            std::thread::sleep(std::time::Duration::from_millis(self.mac_post_inject_delay));
-        }
+        std::thread::sleep(std::time::Duration::from_millis(self.post_inject_delay));
+
+        debug!("releasing inject guard");
 
         // Re-allow espanso to interpret actions
         self.is_injecting.store(false, Release);
