@@ -71,7 +71,8 @@ impl ModuloManager {
 
         if let Some(ref modulo_path) = self.modulo_path {
             let mut command = Command::new(modulo_path);
-            command.args(args)   
+            command
+                .args(args)
                 .stdin(std::process::Stdio::piped())
                 .stdout(std::process::Stdio::piped())
                 .stderr(std::process::Stdio::piped());

@@ -63,6 +63,7 @@ mod edit;
 mod engine;
 mod event;
 mod extension;
+mod guard;
 mod keyboard;
 mod matcher;
 mod package;
