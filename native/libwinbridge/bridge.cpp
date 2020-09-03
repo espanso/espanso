@@ -808,7 +808,7 @@ int32_t set_clipboard(wchar_t *text) {
 }
 
 int32_t get_clipboard(wchar_t *buffer, int32_t size) {
-    int32_t result = 0;
+    int32_t result = 1;
     if (!OpenClipboard(NULL)) {
         return -1;
     }
