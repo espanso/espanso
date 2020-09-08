@@ -44,16 +44,19 @@ impl ModuloManager {
             }
         }
 
-        // TODO: explain why
-        #[cfg(target_os = "macos")]
-        {
-            modulo_path = generate_modulo_app_bundle(&modulo_path).expect("unable to generate modulo app stub")
-                        .to_string_lossy().to_string();
-        }
-        
+        if let Some(ref path) = modulo_path {
+            info!("Using modulo at {:?}", path);
 
-        if let Some(ref modulo_path) = modulo_path {
-            info!("Using modulo at {:?}", modulo_path);
+            // MacOS specific remark
+            // In order to give modulo the focus when spawning a form, modulo has to be
+            // wrapped inside an application bundle. Therefore, we generate a bundle
+            // at startup.
+            // See issue: https://github.com/federico-terzi/espanso/issues/430
+            #[cfg(target_os = "macos")]
+            {
+                modulo_path = Some(mac::generate_modulo_app_bundle(path).expect("unable to generate modulo app stub")
+                            .to_string_lossy().to_string());
+            }
         }
 
         Self { modulo_path }
