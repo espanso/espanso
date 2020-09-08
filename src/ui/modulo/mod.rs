@@ -3,6 +3,9 @@ use log::{error, info};
 use std::io::{Error, Write};
 use std::process::{Child, Command, Output};
 
+#[cfg(target_os = "macos")]
+mod mac;
+
 pub struct ModuloManager {
     modulo_path: Option<String>,
 }
@@ -40,6 +43,14 @@ impl ModuloManager {
                 }
             }
         }
+
+        // TODO: explain why
+        #[cfg(target_os = "macos")]
+        {
+            modulo_path = generate_modulo_app_bundle(&modulo_path).expect("unable to generate modulo app stub")
+                        .to_string_lossy().to_string();
+        }
+        
 
         if let Some(ref modulo_path) = modulo_path {
             info!("Using modulo at {:?}", modulo_path);
