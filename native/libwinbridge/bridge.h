@@ -97,6 +97,11 @@ extern "C" void trigger_shift_paste();
  */
 extern "C" void trigger_copy();
 
+/*
+ * Check whether keyboard modifiers (CTRL, CMD, SHIFT, ecc) are pressed
+ */
+extern "C" int32_t are_modifiers_pressed();
+
 // Detect current application commands
 
 /*
