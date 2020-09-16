@@ -97,7 +97,9 @@ fn main() {
                 .help("(Optional) Link to GitHub repository")
                 .required(false)
                 .default_value("hub"),
-        );
+        )
+        .arg(Arg::with_name("proxy").help("Use a proxy, should be used as --proxy=https://proxy:1234")
+            .required(false).long("proxy").takes_value(true));
 
     let uninstall_subcommand = SubCommand::with_name("uninstall")
         .about("Remove an installed package. Equivalent to 'espanso package uninstall'")
@@ -1096,6 +1098,14 @@ fn install_main(_config_set: ConfigSet, matches: &ArgMatches) {
         repository = repository.trim_end_matches(".git")
     }
 
+    let proxy = match matches.value_of("proxy") {
+        Some(proxy) => {
+            println!("Using proxy: {}", proxy);
+            Some(proxy.to_string())
+        }
+        None => {None}
+    };
+
     let package_resolver = Box::new(ZipPackageResolver::new());
 
     let allow_external: bool = if matches.is_present("external") {
@@ -1131,7 +1141,7 @@ fn install_main(_config_set: ConfigSet, matches: &ArgMatches) {
             println!("Using cached package index, run 'espanso package refresh' to update it.")
         }
 
-        package_manager.install_package(package_name, allow_external)
+        package_manager.install_package(package_name, allow_external, proxy)
     } else {
         // Make sure the repo is a valid github url
         lazy_static! {
@@ -1147,7 +1157,7 @@ fn install_main(_config_set: ConfigSet, matches: &ArgMatches) {
         if !allow_external {
             Ok(InstallResult::BlockedExternalPackage(repository.to_owned()))
         } else {
-            package_manager.install_package_from_repo(package_name, repository)
+            package_manager.install_package_from_repo(package_name, repository, proxy)
         }
     };
 
