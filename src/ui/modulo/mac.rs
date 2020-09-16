@@ -4,6 +4,7 @@ use std::os::unix::fs::symlink;
 
 const MODULO_APP_BUNDLE_NAME: &str = "Modulo.app";
 const MODULO_APP_BUNDLE_PLIST_CONTENT: &'static str = include_str!("../../res/mac/modulo.plist");
+const MODULO_APP_BUNDLE_ICON: &'static str = include_str!("../../res/mac/AppIcon.icns");
 
 pub fn generate_modulo_app_bundle(modulo_path: &str) -> Result<PathBuf, std::io::Error> {
     let modulo_pathbuf = PathBuf::from(modulo_path);
@@ -37,11 +38,18 @@ pub fn generate_modulo_app_bundle(modulo_path: &str) -> Result<PathBuf, std::io:
 
     let macos_dir = contents_dir.join("MacOS");
     std::fs::create_dir(&macos_dir)?;
+    
+    let resources_dir = contents_dir.join("Resources");
+    std::fs::create_dir(&resources_dir)?;
 
     // Generate the Plist file
     let plist_content = MODULO_APP_BUNDLE_PLIST_CONTENT.replace("{{{modulo_path}}}", &modulo_path);
     let plist_file = contents_dir.join("Info.plist");
     std::fs::write(plist_file, plist_content)?;
+
+    // Copy the icon file
+    let icon_file = resources_dir.join("AppIcon.icns");
+    std::fs::write(icon_file, MODULO_APP_BUNDLE_ICON)?;
 
     // Generate the symbolic link to the modulo binary
     let target_link = macos_dir.join("modulo");
