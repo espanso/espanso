@@ -4,7 +4,7 @@ use std::os::unix::fs::symlink;
 
 const MODULO_APP_BUNDLE_NAME: &str = "Modulo.app";
 const MODULO_APP_BUNDLE_PLIST_CONTENT: &'static str = include_str!("../../res/mac/modulo.plist");
-const MODULO_APP_BUNDLE_ICON: &'static str = include_str!("../../res/mac/AppIcon.icns");
+const MODULO_APP_BUNDLE_ICON: &'static str = include_bytes!("../../res/mac/AppIcon.icns");
 
 pub fn generate_modulo_app_bundle(modulo_path: &str) -> Result<PathBuf, std::io::Error> {
     let modulo_pathbuf = PathBuf::from(modulo_path);
