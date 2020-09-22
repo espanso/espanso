@@ -187,6 +187,9 @@ Since version 0.7.0, espanso introduced a few gui-related features that require 
 Installing modulo is pretty straight forward, being it packaged as an AppImage. Here's the list of suggested steps:
 
 ```bash
+# Make sure to have the $HOME/opt directory
+mkdir -p $HOME/opt
+
 # Download the latest Modulo AppImage in the $HOME/opt
 wget https://github.com/federico-terzi/modulo/releases/latest/download/modulo-x86_64.AppImage -O $HOME/opt/modulo.AppImage
 
