@@ -34,6 +34,7 @@ use std::sync::Arc;
 use std::{fs, thread};
 
 const STATUS_ICON_BINARY: &[u8] = include_bytes!("../res/mac/icon.png");
+const DISABLED_STATUS_ICON_BINARY: &[u8] = include_bytes!("../res/mac/icondisabled.png");
 
 pub struct MacContext {
     pub send_channel: Sender<Event>,
@@ -72,6 +73,7 @@ impl MacContext {
         // Initialize the status icon path
         let espanso_dir = super::get_data_dir();
         let status_icon_target = espanso_dir.join("icon.png");
+        let disabled_status_icon_target = espanso_dir.join("icondisabled.png");
 
         if status_icon_target.exists() {
             info!("Status icon already initialized, skipping.");
@@ -84,6 +86,19 @@ impl MacContext {
             });
         }
 
+        if disabled_status_icon_target.exists() {
+            info!("Status icon (disabled) already initialized, skipping.");
+        } else {
+            fs::write(&disabled_status_icon_target, DISABLED_STATUS_ICON_BINARY).unwrap_or_else(
+                |e| {
+                    error!(
+                    "Error copying the Status Icon (disabled) to the espanso data directory: {}",
+                    e
+                );
+                },
+            );
+        }
+
         unsafe {
             let context_ptr = &*context as *const MacContext as *const c_void;
 
@@ -93,9 +108,17 @@ impl MacContext {
 
             let status_icon_path =
                 CString::new(status_icon_target.to_str().unwrap_or_default()).unwrap_or_default();
+            let disabled_status_icon_path =
+                CString::new(disabled_status_icon_target.to_str().unwrap_or_default())
+                    .unwrap_or_default();
             let show_icon = if config.show_icon { 1 } else { 0 };
 
-            initialize(context_ptr, status_icon_path.as_ptr(), show_icon);
+            initialize(
+                context_ptr,
+                status_icon_path.as_ptr(),
+                disabled_status_icon_path.as_ptr(),
+                show_icon,
+            );
         }
 
         context
@@ -143,6 +166,12 @@ impl MacContext {
                 thread::sleep(std::time::Duration::from_millis(secure_input_watcher_interval));
             }
         });
+    }
+}
+
+pub fn update_icon(enabled: bool) {
+    unsafe {
+        crate::bridge::macos::update_tray_icon(if enabled { 1 } else { 0 });
     }
 }
 

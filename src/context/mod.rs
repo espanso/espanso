@@ -50,7 +50,7 @@ pub fn new(
 
 #[cfg(target_os = "macos")]
 pub fn update_icon(enabled: bool) {
-    // TODO: add update icon on macOS
+    macos::update_icon(enabled);
 }
 
 #[cfg(target_os = "macos")]
