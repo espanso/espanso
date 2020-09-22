@@ -26,12 +26,13 @@ extern "C" {
 
 extern void * context_instance;
 extern char * icon_path;
+extern char * disabled_icon_path;
 extern int32_t show_icon;
 
 /*
 * Initialize the AppDelegate and check for accessibility permissions
 */
-int32_t initialize(void * context, const char * icon_path, int32_t show_icon);
+int32_t initialize(void * context, const char * icon_path, const char * disabled_icon_path, int32_t show_icon);
 
 /*
  * Start the event loop indefinitely. Blocking call.
@@ -116,6 +117,11 @@ int32_t show_context_menu(MenuItem * items, int32_t count);
 typedef void (*ContextMenuClickCallback)(void * self, int32_t id);
 extern ContextMenuClickCallback context_menu_click_callback;
 extern "C" void register_context_menu_click_callback(ContextMenuClickCallback callback);
+
+/*
+ * Update the tray icon status
+ */
+extern "C" void update_tray_icon(int32_t enabled);
 
 // SYSTEM
 

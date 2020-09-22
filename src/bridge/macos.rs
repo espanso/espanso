@@ -29,7 +29,12 @@ pub struct MacMenuItem {
 #[allow(improper_ctypes)]
 #[link(name = "macbridge", kind = "static")]
 extern "C" {
-    pub fn initialize(s: *const c_void, icon_path: *const c_char, show_icon: i32);
+    pub fn initialize(
+        s: *const c_void,
+        icon_path: *const c_char,
+        disabled_icon_path: *const c_char,
+        show_icon: i32,
+    );
     pub fn eventloop();
     pub fn headless_eventloop();
 
@@ -51,6 +56,7 @@ extern "C" {
     pub fn register_icon_click_callback(cb: extern "C" fn(_self: *mut c_void));
     pub fn show_context_menu(items: *const MacMenuItem, count: i32) -> i32;
     pub fn register_context_menu_click_callback(cb: extern "C" fn(_self: *mut c_void, id: i32));
+    pub fn update_tray_icon(enabled: i32);
 
     // Keyboard
     pub fn register_keypress_callback(
