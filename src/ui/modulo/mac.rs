@@ -1,6 +1,6 @@
 use log::info;
-use std::path::PathBuf;
 use std::os::unix::fs::symlink;
+use std::path::PathBuf;
 
 const MODULO_APP_BUNDLE_NAME: &str = "Modulo.app";
 const MODULO_APP_BUNDLE_PLIST_CONTENT: &'static str = include_str!("../../res/mac/modulo.plist");
@@ -11,13 +11,16 @@ pub fn generate_modulo_app_bundle(modulo_path: &str) -> Result<PathBuf, std::io:
     let modulo_path: String = if !modulo_pathbuf.exists() {
         // If modulo was taken from the PATH, we need to calculate the absolute path
         // To do so, we use the `which` command
-        let output = std::process::Command::new("which").arg("modulo").output().expect("unable to call 'which' command to determine modulo's full path");
+        let output = std::process::Command::new("which")
+            .arg("modulo")
+            .output()
+            .expect("unable to call 'which' command to determine modulo's full path");
         let path = String::from_utf8_lossy(output.stdout.as_slice());
         let path = path.trim();
 
         info!("Detected modulo's full path: {:?}", &path);
         path.to_string()
-    }else{
+    } else {
         modulo_path.to_owned()
     };
 
@@ -38,7 +41,7 @@ pub fn generate_modulo_app_bundle(modulo_path: &str) -> Result<PathBuf, std::io:
 
     let macos_dir = contents_dir.join("MacOS");
     std::fs::create_dir(&macos_dir)?;
-    
+
     let resources_dir = contents_dir.join("Resources");
     std::fs::create_dir(&resources_dir)?;
 

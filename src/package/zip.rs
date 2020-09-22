@@ -13,7 +13,11 @@ impl ZipPackageResolver {
 }
 
 impl super::PackageResolver for ZipPackageResolver {
-    fn clone_repo_to_temp(&self, repo_url: &str, proxy: Option<String>) -> Result<TempDir, Box<dyn Error>> {
+    fn clone_repo_to_temp(
+        &self,
+        repo_url: &str,
+        proxy: Option<String>,
+    ) -> Result<TempDir, Box<dyn Error>> {
         let temp_dir = TempDir::new()?;
 
         let zip_url = repo_url.to_owned() + "/archive/master.zip";
