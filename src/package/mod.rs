@@ -49,7 +49,11 @@ pub trait PackageManager {
 }
 
 pub trait PackageResolver {
-    fn clone_repo_to_temp(&self, repo_url: &str, proxy: Option<String>) -> Result<TempDir, Box<dyn Error>>;
+    fn clone_repo_to_temp(
+        &self,
+        repo_url: &str,
+        proxy: Option<String>,
+    ) -> Result<TempDir, Box<dyn Error>>;
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]

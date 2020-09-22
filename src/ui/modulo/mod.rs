@@ -54,8 +54,12 @@ impl ModuloManager {
             // See issue: https://github.com/federico-terzi/espanso/issues/430
             #[cfg(target_os = "macos")]
             {
-                modulo_path = Some(mac::generate_modulo_app_bundle(path).expect("unable to generate modulo app stub")
-                            .to_string_lossy().to_string());
+                modulo_path = Some(
+                    mac::generate_modulo_app_bundle(path)
+                        .expect("unable to generate modulo app stub")
+                        .to_string_lossy()
+                        .to_string(),
+                );
             }
         }
 

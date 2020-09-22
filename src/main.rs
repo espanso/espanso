@@ -98,8 +98,13 @@ fn main() {
                 .required(false)
                 .default_value("hub"),
         )
-        .arg(Arg::with_name("proxy").help("Use a proxy, should be used as --proxy=https://proxy:1234")
-            .required(false).long("proxy").takes_value(true));
+        .arg(
+            Arg::with_name("proxy")
+                .help("Use a proxy, should be used as --proxy=https://proxy:1234")
+                .required(false)
+                .long("proxy")
+                .takes_value(true),
+        );
 
     let uninstall_subcommand = SubCommand::with_name("uninstall")
         .about("Remove an installed package. Equivalent to 'espanso package uninstall'")
@@ -1103,7 +1108,7 @@ fn install_main(_config_set: ConfigSet, matches: &ArgMatches) {
             println!("Using proxy: {}", proxy);
             Some(proxy.to_string())
         }
-        None => {None}
+        None => None,
     };
 
     let package_resolver = Box::new(ZipPackageResolver::new());
