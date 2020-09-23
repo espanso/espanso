@@ -217,3 +217,14 @@ Note that **the `fields` parameter content is specified as the `form_fields` par
 ### macOS remarks
 
 For the expansion to take place on macOS, you have to release the submit keys (CTRL+Enter) after submitting the form.
+
+#### Enabling Tab traversal
+
+By default, on macOS the Tab key can only be used to change focus between Text fields. To make forms completely navigable using the Tab key (including Lists, Selects and Buttons), you have to enable it with these steps:
+
+1. Open *System Preferences*
+2. Navigate to the Keyboard panel
+3. Open the *Keyboard Shortcuts* tab
+4. Near the bottom of the dialog, select "All controls".
+
+Then you should be able to use the Tab key to navigate between form controls.
