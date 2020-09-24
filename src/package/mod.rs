@@ -34,11 +34,13 @@ pub trait PackageManager {
         &self,
         name: &str,
         allow_external: bool,
+        proxy: Option<String>,
     ) -> Result<InstallResult, Box<dyn Error>>;
     fn install_package_from_repo(
         &self,
         name: &str,
         repo_url: &str,
+        proxy: Option<String>,
     ) -> Result<InstallResult, Box<dyn Error>>;
 
     fn remove_package(&self, name: &str) -> Result<RemoveResult, Box<dyn Error>>;
@@ -47,7 +49,11 @@ pub trait PackageManager {
 }
 
 pub trait PackageResolver {
-    fn clone_repo_to_temp(&self, repo_url: &str) -> Result<TempDir, Box<dyn Error>>;
+    fn clone_repo_to_temp(
+        &self,
+        repo_url: &str,
+        proxy: Option<String>,
+    ) -> Result<TempDir, Box<dyn Error>>;
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]

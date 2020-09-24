@@ -3,6 +3,9 @@ use log::{error, info};
 use std::io::{Error, Write};
 use std::process::{Child, Command, Output};
 
+#[cfg(target_os = "macos")]
+mod mac;
+
 pub struct ModuloManager {
     modulo_path: Option<String>,
 }
@@ -41,8 +44,23 @@ impl ModuloManager {
             }
         }
 
-        if let Some(ref modulo_path) = modulo_path {
-            info!("Using modulo at {:?}", modulo_path);
+        if let Some(ref path) = modulo_path {
+            info!("Using modulo at {:?}", path);
+
+            // MacOS specific remark
+            // In order to give modulo the focus when spawning a form, modulo has to be
+            // wrapped inside an application bundle. Therefore, we generate a bundle
+            // at startup.
+            // See issue: https://github.com/federico-terzi/espanso/issues/430
+            #[cfg(target_os = "macos")]
+            {
+                modulo_path = Some(
+                    mac::generate_modulo_app_bundle(path)
+                        .expect("unable to generate modulo app stub")
+                        .to_string_lossy()
+                        .to_string(),
+                );
+            }
         }
 
         Self { modulo_path }

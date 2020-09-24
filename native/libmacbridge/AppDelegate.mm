@@ -26,15 +26,8 @@
     // Setup status icon
     if (show_icon) {
         myStatusItem = [[[NSStatusBar systemStatusBar] statusItemWithLength:NSSquareStatusItemLength] retain];
-
-        NSString *nsIconPath = [NSString stringWithUTF8String:icon_path];
-        NSImage *statusImage = [[NSImage alloc] initWithContentsOfFile:nsIconPath];
-        [statusImage setTemplate:YES];
-
-        [myStatusItem.button setImage:statusImage];
-        [myStatusItem setHighlightMode:YES];
-        [myStatusItem.button setAction:@selector(statusIconClick:)];
-        [myStatusItem.button setTarget:self];
+        
+        [self setIcon: icon_path];
     }
 
     // Setup key listener
@@ -64,6 +57,29 @@
             //NSLog(@"keydown: %d", event.keyCode);
         }
     }];
+}
+
+- (void) updateIcon: (char *)iconPath {
+    if (show_icon) {
+        [myStatusItem release];
+
+        [self setIcon: iconPath];
+    }
+}
+
+- (void) setIcon: (char *)iconPath {
+    if (show_icon) {
+        myStatusItem = [[[NSStatusBar systemStatusBar] statusItemWithLength:NSSquareStatusItemLength] retain];
+
+        NSString *nsIconPath = [NSString stringWithUTF8String:iconPath];
+        NSImage *statusImage = [[NSImage alloc] initWithContentsOfFile:nsIconPath];
+        [statusImage setTemplate:YES];
+
+        [myStatusItem.button setImage:statusImage];
+        [myStatusItem setHighlightMode:YES];
+        [myStatusItem.button setAction:@selector(statusIconClick:)];
+        [myStatusItem.button setTarget:self];
+    }
 }
 
 - (IBAction) statusIconClick: (id) sender {

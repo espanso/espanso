@@ -13,13 +13,26 @@ impl ZipPackageResolver {
 }
 
 impl super::PackageResolver for ZipPackageResolver {
-    fn clone_repo_to_temp(&self, repo_url: &str) -> Result<TempDir, Box<dyn Error>> {
+    fn clone_repo_to_temp(
+        &self,
+        repo_url: &str,
+        proxy: Option<String>,
+    ) -> Result<TempDir, Box<dyn Error>> {
         let temp_dir = TempDir::new()?;
 
         let zip_url = repo_url.to_owned() + "/archive/master.zip";
 
+        let mut client = reqwest::Client::builder();
+
+        if let Some(proxy) = proxy {
+            let proxy = reqwest::Proxy::https(&proxy).expect("unable to setup https proxy");
+            client = client.proxy(proxy);
+        };
+
+        let client = client.build().expect("unable to create http client");
+
         // Download the archive from GitHub
-        let mut response = reqwest::get(&zip_url)?;
+        let mut response = client.get(&zip_url).send()?;
 
         // Extract zip file
         let mut buffer = Vec::new();
@@ -90,7 +103,7 @@ mod tests {
     fn test_clone_temp_repository() {
         let resolver = ZipPackageResolver::new();
         let cloned_dir = resolver
-            .clone_repo_to_temp("https://github.com/federico-terzi/espanso-hub-core")
+            .clone_repo_to_temp("https://github.com/federico-terzi/espanso-hub-core", None)
             .unwrap();
         assert!(cloned_dir.path().join("LICENSE").exists());
     }

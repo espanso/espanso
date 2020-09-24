@@ -69,6 +69,7 @@ extern "C" {
     pub fn trigger_paste();
     pub fn trigger_shift_paste();
     pub fn trigger_copy();
+    pub fn are_modifiers_pressed() -> i32;
 
     // PROCESSES
 

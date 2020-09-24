@@ -29,5 +29,7 @@
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification;
 - (IBAction) statusIconClick: (id) sender;
 - (IBAction) contextMenuClick: (id) sender;
+- (void) updateIcon: (char *)iconPath;
+- (void) setIcon: (char *)iconPath;
 
 @end
