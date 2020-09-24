@@ -141,6 +141,10 @@ espanso restart
 
 Now try to type `:br` anywhere. If you did everything correctly, you should see `Best Regards` appear!
 
+##### macOS remarks
+
+If are using built-in macOS text replacement (System Preferences > Keyboard > Text - note that these will sync from iDevices if you have iCloud sync enabled), and have any triggers that overlap with espanso (the Replace column in System Preferences), you may find that you get double expansions. Starting your espanso trigger with `/` will prevent macOS text replacement from triggering as well (ex: `/br` instead of `:br`).
+
 #### Quick Editing
 
 If you are comfortable using the terminal to edit your configs, you can also use the much quicker:
