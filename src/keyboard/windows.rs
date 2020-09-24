@@ -78,3 +78,15 @@ impl super::KeyboardManager for WindowsKeyboardManager {
         }
     }
 }
+
+pub fn wait_for_modifiers_release() -> bool {
+    let start = std::time::SystemTime::now();
+    while start.elapsed().unwrap_or_default().as_millis() < 3000 {
+        let pressed = unsafe { crate::bridge::windows::are_modifiers_pressed() };
+        if pressed == 0 {
+            return true;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(100));
+    }
+    false
+}

@@ -21,7 +21,7 @@ use crate::config::Configs;
 use serde::{Deserialize, Serialize};
 
 #[cfg(target_os = "windows")]
-mod windows;
+pub mod windows;
 
 #[cfg(target_os = "linux")]
 mod linux;

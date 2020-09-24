@@ -663,6 +663,25 @@ void trigger_copy() {
     SendInput(vec.size(), vec.data(), sizeof(INPUT));
 }
 
+int32_t are_modifiers_pressed() {
+    short ctrl_pressed = GetAsyncKeyState(VK_CONTROL);
+    short enter_pressed = GetAsyncKeyState(VK_RETURN);
+    short alt_pressed = GetAsyncKeyState(VK_MENU);
+    short shift_pressed = GetAsyncKeyState(VK_SHIFT);
+    short meta_pressed = GetAsyncKeyState(VK_LWIN);
+    short rmeta_pressed = GetAsyncKeyState(VK_RWIN);
+    if (((ctrl_pressed & 0x8000) + 
+        (enter_pressed & 0x8000) + 
+        (alt_pressed & 0x8000) +
+        (shift_pressed & 0x8000) + 
+        (meta_pressed & 0x8000) + 
+        (rmeta_pressed & 0x8000)) != 0) {
+            return 1;
+        }
+    
+    return 0;
+}
+
 
 // SYSTEM
 
@@ -808,7 +827,7 @@ int32_t set_clipboard(wchar_t *text) {
 }
 
 int32_t get_clipboard(wchar_t *buffer, int32_t size) {
-    int32_t result = 0;
+    int32_t result = 1;
     if (!OpenClipboard(NULL)) {
         return -1;
     }

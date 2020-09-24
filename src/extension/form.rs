@@ -74,7 +74,7 @@ impl super::Extension for FormExtension {
             .manager
             .invoke(&["form", "-i", "-"], &serialized_config);
 
-        // On macOS, after the form closes we have to wait until the user releases the modifier keys
+        // On macOS and Windows, after the form closes we have to wait until the user releases the modifier keys
         on_form_close();
 
         if let Some(output) = output {
@@ -95,9 +95,17 @@ impl super::Extension for FormExtension {
     }
 }
 
-#[cfg(not(target_os = "macos"))]
+#[cfg(target_os = "linux")]
 fn on_form_close() {
-    // NOOP on Windows and Linux
+    // NOOP on Linux
+}
+
+#[cfg(target_os = "windows")]
+fn on_form_close() {
+    let released = crate::keyboard::windows::wait_for_modifiers_release();
+    if !released {
+        warn!("Wait for modifiers release timed out! Please after closing the form, release your modifiers keys (CTRL, CMD, ALT, SHIFT)");
+    }
 }
 
 #[cfg(target_os = "macos")]

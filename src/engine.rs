@@ -498,9 +498,14 @@ impl<
                 if config.secure_input_notification && config.show_notifications {
                     self.ui_manager.notify_delay(&format!("{} has activated SecureInput. Espanso won't work until you disable it.", app_name), 5000);
                 }
+
+                crate::context::update_icon(false);
             }
             SystemEvent::SecureInputDisabled => {
                 info!("SecureInput has been disabled.");
+
+                let is_enabled = self.enabled.borrow();
+                crate::context::update_icon(*is_enabled);
             }
             SystemEvent::NotifyRequest(message) => {
                 let config = self.config_manager.default_config();

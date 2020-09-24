@@ -264,12 +264,13 @@ impl super::PackageManager for DefaultPackageManager {
         &self,
         name: &str,
         allow_external: bool,
+        proxy: Option<String>,
     ) -> Result<InstallResult, Box<dyn Error>> {
         let package = self.get_package(name);
         match package {
             Some(package) => {
                 if package.is_core || allow_external {
-                    self.install_package_from_repo(name, &package.repo)
+                    self.install_package_from_repo(name, &package.repo, proxy)
                 } else {
                     Ok(BlockedExternalPackage(package.original_repo))
                 }
@@ -282,6 +283,7 @@ impl super::PackageManager for DefaultPackageManager {
         &self,
         name: &str,
         repo_url: &str,
+        proxy: Option<String>,
     ) -> Result<InstallResult, Box<dyn Error>> {
         // Check if package is already installed
         let packages = self.list_local_packages_names();
@@ -294,7 +296,7 @@ impl super::PackageManager for DefaultPackageManager {
             .package_resolver
             .as_ref()
             .unwrap()
-            .clone_repo_to_temp(repo_url)?;
+            .clone_repo_to_temp(repo_url, proxy)?;
 
         let temp_package_dir = temp_dir.path().join(name);
         if !temp_package_dir.exists() {
@@ -532,7 +534,7 @@ mod tests {
 
         assert_eq!(
             temp.package_manager
-                .install_package("doesnotexist", false)
+                .install_package("doesnotexist", false, None)
                 .unwrap(),
             NotFoundInIndex
         );
@@ -548,7 +550,7 @@ mod tests {
 
         assert_eq!(
             temp.package_manager
-                .install_package("italian-accents", false)
+                .install_package("italian-accents", false, None)
                 .unwrap(),
             AlreadyInstalled
         );
@@ -563,7 +565,7 @@ mod tests {
 
         assert_eq!(
             temp.package_manager
-                .install_package("dummy-package", false)
+                .install_package("dummy-package", false, None)
                 .unwrap(),
             Installed
         );
@@ -589,7 +591,7 @@ mod tests {
 
         assert_eq!(
             temp.package_manager
-                .install_package("not-existing", false)
+                .install_package("not-existing", false, None)
                 .unwrap(),
             NotFoundInRepo
         );
@@ -604,7 +606,7 @@ mod tests {
 
         assert_eq!(
             temp.package_manager
-                .install_package("dummy-package2", false)
+                .install_package("dummy-package2", false, None)
                 .unwrap(),
             MissingPackageVersion
         );
@@ -619,7 +621,7 @@ mod tests {
 
         assert_eq!(
             temp.package_manager
-                .install_package("dummy-package3", false)
+                .install_package("dummy-package3", false, None)
                 .unwrap(),
             UnableToParsePackageInfo
         );
@@ -634,7 +636,7 @@ mod tests {
 
         assert_eq!(
             temp.package_manager
-                .install_package("dummy-package4", false)
+                .install_package("dummy-package4", false, None)
                 .unwrap(),
             UnableToParsePackageInfo
         );
@@ -649,7 +651,7 @@ mod tests {
 
         assert_eq!(
             temp.package_manager
-                .install_package("dummy-package", false)
+                .install_package("dummy-package", false, None)
                 .unwrap(),
             Installed
         );

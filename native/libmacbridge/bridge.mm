@@ -33,6 +33,7 @@ extern "C" {
 
 void * context_instance;
 char * icon_path;
+char * disabled_icon_path;
 int32_t show_icon;
 AppDelegate * delegate_ptr;
 
@@ -40,9 +41,10 @@ KeypressCallback keypress_callback;
 IconClickCallback icon_click_callback;
 ContextMenuClickCallback context_menu_click_callback;
 
-int32_t initialize(void * context, const char * _icon_path, int32_t _show_icon) {
+int32_t initialize(void * context, const char * _icon_path, const char * _disabled_icon_path, int32_t _show_icon) {
     context_instance = context;
     icon_path = strdup(_icon_path);
+    disabled_icon_path = strdup(_disabled_icon_path);
     show_icon = _show_icon;
 
     AppDelegate *delegate = [[AppDelegate alloc] init];
@@ -72,6 +74,18 @@ int32_t headless_eventloop() {
     NSApplication * application = [NSApplication sharedApplication];
     [NSApp run];
     return 0;
+}
+
+void update_tray_icon(int32_t enabled) {
+    dispatch_async(dispatch_get_main_queue(), ^(void) {
+        NSApplication * application = [NSApplication sharedApplication];
+        char * iconPath = icon_path;
+        if (!enabled) {
+            iconPath = disabled_icon_path;
+        }
+
+        [[application delegate] updateIcon: iconPath];
+    });
 }
 
 void send_string(const char * string) {
