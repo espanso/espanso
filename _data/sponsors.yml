@@ -146,9 +146,37 @@
   link: ""
   image: ""
 
+- name: Timon Kunze
+  link: ""
+  image: ""
+
+- name: Ian Wentzell
+  link: ""
+  image: ""
+
+- name: Adam Sroka
+  link: "https://github.com/adam-sroka"
+  image: "adam.jpg"
+
+- name: Lasse Benninga
+  link: ""
+  image: ""
+
+- name: Allen Leis
+  link: "https://github.com/looselycoupled"
+  image: "allen.jpg"
+
 - name: "Felix Breuer"
   link: https://breuer.dev/
   image: felix.jpeg
+
+- name: Marty Heyman
+  link: ""
+  image: ""
+
+- name: Jeroen Meerwijk
+  link: "https://ditisnietmijn.nl/"
+  image: ""
 
 - name: sjs2109
   link: ""
