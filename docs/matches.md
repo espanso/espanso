@@ -587,6 +587,7 @@ Not all variable types support variable injection, but notably Shell and Script 
 
 Let's say we want to reverse the string produced by the Date Extension:
 
+{% raw %}
 ```yaml
 - trigger: ":reversed"
   replace: "Reversed {{myshell}}"
@@ -602,6 +603,7 @@ Let's say we want to reverse the string produced by the Date Extension:
 ```
 
 This match produces the result we expected. If the current time was `11:54`, it produces:
+{% endraw %}
 
 ```
 Reversed 45:11
@@ -622,6 +624,7 @@ If you are using **global variables**, you have to be careful in this case, as t
 
 If you need to evaluate a global variable **after** a local one (which might be necessary if you want to inject another variable value inside it), you can do so as follows:
 
+{% raw %}
 ```yaml
 # Considering the following global variable
 global_vars:
@@ -641,5 +644,6 @@ matches:
       - name: "reversed"
         type: "global"
 ```
+{% endraw %}
 
 The key element here is the `global` type, which tells espanso to evaluate variable `reversed` only at that point, and not before `varname`.
