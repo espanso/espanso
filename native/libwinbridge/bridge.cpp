@@ -27,7 +27,15 @@
 
 #define UNICODE
 
+#ifdef __MINGW32__
+# ifndef WINVER
+#  define WINVER 0x0606
+# endif
+# define STRSAFE_NO_DEPRECATE
+#endif
+
 #include <windows.h>
+#include <winuser.h>
 #include <strsafe.h>
 #include <shellapi.h>
 
