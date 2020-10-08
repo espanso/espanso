@@ -898,3 +898,37 @@ int32_t set_clipboard_image(wchar_t *path) {
     return result;
 }
 
+// Inspired by https://docs.microsoft.com/en-za/troubleshoot/cpp/add-html-code-clipboard
+int32_t set_clipboard_html(char * html, wchar_t * text_fallback) {
+    // Get clipboard id for HTML format
+    static int cfid = 0;
+    if(!cfid) {
+        cfid = RegisterClipboardFormat(L"HTML Format");
+    }
+
+    int32_t result = 0;
+    const size_t html_len = strlen(html) + 1;
+    HGLOBAL hMem =  GlobalAlloc(GMEM_MOVEABLE, html_len * sizeof(char));
+    memcpy(GlobalLock(hMem), html, html_len * sizeof(char));
+    GlobalUnlock(hMem);
+
+    const size_t fallback_len = wcslen(text_fallback) + 1;
+    HGLOBAL hMemFallback =  GlobalAlloc(GMEM_MOVEABLE, fallback_len * sizeof(wchar_t));
+    memcpy(GlobalLock(hMemFallback), text_fallback, fallback_len * sizeof(wchar_t));
+    GlobalUnlock(hMemFallback);
+
+    if (!OpenClipboard(NULL)) {
+        return -1;
+    }
+    EmptyClipboard();
+    if (!SetClipboardData(cfid, hMem)) {
+        result = -2;
+    }
+    
+    if (!SetClipboardData(CF_UNICODETEXT, hMemFallback)) {
+        result = -3;
+    }
+    CloseClipboard();
+    GlobalFree(hMem);
+    return result;
+}

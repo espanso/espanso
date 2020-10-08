@@ -34,6 +34,8 @@ dialoguer = "0.4.0"
 rand = "0.7.2"
 zip = "0.5.3"
 notify = "4.0.13"
+markdown = "0.3.0"
+html2text = "0.2.1"
 
 [target.'cfg(unix)'.dependencies]
 libc = "0.2.62"

@@ -17,8 +17,10 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::bridge::windows::{get_clipboard, set_clipboard, set_clipboard_image};
-use std::path::Path;
+use crate::bridge::windows::{
+    get_clipboard, set_clipboard, set_clipboard_html, set_clipboard_image,
+};
+use std::{ffi::CString, path::Path};
 use widestring::U16CString;
 
 pub struct WindowsClipboardManager {}
@@ -58,6 +60,60 @@ impl super::ClipboardManager for WindowsClipboardManager {
         unsafe {
             let payload_c = U16CString::from_str(path_string).unwrap();
             set_clipboard_image(payload_c.as_ptr());
+        }
+    }
+
+    fn set_clipboard_html(&self, html: &str) {
+        // In order to set the HTML clipboard, we have to create a prefix with a specific format
+        // For more information, look here:
+        // https://docs.microsoft.com/en-us/windows/win32/dataxchg/html-clipboard-format
+        // https://docs.microsoft.com/en-za/troubleshoot/cpp/add-html-code-clipboard
+        let mut tokens = Vec::new();
+        tokens.push("Version:0.9");
+        tokens.push("StartHTML:<<STR*#>");
+        tokens.push("EndHTML:<<END*#>");
+        tokens.push("StartFragment:<<SFG#*>");
+        tokens.push("EndFragment:<<EFG#*>");
+        tokens.push("<html>");
+        tokens.push("<body>");
+        let content = format!("<!--StartFragment-->{}<!--EndFragment-->", html);
+        tokens.push(&content);
+        tokens.push("</body>");
+        tokens.push("</html>");
+
+        let mut render = tokens.join("\r\n");
+
+        // Now replace the placeholders with the actual positions
+        render = render.replace(
+            "<<STR*#>",
+            &format!("{:0>8}", render.find("<html>").unwrap_or_default()),
+        );
+        render = render.replace("<<END*#>", &format!("{:0>8}", render.len()));
+        render = render.replace(
+            "<<SFG#*>",
+            &format!(
+                "{:0>8}",
+                render.find("<!--StartFragment-->").unwrap_or_default()
+                    + "<!--StartFragment-->".len()
+            ),
+        );
+        render = render.replace(
+            "<<EFG#*>",
+            &format!(
+                "{:0>8}",
+                render.find("<!--EndFragment-->").unwrap_or_default()
+            ),
+        );
+
+        // Render the text fallback for those applications that don't support HTML clipboard
+        let decorator = html2text::render::text_renderer::TrivialDecorator::new();
+        let text_fallback =
+            html2text::from_read_with_decorator(html.as_bytes(), 1000000, decorator);
+        unsafe {
+            let payload_c =
+                CString::new(render).expect("unable to create CString for html content");
+            let payload_fallback_c = U16CString::from_str(text_fallback).unwrap();
+            set_clipboard_html(payload_c.as_ptr(), payload_fallback_c.as_ptr());
         }
     }
 }
