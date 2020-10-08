@@ -17,7 +17,7 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::os::raw::c_void;
+use std::os::raw::{c_char, c_void};
 
 #[repr(C)]
 pub struct WindowsMenuItem {
@@ -55,6 +55,7 @@ extern "C" {
     pub fn get_clipboard(buffer: *mut u16, size: i32) -> i32;
     pub fn set_clipboard(payload: *const u16) -> i32;
     pub fn set_clipboard_image(path: *const u16) -> i32;
+    pub fn set_clipboard_html(html: *const c_char, text_fallback: *const u16) -> i32;
 
     // KEYBOARD
     pub fn register_keypress_callback(

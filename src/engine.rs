@@ -154,8 +154,14 @@ impl<
         }
     }
 
-    fn inject_text(&self, config: &Configs, target_string: &str, force_clipboard: bool) {
-        let backend = if force_clipboard {
+    fn inject_text(
+        &self,
+        config: &Configs,
+        target_string: &str,
+        force_clipboard: bool,
+        is_html: bool,
+    ) {
+        let backend = if force_clipboard || is_html {
             &BackendType::Clipboard
         } else if config.backend == BackendType::Auto {
             if cfg!(target_os = "linux") {
@@ -188,7 +194,12 @@ impl<
                 }
             }
             BackendType::Clipboard => {
-                self.clipboard_manager.set_clipboard(&target_string);
+                if !is_html {
+                    self.clipboard_manager.set_clipboard(&target_string);
+                } else {
+                    self.clipboard_manager.set_clipboard_html(&target_string);
+                }
+
                 self.keyboard_manager.trigger_paste(&config);
             }
             _ => {
@@ -270,10 +281,10 @@ impl<
                 // clipboard content to restore it later.
                 previous_clipboard_content = self.return_content_if_preserve_clipboard_is_enabled();
 
-                self.inject_text(&config, &target_string, m.force_clipboard);
+                self.inject_text(&config, &target_string, m.force_clipboard, m.is_html);
 
-                // Disallow undo backspace if cursor positioning is used
-                if cursor_rewind.is_none() {
+                // Disallow undo backspace if cursor positioning is used or text is HTML
+                if cursor_rewind.is_none() && !m.is_html {
                     expansion_data = Some((
                         m.triggers[trigger_offset].clone(),
                         target_string.chars().count() as i32,
@@ -350,7 +361,7 @@ impl<
             self.keyboard_manager
                 .delete_string(&config, *injected_text_len - 1);
             // Restore previous text
-            self.inject_text(&config, trigger_string, false);
+            self.inject_text(&config, trigger_string, false, false);
         }
     }
 

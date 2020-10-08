@@ -179,6 +179,13 @@ extern "C" int32_t set_clipboard(wchar_t * text);
  */
 extern "C" int32_t set_clipboard_image(wchar_t * path);
 
+/*
+ * Set clipboard HTML. Notice how in this case, text is not a wide char but instead
+ * uses the UTF8 encoding.
+ * Also set the text fallback, in case some applications don't support HTML clipboard.
+ */
+extern "C" int32_t set_clipboard_html(char * html, wchar_t * text_fallback);
+
 // PROCESSES
 
 extern "C" int32_t start_process(wchar_t * cmd);
