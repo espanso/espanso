@@ -89,6 +89,31 @@ impl super::ClipboardManager for LinuxClipboardManager {
             error!("Could not set image clipboard: {}", e);
         }
     }
+
+    fn set_clipboard_html(&self, html: &str) {
+        let res = Command::new("xclip")
+            .args(&["-sel", "clip", "-t", "text/html"])
+            .stdin(Stdio::piped())
+            .spawn();
+
+        if let Ok(mut child) = res {
+            let stdin = child.stdin.as_mut();
+
+            if let Some(output) = stdin {
+                let res = output.write_all(html.as_bytes());
+
+                if let Err(e) = res {
+                    error!("Could not set clipboard html: {}", e);
+                }
+
+                let res = child.wait();
+
+                if let Err(e) = res {
+                    error!("Could not set clipboard html: {}", e);
+                }
+            }
+        }
+    }
 }
 
 impl LinuxClipboardManager {
