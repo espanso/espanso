@@ -159,6 +159,10 @@ fn default_post_inject_delay() -> u64 {
     100
 }
 
+fn default_wait_for_modifiers_release() -> bool {
+    false
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Configs {
     #[serde(default = "default_name")]
@@ -283,6 +287,9 @@ pub struct Configs {
 
     #[serde(default = "default_modulo_path")]
     pub modulo_path: Option<String>,
+
+    #[serde(default = "default_wait_for_modifiers_release")]
+    pub wait_for_modifiers_release: bool,
 }
 
 // Macro used to validate config fields

@@ -231,6 +231,13 @@ impl<
             m.triggers[trigger_offset].chars().count() as i32 + 1 // Count also the separator
         };
 
+        // If configured to do so, wait until the modifier keys are released (or timeout) so
+        // that we avoid unwanted interactions. As an example, see:
+        // https://github.com/federico-terzi/espanso/issues/470
+        if config.wait_for_modifiers_release {
+            crate::keyboard::wait_for_modifiers_release();
+        }
+
         if !skip_delete {
             self.keyboard_manager.delete_string(&config, char_count);
         }
