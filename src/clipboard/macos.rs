@@ -72,8 +72,7 @@ impl super::ClipboardManager for MacClipboardManager {
         let text_fallback =
             html2text::from_read_with_decorator(html.as_bytes(), 1000000, decorator);
         unsafe {
-            let payload_c =
-                CString::new(html).expect("unable to create CString for html content");
+            let payload_c = CString::new(html).expect("unable to create CString for html content");
             let payload_fallback_c = CString::new(text_fallback).unwrap();
             set_clipboard_html(payload_c.as_ptr(), payload_fallback_c.as_ptr());
         }
