@@ -324,6 +324,24 @@ int32_t set_clipboard_image(char *path) {
     return result;
 }
 
+int32_t set_clipboard_html(char * html, char * fallback_text) {
+    NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
+    NSArray *array = @[NSRTFPboardType, NSPasteboardTypeString];
+    [pasteboard declareTypes:array owner:nil];
+
+    NSString *nsHtml = [NSString stringWithUTF8String:html];
+    NSDictionary *documentAttributes = [NSDictionary dictionaryWithObjectsAndKeys:NSHTMLTextDocumentType, NSDocumentTypeDocumentAttribute, NSCharacterEncodingDocumentAttribute,[NSNumber numberWithInt:NSUTF8StringEncoding], nil];
+    NSAttributedString* atr = [[NSAttributedString alloc] initWithData:[nsHtml dataUsingEncoding:NSUTF8StringEncoding] options:documentAttributes documentAttributes:nil error:nil];
+
+    NSData *rtf = [atr RTFFromRange:NSMakeRange(0, [atr length])
+                                    documentAttributes:nil];
+
+    [pasteboard setData:rtf forType:NSRTFPboardType];
+
+    NSString *nsText = [NSString stringWithUTF8String:fallback_text];
+    [pasteboard setString:nsText forType:NSPasteboardTypeString];
+}
+
 
 // CONTEXT MENU
 

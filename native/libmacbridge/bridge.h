@@ -171,6 +171,11 @@ int32_t set_clipboard(char * text);
 int32_t set_clipboard_image(char * path);
 
 /*
+ * Set the clipboard html 
+ */
+int32_t set_clipboard_html(char * html, char * fallback);
+
+/*
  * If a process is currently holding SecureInput, then return 1 and set the pid pointer to the corresponding PID.
  */
 int32_t get_secure_input_process(int64_t *pid);
