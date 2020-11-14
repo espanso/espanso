@@ -330,7 +330,7 @@ fn default_markdown() -> Option<String> {
     None
 }
 fn default_paragraph() -> bool {
-    true
+    false
 }
 fn default_html() -> Option<String> {
     None
