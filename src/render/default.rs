@@ -238,13 +238,15 @@ impl super::Renderer for DefaultRenderer {
 
                 // Unescape any brackets (needed to be able to insert double brackets in replacement
                 // text, without triggering the variable system). See issue #187
-                let target_string = target_string.replace("\\{", "{").replace("\\}", "}");
+                let mut target_string = target_string.replace("\\{", "{").replace("\\}", "}");
 
                 // Render any argument that may be present
-                let target_string = utils::render_args(&target_string, &args);
+                if !args.is_empty() {
+                    target_string = utils::render_args(&target_string, &args);
+                }
 
                 // Handle case propagation
-                let target_string = if m.propagate_case {
+                target_string = if m.propagate_case {
                     let trigger = &m.triggers[trigger_offset];
 
                     // The check should be carried out from the position of the first
@@ -516,6 +518,25 @@ mod tests {
         let rendered = renderer.render_passive(text, &config);
 
         verify_render(rendered, "Hi Jon");
+    }
+
+    #[test]
+    fn test_render_passive_simple_match_no_args_should_not_replace_args_syntax() {
+        let text = ":greet";
+
+        let config = get_config_for(
+            r###"
+        matches:
+            - trigger: ':greet'
+              replace: "Hi $0$"
+        "###,
+        );
+
+        let renderer = get_renderer(config.clone());
+
+        let rendered = renderer.render_passive(text, &config);
+
+        verify_render(rendered, "Hi $0$");
     }
 
     #[test]
