@@ -177,6 +177,9 @@ impl<'a> From<&'a AutoMatch> for Match {
             });
             let new_replace = new_replace.to_string();
 
+            // Convert escaped brakets in forms
+            let form = form.replace("\\{", "{ ").replace("\\}", " }");
+
             // Convert the form data to valid variables
             let mut params = Mapping::new();
             if let Some(fields) = &other.form_fields {
@@ -186,7 +189,7 @@ impl<'a> From<&'a AutoMatch> for Match {
                 });
                 params.insert(Value::from("fields"), Value::from(mapping_fields));
             }
-            params.insert(Value::from("layout"), Value::from(form.to_owned()));
+            params.insert(Value::from("layout"), Value::from(form));
 
             let vars = vec![MatchVariable {
                 name: "form1".to_owned(),
