@@ -22,6 +22,8 @@ use chrono::{DateTime, Duration, Local};
 use serde_yaml::{Mapping, Value};
 use std::collections::HashMap;
 
+use super::ExtensionOut;
+
 pub struct DateExtension {}
 
 impl DateExtension {
@@ -40,7 +42,7 @@ impl super::Extension for DateExtension {
         params: &Mapping,
         _: &Vec<String>,
         _: &HashMap<String, ExtensionResult>,
-    ) -> Option<ExtensionResult> {
+    ) -> ExtensionOut {
         let mut now: DateTime<Local> = Local::now();
 
         // Compute the given offset
@@ -59,6 +61,6 @@ impl super::Extension for DateExtension {
             now.to_rfc2822()
         };
 
-        Some(ExtensionResult::Single(date))
+        Ok(Some(ExtensionResult::Single(date)))
     }
 }

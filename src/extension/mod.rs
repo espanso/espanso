@@ -38,6 +38,17 @@ pub enum ExtensionResult {
     Multiple(HashMap<String, String>),
 }
 
+#[derive(Clone, Debug, PartialEq)]
+pub enum ExtensionError {
+    // Returned by an extension if an internal process occurred
+    Internal,  
+    // Returned by an extension if the user aborted the expansion
+    // for example when pressing ESC inside a FormExtension.
+    Aborted,  
+}
+
+pub type ExtensionOut = Result<Option<ExtensionResult>, ExtensionError>;
+
 pub trait Extension {
     fn name(&self) -> String;
     fn calculate(
@@ -45,7 +56,7 @@ pub trait Extension {
         params: &Mapping,
         args: &Vec<String>,
         current_vars: &HashMap<String, ExtensionResult>,
-    ) -> Option<ExtensionResult>;
+    ) -> ExtensionOut;
 }
 
 pub fn get_extensions(

@@ -182,20 +182,28 @@ impl super::Renderer for DefaultRenderer {
                             // Normal extension variables
                             let extension = self.extension_map.get(&variable.var_type);
                             if let Some(extension) = extension {
-                                let ext_out =
+                                let ext_res =
                                     extension.calculate(&variable.params, &args, &output_map);
-                                if let Some(output) = ext_out {
-                                    output_map.insert(variable.name.clone(), output);
-                                } else {
-                                    output_map.insert(
-                                        variable.name.clone(),
-                                        ExtensionResult::Single("".to_owned()),
-                                    );
-                                    warn!(
-                                        "Could not generate output for variable: {}",
-                                        variable.name
-                                    );
+                                match ext_res {
+                                    Ok(ext_out) => {
+                                        if let Some(output) = ext_out {
+                                            output_map.insert(variable.name.clone(), output);
+                                        } else {
+                                            output_map.insert(
+                                                variable.name.clone(),
+                                                ExtensionResult::Single("".to_owned()),
+                                            );
+                                            warn!(
+                                                "Could not generate output for variable: {}",
+                                                variable.name
+                                            );
+                                        }
+                                    }
+                                    Err(_) => {
+                                        return RenderResult::Error
+                                    }
                                 }
+                                
                             } else {
                                 error!(
                                     "No extension found for variable type: {}",

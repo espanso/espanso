@@ -41,11 +41,11 @@ impl super::Extension for RandomExtension {
         params: &Mapping,
         args: &Vec<String>,
         _: &HashMap<String, ExtensionResult>,
-    ) -> Option<ExtensionResult> {
+    ) -> super::ExtensionOut {
         let choices = params.get(&Value::from("choices"));
         if choices.is_none() {
             warn!("No 'choices' parameter specified for random variable");
-            return None;
+            return Ok(None);
         }
         let choices = choices.unwrap().as_sequence();
         if let Some(choices) = choices {
@@ -62,17 +62,17 @@ impl super::Extension for RandomExtension {
                     // Render arguments
                     let output = crate::render::utils::render_args(output, args);
 
-                    return Some(ExtensionResult::Single(output));
+                    return Ok(Some(ExtensionResult::Single(output)));
                 }
                 None => {
                     error!("Could not select a random choice.");
-                    return None;
+                    return Err(super::ExtensionError::Internal)
                 }
             }
         }
 
         error!("choices array have an invalid format '{:?}'", choices);
-        None
+        Err(super::ExtensionError::Internal)
     }
 }
 
@@ -88,7 +88,7 @@ mod tests {
         params.insert(Value::from("choices"), Value::from(choices.clone()));
 
         let extension = RandomExtension::new();
-        let output = extension.calculate(&params, &vec![], &HashMap::new());
+        let output = extension.calculate(&params, &vec![], &HashMap::new()).unwrap();
 
         assert!(output.is_some());
 
@@ -106,7 +106,7 @@ mod tests {
         params.insert(Value::from("choices"), Value::from(choices.clone()));
 
         let extension = RandomExtension::new();
-        let output = extension.calculate(&params, &vec!["test".to_owned()], &HashMap::new());
+        let output = extension.calculate(&params, &vec!["test".to_owned()], &HashMap::new()).unwrap();
 
         assert!(output.is_some());
 
