@@ -199,11 +199,8 @@ impl super::Renderer for DefaultRenderer {
                                             );
                                         }
                                     }
-                                    Err(_) => {
-                                        return RenderResult::Error
-                                    }
+                                    Err(_) => return RenderResult::Error,
                                 }
-                                
                             } else {
                                 error!(
                                     "No extension found for variable type: {}",

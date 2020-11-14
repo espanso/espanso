@@ -81,7 +81,7 @@ impl super::Extension for FormExtension {
             let json: Result<HashMap<String, String>, _> = serde_json::from_str(&output);
             match json {
                 Ok(json) => {
-                    // Check if the JSON is empty. In those cases, it means the user exited 
+                    // Check if the JSON is empty. In those cases, it means the user exited
                     // the form before submitting it, therefore the expansion should stop
                     if json.is_empty() {
                         return Err(super::ExtensionError::Aborted);

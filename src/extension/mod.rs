@@ -41,10 +41,10 @@ pub enum ExtensionResult {
 #[derive(Clone, Debug, PartialEq)]
 pub enum ExtensionError {
     // Returned by an extension if an internal process occurred
-    Internal,  
+    Internal,
     // Returned by an extension if the user aborted the expansion
     // for example when pressing ESC inside a FormExtension.
-    Aborted,  
+    Aborted,
 }
 
 pub type ExtensionOut = Result<Option<ExtensionResult>, ExtensionError>;
