@@ -29,8 +29,8 @@ pub struct LinuxSystemManager {}
 impl super::SystemManager for LinuxSystemManager {
     fn get_current_window_title(&self) -> Option<String> {
         unsafe {
-            let mut buffer: [c_char; 100] = [0; 100];
-            let res = get_active_window_name(buffer.as_mut_ptr(), buffer.len() as i32);
+            let mut buffer: [c_char; 256] = [0; 256];
+            let res = get_active_window_name(buffer.as_mut_ptr(), (buffer.len() - 1) as i32);
 
             if res > 0 {
                 let c_string = CStr::from_ptr(buffer.as_ptr());
@@ -47,8 +47,8 @@ impl super::SystemManager for LinuxSystemManager {
 
     fn get_current_window_class(&self) -> Option<String> {
         unsafe {
-            let mut buffer: [c_char; 100] = [0; 100];
-            let res = get_active_window_class(buffer.as_mut_ptr(), buffer.len() as i32);
+            let mut buffer: [c_char; 256] = [0; 256];
+            let res = get_active_window_class(buffer.as_mut_ptr(), (buffer.len() - 1) as i32);
 
             if res > 0 {
                 let c_string = CStr::from_ptr(buffer.as_ptr());
@@ -65,8 +65,8 @@ impl super::SystemManager for LinuxSystemManager {
 
     fn get_current_window_executable(&self) -> Option<String> {
         unsafe {
-            let mut buffer: [c_char; 100] = [0; 100];
-            let res = get_active_window_executable(buffer.as_mut_ptr(), buffer.len() as i32);
+            let mut buffer: [c_char; 256] = [0; 256];
+            let res = get_active_window_executable(buffer.as_mut_ptr(), (buffer.len() - 1) as i32);
 
             if res > 0 {
                 let c_string = CStr::from_ptr(buffer.as_ptr());
