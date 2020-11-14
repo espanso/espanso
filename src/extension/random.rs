@@ -66,7 +66,7 @@ impl super::Extension for RandomExtension {
                 }
                 None => {
                     error!("Could not select a random choice.");
-                    return Err(super::ExtensionError::Internal)
+                    return Err(super::ExtensionError::Internal);
                 }
             }
         }
@@ -88,7 +88,9 @@ mod tests {
         params.insert(Value::from("choices"), Value::from(choices.clone()));
 
         let extension = RandomExtension::new();
-        let output = extension.calculate(&params, &vec![], &HashMap::new()).unwrap();
+        let output = extension
+            .calculate(&params, &vec![], &HashMap::new())
+            .unwrap();
 
         assert!(output.is_some());
 
@@ -106,7 +108,9 @@ mod tests {
         params.insert(Value::from("choices"), Value::from(choices.clone()));
 
         let extension = RandomExtension::new();
-        let output = extension.calculate(&params, &vec!["test".to_owned()], &HashMap::new()).unwrap();
+        let output = extension
+            .calculate(&params, &vec!["test".to_owned()], &HashMap::new())
+            .unwrap();
 
         assert!(output.is_some());
 
