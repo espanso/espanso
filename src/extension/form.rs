@@ -43,13 +43,13 @@ impl super::Extension for FormExtension {
         params: &Mapping,
         _: &Vec<String>,
         _: &HashMap<String, ExtensionResult>,
-    ) -> Option<ExtensionResult> {
+    ) -> super::ExtensionOut {
         let layout = params.get(&Value::from("layout"));
         let layout = if let Some(value) = layout {
             value.as_str().unwrap_or_default().to_string()
         } else {
             error!("invoking form extension without specifying a layout");
-            return None;
+            return Err(super::ExtensionError::Internal);
         };
 
         let mut form_config = Mapping::new();
@@ -81,16 +81,22 @@ impl super::Extension for FormExtension {
             let json: Result<HashMap<String, String>, _> = serde_json::from_str(&output);
             match json {
                 Ok(json) => {
-                    return Some(ExtensionResult::Multiple(json));
+                    // Check if the JSON is empty. In those cases, it means the user exited 
+                    // the form before submitting it, therefore the expansion should stop
+                    if json.is_empty() {
+                        return Err(super::ExtensionError::Aborted);
+                    }
+
+                    return Ok(Some(ExtensionResult::Multiple(json)));
                 }
                 Err(error) => {
                     error!("modulo json parsing error: {}", error);
-                    return None;
+                    return Err(super::ExtensionError::Internal);
                 }
             }
         } else {
             error!("modulo form didn't return any output");
-            return None;
+            return Err(super::ExtensionError::Internal);
         }
     }
 }

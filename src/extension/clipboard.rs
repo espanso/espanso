@@ -22,6 +22,8 @@ use crate::extension::ExtensionResult;
 use serde_yaml::Mapping;
 use std::collections::HashMap;
 
+use super::ExtensionOut;
+
 pub struct ClipboardExtension {
     clipboard_manager: Box<dyn ClipboardManager>,
 }
@@ -42,11 +44,11 @@ impl super::Extension for ClipboardExtension {
         _: &Mapping,
         _: &Vec<String>,
         _: &HashMap<String, ExtensionResult>,
-    ) -> Option<ExtensionResult> {
+    ) -> ExtensionOut {
         if let Some(clipboard) = self.clipboard_manager.get_clipboard() {
-            Some(ExtensionResult::Single(clipboard))
+            Ok(Some(ExtensionResult::Single(clipboard)))
         } else {
-            None
+            Ok(None)
         }
     }
 }

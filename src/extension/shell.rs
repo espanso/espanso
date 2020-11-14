@@ -164,11 +164,11 @@ impl super::Extension for ShellExtension {
         params: &Mapping,
         args: &Vec<String>,
         vars: &HashMap<String, ExtensionResult>,
-    ) -> Option<ExtensionResult> {
+    ) -> super::ExtensionOut {
         let cmd = params.get(&Value::from("cmd"));
         if cmd.is_none() {
             warn!("No 'cmd' parameter specified for shell variable");
-            return None;
+            return Err(super::ExtensionError::Internal);
         }
 
         let inject_args = params
@@ -186,7 +186,7 @@ impl super::Extension for ShellExtension {
 
             if shell.is_none() {
                 error!("Invalid shell parameter, please select a valid one.");
-                return None;
+                return Err(super::ExtensionError::Internal);
             }
 
             shell.unwrap()
@@ -257,11 +257,11 @@ impl super::Extension for ShellExtension {
                     output_str = output_str.trim().to_owned()
                 }
 
-                Some(ExtensionResult::Single(output_str))
+                Ok(Some(ExtensionResult::Single(output_str)))
             }
             Err(e) => {
                 error!("Could not execute cmd '{}', error: {}", cmd, e);
-                None
+                Err(super::ExtensionError::Internal)
             }
         }
     }
@@ -279,7 +279,7 @@ mod tests {
         params.insert(Value::from("trim"), Value::from(false));
 
         let extension = ShellExtension::new();
-        let output = extension.calculate(&params, &vec![], &HashMap::new());
+        let output = extension.calculate(&params, &vec![], &HashMap::new()).unwrap();
 
         assert!(output.is_some());
 
@@ -302,7 +302,7 @@ mod tests {
         params.insert(Value::from("cmd"), Value::from("echo \"hello world\""));
 
         let extension = ShellExtension::new();
-        let output = extension.calculate(&params, &vec![], &HashMap::new());
+        let output = extension.calculate(&params, &vec![], &HashMap::new()).unwrap();
 
         assert!(output.is_some());
         assert_eq!(
@@ -320,7 +320,7 @@ mod tests {
         );
 
         let extension = ShellExtension::new();
-        let output = extension.calculate(&params, &vec![], &HashMap::new());
+        let output = extension.calculate(&params, &vec![], &HashMap::new()).unwrap();
 
         assert!(output.is_some());
         assert_eq!(
@@ -336,7 +336,7 @@ mod tests {
         params.insert(Value::from("trim"), Value::from("error"));
 
         let extension = ShellExtension::new();
-        let output = extension.calculate(&params, &vec![], &HashMap::new());
+        let output = extension.calculate(&params, &vec![], &HashMap::new()).unwrap();
 
         assert!(output.is_some());
         assert_eq!(
@@ -353,7 +353,7 @@ mod tests {
         params.insert(Value::from("trim"), Value::from(true));
 
         let extension = ShellExtension::new();
-        let output = extension.calculate(&params, &vec![], &HashMap::new());
+        let output = extension.calculate(&params, &vec![], &HashMap::new()).unwrap();
 
         assert!(output.is_some());
         assert_eq!(
@@ -370,7 +370,7 @@ mod tests {
         params.insert(Value::from("inject_args"), Value::from(true));
 
         let extension = ShellExtension::new();
-        let output = extension.calculate(&params, &vec!["hello".to_owned()], &HashMap::new());
+        let output = extension.calculate(&params, &vec!["hello".to_owned()], &HashMap::new()).unwrap();
 
         assert!(output.is_some());
 
@@ -384,7 +384,7 @@ mod tests {
         params.insert(Value::from("cmd"), Value::from("echo 'hey friend' | awk '{ print $2 }'"));
 
         let extension = ShellExtension::new();
-        let output = extension.calculate(&params, &vec!["hello".to_owned()], &HashMap::new());
+        let output = extension.calculate(&params, &vec!["hello".to_owned()], &HashMap::new()).unwrap();
 
         assert!(output.is_some());
 
@@ -399,7 +399,7 @@ mod tests {
         params.insert(Value::from("inject_args"), Value::from(true));
 
         let extension = ShellExtension::new();
-        let output = extension.calculate(&params, &vec!["hello".to_owned()], &HashMap::new());
+        let output = extension.calculate(&params, &vec!["hello".to_owned()], &HashMap::new()).unwrap();
 
         assert!(output.is_some());
 
@@ -422,7 +422,7 @@ mod tests {
             "var1".to_owned(),
             ExtensionResult::Single("hello".to_owned()),
         );
-        let output = extension.calculate(&params, &vec![], &vars);
+        let output = extension.calculate(&params, &vec![], &vars).unwrap();
 
         assert!(output.is_some());
         assert_eq!(output.unwrap(), ExtensionResult::Single("hello".to_owned()));
@@ -443,7 +443,7 @@ mod tests {
         let mut subvars = HashMap::new();
         subvars.insert("name".to_owned(), "John".to_owned());
         vars.insert("form1".to_owned(), ExtensionResult::Multiple(subvars));
-        let output = extension.calculate(&params, &vec![], &vars);
+        let output = extension.calculate(&params, &vec![], &vars).unwrap();
 
         assert!(output.is_some());
         assert_eq!(output.unwrap(), ExtensionResult::Single("John".to_owned()));
