@@ -184,6 +184,8 @@ At this point, you should [install `modulo`](#installing-modulo) to enable the G
 
 Since version 0.7.0, espanso introduced a few gui-related features that require [modulo](https://github.com/federico-terzi/modulo) to be installed in your system. **While not strictly required, it's highly suggested to install it enable some very useful features, such as Forms.**.
 
+#### Manual installation
+
 Installing modulo is pretty straight forward, being it packaged as an AppImage. Here's the list of suggested steps:
 
 ```bash
@@ -201,5 +203,24 @@ sudo ln -s $HOME/opt/modulo.AppImage /usr/bin/modulo
 ```
 
 Note that these steps can be changed in many ways, the only requirement is that the modulo binary is available as `modulo` in the PATH.
+
+#### Installing on Manjaro / Arch
+
+Similarily to espanso itself, there are multiple ways to install modulo on Arch: You can either use the [manual method above](#manual-installation-1) or install it using the [AUR](#installing-from-aur-1) package.
+
+##### Installing from AUR
+
+The official way to install modulo on Arch-based systems is by using one of the AUR packages, currently maintained by [Scrumplex](https://scrumplex.net/). There are multiple options available:
+
+* [modulo](https://aur.archlinux.org/packages/modulo/) - Builds from the latest (stable) release.
+* [modulo-git](https://aur.archlinux.org/packages/modulo-git/) - Builds from the latest commit (in dev branch)
+
+After you chose the package you want, you can install modulo with:
+```
+git clone https://aur.archlinux.org/modulo.git
+cd modulo
+makepkg -si
+```
+
 
 At this point, you are ready to read the [Getting Started](/docs/get-started/) tutorial.
