@@ -3,7 +3,7 @@ title: Forms
 layout: docs
 ---
 
-Since version 0.7.0, espanso is capable of creating arbirarly complex input forms:
+Since version 0.7.0, espanso is capable of creating arbitrarily complex input forms:
 
 ![Espanso Form](/assets/images/macform.png)
 
@@ -212,7 +212,7 @@ If you want to use other Controls in a form specified using the above (verbose) 
 ```
 {% endraw %}
 
-Note that **the `fields` parameter content is specified as the `form_fields` parameter explaned above**.
+Note that **the `fields` parameter content is specified as the `form_fields` parameter explained above**.
 
 ### macOS remarks
 
