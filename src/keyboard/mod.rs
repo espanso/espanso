@@ -18,6 +18,7 @@
  */
 
 use crate::config::Configs;
+use log::warn;
 use serde::{Deserialize, Serialize};
 
 #[cfg(target_os = "windows")]
@@ -70,4 +71,20 @@ pub fn get_manager() -> impl KeyboardManager {
 #[cfg(target_os = "macos")]
 pub fn get_manager() -> impl KeyboardManager {
     macos::MacKeyboardManager {}
+}
+
+// These methods are used to wait until all modifiers are released (or timeout occurs)
+pub fn wait_for_modifiers_release() {
+    #[cfg(target_os = "windows")]
+    let released = crate::keyboard::windows::wait_for_modifiers_release();
+
+    #[cfg(target_os = "macos")]
+    let released = crate::keyboard::macos::wait_for_modifiers_release();
+
+    #[cfg(target_os = "linux")]
+    let released = true; // NOOP on linux (at least for now)
+
+    if !released {
+        warn!("Wait for modifiers release timed out! Please release your modifiers keys (CTRL, CMD, ALT, SHIFT) after typing the trigger");
+    }
 }

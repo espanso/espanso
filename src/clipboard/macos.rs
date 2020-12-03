@@ -29,7 +29,7 @@ impl super::ClipboardManager for MacClipboardManager {
     fn get_clipboard(&self) -> Option<String> {
         unsafe {
             let mut buffer: [c_char; 2000] = [0; 2000];
-            let res = get_clipboard(buffer.as_mut_ptr(), buffer.len() as i32);
+            let res = get_clipboard(buffer.as_mut_ptr(), (buffer.len() - 1) as i32);
 
             if res > 0 {
                 let c_string = CStr::from_ptr(buffer.as_ptr());
@@ -63,6 +63,18 @@ impl super::ClipboardManager for MacClipboardManager {
                     warn!("Couldn't set clipboard for image: {:?}", image_path)
                 }
             }
+        }
+    }
+
+    fn set_clipboard_html(&self, html: &str) {
+        // Render the text fallback for those applications that don't support HTML clipboard
+        let decorator = html2text::render::text_renderer::TrivialDecorator::new();
+        let text_fallback =
+            html2text::from_read_with_decorator(html.as_bytes(), 1000000, decorator);
+        unsafe {
+            let payload_c = CString::new(html).expect("unable to create CString for html content");
+            let payload_fallback_c = CString::new(text_fallback).unwrap();
+            set_clipboard_html(payload_c.as_ptr(), payload_fallback_c.as_ptr());
         }
     }
 }

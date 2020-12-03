@@ -31,8 +31,8 @@ impl WindowsSystemManager {
 impl super::SystemManager for WindowsSystemManager {
     fn get_current_window_title(&self) -> Option<String> {
         unsafe {
-            let mut buffer: [u16; 100] = [0; 100];
-            let res = get_active_window_name(buffer.as_mut_ptr(), buffer.len() as i32);
+            let mut buffer: [u16; 256] = [0; 256];
+            let res = get_active_window_name(buffer.as_mut_ptr(), (buffer.len() - 1) as i32);
 
             if res > 0 {
                 let c_string = U16CString::from_ptr_str(buffer.as_ptr());
@@ -51,8 +51,8 @@ impl super::SystemManager for WindowsSystemManager {
 
     fn get_current_window_executable(&self) -> Option<String> {
         unsafe {
-            let mut buffer: [u16; 250] = [0; 250];
-            let res = get_active_window_executable(buffer.as_mut_ptr(), buffer.len() as i32);
+            let mut buffer: [u16; 256] = [0; 256];
+            let res = get_active_window_executable(buffer.as_mut_ptr(), (buffer.len() - 1) as i32);
 
             if res > 0 {
                 let c_string = U16CString::from_ptr_str(buffer.as_ptr());
