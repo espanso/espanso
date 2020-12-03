@@ -174,7 +174,7 @@ mod tests {
         );
 
         let extension = ScriptExtension::new();
-        let output = extension.calculate(&params, &vec![], &HashMap::new());
+        let output = extension.calculate(&params, &vec![], &HashMap::new()).unwrap();
 
         assert!(output.is_some());
         assert_eq!(
@@ -194,7 +194,7 @@ mod tests {
         params.insert(Value::from("trim"), Value::from(false));
 
         let extension = ScriptExtension::new();
-        let output = extension.calculate(&params, &vec![], &HashMap::new());
+        let output = extension.calculate(&params, &vec![], &HashMap::new()).unwrap();
 
         assert!(output.is_some());
         assert_eq!(
@@ -213,7 +213,7 @@ mod tests {
         );
 
         let extension = ScriptExtension::new();
-        let output = extension.calculate(&params, &vec!["jon".to_owned()], &HashMap::new());
+        let output = extension.calculate(&params, &vec!["jon".to_owned()], &HashMap::new()).unwrap();
 
         assert!(output.is_some());
         assert_eq!(
@@ -233,7 +233,7 @@ mod tests {
         params.insert(Value::from("inject_args"), Value::from(true));
 
         let extension = ScriptExtension::new();
-        let output = extension.calculate(&params, &vec!["jon".to_owned()], &HashMap::new());
+        let output = extension.calculate(&params, &vec!["jon".to_owned()], &HashMap::new()).unwrap();
 
         assert!(output.is_some());
         assert_eq!(
@@ -261,7 +261,7 @@ mod tests {
         );
 
         let extension = ScriptExtension::new();
-        let output = extension.calculate(&params, &vec![], &vars);
+        let output = extension.calculate(&params, &vec![], &vars).unwrap();
 
         assert!(output.is_some());
         assert_eq!(
