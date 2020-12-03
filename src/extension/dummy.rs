@@ -43,15 +43,15 @@ impl super::Extension for DummyExtension {
         params: &Mapping,
         _: &Vec<String>,
         _: &HashMap<String, ExtensionResult>,
-    ) -> Option<ExtensionResult> {
+    ) -> super::ExtensionOut {
         let echo = params.get(&Value::from("echo"));
 
         if let Some(echo) = echo {
-            Some(ExtensionResult::Single(
+            Ok(Some(ExtensionResult::Single(
                 echo.as_str().unwrap_or_default().to_owned(),
-            ))
+            )))
         } else {
-            None
+            Ok(None)
         }
     }
 }

@@ -39,14 +39,14 @@ impl super::Extension for VarDummyExtension {
         params: &Mapping,
         _: &Vec<String>,
         vars: &HashMap<String, ExtensionResult>,
-    ) -> Option<ExtensionResult> {
+    ) -> super::ExtensionOut {
         let target = params.get(&Value::from("target"));
 
         if let Some(target) = target {
             let value = vars.get(target.as_str().unwrap_or_default());
-            Some(value.unwrap().clone())
+            Ok(Some(value.unwrap().clone()))
         } else {
-            None
+            Ok(None)
         }
     }
 }

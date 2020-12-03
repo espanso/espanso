@@ -39,7 +39,7 @@ impl super::Extension for MultiEchoExtension {
         params: &Mapping,
         _: &Vec<String>,
         _: &HashMap<String, ExtensionResult>,
-    ) -> Option<ExtensionResult> {
+    ) -> super::ExtensionOut {
         let mut output: HashMap<String, String> = HashMap::new();
         for (key, value) in params.iter() {
             if let Some(key) = key.as_str() {
@@ -48,6 +48,6 @@ impl super::Extension for MultiEchoExtension {
                 }
             }
         }
-        Some(ExtensionResult::Multiple(output))
+        Ok(Some(ExtensionResult::Multiple(output)))
     }
 }

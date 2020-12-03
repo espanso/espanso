@@ -1,6 +1,6 @@
 [package]
 name = "espanso"
-version = "0.7.2"
+version = "0.7.3"
 authors = ["Federico Terzi <federicoterzi96@gmail.com>"]
 license = "GPL-3.0"
 description = "Cross-platform Text Expander written in Rust"
@@ -14,7 +14,7 @@ version = "0.1.1"
 
 [dependencies]
 widestring = "0.4.0"
-serde = { version = "1.0", features = ["derive"] }
+serde = { version = "1.0.117", features = ["derive"] }
 serde_yaml = "0.8"
 dirs = "2.0.2"
 clap = "2.33.0"
@@ -22,7 +22,7 @@ regex = "1.3.1"
 log = "0.4.8"
 simplelog = "0.7.1"
 fs2 = "0.4.3"
-serde_json = "1.0.40"
+serde_json = "1.0.60"
 log-panics = {version = "2.0.0", features = ["with-backtrace"]}
 backtrace = "0.3.37"
 chrono = "0.4.9"
@@ -34,6 +34,8 @@ dialoguer = "0.4.0"
 rand = "0.7.2"
 zip = "0.5.3"
 notify = "4.0.13"
+markdown = "0.3.0"
+html2text = "0.2.1"
 
 [target.'cfg(unix)'.dependencies]
 libc = "0.2.62"

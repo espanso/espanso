@@ -26,7 +26,6 @@
     // Setup status icon
     if (show_icon) {
         myStatusItem = [[[NSStatusBar systemStatusBar] statusItemWithLength:NSSquareStatusItemLength] retain];
-        
         [self setIcon: icon_path];
     }
 
@@ -61,16 +60,12 @@
 
 - (void) updateIcon: (char *)iconPath {
     if (show_icon) {
-        [myStatusItem release];
-
         [self setIcon: iconPath];
     }
 }
 
 - (void) setIcon: (char *)iconPath {
     if (show_icon) {
-        myStatusItem = [[[NSStatusBar systemStatusBar] statusItemWithLength:NSSquareStatusItemLength] retain];
-
         NSString *nsIconPath = [NSString stringWithUTF8String:iconPath];
         NSImage *statusImage = [[NSImage alloc] initWithContentsOfFile:nsIconPath];
         [statusImage setTemplate:YES];

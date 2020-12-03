@@ -22,9 +22,9 @@ use crate::event::{KeyEvent, KeyModifier};
 use regex::{Captures, Regex};
 use serde::{Deserialize, Deserializer, Serialize};
 use serde_yaml::{Mapping, Value};
-use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
+use std::{borrow::Cow, collections::HashMap};
 
 pub(crate) mod scrolling;
 
@@ -36,6 +36,7 @@ pub struct Match {
     pub passive_only: bool,
     pub propagate_case: bool,
     pub force_clipboard: bool,
+    pub is_html: bool,
 
     // Automatically calculated from the triggers, used by the matcher to check for correspondences.
     #[serde(skip_serializing)]
@@ -132,15 +133,36 @@ impl<'a> From<&'a AutoMatch> for Match {
             })
             .collect();
 
-        let content = if let Some(replace) = &other.replace {
-            // Text match
-            let new_replace = replace.clone();
+        let (text_content, is_html) = if let Some(replace) = &other.replace {
+            (Some(Cow::from(replace)), false)
+        } else if let Some(markdown_str) = &other.markdown {
+            // Render the markdown into HTML
+            let mut html = markdown::to_html(markdown_str);
+            html = html.trim().to_owned();
 
+            if !other.paragraph {
+                // Remove the surrounding paragraph
+                if html.starts_with("<p>") {
+                    html = html.trim_start_matches("<p>").to_owned();
+                }
+                if html.ends_with("</p>") {
+                    html = html.trim_end_matches("</p>").to_owned();
+                }
+            }
+
+            (Some(Cow::from(html)), true)
+        } else if let Some(html) = &other.html {
+            (Some(Cow::from(html)), true)
+        } else {
+            (None, false)
+        };
+
+        let content = if let Some(content) = text_content {
             // Check if the match contains variables
-            let has_vars = VAR_REGEX.is_match(replace);
+            let has_vars = VAR_REGEX.is_match(&content);
 
             let content = TextContent {
-                replace: new_replace,
+                replace: content.to_string(),
                 vars: other.vars.clone(),
                 _has_vars: has_vars,
             };
@@ -155,6 +177,9 @@ impl<'a> From<&'a AutoMatch> for Match {
             });
             let new_replace = new_replace.to_string();
 
+            // Convert escaped brakets in forms
+            let form = form.replace("\\{", "{ ").replace("\\}", " }");
+
             // Convert the form data to valid variables
             let mut params = Mapping::new();
             if let Some(fields) = &other.form_fields {
@@ -164,7 +189,7 @@ impl<'a> From<&'a AutoMatch> for Match {
                 });
                 params.insert(Value::from("fields"), Value::from(mapping_fields));
             }
-            params.insert(Value::from("layout"), Value::from(form.to_owned()));
+            params.insert(Value::from("layout"), Value::from(form));
 
             let vars = vec![MatchVariable {
                 name: "form1".to_owned(),
@@ -208,7 +233,7 @@ impl<'a> From<&'a AutoMatch> for Match {
 
             MatchContentType::Image(content)
         } else {
-            eprintln!("ERROR: no action specified for match {}, please specify either 'replace', 'image_path' or 'form'", other.trigger);
+            eprintln!("ERROR: no action specified for match {}, please specify either 'replace', 'markdown', 'html', image_path' or 'form'", other.trigger);
             std::process::exit(2);
         };
 
@@ -220,6 +245,7 @@ impl<'a> From<&'a AutoMatch> for Match {
             _trigger_sequences: trigger_sequences,
             propagate_case: other.propagate_case,
             force_clipboard: other.force_clipboard,
+            is_html,
         }
     }
 }
@@ -259,6 +285,15 @@ struct AutoMatch {
 
     #[serde(default = "default_force_clipboard")]
     pub force_clipboard: bool,
+
+    #[serde(default = "default_markdown")]
+    pub markdown: Option<String>,
+
+    #[serde(default = "default_paragraph")]
+    pub paragraph: bool,
+
+    #[serde(default = "default_html")]
+    pub html: Option<String>,
 }
 
 fn default_trigger() -> String {
@@ -293,6 +328,15 @@ fn default_propagate_case() -> bool {
 }
 fn default_force_clipboard() -> bool {
     false
+}
+fn default_markdown() -> Option<String> {
+    None
+}
+fn default_paragraph() -> bool {
+    false
+}
+fn default_html() -> Option<String> {
+    None
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
@@ -661,6 +705,97 @@ mod tests {
                 );
             }
             _ => panic!("wrong content"),
+        }
+    }
+
+    #[test]
+    fn test_match_markdown_loaded_correctly() {
+        let match_str = r###"
+        trigger: ":test"
+        markdown: "This *text* is **very bold**"
+        "###;
+
+        let _match: Match = serde_yaml::from_str(match_str).unwrap();
+
+        match _match.content {
+            MatchContentType::Text(content) => {
+                assert_eq!(
+                    content.replace,
+                    "This <em>text</em> is <strong>very bold</strong>"
+                );
+                assert_eq!(_match.is_html, true);
+            }
+            _ => {
+                assert!(false);
+            }
+        }
+    }
+
+    #[test]
+    fn test_match_markdown_keep_vars() {
+        let match_str = r###"
+        trigger: ":test"
+        markdown: "This *text* is {{variable}} **very bold**"
+        "###;
+
+        let _match: Match = serde_yaml::from_str(match_str).unwrap();
+
+        match _match.content {
+            MatchContentType::Text(content) => {
+                assert_eq!(
+                    content.replace,
+                    "This <em>text</em> is {{variable}} <strong>very bold</strong>"
+                );
+                assert_eq!(_match.is_html, true);
+                assert_eq!(content._has_vars, true);
+            }
+            _ => {
+                assert!(false);
+            }
+        }
+    }
+
+    #[test]
+    fn test_match_html_loaded_correctly() {
+        let match_str = r###"
+        trigger: ":test"
+        html: "This <i>text<i> is <b>very bold</b>"
+        "###;
+
+        let _match: Match = serde_yaml::from_str(match_str).unwrap();
+
+        match _match.content {
+            MatchContentType::Text(content) => {
+                assert_eq!(content.replace, "This <i>text<i> is <b>very bold</b>");
+                assert_eq!(_match.is_html, true);
+            }
+            _ => {
+                assert!(false);
+            }
+        }
+    }
+
+    #[test]
+    fn test_match_html_keep_vars() {
+        let match_str = r###"
+        trigger: ":test"
+        html: "This <i>text<i> is {{var}} <b>very bold</b>"
+        "###;
+
+        let _match: Match = serde_yaml::from_str(match_str).unwrap();
+
+        match _match.content {
+            MatchContentType::Text(content) => {
+                assert_eq!(
+                    content.replace,
+                    "This <i>text<i> is {{var}} <b>very bold</b>"
+                );
+                assert_eq!(_match.is_html, true);
+                assert_eq!(content._has_vars, true);
+            }
+            _ => {
+                assert!(false);
+            }
         }
     }
 }

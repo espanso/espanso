@@ -25,11 +25,8 @@ use std::collections::HashMap;
 use std::process::{Command, Output};
 
 lazy_static! {
-    static ref POS_ARG_REGEX: Regex = if cfg!(target_os = "windows") {
-        Regex::new("%(?P<pos>\\d+)").unwrap()
-    } else {
-        Regex::new("\\$(?P<pos>\\d+)").unwrap()
-    };
+    static ref UNIX_POS_ARG_REGEX: Regex = Regex::new("\\$(?P<pos>\\d+)").unwrap();
+    static ref WIN_POS_ARG_REGEX: Regex = Regex::new("%(?P<pos>\\d+)").unwrap();
 }
 
 pub enum Shell {
@@ -121,6 +118,14 @@ impl Shell {
             _ => None,
         }
     }
+
+    fn get_arg_regex(&self) -> &Regex {
+        let regex = match self {
+            Shell::Cmd | Shell::Powershell => &*WIN_POS_ARG_REGEX,
+            _ => &*UNIX_POS_ARG_REGEX,
+        };
+        regex
+    }
 }
 
 impl Default for Shell {
@@ -155,27 +160,20 @@ impl super::Extension for ShellExtension {
         params: &Mapping,
         args: &Vec<String>,
         vars: &HashMap<String, ExtensionResult>,
-    ) -> Option<ExtensionResult> {
+    ) -> super::ExtensionOut {
         let cmd = params.get(&Value::from("cmd"));
         if cmd.is_none() {
             warn!("No 'cmd' parameter specified for shell variable");
-            return None;
+            return Err(super::ExtensionError::Internal);
         }
 
-        let original_cmd = cmd.unwrap().as_str().unwrap();
+        let inject_args = params
+            .get(&Value::from("inject_args"))
+            .unwrap_or(&Value::from(false))
+            .as_bool()
+            .unwrap_or(false);
 
-        // Render positional parameters in args
-        let cmd = POS_ARG_REGEX
-            .replace_all(&original_cmd, |caps: &Captures| {
-                let position_str = caps.name("pos").unwrap().as_str();
-                let position = position_str.parse::<i32>().unwrap_or(-1);
-                if position >= 0 && position < args.len() as i32 {
-                    args[position as usize].to_owned()
-                } else {
-                    "".to_owned()
-                }
-            })
-            .to_string();
+        let original_cmd = cmd.unwrap().as_str().unwrap();
 
         let shell_param = params.get(&Value::from("shell"));
         let shell = if let Some(shell_param) = shell_param {
@@ -184,12 +182,30 @@ impl super::Extension for ShellExtension {
 
             if shell.is_none() {
                 error!("Invalid shell parameter, please select a valid one.");
-                return None;
+                return Err(super::ExtensionError::Internal);
             }
 
             shell.unwrap()
         } else {
             Shell::default()
+        };
+
+        // Render positional parameters in args
+        let cmd = if inject_args {
+            shell
+                .get_arg_regex()
+                .replace_all(&original_cmd, |caps: &Captures| {
+                    let position_str = caps.name("pos").unwrap().as_str();
+                    let position = position_str.parse::<i32>().unwrap_or(-1);
+                    if position >= 0 && position < args.len() as i32 {
+                        args[position as usize].to_owned()
+                    } else {
+                        "".to_owned()
+                    }
+                })
+                .to_string()
+        } else {
+            original_cmd.to_owned()
         };
 
         let env_variables = super::utils::convert_to_env_variables(&vars);
@@ -238,11 +254,11 @@ impl super::Extension for ShellExtension {
                     output_str = output_str.trim().to_owned()
                 }
 
-                Some(ExtensionResult::Single(output_str))
+                Ok(Some(ExtensionResult::Single(output_str)))
             }
             Err(e) => {
                 error!("Could not execute cmd '{}', error: {}", cmd, e);
-                None
+                Err(super::ExtensionError::Internal)
             }
         }
     }
@@ -260,7 +276,9 @@ mod tests {
         params.insert(Value::from("trim"), Value::from(false));
 
         let extension = ShellExtension::new();
-        let output = extension.calculate(&params, &vec![], &HashMap::new());
+        let output = extension
+            .calculate(&params, &vec![], &HashMap::new())
+            .unwrap();
 
         assert!(output.is_some());
 
@@ -283,7 +301,9 @@ mod tests {
         params.insert(Value::from("cmd"), Value::from("echo \"hello world\""));
 
         let extension = ShellExtension::new();
-        let output = extension.calculate(&params, &vec![], &HashMap::new());
+        let output = extension
+            .calculate(&params, &vec![], &HashMap::new())
+            .unwrap();
 
         assert!(output.is_some());
         assert_eq!(
@@ -301,7 +321,9 @@ mod tests {
         );
 
         let extension = ShellExtension::new();
-        let output = extension.calculate(&params, &vec![], &HashMap::new());
+        let output = extension
+            .calculate(&params, &vec![], &HashMap::new())
+            .unwrap();
 
         assert!(output.is_some());
         assert_eq!(
@@ -317,7 +339,9 @@ mod tests {
         params.insert(Value::from("trim"), Value::from("error"));
 
         let extension = ShellExtension::new();
-        let output = extension.calculate(&params, &vec![], &HashMap::new());
+        let output = extension
+            .calculate(&params, &vec![], &HashMap::new())
+            .unwrap();
 
         assert!(output.is_some());
         assert_eq!(
@@ -334,7 +358,9 @@ mod tests {
         params.insert(Value::from("trim"), Value::from(true));
 
         let extension = ShellExtension::new();
-        let output = extension.calculate(&params, &vec![], &HashMap::new());
+        let output = extension
+            .calculate(&params, &vec![], &HashMap::new())
+            .unwrap();
 
         assert!(output.is_some());
         assert_eq!(
@@ -348,9 +374,12 @@ mod tests {
     fn test_shell_args_unix() {
         let mut params = Mapping::new();
         params.insert(Value::from("cmd"), Value::from("echo $0"));
+        params.insert(Value::from("inject_args"), Value::from(true));
 
         let extension = ShellExtension::new();
-        let output = extension.calculate(&params, &vec!["hello".to_owned()], &HashMap::new());
+        let output = extension
+            .calculate(&params, &vec!["hello".to_owned()], &HashMap::new())
+            .unwrap();
 
         assert!(output.is_some());
 
@@ -358,13 +387,38 @@ mod tests {
     }
 
     #[test]
+    #[cfg(not(target_os = "windows"))]
+    fn test_shell_no_default_inject_args_unix() {
+        let mut params = Mapping::new();
+        params.insert(
+            Value::from("cmd"),
+            Value::from("echo 'hey friend' | awk '{ print $2 }'"),
+        );
+
+        let extension = ShellExtension::new();
+        let output = extension
+            .calculate(&params, &vec!["hello".to_owned()], &HashMap::new())
+            .unwrap();
+
+        assert!(output.is_some());
+
+        assert_eq!(
+            output.unwrap(),
+            ExtensionResult::Single("friend".to_owned())
+        );
+    }
+
+    #[test]
     #[cfg(target_os = "windows")]
     fn test_shell_args_windows() {
         let mut params = Mapping::new();
         params.insert(Value::from("cmd"), Value::from("echo %0"));
+        params.insert(Value::from("inject_args"), Value::from(true));
 
         let extension = ShellExtension::new();
-        let output = extension.calculate(&params, &vec!["hello".to_owned()], &HashMap::new());
+        let output = extension
+            .calculate(&params, &vec!["hello".to_owned()], &HashMap::new())
+            .unwrap();
 
         assert!(output.is_some());
 
@@ -387,7 +441,7 @@ mod tests {
             "var1".to_owned(),
             ExtensionResult::Single("hello".to_owned()),
         );
-        let output = extension.calculate(&params, &vec![], &vars);
+        let output = extension.calculate(&params, &vec![], &vars).unwrap();
 
         assert!(output.is_some());
         assert_eq!(output.unwrap(), ExtensionResult::Single("hello".to_owned()));
@@ -408,7 +462,7 @@ mod tests {
         let mut subvars = HashMap::new();
         subvars.insert("name".to_owned(), "John".to_owned());
         vars.insert("form1".to_owned(), ExtensionResult::Multiple(subvars));
-        let output = extension.calculate(&params, &vec![], &vars);
+        let output = extension.calculate(&params, &vec![], &vars).unwrap();
 
         assert!(output.is_some());
         assert_eq!(output.unwrap(), ExtensionResult::Single("John".to_owned()));
