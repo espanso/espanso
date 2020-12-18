@@ -29,7 +29,7 @@ fn default_editor() -> String {
 }
 #[cfg(target_os = "windows")]
 fn default_editor() -> String {
-    "C:\\Windows\\System32\\notepad.exe".to_owned()
+    "C:/Windows/System32/notepad.exe".to_owned()
 }
 
 pub fn open_editor(file_path: &Path) -> bool {
