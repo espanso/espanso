@@ -110,9 +110,17 @@
   link: https://kars.me/espanso
   image: "kars.jpg"
 
+- name: "Devin W. Leaman"
+  link: "https://github.com/4lch4"
+  image: "6931731.png"
+
 - name: "Bradley Sawler"
   link: ""
   image: "bradley.jpg"
+
+- name: "Johnson Chuang"
+  link: "https://github.com/monstatw"
+  image: "johnson.jpeg"
 
 - name: "Enno Nagel"
   link: http://ongel.de/
@@ -134,6 +142,9 @@
   link: https://github.com/skostojohn
   image: "scott2.jpeg"
 
+- name: "André Buck"
+  image: "4547764.png"
+
 - name: David Williams 
   link: http://www.pacificera.com/
   image: "david.jpeg"
@@ -146,11 +157,27 @@
   link: ""
   image: ""
 
+- name: "Nav Saini"
+  link: "https://github.com/navxio"
+  image: "9297865.jpeg"
+
+- name: "Clark Venable"
+  link: "https://github.com/jclarkv"
+  image: "6352270.jpeg"
+
+- name: "Oskar Austegard"
+  image: "oskar.jpg"
+  link: "https://twitter.com/austegard"
+
 - name: Timon Kunze
   link: ""
   image: ""
 
 - name: Ian Wentzell
+  link: ""
+  image: ""
+
+- name: "Nathan Maxwell"
   link: ""
   image: ""
 
@@ -162,17 +189,49 @@
   link: ""
   image: ""
 
+- name: "Pascal Turbé"
+  link: "https://yllis.eu/"
+  image: ""
+
 - name: Allen Leis
   link: "https://github.com/looselycoupled"
   image: "allen.jpg"
+
+- name: "Mohammed Al-Mahdawi"
+  link: "https://github.com/MohammedAl-Mahdawi"
+  image: "5562839.jpeg"
 
 - name: "Felix Breuer"
   link: https://breuer.dev/
   image: felix.jpeg
 
+- name: "Fernanda and Paulo"
+  image: ""
+  link: ""
+
+- name: "Joshua Grebler"
+  link: ""
+  image: ""
+
+- name: "Martin Fox"
+  link: ""
+  image: ""
+
+- name: "Luis Arias"
+  link: ""
+  image: ""
+
+- name: "David Slattery"
+  link: ""
+  image: ""
+
 - name: Marty Heyman
   link: ""
   image: ""
+
+- name: "Patrick Meaney"
+  image: "patrik.png"
+  link: "https://www.pmeaney.com/"
 
 - name: Jeroen Meerwijk
   link: "https://ditisnietmijn.nl/"
