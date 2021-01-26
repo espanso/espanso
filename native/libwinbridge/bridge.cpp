@@ -260,7 +260,7 @@ LRESULT CALLBACK window_procedure(HWND window, unsigned int msg, WPARAM wp, LPAR
                     // Convert the virtual key to an unicode char
                     std::array<WCHAR, 4> buffer;
 
-                    // This flag is needed to avoid chaning the keyboard state for some layouts.
+                    // This flag is needed to avoid changing the keyboard state for some layouts.
                     // Refer to issue: https://github.com/federico-terzi/espanso/issues/86
                     UINT flags = 1 << 2;
 

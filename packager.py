@@ -87,7 +87,7 @@ def build_windows(package_info):
 
     modulo_url = "https://github.com/federico-terzi/modulo/releases/download/v{0}/modulo-win.exe".format(package_info.modulo_version)
     modulo_sha_url = "https://github.com/federico-terzi/modulo/releases/download/v{0}/modulo-win.exe.sha256.txt".format(package_info.modulo_version)
-    print("Pulling modulo depencency from:", modulo_url)
+    print("Pulling modulo dependency from:", modulo_url)
     modulo_target_file = os.path.join(TARGET_DIR, "modulo.exe")
     urllib.request.urlretrieve(modulo_url, modulo_target_file)
     print("Pulling SHA signature from:", modulo_sha_url)

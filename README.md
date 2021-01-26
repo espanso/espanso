@@ -62,7 +62,7 @@ please consider making a small donation, it really helps :)
 
 Many people helped the project along the way, thanks to all of you. In particular, I want to thank: 
 
-* [Scrumplex](https://scrumplex.net/) - Official AUR repo mantainer and Linux Guru
+* [Scrumplex](https://scrumplex.net/) - Official AUR repo maintainer and Linux Guru
 * [Luca Antognetti](https://github.com/luca-ant) - Linux and Windows Tester
 * [Matteo Pellegrino](https://www.matteopellegrino.me/) - MacOS Tester
 * [Timo Runge](http://timorunge.com/) - MacOS contributor
