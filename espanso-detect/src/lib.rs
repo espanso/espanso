@@ -21,11 +21,3 @@ pub mod event;
 
 #[cfg(target_os = "windows")]
 pub mod win32;
-
-#[cfg(test)]
-mod tests {
-  #[test]
-  fn it_works() {
-    assert_eq!(2 + 2, 5);
-  }
-}

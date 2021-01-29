@@ -25,8 +25,8 @@ use crate::event::Variant::*;
 use crate::event::{InputEvent, Key, KeyboardEvent, Variant};
 use crate::event::{Key::*, MouseButton, MouseEvent};
 
-const LEFT_VARIANT: i32 = 1;
-const RIGHT_VARIANT: i32 = 2;
+const INPUT_LEFT_VARIANT: i32 = 1;
+const INPUT_RIGHT_VARIANT: i32 = 2;
 
 const INPUT_EVENT_TYPE_KEYBOARD: i32 = 1;
 const INPUT_EVENT_TYPE_MOUSE: i32 = 2;
@@ -72,9 +72,7 @@ pub struct Win32Source {
 
 impl Win32Source {
   pub fn new(callback: Win32SourceCallback) -> Win32Source {
-    Self {
-      callback
-    }
+    Self { callback }
   }
   pub fn eventloop(&self) {
     unsafe {
@@ -87,10 +85,7 @@ impl Win32Source {
         }
       }
 
-      raw_eventloop(
-        self as *const Win32Source,
-        callback,
-      );
+      raw_eventloop(self as *const Win32Source, callback);
     }
   }
 }
@@ -110,8 +105,8 @@ impl From<RawInputEvent> for Option<InputEvent> {
 
         // If the raw event does not include an explicit variant, use the hint provided by the key code
         let variant = match raw.variant {
-          LEFT_VARIANT => Some(Left),
-          RIGHT_VARIANT => Some(Right),
+          INPUT_LEFT_VARIANT => Some(Left),
+          INPUT_RIGHT_VARIANT => Some(Right),
           _ => variant_hint,
         };
 
@@ -233,5 +228,84 @@ fn raw_to_mouse_button(raw: i32) -> Option<MouseButton> {
     INPUT_MOUSE_BUTTON_4 => Some(MouseButton::Button4),
     INPUT_MOUSE_BUTTON_5 => Some(MouseButton::Button5),
     _ => None,
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  fn default_raw_input_event() -> RawInputEvent {
+    RawInputEvent {
+      event_type: INPUT_EVENT_TYPE_KEYBOARD,
+      buffer: [0; 24],
+      buffer_len: 0,
+      key_code: 0,
+      variant: INPUT_LEFT_VARIANT,
+      status: INPUT_STATUS_PRESSED,
+    }
+  }
+
+  #[test]
+  fn raw_to_input_event_keyboard_works_correctly() {
+    let wide_string = widestring::WideString::from("k".to_string());
+    let mut buffer: [u16; 24] = [0; 24];
+    buffer[..1].copy_from_slice(wide_string.as_slice());
+
+    let mut raw = default_raw_input_event();
+    raw.buffer = buffer;
+    raw.buffer_len = 1;
+    raw.status = INPUT_STATUS_RELEASED;
+    raw.variant = 0;
+    raw.key_code = 0x4B;
+
+    let result: Option<InputEvent> = raw.into();
+    assert_eq!(result.unwrap(), InputEvent::Keyboard(KeyboardEvent {
+      key: Other(0x4B),
+      status: Released,
+      value: Some("k".to_string()),
+      variant: None,
+    }));
+  }
+
+  #[test]
+  fn raw_to_input_event_mouse_works_correctly() {
+
+    let mut raw = default_raw_input_event();
+    raw.event_type = INPUT_EVENT_TYPE_MOUSE;
+    raw.status = INPUT_STATUS_RELEASED;
+    raw.variant = 0;
+    raw.key_code = INPUT_MOUSE_RIGHT_BUTTON;
+
+    let result: Option<InputEvent> = raw.into();
+    assert_eq!(result.unwrap(), InputEvent::Mouse(MouseEvent {
+      status: Released,
+      button: MouseButton::Right,
+    }));
+  }
+
+  #[test]
+  fn raw_to_input_invalid_buffer() {
+    let buffer: [u16; 24] = [123; 24];
+
+    let mut raw = default_raw_input_event();
+    raw.buffer = buffer;
+    raw.buffer_len = 5;
+
+    let result: Option<InputEvent> = raw.into();
+    assert!(result.unwrap().into_keyboard().unwrap().value.is_none());
+  }
+
+  #[test]
+  fn raw_to_input_event_returns_none_when_missing_type() {
+    let result: Option<InputEvent> = RawInputEvent {
+      event_type: 0,  // Missing type
+      buffer: [0; 24],
+      buffer_len: 0,
+      key_code: 123,
+      variant: INPUT_LEFT_VARIANT,
+      status: INPUT_STATUS_PRESSED,
+    }.into();
+    assert!(result.is_none());
   }
 }

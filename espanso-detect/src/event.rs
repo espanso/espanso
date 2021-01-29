@@ -16,14 +16,17 @@
  * You should have received a copy of the GNU General Public License
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
- 
-#[derive(Debug)]
+#[cfg(test)]
+use enum_as_inner::EnumAsInner;
+
+#[derive(Debug, PartialEq)]
+#[cfg_attr(test, derive(EnumAsInner))]
 pub enum InputEvent {
   Mouse(MouseEvent),
   Keyboard(KeyboardEvent),
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum MouseButton {
   Left,
   Right,
@@ -35,25 +38,25 @@ pub enum MouseButton {
   Button5,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct MouseEvent {
   pub button: MouseButton,
   pub status: Status,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Status {
   Pressed,
   Released,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Variant {
   Left,
   Right,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct KeyboardEvent {
   pub key: Key,
   pub value: Option<String>,
@@ -62,7 +65,7 @@ pub struct KeyboardEvent {
 }
 
 // A subset of the Web's key values: https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Key {
   // Modifiers
   Alt,
