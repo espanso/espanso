@@ -1,0 +1,15 @@
+[package]
+name = "espanso-detect"
+version = "0.1.0"
+authors = ["Federico Terzi <federico-terzi@users.noreply.github.com>"]
+edition = "2018"
+build="build.rs"
+
+[dependencies]
+log = "0.4.14"
+
+[target.'cfg(windows)'.dependencies]
+widestring = "0.4.3"
+
+[build-dependencies]
+cc = "1.0.66"
