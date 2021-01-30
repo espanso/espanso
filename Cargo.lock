@@ -26,6 +26,8 @@ name = "espanso"
 version = "1.0.0"
 dependencies = [
  "espanso-detect 0.1.0",
+ "espanso-ui 0.1.0",
+ "maplit 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -34,6 +36,17 @@ version = "0.1.0"
 dependencies = [
  "cc 1.0.66 (registry+https://github.com/rust-lang/crates.io-index)",
  "enum-as-inner 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "lazycell 1.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "log 0.4.14 (registry+https://github.com/rust-lang/crates.io-index)",
+ "widestring 0.4.3 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "espanso-ui"
+version = "0.1.0"
+dependencies = [
+ "cc 1.0.66 (registry+https://github.com/rust-lang/crates.io-index)",
+ "lazycell 1.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.14 (registry+https://github.com/rust-lang/crates.io-index)",
  "widestring 0.4.3 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -47,12 +60,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "lazycell"
+version = "1.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
 name = "log"
 version = "0.4.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "cfg-if 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
+
+[[package]]
+name = "maplit"
+version = "1.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "proc-macro2"
@@ -100,7 +123,9 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum cfg-if 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)" = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 "checksum enum-as-inner 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)" = "7c5f0096a91d210159eceb2ff5e1c4da18388a170e1e3ce948aac9c8fdbbf595"
 "checksum heck 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)" = "87cbf45460356b7deeb5e3415b5563308c0a9b057c85e12b06ad551f98d0a6ac"
+"checksum lazycell 1.3.0 (registry+https://github.com/rust-lang/crates.io-index)" = "830d08ce1d1d941e6b30645f1a0eb5643013d835ce3779a5fc208261dbe10f55"
 "checksum log 0.4.14 (registry+https://github.com/rust-lang/crates.io-index)" = "51b9bbe6c47d51fc3e1a9b945965946b4c44142ab8792c50835a980d362c2710"
+"checksum maplit 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)" = "3e2e65a1a2e43cfcb47a895c4c8b10d1f4a61097f9f254f183aee60cad9c651d"
 "checksum proc-macro2 1.0.24 (registry+https://github.com/rust-lang/crates.io-index)" = "1e0704ee1a7e00d7bb417d0770ea303c1bccbabf0ef1667dae92b5967f5f8a71"
 "checksum quote 1.0.8 (registry+https://github.com/rust-lang/crates.io-index)" = "991431c3519a3f36861882da93630ce66b52918dcf1b8e2fd66b397fc96f28df"
 "checksum syn 1.0.60 (registry+https://github.com/rust-lang/crates.io-index)" = "c700597eca8a5a762beb35753ef6b94df201c81cca676604f547495a0d7f0081"

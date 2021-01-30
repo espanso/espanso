@@ -18,6 +18,7 @@
  */
 
 #include "native.h"
+#include <iostream>
 #include <stdio.h>
 #include <string>
 #include <vector>
@@ -39,29 +40,41 @@
 #include <Windows.h>
 
 // How many milliseconds must pass between events before refreshing the keyboard layout
-const long refreshKeyboardLayoutInterval = 2000;
-const USHORT mouseDownFlags = RI_MOUSE_LEFT_BUTTON_DOWN | RI_MOUSE_RIGHT_BUTTON_DOWN | RI_MOUSE_MIDDLE_BUTTON_DOWN |
+const long DETECT_REFRESH_KEYBOARD_LAYOUT_INTERVAL = 2000;
+const wchar_t *const DETECT_WINCLASS = L"EspansoDetect";
+const USHORT MOUSE_DOWN_FLAGS = RI_MOUSE_LEFT_BUTTON_DOWN | RI_MOUSE_RIGHT_BUTTON_DOWN | RI_MOUSE_MIDDLE_BUTTON_DOWN |
                         RI_MOUSE_BUTTON_1_DOWN | RI_MOUSE_BUTTON_2_DOWN | RI_MOUSE_BUTTON_3_DOWN |
                         RI_MOUSE_BUTTON_4_DOWN | RI_MOUSE_BUTTON_5_DOWN;
-const USHORT mouseUpFlags = RI_MOUSE_LEFT_BUTTON_UP | RI_MOUSE_RIGHT_BUTTON_UP | RI_MOUSE_MIDDLE_BUTTON_UP |
+const USHORT MOUSE_UP_FLAGS = RI_MOUSE_LEFT_BUTTON_UP | RI_MOUSE_RIGHT_BUTTON_UP | RI_MOUSE_MIDDLE_BUTTON_UP |
                       RI_MOUSE_BUTTON_1_UP | RI_MOUSE_BUTTON_2_UP | RI_MOUSE_BUTTON_3_UP |
                       RI_MOUSE_BUTTON_4_UP | RI_MOUSE_BUTTON_5_UP;
 
-DWORD lastKeyboardPressTick = 0;
-HKL currentKeyboardLayout;
-HWND window;
-const wchar_t *const winclass = L"Espanso";
+typedef struct {
+  HKL current_keyboard_layout;
+  DWORD last_key_press_tick;
 
-void *self = NULL;
-EventCallback event_callback = NULL;
+  // Rust interop
+  void * rust_instance;
+  EventCallback event_callback;
+} DetectVariables;
 
 /*
- * Message handler procedure for the windows
+ * Message handler procedure for the window
  */
-LRESULT CALLBACK window_procedure(HWND window, unsigned int msg, WPARAM wp, LPARAM lp)
+LRESULT CALLBACK detect_window_procedure(HWND window, unsigned int msg, WPARAM wp, LPARAM lp)
 {
+  DetectVariables * variables = reinterpret_cast<DetectVariables*>(GetWindowLongPtrW(window, GWLP_USERDATA));
+
   switch (msg)
   {
+  case WM_DESTROY:
+    PostQuitMessage(0);
+
+    // Free the window variables
+    delete variables;
+    SetWindowLongPtrW(window, GWLP_USERDATA, NULL);
+
+    return 0L;
   case WM_INPUT: // Message relative to the RAW INPUT events
   {
     InputEvent event = {};
@@ -104,7 +117,7 @@ LRESULT CALLBACK window_procedure(HWND window, unsigned int msg, WPARAM wp, LPAR
       DWORD currentTick = GetTickCount();
 
       // If enough time has passed between the last keypress and now, refresh the keyboard layout
-      if ((currentTick - lastKeyboardPressTick) > refreshKeyboardLayoutInterval)
+      if ((currentTick - variables->last_key_press_tick) > DETECT_REFRESH_KEYBOARD_LAYOUT_INTERVAL)
       {
 
         // Because keyboard layouts on windows are Window-specific, to get the current
@@ -119,11 +132,11 @@ LRESULT CALLBACK window_procedure(HWND window, unsigned int msg, WPARAM wp, LPAR
           // It's not always valid, so update the current value only if available.
           if (newKeyboardLayout != 0)
           {
-            currentKeyboardLayout = newKeyboardLayout;
+            variables->current_keyboard_layout = newKeyboardLayout;
           }
         }
 
-        lastKeyboardPressTick = currentTick;
+        variables->last_key_press_tick = currentTick;
       }
 
       // Get keyboard state ( necessary to decode the associated Unicode char )
@@ -134,7 +147,7 @@ LRESULT CALLBACK window_procedure(HWND window, unsigned int msg, WPARAM wp, LPAR
         // Refer to issue: https://github.com/federico-terzi/espanso/issues/86
         UINT flags = 1 << 2;
 
-        int result = ToUnicodeEx(raw->data.keyboard.VKey, raw->data.keyboard.MakeCode, lpKeyState.data(), reinterpret_cast<LPWSTR>(event.buffer), (sizeof(event.buffer)/sizeof(event.buffer[0])) - 1, flags, currentKeyboardLayout);
+        int result = ToUnicodeEx(raw->data.keyboard.VKey, raw->data.keyboard.MakeCode, lpKeyState.data(), reinterpret_cast<LPWSTR>(event.buffer), (sizeof(event.buffer)/sizeof(event.buffer[0])) - 1, flags, variables->current_keyboard_layout);
 
         // Handle the corresponding string if present
         if (result >= 1)
@@ -187,16 +200,16 @@ LRESULT CALLBACK window_procedure(HWND window, unsigned int msg, WPARAM wp, LPAR
     else if (raw->header.dwType == RIM_TYPEMOUSE)  // Mouse events
     {
       // Make sure the mouse event belongs to the supported ones
-      if ((raw->data.mouse.usButtonFlags & (mouseDownFlags | mouseUpFlags)) == 0) {
+      if ((raw->data.mouse.usButtonFlags & (MOUSE_DOWN_FLAGS | MOUSE_UP_FLAGS)) == 0) {
         return 0;        
       }
 
       event.event_type = INPUT_EVENT_TYPE_MOUSE;
 
-      if ((raw->data.mouse.usButtonFlags & mouseDownFlags) != 0)
+      if ((raw->data.mouse.usButtonFlags & MOUSE_DOWN_FLAGS) != 0)
       {
         event.status = INPUT_STATUS_PRESSED;
-      } else if ((raw->data.mouse.usButtonFlags & mouseUpFlags) != 0) {
+      } else if ((raw->data.mouse.usButtonFlags & MOUSE_UP_FLAGS) != 0) {
         event.status = INPUT_STATUS_RELEASED;
       }
 
@@ -221,9 +234,9 @@ LRESULT CALLBACK window_procedure(HWND window, unsigned int msg, WPARAM wp, LPAR
     }
 
     // If valid, send the event to the Rust layer
-    if (event.event_type != 0 && self != NULL && event_callback != NULL)
+    if (event.event_type != 0 &&  variables->rust_instance != NULL && variables->event_callback != NULL)
     {
-      event_callback(self, event);
+      variables->event_callback(variables->rust_instance, event);
     }
 
     return 0;
@@ -233,17 +246,16 @@ LRESULT CALLBACK window_procedure(HWND window, unsigned int msg, WPARAM wp, LPAR
   }
 }
 
-int32_t raw_eventloop(void *_self, EventCallback _callback)
+void * detect_initialize(void *_self)
 {
-  // Initialize the default keyboard layout
-  currentKeyboardLayout = GetKeyboardLayout(0);
+  HWND window = NULL;
 
   // Initialize the Worker window
   // Docs: https://docs.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-wndclassexa
   WNDCLASSEX wndclass = {
       sizeof(WNDCLASSEX),       // cbSize: Size of this structure
       0,                        // style: Class styles
-      window_procedure,         // lpfnWndProc: Pointer to the window procedure
+      detect_window_procedure,         // lpfnWndProc: Pointer to the window procedure
       0,                        // cbClsExtra: Number of extra bytes to allocate following the window-class structure
       0,                        // cbWndExtra: The number of extra bytes to allocate following the window instance.
       GetModuleHandle(0),       // hInstance: A handle to the instance that contains the window procedure for the class.
@@ -251,16 +263,22 @@ int32_t raw_eventloop(void *_self, EventCallback _callback)
       LoadCursor(0, IDC_ARROW), // hCursor: A handle to the class cursor.
       NULL,                     // hbrBackground: A handle to the class background brush.
       NULL,                     // lpszMenuName: Pointer to a null-terminated character string that specifies the resource name of the class menu
-      winclass,                 // lpszClassName: A pointer to a null-terminated string or is an atom.
+      DETECT_WINCLASS,                 // lpszClassName: A pointer to a null-terminated string or is an atom.
       NULL                      // hIconSm: A handle to a small icon that is associated with the window class.
   };
 
   if (RegisterClassEx(&wndclass))
   {
+    DetectVariables * variables = new DetectVariables();
+    variables->rust_instance = _self;
+
+    // Initialize the default keyboard layout
+    variables->current_keyboard_layout = GetKeyboardLayout(0);
+
     // Docs: https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-createwindowexw
     window = CreateWindowEx(
         0,                        // dwExStyle: The extended window style of the window being created.
-        winclass,                 // lpClassName: A null-terminated string or a class atom created by a previous call to the RegisterClass
+        DETECT_WINCLASS,                 // lpClassName: A null-terminated string or a class atom created by a previous call to the RegisterClass
         L"Espanso Worker Window", // lpWindowName: The window name.
         WS_OVERLAPPEDWINDOW,      // dwStyle: The style of the window being created.
         CW_USEDEFAULT,            // X: The initial horizontal position of the window.
@@ -272,6 +290,8 @@ int32_t raw_eventloop(void *_self, EventCallback _callback)
         GetModuleHandle(0),       // hInstance: A handle to the instance of the module to be associated with the window.
         NULL                      // lpParam: Pointer to a value to be passed to the window
     );
+
+    SetWindowLongPtrW(window, GWLP_USERDATA, reinterpret_cast<::LONG_PTR>(variables));
 
     // Register raw inputs
     RAWINPUTDEVICE Rid[2];
@@ -288,22 +308,27 @@ int32_t raw_eventloop(void *_self, EventCallback _callback)
 
     if (RegisterRawInputDevices(Rid, 2, sizeof(Rid[0])) == FALSE)
     { // Something went wrong, error.
-      return -1;
+      return nullptr;
     }
   }
   else
   {
     // Something went wrong, error.
-    return -2;
+    return nullptr;
   }
 
-  event_callback = _callback;
-  self = _self;
+  return window;
+}
 
+int32_t detect_eventloop(void * window, EventCallback _callback)
+{
   if (window)
   {
+    DetectVariables * variables = reinterpret_cast<DetectVariables*>(GetWindowLongPtrW((HWND) window, GWLP_USERDATA));
+    variables->event_callback = _callback;
+
     // Hide the window
-    ShowWindow(window, SW_HIDE);
+    ShowWindow((HWND) window, SW_HIDE);
 
     // Enter the Event loop
     MSG msg;
@@ -311,8 +336,11 @@ int32_t raw_eventloop(void *_self, EventCallback _callback)
       DispatchMessage(&msg);
   }
 
-  event_callback = NULL;
-  self = NULL;
-
   return 1;
+}
+
+int32_t detect_destroy(void * window) {
+  if (window) {
+    return DestroyWindow((HWND) window);
+  }
 }

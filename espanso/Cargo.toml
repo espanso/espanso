@@ -10,3 +10,5 @@ edition = "2018"
 
 [dependencies]
 espanso-detect = { path = "../espanso-detect" } 
+espanso-ui = { path = "../espanso-ui" } 
+maplit = "1.0.2"

@@ -3,4 +3,5 @@
 members = [
   "espanso",
   "espanso-detect",
+  "espanso-ui",
 ]

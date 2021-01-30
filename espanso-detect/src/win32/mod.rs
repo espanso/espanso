@@ -17,7 +17,10 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use log::{trace, warn};
+use std::ffi::c_void;
+
+use lazycell::LazyCell;
+use log::{error, trace, warn};
 use widestring::U16CStr;
 
 use crate::event::Status::*;
@@ -57,35 +60,81 @@ pub struct RawInputEvent {
 }
 
 #[allow(improper_ctypes)]
-#[link(name = "native", kind = "static")]
+#[link(name = "espansodetect", kind = "static")]
 extern "C" {
-  pub fn raw_eventloop(
-    _self: *const Win32Source,
+  pub fn detect_initialize(_self: *const Win32Source) -> *mut c_void;
+
+  pub fn detect_eventloop(
+    window: *const c_void,
     event_callback: extern "C" fn(_self: *mut Win32Source, event: RawInputEvent),
-  );
+  ) -> i32;
+
+  pub fn detect_destroy(window: *const c_void) -> i32;
 }
 
 pub type Win32SourceCallback = Box<dyn Fn(InputEvent)>;
 pub struct Win32Source {
-  callback: Win32SourceCallback,
+  handle: *mut c_void,
+  callback: LazyCell<Win32SourceCallback>,
 }
 
 impl Win32Source {
-  pub fn new(callback: Win32SourceCallback) -> Win32Source {
-    Self { callback }
+  pub fn new() -> Win32Source {
+    Self {
+      handle: std::ptr::null_mut(),
+      callback: LazyCell::new(),
+    }
   }
-  pub fn eventloop(&self) {
-    unsafe {
-      extern "C" fn callback(_self: *mut Win32Source, event: RawInputEvent) {
-        let event: Option<InputEvent> = event.into();
+
+  pub fn initialize(&mut self) {
+    let handle = unsafe { detect_initialize(self as *const Win32Source) };
+
+    if handle.is_null() {
+      panic!("Unable to initialize Win32EventLoop");
+    }
+
+    self.handle = handle;
+  }
+
+  pub fn eventloop(&self, event_callback: Win32SourceCallback) {
+    if self.handle.is_null() {
+      panic!("Attempt to start Win32Source eventloop without initialization");
+    }
+
+    if let Err(_) = self.callback.fill(event_callback) {
+      panic!("Unable to set Win32Source event callback");
+    }
+
+    extern "C" fn callback(_self: *mut Win32Source, event: RawInputEvent) {
+      let event: Option<InputEvent> = event.into();
+      if let Some(callback) = unsafe { (*_self).callback.borrow() } {
         if let Some(event) = event {
-          unsafe { (*(*_self).callback)(event) }
+          callback(event)
         } else {
           trace!("Unable to convert raw event to input event");
         }
       }
+    }
 
-      raw_eventloop(self as *const Win32Source, callback);
+    let error_code = unsafe { detect_eventloop(self.handle, callback) };
+
+    if error_code <= 0 {
+      panic!("Win32Source eventloop returned a negative error code");
+    }
+  }
+}
+
+impl Drop for Win32Source {
+  fn drop(&mut self) {
+    if self.handle.is_null() {
+      error!("Win32Source destruction cannot be performed, handle is null");
+      return;
+    }
+
+    let result = unsafe { detect_destroy(self.handle) };
+
+    if result != 0 {
+      error!("Win32EventLoop destruction returned non-zero code");
     }
   }
 }
@@ -260,17 +309,19 @@ mod tests {
     raw.key_code = 0x4B;
 
     let result: Option<InputEvent> = raw.into();
-    assert_eq!(result.unwrap(), InputEvent::Keyboard(KeyboardEvent {
-      key: Other(0x4B),
-      status: Released,
-      value: Some("k".to_string()),
-      variant: None,
-    }));
+    assert_eq!(
+      result.unwrap(),
+      InputEvent::Keyboard(KeyboardEvent {
+        key: Other(0x4B),
+        status: Released,
+        value: Some("k".to_string()),
+        variant: None,
+      })
+    );
   }
 
   #[test]
   fn raw_to_input_event_mouse_works_correctly() {
-
     let mut raw = default_raw_input_event();
     raw.event_type = INPUT_EVENT_TYPE_MOUSE;
     raw.status = INPUT_STATUS_RELEASED;
@@ -278,10 +329,13 @@ mod tests {
     raw.key_code = INPUT_MOUSE_RIGHT_BUTTON;
 
     let result: Option<InputEvent> = raw.into();
-    assert_eq!(result.unwrap(), InputEvent::Mouse(MouseEvent {
-      status: Released,
-      button: MouseButton::Right,
-    }));
+    assert_eq!(
+      result.unwrap(),
+      InputEvent::Mouse(MouseEvent {
+        status: Released,
+        button: MouseButton::Right,
+      })
+    );
   }
 
   #[test]
@@ -299,13 +353,14 @@ mod tests {
   #[test]
   fn raw_to_input_event_returns_none_when_missing_type() {
     let result: Option<InputEvent> = RawInputEvent {
-      event_type: 0,  // Missing type
+      event_type: 0, // Missing type
       buffer: [0; 24],
       buffer_len: 0,
       key_code: 123,
       variant: INPUT_LEFT_VARIANT,
       status: INPUT_STATUS_PRESSED,
-    }.into();
+    }
+    .into();
     assert!(result.is_none());
   }
 }
