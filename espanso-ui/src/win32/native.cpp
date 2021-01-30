@@ -36,6 +36,7 @@
 
 #include <windows.h>
 #include <winuser.h>
+#include <string.h>
 #include <strsafe.h>
 #pragma comment(lib, "Shell32.lib")
 #include <shellapi.h>
@@ -43,25 +44,40 @@
 #pragma comment(lib, "Gdi32.lib")
 #include <Windows.h>
 
+#include "WinToast/wintoastlib.h"
+using namespace WinToastLib;
+
 #define APPWM_ICON_CLICK (WM_APP + 1)
 #define APPWM_SHOW_CONTEXT_MENU (WM_APP + 2)
 #define APPWM_UPDATE_TRAY_ICON (WM_APP + 3)
+#define APPWM_SHOW_NOTIFICATION (WM_APP + 4)
 
 const wchar_t *const ui_winclass = L"EspansoUI";
 
-typedef struct {
+typedef struct
+{
   UIOptions options;
   NOTIFYICONDATA nid;
   HICON g_icons[MAX_ICON_COUNT];
+  wchar_t notification_icon_path[MAX_FILE_PATH];
 
   // Rust interop
   void *rust_instance;
   EventCallback event_callback;
 } UIVariables;
 
-
 // Needed to detect when Explorer crashes
 UINT WM_TASKBARCREATED = RegisterWindowMessage(L"TaskbarCreated");
+
+// Notification handler using: https://mohabouje.github.io/WinToast/
+class EspansoNotificationHandler : public IWinToastHandler
+{
+public:
+  void toastActivated() const {}
+  void toastActivated(int actionIndex) const {}
+  void toastDismissed(WinToastDismissalReason state) const {}
+  void toastFailed() const {}
+};
 
 /*
  * Message handler procedure for the window
@@ -69,7 +85,7 @@ UINT WM_TASKBARCREATED = RegisterWindowMessage(L"TaskbarCreated");
 LRESULT CALLBACK ui_window_procedure(HWND window, unsigned int msg, WPARAM wp, LPARAM lp)
 {
   UIEvent event = {};
-  UIVariables * variables = reinterpret_cast<UIVariables*>(GetWindowLongPtrW(window, GWLP_USERDATA));
+  UIVariables *variables = reinterpret_cast<UIVariables *>(GetWindowLongPtrW(window, GWLP_USERDATA));
 
   switch (msg)
   {
@@ -125,18 +141,33 @@ LRESULT CALLBACK ui_window_procedure(HWND window, unsigned int msg, WPARAM wp, L
             */
     break;
   }
-  case APPWM_UPDATE_TRAY_ICON:  // Request to update the tray icon
+  case APPWM_UPDATE_TRAY_ICON: // Request to update the tray icon
   {
-    int32_t index = (int32_t) lp;
-    if (index >= variables->options.icon_paths_count) {
+    int32_t index = (int32_t)lp;
+    if (index >= variables->options.icon_paths_count)
+    {
       break;
     }
 
     variables->nid.hIcon = variables->g_icons[index];
-    if (variables->options.show_icon) {
+    if (variables->options.show_icon)
+    {
       Shell_NotifyIcon(NIM_MODIFY, &variables->nid);
     }
 
+    break;
+  }
+  case APPWM_SHOW_NOTIFICATION:
+  {
+    std::unique_ptr<wchar_t> message(reinterpret_cast<wchar_t *>(lp));
+
+    std::cout << "hello" << variables->notification_icon_path << std::endl;
+
+    WinToastTemplate templ = WinToastTemplate(WinToastTemplate::ImageAndText02);
+    templ.setImagePath(variables->notification_icon_path);
+    templ.setTextField(L"Espanso", WinToastTemplate::FirstLine);
+    templ.setTextField(message.get(), WinToastTemplate::SecondLine);
+    WinToast::instance()->showToast(templ, new EspansoNotificationHandler());
     break;
   }
   case APPWM_ICON_CLICK: // Click on the tray icon
@@ -165,7 +196,8 @@ LRESULT CALLBACK ui_window_procedure(HWND window, unsigned int msg, WPARAM wp, L
   }
 }
 
-void * ui_initialize(void *_self, UIOptions _options) {
+void *ui_initialize(void *_self, UIOptions _options, int32_t *error_code)
+{
   HWND window = NULL;
 
   SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE);
@@ -176,7 +208,7 @@ void * ui_initialize(void *_self, UIOptions _options) {
   WNDCLASSEX uiwndclass = {
       sizeof(WNDCLASSEX),       // cbSize: Size of this structure
       0,                        // style: Class styles
-      ui_window_procedure,         // lpfnWndProc: Pointer to the window procedure
+      ui_window_procedure,      // lpfnWndProc: Pointer to the window procedure
       0,                        // cbClsExtra: Number of extra bytes to allocate following the window-class structure
       0,                        // cbWndExtra: The number of extra bytes to allocate following the window instance.
       GetModuleHandle(0),       // hInstance: A handle to the instance that contains the window procedure for the class.
@@ -192,25 +224,26 @@ void * ui_initialize(void *_self, UIOptions _options) {
   {
     // Initialize the service window
     window = CreateWindowEx(
-        0,                        // dwExStyle: The extended window style of the window being created.
-        ui_winclass,                 // lpClassName: A null-terminated string or a class atom created by a previous call to the RegisterClass
+        0,                    // dwExStyle: The extended window style of the window being created.
+        ui_winclass,          // lpClassName: A null-terminated string or a class atom created by a previous call to the RegisterClass
         L"Espanso UI Window", // lpWindowName: The window name.
-        WS_OVERLAPPEDWINDOW,      // dwStyle: The style of the window being created.
-        CW_USEDEFAULT,            // X: The initial horizontal position of the window.
-        CW_USEDEFAULT,            // Y: The initial vertical position of the window.
-        100,                      // nWidth: The width, in device units, of the window.
-        100,                      // nHeight: The height, in device units, of the window.
-        NULL,                     // hWndParent:  handle to the parent or owner window of the window being created.
-        NULL,                     // hMenu: A handle to a menu, or specifies a child-window identifier, depending on the window style.
-        GetModuleHandle(0),       // hInstance: A handle to the instance of the module to be associated with the window.
-        NULL                      // lpParam: Pointer to a value to be passed to the window
+        WS_OVERLAPPEDWINDOW,  // dwStyle: The style of the window being created.
+        CW_USEDEFAULT,        // X: The initial horizontal position of the window.
+        CW_USEDEFAULT,        // Y: The initial vertical position of the window.
+        100,                  // nWidth: The width, in device units, of the window.
+        100,                  // nHeight: The height, in device units, of the window.
+        NULL,                 // hWndParent:  handle to the parent or owner window of the window being created.
+        NULL,                 // hMenu: A handle to a menu, or specifies a child-window identifier, depending on the window style.
+        GetModuleHandle(0),   // hInstance: A handle to the instance of the module to be associated with the window.
+        NULL                  // lpParam: Pointer to a value to be passed to the window
     );
 
     if (window)
     {
-      UIVariables * variables = new UIVariables();
+      UIVariables *variables = new UIVariables();
       variables->options = _options;
       variables->rust_instance = _self;
+      wcscpy(variables->notification_icon_path, _options.notification_icon_path);
       SetWindowLongPtrW(window, GWLP_USERDATA, reinterpret_cast<::LONG_PTR>(variables));
 
       // Load the tray icons
@@ -241,18 +274,38 @@ void * ui_initialize(void *_self, UIOptions _options) {
         Shell_NotifyIcon(NIM_ADD, &variables->nid);
       }
     }
+    else
+    {
+      *error_code = -2;
+      return nullptr;
+    }
   }
-  
+  else
+  {
+    *error_code = -1;
+    return nullptr;
+  }
+
+  // Initialize the notification handler
+  WinToast::instance()->setAppName(L"Espanso");
+  const auto aumi = WinToast::configureAUMI(L"federico.terzi", L"Espanso", L"Espanso", L"1.0.0");
+  WinToast::instance()->setAppUserModelId(aumi);
+  if (!WinToast::instance()->initialize())
+  {
+    *error_code = -3;
+    return nullptr;
+  }
+
   return window;
 }
 
-int32_t ui_eventloop(void * window, EventCallback _callback)
+int32_t ui_eventloop(void *window, EventCallback _callback)
 {
   if (window)
   {
-    UIVariables * variables = reinterpret_cast<UIVariables*>(GetWindowLongPtrW((HWND) window, GWLP_USERDATA));
+    UIVariables *variables = reinterpret_cast<UIVariables *>(GetWindowLongPtrW((HWND)window, GWLP_USERDATA));
     variables->event_callback = _callback;
-    
+
     // Enter the Event loop
     MSG msg;
     while (GetMessage(&msg, 0, 0, 0))
@@ -262,15 +315,30 @@ int32_t ui_eventloop(void * window, EventCallback _callback)
   return 1;
 }
 
-int32_t ui_destroy(void * window) {
-  if (window) {
-    return DestroyWindow((HWND) window);
+int32_t ui_destroy(void *window)
+{
+  if (window)
+  {
+    return DestroyWindow((HWND)window);
+  }
+  return -1;
+}
+
+void ui_update_tray_icon(void *window, int32_t index)
+{
+  if (window)
+  {
+    PostMessage((HWND)window, APPWM_UPDATE_TRAY_ICON, 0, index);
   }
 }
 
-void ui_update_tray_icon(void * window, int32_t index)
+int32_t ui_show_notification(void *window, wchar_t *message)
 {
-  if (window) {
-    PostMessage((HWND) window, APPWM_UPDATE_TRAY_ICON, 0, index);
+  if (window)
+  {
+    wchar_t *message_copy = _wcsdup(message);
+    PostMessage((HWND)window, APPWM_SHOW_NOTIFICATION, 0, (LPARAM)message_copy);
+    return 0;
   }
+  return -1;
 }

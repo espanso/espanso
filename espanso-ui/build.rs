@@ -24,7 +24,9 @@ fn cc_config() {
   cc::Build::new()
     .cpp(true)
     .include("src/win32/native.h")
+    .include("src/win32/WinToast/wintoastlib.h")
     .file("src/win32/native.cpp")
+    .file("src/win32/WinToast/wintoastlib.cpp")
     .compile("espansoui");
 
   println!("cargo:rustc-link-lib=static=espansoui");
