@@ -17,7 +17,7 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub mod event;
-
-#[cfg(target_os = "windows")]
-pub mod win32;
+#[derive(Debug, PartialEq, Clone)]
+pub enum UIEvent {
+  TrayIconClick,
+}

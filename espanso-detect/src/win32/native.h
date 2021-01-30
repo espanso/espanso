@@ -60,10 +60,16 @@ typedef struct {
   int32_t status;
 } InputEvent;
 
-typedef void (*EventCallback)(void * self, InputEvent data);
-extern EventCallback event_callback;
+typedef void (*EventCallback)(void * rust_istance, InputEvent data);
 
-// Initialize the Raw Input API and run the event loop. Blocking call.
-extern "C" int32_t raw_eventloop(void * self, EventCallback callback);
+
+// Initialize the Raw Input API and the Window.
+extern "C" void * detect_initialize(void * rust_istance);
+
+// Run the event loop. Blocking call.
+extern "C" int32_t detect_eventloop(void * window, EventCallback callback);
+
+// Destroy the given window.
+extern "C" int32_t detect_destroy(void * window);
 
 #endif //ESPANSO_DETECT_H
