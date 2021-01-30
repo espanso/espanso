@@ -127,10 +127,10 @@ impl Win32EventLoop {
     // Convert the icon paths to the raw representation
     let mut icon_paths: [[u16; MAX_FILE_PATH]; MAX_ICON_COUNT] =
       [[0; MAX_FILE_PATH]; MAX_ICON_COUNT];
-    for i in 0..self.icons.len() {
+    for (i, icon_path) in icon_paths.iter_mut().enumerate().take(self.icons.len()) {
       let wide_path = WideString::from_str(&self.icons[i]);
       let len = min(wide_path.len(), MAX_FILE_PATH - 1);
-      icon_paths[i][0..len].clone_from_slice(&wide_path.as_slice()[..len]);
+      icon_path[0..len].clone_from_slice(&wide_path.as_slice()[..len]);
       // TODO: test overflow, correct case
     }
 
@@ -170,7 +170,7 @@ impl Win32EventLoop {
       // TODO: test
     }
 
-    if let Err(_) = self._event_callback.fill(event_callback) {
+    if self._event_callback.fill(event_callback).is_err() {
       panic!("Unable to set Win32EventLoop callback");
     }
 
@@ -238,11 +238,11 @@ impl Win32Remote {
       unsafe { ui_update_tray_icon(handle, (*index) as i32) }
     } else {
       error!("Unable to update tray icon, invalid icon id");
-      return;
     }
   }
 }
 
+#[allow(clippy::single_match)] // TODO: remove after another match is used
 impl From<RawUIEvent> for Option<UIEvent> {
   fn from(raw: RawUIEvent) -> Option<UIEvent> {
     match raw.event_type {

@@ -78,6 +78,7 @@ pub struct Win32Source {
   callback: LazyCell<Win32SourceCallback>,
 }
 
+#[allow(clippy::new_without_default)]
 impl Win32Source {
   pub fn new() -> Win32Source {
     Self {
@@ -101,7 +102,7 @@ impl Win32Source {
       panic!("Attempt to start Win32Source eventloop without initialization");
     }
 
-    if let Err(_) = self.callback.fill(event_callback) {
+    if self.callback.fill(event_callback).is_err() {
       panic!("Unable to set Win32Source event callback");
     }
 
