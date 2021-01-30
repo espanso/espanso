@@ -1,4 +1,4 @@
-use espanso_detect::event::InputEvent;
+use espanso_detect::event::{InputEvent, Status};
 
 fn main() {
   println!("Hello, world!z");
@@ -17,6 +17,7 @@ fn main() {
   let (remote, mut eventloop) = espanso_ui::win32::create(espanso_ui::win32::Win32UIOptions {
     show_icon: true,
     icon_paths: &icon_paths,
+    notification_icon_path: r"C:\Users\Freddy\Insync\Development\Espanso\Images\icongreensmall.png".to_string(),
   });
 
   std::thread::spawn(move || {
@@ -27,8 +28,9 @@ fn main() {
       match event {
         InputEvent::Mouse(_) => {}
         InputEvent::Keyboard(evt) => {
-          if evt.key == espanso_detect::event::Key::Shift {
-            remote.update_tray_icon(espanso_ui::icons::TrayIcon::Disabled);
+          if evt.key == espanso_detect::event::Key::Shift && evt.status == Status::Pressed {
+            //remote.update_tray_icon(espanso_ui::icons::TrayIcon::Disabled);
+            remote.show_notification("Espanso is running!");
           }
         }
       }

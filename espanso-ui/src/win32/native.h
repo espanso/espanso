@@ -35,6 +35,7 @@ typedef struct {
 
   wchar_t icon_paths[MAX_ICON_COUNT][MAX_FILE_PATH];
   int32_t icon_paths_count;
+  wchar_t notification_icon_path[MAX_FILE_PATH];
 } UIOptions;
 
 typedef struct {
@@ -44,7 +45,7 @@ typedef struct {
 typedef void (*EventCallback)(void * self, UIEvent data);
 
 // Initialize the hidden UI window, the tray icon and returns the window handle.
-extern "C" void * ui_initialize(void * self, UIOptions options);
+extern "C" void * ui_initialize(void * self, UIOptions options, int32_t * error_code);
 
 // Run the event loop. Blocking call.
 extern "C" int32_t ui_eventloop(void * window, EventCallback callback);
@@ -55,5 +56,8 @@ extern "C" int32_t ui_destroy(void * window);
 // Updates the tray icon to the given one. The method accepts an index that refers to
 // the icon within the UIOptions.icon_paths array.
 extern "C" void ui_update_tray_icon(void * window, int32_t index);
+
+// Show a native Windows 10 notification
+extern "C" int32_t ui_show_notification(void * window, wchar_t * message);
 
 #endif //ESPANSO_UI_H

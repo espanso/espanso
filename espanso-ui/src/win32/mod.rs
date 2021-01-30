@@ -17,20 +17,14 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::{
-  cmp::min,
-  collections::HashMap,
-  ffi::c_void,
-  sync::{
+use std::{cmp::min, collections::HashMap, ffi::c_void, sync::{
     atomic::{AtomicPtr, Ordering},
     Arc,
-  },
-  thread::ThreadId,
-};
+  }, thread::ThreadId};
 
 use lazycell::LazyCell;
 use log::{error, trace};
-use widestring::WideString;
+use widestring::{WideCString};
 
 use crate::{event::UIEvent, icons::TrayIcon};
 
@@ -48,6 +42,8 @@ pub struct RawUIOptions {
 
   pub icon_paths: [[u16; MAX_FILE_PATH]; MAX_ICON_COUNT],
   pub icon_paths_count: i32,
+
+  pub notification_icon_path: [u16; MAX_FILE_PATH],
 }
 // Take a look at the native.h header file for an explanation of the fields
 #[repr(C)]
@@ -58,18 +54,24 @@ pub struct RawUIEvent {
 #[allow(improper_ctypes)]
 #[link(name = "espansoui", kind = "static")]
 extern "C" {
-  pub fn ui_initialize(_self: *const Win32EventLoop, options: RawUIOptions) -> *mut c_void;
+  pub fn ui_initialize(
+    _self: *const Win32EventLoop,
+    options: RawUIOptions,
+    error_code: *mut i32,
+  ) -> *mut c_void;
   pub fn ui_eventloop(
     window_handle: *const c_void,
     event_callback: extern "C" fn(_self: *mut Win32EventLoop, event: RawUIEvent),
   ) -> i32;
   pub fn ui_destroy(window_handle: *const c_void) -> i32;
   pub fn ui_update_tray_icon(window_handle: *const c_void, index: i32);
+  pub fn ui_show_notification(window_handle: *const c_void, message: *const u16);
 }
 
 pub struct Win32UIOptions<'a> {
   pub show_icon: bool,
   pub icon_paths: &'a Vec<(TrayIcon, String)>,
+  pub notification_icon_path: String,
 }
 
 pub fn create(options: Win32UIOptions) -> (Win32Remote, Win32EventLoop) {
@@ -88,7 +90,12 @@ pub fn create(options: Win32UIOptions) -> (Win32Remote, Win32EventLoop) {
     icons.push(path.clone());
   }
 
-  let eventloop = Win32EventLoop::new(handle.clone(), icons, options.show_icon);
+  let eventloop = Win32EventLoop::new(
+    handle.clone(),
+    icons,
+    options.show_icon,
+    options.notification_icon_path,
+  );
   let remote = Win32Remote::new(handle, icon_indexes);
 
   (remote, eventloop)
@@ -101,6 +108,7 @@ pub struct Win32EventLoop {
 
   show_icon: bool,
   icons: Vec<String>,
+  notification_icon_path: String,
 
   // Internal
   _event_callback: LazyCell<Win32UIEventCallback>,
@@ -108,11 +116,17 @@ pub struct Win32EventLoop {
 }
 
 impl Win32EventLoop {
-  pub(crate) fn new(handle: Arc<AtomicPtr<c_void>>, icons: Vec<String>, show_icon: bool) -> Self {
+  pub(crate) fn new(
+    handle: Arc<AtomicPtr<c_void>>,
+    icons: Vec<String>,
+    show_icon: bool,
+    notification_icon_path: String,
+  ) -> Self {
     Self {
       handle,
       icons,
       show_icon,
+      notification_icon_path,
       _event_callback: LazyCell::new(),
       _init_thread_id: LazyCell::new(),
     }
@@ -128,22 +142,35 @@ impl Win32EventLoop {
     let mut icon_paths: [[u16; MAX_FILE_PATH]; MAX_ICON_COUNT] =
       [[0; MAX_FILE_PATH]; MAX_ICON_COUNT];
     for (i, icon_path) in icon_paths.iter_mut().enumerate().take(self.icons.len()) {
-      let wide_path = WideString::from_str(&self.icons[i]);
+      let wide_path = WideCString::from_str(&self.icons[i]).expect("Error while converting icon to wide string");
       let len = min(wide_path.len(), MAX_FILE_PATH - 1);
       icon_path[0..len].clone_from_slice(&wide_path.as_slice()[..len]);
       // TODO: test overflow, correct case
     }
 
+    let wide_notification_icon_path =
+      widestring::WideCString::from_str(&self.notification_icon_path).expect("Error while converting notification icon to wide string");
+    let mut wide_notification_icon_path_buffer: [u16; MAX_FILE_PATH] = [0; MAX_FILE_PATH];
+    wide_notification_icon_path_buffer[..wide_notification_icon_path.as_slice().len()]
+      .clone_from_slice(wide_notification_icon_path.as_slice());
+
     let options = RawUIOptions {
       show_icon: if self.show_icon { 1 } else { 0 },
       icon_paths,
       icon_paths_count: self.icons.len() as i32,
+      notification_icon_path: wide_notification_icon_path_buffer,
     };
 
-    let handle = unsafe { ui_initialize(self as *const Win32EventLoop, options) };
+    let mut error_code = 0;
+    let handle = unsafe { ui_initialize(self as *const Win32EventLoop, options, &mut error_code) };
 
     if handle.is_null() {
-      panic!("Unable to initialize Win32EventLoop");
+      match error_code {
+        -1 => panic!("Unable to initialize Win32EventLoop, error registering window class"),
+        -2 => panic!("Unable to initialize Win32EventLoop, error creating window"),
+        -3 => panic!("Unable to initialize Win32EventLoop, initializing notifications"),
+        _ => panic!("Unable to initialize Win32EventLoop, unknown error"),
+      }
     }
 
     self.handle.store(handle, Ordering::Release);
@@ -238,6 +265,22 @@ impl Win32Remote {
       unsafe { ui_update_tray_icon(handle, (*index) as i32) }
     } else {
       error!("Unable to update tray icon, invalid icon id");
+    }
+  }
+
+  pub fn show_notification(&self, message: &str) {
+    let handle = self.handle.load(Ordering::Acquire);
+    if handle.is_null() {
+      error!("Unable to show notification, pointer is null");
+      return;
+    }
+
+    let wide_message = widestring::WideCString::from_str(message);
+    match wide_message {
+      Ok(wide_message) => unsafe { ui_show_notification(handle, wide_message.as_ptr()) },
+      Err(error) => {
+        error!("Unable to show notification, invalid message encoding {}", error);
+      }
     }
   }
 }
