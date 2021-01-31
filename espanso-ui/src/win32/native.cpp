@@ -113,9 +113,12 @@ LRESULT CALLBACK ui_window_procedure(HWND window, unsigned int msg, WPARAM wp, L
 
     if (flags == 0)
     {
-      std::cout << "click menu" << std::flush;
-      // TODO: click
-      //context_menu_click_callback(manager_instance, (int32_t)idItem);
+      event.event_type = UI_EVENT_TYPE_CONTEXT_MENU_CLICK;
+      event.context_menu_id = (uint32_t) idItem;
+      if (variables->event_callback && variables->rust_instance)
+      {
+        variables->event_callback(variables->rust_instance, event);
+      }
     }
 
     break;
