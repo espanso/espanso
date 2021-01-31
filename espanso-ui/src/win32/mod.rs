@@ -17,16 +17,23 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::{cmp::min, collections::HashMap, ffi::c_void, sync::{
+use std::{
+  cmp::min,
+  collections::HashMap,
+  ffi::{c_void, CString},
+  os::raw::c_char,
+  sync::{
     atomic::{AtomicPtr, Ordering},
     Arc,
-  }, thread::ThreadId};
+  },
+  thread::ThreadId,
+};
 
 use lazycell::LazyCell;
 use log::{error, trace};
-use widestring::{WideCString};
+use widestring::WideCString;
 
-use crate::{event::UIEvent, icons::TrayIcon};
+use crate::{event::UIEvent, icons::TrayIcon, menu::Menu};
 
 // IMPORTANT: if you change these, also edit the native.h file.
 const MAX_FILE_PATH: usize = 260;
@@ -66,6 +73,7 @@ extern "C" {
   pub fn ui_destroy(window_handle: *const c_void) -> i32;
   pub fn ui_update_tray_icon(window_handle: *const c_void, index: i32);
   pub fn ui_show_notification(window_handle: *const c_void, message: *const u16);
+  pub fn ui_show_context_menu(window_handle: *const c_void, payload: *const c_char);
 }
 
 pub struct Win32UIOptions<'a> {
@@ -142,14 +150,16 @@ impl Win32EventLoop {
     let mut icon_paths: [[u16; MAX_FILE_PATH]; MAX_ICON_COUNT] =
       [[0; MAX_FILE_PATH]; MAX_ICON_COUNT];
     for (i, icon_path) in icon_paths.iter_mut().enumerate().take(self.icons.len()) {
-      let wide_path = WideCString::from_str(&self.icons[i]).expect("Error while converting icon to wide string");
+      let wide_path =
+        WideCString::from_str(&self.icons[i]).expect("Error while converting icon to wide string");
       let len = min(wide_path.len(), MAX_FILE_PATH - 1);
       icon_path[0..len].clone_from_slice(&wide_path.as_slice()[..len]);
       // TODO: test overflow, correct case
     }
 
     let wide_notification_icon_path =
-      widestring::WideCString::from_str(&self.notification_icon_path).expect("Error while converting notification icon to wide string");
+      widestring::WideCString::from_str(&self.notification_icon_path)
+        .expect("Error while converting notification icon to wide string");
     let mut wide_notification_icon_path_buffer: [u16; MAX_FILE_PATH] = [0; MAX_FILE_PATH];
     wide_notification_icon_path_buffer[..wide_notification_icon_path.as_slice().len()]
       .clone_from_slice(wide_notification_icon_path.as_slice());
@@ -279,7 +289,34 @@ impl Win32Remote {
     match wide_message {
       Ok(wide_message) => unsafe { ui_show_notification(handle, wide_message.as_ptr()) },
       Err(error) => {
-        error!("Unable to show notification, invalid message encoding {}", error);
+        error!(
+          "Unable to show notification, invalid message encoding {}",
+          error
+        );
+      }
+    }
+  }
+
+  pub fn show_context_menu(&self, menu: &Menu) {
+    let handle = self.handle.load(Ordering::Acquire);
+    if handle.is_null() {
+      error!("Unable to show context menu, pointer is null");
+      return;
+    }
+
+    match menu.to_json() {
+      Ok(payload) => {
+        let c_string = CString::new(payload);
+        match c_string {
+          Ok(c_string) => unsafe { ui_show_context_menu(handle, c_string.as_ptr()) },
+          Err(error) => error!(
+            "Unable to show context menu, impossible to convert payload to c_string: {}",
+            error
+          ),
+        }
+      }
+      Err(error) => {
+        error!("Unable to show context menu, {}", error);
       }
     }
   }

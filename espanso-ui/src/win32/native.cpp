@@ -47,6 +47,9 @@
 #include "WinToast/wintoastlib.h"
 using namespace WinToastLib;
 
+#include "json/json.hpp"
+using json = nlohmann::json;
+
 #define APPWM_ICON_CLICK (WM_APP + 1)
 #define APPWM_SHOW_CONTEXT_MENU (WM_APP + 2)
 #define APPWM_UPDATE_TRAY_ICON (WM_APP + 3)
@@ -111,6 +114,7 @@ LRESULT CALLBACK ui_window_procedure(HWND window, unsigned int msg, WPARAM wp, L
     if (flags == 0)
     {
       std::cout << "click menu" << std::flush;
+      // TODO: click
       //context_menu_click_callback(manager_instance, (int32_t)idItem);
     }
 
@@ -118,27 +122,12 @@ LRESULT CALLBACK ui_window_procedure(HWND window, unsigned int msg, WPARAM wp, L
   }
   case APPWM_SHOW_CONTEXT_MENU: // Request to show context menu
   {
-    HMENU hPopupMenu = CreatePopupMenu();
+    HMENU menu = (HMENU)lp;
+    POINT pt;
+    GetCursorPos(&pt);
+    SetForegroundWindow(window);
+    TrackPopupMenu(menu, TPM_BOTTOMALIGN | TPM_LEFTALIGN, pt.x, pt.y, 0, window, NULL);
 
-    // Create the menu
-
-    /*
-            int32_t count = static_cast<int32_t>(lp);
-            std::unique_ptr<MenuItem[]> items(reinterpret_cast<MenuItem*>(wp));
-
-            for (int i = 0; i<count; i++) {
-                if (items[i].type == 1) {
-                    InsertMenu(hPopupMenu, i, MF_BYPOSITION | MF_STRING, items[i].id, items[i].name);
-                }else{
-                    InsertMenu(hPopupMenu, i, MF_BYPOSITION | MF_SEPARATOR, items[i].id, NULL);
-                }
-            }
-
-            POINT pt;
-            GetCursorPos(&pt);
-            SetForegroundWindow(nw);
-            TrackPopupMenu(hPopupMenu, TPM_BOTTOMALIGN | TPM_LEFTALIGN, pt.x, pt.y, 0, nw, NULL);
-            */
     break;
   }
   case APPWM_UPDATE_TRAY_ICON: // Request to update the tray icon
@@ -288,7 +277,7 @@ void *ui_initialize(void *_self, UIOptions _options, int32_t *error_code)
 
   // Initialize the notification handler
   WinToast::instance()->setAppName(L"Espanso");
-  const auto aumi = WinToast::configureAUMI(L"federico.terzi", L"Espanso", L"Espanso", L"1.0.0");
+  const auto aumi = WinToast::configureAUMI(L"federico.terzi", L"Espanso", L"Core", L"1.0.0");
   WinToast::instance()->setAppUserModelId(aumi);
   if (!WinToast::instance()->initialize())
   {
@@ -338,6 +327,71 @@ int32_t ui_show_notification(void *window, wchar_t *message)
   {
     wchar_t *message_copy = _wcsdup(message);
     PostMessage((HWND)window, APPWM_SHOW_NOTIFICATION, 0, (LPARAM)message_copy);
+    return 0;
+  }
+  return -1;
+}
+
+// Menu related methods
+
+void _insert_separator_menu(HMENU parent)
+{
+  InsertMenu(parent, -1, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
+}
+
+void _insert_single_menu(HMENU parent, json item)
+{
+  if (!item["label"].is_string() || !item["raw_id"].is_number())
+  {
+    return;
+  }
+  std::string label = item["label"];
+  uint32_t raw_id = item["raw_id"];
+
+  // Convert to wide chars
+  std::wstring wide_label(label.length(), L'#');
+  mbstowcs(&wide_label[0], label.c_str(), label.length());
+
+  InsertMenu(parent, -1, MF_BYPOSITION | MF_STRING, raw_id, wide_label.c_str());
+}
+
+void _insert_sub_menu(HMENU parent, json items)
+{
+  for (auto &item : items)
+  {
+    if (item["type"] == "simple")
+    {
+      _insert_single_menu(parent, item);
+    }
+    else if (item["type"] == "separator")
+    {
+      _insert_separator_menu(parent);
+    }
+    else if (item["type"] == "sub")
+    {
+      HMENU subMenu = CreatePopupMenu();
+      std::string label = item["label"];
+
+      // Convert to wide chars
+      std::wstring wide_label(label.length(), L'#');
+      mbstowcs(&wide_label[0], label.c_str(), label.length());
+
+      InsertMenu(parent, -1, MF_BYPOSITION | MF_POPUP, (UINT_PTR)subMenu, wide_label.c_str());
+      _insert_sub_menu(subMenu, item["items"]);
+    }
+  }
+}
+
+int32_t ui_show_context_menu(void *window, char *payload)
+{
+  if (window)
+  {
+    auto j_menu = json::parse(payload);
+    // Generate the menu from the JSON payload
+    HMENU parentMenu = CreatePopupMenu();
+    _insert_sub_menu(parentMenu, j_menu);
+
+    PostMessage((HWND)window, APPWM_SHOW_CONTEXT_MENU, 0, (LPARAM)parentMenu);
     return 0;
   }
   return -1;
