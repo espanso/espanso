@@ -17,19 +17,17 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::ffi::c_void;
+use std::{
+  ffi::{c_void, CStr},
+};
 
 use lazycell::LazyCell;
 use log::{error, trace, warn};
-use widestring::U16CStr;
 
 use crate::event::Status::*;
 use crate::event::Variant::*;
 use crate::event::{InputEvent, Key, KeyboardEvent, Variant};
 use crate::event::{Key::*, MouseButton, MouseEvent};
-
-const INPUT_LEFT_VARIANT: i32 = 1;
-const INPUT_RIGHT_VARIANT: i32 = 2;
 
 const INPUT_EVENT_TYPE_KEYBOARD: i32 = 1;
 const INPUT_EVENT_TYPE_MOUSE: i32 = 2;
@@ -38,75 +36,87 @@ const INPUT_STATUS_PRESSED: i32 = 1;
 const INPUT_STATUS_RELEASED: i32 = 2;
 
 const INPUT_MOUSE_LEFT_BUTTON: i32 = 1;
-const INPUT_MOUSE_RIGHT_BUTTON: i32 = 2;
-const INPUT_MOUSE_MIDDLE_BUTTON: i32 = 3;
-const INPUT_MOUSE_BUTTON_1: i32 = 4;
-const INPUT_MOUSE_BUTTON_2: i32 = 5;
-const INPUT_MOUSE_BUTTON_3: i32 = 6;
-const INPUT_MOUSE_BUTTON_4: i32 = 7;
-const INPUT_MOUSE_BUTTON_5: i32 = 8;
+const INPUT_MOUSE_RIGHT_BUTTON: i32 = 3;
+const INPUT_MOUSE_MIDDLE_BUTTON: i32 = 2;
+const INPUT_MOUSE_BUTTON_1: i32 = 9;
+const INPUT_MOUSE_BUTTON_2: i32 = 8;
 
 // Take a look at the native.h header file for an explanation of the fields
 #[repr(C)]
 pub struct RawInputEvent {
   pub event_type: i32,
 
-  pub buffer: [u16; 24],
+  pub buffer: [u8; 24],
   pub buffer_len: i32,
 
+  pub key_sym: i32,
   pub key_code: i32,
-  pub variant: i32,
   pub status: i32,
 }
 
 #[allow(improper_ctypes)]
 #[link(name = "espansodetect", kind = "static")]
 extern "C" {
-  pub fn detect_initialize(_self: *const Win32Source) -> *mut c_void;
+  pub fn detect_check_x11() -> i32;
+
+  pub fn detect_initialize(_self: *const X11Source, error_code: *mut i32) -> *mut c_void;
 
   pub fn detect_eventloop(
     window: *const c_void,
-    event_callback: extern "C" fn(_self: *mut Win32Source, event: RawInputEvent),
+    event_callback: extern "C" fn(_self: *mut X11Source, event: RawInputEvent),
   ) -> i32;
 
   pub fn detect_destroy(window: *const c_void) -> i32;
 }
 
-pub type Win32SourceCallback = Box<dyn Fn(InputEvent)>;
-pub struct Win32Source {
+pub type X11SourceCallback = Box<dyn Fn(InputEvent)>;
+pub struct X11Source {
   handle: *mut c_void,
-  callback: LazyCell<Win32SourceCallback>,
+  callback: LazyCell<X11SourceCallback>,
 }
 
 #[allow(clippy::new_without_default)]
-impl Win32Source {
-  pub fn new() -> Win32Source {
+impl X11Source {
+  pub fn new() -> X11Source {
     Self {
       handle: std::ptr::null_mut(),
       callback: LazyCell::new(),
     }
   }
 
+  pub fn is_compatible() -> bool {
+    unsafe { detect_check_x11() != 0 }
+  }
+
   pub fn initialize(&mut self) {
-    let handle = unsafe { detect_initialize(self as *const Win32Source) };
+    let mut error_code = 0;
+    let handle = unsafe { detect_initialize(self as *const X11Source, &mut error_code) };
 
     if handle.is_null() {
-      panic!("Unable to initialize Win32Source");
+      match error_code {
+        -1 => panic!("Unable to initialize X11Source, cannot open displays"),
+        -2 => panic!("Unable to initialize X11Source, X Record Extension is not installed"),
+        -3 => panic!("Unable to initialize X11Source, X Keyboard Extension is not installed"),
+        -4 => panic!("Unable to initialize X11Source, cannot initialize record range"),
+        -5 => panic!("Unable to initialize X11Source, cannot initialize XRecord context"),
+        -6 => panic!("Unable to initialize X11Source, cannot enable XRecord context"),
+        _ => panic!("Unable to initialize X11Source, unknown error"),
+      }
     }
 
     self.handle = handle;
   }
 
-  pub fn eventloop(&self, event_callback: Win32SourceCallback) {
+  pub fn eventloop(&self, event_callback: X11SourceCallback) {
     if self.handle.is_null() {
-      panic!("Attempt to start Win32Source eventloop without initialization");
+      panic!("Attempt to start X11Source eventloop without initialization");
     }
 
     if self.callback.fill(event_callback).is_err() {
-      panic!("Unable to set Win32Source event callback");
+      panic!("Unable to set X11Source event callback");
     }
 
-    extern "C" fn callback(_self: *mut Win32Source, event: RawInputEvent) {
+    extern "C" fn callback(_self: *mut X11Source, event: RawInputEvent) {
       let event: Option<InputEvent> = event.into();
       if let Some(callback) = unsafe { (*_self).callback.borrow() } {
         if let Some(event) = event {
@@ -120,22 +130,22 @@ impl Win32Source {
     let error_code = unsafe { detect_eventloop(self.handle, callback) };
 
     if error_code <= 0 {
-      panic!("Win32Source eventloop returned a negative error code");
+      panic!("X11Source eventloop returned a negative error code");
     }
   }
 }
 
-impl Drop for Win32Source {
+impl Drop for X11Source {
   fn drop(&mut self) {
     if self.handle.is_null() {
-      error!("Win32Source destruction cannot be performed, handle is null");
+      error!("X11Source destruction cannot be performed, handle is null");
       return;
     }
 
     let result = unsafe { detect_destroy(self.handle) };
 
     if result != 0 {
-      error!("Win32Source destruction returned non-zero code");
+      error!("X11Source destruction returned non-zero code");
     }
   }
 }
@@ -151,30 +161,23 @@ impl From<RawInputEvent> for Option<InputEvent> {
     match raw.event_type {
       // Keyboard events
       INPUT_EVENT_TYPE_KEYBOARD => {
-        let (key, variant_hint) = key_code_to_key(raw.key_code);
-
-        // If the raw event does not include an explicit variant, use the hint provided by the key code
-        let variant = match raw.variant {
-          INPUT_LEFT_VARIANT => Some(Left),
-          INPUT_RIGHT_VARIANT => Some(Right),
-          _ => variant_hint,
-        };
-
+        let (key, variant) = key_sym_to_key(raw.key_sym);
         let value = if raw.buffer_len > 0 {
-          let raw_string_result = U16CStr::from_slice_with_nul(&raw.buffer);
+          let raw_string_result =
+            CStr::from_bytes_with_nul(&raw.buffer[..((raw.buffer_len + 1) as usize)]);
           match raw_string_result {
             Ok(c_string) => {
-              let string_result = c_string.to_string();
+              let string_result = c_string.to_str();
               match string_result {
-                Ok(value) => Some(value),
+                Ok(value) => Some(value.to_string()),
                 Err(err) => {
-                  warn!("Widechar conversion error: {}", err);
+                  warn!("char conversion error: {}", err);
                   None
                 }
               }
             }
             Err(err) => {
-              warn!("Received malformed widechar: {}", err);
+              warn!("Received malformed char: {}", err);
               None
             }
           }
@@ -205,65 +208,63 @@ impl From<RawInputEvent> for Option<InputEvent> {
 }
 
 // Mappings from: https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values
-fn key_code_to_key(key_code: i32) -> (Key, Option<Variant>) {
-  match key_code {
+// TODO: might need to add also the variants
+fn key_sym_to_key(key_sym: i32) -> (Key, Option<Variant>) {
+  match key_sym {
     // Modifiers
-    0x12 => (Alt, None),
-    0xA4 => (Alt, Some(Left)),
-    0xA5 => (Alt, Some(Right)),
-    0x14 => (CapsLock, None),
-    0x11 => (Control, None),
-    0xA2 => (Control, Some(Left)),
-    0xA3 => (Control, Some(Right)),
-    0x5B => (Meta, Some(Left)),
-    0x5C => (Meta, Some(Right)),
-    0x90 => (NumLock, None),
-    0x10 => (Shift, None),
-    0xA0 => (Shift, Some(Left)),
-    0xA1 => (Shift, Some(Right)),
+    0xFFE9 => (Alt, Some(Left)),
+    0xFFEA => (Alt, Some(Right)),
+    0xFFE5 => (CapsLock, None),
+    0xFFE3 => (Control, Some(Left)),
+    0xFFE4 => (Control, Some(Right)),
+    0xFFE7 | 0xFFEB => (Meta, Some(Left)),
+    0xFFE8 | 0xFFEC => (Meta, Some(Right)),
+    0xFF7F => (NumLock, None),
+    0xFFE1 => (Shift, Some(Left)),
+    0xFFE2 => (Shift, Some(Right)),
 
     // Whitespace
-    0x0D => (Enter, None),
-    0x09 => (Tab, None),
+    0xFF0D => (Enter, None),
+    0xFF09 => (Tab, None),
     0x20 => (Space, None),
 
     // Navigation
-    0x28 => (ArrowDown, None),
-    0x25 => (ArrowLeft, None),
-    0x27 => (ArrowRight, None),
-    0x26 => (ArrowUp, None),
-    0x23 => (End, None),
-    0x24 => (Home, None),
-    0x22 => (PageDown, None),
-    0x21 => (PageUp, None),
+    0xFF54 => (ArrowDown, None),
+    0xFF51 => (ArrowLeft, None),
+    0xFF53 => (ArrowRight, None),
+    0xFF52 => (ArrowUp, None),
+    0xFF57 => (End, None),
+    0xFF50 => (Home, None),
+    0xFF56 => (PageDown, None),
+    0xFF55 => (PageUp, None),
 
     // Editing keys
-    0x08 => (Backspace, None),
+    0xFF08 => (Backspace, None),
 
     // Function keys
-    0x70 => (F1, None),
-    0x71 => (F2, None),
-    0x72 => (F3, None),
-    0x73 => (F4, None),
-    0x74 => (F5, None),
-    0x75 => (F6, None),
-    0x76 => (F7, None),
-    0x77 => (F8, None),
-    0x78 => (F9, None),
-    0x79 => (F10, None),
-    0x7A => (F11, None),
-    0x7B => (F12, None),
-    0x7C => (F13, None),
-    0x7D => (F14, None),
-    0x7E => (F15, None),
-    0x7F => (F16, None),
-    0x80 => (F17, None),
-    0x81 => (F18, None),
-    0x82 => (F19, None),
-    0x83 => (F20, None),
+    0xFFBE => (F1, None),
+    0xFFBF => (F2, None),
+    0xFFC0 => (F3, None),
+    0xFFC1 => (F4, None),
+    0xFFC2 => (F5, None),
+    0xFFC3 => (F6, None),
+    0xFFC4 => (F7, None),
+    0xFFC5 => (F8, None),
+    0xFFC6 => (F9, None),
+    0xFFC7 => (F10, None),
+    0xFFC8 => (F11, None),
+    0xFFC9 => (F12, None),
+    0xFFCA => (F13, None),
+    0xFFCB => (F14, None),
+    0xFFCC => (F15, None),
+    0xFFCD => (F16, None),
+    0xFFCE => (F17, None),
+    0xFFCF => (F18, None),
+    0xFFD0 => (F19, None),
+    0xFFD1 => (F20, None),
 
     // Other keys, includes the raw code provided by the operating system
-    _ => (Other(key_code), None),
+    _ => (Other(key_sym), None),
   }
 }
 
@@ -274,16 +275,15 @@ fn raw_to_mouse_button(raw: i32) -> Option<MouseButton> {
     INPUT_MOUSE_MIDDLE_BUTTON => Some(MouseButton::Middle),
     INPUT_MOUSE_BUTTON_1 => Some(MouseButton::Button1),
     INPUT_MOUSE_BUTTON_2 => Some(MouseButton::Button2),
-    INPUT_MOUSE_BUTTON_3 => Some(MouseButton::Button3),
-    INPUT_MOUSE_BUTTON_4 => Some(MouseButton::Button4),
-    INPUT_MOUSE_BUTTON_5 => Some(MouseButton::Button5),
     _ => None,
   }
 }
 
 #[cfg(test)]
 mod tests {
-  use super::*;
+  use std::ffi::CString;
+
+    use super::*;
 
   fn default_raw_input_event() -> RawInputEvent {
     RawInputEvent {
@@ -291,23 +291,22 @@ mod tests {
       buffer: [0; 24],
       buffer_len: 0,
       key_code: 0,
-      variant: INPUT_LEFT_VARIANT,
+      key_sym: 0,
       status: INPUT_STATUS_PRESSED,
     }
   }
 
   #[test]
   fn raw_to_input_event_keyboard_works_correctly() {
-    let wide_string = widestring::WideString::from("k".to_string());
-    let mut buffer: [u16; 24] = [0; 24];
-    buffer[..1].copy_from_slice(wide_string.as_slice());
+    let c_string = CString::new("k".to_string()).unwrap();
+    let mut buffer: [u8; 24] = [0; 24];
+    buffer[..1].copy_from_slice(c_string.as_bytes());
 
     let mut raw = default_raw_input_event();
     raw.buffer = buffer;
     raw.buffer_len = 1;
     raw.status = INPUT_STATUS_RELEASED;
-    raw.variant = 0;
-    raw.key_code = 0x4B;
+    raw.key_sym = 0x4B;
 
     let result: Option<InputEvent> = raw.into();
     assert_eq!(
@@ -326,7 +325,6 @@ mod tests {
     let mut raw = default_raw_input_event();
     raw.event_type = INPUT_EVENT_TYPE_MOUSE;
     raw.status = INPUT_STATUS_RELEASED;
-    raw.variant = 0;
     raw.key_code = INPUT_MOUSE_RIGHT_BUTTON;
 
     let result: Option<InputEvent> = raw.into();
@@ -341,7 +339,7 @@ mod tests {
 
   #[test]
   fn raw_to_input_invalid_buffer() {
-    let buffer: [u16; 24] = [123; 24];
+    let buffer: [u8; 24] = [123; 24];
 
     let mut raw = default_raw_input_event();
     raw.buffer = buffer;
@@ -353,15 +351,9 @@ mod tests {
 
   #[test]
   fn raw_to_input_event_returns_none_when_missing_type() {
-    let result: Option<InputEvent> = RawInputEvent {
-      event_type: 0, // Missing type
-      buffer: [0; 24],
-      buffer_len: 0,
-      key_code: 123,
-      variant: INPUT_LEFT_VARIANT,
-      status: INPUT_STATUS_PRESSED,
-    }
-    .into();
+    let mut raw = default_raw_input_event();
+    raw.event_type = 0;
+    let result: Option<InputEvent> = raw.into();
     assert!(result.is_none());
   }
 }

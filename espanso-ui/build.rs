@@ -40,11 +40,11 @@ fn cc_config() {
 
 #[cfg(target_os = "linux")]
 fn cc_config() {
-  println!("cargo:rustc-link-search=native=/usr/lib/x86_64-linux-gnu/");
-  println!("cargo:rustc-link-lib=static=linuxbridge");
-  println!("cargo:rustc-link-lib=dylib=X11");
-  println!("cargo:rustc-link-lib=dylib=Xtst");
-  println!("cargo:rustc-link-lib=dylib=xdo");
+  // println!("cargo:rustc-link-search=native=/usr/lib/x86_64-linux-gnu/");
+  // println!("cargo:rustc-link-lib=static=linuxbridge");
+  // println!("cargo:rustc-link-lib=dylib=X11");
+  // println!("cargo:rustc-link-lib=dylib=Xtst");
+  // println!("cargo:rustc-link-lib=dylib=xdo");
 }
 
 #[cfg(target_os = "macos")]
