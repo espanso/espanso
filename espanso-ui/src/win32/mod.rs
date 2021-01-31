@@ -40,7 +40,7 @@ const MAX_FILE_PATH: usize = 260;
 const MAX_ICON_COUNT: usize = 3;
 
 const UI_EVENT_TYPE_ICON_CLICK: i32 = 1;
-//const UI_EVENT_TYPE_CONTEXT_MENU_CLICK: i32 = 2;
+const UI_EVENT_TYPE_CONTEXT_MENU_CLICK: i32 = 2;
 
 // Take a look at the native.h header file for an explanation of the fields
 #[repr(C)]
@@ -56,6 +56,7 @@ pub struct RawUIOptions {
 #[repr(C)]
 pub struct RawUIEvent {
   pub event_type: i32,
+  pub context_menu_id: u32,
 }
 
 #[allow(improper_ctypes)]
@@ -326,9 +327,11 @@ impl Win32Remote {
 impl From<RawUIEvent> for Option<UIEvent> {
   fn from(raw: RawUIEvent) -> Option<UIEvent> {
     match raw.event_type {
-      // Keyboard events
       UI_EVENT_TYPE_ICON_CLICK => {
         return Some(UIEvent::TrayIconClick);
+      }
+      UI_EVENT_TYPE_CONTEXT_MENU_CLICK => {
+        return Some(UIEvent::ContextMenuClick(raw.context_menu_id));
       }
       _ => {}
     }

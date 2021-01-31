@@ -40,6 +40,7 @@ typedef struct {
 
 typedef struct {
   int32_t event_type;
+  uint32_t context_menu_id;
 } UIEvent;
 
 typedef void (*EventCallback)(void * self, UIEvent data);

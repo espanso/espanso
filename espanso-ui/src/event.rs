@@ -20,4 +20,5 @@
 #[derive(Debug, PartialEq, Clone)]
 pub enum UIEvent {
   TrayIconClick,
+  ContextMenuClick(u32),
 }
