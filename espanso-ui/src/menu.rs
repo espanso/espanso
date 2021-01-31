@@ -33,10 +33,16 @@ impl Menu {
     self.raw_ids.get(&raw_id).cloned()
   }
 
-  fn generate_raw_id(raw_ids: &mut HashMap<u32, String>, ids: &mut HashSet<String>, current: &mut u32, item: &mut MenuItem) -> Result<()> {
+  fn generate_raw_id(
+    raw_ids: &mut HashMap<u32, String>,
+    ids: &mut HashSet<String>,
+    current: &mut u32,
+    item: &mut MenuItem,
+  ) -> Result<()> {
     match item {
       MenuItem::Simple(simple_item) => {
-        if ids.contains::<str>(&simple_item.id) {  // Duplicate id, throw error
+        if ids.contains::<str>(&simple_item.id) {
+          // Duplicate id, throw error
           Err(MenuError::DuplicateMenuId(simple_item.id.to_string()).into())
         } else {
           ids.insert(simple_item.id.to_string());
@@ -46,7 +52,7 @@ impl Menu {
           Ok(())
         }
       }
-      MenuItem::Sub(SubMenuItem { items, ..}) => {
+      MenuItem::Sub(SubMenuItem { items, .. }) => {
         for sub_item in items.iter_mut() {
           Self::generate_raw_id(raw_ids, ids, current, sub_item)?
         }
@@ -114,25 +120,17 @@ mod tests {
   #[test]
   fn test_context_menu_serializes_correctly() {
     let menu = Menu::from(vec![
-      MenuItem::Simple(SimpleMenuItem::new(
-        "open",
-        "Open",
-      )),
+      MenuItem::Simple(SimpleMenuItem::new("open", "Open")),
       MenuItem::Separator,
       MenuItem::Sub(SubMenuItem::new(
         "Sub",
         vec![
-          MenuItem::Simple(SimpleMenuItem::new(
-            "sub1",
-            "Sub 1",
-          )),
-          MenuItem::Simple(SimpleMenuItem::new(
-            "sub2",
-            "Sub 2",
-          )),
-        ]),
-      ),
-    ]).unwrap();
+          MenuItem::Simple(SimpleMenuItem::new("sub1", "Sub 1")),
+          MenuItem::Simple(SimpleMenuItem::new("sub2", "Sub 2")),
+        ],
+      )),
+    ])
+    .unwrap();
     assert_eq!(
       menu.to_json().unwrap(),
       r#"[{"type":"simple","id":"open","label":"Open","raw_id":0},{"type":"separator"},{"type":"sub","label":"Sub","items":[{"type":"simple","id":"sub1","label":"Sub 1","raw_id":1},{"type":"simple","id":"sub2","label":"Sub 2","raw_id":2}]}]"#
@@ -142,62 +140,38 @@ mod tests {
   #[test]
   fn test_context_menu_raw_ids_work_correctly() {
     let menu = Menu::from(vec![
-      MenuItem::Simple(SimpleMenuItem::new(
-        "open",
-        "Open",
-      )),
+      MenuItem::Simple(SimpleMenuItem::new("open", "Open")),
       MenuItem::Separator,
       MenuItem::Sub(SubMenuItem::new(
         "Sub",
         vec![
-          MenuItem::Simple(SimpleMenuItem::new(
-            "sub1",
-            "Sub 1",
-          )),
-          MenuItem::Simple(SimpleMenuItem::new(
-            "sub2",
-            "Sub 2",
-          )),
-        ]),
-      ),
-    ]).unwrap();
-    assert_eq!(
-      menu.get_item_id(0).unwrap(),
-      "open"
-    );
-    assert_eq!(
-      menu.get_item_id(1).unwrap(),
-      "sub1"
-    );
-    assert_eq!(
-      menu.get_item_id(2).unwrap(),
-      "sub2"
-    );
+          MenuItem::Simple(SimpleMenuItem::new("sub1", "Sub 1")),
+          MenuItem::Simple(SimpleMenuItem::new("sub2", "Sub 2")),
+        ],
+      )),
+    ])
+    .unwrap();
+    assert_eq!(menu.get_item_id(0).unwrap(), "open");
+    assert_eq!(menu.get_item_id(1).unwrap(), "sub1");
+    assert_eq!(menu.get_item_id(2).unwrap(), "sub2");
   }
 
   #[test]
   fn test_context_menu_detects_duplicate_ids() {
     let menu = Menu::from(vec![
-      MenuItem::Simple(SimpleMenuItem::new(
-        "open",
-        "Open",
-      )),
+      MenuItem::Simple(SimpleMenuItem::new("open", "Open")),
       MenuItem::Separator,
       MenuItem::Sub(SubMenuItem::new(
         "Sub",
         vec![
-          MenuItem::Simple(SimpleMenuItem::new(
-            "open",
-            "Sub 1",
-          )),
-          MenuItem::Simple(SimpleMenuItem::new(
-            "sub2",
-            "Sub 2",
-          )),
-        ]),
-      ),
+          MenuItem::Simple(SimpleMenuItem::new("open", "Sub 1")),
+          MenuItem::Simple(SimpleMenuItem::new("sub2", "Sub 2")),
+        ],
+      )),
     ]);
-    assert!(matches!(menu.unwrap_err().downcast::<MenuError>().unwrap(), 
-            MenuError::DuplicateMenuId(id) if id == "open")); 
+    assert!(
+      matches!(menu.unwrap_err().downcast::<MenuError>().unwrap(), 
+            MenuError::DuplicateMenuId(id) if id == "open")
+    );
   }
 }
