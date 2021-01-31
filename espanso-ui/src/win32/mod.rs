@@ -186,7 +186,7 @@ impl Win32EventLoop {
 
     self.handle.store(handle, Ordering::Release);
 
-    // TODO: explain
+    // Make sure the run() method is called in the same thread as initialize()
     self
       ._init_thread_id
       .fill(std::thread::current().id())
