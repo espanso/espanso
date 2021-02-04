@@ -17,13 +17,11 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub mod event;
+#ifndef ESPANSO_DETECT_EVDEV_H
+#define ESPANSO_DETECT_EVDEV_H
 
-#[cfg(target_os = "windows")]
-pub mod win32;
+#include <stdint.h>
 
-#[cfg(target_os = "linux")]
-pub mod x11;
+extern "C" int32_t is_keyboard(int fd);
 
-#[cfg(target_os = "linux")]
-pub mod evdev;
+#endif //ESPANSO_DETECT_EVDEV_H
