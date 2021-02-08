@@ -1,5 +1,5 @@
 use espanso_detect::event::{InputEvent, Status};
-use espanso_ui::{linux::LinuxUIOptions, menu::*};
+use espanso_ui::{icons::TrayIcon, mac::*, menu::*, event::UIEvent::*};
 use simplelog::{CombinedLogger, Config, LevelFilter, TermLogger, TerminalMode};
 
 fn main() {
@@ -14,14 +14,24 @@ fn main() {
   ])
   .unwrap();
 
+  // let icon_paths = vec![
+  //   (
+  //     espanso_ui::icons::TrayIcon::Normal,
+  //     r"C:\Users\Freddy\AppData\Local\espanso\espanso.ico".to_string(),
+  //   ),
+  //   (
+  //     espanso_ui::icons::TrayIcon::Disabled,
+  //     r"C:\Users\Freddy\AppData\Local\espanso\espansored.ico".to_string(),
+  //   ),
+  // ];
   let icon_paths = vec![
     (
       espanso_ui::icons::TrayIcon::Normal,
-      r"C:\Users\Freddy\AppData\Local\espanso\espanso.ico".to_string(),
+      r"/Users/freddy/Library/Application Support/espanso/icon.png".to_string(),
     ),
     (
       espanso_ui::icons::TrayIcon::Disabled,
-      r"C:\Users\Freddy\AppData\Local\espanso\espansored.ico".to_string(),
+      r"/Users/freddy/Library/Application Support/espanso/icondisabled.png".to_string(),
     ),
   ];
 
@@ -32,44 +42,55 @@ fn main() {
   //   notification_icon_path: r"C:\Users\Freddy\Insync\Development\Espanso\Images\icongreensmall.png"
   //     .to_string(),
   // });
-  let (remote, mut eventloop) = espanso_ui::linux::create(LinuxUIOptions {
-    notification_icon_path: r"/home/freddy/insync/Development/Espanso/Images/icongreensmall.png".to_owned(),
+  let (remote, mut eventloop) = espanso_ui::mac::create(MacUIOptions {
+    show_icon: true,
+    icon_paths: &icon_paths,
   });
 
   let handle = std::thread::spawn(move || {
+    
     //let mut source = espanso_detect::win32::Win32Source::new();
-    let mut source = espanso_detect::evdev::EVDEVSource::new();
-    source.initialize();
-    source.eventloop(Box::new(move |event: InputEvent| {
-      println!("ev {:?}", event);
-      match event {
-        InputEvent::Mouse(_) => {}
-        InputEvent::Keyboard(evt) => {
-          if evt.key == espanso_detect::event::Key::Shift && evt.status == Status::Pressed {
-            //remote.update_tray_icon(espanso_ui::icons::TrayIcon::Disabled);
-            remote.show_notification("Espanso is running!");
-          }
-        }
-      }
-    }));
+    //let mut source = espanso_detect::x11::X11Source::new();
+    // source.initialize();
+    // source.eventloop(Box::new(move |event: InputEvent| {
+    //   println!("ev {:?}", event);
+    //   match event {
+    //     InputEvent::Mouse(_) => {}
+    //     InputEvent::Keyboard(evt) => {
+    //       if evt.key == espanso_detect::event::Key::Shift && evt.status == Status::Pressed {
+    //         //remote.update_tray_icon(espanso_ui::icons::TrayIcon::Disabled);
+    //         remote.show_notification("Espanso is running!");
+    //       }
+    //     }
+    //   }
+    // }));
   });
 
-  // eventloop.initialize();
-  // eventloop.run(Box::new(move |event| {
-  //   println!("ui {:?}", event);
-  //   let menu = Menu::from(vec![
-  //     MenuItem::Simple(SimpleMenuItem::new("open", "Open")),
-  //     MenuItem::Separator,
-  //     MenuItem::Sub(SubMenuItem::new(
-  //       "Sub",
-  //       vec![
-  //         MenuItem::Simple(SimpleMenuItem::new("sub1", "Sub 1")),
-  //         MenuItem::Simple(SimpleMenuItem::new("sub2", "Sub 2")),
-  //       ],
-  //     )),
-  //   ])
-  //   .unwrap();
-  //   remote.show_context_menu(&menu);
-  // }))
-  eventloop.run();
+  eventloop.initialize();
+  eventloop.run(Box::new(move |event| {
+    println!("ui {:?}", event);
+    let menu = Menu::from(vec![
+      MenuItem::Simple(SimpleMenuItem::new("open", "Open")),
+      MenuItem::Separator,
+      MenuItem::Sub(SubMenuItem::new(
+        "Sub",
+        vec![
+          MenuItem::Simple(SimpleMenuItem::new("sub1", "Sub 1")),
+          MenuItem::Simple(SimpleMenuItem::new("sub2", "Sub 2")),
+        ],
+      )),
+    ])
+    .unwrap();
+    match event {
+      TrayIconClick => {
+        remote.show_context_menu(&menu);
+      }
+      ContextMenuClick(raw_id) => {
+        //remote.update_tray_icon(TrayIcon::Disabled);
+        remote.show_notification("Hello there!");
+        println!("item {:?}", menu.get_item_id(raw_id));
+      }
+    }
+    
+  }));
 }

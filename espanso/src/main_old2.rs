@@ -38,7 +38,7 @@ fn main() {
 
   let handle = std::thread::spawn(move || {
     //let mut source = espanso_detect::win32::Win32Source::new();
-    let mut source = espanso_detect::x11::X11Source::new();
+    let mut source = espanso_detect::evdev::EVDEVSource::new();
     source.initialize();
     source.eventloop(Box::new(move |event: InputEvent| {
       println!("ev {:?}", event);
