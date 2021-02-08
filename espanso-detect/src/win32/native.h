@@ -64,7 +64,7 @@ typedef void (*EventCallback)(void * rust_istance, InputEvent data);
 
 
 // Initialize the Raw Input API and the Window.
-extern "C" void * detect_initialize(void * rust_istance);
+extern "C" void * detect_initialize(void * rust_istance, int32_t *error_code);
 
 // Run the event loop. Blocking call.
 extern "C" int32_t detect_eventloop(void * window, EventCallback callback);

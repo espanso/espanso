@@ -23,6 +23,9 @@ use lazycell::LazyCell;
 use log::{error, trace, warn};
 use widestring::U16CStr;
 
+use anyhow::Result;
+use thiserror::Error;
+
 use crate::event::Status::*;
 use crate::event::Variant::*;
 use crate::event::{InputEvent, Key, KeyboardEvent, Variant};
@@ -62,7 +65,7 @@ pub struct RawInputEvent {
 #[allow(improper_ctypes)]
 #[link(name = "espansodetect", kind = "static")]
 extern "C" {
-  pub fn detect_initialize(_self: *const Win32Source) -> *mut c_void;
+  pub fn detect_initialize(_self: *const Win32Source, error_code: *mut i32) -> *mut c_void;
 
   pub fn detect_eventloop(
     window: *const c_void,
@@ -87,14 +90,22 @@ impl Win32Source {
     }
   }
 
-  pub fn initialize(&mut self) {
-    let handle = unsafe { detect_initialize(self as *const Win32Source) };
+  pub fn initialize(&mut self) -> Result<()> {
+    let mut error_code = 0;
+    let handle = unsafe { detect_initialize(self as *const Win32Source, &mut error_code) };
 
     if handle.is_null() {
-      panic!("Unable to initialize Win32Source");
+      let error = match error_code {
+        -1 => Win32SourceError::WindowFailed(),
+        -2 => Win32SourceError::RawInputFailed(),
+        _ => Win32SourceError::Unknown(),
+      };
+      return Err(error.into())
     }
 
     self.handle = handle;
+
+    Ok(())
   }
 
   pub fn eventloop(&self, event_callback: Win32SourceCallback) {
@@ -138,6 +149,18 @@ impl Drop for Win32Source {
       error!("Win32Source destruction returned non-zero code");
     }
   }
+}
+
+#[derive(Error, Debug)]
+pub enum Win32SourceError {
+  #[error("window registration failed")]
+  WindowFailed(),
+
+  #[error("raw input API failed")]
+  RawInputFailed(),
+
+  #[error("unknown error")]
+  Unknown(),
 }
 
 impl From<RawInputEvent> for Option<InputEvent> {

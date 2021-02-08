@@ -246,7 +246,7 @@ LRESULT CALLBACK detect_window_procedure(HWND window, unsigned int msg, WPARAM w
   }
 }
 
-void * detect_initialize(void *_self)
+void * detect_initialize(void *_self, int32_t *error_code)
 {
   HWND window = NULL;
 
@@ -308,12 +308,14 @@ void * detect_initialize(void *_self)
 
     if (RegisterRawInputDevices(Rid, 2, sizeof(Rid[0])) == FALSE)
     { // Something went wrong, error.
+      *error_code = -2;
       return nullptr;
     }
   }
   else
   {
     // Something went wrong, error.
+    *error_code = -1;
     return nullptr;
   }
 
