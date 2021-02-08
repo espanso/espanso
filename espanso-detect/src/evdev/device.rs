@@ -3,7 +3,7 @@
 
 use anyhow::Result;
 use libc::{input_event, size_t, ssize_t, EWOULDBLOCK, O_CLOEXEC, O_NONBLOCK, O_RDONLY};
-use log::{trace};
+use log::trace;
 use scopeguard::ScopeGuard;
 use std::os::unix::io::AsRawFd;
 use std::{
@@ -15,10 +15,9 @@ use thiserror::Error;
 
 use super::{
   ffi::{
-    is_keyboard, xkb_key_direction, xkb_keycode_t, xkb_keymap_key_repeats,
-    xkb_state, xkb_state_get_keymap, xkb_state_key_get_one_sym,
-    xkb_state_key_get_utf8, xkb_state_new, xkb_state_unref,
-    xkb_state_update_key, EV_KEY,
+    is_keyboard, xkb_key_direction, xkb_keycode_t, xkb_keymap_key_repeats, xkb_state,
+    xkb_state_get_keymap, xkb_state_key_get_one_sym, xkb_state_key_get_utf8, xkb_state_new,
+    xkb_state_unref, xkb_state_update_key, EV_KEY,
   },
   keymap::Keymap,
 };
@@ -66,10 +65,8 @@ impl Device {
 
     let raw_state = unsafe { xkb_state_new(keymap.get_handle()) };
     // Automatically close the state if the function does not return correctly
-    let state = scopeguard::guard(raw_state, |raw_state| {
-      unsafe {
-        xkb_state_unref(raw_state);
-      }
+    let state = scopeguard::guard(raw_state, |raw_state| unsafe {
+      xkb_state_unref(raw_state);
     });
 
     if raw_state.is_null() {
@@ -115,7 +112,7 @@ impl Device {
       }
 
       let nevs: size_t = len as usize / std::mem::size_of::<input_event>();
-      
+
       #[allow(clippy::needless_range_loop)]
       for i in 0..nevs {
         let event = self.process_event(evs[i].type_, evs[i].code, evs[i].value);

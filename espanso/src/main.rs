@@ -1,5 +1,5 @@
 use espanso_detect::event::{InputEvent, Status};
-use espanso_ui::{icons::TrayIcon, mac::*, menu::*, event::UIEvent::*};
+use espanso_ui::{event::UIEvent::*, icons::TrayIcon, mac::*, menu::*};
 use simplelog::{CombinedLogger, Config, LevelFilter, TermLogger, TerminalMode};
 
 fn main() {
@@ -35,7 +35,6 @@ fn main() {
     ),
   ];
 
- 
   // let (remote, mut eventloop) = espanso_ui::win32::create(espanso_ui::win32::Win32UIOptions {
   //   show_icon: true,
   //   icon_paths: &icon_paths,
@@ -48,7 +47,7 @@ fn main() {
   });
 
   let handle = std::thread::spawn(move || {
-    
+
     //let mut source = espanso_detect::win32::Win32Source::new();
     //let mut source = espanso_detect::x11::X11Source::new();
     // source.initialize();
@@ -91,6 +90,5 @@ fn main() {
         println!("item {:?}", menu.get_item_id(raw_id));
       }
     }
-    
   }));
 }

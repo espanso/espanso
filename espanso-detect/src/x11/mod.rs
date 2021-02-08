@@ -17,9 +17,7 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::{
-  ffi::{c_void, CStr},
-};
+use std::ffi::{c_void, CStr};
 
 use lazycell::LazyCell;
 use log::{error, trace, warn};
@@ -105,7 +103,7 @@ impl X11Source {
         -6 => X11SourceError::FailedRegistration("cannot enable XRecord context".to_owned()),
         _ => X11SourceError::Unknown(),
       };
-      return Err(error.into())
+      return Err(error.into());
     }
 
     self.handle = handle;
@@ -307,7 +305,7 @@ fn raw_to_mouse_button(raw: i32) -> Option<MouseButton> {
 mod tests {
   use std::ffi::CString;
 
-    use super::*;
+  use super::*;
 
   fn default_raw_input_event() -> RawInputEvent {
     RawInputEvent {

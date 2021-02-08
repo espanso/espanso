@@ -100,7 +100,7 @@ impl Win32Source {
         -2 => Win32SourceError::RawInputFailed(),
         _ => Win32SourceError::Unknown(),
       };
-      return Err(error.into())
+      return Err(error.into());
     }
 
     self.handle = handle;

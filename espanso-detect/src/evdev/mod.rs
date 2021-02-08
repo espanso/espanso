@@ -25,6 +25,7 @@ mod device;
 mod ffi;
 mod keymap;
 
+use anyhow::Result;
 use context::Context;
 use device::{get_devices, Device};
 use keymap::Keymap;
@@ -32,7 +33,6 @@ use libc::{
   __errno_location, close, epoll_ctl, epoll_event, epoll_wait, EINTR, EPOLLIN, EPOLL_CTL_ADD,
 };
 use log::{error, trace};
-use anyhow::Result;
 use thiserror::Error;
 
 use crate::event::Status::*;
@@ -73,10 +73,10 @@ impl EVDEVSource {
             error!(
               "You can either add the current user to the 'input' group or run espanso as root"
             );
-            return Err(EVDEVSourceError::PermissionDenied().into())
+            return Err(EVDEVSourceError::PermissionDenied().into());
           }
         }
-        return Err(error)
+        return Err(error);
       }
     }
 
@@ -165,7 +165,11 @@ impl From<RawInputEvent> for Option<InputEvent> {
           Some(keyboard_event.value)
         };
 
-        let status = if keyboard_event.is_down { Pressed } else { Released };
+        let status = if keyboard_event.is_down {
+          Pressed
+        } else {
+          Released
+        };
 
         return Some(InputEvent::Keyboard(KeyboardEvent {
           key,
@@ -177,7 +181,11 @@ impl From<RawInputEvent> for Option<InputEvent> {
       RawInputEvent::Mouse(mouse_event) => {
         let button = raw_to_mouse_button(mouse_event.code);
 
-        let status = if mouse_event.is_down { Pressed } else { Released };
+        let status = if mouse_event.is_down {
+          Pressed
+        } else {
+          Released
+        };
 
         if let Some(button) = button {
           return Some(InputEvent::Mouse(MouseEvent { button, status }));
@@ -253,10 +261,10 @@ fn key_sym_to_key(key_sym: i32) -> (Key, Option<Variant>) {
 fn raw_to_mouse_button(raw: u16) -> Option<MouseButton> {
   match raw {
     BTN_LEFT => Some(MouseButton::Left),
-    BTN_RIGHT=> Some(MouseButton::Right),
-    BTN_MIDDLE=> Some(MouseButton::Middle),
-    BTN_SIDE=> Some(MouseButton::Button1),
-    BTN_EXTRA=> Some(MouseButton::Button2),
+    BTN_RIGHT => Some(MouseButton::Right),
+    BTN_MIDDLE => Some(MouseButton::Middle),
+    BTN_SIDE => Some(MouseButton::Button1),
+    BTN_EXTRA => Some(MouseButton::Button2),
     _ => None,
   }
 }
@@ -265,9 +273,12 @@ fn raw_to_mouse_button(raw: u16) -> Option<MouseButton> {
 mod tests {
   use device::RawMouseEvent;
 
-    use crate::event::{InputEvent, KeyboardEvent, Key::Other};
+  use crate::event::{InputEvent, Key::Other, KeyboardEvent};
 
-  use super::{*, device::{RawInputEvent, RawKeyboardEvent}};
+  use super::{
+    device::{RawInputEvent, RawKeyboardEvent},
+    *,
+  };
 
   #[test]
   fn raw_to_input_event_keyboard_works_correctly() {
