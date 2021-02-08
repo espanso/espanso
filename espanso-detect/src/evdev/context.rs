@@ -3,9 +3,9 @@
 
 use scopeguard::ScopeGuard;
 
-use super::ffi::{XKB_CONTEXT_NO_FLAGS, xkb_context, xkb_context_new, xkb_context_unref};
-use thiserror::Error;
+use super::ffi::{xkb_context, xkb_context_new, xkb_context_unref, XKB_CONTEXT_NO_FLAGS};
 use anyhow::Result;
+use thiserror::Error;
 
 pub struct Context {
   context: *mut xkb_context,
@@ -14,10 +14,8 @@ pub struct Context {
 impl Context {
   pub fn new() -> Result<Context> {
     let raw_context = unsafe { xkb_context_new(XKB_CONTEXT_NO_FLAGS) };
-    let context = scopeguard::guard(raw_context, |raw_context| {
-      unsafe {
-        xkb_context_unref(raw_context);
-      }
+    let context = scopeguard::guard(raw_context, |raw_context| unsafe {
+      xkb_context_unref(raw_context);
     });
 
     if raw_context.is_null() {

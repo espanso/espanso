@@ -3,10 +3,13 @@
 
 use scopeguard::ScopeGuard;
 
-use thiserror::Error;
 use anyhow::Result;
+use thiserror::Error;
 
-use super::{context::Context, ffi::{XKB_KEYMAP_COMPILE_NO_FLAGS, xkb_keymap, xkb_keymap_new_from_names, xkb_keymap_unref}};
+use super::{
+  context::Context,
+  ffi::{xkb_keymap, xkb_keymap_new_from_names, xkb_keymap_unref, XKB_KEYMAP_COMPILE_NO_FLAGS},
+};
 
 pub struct Keymap {
   keymap: *mut xkb_keymap,
@@ -14,11 +17,15 @@ pub struct Keymap {
 
 impl Keymap {
   pub fn new(context: &Context) -> Result<Keymap> {
-    let raw_keymap = unsafe { xkb_keymap_new_from_names(context.get_handle(), std::ptr::null(), XKB_KEYMAP_COMPILE_NO_FLAGS) };
-    let keymap = scopeguard::guard(raw_keymap, |raw_keymap| {
-      unsafe {
-        xkb_keymap_unref(raw_keymap);
-      }
+    let raw_keymap = unsafe {
+      xkb_keymap_new_from_names(
+        context.get_handle(),
+        std::ptr::null(),
+        XKB_KEYMAP_COMPILE_NO_FLAGS,
+      )
+    };
+    let keymap = scopeguard::guard(raw_keymap, |raw_keymap| unsafe {
+      xkb_keymap_unref(raw_keymap);
     });
 
     if raw_keymap.is_null() {

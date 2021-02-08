@@ -37,7 +37,7 @@ void ui_initialize(void *_self, UIOptions _options)
 
 int32_t ui_eventloop(EventCallback _callback)
 {
-  AppDelegate *delegate = [[NSApplication sharedApplication] delegate];
+  AppDelegate *delegate = (AppDelegate*)[[NSApplication sharedApplication] delegate];
   delegate->event_callback = _callback;
 
   [NSApp run];
@@ -48,7 +48,7 @@ int32_t ui_eventloop(EventCallback _callback)
 void ui_update_tray_icon(int32_t index)
 {
   dispatch_async(dispatch_get_main_queue(), ^(void) {
-    AppDelegate *delegate = [[NSApplication sharedApplication] delegate];
+    AppDelegate *delegate = (AppDelegate*)[[NSApplication sharedApplication] delegate];
     [delegate setIcon: index];
   });
 }
@@ -57,7 +57,7 @@ void ui_show_notification(char *message, double delay)
 {
   NSString *nsMessage = [NSString stringWithUTF8String:message];
   dispatch_async(dispatch_get_main_queue(), ^(void) {
-    AppDelegate *delegate = [[NSApplication sharedApplication] delegate];
+    AppDelegate *delegate = (AppDelegate*)[[NSApplication sharedApplication] delegate];
     [delegate showNotification: nsMessage withDelay: delay];
   });
 }
@@ -66,7 +66,7 @@ void ui_show_context_menu(char *payload)
 {
   NSString *nsPayload = [NSString stringWithUTF8String:payload];
   dispatch_async(dispatch_get_main_queue(), ^(void) {
-    AppDelegate *delegate = [[NSApplication sharedApplication] delegate];
+    AppDelegate *delegate = (AppDelegate*)[[NSApplication sharedApplication] delegate];
     [delegate popupMenu: nsPayload];
   });
 }

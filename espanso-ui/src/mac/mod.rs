@@ -17,7 +17,7 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::{cmp::min, collections::HashMap, ffi::{CString}, os::raw::c_char, thread::ThreadId};
+use std::{cmp::min, collections::HashMap, ffi::CString, os::raw::c_char, thread::ThreadId};
 
 use lazycell::LazyCell;
 use log::{error, trace};
@@ -49,10 +49,7 @@ pub struct RawUIEvent {
 #[allow(improper_ctypes)]
 #[link(name = "espansoui", kind = "static")]
 extern "C" {
-  pub fn ui_initialize(
-    _self: *const MacEventLoop,
-    options: RawUIOptions,
-  );
+  pub fn ui_initialize(_self: *const MacEventLoop, options: RawUIOptions);
   pub fn ui_eventloop(
     event_callback: extern "C" fn(_self: *mut MacEventLoop, event: RawUIEvent),
   ) -> i32;
@@ -80,10 +77,7 @@ pub fn create(options: MacUIOptions) -> (MacRemote, MacEventLoop) {
     icons.push(path.clone());
   }
 
-  let eventloop = MacEventLoop::new(
-    icons,
-    options.show_icon,
-  );
+  let eventloop = MacEventLoop::new(icons, options.show_icon);
   let remote = MacRemote::new(icon_indexes);
 
   (remote, eventloop)
@@ -101,10 +95,7 @@ pub struct MacEventLoop {
 }
 
 impl MacEventLoop {
-  pub(crate) fn new(
-    icons: Vec<String>,
-    show_icon: bool,
-  ) -> Self {
+  pub(crate) fn new(icons: Vec<String>, show_icon: bool) -> Self {
     Self {
       icons,
       show_icon,
@@ -118,7 +109,8 @@ impl MacEventLoop {
     let mut icon_paths: [[u8; MAX_FILE_PATH]; MAX_ICON_COUNT] =
       [[0; MAX_FILE_PATH]; MAX_ICON_COUNT];
     for (i, icon_path) in icon_paths.iter_mut().enumerate().take(self.icons.len()) {
-      let c_path = CString::new(self.icons[i].clone()).expect("unable to create CString for UI tray icon path");
+      let c_path = CString::new(self.icons[i].clone())
+        .expect("unable to create CString for UI tray icon path");
       let len = min(c_path.as_bytes().len(), MAX_FILE_PATH - 1);
       icon_path[0..len].clone_from_slice(&c_path.as_bytes()[..len]);
     }
@@ -175,12 +167,8 @@ pub struct MacRemote {
 }
 
 impl MacRemote {
-  pub(crate) fn new(
-    icon_indexes: HashMap<TrayIcon, usize>,
-  ) -> Self {
-    Self {
-      icon_indexes,
-    }
+  pub(crate) fn new(icon_indexes: HashMap<TrayIcon, usize>) -> Self {
+    Self { icon_indexes }
   }
 
   pub fn update_tray_icon(&self, icon: TrayIcon) {
@@ -196,10 +184,7 @@ impl MacRemote {
     match c_string {
       Ok(message) => unsafe { ui_show_notification(message.as_ptr(), 3.0) },
       Err(error) => {
-        error!(
-          "Unable to show notification {}",
-          error
-        );
+        error!("Unable to show notification {}", error);
       }
     }
   }
