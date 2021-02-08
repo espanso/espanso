@@ -250,35 +250,21 @@ fn raw_to_mouse_button(raw: u16) -> Option<MouseButton> {
   }
 }
 
-/* TODO convert tests
 #[cfg(test)]
 mod tests {
-  use std::ffi::CString;
+  use device::RawMouseEvent;
 
-    use super::*;
+    use crate::event::{InputEvent, KeyboardEvent, Key::Other};
 
-  fn default_raw_input_event() -> RawInputEvent {
-    RawInputEvent {
-      event_type: INPUT_EVENT_TYPE_KEYBOARD,
-      buffer: [0; 24],
-      buffer_len: 0,
-      key_code: 0,
-      key_sym: 0,
-      status: INPUT_STATUS_PRESSED,
-    }
-  }
+  use super::{*, device::{RawInputEvent, RawKeyboardEvent}};
 
   #[test]
   fn raw_to_input_event_keyboard_works_correctly() {
-    let c_string = CString::new("k".to_string()).unwrap();
-    let mut buffer: [u8; 24] = [0; 24];
-    buffer[..1].copy_from_slice(c_string.as_bytes());
-
-    let mut raw = default_raw_input_event();
-    raw.buffer = buffer;
-    raw.buffer_len = 1;
-    raw.status = INPUT_STATUS_RELEASED;
-    raw.key_sym = 0x4B;
+    let raw = RawInputEvent::Keyboard(RawKeyboardEvent {
+      sym: 0x4B,
+      value: "k".to_owned(),
+      is_down: false,
+    });
 
     let result: Option<InputEvent> = raw.into();
     assert_eq!(
@@ -294,10 +280,10 @@ mod tests {
 
   #[test]
   fn raw_to_input_event_mouse_works_correctly() {
-    let mut raw = default_raw_input_event();
-    raw.event_type = INPUT_EVENT_TYPE_MOUSE;
-    raw.status = INPUT_STATUS_RELEASED;
-    raw.key_code = INPUT_MOUSE_RIGHT_BUTTON;
+    let raw = RawInputEvent::Mouse(RawMouseEvent {
+      code: BTN_RIGHT,
+      is_down: false,
+    });
 
     let result: Option<InputEvent> = raw.into();
     assert_eq!(
@@ -308,26 +294,4 @@ mod tests {
       })
     );
   }
-
-  #[test]
-  fn raw_to_input_invalid_buffer() {
-    let buffer: [u8; 24] = [123; 24];
-
-    let mut raw = default_raw_input_event();
-    raw.buffer = buffer;
-    raw.buffer_len = 5;
-
-    let result: Option<InputEvent> = raw.into();
-    assert!(result.unwrap().into_keyboard().unwrap().value.is_none());
-  }
-
-  #[test]
-  fn raw_to_input_event_returns_none_when_missing_type() {
-    let mut raw = default_raw_input_event();
-    raw.event_type = 0;
-    let result: Option<InputEvent> = raw.into();
-    assert!(result.is_none());
-  }
 }
-
-*/

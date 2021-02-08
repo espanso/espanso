@@ -9,7 +9,6 @@ use std::os::unix::io::AsRawFd;
 use std::{
   ffi::{c_void, CStr},
   fs::OpenOptions,
-  mem::zeroed,
 };
 use std::{fs::File, os::unix::fs::OpenOptionsExt};
 use thiserror::Error;
@@ -31,19 +30,19 @@ const KEY_STATE_REPEAT: i32 = 2;
 
 #[derive(Debug)]
 pub enum RawInputEvent {
-  Keyboard(KeyboardEvent),
-  Mouse(MouseEvent),
+  Keyboard(RawKeyboardEvent),
+  Mouse(RawMouseEvent),
 }
 
 #[derive(Debug)]
-pub struct KeyboardEvent {
+pub struct RawKeyboardEvent {
   pub sym: u32,
   pub value: String,
   pub is_down: bool,
 }
 
 #[derive(Debug)]
-pub struct MouseEvent {
+pub struct RawMouseEvent {
   pub code: u16,
   pub is_down: bool,
 }
@@ -143,7 +142,7 @@ impl Device {
     // Check if the current event originated from a mouse
     if code >= 0x110 && code <= 0x117 {
       // Mouse event
-      return Some(RawInputEvent::Mouse(MouseEvent { code, is_down }));
+      return Some(RawInputEvent::Mouse(RawMouseEvent { code, is_down }));
     }
 
     // Keyboard event
@@ -173,7 +172,7 @@ impl Device {
     let content_raw = unsafe { CStr::from_ptr(buffer.as_ptr() as *mut i8) };
     let content = content_raw.to_string_lossy().to_string();
 
-    let event = KeyboardEvent {
+    let event = RawKeyboardEvent {
       is_down,
       sym,
       value: content,
