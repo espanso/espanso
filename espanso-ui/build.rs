@@ -40,17 +40,24 @@ fn cc_config() {
 
 #[cfg(target_os = "linux")]
 fn cc_config() {
-  // println!("cargo:rustc-link-search=native=/usr/lib/x86_64-linux-gnu/");
-  // println!("cargo:rustc-link-lib=static=linuxbridge");
-  // println!("cargo:rustc-link-lib=dylib=X11");
-  // println!("cargo:rustc-link-lib=dylib=Xtst");
-  // println!("cargo:rustc-link-lib=dylib=xdo");
+  // Nothing to link on linux
 }
 
 #[cfg(target_os = "macos")]
 fn cc_config() {
+  println!("cargo:rerun-if-changed=src/mac/native.mm");
+  println!("cargo:rerun-if-changed=src/mac/native.h");
+  println!("cargo:rerun-if-changed=src/mac/AppDelegate.mm");
+  println!("cargo:rerun-if-changed=src/mac/AppDelegate.h");
+  cc::Build::new()
+    .cpp(true)
+    .include("src/mac/native.h")
+    .include("src/mac/AppDelegate.h")
+    .file("src/mac/native.mm")
+    .file("src/mac/AppDelegate.mm")
+    .compile("espansoui");
   println!("cargo:rustc-link-lib=dylib=c++");
-  println!("cargo:rustc-link-lib=static=macbridge");
+  println!("cargo:rustc-link-lib=static=espansoui");
   println!("cargo:rustc-link-lib=framework=Cocoa");
   println!("cargo:rustc-link-lib=framework=IOKit");
 }

@@ -59,10 +59,7 @@ fn cc_config() {
 
 #[cfg(target_os = "macos")]
 fn cc_config() {
-  println!("cargo:rustc-link-lib=dylib=c++");
-  println!("cargo:rustc-link-lib=static=macbridge");
-  println!("cargo:rustc-link-lib=framework=Cocoa");
-  println!("cargo:rustc-link-lib=framework=IOKit");
+  // TODO
 }
 
 fn main() {
