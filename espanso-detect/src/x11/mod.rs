@@ -24,6 +24,9 @@ use std::{
 use lazycell::LazyCell;
 use log::{error, trace, warn};
 
+use anyhow::Result;
+use thiserror::Error;
+
 use crate::event::Status::*;
 use crate::event::Variant::*;
 use crate::event::{InputEvent, Key, KeyboardEvent, Variant};
@@ -88,23 +91,26 @@ impl X11Source {
     unsafe { detect_check_x11() != 0 }
   }
 
-  pub fn initialize(&mut self) {
+  pub fn initialize(&mut self) -> Result<()> {
     let mut error_code = 0;
     let handle = unsafe { detect_initialize(self as *const X11Source, &mut error_code) };
 
     if handle.is_null() {
-      match error_code {
-        -1 => panic!("Unable to initialize X11Source, cannot open displays"),
-        -2 => panic!("Unable to initialize X11Source, X Record Extension is not installed"),
-        -3 => panic!("Unable to initialize X11Source, X Keyboard Extension is not installed"),
-        -4 => panic!("Unable to initialize X11Source, cannot initialize record range"),
-        -5 => panic!("Unable to initialize X11Source, cannot initialize XRecord context"),
-        -6 => panic!("Unable to initialize X11Source, cannot enable XRecord context"),
-        _ => panic!("Unable to initialize X11Source, unknown error"),
-      }
+      let error = match error_code {
+        -1 => X11SourceError::DisplayFailure(),
+        -2 => X11SourceError::XRecordMissing(),
+        -3 => X11SourceError::XKeyboardMissing(),
+        -4 => X11SourceError::FailedRegistration("cannot initialize record range".to_owned()),
+        -5 => X11SourceError::FailedRegistration("cannot initialize XRecord context".to_owned()),
+        -6 => X11SourceError::FailedRegistration("cannot enable XRecord context".to_owned()),
+        _ => X11SourceError::Unknown(),
+      };
+      return Err(error.into())
     }
 
     self.handle = handle;
+
+    Ok(())
   }
 
   pub fn eventloop(&self, event_callback: X11SourceCallback) {
@@ -148,6 +154,24 @@ impl Drop for X11Source {
       error!("X11Source destruction returned non-zero code");
     }
   }
+}
+
+#[derive(Error, Debug)]
+pub enum X11SourceError {
+  #[error("cannot open displays")]
+  DisplayFailure(),
+
+  #[error("X Record Extension is not installed")]
+  XRecordMissing(),
+
+  #[error("X Keyboard Extension is not installed")]
+  XKeyboardMissing(),
+
+  #[error("failed registration: ${0}")]
+  FailedRegistration(String),
+
+  #[error("unknown error")]
+  Unknown(),
 }
 
 impl From<RawInputEvent> for Option<InputEvent> {

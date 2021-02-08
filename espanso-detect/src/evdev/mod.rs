@@ -32,6 +32,8 @@ use libc::{
   __errno_location, close, epoll_ctl, epoll_event, epoll_wait, EINTR, EPOLLIN, EPOLL_CTL_ADD,
 };
 use log::{error, trace};
+use anyhow::Result;
+use thiserror::Error;
 
 use crate::event::Status::*;
 use crate::event::Variant::*;
@@ -59,7 +61,7 @@ impl EVDEVSource {
     }
   }
 
-  pub fn initialize(&mut self) {
+  pub fn initialize(&mut self) -> Result<()> {
     let context = Context::new().expect("unable to obtain xkb context");
     let keymap = Keymap::new(&context).expect("unable to create xkb keymap");
     match get_devices(&keymap) {
@@ -71,11 +73,14 @@ impl EVDEVSource {
             error!(
               "You can either add the current user to the 'input' group or run espanso as root"
             );
+            return Err(EVDEVSourceError::PermissionDenied().into())
           }
         }
-        panic!("error when initilizing EVDEV source {}", error);
+        return Err(error)
       }
     }
+
+    Ok(())
   }
 
   pub fn eventloop(&self, event_callback: EVDEVSourceCallback) {
@@ -141,6 +146,12 @@ impl EVDEVSource {
       }
     }
   }
+}
+
+#[derive(Error, Debug)]
+pub enum EVDEVSourceError {
+  #[error("permission denied")]
+  PermissionDenied(),
 }
 
 impl From<RawInputEvent> for Option<InputEvent> {
