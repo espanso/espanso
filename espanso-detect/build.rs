@@ -59,7 +59,16 @@ fn cc_config() {
 
 #[cfg(target_os = "macos")]
 fn cc_config() {
-  // TODO
+  println!("cargo:rerun-if-changed=src/mac/native.mm");
+  println!("cargo:rerun-if-changed=src/mac/native.h");
+  cc::Build::new()
+    .cpp(true)
+    .include("src/mac/native.h")
+    .file("src/mac/native.mm")
+    .compile("espansodetect");
+  println!("cargo:rustc-link-lib=dylib=c++");
+  println!("cargo:rustc-link-lib=static=espansodetect");
+  println!("cargo:rustc-link-lib=framework=Cocoa");
 }
 
 fn main() {

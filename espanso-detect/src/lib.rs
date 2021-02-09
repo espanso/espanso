@@ -27,3 +27,10 @@ pub mod x11;
 
 #[cfg(target_os = "linux")]
 pub mod evdev;
+
+#[cfg(target_os = "macos")]
+pub mod mac;
+
+#[cfg(target_os = "macos")]
+#[macro_use]
+extern crate lazy_static;

@@ -260,6 +260,9 @@ fn key_code_to_key(key_code: i32) -> (Key, Option<Variant>) {
     0x22 => (PageDown, None),
     0x21 => (PageUp, None),
 
+    // UI
+    0x1B => (Escape, None),
+
     // Editing keys
     0x08 => (Backspace, None),
 
