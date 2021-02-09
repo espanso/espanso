@@ -260,6 +260,9 @@ fn key_sym_to_key(key_sym: i32) -> (Key, Option<Variant>) {
     0xFF56 => (PageDown, None),
     0xFF55 => (PageUp, None),
 
+    // UI keys
+    0xFF1B => (Escape, None),
+
     // Editing keys
     0xFF08 => (Backspace, None),
 

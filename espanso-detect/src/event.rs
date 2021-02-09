@@ -90,6 +90,9 @@ pub enum Key {
   PageDown,
   PageUp,
 
+  // UI
+  Escape,
+
   // Editing keys
   Backspace,
 

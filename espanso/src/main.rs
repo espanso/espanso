@@ -46,26 +46,27 @@ fn main() {
     icon_paths: &icon_paths,
   });
 
-  let handle = std::thread::spawn(move || {
+  eventloop.initialize();
 
+  let handle = std::thread::spawn(move || {
     //let mut source = espanso_detect::win32::Win32Source::new();
     //let mut source = espanso_detect::x11::X11Source::new();
-    // source.initialize();
-    // source.eventloop(Box::new(move |event: InputEvent| {
-    //   println!("ev {:?}", event);
-    //   match event {
-    //     InputEvent::Mouse(_) => {}
-    //     InputEvent::Keyboard(evt) => {
-    //       if evt.key == espanso_detect::event::Key::Shift && evt.status == Status::Pressed {
-    //         //remote.update_tray_icon(espanso_ui::icons::TrayIcon::Disabled);
-    //         remote.show_notification("Espanso is running!");
-    //       }
-    //     }
-    //   }
-    // }));
+    let mut source = espanso_detect::mac::CocoaSource::new();
+    source.initialize();
+    source.eventloop(Box::new(move |event: InputEvent| {
+      println!("ev {:?}", event);
+      match event {
+        InputEvent::Mouse(_) => {}
+        InputEvent::Keyboard(evt) => {
+          if evt.key == espanso_detect::event::Key::Shift && evt.status == Status::Pressed {
+            //remote.update_tray_icon(espanso_ui::icons::TrayIcon::Disabled);
+            //remote.show_notification("Espanso is running!");
+          }
+        }
+      }
+    }));
   });
 
-  eventloop.initialize();
   eventloop.run(Box::new(move |event| {
     println!("ui {:?}", event);
     let menu = Menu::from(vec![

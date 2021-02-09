@@ -145,6 +145,7 @@ dependencies = [
  "anyhow",
  "cc",
  "enum-as-inner",
+ "lazy_static",
  "lazycell",
  "libc",
  "log",
