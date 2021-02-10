@@ -1,5 +1,5 @@
 use espanso_detect::event::{InputEvent, Status};
-use espanso_inject::{Injector, get_injector};
+use espanso_inject::{get_injector, Injector};
 use espanso_ui::{event::UIEvent::*, icons::TrayIcon, menu::*};
 use simplelog::{CombinedLogger, Config, LevelFilter, TermLogger, TerminalMode};
 

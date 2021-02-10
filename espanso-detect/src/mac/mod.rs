@@ -17,10 +17,13 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::{ffi::{CStr}, sync::{
+use std::{
+  ffi::CStr,
+  sync::{
     mpsc::{channel, Receiver, Sender},
     Arc, Mutex,
-  }};
+  },
+};
 
 use lazycell::LazyCell;
 use log::{error, trace, warn};
@@ -169,7 +172,8 @@ impl From<RawInputEvent> for Option<InputEvent> {
         let (key, variant) = key_code_to_key(raw.key_code);
 
         let value = if raw.buffer_len > 0 {
-          let raw_string_result = CStr::from_bytes_with_nul(&raw.buffer[..((raw.buffer_len + 1) as usize)]);
+          let raw_string_result =
+            CStr::from_bytes_with_nul(&raw.buffer[..((raw.buffer_len + 1) as usize)]);
           match raw_string_result {
             Ok(c_string) => {
               let string_result = c_string.to_str();
@@ -340,4 +344,3 @@ mod tests {
     );
   }
 }
-
