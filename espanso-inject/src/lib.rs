@@ -42,6 +42,8 @@ pub trait Injector {
   fn send_key_combination(&self, keys: &[keys::Key], delay: i32) -> Result<()>;
 }
 
+
+#[allow(dead_code)]
 pub struct InjectorOptions {
   // Only relevant in Linux systems
   use_evdev: bool,
@@ -62,7 +64,7 @@ pub fn get_injector(_options: InjectorOptions) -> impl Injector {
 
 #[cfg(target_os = "macos")]
 pub fn get_injector(_options: InjectorOptions) -> impl Injector {
-  // TODO
+  mac::MacInjector::new()
 }
 
 #[cfg(target_os = "linux")]

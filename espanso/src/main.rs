@@ -1,5 +1,5 @@
 use espanso_detect::event::{InputEvent, Status};
-use espanso_inject::{get_injector, Injector};
+use espanso_inject::{get_injector, Injector, keys};
 use espanso_ui::{event::UIEvent::*, icons::TrayIcon, menu::*};
 use simplelog::{CombinedLogger, Config, LevelFilter, TermLogger, TerminalMode};
 
@@ -36,23 +36,23 @@ fn main() {
     ),
   ];
 
-  let (remote, mut eventloop) = espanso_ui::win32::create(espanso_ui::win32::Win32UIOptions {
-    show_icon: true,
-    icon_paths: &icon_paths,
-    notification_icon_path: r"C:\Users\Freddy\Insync\Development\Espanso\Images\icongreensmall.png"
-      .to_string(),
-  });
-  // let (remote, mut eventloop) = espanso_ui::mac::create(MacUIOptions {
+  // let (remote, mut eventloop) = espanso_ui::win32::create(espanso_ui::win32::Win32UIOptions {
   //   show_icon: true,
   //   icon_paths: &icon_paths,
+  //   notification_icon_path: r"C:\Users\Freddy\Insync\Development\Espanso\Images\icongreensmall.png"
+  //     .to_string(),
   // });
+  let (remote, mut eventloop) = espanso_ui::mac::create(espanso_ui::mac::MacUIOptions {
+    show_icon: true,
+    icon_paths: &icon_paths,
+  });
 
   eventloop.initialize();
 
   let handle = std::thread::spawn(move || {
-    let mut source = espanso_detect::win32::Win32Source::new();
+    //let mut source = espanso_detect::win32::Win32Source::new();
     //let mut source = espanso_detect::x11::X11Source::new();
-    //let mut source = espanso_detect::mac::CocoaSource::new();
+    let mut source = espanso_detect::mac::CocoaSource::new();
     source.initialize();
     source.eventloop(Box::new(move |event: InputEvent| {
       let injector = get_injector(Default::default());
@@ -64,6 +64,7 @@ fn main() {
             //remote.update_tray_icon(espanso_ui::icons::TrayIcon::Disabled);
             //remote.show_notification("Espanso is running!");
             injector.send_string("hey guys");
+            //injector.send_key_combination(&[keys::Key::Meta, keys::Key::V], 2);
           }
         }
       }
