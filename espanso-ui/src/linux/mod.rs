@@ -52,6 +52,10 @@ impl LinuxEventLoop {
     Self { rx }
   }
 
+  pub fn initialize(&self) {
+    // NOOP on linux
+  }
+
   pub fn run(&self) {
     // We don't run an event loop on Linux as there is no tray icon or application window needed.
     // Thad said, we still need a way to block this method, and thus we use a channel
