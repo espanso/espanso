@@ -1,4 +1,25 @@
+/*
+ * This file is part of espanso.
+ *
+ * Copyright (C) 2019-2021 Federico Terzi
+ *
+ * espanso is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * espanso is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 use crate::keys::Key;
+use anyhow::Result;
+use thiserror::Error;
 
 pub fn convert_key_to_sym(key: &Key) -> Option<u32> {
   match key {
@@ -103,4 +124,23 @@ pub fn convert_key_to_sym(key: &Key) -> Option<u32> {
     Key::Numpad9 => Some(0xffb9),
     Key::Raw(code) => Some(*code as u32),
   }
+}
+
+pub fn convert_to_sym_array(keys: &[Key]) -> Result<Vec<u64>> {
+  let mut virtual_keys: Vec<u64> = Vec::new();
+  for key in keys.iter() {
+    let vk = convert_key_to_sym(key);
+    if let Some(vk) = vk {
+      virtual_keys.push(vk as u64)
+    } else {
+      return Err(LinuxRawKeyError::MappingFailure(key.clone()).into());
+    }
+  }
+  Ok(virtual_keys)
+}
+
+#[derive(Error, Debug)]
+pub enum LinuxRawKeyError {
+  #[error("missing mapping for key `{0}`")]
+  MappingFailure(Key),
 }

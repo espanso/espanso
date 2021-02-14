@@ -38,6 +38,8 @@ The available modifiers can be found in the https://github.com/torvalds/linux/bl
 #define KEY_RIGHTMETA		126
 #define KEY_RIGHTCTRL		97
 #define KEY_RIGHTALT		100
+#define KEY_CAPSLOCK		58
+#define KEY_NUMLOCK		69
 
 All these codes have to be added the EVDEV_OFFSET = 8
 

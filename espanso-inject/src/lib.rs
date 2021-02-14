@@ -27,8 +27,11 @@ mod win32;
 #[cfg(target_os = "linux")]
 mod x11;
 
-//#[cfg(target_os = "linux")]
-//mod evdev;
+#[cfg(target_os = "linux")]
+mod evdev;
+
+#[cfg(target_os = "linux")]
+mod linux;
 
 #[cfg(target_os = "macos")]
 mod mac;
@@ -72,17 +75,42 @@ impl Default for InjectionOptions {
   }
 }
 
-
 #[allow(dead_code)]
 pub struct InjectorCreationOptions {
   // Only relevant in Linux systems
   use_evdev: bool,
+
+  // Overwrite the list of modifiers to be scanned when 
+  // populating the evdev injector lookup maps
+  evdev_modifiers: Option<Vec<u32>>,
+
+  // Overwrite the maximum number of modifiers used tested in
+  // a single combination to populate the lookup maps
+  evdev_max_modifier_combination_len: Option<i32>,
+
+  // Can be used to overwrite the keymap configuration
+  // used by espanso to inject key presses.
+  evdev_keyboard_rmlvo: Option<KeyboardConfig>,
+}
+
+// This struct identifies the keyboard layout that
+// should be used by EVDEV when loading the keymap.
+// For more information: https://xkbcommon.org/doc/current/structxkb__rule__names.html
+pub struct KeyboardConfig {
+  pub rules: Option<String>,
+  pub model: Option<String>,
+  pub layout: Option<String>,
+  pub variant: Option<String>,
+  pub options: Option<String>,
 }
 
 impl Default for InjectorCreationOptions {
   fn default() -> Self {
     Self {
       use_evdev: false,
+      evdev_modifiers: None,
+      evdev_max_modifier_combination_len: None,
+      evdev_keyboard_rmlvo: None,
     }
   }
 }
@@ -100,6 +128,7 @@ pub fn get_injector(_options: InjectorOptions) -> impl Injector {
 #[cfg(target_os = "linux")]
 pub fn get_injector(options: InjectorCreationOptions) -> Result<impl Injector> {
   // TODO: differenciate based on the options
-  x11::X11Injector::new()
+  //x11::X11Injector::new()
+  evdev::EVDEVInjector::new(options)
 }
 
