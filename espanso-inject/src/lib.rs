@@ -18,6 +18,7 @@
  */
 
 use anyhow::Result;
+use log::info;
 
 pub mod keys;
 
@@ -25,6 +26,7 @@ pub mod keys;
 mod win32;
 
 #[cfg(target_os = "linux")]
+#[cfg(not(feature = "wayland"))]
 mod x11;
 
 #[cfg(target_os = "linux")]
@@ -77,7 +79,7 @@ impl Default for InjectionOptions {
 
 #[allow(dead_code)]
 pub struct InjectorCreationOptions {
-  // Only relevant in Linux systems
+  // Only relevant in X11 Linux systems, use the EVDEV backend instead of X11.
   use_evdev: bool,
 
   // Overwrite the list of modifiers to be scanned when 
@@ -116,19 +118,33 @@ impl Default for InjectorCreationOptions {
 }
 
 #[cfg(target_os = "windows")]
-pub fn get_injector(_options: InjectorOptions) -> impl Injector {
-  win32::Win32Injector::new()
+pub fn get_injector(_options: InjectorOptions) -> Result<Box<dyn Injector>> {
+  info!("using Win32Injector");
+  Ok(Box::new(win32::Win32Injector::new()))
 }
 
 #[cfg(target_os = "macos")]
-pub fn get_injector(_options: InjectorOptions) -> impl Injector {
-  mac::MacInjector::new()
+pub fn get_injector(_options: InjectorOptions) -> Result<Box<dyn Injector>> {
+  info!("using MacInjector");
+  Ok(Box::new(mac::MacInjector::new()))
 }
 
 #[cfg(target_os = "linux")]
-pub fn get_injector(options: InjectorCreationOptions) -> Result<impl Injector> {
-  // TODO: differenciate based on the options
-  //x11::X11Injector::new()
-  evdev::EVDEVInjector::new(options)
+#[cfg(not(feature = "wayland"))]
+pub fn get_injector(options: InjectorCreationOptions) -> Result<Box<dyn Injector>> {
+  if options.use_evdev {
+    info!("using EVDEVInjector");
+    Ok(Box::new(evdev::EVDEVInjector::new(options)?))
+  } else {
+    info!("using X11Injector");
+    Ok(Box::new(x11::X11Injector::new()?))
+  }
+}
+
+#[cfg(target_os = "linux")]
+#[cfg(feature = "wayland")]
+pub fn get_injector(options: InjectorCreationOptions) -> Result<Box<dyn Injector>> {
+  info!("using EVDEVInjector");
+  Ok(Box::new(evdev::EVDEVInjector::new(options)?))
 }
 

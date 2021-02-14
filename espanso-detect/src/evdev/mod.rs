@@ -36,7 +36,7 @@ use libc::{
 use log::{error, trace};
 use thiserror::Error;
 
-use crate::event::Status::*;
+use crate::{KeyboardConfig, Source, SourceCallback, SourceCreationOptions, event::Status::*};
 use crate::event::Variant::*;
 use crate::event::{InputEvent, Key, KeyboardEvent, Variant};
 use crate::event::{Key::*, MouseButton, MouseEvent};
@@ -49,27 +49,30 @@ const BTN_MIDDLE: u16 = 0x112;
 const BTN_SIDE: u16 = 0x113;
 const BTN_EXTRA: u16 = 0x114;
 
-pub type EVDEVSourceCallback = Box<dyn Fn(InputEvent)>;
 pub struct EVDEVSource {
   devices: Vec<Device>,
 
+  _keyboard_rmlvo: Option<KeyboardConfig>,
   _context: LazyCell<Context>,
   _keymap: LazyCell<Keymap>,
 }
 
 #[allow(clippy::new_without_default)]
 impl EVDEVSource {
-  pub fn new() -> EVDEVSource {
+  pub fn new(options: SourceCreationOptions) -> EVDEVSource {
     Self {
       devices: Vec::new(),
       _context: LazyCell::new(),
       _keymap: LazyCell::new(),
+      _keyboard_rmlvo: options.evdev_keyboard_rmlvo,
     }
   }
+}
 
-  pub fn initialize(&mut self) -> Result<()> {
+impl Source for EVDEVSource {
+  fn initialize(&mut self) -> Result<()> {
     let context = Context::new().expect("unable to obtain xkb context");
-    let keymap = Keymap::new(&context).expect("unable to create xkb keymap");
+    let keymap = Keymap::new(&context, self._keyboard_rmlvo.clone()).expect("unable to create xkb keymap");
 
     match get_devices(&keymap) {
       Ok(devices) => self.devices = devices,
@@ -97,7 +100,7 @@ impl EVDEVSource {
     Ok(())
   }
 
-  pub fn eventloop(&self, event_callback: EVDEVSourceCallback) {
+  fn eventloop(&self, event_callback: SourceCallback) {
     if self.devices.is_empty() {
       panic!("can't start eventloop without evdev devices");
     }

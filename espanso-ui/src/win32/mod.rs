@@ -110,8 +110,6 @@ pub fn create(options: Win32UIOptions) -> (Win32Remote, Win32EventLoop) {
   (remote, eventloop)
 }
 
-pub type Win32UIEventCallback = Box<dyn Fn(UIEvent)>;
-
 pub struct Win32EventLoop {
   handle: Arc<AtomicPtr<c_void>>,
 
