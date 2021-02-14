@@ -18,7 +18,6 @@
  */
 
 mod ffi;
-mod raw_keys;
 
 use std::{
   collections::HashMap,
@@ -31,7 +30,7 @@ use ffi::{Display, KeyCode, KeyPress, KeyRelease, KeySym, Window, XCloseDisplay,
 use log::error;
 
 use anyhow::Result;
-use raw_keys::convert_key_to_sym;
+use crate::linux::raw_keys::{convert_key_to_sym, convert_to_sym_array};
 use thiserror::Error;
 
 use crate::{keys, InjectionOptions, Injector};
@@ -144,19 +143,6 @@ impl X11Injector {
     }
 
     (char_map, sym_map)
-  }
-
-  fn convert_to_sym_array(keys: &[keys::Key]) -> Result<Vec<u64>> {
-    let mut virtual_keys: Vec<u64> = Vec::new();
-    for key in keys.iter() {
-      let vk = convert_key_to_sym(key);
-      if let Some(vk) = vk {
-        virtual_keys.push(vk as u64)
-      } else {
-        return Err(X11InjectorError::MappingFailure(key.clone()).into());
-      }
-    }
-    Ok(virtual_keys)
   }
 
   fn convert_to_record_array(&self, syms: &[KeySym]) -> Result<Vec<KeyRecord>> {
@@ -371,7 +357,7 @@ impl Injector for X11Injector {
     let focused_window = self.get_focused_window();
     
     // Compute all the key record sequence first to make sure a mapping is available
-    let syms = Self::convert_to_sym_array(keys)?;
+    let syms = convert_to_sym_array(keys)?;
     let records = self.convert_to_record_array(&syms)?;
 
     if options.disable_fast_inject {
@@ -397,7 +383,7 @@ impl Injector for X11Injector {
     let focused_window = self.get_focused_window();
 
     // Compute all the key record sequence first to make sure a mapping is available
-    let syms = Self::convert_to_sym_array(keys)?;
+    let syms = convert_to_sym_array(keys)?;
     let records = self.convert_to_record_array(&syms)?;
     
     // Render the correct modifier mask for the given sequence
@@ -438,9 +424,6 @@ pub enum X11InjectorError {
 
   #[error("missing vkey mapping for char `{0}`")]
   CharMappingFailure(String),
-
-  #[error("missing sym mapping for key `{0}`")]
-  MappingFailure(keys::Key),
 
   #[error("missing record mapping for sym `{0}`")]
   SymMappingFailure(u64),

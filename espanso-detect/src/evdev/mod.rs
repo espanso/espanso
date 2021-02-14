@@ -29,6 +29,7 @@ use anyhow::Result;
 use context::Context;
 use device::{get_devices, Device};
 use keymap::Keymap;
+use lazycell::LazyCell;
 use libc::{
   __errno_location, close, epoll_ctl, epoll_event, epoll_wait, EINTR, EPOLLIN, EPOLL_CTL_ADD,
 };
@@ -51,6 +52,9 @@ const BTN_EXTRA: u16 = 0x114;
 pub type EVDEVSourceCallback = Box<dyn Fn(InputEvent)>;
 pub struct EVDEVSource {
   devices: Vec<Device>,
+
+  _context: LazyCell<Context>,
+  _keymap: LazyCell<Keymap>,
 }
 
 #[allow(clippy::new_without_default)]
@@ -58,12 +62,15 @@ impl EVDEVSource {
   pub fn new() -> EVDEVSource {
     Self {
       devices: Vec::new(),
+      _context: LazyCell::new(),
+      _keymap: LazyCell::new(),
     }
   }
 
   pub fn initialize(&mut self) -> Result<()> {
     let context = Context::new().expect("unable to obtain xkb context");
     let keymap = Keymap::new(&context).expect("unable to create xkb keymap");
+
     match get_devices(&keymap) {
       Ok(devices) => self.devices = devices,
       Err(error) => {
@@ -78,6 +85,13 @@ impl EVDEVSource {
         }
         return Err(error);
       }
+    }
+
+    if self._context.fill(context).is_err() {
+      return Err(EVDEVSourceError::InitFailure().into());
+    }
+    if self._keymap.fill(keymap).is_err() {
+      return Err(EVDEVSourceError::InitFailure().into());
     }
 
     Ok(())
@@ -150,6 +164,9 @@ impl EVDEVSource {
 
 #[derive(Error, Debug)]
 pub enum EVDEVSourceError {
+  #[error("initialization failed")]
+  InitFailure(),
+
   #[error("permission denied")]
   PermissionDenied(),
 }

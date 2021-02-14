@@ -39,19 +39,20 @@ fn cc_config() {
   // println!("cargo:rerun-if-changed=src/x11/native.h");
   // println!("cargo:rerun-if-changed=src/evdev/native.cpp");
   // println!("cargo:rerun-if-changed=src/evdev/native.h");
+  println!("cargo:rerun-if-changed=src/evdev/native.h");
+  println!("cargo:rerun-if-changed=src/evdev/native.c");
   // cc::Build::new()
   //   .cpp(true)
   //   .include("src/x11/native.h")
   //   .file("src/x11/native.cpp")
   //   .compile("espansoinject");
-  // cc::Build::new()
-  //   .cpp(true)
-  //   .include("src/evdev/native.h")
-  //   .file("src/evdev/native.cpp")
-  //   .compile("espansoinjectevdev");
+  cc::Build::new()
+    .include("src/evdev/native.h")
+    .file("src/evdev/native.c")
+    .compile("espansoinjectev");
   println!("cargo:rustc-link-search=native=/usr/lib/x86_64-linux-gnu/");
   // println!("cargo:rustc-link-lib=static=espansoinject");
-  // println!("cargo:rustc-link-lib=static=espansoinjectevdev");
+  println!("cargo:rustc-link-lib=static=espansoinjectev");
   println!("cargo:rustc-link-lib=dylib=X11");
   println!("cargo:rustc-link-lib=dylib=Xtst");
   println!("cargo:rustc-link-lib=dylib=xkbcommon");
