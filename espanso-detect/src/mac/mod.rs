@@ -86,7 +86,6 @@ extern "C" fn native_callback(raw_event: RawInputEvent) {
   }
 }
 
-pub type CocoaSourceCallback = Box<dyn Fn(InputEvent)>;
 pub struct CocoaSource {
   receiver: LazyCell<Receiver<InputEvent>>,
 }
@@ -99,7 +98,11 @@ impl CocoaSource {
     }
   }
 
-  pub fn initialize(&mut self) -> Result<()> {
+  
+}
+
+impl Source for CocoaSource {
+  fn initialize(&mut self) -> Result<()> {
     let (sender, receiver) = channel();
 
     // Set the global sender
@@ -120,7 +123,7 @@ impl CocoaSource {
     Ok(())
   }
 
-  pub fn eventloop(&self, event_callback: CocoaSourceCallback) {
+  fn eventloop(&self, event_callback: SourceCallback) {
     if let Some(receiver) = self.receiver.borrow() {
       loop {
         let event = receiver.recv();

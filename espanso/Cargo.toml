@@ -8,6 +8,11 @@ readme = "README.md"
 homepage = "https://github.com/federico-terzi/espanso"
 edition = "2018"
 
+[features]
+# If the wayland feature is enabled, all X11 dependencies will be dropped
+# and only EVDEV-based methods will be supported.
+wayland = ["espanso-detect/wayland", "espanso-inject/wayland"]
+
 [dependencies]
 espanso-detect = { path = "../espanso-detect" } 
 espanso-ui = { path = "../espanso-ui" } 

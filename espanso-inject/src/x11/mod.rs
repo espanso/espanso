@@ -30,7 +30,7 @@ use ffi::{Display, KeyCode, KeyPress, KeyRelease, KeySym, Window, XCloseDisplay,
 use log::error;
 
 use anyhow::Result;
-use crate::linux::raw_keys::{convert_key_to_sym, convert_to_sym_array};
+use crate::linux::raw_keys::{convert_to_sym_array};
 use thiserror::Error;
 
 use crate::{keys, InjectionOptions, Injector};

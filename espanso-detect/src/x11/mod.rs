@@ -25,7 +25,7 @@ use log::{error, trace, warn};
 use anyhow::Result;
 use thiserror::Error;
 
-use crate::event::Status::*;
+use crate::{Source, SourceCallback, event::Status::*};
 use crate::event::Variant::*;
 use crate::event::{InputEvent, Key, KeyboardEvent, Variant};
 use crate::event::{Key::*, MouseButton, MouseEvent};
@@ -70,10 +70,9 @@ extern "C" {
   pub fn detect_destroy(window: *const c_void) -> i32;
 }
 
-pub type X11SourceCallback = Box<dyn Fn(InputEvent)>;
 pub struct X11Source {
   handle: *mut c_void,
-  callback: LazyCell<X11SourceCallback>,
+  callback: LazyCell<SourceCallback>,
 }
 
 #[allow(clippy::new_without_default)]
@@ -89,7 +88,11 @@ impl X11Source {
     unsafe { detect_check_x11() != 0 }
   }
 
-  pub fn initialize(&mut self) -> Result<()> {
+  
+}
+
+impl Source for X11Source {
+  fn initialize(&mut self) -> Result<()> {
     let mut error_code = 0;
     let handle = unsafe { detect_initialize(self as *const X11Source, &mut error_code) };
 
@@ -111,7 +114,7 @@ impl X11Source {
     Ok(())
   }
 
-  pub fn eventloop(&self, event_callback: X11SourceCallback) {
+  fn eventloop(&self, event_callback: SourceCallback) {
     if self.handle.is_null() {
       panic!("Attempt to start X11Source eventloop without initialization");
     }

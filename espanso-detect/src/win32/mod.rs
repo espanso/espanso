@@ -75,10 +75,9 @@ extern "C" {
   pub fn detect_destroy(window: *const c_void) -> i32;
 }
 
-pub type Win32SourceCallback = Box<dyn Fn(InputEvent)>;
 pub struct Win32Source {
   handle: *mut c_void,
-  callback: LazyCell<Win32SourceCallback>,
+  callback: LazyCell<SourceCallback>,
 }
 
 #[allow(clippy::new_without_default)]
@@ -89,8 +88,10 @@ impl Win32Source {
       callback: LazyCell::new(),
     }
   }
+}
 
-  pub fn initialize(&mut self) -> Result<()> {
+impl Source for Win32Source {
+  fn initialize(&mut self) -> Result<()> {
     let mut error_code = 0;
     let handle = unsafe { detect_initialize(self as *const Win32Source, &mut error_code) };
 
@@ -108,7 +109,7 @@ impl Win32Source {
     Ok(())
   }
 
-  pub fn eventloop(&self, event_callback: Win32SourceCallback) {
+  fn eventloop(&self, event_callback: SourceCallback) {
     if self.handle.is_null() {
       panic!("Attempt to start Win32Source eventloop without initialization");
     }
