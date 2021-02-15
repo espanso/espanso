@@ -15,7 +15,7 @@ use thiserror::Error;
 
 use super::{
   ffi::{
-    is_keyboard, xkb_key_direction, xkb_keycode_t, xkb_keymap_key_repeats, xkb_state,
+    is_keyboard_or_mouse, xkb_key_direction, xkb_keycode_t, xkb_keymap_key_repeats, xkb_state,
     xkb_state_get_keymap, xkb_state_key_get_one_sym, xkb_state_key_get_utf8, xkb_state_new,
     xkb_state_unref, xkb_state_update_key, EV_KEY,
   },
@@ -59,7 +59,7 @@ impl Device {
       .custom_flags(O_NONBLOCK | O_CLOEXEC | O_RDONLY)
       .open(&path)?;
 
-    if unsafe { is_keyboard(file.as_raw_fd()) == 0 } {
+    if unsafe { is_keyboard_or_mouse(file.as_raw_fd()) == 0 } {
       return Err(DeviceError::InvalidDevice(path.to_string()).into());
     }
 

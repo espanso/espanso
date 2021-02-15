@@ -65,7 +65,11 @@ impl Default for InjectionOptions {
     } else if cfg!(target_os = "macos") {
       2
     } else if cfg!(target_os = "linux") {
-      0
+      if cfg!(feature = "wayland") {
+        1
+      } else {
+        0
+      }
     } else {
       panic!("unsupported OS");
     };

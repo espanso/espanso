@@ -73,5 +73,5 @@ extern "C" {
 
 #[link(name = "espansodetectevdev", kind = "static")]
 extern "C" {
-  pub fn is_keyboard(fd: i32) -> i32;
+  pub fn is_keyboard_or_mouse(fd: i32) -> i32;
 }
