@@ -57,7 +57,7 @@ evdev_bit_is_set(const unsigned long *array, int bit)
 }
 
 /* Some heuristics to see if the device is a keyboard. */
-int32_t is_keyboard(int fd)
+int32_t is_keyboard_or_mouse(int fd)
 {
   int i;
   unsigned long evbits[NLONGS(EV_CNT)] = {0};
@@ -76,7 +76,13 @@ int32_t is_keyboard(int fd)
   if (errno)
     return false;
 
+  // Test for keyboard keys
   for (i = KEY_RESERVED; i <= KEY_MIN_INTERESTING; i++)
+    if (evdev_bit_is_set(keybits, i))
+      return true;
+
+  // Test for mouse keys
+  for (i = BTN_MOUSE; i <= BTN_TASK; i++)
     if (evdev_bit_is_set(keybits, i))
       return true;
 
