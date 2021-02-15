@@ -5,4 +5,5 @@ members = [
   "espanso-detect",
   "espanso-ui",
   "espanso-inject",
+  "espanso-ipc",
 ]
