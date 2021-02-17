@@ -1,5 +1,6 @@
 use icons::TrayIcon;
 use anyhow::Result;
+use thiserror::Error;
 
 pub mod event;
 pub mod icons;
@@ -22,8 +23,8 @@ pub trait UIRemote {
 
 pub type UIEventCallback = Box<dyn Fn(event::UIEvent)>;
 pub trait UIEventLoop {
-  fn initialize(&mut self);
-  fn run(&self, event_callback: UIEventCallback);
+  fn initialize(&mut self) -> Result<()>;
+  fn run(&self, event_callback: UIEventCallback) -> Result<()>;
 }
 
 pub struct UIOptions {
@@ -43,22 +44,33 @@ impl Default for UIOptions {
 }
 
 #[cfg(target_os = "windows")]
-pub fn create_ui(_options: UIOptions) -> Result<Box<dyn Injector>> {
-  // TODO: refactor
-  Ok(Box::new(win32::Win32Injector::new()))
+pub fn create_ui(options: UIOptions) -> Result<(Box<dyn UIRemote>, Box<dyn UIEventLoop>)> {
+  let (remote, eventloop) = win32::create(win32::Win32UIOptions {
+    show_icon: options.show_icon,
+    icon_paths: &options.icon_paths,
+    notification_icon_path: options.notification_icon_path.ok_or_else(|| UIError::MissingOption("notification icon".to_string()))?,
+  })?;
+  Ok((Box::new(remote), Box::new(eventloop)))
 }
 
 #[cfg(target_os = "macos")]
-pub fn create_ui(_options: UIOptions) -> Result<Box<dyn Injector>> {
-  // TODO: refactor
-  Ok(Box::new(mac::MacInjector::new()))
-}
-
-#[cfg(target_os = "linux")]
 pub fn create_ui(options: UIOptions) -> Result<(Box<dyn UIRemote>, Box<dyn UIEventLoop>)> {
-  // TODO: here we could avoid panicking and instead return a good result
   let (remote, eventloop) = linux::create(linux::LinuxUIOptions {
     notification_icon_path: options.notification_icon_path.expect("missing notification icon path")
   });
   Ok((Box::new(remote), Box::new(eventloop)))
+}
+
+#[cfg(target_os = "linux")]
+pub fn create_ui(options: UIOptions) -> Result<(Box<dyn UIRemote>, Box<dyn UIEventLoop>)> {
+  let (remote, eventloop) = linux::create(linux::LinuxUIOptions {
+    notification_icon_path: options.notification_icon_path.ok_or(UIError::MissingOption("notification icon".to_string()))?,
+  });
+  Ok((Box::new(remote), Box::new(eventloop)))
+}
+
+#[derive(Error, Debug)]
+pub enum UIError {
+  #[error("missing required option for ui: `{0}`")]
+  MissingOption(String),
 }

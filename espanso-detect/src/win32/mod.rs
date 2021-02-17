@@ -26,7 +26,7 @@ use widestring::U16CStr;
 use anyhow::Result;
 use thiserror::Error;
 
-use crate::event::Status::*;
+use crate::{Source, SourceCallback, event::Status::*};
 use crate::event::Variant::*;
 use crate::event::{InputEvent, Key, KeyboardEvent, Variant};
 use crate::event::{Key::*, MouseButton, MouseEvent};
@@ -109,13 +109,14 @@ impl Source for Win32Source {
     Ok(())
   }
 
-  fn eventloop(&self, event_callback: SourceCallback) {
+  fn eventloop(&self, event_callback: SourceCallback) -> Result<()> {
     if self.handle.is_null() {
       panic!("Attempt to start Win32Source eventloop without initialization");
     }
 
     if self.callback.fill(event_callback).is_err() {
-      panic!("Unable to set Win32Source event callback");
+      error!("Unable to set Win32Source event callback");
+      return Err(Win32SourceError::Unknown().into())
     }
 
     extern "C" fn callback(_self: *mut Win32Source, event: RawInputEvent) {
@@ -132,8 +133,11 @@ impl Source for Win32Source {
     let error_code = unsafe { detect_eventloop(self.handle, callback) };
 
     if error_code <= 0 {
-      panic!("Win32Source eventloop returned a negative error code");
+      error!("Win32Source eventloop returned a negative error code");
+      return Err(Win32SourceError::Unknown().into())
     }
+
+    Ok(())
   }
 }
 

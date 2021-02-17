@@ -43,7 +43,7 @@ pub type SourceCallback = Box<dyn Fn(event::InputEvent)>;
 
 pub trait Source {
   fn initialize(&mut self) -> Result<()>;
-  fn eventloop(&self, event_callback: SourceCallback);
+  fn eventloop(&self, event_callback: SourceCallback) -> Result<()>;
 }
 
 #[allow(dead_code)]

@@ -13,5 +13,4 @@ serde_json = "1.0.62"
 crossbeam = "0.8.0"
 
 [target.'cfg(windows)'.dependencies]
-
-[target.'cfg(unix)'.dependencies]
+named_pipe = "0.4.1"

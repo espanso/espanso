@@ -122,13 +122,13 @@ impl Default for InjectorCreationOptions {
 }
 
 #[cfg(target_os = "windows")]
-pub fn get_injector(_options: InjectorOptions) -> Result<Box<dyn Injector>> {
+pub fn get_injector(_options: InjectorCreationOptions) -> Result<Box<dyn Injector>> {
   info!("using Win32Injector");
   Ok(Box::new(win32::Win32Injector::new()))
 }
 
 #[cfg(target_os = "macos")]
-pub fn get_injector(_options: InjectorOptions) -> Result<Box<dyn Injector>> {
+pub fn get_injector(_options: InjectorCreationOptions) -> Result<Box<dyn Injector>> {
   info!("using MacInjector");
   Ok(Box::new(mac::MacInjector::new()))
 }

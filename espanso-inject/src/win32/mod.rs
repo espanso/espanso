@@ -25,7 +25,7 @@ use raw_keys::convert_key_to_vkey;
 use anyhow::Result;
 use thiserror::Error;
 
-use crate::{keys, Injector};
+use crate::{InjectionOptions, Injector, keys};
 
 #[allow(improper_ctypes)]
 #[link(name = "espansoinject", kind = "static")]
@@ -60,7 +60,7 @@ impl Win32Injector {
 }
 
 impl Injector for Win32Injector {
-  fn send_string(&self, string: &str) -> Result<()> {
+  fn send_string(&self, string: &str, _: InjectionOptions) -> Result<()> {
     let wide_string = widestring::WideCString::from_str(string)?;
     unsafe {
       inject_string(wide_string.as_ptr());
@@ -68,32 +68,32 @@ impl Injector for Win32Injector {
     Ok(())
   }
 
-  fn send_keys(&self, keys: &[keys::Key], delay: i32) -> Result<()> {
+  fn send_keys(&self, keys: &[keys::Key], options: InjectionOptions) -> Result<()> {
     let virtual_keys = Self::convert_to_vk_array(keys)?;
 
-    if delay == 0 {
+    if options.delay == 0 {
       unsafe {
         inject_separate_vkeys(virtual_keys.as_ptr(), virtual_keys.len() as i32);
       }
     } else {
       unsafe {
-        inject_separate_vkeys_with_delay(virtual_keys.as_ptr(), virtual_keys.len() as i32, delay);
+        inject_separate_vkeys_with_delay(virtual_keys.as_ptr(), virtual_keys.len() as i32, options.delay);
       }
     }
 
     Ok(())
   }
 
-  fn send_key_combination(&self, keys: &[keys::Key], delay: i32) -> Result<()> {
+  fn send_key_combination(&self, keys: &[keys::Key], options: InjectionOptions) -> Result<()> {
     let virtual_keys = Self::convert_to_vk_array(keys)?;
 
-    if delay == 0 {
+    if options.delay == 0 {
       unsafe {
         inject_vkeys_combination(virtual_keys.as_ptr(), virtual_keys.len() as i32);
       }
     } else {
       unsafe {
-        inject_vkeys_combination_with_delay(virtual_keys.as_ptr(), virtual_keys.len() as i32, delay);
+        inject_vkeys_combination_with_delay(virtual_keys.as_ptr(), virtual_keys.len() as i32, options.delay);
       }
     }
 
