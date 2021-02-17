@@ -27,7 +27,7 @@ use raw_keys::convert_key_to_vkey;
 use anyhow::Result;
 use thiserror::Error;
 
-use crate::{keys, Injector};
+use crate::{InjectionOptions, Injector, keys};
 
 #[allow(improper_ctypes)]
 #[link(name = "espansoinject", kind = "static")]
@@ -60,7 +60,7 @@ impl MacInjector {
 }
 
 impl Injector for MacInjector {
-  fn send_string(&self, string: &str) -> Result<()> {
+  fn send_string(&self, string: &str, _: InjectionOptions) -> Result<()> {
     let c_string = CString::new(string)?;
     unsafe {
       inject_string(c_string.as_ptr());
@@ -68,21 +68,21 @@ impl Injector for MacInjector {
     Ok(())
   }
 
-  fn send_keys(&self, keys: &[keys::Key], delay: i32) -> Result<()> {
+  fn send_keys(&self, keys: &[keys::Key], options: InjectionOptions) -> Result<()> {
     let virtual_keys = Self::convert_to_vk_array(keys)?;
 
     unsafe {
-      inject_separate_vkeys(virtual_keys.as_ptr(), virtual_keys.len() as i32, delay);
+      inject_separate_vkeys(virtual_keys.as_ptr(), virtual_keys.len() as i32, options.delay);
     }
 
     Ok(())
   }
 
-  fn send_key_combination(&self, keys: &[keys::Key], delay: i32) -> Result<()> {
+  fn send_key_combination(&self, keys: &[keys::Key], options: InjectionOptions) -> Result<()> {
     let virtual_keys = Self::convert_to_vk_array(keys)?;
 
     unsafe {
-      inject_vkeys_combination(virtual_keys.as_ptr(), virtual_keys.len() as i32, delay);
+      inject_vkeys_combination(virtual_keys.as_ptr(), virtual_keys.len() as i32, options.delay);
     }
 
     Ok(())
