@@ -19,10 +19,12 @@
 
 use std::{cmp::min, collections::HashMap, ffi::CString, os::raw::c_char, thread::ThreadId};
 
+use anyhow::Result;
+use thiserror::Error;
 use lazycell::LazyCell;
 use log::{error, trace};
 
-use crate::{event::UIEvent, icons::TrayIcon, menu::Menu};
+use crate::{UIEventLoop, UIRemote, event::UIEvent, icons::TrayIcon, menu::Menu};
 
 // IMPORTANT: if you change these, also edit the native.h file.
 const MAX_FILE_PATH: usize = 1024;
@@ -63,7 +65,7 @@ pub struct MacUIOptions<'a> {
   pub icon_paths: &'a Vec<(TrayIcon, String)>,
 }
 
-pub fn create(options: MacUIOptions) -> (MacRemote, MacEventLoop) {
+pub fn create(options: MacUIOptions) -> Result<(MacRemote, MacEventLoop)> {
   // Validate icons
   if options.icon_paths.len() > MAX_ICON_COUNT {
     panic!("MacOS UI received too many icon paths, please increase the MAX_ICON_COUNT constant to support more");
@@ -80,7 +82,7 @@ pub fn create(options: MacUIOptions) -> (MacRemote, MacEventLoop) {
   let eventloop = MacEventLoop::new(icons, options.show_icon);
   let remote = MacRemote::new(icon_indexes);
 
-  (remote, eventloop)
+  Ok((remote, eventloop))
 }
 
 pub type MacUIEventCallback = Box<dyn Fn(UIEvent)>;
@@ -104,13 +106,16 @@ impl MacEventLoop {
     }
   }
 
-  pub fn initialize(&mut self) {
+  
+}
+
+impl UIEventLoop for MacEventLoop {
+  fn initialize(&mut self) -> Result<()> {
     // Convert the icon paths to the raw representation
     let mut icon_paths: [[u8; MAX_FILE_PATH]; MAX_ICON_COUNT] =
       [[0; MAX_FILE_PATH]; MAX_ICON_COUNT];
     for (i, icon_path) in icon_paths.iter_mut().enumerate().take(self.icons.len()) {
-      let c_path = CString::new(self.icons[i].clone())
-        .expect("unable to create CString for UI tray icon path");
+      let c_path = CString::new(self.icons[i].clone())?;
       let len = min(c_path.as_bytes().len(), MAX_FILE_PATH - 1);
       icon_path[0..len].clone_from_slice(&c_path.as_bytes()[..len]);
     }
@@ -128,9 +133,11 @@ impl MacEventLoop {
       ._init_thread_id
       .fill(std::thread::current().id())
       .expect("Unable to set initialization thread id");
+    
+    Ok(())
   }
 
-  pub fn run(&self, event_callback: MacUIEventCallback) {
+  fn run(&self, event_callback: MacUIEventCallback) -> Result<()> {
     // Make sure the run() method is called in the same thread as initialize()
     if let Some(init_id) = self._init_thread_id.borrow() {
       if init_id != &std::thread::current().id() {
@@ -139,7 +146,8 @@ impl MacEventLoop {
     }
 
     if self._event_callback.fill(event_callback).is_err() {
-      panic!("Unable to set MacEventLoop callback");
+      error!("Unable to set MacEventLoop callback");
+      return Err(MacUIError::InternalError().into())
     }
 
     extern "C" fn callback(_self: *mut MacEventLoop, event: RawUIEvent) {
@@ -156,8 +164,11 @@ impl MacEventLoop {
     let error_code = unsafe { ui_eventloop(callback) };
 
     if error_code <= 0 {
-      panic!("MacEventLoop exited with <= 0 code")
+      error!("MacEventLoop exited with <= 0 code");
+      return Err(MacUIError::InternalError().into())
     }
+
+    Ok(())
   }
 }
 
@@ -169,9 +180,11 @@ pub struct MacRemote {
 impl MacRemote {
   pub(crate) fn new(icon_indexes: HashMap<TrayIcon, usize>) -> Self {
     Self { icon_indexes }
-  }
+  }  
+}
 
-  pub fn update_tray_icon(&self, icon: TrayIcon) {
+impl UIRemote for MacRemote {
+  fn update_tray_icon(&self, icon: TrayIcon) {
     if let Some(index) = self.icon_indexes.get(&icon) {
       unsafe { ui_update_tray_icon((*index) as i32) }
     } else {
@@ -179,7 +192,7 @@ impl MacRemote {
     }
   }
 
-  pub fn show_notification(&self, message: &str) {
+  fn show_notification(&self, message: &str) {
     let c_string = CString::new(message);
     match c_string {
       Ok(message) => unsafe { ui_show_notification(message.as_ptr(), 3.0) },
@@ -189,7 +202,7 @@ impl MacRemote {
     }
   }
 
-  pub fn show_context_menu(&self, menu: &Menu) {
+  fn show_context_menu(&self, menu: &Menu) {
     match menu.to_json() {
       Ok(payload) => {
         let c_string = CString::new(payload);
@@ -223,4 +236,10 @@ impl From<RawUIEvent> for Option<UIEvent> {
 
     None
   }
+}
+
+#[derive(Error, Debug)]
+pub enum MacUIError {
+  #[error("internal error")]
+  InternalError(),
 }

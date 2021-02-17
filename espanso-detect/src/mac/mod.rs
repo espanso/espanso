@@ -31,7 +31,7 @@ use log::{error, trace, warn};
 use anyhow::Result;
 use thiserror::Error;
 
-use crate::event::Status::*;
+use crate::{Source, SourceCallback, event::Status::*};
 use crate::event::Variant::*;
 use crate::event::{InputEvent, Key, KeyboardEvent, Variant};
 use crate::event::{Key::*, MouseButton, MouseEvent};
@@ -123,7 +123,7 @@ impl Source for CocoaSource {
     Ok(())
   }
 
-  fn eventloop(&self, event_callback: SourceCallback) {
+  fn eventloop(&self, event_callback: SourceCallback) -> Result<()> {
     if let Some(receiver) = self.receiver.borrow() {
       loop {
         let event = receiver.recv();
@@ -138,8 +138,11 @@ impl Source for CocoaSource {
         }
       }
     } else {
-      panic!("Unable to start event loop if CocoaSource receiver is null");
+      error!("Unable to start event loop if CocoaSource receiver is null");
+      return Err(CocoaSourceError::Unknown().into())
     }
+
+    Ok(())
   }
 }
 
