@@ -53,7 +53,7 @@ fn main() {
     ..Default::default()
   }).unwrap();
 
-  eventloop.initialize();
+  eventloop.initialize().unwrap();
 
   let handle = std::thread::spawn(move || {
     let injector = get_injector(Default::default()).unwrap();
@@ -73,7 +73,7 @@ fn main() {
           }
         }
       }
-    }));
+    })).unwrap();
   });
 
   eventloop.run(Box::new(move |event| {

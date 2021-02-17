@@ -32,8 +32,10 @@ use std::{
 use lazycell::LazyCell;
 use log::{error, trace};
 use widestring::WideCString;
+use anyhow::Result;
+use thiserror::Error;
 
-use crate::{event::UIEvent, icons::TrayIcon, menu::Menu};
+use crate::{UIEventCallback, UIEventLoop, UIRemote, event::UIEvent, icons::TrayIcon, menu::Menu};
 
 // IMPORTANT: if you change these, also edit the native.h file.
 const MAX_FILE_PATH: usize = 260;
@@ -83,7 +85,7 @@ pub struct Win32UIOptions<'a> {
   pub notification_icon_path: String,
 }
 
-pub fn create(options: Win32UIOptions) -> (Win32Remote, Win32EventLoop) {
+pub fn create(options: Win32UIOptions) -> Result<(Win32Remote, Win32EventLoop)> {
   let handle: Arc<AtomicPtr<c_void>> = Arc::new(AtomicPtr::new(std::ptr::null_mut()));
 
   // Validate icons
@@ -107,7 +109,7 @@ pub fn create(options: Win32UIOptions) -> (Win32Remote, Win32EventLoop) {
   );
   let remote = Win32Remote::new(handle, icon_indexes);
 
-  (remote, eventloop)
+  Ok((remote, eventloop))
 }
 
 pub struct Win32EventLoop {
@@ -118,7 +120,7 @@ pub struct Win32EventLoop {
   notification_icon_path: String,
 
   // Internal
-  _event_callback: LazyCell<Win32UIEventCallback>,
+  _event_callback: LazyCell<UIEventCallback>,
   _init_thread_id: LazyCell<ThreadId>,
 }
 
@@ -138,11 +140,14 @@ impl Win32EventLoop {
       _init_thread_id: LazyCell::new(),
     }
   }
+}
 
-  pub fn initialize(&mut self) {
+impl UIEventLoop for Win32EventLoop {
+  fn initialize(&mut self) -> Result<()> {
     let window_handle = self.handle.load(Ordering::Acquire);
     if !window_handle.is_null() {
-      panic!("Attempt to initialize Win32EventLoop on non-null window handle");
+      error!("Attempt to initialize Win32EventLoop on non-null window handle");
+      return Err(Win32UIError::InvalidHandle().into());
     }
 
     // Convert the icon paths to the raw representation
@@ -150,15 +155,13 @@ impl Win32EventLoop {
       [[0; MAX_FILE_PATH]; MAX_ICON_COUNT];
     for (i, icon_path) in icon_paths.iter_mut().enumerate().take(self.icons.len()) {
       let wide_path =
-        WideCString::from_str(&self.icons[i]).expect("Error while converting icon to wide string");
+        WideCString::from_str(&self.icons[i])?;
       let len = min(wide_path.len(), MAX_FILE_PATH - 1);
       icon_path[0..len].clone_from_slice(&wide_path.as_slice()[..len]);
-      // TODO: test overflow, correct case
     }
 
     let wide_notification_icon_path =
-      widestring::WideCString::from_str(&self.notification_icon_path)
-        .expect("Error while converting notification icon to wide string");
+      widestring::WideCString::from_str(&self.notification_icon_path)?;
     let mut wide_notification_icon_path_buffer: [u16; MAX_FILE_PATH] = [0; MAX_FILE_PATH];
     wide_notification_icon_path_buffer[..wide_notification_icon_path.as_slice().len()]
       .clone_from_slice(wide_notification_icon_path.as_slice());
@@ -174,11 +177,11 @@ impl Win32EventLoop {
     let handle = unsafe { ui_initialize(self as *const Win32EventLoop, options, &mut error_code) };
 
     if handle.is_null() {
-      match error_code {
-        -1 => panic!("Unable to initialize Win32EventLoop, error registering window class"),
-        -2 => panic!("Unable to initialize Win32EventLoop, error creating window"),
-        -3 => panic!("Unable to initialize Win32EventLoop, initializing notifications"),
-        _ => panic!("Unable to initialize Win32EventLoop, unknown error"),
+      return match error_code {
+        -1 => Err(Win32UIError::EventLoopInitError("Unable to initialize Win32EventLoop, error registering window class".to_string()).into()),
+        -2 => Err(Win32UIError::EventLoopInitError("Unable to initialize Win32EventLoop, error creating window".to_string()).into()),
+        -3 => Err(Win32UIError::EventLoopInitError("Unable to initialize Win32EventLoop, initializing notifications".to_string()).into()),
+        _ => Err(Win32UIError::EventLoopInitError("Unable to initialize Win32EventLoop, unknown error".to_string()).into()),
       }
     }
 
@@ -189,25 +192,27 @@ impl Win32EventLoop {
       ._init_thread_id
       .fill(std::thread::current().id())
       .expect("Unable to set initialization thread id");
+    
+    Ok(())
   }
 
-  pub fn run(&self, event_callback: Win32UIEventCallback) {
+  fn run(&self, event_callback: UIEventCallback) -> Result<()> {
     // Make sure the run() method is called in the same thread as initialize()
     if let Some(init_id) = self._init_thread_id.borrow() {
       if init_id != &std::thread::current().id() {
         panic!("Win32EventLoop run() and initialize() methods should be called in the same thread");
-        // TODO: test
       }
     }
 
     let window_handle = self.handle.load(Ordering::Acquire);
     if window_handle.is_null() {
-      panic!("Attempt to run Win32EventLoop on a null window handle");
-      // TODO: test
+      error!("Attempt to run Win32EventLoop on a null window handle");
+      return Err(Win32UIError::InvalidHandle().into())
     }
 
     if self._event_callback.fill(event_callback).is_err() {
-      panic!("Unable to set Win32EventLoop callback");
+      error!("Unable to set Win32EventLoop callback");
+      return Err(Win32UIError::InternalError().into())
     }
 
     extern "C" fn callback(_self: *mut Win32EventLoop, event: RawUIEvent) {
@@ -224,8 +229,11 @@ impl Win32EventLoop {
     let error_code = unsafe { ui_eventloop(window_handle, callback) };
 
     if error_code <= 0 {
-      panic!("Win32EventLoop exited with <= 0 code")
+      error!("Win32EventLoop exited with <= 0 code");
+      return Err(Win32UIError::InternalError().into())
     }
+
+    Ok(())
   }
 }
 
@@ -262,8 +270,10 @@ impl Win32Remote {
       icon_indexes,
     }
   }
+}
 
-  pub fn update_tray_icon(&self, icon: TrayIcon) {
+impl UIRemote for Win32Remote {
+  fn update_tray_icon(&self, icon: TrayIcon) {
     let handle = self.handle.load(Ordering::Acquire);
     if handle.is_null() {
       error!("Unable to update tray icon, pointer is null");
@@ -277,7 +287,7 @@ impl Win32Remote {
     }
   }
 
-  pub fn show_notification(&self, message: &str) {
+  fn show_notification(&self, message: &str) {
     let handle = self.handle.load(Ordering::Acquire);
     if handle.is_null() {
       error!("Unable to show notification, pointer is null");
@@ -296,7 +306,7 @@ impl Win32Remote {
     }
   }
 
-  pub fn show_context_menu(&self, menu: &Menu) {
+  fn show_context_menu(&self, menu: &Menu) {
     let handle = self.handle.load(Ordering::Acquire);
     if handle.is_null() {
       error!("Unable to show context menu, pointer is null");
@@ -336,6 +346,18 @@ impl From<RawUIEvent> for Option<UIEvent> {
 
     None
   }
+}
+
+#[derive(Error, Debug)]
+pub enum Win32UIError {
+  #[error("invalid handle")]
+  InvalidHandle(),
+
+  #[error("event loop initialization failed: `{0}`")]
+  EventLoopInitError(String),
+
+  #[error("internal error")]
+  InternalError(),
 }
 
 #[cfg(test)]

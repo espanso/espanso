@@ -51,6 +51,19 @@ pub fn client<Event: Serialize>(id: &str, parent_dir: &Path) -> Result<impl IPCC
   Ok(client)
 }
 
+#[cfg(target_os = "windows")]
+pub fn server<Event: Send + Sync + DeserializeOwned>(id: &str, _: &Path) -> Result<(impl IPCServer<Event>, Receiver<Event>)> {
+  let (sender, receiver) = unbounded();
+  let server = windows::WinIPCServer::new(id, sender)?;
+  Ok((server, receiver))
+}
+
+#[cfg(target_os = "windows")]
+pub fn client<Event: Serialize>(id: &str, _: &Path) -> Result<impl IPCClient<Event>> {
+  let client = windows::WinIPCClient::new(id)?;
+  Ok(client)
+}
+
 #[derive(Error, Debug)]
 pub enum IPCServerError {
   #[error("stream ended")]
@@ -78,6 +91,7 @@ mod tests {
       server.accept_one().unwrap();
     });
 
+    std::thread::sleep(std::time::Duration::from_secs(1));
     let client = client::<Event>("testespansoipc", &std::env::temp_dir()).unwrap();
     client.send(Event::Foo("hello".to_string())).unwrap();
     
