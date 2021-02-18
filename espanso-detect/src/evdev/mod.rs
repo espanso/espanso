@@ -100,9 +100,10 @@ impl Source for EVDEVSource {
     Ok(())
   }
 
-  fn eventloop(&self, event_callback: SourceCallback) {
+  fn eventloop(&self, event_callback: SourceCallback) -> Result<()> {
     if self.devices.is_empty() {
-      panic!("can't start eventloop without evdev devices");
+      error!("can't start eventloop without evdev devices");
+      return Err(EVDEVSourceError::NoDevices().into());
     }
 
     let raw_epfd = unsafe { libc::epoll_create1(0) };
@@ -111,7 +112,8 @@ impl Source for EVDEVSource {
     });
 
     if *epfd < 0 {
-      panic!("could not create epoll instance");
+      error!("could not create epoll instance");
+      return Err(EVDEVSourceError::Internal().into());
     }
 
     // Setup epoll for all input devices
@@ -121,11 +123,12 @@ impl Source for EVDEVSource {
       ev.events = EPOLLIN as u32;
       ev.u64 = i as u64;
       if unsafe { epoll_ctl(*epfd, EPOLL_CTL_ADD, device.get_raw_fd(), &mut ev) } != 0 {
-        panic!(format!(
+        error!(
           "Could not add {} to epoll, errno {}",
           device.get_path(),
           unsafe { *errno_ptr }
-        ));
+        );
+        return Err(EVDEVSourceError::Internal().into());
       }
     }
 
@@ -137,9 +140,10 @@ impl Source for EVDEVSource {
         if unsafe { *errno_ptr } == EINTR {
           continue;
         } else {
-          panic!(format!("Could not poll for events, {}", unsafe {
+          error!("Could not poll for events, {}", unsafe {
             *errno_ptr
-          }))
+          });
+          return Err(EVDEVSourceError::Internal().into());
         }
       }
 
@@ -172,6 +176,12 @@ pub enum EVDEVSourceError {
 
   #[error("permission denied")]
   PermissionDenied(),
+
+  #[error("no devices")]
+  NoDevices(),
+
+  #[error("internal error")]
+  Internal(),
 }
 
 impl From<RawInputEvent> for Option<InputEvent> {

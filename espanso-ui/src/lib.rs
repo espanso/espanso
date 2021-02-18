@@ -54,7 +54,8 @@ pub fn create_ui(options: UIOptions) -> Result<(Box<dyn UIRemote>, Box<dyn UIEve
 }
 
 #[cfg(target_os = "macos")]
-pub fn create_ui(options: UIOptions) -> Result<(Box<dyn UIRemote>, Box<dyn UIEventLoop>)> {
+pub fn create_ui(options: UIOptions) -> Result<(Box<dyn UIRemote>, Box<dyn 
+  UIEventLoop>)> {
   let (remote, eventloop) = mac::create(mac::MacUIOptions {
     show_icon: options.show_icon,
     icon_paths: &options.icon_paths,
@@ -65,7 +66,7 @@ pub fn create_ui(options: UIOptions) -> Result<(Box<dyn UIRemote>, Box<dyn UIEve
 #[cfg(target_os = "linux")]
 pub fn create_ui(options: UIOptions) -> Result<(Box<dyn UIRemote>, Box<dyn UIEventLoop>)> {
   let (remote, eventloop) = linux::create(linux::LinuxUIOptions {
-    notification_icon_path: options.notification_icon_path.ok_or(UIError::MissingOption("notification icon".to_string()))?,
+    notification_icon_path: options.notification_icon_path.ok_or_else(|| UIError::MissingOption("notification icon".to_string()))?,
   });
   Ok((Box::new(remote), Box::new(eventloop)))
 }

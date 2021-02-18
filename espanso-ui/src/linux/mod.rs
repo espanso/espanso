@@ -1,4 +1,5 @@
 use log::error;
+use anyhow::Result;
 use notify_rust::Notification;
 use std::sync::mpsc;
 use std::sync::mpsc::{Receiver, Sender};
@@ -66,13 +67,19 @@ impl LinuxEventLoop {
 }
 
 impl UIEventLoop for LinuxEventLoop {
-  fn initialize(&mut self) {
+  fn initialize(&mut self) -> Result<()> {
     // NOOP on linux
+    Ok(())
   }
 
-  fn run(&self, _: crate::UIEventCallback) {
+  fn run(&self, _: crate::UIEventCallback) -> Result<()> {
     // We don't run an event loop on Linux as there is no tray icon or application window needed.
     // Thad said, we still need a way to block this method, and thus we use a channel
-    self.rx.recv().expect("Unable to block the LinuxEventLoop");
+    if let Err(error) = self.rx.recv() {
+      error!("Unable to block the LinuxEventLoop: {}", error);
+      return Err(error.into());
+    }
+
+    Ok(())
   }
 }
