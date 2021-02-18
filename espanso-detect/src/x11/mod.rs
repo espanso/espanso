@@ -114,13 +114,15 @@ impl Source for X11Source {
     Ok(())
   }
 
-  fn eventloop(&self, event_callback: SourceCallback) {
+  fn eventloop(&self, event_callback: SourceCallback) -> Result<()> {
     if self.handle.is_null() {
-      panic!("Attempt to start X11Source eventloop without initialization");
+      error!("Attempt to start X11Source eventloop without initialization");
+      return Err(X11SourceError::Internal().into());
     }
 
     if self.callback.fill(event_callback).is_err() {
-      panic!("Unable to set X11Source event callback");
+      error!("Unable to set X11Source event callback");
+      return Err(X11SourceError::Internal().into());
     }
 
     extern "C" fn callback(_self: *mut X11Source, event: RawInputEvent) {
@@ -137,8 +139,11 @@ impl Source for X11Source {
     let error_code = unsafe { detect_eventloop(self.handle, callback) };
 
     if error_code <= 0 {
-      panic!("X11Source eventloop returned a negative error code");
+      error!("X11Source eventloop returned a negative error code");
+      return Err(X11SourceError::Internal().into());
     }
+
+    Ok(())
   }
 }
 
@@ -173,6 +178,9 @@ pub enum X11SourceError {
 
   #[error("unknown error")]
   Unknown(),
+
+  #[error("internal error")]
+  Internal(),
 }
 
 impl From<RawInputEvent> for Option<InputEvent> {
