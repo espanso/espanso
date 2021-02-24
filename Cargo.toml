@@ -6,4 +6,5 @@ members = [
   "espanso-ui",
   "espanso-inject",
   "espanso-ipc",
+  "espanso-config",
 ]
