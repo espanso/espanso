@@ -17,5 +17,6 @@ wayland = ["espanso-detect/wayland", "espanso-inject/wayland"]
 espanso-detect = { path = "../espanso-detect" } 
 espanso-ui = { path = "../espanso-ui" } 
 espanso-inject = { path = "../espanso-inject" } 
+espanso-config = { path = "../espanso-config" } 
 maplit = "1.0.2"
 simplelog = "0.9.0"

@@ -91,7 +91,10 @@ mod tests {
       server.accept_one().unwrap();
     });
 
-    std::thread::sleep(std::time::Duration::from_secs(1));
+    if cfg!(target_os = "windows") {
+      std::thread::sleep(std::time::Duration::from_secs(1));
+    }
+    
     let client = client::<Event>("testespansoipc", &std::env::temp_dir()).unwrap();
     client.send(Event::Foo("hello".to_string())).unwrap();
     
