@@ -1,6 +1,9 @@
 use serde_yaml::Mapping;
 
-mod yaml;
+use crate::counter::{next_id, StructId};
+
+mod group;
+mod store;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Match {
@@ -9,6 +12,9 @@ pub struct Match {
 
   // Metadata
   label: Option<String>,
+
+  // Internals
+  _id: StructId,
 }
 
 impl Default for Match {
@@ -17,6 +23,7 @@ impl Default for Match {
       cause: MatchCause::None,
       effect: MatchEffect::None,
       label: None,
+      _id: next_id(),
     }
   }
 }
@@ -82,4 +89,18 @@ pub struct Variable {
   pub name: String,
   pub var_type: String,
   pub params: Mapping,
+
+  // Internals
+  _id: StructId,
+}
+
+impl Default for Variable {
+  fn default() -> Self {
+    Self {
+      name: String::new(),
+      var_type: String::new(),
+      params: Mapping::new(),
+      _id: next_id(),
+    }
+  }
 }

@@ -1,17 +1,80 @@
-use std::{
-  collections::HashMap,
-  convert::{TryFrom, TryInto},
-};
+use std::{collections::HashMap, convert::{TryFrom, TryInto}, path::Path};
 
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use serde_yaml::{Mapping, Value};
 use thiserror::Error;
 
-use super::{MatchCause, MatchEffect, TextEffect, TriggerCause, Variable};
+use crate::util::is_yaml_empty;
+
+use crate::matches::{Match, MatchCause, MatchEffect, TextEffect, TriggerCause, Variable};
+use super::{MatchGroup};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-struct YAMLMatch {
+pub struct YAMLMatchGroup {
+  #[serde(default)]
+  pub imports: Option<Vec<String>>,
+
+  #[serde(default)]
+  pub global_vars: Option<Vec<YAMLVariable>>,
+
+  #[serde(default)]
+  pub matches: Option<Vec<YAMLMatch>>,
+}
+
+impl YAMLMatchGroup {
+  pub fn parse_from_str(yaml: &str) -> Result<Self> {
+    // Because an empty string is not valid YAML but we want to support it anyway
+    if is_yaml_empty(yaml) {
+      return Ok(serde_yaml::from_str(
+        "arbitrary_field_that_will_not_block_the_parser: true",
+      )?);
+    }
+
+    Ok(serde_yaml::from_str(yaml)?)
+  }
+
+  // TODO: test
+  pub fn parse_from_file(path: &Path) -> Result<Self> {
+    let content = std::fs::read_to_string(path)?;
+    Self::parse_from_str(&content)
+  }
+}
+
+impl TryFrom<YAMLMatchGroup> for MatchGroup {
+  type Error = anyhow::Error;
+
+  // TODO: test
+  fn try_from(yaml_match_group: YAMLMatchGroup) -> Result<Self, Self::Error> {
+    let global_vars: Result<Vec<Variable>> = yaml_match_group
+      .global_vars
+      .as_ref()
+      .cloned()
+      .unwrap_or_default()
+      .iter()
+      .map(|var| var.clone().try_into())
+      .collect();
+
+    let matches: Result<Vec<Match>> = yaml_match_group
+      .matches
+      .as_ref()
+      .cloned()
+      .unwrap_or_default()
+      .iter()
+      .map(|m| m.clone().try_into())
+      .collect();
+
+    Ok(MatchGroup {
+      imports: yaml_match_group.imports.unwrap_or_default(),
+      global_vars: global_vars?,
+      matches: matches?,
+      ..Default::default()
+    })
+  }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct YAMLMatch {
   #[serde(default)]
   pub trigger: Option<String>,
 
@@ -73,7 +136,7 @@ fn default_params() -> Mapping {
   Mapping::new()
 }
 
-impl TryFrom<YAMLMatch> for super::Match {
+impl TryFrom<YAMLMatch> for Match {
   type Error = anyhow::Error;
 
   // TODO: test
@@ -126,11 +189,12 @@ impl TryFrom<YAMLMatch> for super::Match {
       cause,
       effect,
       label: None,
+      ..Default::default()
     })
   }
 }
 
-impl TryFrom<YAMLVariable> for super::Variable {
+impl TryFrom<YAMLVariable> for Variable {
   type Error = anyhow::Error;
 
   // TODO: test
@@ -139,6 +203,7 @@ impl TryFrom<YAMLVariable> for super::Variable {
       name: yaml_var.name,
       var_type: yaml_var.var_type,
       params: yaml_var.params,
+      ..Default::default()
     })
   }
 }
@@ -322,6 +387,7 @@ mod tests {
       name: "var1".to_string(),
       var_type: "test".to_string(),
       params,
+      ..Default::default()
     }];
     assert_eq!(
       create_match(
@@ -356,6 +422,7 @@ mod tests {
       name: "var1".to_string(),
       var_type: "test".to_string(),
       params: Mapping::new(),
+      ..Default::default()
     }];
     assert_eq!(
       create_match(

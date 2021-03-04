@@ -16,10 +16,13 @@
  * You should have received a copy of the GNU General Public License
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
+#[macro_use]
+extern crate lazy_static;
 
 mod util;
 mod config;
 mod matches;
+mod counter;
 
 use std::path::Path;
 use anyhow::Result;

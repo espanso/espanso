@@ -1,6 +1,6 @@
 use anyhow::{private::kind::TraitKind, Result};
 use serde::{Deserialize, Serialize};
-use std::iter::FromIterator;
+use std::{iter::FromIterator, path::Path};
 use std::{collections::HashSet, convert::TryFrom};
 
 use crate::{merge, util::is_yaml_empty};
@@ -124,27 +124,25 @@ impl YAMLConfig {
 
     excludes
   }
-}
 
-// TODO: convert to TryFrom (check the matches section for an example)
-impl TryFrom<YAMLConfig> for super::Config {
-  type Error = anyhow::Error;
-
-  // TODO: test
-  fn try_from(yaml_config: YAMLConfig) -> Result<Self, Self::Error> {
-    let includes = yaml_config.aggregate_includes();
-    let excludes = yaml_config.aggregate_excludes();
+  pub fn generate_match_paths(&self, base_dir: &Path) -> HashSet<String> {
+    let includes = self.aggregate_includes();
+    let excludes = self.aggregate_excludes();
 
     // Extract the paths
-    let exclude_paths = calculate_paths(excludes.iter());
-    let include_paths = calculate_paths(includes.iter());
+    let exclude_paths = calculate_paths(base_dir, excludes.iter());
+    let include_paths = calculate_paths(base_dir, includes.iter());
 
-    let match_files: Vec<String> =
-      Vec::from_iter(include_paths.difference(&exclude_paths).cloned());
+    HashSet::from_iter(include_paths.difference(&exclude_paths).cloned())
+  }
 
-    Ok(Self {
-      label: yaml_config.label,
-      match_files,
+  // TODO: test
+  pub fn to_config(&self, base_dir: &Path) -> Result<super::Config> {
+    let match_paths = self.generate_match_paths(base_dir);
+
+    Ok(super::Config {
+      label: self.label.clone(),
+      match_paths,
     })
   }
 }
@@ -153,15 +151,9 @@ impl TryFrom<YAMLConfig> for super::Config {
 mod tests {
   use super::*;
   use crate::config::Config;
+  use crate::config::path::tests::use_test_directory;
   use std::iter::FromIterator;
   use std::{convert::TryInto, fs::create_dir_all};
-  use tempdir::TempDir;
-
-  // fn create_config(yaml: &str) -> Result<Config> {
-  //   let yaml_config: YAMLConfig = serde_yaml::from_str(yaml)?;
-  //   let m: Config = yaml_config.try_into()?;
-  //   Ok(m)
-  // }
 
   #[test]
   fn aggregate_includes_empty_config() {
@@ -301,6 +293,63 @@ mod tests {
 
     child.merge_parent(&parent);
     assert_eq!(child.use_standard_includes, Some(false));
+  }
+
+  #[test]
+  fn generate_match_paths_works_correctly() {
+    use_test_directory(|base, match_dir, _| {
+      let sub_dir = match_dir.join("sub");
+      create_dir_all(&sub_dir).unwrap();
+
+      std::fs::write(match_dir.join("base.yml"), "test").unwrap();
+      std::fs::write(match_dir.join("another.yml"), "test").unwrap();
+      std::fs::write(match_dir.join("_sub.yml"), "test").unwrap();
+      std::fs::write(sub_dir.join("sub.yml"), "test").unwrap();
+
+      let config = YAMLConfig::parse_from_str("").unwrap();
+
+      let mut expected = HashSet::new();
+      expected.insert(format!("{}/match/base.yml", base.to_string_lossy()));
+      expected.insert(format!("{}/match/another.yml", base.to_string_lossy()));
+      expected.insert(format!("{}/match/sub/sub.yml", base.to_string_lossy()));
+
+      assert_eq!(config.generate_match_paths(base), expected);
+    });
+  }
+
+  #[test]
+  fn generate_match_paths_works_correctly_with_child_config() {
+    use_test_directory(|base, match_dir, _| {
+      let sub_dir = match_dir.join("sub");
+      create_dir_all(&sub_dir).unwrap();
+
+      std::fs::write(match_dir.join("base.yml"), "test").unwrap();
+      std::fs::write(match_dir.join("another.yml"), "test").unwrap();
+      std::fs::write(match_dir.join("_sub.yml"), "test").unwrap();
+      std::fs::write(sub_dir.join("another.yml"), "test").unwrap();
+      std::fs::write(sub_dir.join("_sub.yml"), "test").unwrap();
+
+      let parent = YAMLConfig::parse_from_str(r"
+      excludes: ['**/another.yml']
+      ").unwrap();
+      let mut child = YAMLConfig::parse_from_str(r"
+      use_standard_includes: false
+      excludes: []
+      includes: ['match/sub/*.yml']
+      ").unwrap();
+      child.merge_parent(&parent);
+
+      let mut expected = HashSet::new();
+      expected.insert(format!("{}/match/sub/another.yml", base.to_string_lossy()));
+      expected.insert(format!("{}/match/sub/_sub.yml", base.to_string_lossy()));
+
+      assert_eq!(child.generate_match_paths(base), expected);
+
+      let mut expected = HashSet::new();
+      expected.insert(format!("{}/match/base.yml", base.to_string_lossy()));
+
+      assert_eq!(parent.generate_match_paths(base), expected);
+    });
   }
 
   // TODO: test conversion to Config (we need to test that the file match resolution works)
