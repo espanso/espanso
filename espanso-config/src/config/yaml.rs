@@ -150,10 +150,9 @@ impl YAMLConfig {
 #[cfg(test)]
 mod tests {
   use super::*;
-  use crate::config::Config;
-  use crate::config::path::tests::use_test_directory;
+  use crate::util::tests::use_test_directory;
   use std::iter::FromIterator;
-  use std::{convert::TryInto, fs::create_dir_all};
+  use std::fs::create_dir_all;
 
   #[test]
   fn aggregate_includes_empty_config() {
