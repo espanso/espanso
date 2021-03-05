@@ -4,7 +4,7 @@ use anyhow::Result;
 
 mod yaml;
 mod path;
-mod macro_util;
+mod util;
 
 pub struct Config {
   pub label: Option<String>,

@@ -47,21 +47,9 @@ pub fn calculate_paths<'a>(base_dir: &Path, glob_patterns: impl Iterator<Item = 
 
 #[cfg(test)]
 pub mod tests {
-  use std::{fs::create_dir_all, path::Path};
-
   use super::*;
-  use tempdir::TempDir;
-
-  pub fn use_test_directory(callback: impl FnOnce(&Path, &Path, &Path)) {
-    let dir = TempDir::new("tempconfig").unwrap();
-    let match_dir = dir.path().join("match");
-    create_dir_all(&match_dir).unwrap();
-
-    let config_dir = dir.path().join("config");
-    create_dir_all(&config_dir).unwrap();
-
-    callback(&dir.path(), &match_dir, &config_dir);
-  }
+  use crate::util::tests::use_test_directory;
+  use std::{fs::create_dir_all};
 
   #[test]
   fn calculate_paths_relative_paths() {

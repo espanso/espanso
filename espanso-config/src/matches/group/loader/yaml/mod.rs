@@ -1,52 +1,39 @@
-use std::{collections::HashMap, convert::{TryFrom, TryInto}, path::Path};
-
+use crate::matches::{Match, Variable, group::{MatchGroup, path::resolve_imports}};
+use log::warn;
+use parse::YAMLMatchGroup;
 use anyhow::Result;
-use serde::{Deserialize, Serialize};
-use serde_yaml::{Mapping, Value};
-use thiserror::Error;
+use std::convert::{TryFrom, TryInto};
 
-use crate::util::is_yaml_empty;
+use self::parse::{YAMLMatch, YAMLVariable};
+use crate::matches::{MatchCause, MatchEffect, TextEffect, TriggerCause};
 
-use crate::matches::{Match, MatchCause, MatchEffect, TextEffect, TriggerCause, Variable};
-use super::{MatchGroup};
+use super::Importer;
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct YAMLMatchGroup {
-  #[serde(default)]
-  pub imports: Option<Vec<String>>,
+mod parse;
 
-  #[serde(default)]
-  pub global_vars: Option<Vec<YAMLVariable>>,
+pub(crate) struct YAMLImporter {}
 
-  #[serde(default)]
-  pub matches: Option<Vec<YAMLMatch>>,
-}
-
-impl YAMLMatchGroup {
-  pub fn parse_from_str(yaml: &str) -> Result<Self> {
-    // Because an empty string is not valid YAML but we want to support it anyway
-    if is_yaml_empty(yaml) {
-      return Ok(serde_yaml::from_str(
-        "arbitrary_field_that_will_not_block_the_parser: true",
-      )?);
-    }
-
-    Ok(serde_yaml::from_str(yaml)?)
-  }
-
-  // TODO: test
-  pub fn parse_from_file(path: &Path) -> Result<Self> {
-    let content = std::fs::read_to_string(path)?;
-    Self::parse_from_str(&content)
+impl YAMLImporter {
+  pub fn new() -> Self {
+    Self {}
   }
 }
 
-impl TryFrom<YAMLMatchGroup> for MatchGroup {
-  type Error = anyhow::Error;
+impl Importer for YAMLImporter {
+  fn is_supported(&self, extension: &str) -> bool {
+    extension == "yaml" || extension == "yml"
+  }
 
   // TODO: test
-  fn try_from(yaml_match_group: YAMLMatchGroup) -> Result<Self, Self::Error> {
-    let global_vars: Result<Vec<Variable>> = yaml_match_group
+  // TODO: test resolve imports
+  // TODO: test cyclical dependency
+  fn load_group(
+    &self,
+    path: &std::path::Path,
+  ) -> anyhow::Result<crate::matches::group::MatchGroup> {
+    let yaml_group = YAMLMatchGroup::parse_from_file(path)?;
+
+    let global_vars: Result<Vec<Variable>> = yaml_group
       .global_vars
       .as_ref()
       .cloned()
@@ -55,7 +42,7 @@ impl TryFrom<YAMLMatchGroup> for MatchGroup {
       .map(|var| var.clone().try_into())
       .collect();
 
-    let matches: Result<Vec<Match>> = yaml_match_group
+    let matches: Result<Vec<Match>> = yaml_group
       .matches
       .as_ref()
       .cloned()
@@ -64,76 +51,15 @@ impl TryFrom<YAMLMatchGroup> for MatchGroup {
       .map(|m| m.clone().try_into())
       .collect();
 
+    // Resolve imports
+    let resolved_imports = resolve_imports(path, &yaml_group.imports.unwrap_or_default())?;
+
     Ok(MatchGroup {
-      imports: yaml_match_group.imports.unwrap_or_default(),
+      imports: resolved_imports,
       global_vars: global_vars?,
       matches: matches?,
-      ..Default::default()
     })
   }
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct YAMLMatch {
-  #[serde(default)]
-  pub trigger: Option<String>,
-
-  #[serde(default)]
-  pub triggers: Option<Vec<String>>,
-
-  #[serde(default)]
-  pub replace: Option<String>,
-
-  #[serde(default)]
-  pub image_path: Option<String>, // TODO: map
-
-  #[serde(default)]
-  pub form: Option<String>, // TODO: map
-
-  #[serde(default)]
-  pub form_fields: Option<HashMap<String, Value>>, // TODO: map
-
-  #[serde(default)]
-  pub vars: Option<Vec<YAMLVariable>>,
-
-  #[serde(default)]
-  pub word: Option<bool>,
-
-  #[serde(default)]
-  pub left_word: Option<bool>,
-
-  #[serde(default)]
-  pub right_word: Option<bool>,
-
-  #[serde(default)]
-  pub propagate_case: Option<bool>,
-
-  #[serde(default)]
-  pub force_clipboard: Option<bool>,
-
-  #[serde(default)]
-  pub markdown: Option<String>, // TODO: map
-
-  #[serde(default)]
-  pub paragraph: Option<bool>, // TODO: map
-
-  #[serde(default)]
-  pub html: Option<String>, // TODO: map
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
-pub struct YAMLVariable {
-  pub name: String,
-
-  #[serde(rename = "type")]
-  pub var_type: String,
-
-  #[serde(default = "default_params")]
-  pub params: Mapping,
-}
-
-fn default_params() -> Mapping {
-  Mapping::new()
 }
 
 impl TryFrom<YAMLMatch> for Match {
@@ -183,7 +109,9 @@ impl TryFrom<YAMLMatch> for Match {
       MatchEffect::None
     };
 
-    // TODO: log none match effect
+    if let MatchEffect::None = effect {
+      warn!("match caused by {:?} does not produce any effect. Did you forget the 'replace' field?", cause);
+    }
 
     Ok(Self {
       cause,
@@ -208,16 +136,11 @@ impl TryFrom<YAMLVariable> for Variable {
   }
 }
 
-#[derive(Error, Debug)]
-pub enum YAMLConversionError {
-  // TODO
-//#[error("unknown data store error")]
-//Unknown,
-}
-
 #[cfg(test)]
 mod tests {
-  use super::*;
+  use serde_yaml::{Mapping, Value};
+
+    use super::*;
   use crate::matches::Match;
 
   fn create_match(yaml: &str) -> Result<Match> {

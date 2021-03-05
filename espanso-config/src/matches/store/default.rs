@@ -4,8 +4,11 @@ use std::{
   path::PathBuf,
 };
 
-use super::MatchStore;
-use crate::{counter::StructId, matches::{group::MatchGroup, Match, Variable}};
+use super::{MatchSet, MatchStore};
+use crate::{
+  counter::StructId,
+  matches::{group::MatchGroup, Match, Variable},
+};
 
 // TODO: implement store according to notes
 pub(crate) struct DefaultMatchStore {
@@ -32,11 +35,27 @@ impl MatchStore for DefaultMatchStore {
 
   // TODO: test
   // TODO: test for cyclical imports
-  fn query_set(&self, paths: &[String]) -> super::MatchSet {
+  fn query_set(&self, paths: &[String]) -> MatchSet {
     let mut matches: Vec<&Match> = Vec::new();
     let mut global_vars: Vec<&Variable> = Vec::new();
+    let mut visited_paths = HashSet::new();
+    let mut visited_matches = HashSet::new();
+    let mut visited_global_vars = HashSet::new();
 
-    todo!()
+    query_matches_for_paths(
+      &self.groups,
+      &mut visited_paths,
+      &mut visited_matches,
+      &mut visited_global_vars,
+      &mut matches,
+      &mut global_vars,
+      paths,
+    );
+
+    MatchSet {
+      matches,
+      global_vars,
+    }
   }
 }
 
@@ -46,9 +65,9 @@ fn load_match_groups_recursively(groups: &mut HashMap<String, MatchGroup>, paths
       let group_path = PathBuf::from(path);
       match MatchGroup::load(&group_path) {
         Ok(group) => {
-          load_match_groups_recursively(groups, &group.resolved_imports);
+          load_match_groups_recursively(groups, &group.imports);
           groups.insert(path.clone(), group);
-        },
+        }
         Err(error) => {
           error!("unable to load match group: {:?}", error);
         }
@@ -57,8 +76,9 @@ fn load_match_groups_recursively(groups: &mut HashMap<String, MatchGroup>, paths
   }
 }
 
+// TODO: test
 fn query_matches_for_paths<'a>(
-  groups: &'a mut HashMap<String, MatchGroup>,
+  groups: &'a HashMap<String, MatchGroup>,
   visited_paths: &mut HashSet<String>,
   visited_matches: &mut HashSet<StructId>,
   visited_global_vars: &mut HashSet<StructId>,
@@ -83,7 +103,15 @@ fn query_matches_for_paths<'a>(
           }
         }
 
-        // TODO: here we should visit the imported paths recursively
+        query_matches_for_paths(
+          groups,
+          visited_paths,
+          visited_matches,
+          visited_global_vars,
+          matches,
+          global_vars,
+          &group.imports,
+        )
       }
 
       visited_paths.insert(path.clone());

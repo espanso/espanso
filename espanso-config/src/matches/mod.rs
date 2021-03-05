@@ -5,7 +5,7 @@ use crate::counter::{next_id, StructId};
 mod group;
 mod store;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone)]
 pub struct Match {
   cause: MatchCause,
   effect: MatchEffect,
@@ -25,6 +25,12 @@ impl Default for Match {
       label: None,
       _id: next_id(),
     }
+  }
+}
+
+impl PartialEq for Match {
+  fn eq(&self, other: &Self) -> bool {
+    self.cause == other.cause && self.effect == other.effect && self.label == other.label
   }
 }
 
@@ -84,7 +90,7 @@ impl Default for TextEffect {
   }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone)]
 pub struct Variable {
   pub name: String,
   pub var_type: String,
@@ -102,5 +108,11 @@ impl Default for Variable {
       params: Mapping::new(),
       _id: next_id(),
     }
+  }
+}
+
+impl PartialEq for Variable {
+  fn eq(&self, other: &Self) -> bool {
+    self.name == other.name && self.var_type == other.var_type && self.params == other.params
   }
 }
