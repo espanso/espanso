@@ -4,7 +4,7 @@ mod default;
 
 pub trait MatchStore {
   fn load(&mut self, paths: &[String]);
-  fn query_set(&self, paths: &[String]) -> MatchSet;
+  fn query(&self, paths: &[String]) -> MatchSet;
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -14,5 +14,7 @@ pub struct MatchSet<'a> {
 }
 
 pub fn new() -> impl MatchStore {
+  // TODO: here we can replace the DefaultMatchStore with a caching wrapper
+  // that returns the same response for the given "paths" query
   default::DefaultMatchStore::new()
 }
