@@ -1,4 +1,7 @@
-use std::{collections::HashSet, path::{Path, PathBuf}};
+use std::{
+  collections::HashSet,
+  path::{Path, PathBuf},
+};
 
 use glob::glob;
 use log::error;
@@ -8,7 +11,10 @@ lazy_static! {
   static ref ABSOLUTE_PATH: Regex = Regex::new(r"(?m)^([a-zA-Z]:/|/).*$").unwrap();
 }
 
-pub fn calculate_paths<'a>(base_dir: &Path, glob_patterns: impl Iterator<Item = &'a String>) -> HashSet<String> {
+pub fn calculate_paths<'a>(
+  base_dir: &Path,
+  glob_patterns: impl Iterator<Item = &'a String>,
+) -> HashSet<String> {
   let mut path_set = HashSet::new();
   for glob_pattern in glob_patterns {
     // Handle relative and absolute paths appropriately
@@ -24,7 +30,15 @@ pub fn calculate_paths<'a>(base_dir: &Path, glob_patterns: impl Iterator<Item = 
         for path in paths {
           match path {
             Ok(path) => {
-              path_set.insert(path.to_string_lossy().to_string());
+              // Canonicalize the path
+              match dunce::canonicalize(&path) {
+                Ok(canonical_path) => {
+                  path_set.insert(canonical_path.to_string_lossy().to_string());
+                }
+                Err(err) => {
+                  error!("unable to canonicalize path from glob: {:?}, with error: {}", path, err);
+                }
+              }
             }
             Err(err) => error!(
               "glob error when processing pattern: {}, with error: {}",
@@ -49,31 +63,63 @@ pub fn calculate_paths<'a>(base_dir: &Path, glob_patterns: impl Iterator<Item = 
 pub mod tests {
   use super::*;
   use crate::util::tests::use_test_directory;
-  use std::{fs::create_dir_all};
+  use std::fs::create_dir_all;
 
   #[test]
   fn calculate_paths_relative_paths() {
-    use_test_directory(|base, match_dir, config_dir| {
+    use_test_directory(|base, match_dir, _| {
       let sub_dir = match_dir.join("sub");
       create_dir_all(&sub_dir).unwrap();
 
-      std::fs::write(match_dir.join("base.yml"), "test").unwrap();
-      std::fs::write(match_dir.join("another.yml"), "test").unwrap();
-      std::fs::write(match_dir.join("_sub.yml"), "test").unwrap();
-      std::fs::write(sub_dir.join("sub.yml"), "test").unwrap();
+      let base_file = match_dir.join("base.yml");
+      std::fs::write(&base_file, "test").unwrap();
+      let another_file = match_dir.join("another.yml");
+      std::fs::write(&another_file, "test").unwrap();
+      let under_file = match_dir.join("_sub.yml");
+      std::fs::write(&under_file, "test").unwrap();
+      let sub_file = sub_dir.join("sub.yml");
+      std::fs::write(&sub_file, "test").unwrap();
 
-      let result = calculate_paths(base, vec![
-        "**/*.yml".to_string(),
-        "match/sub/*.yml".to_string(),
-        // Invalid path
-        "invalid".to_string(),
-      ].iter());
+      let result = calculate_paths(
+        base,
+        vec![
+          "**/*.yml".to_string(),
+          "match/sub/*.yml".to_string(),
+          // Invalid path
+          "invalid".to_string(),
+        ]
+        .iter(),
+      );
 
       let mut expected = HashSet::new();
-      expected.insert(format!("{}/match/base.yml", base.to_string_lossy()));
-      expected.insert(format!("{}/match/another.yml", base.to_string_lossy()));
-      expected.insert(format!("{}/match/_sub.yml", base.to_string_lossy()));
-      expected.insert(format!("{}/match/sub/sub.yml", base.to_string_lossy()));
+      expected.insert(base_file.to_string_lossy().to_string());
+      expected.insert(another_file.to_string_lossy().to_string());
+      expected.insert(under_file.to_string_lossy().to_string());
+      expected.insert(sub_file.to_string_lossy().to_string());
+
+      assert_eq!(result, expected);
+    });
+  }
+
+  #[test]
+  fn calculate_paths_relative_with_parent_modifier() {
+    use_test_directory(|base, match_dir, _| {
+      let sub_dir = match_dir.join("sub");
+      create_dir_all(&sub_dir).unwrap();
+
+      let base_file = match_dir.join("base.yml");
+      std::fs::write(&base_file, "test").unwrap();
+      let another_file = match_dir.join("another.yml");
+      std::fs::write(&another_file, "test").unwrap();
+      let under_file = match_dir.join("_sub.yml");
+      std::fs::write(&under_file, "test").unwrap();
+      let sub_file = sub_dir.join("sub.yml");
+      std::fs::write(&sub_file, "test").unwrap();
+
+      let result = calculate_paths(base, vec!["match/sub/../sub/*.yml".to_string()].iter());
+
+      let mut expected = HashSet::new();
+      expected.insert(sub_file.to_string_lossy().to_string());
 
       assert_eq!(result, expected);
     });
@@ -81,27 +127,35 @@ pub mod tests {
 
   #[test]
   fn calculate_paths_absolute_paths() {
-    use_test_directory(|base, match_dir, config_dir| {
+    use_test_directory(|base, match_dir, _| {
       let sub_dir = match_dir.join("sub");
       create_dir_all(&sub_dir).unwrap();
 
-      std::fs::write(match_dir.join("base.yml"), "test").unwrap();
-      std::fs::write(match_dir.join("another.yml"), "test").unwrap();
-      std::fs::write(match_dir.join("_sub.yml"), "test").unwrap();
-      std::fs::write(sub_dir.join("sub.yml"), "test").unwrap();
+      let base_file = match_dir.join("base.yml");
+      std::fs::write(&base_file, "test").unwrap();
+      let another_file = match_dir.join("another.yml");
+      std::fs::write(&another_file, "test").unwrap();
+      let under_file = match_dir.join("_sub.yml");
+      std::fs::write(&under_file, "test").unwrap();
+      let sub_file = sub_dir.join("sub.yml");
+      std::fs::write(&sub_file, "test").unwrap();
 
-      let result = calculate_paths(base, vec![
-        format!("{}/**/*.yml", base.to_string_lossy()),
-        format!("{}/match/sub/*.yml", base.to_string_lossy()),
-        // Invalid path
-        "invalid".to_string(),
-      ].iter());
+      let result = calculate_paths(
+        base,
+        vec![
+          format!("{}/**/*.yml", base.to_string_lossy()),
+          format!("{}/match/sub/*.yml", base.to_string_lossy()),
+          // Invalid path
+          "invalid".to_string(),
+        ]
+        .iter(),
+      );
 
       let mut expected = HashSet::new();
-      expected.insert(format!("{}/match/base.yml", base.to_string_lossy()));
-      expected.insert(format!("{}/match/another.yml", base.to_string_lossy()));
-      expected.insert(format!("{}/match/_sub.yml", base.to_string_lossy()));
-      expected.insert(format!("{}/match/sub/sub.yml", base.to_string_lossy()));
+      expected.insert(base_file.to_string_lossy().to_string());
+      expected.insert(another_file.to_string_lossy().to_string());
+      expected.insert(under_file.to_string_lossy().to_string());
+      expected.insert(sub_file.to_string_lossy().to_string());
 
       assert_eq!(result, expected);
     });

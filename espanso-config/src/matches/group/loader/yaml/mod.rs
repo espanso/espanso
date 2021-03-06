@@ -1,7 +1,10 @@
-use crate::matches::{Match, Variable, group::{MatchGroup, path::resolve_imports}};
+use crate::matches::{
+  group::{path::resolve_imports, MatchGroup},
+  Match, Variable,
+};
+use anyhow::Result;
 use log::warn;
 use parse::YAMLMatchGroup;
-use anyhow::Result;
 use std::convert::{TryFrom, TryInto};
 
 use self::parse::{YAMLMatch, YAMLVariable};
@@ -24,9 +27,6 @@ impl Importer for YAMLImporter {
     extension == "yaml" || extension == "yml"
   }
 
-  // TODO: test
-  // TODO: test resolve imports
-  // TODO: test cyclical dependency
   fn load_group(
     &self,
     path: &std::path::Path,
@@ -65,7 +65,6 @@ impl Importer for YAMLImporter {
 impl TryFrom<YAMLMatch> for Match {
   type Error = anyhow::Error;
 
-  // TODO: test
   fn try_from(yaml_match: YAMLMatch) -> Result<Self, Self::Error> {
     let triggers = if let Some(trigger) = yaml_match.trigger {
       Some(vec![trigger])
@@ -110,7 +109,10 @@ impl TryFrom<YAMLMatch> for Match {
     };
 
     if let MatchEffect::None = effect {
-      warn!("match caused by {:?} does not produce any effect. Did you forget the 'replace' field?", cause);
+      warn!(
+        "match caused by {:?} does not produce any effect. Did you forget the 'replace' field?",
+        cause
+      );
     }
 
     Ok(Self {
@@ -125,7 +127,6 @@ impl TryFrom<YAMLMatch> for Match {
 impl TryFrom<YAMLVariable> for Variable {
   type Error = anyhow::Error;
 
-  // TODO: test
   fn try_from(yaml_var: YAMLVariable) -> Result<Self, Self::Error> {
     Ok(Self {
       name: yaml_var.name,
@@ -138,10 +139,10 @@ impl TryFrom<YAMLVariable> for Variable {
 
 #[cfg(test)]
 mod tests {
+  use super::*;
+  use std::fs::create_dir_all;
   use serde_yaml::{Mapping, Value};
-
-    use super::*;
-  use crate::matches::Match;
+  use crate::{matches::Match, util::tests::use_test_directory};
 
   fn create_match(yaml: &str) -> Result<Match> {
     let yaml_match: YAMLMatch = serde_yaml::from_str(yaml)?;
@@ -370,5 +371,72 @@ mod tests {
         ..Default::default()
       }
     )
+  }
+
+  #[test]
+  fn importer_is_supported() {
+    let importer = YAMLImporter::new();
+    assert!(importer.is_supported("yaml"));
+    assert!(importer.is_supported("yml"));
+    assert!(!importer.is_supported("invalid"));
+  }
+
+  #[test]
+  fn importer_works_correctly() {
+    use_test_directory(|_, match_dir, _| {
+      let sub_dir = match_dir.join("sub");
+      create_dir_all(&sub_dir).unwrap();
+
+      let base_file = match_dir.join("base.yml");
+      std::fs::write(&base_file, r#"
+      imports:
+        - "sub/sub.yml"
+        - "invalid/import.yml" # This should be discarded
+      
+      global_vars:
+        - name: "var1"
+          type: "test"
+      
+      matches:
+        - trigger: "hello"
+          replace: "world"
+      "#).unwrap();
+
+      let sub_file = sub_dir.join("sub.yml");
+      std::fs::write(&sub_file, "").unwrap(); 
+      
+      let importer = YAMLImporter::new();
+      let group = importer.load_group(&base_file).unwrap();
+      
+      let vars = vec![Variable {
+        name: "var1".to_string(),
+        var_type: "test".to_string(),
+        params: Mapping::new(),
+        ..Default::default()
+      }];
+
+      assert_eq!(
+        group,
+        MatchGroup {
+          imports: vec![
+            sub_file.to_string_lossy().to_string(),
+          ],
+          global_vars: vars,
+          matches: vec![
+            Match {
+              cause: MatchCause::Trigger(TriggerCause {
+                triggers: vec!["hello".to_string()],
+                ..Default::default()
+              }),
+              effect: MatchEffect::Text(TextEffect {
+                replace: "world".to_string(),
+                ..Default::default()
+              }),
+              ..Default::default()
+            }
+          ],
+        }
+      )
+    });
   }
 }
