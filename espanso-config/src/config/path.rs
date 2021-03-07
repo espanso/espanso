@@ -1,6 +1,6 @@
 use std::{
   collections::HashSet,
-  path::{Path, PathBuf},
+  path::{Path},
 };
 
 use glob::glob;

@@ -91,9 +91,8 @@ mod tests {
       server.accept_one().unwrap();
     });
 
-    if cfg!(target_os = "windows") {
-      std::thread::sleep(std::time::Duration::from_secs(1));
-    }
+    // TODO: avoid delay and change the IPC code so that we can wait for the IPC
+    //std::thread::sleep(std::time::Duration::from_secs(1));
     
     let client = client::<Event>("testespansoipc", &std::env::temp_dir()).unwrap();
     client.send(Event::Foo("hello".to_string())).unwrap();
