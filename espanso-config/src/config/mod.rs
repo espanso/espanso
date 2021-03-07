@@ -1,16 +1,11 @@
 use std::collections::HashSet;
-use anyhow::Result;
 
-
-mod yaml;
 mod path;
+mod parse;
 mod util;
+mod resolve;
 
-pub struct Config {
-  pub label: Option<String>,
-  //pub backend: 
-  pub match_paths: HashSet<String>,
-}
-
-impl Config {
+pub trait Config {
+  fn label(&self) -> &str;
+  fn match_paths(&self) -> &HashSet<String>;
 }
