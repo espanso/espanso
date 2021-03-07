@@ -205,6 +205,50 @@
   link: https://breuer.dev/
   image: felix.jpeg
 
+- name: "Joe Doss"
+  link: https://github.com/jdoss
+  image: "joe.jpeg"
+
+- name: "Simon Douglas"
+  link: ""
+  image: ""
+
+- name: "Harsh Gupta"
+  link: "http://hargup.in/"
+  image: ""
+
+- name: "Sam Nead"
+  link: "https://twitter.com/neadreport"
+  image: "sam.jpg"
+
+- name: "Jaan Altosaar"
+  link: "https://jaan.io/"
+  image: "jaan.png"
+
+- name: "Oliver Weiler"
+  link: ""
+  image: ""
+
+- name: "Lorenzo Carbonell"
+  link: "https://www.atareao.es/"
+  image: ""
+
+- name: "Tom Clancy"
+  link: "http://thosecleverkids.com/pages/about"
+  image: ""
+
+- name: "Daniel Pastor Peidro"
+  link: https://github.com/dapaspei/
+  image: "daniel.jpeg"
+
+- name: "Ricky Kresslein"
+  link: https://kressle.in/
+  image: "ricky.jpg"
+
+- name: "David McKay"
+  link: https://rawkode.com/
+  image: "davidmckay.jpeg"
+
 - name: "Fernanda and Paulo"
   image: ""
   link: ""
@@ -243,4 +287,20 @@
 
 - name: Svellingen
   link: ""
+  image: ""
+
+- name: "Wei Sun"
+  link: https://github.com/sunwei415
+  image: ""
+
+- name: Roman
+  link: https://github.com/moltar
+  image: ""
+
+- name: "Görge Albrecht"
+  link: https://github.com/goerge
+  image: ""
+
+- name: "Chris Beardy"
+  link: https://github.com/chrisbeardy
   image: ""
