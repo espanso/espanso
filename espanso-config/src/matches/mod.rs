@@ -3,7 +3,7 @@ use serde_yaml::Mapping;
 use crate::counter::{next_id, StructId};
 
 mod group;
-mod store;
+pub mod store;
 
 #[derive(Debug, Clone)]
 pub struct Match {

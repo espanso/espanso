@@ -15,7 +15,7 @@ pub(crate) struct ResolvedConfig {
 
   // Generated properties
   
-  match_paths: HashSet<String>,
+  match_paths: Vec<String>,
 
   filter_title: Option<Regex>,
   filter_class: Option<Regex>,
@@ -26,7 +26,7 @@ impl Default for ResolvedConfig {
   fn default() -> Self {
     Self {
       parsed: Default::default(),
-      match_paths: HashSet::new(),
+      match_paths: Vec::new(),
       filter_title: None,
       filter_class: None,
       filter_exec: None,
@@ -39,7 +39,7 @@ impl Config for ResolvedConfig {
     self.parsed.label.as_deref().unwrap_or("none")
   }
 
-  fn match_paths(&self) -> &HashSet<String> {
+  fn match_paths(&self) -> &[String] {
     &self.match_paths
   }
 
@@ -110,7 +110,7 @@ impl ResolvedConfig {
       .parent()
       .ok_or_else(ResolveError::ParentResolveFailed)?;
 
-    let match_paths = Self::generate_match_paths(&config, base_dir);
+    let match_paths = Self::generate_match_paths(&config, base_dir).into_iter().collect();
 
     let filter_title = if let Some(filter_title) = config.filter_title.as_deref() {
       Some(Regex::new(filter_title)?)
@@ -425,12 +425,17 @@ mod tests {
 
       let config = ResolvedConfig::load(&config_file, None).unwrap();
 
-      let mut expected = HashSet::new();
-      expected.insert(base_file.to_string_lossy().to_string());
-      expected.insert(another_file.to_string_lossy().to_string());
-      expected.insert(sub_file.to_string_lossy().to_string());
+      let mut expected = vec![
+        base_file.to_string_lossy().to_string(),
+        another_file.to_string_lossy().to_string(),
+        sub_file.to_string_lossy().to_string(),
+      ];
+      expected.sort();
+      
+      let mut result = config.match_paths().to_vec();
+      result.sort();
 
-      assert_eq!(config.match_paths(), &expected);
+      assert_eq!(result, expected.as_slice());
     });
   }
 
@@ -476,16 +481,21 @@ mod tests {
       let parent = ResolvedConfig::load(&parent_file, None).unwrap();
       let child = ResolvedConfig::load(&config_file, Some(&parent)).unwrap();
 
-      let mut expected = HashSet::new();
-      expected.insert(sub_file.to_string_lossy().to_string());
-      expected.insert(sub_under_file.to_string_lossy().to_string());
+      let mut expected = vec![
+        sub_file.to_string_lossy().to_string(),
+        sub_under_file.to_string_lossy().to_string(),
+      ];
+      expected.sort();
 
-      assert_eq!(child.match_paths(), &expected);
+      let mut result = child.match_paths().to_vec();
+      result.sort();
+      assert_eq!(result, expected.as_slice());
 
-      let mut expected = HashSet::new();
-      expected.insert(base_file.to_string_lossy().to_string());
+      let expected = vec![
+        base_file.to_string_lossy().to_string()
+      ];
 
-      assert_eq!(parent.match_paths(), &expected);
+      assert_eq!(parent.match_paths(), expected.as_slice());
     });
   }
 
