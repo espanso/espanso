@@ -1,16 +1,19 @@
-use super::{Config, ConfigStore};
+use super::{Config, ConfigStore, ConfigStoreError, resolve::ResolvedConfig};
+use anyhow::Result;
+use log::{debug, error};
+use std::{collections::HashSet, path::Path};
 
 pub(crate) struct DefaultConfigStore {
   default: Box<dyn Config>,
   customs: Vec<Box<dyn Config>>,
 }
 
-impl<'a> ConfigStore<'a> for DefaultConfigStore {
-  fn default(&'a self) -> &'a dyn super::Config {
+impl ConfigStore for DefaultConfigStore {
+  fn default(&self) -> &dyn super::Config {
     self.default.as_ref()
   }
 
-  fn active(&'a self, app: &super::AppProperties) -> &'a dyn super::Config {
+  fn active<'a>(&'a self, app: &super::AppProperties) -> &'a dyn super::Config {
     // Find a custom config that matches or fallback to the default one
     for custom in self.customs.iter() {
       if custom.is_match(app) {
@@ -18,6 +21,64 @@ impl<'a> ConfigStore<'a> for DefaultConfigStore {
       }
     }
     self.default.as_ref()
+  }
+
+  // TODO: test
+  fn get_all_match_paths(&self) -> HashSet<String> {
+    let mut paths = HashSet::new();
+
+    paths.extend(self.default().match_paths().iter().cloned());
+    for custom in self.customs.iter() {
+      paths.extend(custom.match_paths().iter().cloned());
+    }
+
+    paths
+  }
+}
+
+impl DefaultConfigStore {
+  // TODO: test
+  pub fn load(config_dir: &Path) -> Result<Self> {
+    if !config_dir.is_dir() {
+      return Err(ConfigStoreError::InvalidConfigDir().into());
+    }
+
+    // First get the default.yml file
+    let default_file = config_dir.join("default.yml");
+    if !default_file.exists() || !default_file.is_file() {
+      return Err(ConfigStoreError::MissingDefault().into());
+    }
+    let default = ResolvedConfig::load(&default_file, None)?;
+    debug!("loaded default config at path: {:?}", default_file);
+
+    // Then the others
+    let mut customs: Vec<Box<dyn Config>> = Vec::new();
+    for entry in std::fs::read_dir(config_dir).map_err(ConfigStoreError::IOError)? {
+      let entry = entry?;
+      let config_file = entry.path();
+      let extension = config_file.extension().unwrap_or_default().to_string_lossy().to_lowercase();
+
+      // Additional config files are loaded best-effort
+      if config_file.is_file()
+        && config_file != default_file
+        && (extension == "yml" || extension == "yaml")
+      {
+        match ResolvedConfig::load(&config_file, Some(&default)) {
+          Ok(config) => {
+            customs.push(Box::new(config));
+            debug!("loaded config at path: {:?}", config_file);
+          }
+          Err(err) => {
+            error!("unable to load config at path: {:?}, with error: {}", config_file, err);
+          }
+        }
+      }
+    }
+
+    Ok(Self {
+      default: Box::new(default),
+      customs,
+    })
   }
 }
 
@@ -44,7 +105,7 @@ mod tests {
       &self.label
     }
 
-    fn match_paths(&self) -> &std::collections::HashSet<String> {
+    fn match_paths(&self) -> &[String] {
       unimplemented!()
     }
 
