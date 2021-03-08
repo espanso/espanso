@@ -1,6 +1,7 @@
-use super::{parse::ParsedConfig, path::calculate_paths, Config};
+use super::{parse::ParsedConfig, path::calculate_paths, util::os_matches, AppProperties, Config};
 use crate::merge;
 use anyhow::Result;
+use regex::Regex;
 use std::iter::FromIterator;
 use std::{collections::HashSet, path::Path};
 use thiserror::Error;
@@ -8,12 +9,17 @@ use thiserror::Error;
 const STANDARD_INCLUDES: &[&str] = &["../match/**/*.yml"];
 const STANDARD_EXCLUDES: &[&str] = &["../match/**/_*.yml"];
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone)]
 pub(crate) struct ResolvedConfig {
   parsed: ParsedConfig,
 
   // Generated properties
+  
   match_paths: HashSet<String>,
+
+  filter_title: Option<Regex>,
+  filter_class: Option<Regex>,
+  filter_exec: Option<Regex>,
 }
 
 impl Default for ResolvedConfig {
@@ -21,6 +27,9 @@ impl Default for ResolvedConfig {
     Self {
       parsed: Default::default(),
       match_paths: HashSet::new(),
+      filter_title: None,
+      filter_class: None,
+      filter_exec: None,
     }
   }
 }
@@ -32,6 +41,58 @@ impl Config for ResolvedConfig {
 
   fn match_paths(&self) -> &HashSet<String> {
     &self.match_paths
+  }
+
+  fn is_match(&self, app: &AppProperties) -> bool {
+    if self.parsed.filter_os.is_none()
+      && self.parsed.filter_title.is_none()
+      && self.parsed.filter_exec.is_none()
+      && self.parsed.filter_class.is_none()
+    {
+      return false;
+    }
+
+    let is_os_match = if let Some(filter_os) = self.parsed.filter_os.as_deref() {
+      os_matches(filter_os)
+    } else {
+      true
+    };
+
+    let is_title_match =
+      if let Some(title_regex) = self.filter_title.as_ref() {
+        if let Some(title) = app.title {
+          title_regex.is_match(title)
+        } else {
+          false
+        }
+      } else {
+        true
+      };
+
+    let is_exec_match =
+      if let Some(exec_regex) = self.filter_exec.as_ref() {
+        if let Some(exec) = app.exec {
+          exec_regex.is_match(exec)
+        } else {
+          false
+        }
+      } else {
+        true
+      };
+
+    let is_class_match =
+      if let Some(class_regex) = self.filter_class.as_ref() {
+        if let Some(class) = app.class {
+          class_regex.is_match(class)
+        } else {
+          false
+        }
+      } else {
+        true
+      };
+
+    // All the filters that have been specified must be true to define a match
+    is_os_match && is_exec_match && is_title_match && is_class_match
   }
 }
 
@@ -47,13 +108,34 @@ impl ResolvedConfig {
     // Extract the base directory
     let base_dir = path
       .parent()
-      .ok_or_else(|| ResolveError::ParentResolveFailed())?;
+      .ok_or_else(ResolveError::ParentResolveFailed)?;
 
     let match_paths = Self::generate_match_paths(&config, base_dir);
+
+    let filter_title = if let Some(filter_title) = config.filter_title.as_deref() {
+      Some(Regex::new(filter_title)?)
+    } else {
+      None
+    };
+
+    let filter_class = if let Some(filter_class) = config.filter_class.as_deref() {
+      Some(Regex::new(filter_class)?)
+    } else {
+      None
+    };
+
+    let filter_exec = if let Some(filter_exec) = config.filter_exec.as_deref() {
+      Some(Regex::new(filter_exec)?)
+    } else {
+      None
+    };
 
     Ok(Self {
       parsed: config,
       match_paths,
+      filter_title,
+      filter_class,
+      filter_exec,
     })
   }
 
@@ -210,9 +292,13 @@ mod tests {
         ..Default::default()
       }),
       HashSet::from_iter(
-        vec!["../match/**/*.yml".to_string(), "custom/*.yml".to_string(), "sub/*.yml".to_string()]
-          .iter()
-          .cloned()
+        vec![
+          "../match/**/*.yml".to_string(),
+          "custom/*.yml".to_string(),
+          "sub/*.yml".to_string()
+        ]
+        .iter()
+        .cloned()
       )
     );
   }
@@ -277,9 +363,13 @@ mod tests {
         ..Default::default()
       }),
       HashSet::from_iter(
-        vec!["../match/**/_*.yml".to_string(), "custom/*.yml".to_string(), "sub/*.yml".to_string()]
-          .iter()
-          .cloned()
+        vec![
+          "../match/**/_*.yml".to_string(),
+          "custom/*.yml".to_string(),
+          "sub/*.yml".to_string()
+        ]
+        .iter()
+        .cloned()
       )
     );
   }
@@ -364,16 +454,24 @@ mod tests {
       // Configs
 
       let parent_file = config_dir.join("parent.yml");
-      std::fs::write(&parent_file, r#"
+      std::fs::write(
+        &parent_file,
+        r#"
       excludes: ['../**/another.yml']
-      "#).unwrap();
+      "#,
+      )
+      .unwrap();
 
       let config_file = config_dir.join("default.yml");
-      std::fs::write(&config_file, r#"
+      std::fs::write(
+        &config_file,
+        r#"
       use_standard_includes: false
       excludes: []
       includes: ["../match/sub/*.yml"]
-      "#).unwrap();
+      "#,
+      )
+      .unwrap();
 
       let parent = ResolvedConfig::load(&parent_file, None).unwrap();
       let child = ResolvedConfig::load(&config_file, Some(&parent)).unwrap();
@@ -389,5 +487,179 @@ mod tests {
 
       assert_eq!(parent.match_paths(), &expected);
     });
+  }
+
+  fn test_filter_is_match(config: &str, app: &AppProperties) -> bool {
+    let mut result = false;
+    let result_ref = &mut result;
+    use_test_directory(move |_, _, config_dir| {
+      let config_file = config_dir.join("default.yml");
+      std::fs::write(&config_file, config).unwrap();
+
+      let config = ResolvedConfig::load(&config_file, None).unwrap();
+
+      *result_ref = config.is_match(app)
+    });
+    result
+  }
+
+  #[test]
+  fn is_match_no_filters() {
+    assert!(!test_filter_is_match(
+      "",
+      &AppProperties {
+        title: Some("Google"),
+        class: Some("Chrome"),
+        exec: Some("chrome.exe"),
+      },
+    ));
+  }
+
+  #[test]
+  fn is_match_filter_title() {
+    assert!(test_filter_is_match(
+      "filter_title: Google",
+      &AppProperties {
+        title: Some("Google Mail"),
+        class: Some("Chrome"),
+        exec: Some("chrome.exe"),
+      },
+    ));
+
+    assert!(!test_filter_is_match(
+      "filter_title: Google",
+      &AppProperties {
+        title: Some("Yahoo"),
+        class: Some("Chrome"),
+        exec: Some("chrome.exe"),
+      },
+    ));
+
+    assert!(!test_filter_is_match(
+      "filter_title: Google",
+      &AppProperties {
+        title: None,
+        class: Some("Chrome"),
+        exec: Some("chrome.exe"),
+      },
+    ));
+  }
+
+  #[test]
+  fn is_match_filter_class() {
+    assert!(test_filter_is_match(
+      "filter_class: Chrome",
+      &AppProperties {
+        title: Some("Google Mail"),
+        class: Some("Chrome"),
+        exec: Some("chrome.exe"),
+      },
+    ));
+
+    assert!(!test_filter_is_match(
+      "filter_class: Chrome",
+      &AppProperties {
+        title: Some("Yahoo"),
+        class: Some("Another"),
+        exec: Some("chrome.exe"),
+      },
+    ));
+
+    assert!(!test_filter_is_match(
+      "filter_class: Chrome",
+      &AppProperties {
+        title: Some("google"),
+        class: None,
+        exec: Some("chrome.exe"),
+      },
+    ));
+  }
+
+  #[test]
+  fn is_match_filter_exec() {
+    assert!(test_filter_is_match(
+      "filter_exec: chrome.exe",
+      &AppProperties {
+        title: Some("Google Mail"),
+        class: Some("Chrome"),
+        exec: Some("chrome.exe"),
+      },
+    ));
+
+    assert!(!test_filter_is_match(
+      "filter_exec: chrome.exe",
+      &AppProperties {
+        title: Some("Yahoo"),
+        class: Some("Another"),
+        exec: Some("zoom.exe"),
+      },
+    ));
+
+    assert!(!test_filter_is_match(
+      "filter_exec: chrome.exe",
+      &AppProperties {
+        title: Some("google"),
+        class: Some("Chrome"),
+        exec: None,
+      },
+    ));
+  }
+
+  #[test]
+  fn is_match_filter_os() {
+    let (current, another) = if cfg!(target_os = "windows") {
+      ("windows", "macos")
+    } else if cfg!(target_os = "macos") {
+      ("macos", "windows")
+    } else if cfg!(target_os = "linux") {
+      ("linux", "macos")
+    } else {
+      ("invalid", "invalid")
+    };
+
+    assert!(test_filter_is_match(
+      &format!("filter_os: {}", current),
+      &AppProperties {
+        title: Some("Google Mail"),
+        class: Some("Chrome"),
+        exec: Some("chrome.exe"),
+      },
+    ));
+
+    assert!(!test_filter_is_match(
+      &format!("filter_os: {}", another),
+      &AppProperties {
+        title: Some("Google Mail"),
+        class: Some("Chrome"),
+        exec: Some("chrome.exe"),
+      },
+    ));
+  }
+
+  #[test]
+  fn is_match_multiple_filters() {
+    assert!(test_filter_is_match(
+      r#"
+      filter_exec: chrome.exe
+      filter_title: "Youtube"
+      "#,
+      &AppProperties {
+        title: Some("Youtube - Broadcast Yourself"),
+        class: Some("Chrome"),
+        exec: Some("chrome.exe"),
+      },
+    ));
+
+    assert!(!test_filter_is_match(
+      r#"
+      filter_exec: chrome.exe
+      filter_title: "Youtube"
+      "#,
+      &AppProperties {
+        title: Some("Gmail"),
+        class: Some("Chrome"),
+        exec: Some("chrome.exe"),
+      },
+    ));
   }
 }
