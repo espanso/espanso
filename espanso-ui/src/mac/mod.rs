@@ -20,11 +20,11 @@
 use std::{cmp::min, collections::HashMap, ffi::CString, os::raw::c_char, thread::ThreadId};
 
 use anyhow::Result;
-use thiserror::Error;
 use lazycell::LazyCell;
 use log::{error, trace};
+use thiserror::Error;
 
-use crate::{UIEventLoop, UIRemote, event::UIEvent, icons::TrayIcon, menu::Menu};
+use crate::{event::UIEvent, icons::TrayIcon, menu::Menu, UIEventLoop, UIRemote};
 
 // IMPORTANT: if you change these, also edit the native.h file.
 const MAX_FILE_PATH: usize = 1024;
@@ -105,8 +105,6 @@ impl MacEventLoop {
       _init_thread_id: LazyCell::new(),
     }
   }
-
-  
 }
 
 impl UIEventLoop for MacEventLoop {
@@ -133,7 +131,7 @@ impl UIEventLoop for MacEventLoop {
       ._init_thread_id
       .fill(std::thread::current().id())
       .expect("Unable to set initialization thread id");
-    
+
     Ok(())
   }
 
@@ -147,7 +145,7 @@ impl UIEventLoop for MacEventLoop {
 
     if self._event_callback.fill(event_callback).is_err() {
       error!("Unable to set MacEventLoop callback");
-      return Err(MacUIError::InternalError().into())
+      return Err(MacUIError::InternalError().into());
     }
 
     extern "C" fn callback(_self: *mut MacEventLoop, event: RawUIEvent) {
@@ -165,7 +163,7 @@ impl UIEventLoop for MacEventLoop {
 
     if error_code <= 0 {
       error!("MacEventLoop exited with <= 0 code");
-      return Err(MacUIError::InternalError().into())
+      return Err(MacUIError::InternalError().into());
     }
 
     Ok(())
@@ -180,7 +178,7 @@ pub struct MacRemote {
 impl MacRemote {
   pub(crate) fn new(icon_indexes: HashMap<TrayIcon, usize>) -> Self {
     Self { icon_indexes }
-  }  
+  }
 }
 
 impl UIRemote for MacRemote {

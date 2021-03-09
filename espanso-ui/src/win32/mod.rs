@@ -29,13 +29,13 @@ use std::{
   thread::ThreadId,
 };
 
+use anyhow::Result;
 use lazycell::LazyCell;
 use log::{error, trace};
-use widestring::WideCString;
-use anyhow::Result;
 use thiserror::Error;
+use widestring::WideCString;
 
-use crate::{UIEventCallback, UIEventLoop, UIRemote, event::UIEvent, icons::TrayIcon, menu::Menu};
+use crate::{event::UIEvent, icons::TrayIcon, menu::Menu, UIEventCallback, UIEventLoop, UIRemote};
 
 // IMPORTANT: if you change these, also edit the native.h file.
 const MAX_FILE_PATH: usize = 260;
@@ -154,8 +154,7 @@ impl UIEventLoop for Win32EventLoop {
     let mut icon_paths: [[u16; MAX_FILE_PATH]; MAX_ICON_COUNT] =
       [[0; MAX_FILE_PATH]; MAX_ICON_COUNT];
     for (i, icon_path) in icon_paths.iter_mut().enumerate().take(self.icons.len()) {
-      let wide_path =
-        WideCString::from_str(&self.icons[i])?;
+      let wide_path = WideCString::from_str(&self.icons[i])?;
       let len = min(wide_path.len(), MAX_FILE_PATH - 1);
       icon_path[0..len].clone_from_slice(&wide_path.as_slice()[..len]);
     }
@@ -178,11 +177,31 @@ impl UIEventLoop for Win32EventLoop {
 
     if handle.is_null() {
       return match error_code {
-        -1 => Err(Win32UIError::EventLoopInitError("Unable to initialize Win32EventLoop, error registering window class".to_string()).into()),
-        -2 => Err(Win32UIError::EventLoopInitError("Unable to initialize Win32EventLoop, error creating window".to_string()).into()),
-        -3 => Err(Win32UIError::EventLoopInitError("Unable to initialize Win32EventLoop, initializing notifications".to_string()).into()),
-        _ => Err(Win32UIError::EventLoopInitError("Unable to initialize Win32EventLoop, unknown error".to_string()).into()),
-      }
+        -1 => Err(
+          Win32UIError::EventLoopInitError(
+            "Unable to initialize Win32EventLoop, error registering window class".to_string(),
+          )
+          .into(),
+        ),
+        -2 => Err(
+          Win32UIError::EventLoopInitError(
+            "Unable to initialize Win32EventLoop, error creating window".to_string(),
+          )
+          .into(),
+        ),
+        -3 => Err(
+          Win32UIError::EventLoopInitError(
+            "Unable to initialize Win32EventLoop, initializing notifications".to_string(),
+          )
+          .into(),
+        ),
+        _ => Err(
+          Win32UIError::EventLoopInitError(
+            "Unable to initialize Win32EventLoop, unknown error".to_string(),
+          )
+          .into(),
+        ),
+      };
     }
 
     self.handle.store(handle, Ordering::Release);
@@ -192,7 +211,7 @@ impl UIEventLoop for Win32EventLoop {
       ._init_thread_id
       .fill(std::thread::current().id())
       .expect("Unable to set initialization thread id");
-    
+
     Ok(())
   }
 
@@ -207,12 +226,12 @@ impl UIEventLoop for Win32EventLoop {
     let window_handle = self.handle.load(Ordering::Acquire);
     if window_handle.is_null() {
       error!("Attempt to run Win32EventLoop on a null window handle");
-      return Err(Win32UIError::InvalidHandle().into())
+      return Err(Win32UIError::InvalidHandle().into());
     }
 
     if self._event_callback.fill(event_callback).is_err() {
       error!("Unable to set Win32EventLoop callback");
-      return Err(Win32UIError::InternalError().into())
+      return Err(Win32UIError::InternalError().into());
     }
 
     extern "C" fn callback(_self: *mut Win32EventLoop, event: RawUIEvent) {
@@ -230,7 +249,7 @@ impl UIEventLoop for Win32EventLoop {
 
     if error_code <= 0 {
       error!("Win32EventLoop exited with <= 0 code");
-      return Err(Win32UIError::InternalError().into())
+      return Err(Win32UIError::InternalError().into());
     }
 
     Ok(())

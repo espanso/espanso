@@ -25,10 +25,10 @@ use log::{error, trace, warn};
 use anyhow::Result;
 use thiserror::Error;
 
-use crate::{Source, SourceCallback, event::Status::*};
 use crate::event::Variant::*;
 use crate::event::{InputEvent, Key, KeyboardEvent, Variant};
 use crate::event::{Key::*, MouseButton, MouseEvent};
+use crate::{event::Status::*, Source, SourceCallback};
 
 const INPUT_EVENT_TYPE_KEYBOARD: i32 = 1;
 const INPUT_EVENT_TYPE_MOUSE: i32 = 2;
@@ -87,8 +87,6 @@ impl X11Source {
   pub fn is_compatible() -> bool {
     unsafe { detect_check_x11() != 0 }
   }
-
-  
 }
 
 impl Source for X11Source {

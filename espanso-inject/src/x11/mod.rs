@@ -26,11 +26,15 @@ use std::{
   slice,
 };
 
-use ffi::{Display, KeyCode, KeyPress, KeyRelease, KeySym, Window, XCloseDisplay, XDefaultRootWindow, XFlush, XFreeModifiermap, XGetInputFocus, XGetModifierMapping, XKeyEvent, XLookupString, XQueryKeymap, XSendEvent, XSync, XTestFakeKeyEvent};
+use ffi::{
+  Display, KeyCode, KeyPress, KeyRelease, KeySym, Window, XCloseDisplay, XDefaultRootWindow,
+  XFlush, XFreeModifiermap, XGetInputFocus, XGetModifierMapping, XKeyEvent, XLookupString,
+  XQueryKeymap, XSendEvent, XSync, XTestFakeKeyEvent,
+};
 use log::error;
 
+use crate::linux::raw_keys::convert_to_sym_array;
 use anyhow::Result;
-use crate::linux::raw_keys::{convert_to_sym_array};
 use thiserror::Error;
 
 use crate::{keys, InjectionOptions, Injector};
@@ -174,7 +178,6 @@ impl X11Injector {
             modifiers.modifiermap,
             (8 * modifiers.max_keypermod) as usize,
           )
-          
         };
         let keycode = modifier_map[(mod_index * modifiers.max_keypermod + mod_key) as usize];
         if keycode != 0 {
@@ -355,7 +358,7 @@ impl Injector for X11Injector {
 
   fn send_keys(&self, keys: &[keys::Key], options: InjectionOptions) -> Result<()> {
     let focused_window = self.get_focused_window();
-    
+
     // Compute all the key record sequence first to make sure a mapping is available
     let syms = convert_to_sym_array(keys)?;
     let records = self.convert_to_record_array(&syms)?;
@@ -385,7 +388,7 @@ impl Injector for X11Injector {
     // Compute all the key record sequence first to make sure a mapping is available
     let syms = convert_to_sym_array(keys)?;
     let records = self.convert_to_record_array(&syms)?;
-    
+
     // Render the correct modifier mask for the given sequence
     let records = self.render_key_combination(&records);
 

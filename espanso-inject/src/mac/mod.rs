@@ -27,7 +27,7 @@ use raw_keys::convert_key_to_vkey;
 use anyhow::Result;
 use thiserror::Error;
 
-use crate::{InjectionOptions, Injector, keys};
+use crate::{keys, InjectionOptions, Injector};
 
 #[allow(improper_ctypes)]
 #[link(name = "espansoinject", kind = "static")]
@@ -72,7 +72,11 @@ impl Injector for MacInjector {
     let virtual_keys = Self::convert_to_vk_array(keys)?;
 
     unsafe {
-      inject_separate_vkeys(virtual_keys.as_ptr(), virtual_keys.len() as i32, options.delay);
+      inject_separate_vkeys(
+        virtual_keys.as_ptr(),
+        virtual_keys.len() as i32,
+        options.delay,
+      );
     }
 
     Ok(())
@@ -82,7 +86,11 @@ impl Injector for MacInjector {
     let virtual_keys = Self::convert_to_vk_array(keys)?;
 
     unsafe {
-      inject_vkeys_combination(virtual_keys.as_ptr(), virtual_keys.len() as i32, options.delay);
+      inject_vkeys_combination(
+        virtual_keys.as_ptr(),
+        virtual_keys.len() as i32,
+        options.delay,
+      );
     }
 
     Ok(())

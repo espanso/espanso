@@ -36,10 +36,10 @@ use libc::{
 use log::{error, trace};
 use thiserror::Error;
 
-use crate::{KeyboardConfig, Source, SourceCallback, SourceCreationOptions, event::Status::*};
 use crate::event::Variant::*;
 use crate::event::{InputEvent, Key, KeyboardEvent, Variant};
 use crate::event::{Key::*, MouseButton, MouseEvent};
+use crate::{event::Status::*, KeyboardConfig, Source, SourceCallback, SourceCreationOptions};
 
 use self::device::{DeviceError, RawInputEvent};
 
@@ -72,7 +72,8 @@ impl EVDEVSource {
 impl Source for EVDEVSource {
   fn initialize(&mut self) -> Result<()> {
     let context = Context::new().expect("unable to obtain xkb context");
-    let keymap = Keymap::new(&context, self._keyboard_rmlvo.clone()).expect("unable to create xkb keymap");
+    let keymap =
+      Keymap::new(&context, self._keyboard_rmlvo.clone()).expect("unable to create xkb keymap");
 
     match get_devices(&keymap) {
       Ok(devices) => self.devices = devices,
@@ -140,9 +141,7 @@ impl Source for EVDEVSource {
         if unsafe { *errno_ptr } == EINTR {
           continue;
         } else {
-          error!("Could not poll for events, {}", unsafe {
-            *errno_ptr
-          });
+          error!("Could not poll for events, {}", unsafe { *errno_ptr });
           return Err(EVDEVSourceError::Internal().into());
         }
       }

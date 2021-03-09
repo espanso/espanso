@@ -1,4 +1,23 @@
-use super::{Config, ConfigStore, ConfigStoreError, resolve::ResolvedConfig};
+/*
+ * This file is part of espanso.
+ *
+ * Copyright (C) 2019-2021 Federico Terzi
+ *
+ * espanso is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * espanso is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+use super::{resolve::ResolvedConfig, Config, ConfigStore, ConfigStoreError};
 use anyhow::Result;
 use log::{debug, error};
 use std::{collections::HashSet, path::Path};
@@ -56,7 +75,11 @@ impl DefaultConfigStore {
     for entry in std::fs::read_dir(config_dir).map_err(ConfigStoreError::IOError)? {
       let entry = entry?;
       let config_file = entry.path();
-      let extension = config_file.extension().unwrap_or_default().to_string_lossy().to_lowercase();
+      let extension = config_file
+        .extension()
+        .unwrap_or_default()
+        .to_string_lossy()
+        .to_lowercase();
 
       // Additional config files are loaded best-effort
       if config_file.is_file()
@@ -69,7 +92,10 @@ impl DefaultConfigStore {
             debug!("loaded config at path: {:?}", config_file);
           }
           Err(err) => {
-            error!("unable to load config at path: {:?}, with error: {}", config_file, err);
+            error!(
+              "unable to load config at path: {:?}, with error: {}",
+              config_file, err
+            );
           }
         }
       }

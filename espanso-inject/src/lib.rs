@@ -86,7 +86,7 @@ pub struct InjectorCreationOptions {
   // Only relevant in X11 Linux systems, use the EVDEV backend instead of X11.
   use_evdev: bool,
 
-  // Overwrite the list of modifiers to be scanned when 
+  // Overwrite the list of modifiers to be scanned when
   // populating the evdev injector lookup maps
   evdev_modifiers: Option<Vec<u32>>,
 
@@ -151,4 +151,3 @@ pub fn get_injector(options: InjectorCreationOptions) -> Result<Box<dyn Injector
   info!("using EVDEVInjector");
   Ok(Box::new(evdev::EVDEVInjector::new(options)?))
 }
-

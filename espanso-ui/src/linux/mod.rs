@@ -1,5 +1,5 @@
-use log::error;
 use anyhow::Result;
+use log::error;
 use notify_rust::Notification;
 use std::sync::mpsc;
 use std::sync::mpsc::{Receiver, Sender};

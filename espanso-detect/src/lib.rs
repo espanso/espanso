@@ -50,7 +50,7 @@ pub trait Source {
 pub struct SourceCreationOptions {
   // Only relevant in X11 Linux systems, use the EVDEV backend instead of X11.
   use_evdev: bool,
-  
+
   // Can be used to overwrite the keymap configuration
   // used by espanso to inject key presses.
   evdev_keyboard_rmlvo: Option<KeyboardConfig>,
@@ -107,4 +107,3 @@ pub fn get_source(options: SourceCreationOptions) -> Result<Box<dyn Source>> {
   info!("using EVDEVSource");
   Ok(Box::new(evdev::EVDEVSource::new(options)))
 }
-

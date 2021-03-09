@@ -19,13 +19,13 @@
 
 mod raw_keys;
 
-use log::{error};
+use log::error;
 use raw_keys::convert_key_to_vkey;
 
 use anyhow::Result;
 use thiserror::Error;
 
-use crate::{InjectionOptions, Injector, keys};
+use crate::{keys, InjectionOptions, Injector};
 
 #[allow(improper_ctypes)]
 #[link(name = "espansoinject", kind = "static")]
@@ -77,7 +77,11 @@ impl Injector for Win32Injector {
       }
     } else {
       unsafe {
-        inject_separate_vkeys_with_delay(virtual_keys.as_ptr(), virtual_keys.len() as i32, options.delay);
+        inject_separate_vkeys_with_delay(
+          virtual_keys.as_ptr(),
+          virtual_keys.len() as i32,
+          options.delay,
+        );
       }
     }
 
@@ -93,7 +97,11 @@ impl Injector for Win32Injector {
       }
     } else {
       unsafe {
-        inject_vkeys_combination_with_delay(virtual_keys.as_ptr(), virtual_keys.len() as i32, options.delay);
+        inject_vkeys_combination_with_delay(
+          virtual_keys.as_ptr(),
+          virtual_keys.len() as i32,
+          options.delay,
+        );
       }
     }
 
@@ -113,6 +121,9 @@ mod tests {
 
   #[test]
   fn convert_raw_to_virtual_key_array() {
-    assert_eq!(Win32Injector::convert_to_vk_array(&[keys::Key::Alt, keys::Key::V]).unwrap(), vec![0x12, 0x56]);
+    assert_eq!(
+      Win32Injector::convert_to_vk_array(&[keys::Key::Alt, keys::Key::V]).unwrap(),
+      vec![0x12, 0x56]
+    );
   }
 }

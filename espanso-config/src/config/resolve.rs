@@ -1,3 +1,22 @@
+/*
+ * This file is part of espanso.
+ *
+ * Copyright (C) 2019-2021 Federico Terzi
+ *
+ * espanso is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * espanso is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 use super::{parse::ParsedConfig, path::calculate_paths, util::os_matches, AppProperties, Config};
 use crate::merge;
 use anyhow::Result;
@@ -14,7 +33,6 @@ pub(crate) struct ResolvedConfig {
   parsed: ParsedConfig,
 
   // Generated properties
-  
   match_paths: Vec<String>,
 
   filter_title: Option<Regex>,
@@ -58,38 +76,35 @@ impl Config for ResolvedConfig {
       true
     };
 
-    let is_title_match =
-      if let Some(title_regex) = self.filter_title.as_ref() {
-        if let Some(title) = app.title {
-          title_regex.is_match(title)
-        } else {
-          false
-        }
+    let is_title_match = if let Some(title_regex) = self.filter_title.as_ref() {
+      if let Some(title) = app.title {
+        title_regex.is_match(title)
       } else {
-        true
-      };
+        false
+      }
+    } else {
+      true
+    };
 
-    let is_exec_match =
-      if let Some(exec_regex) = self.filter_exec.as_ref() {
-        if let Some(exec) = app.exec {
-          exec_regex.is_match(exec)
-        } else {
-          false
-        }
+    let is_exec_match = if let Some(exec_regex) = self.filter_exec.as_ref() {
+      if let Some(exec) = app.exec {
+        exec_regex.is_match(exec)
       } else {
-        true
-      };
+        false
+      }
+    } else {
+      true
+    };
 
-    let is_class_match =
-      if let Some(class_regex) = self.filter_class.as_ref() {
-        if let Some(class) = app.class {
-          class_regex.is_match(class)
-        } else {
-          false
-        }
+    let is_class_match = if let Some(class_regex) = self.filter_class.as_ref() {
+      if let Some(class) = app.class {
+        class_regex.is_match(class)
       } else {
-        true
-      };
+        false
+      }
+    } else {
+      true
+    };
 
     // All the filters that have been specified must be true to define a match
     is_os_match && is_exec_match && is_title_match && is_class_match
@@ -110,7 +125,9 @@ impl ResolvedConfig {
       .parent()
       .ok_or_else(ResolveError::ParentResolveFailed)?;
 
-    let match_paths = Self::generate_match_paths(&config, base_dir).into_iter().collect();
+    let match_paths = Self::generate_match_paths(&config, base_dir)
+      .into_iter()
+      .collect();
 
     let filter_title = if let Some(filter_title) = config.filter_title.as_deref() {
       Some(Regex::new(filter_title)?)
@@ -431,7 +448,7 @@ mod tests {
         sub_file.to_string_lossy().to_string(),
       ];
       expected.sort();
-      
+
       let mut result = config.match_paths().to_vec();
       result.sort();
 
@@ -491,9 +508,7 @@ mod tests {
       result.sort();
       assert_eq!(result, expected.as_slice());
 
-      let expected = vec![
-        base_file.to_string_lossy().to_string()
-      ];
+      let expected = vec![base_file.to_string_lossy().to_string()];
 
       assert_eq!(parent.match_paths(), expected.as_slice());
     });

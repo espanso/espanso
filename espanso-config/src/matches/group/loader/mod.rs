@@ -1,3 +1,22 @@
+/*
+ * This file is part of espanso.
+ *
+ * Copyright (C) 2019-2021 Federico Terzi
+ *
+ * espanso is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * espanso is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 use anyhow::Result;
 use std::path::Path;
 use thiserror::Error;
@@ -14,9 +33,7 @@ trait Importer {
 }
 
 lazy_static! {
-  static ref IMPORTERS: Vec<Box<dyn Importer + Sync + Send>> = vec![
-    Box::new(YAMLImporter::new()),
-  ];
+  static ref IMPORTERS: Vec<Box<dyn Importer + Sync + Send>> = vec![Box::new(YAMLImporter::new()),];
 }
 
 pub(crate) fn load_match_group(path: &Path) -> Result<MatchGroup> {
@@ -26,7 +43,7 @@ pub(crate) fn load_match_group(path: &Path) -> Result<MatchGroup> {
     let importer = IMPORTERS
       .iter()
       .find(|importer| importer.is_supported(&extension));
-    
+
     match importer {
       Some(importer) => match importer.load_group(path) {
         Ok(group) => Ok(group),
@@ -62,7 +79,13 @@ mod tests {
       let file = match_dir.join("base.invalid");
       std::fs::write(&file, "test").unwrap();
 
-      assert!(matches!(load_match_group(&file).unwrap_err().downcast::<LoadError>().unwrap(), LoadError::InvalidFormat()));
+      assert!(matches!(
+        load_match_group(&file)
+          .unwrap_err()
+          .downcast::<LoadError>()
+          .unwrap(),
+        LoadError::InvalidFormat()
+      ));
     });
   }
 
@@ -72,7 +95,13 @@ mod tests {
       let file = match_dir.join("base");
       std::fs::write(&file, "test").unwrap();
 
-      assert!(matches!(load_match_group(&file).unwrap_err().downcast::<LoadError>().unwrap(), LoadError::MissingExtension()));
+      assert!(matches!(
+        load_match_group(&file)
+          .unwrap_err()
+          .downcast::<LoadError>()
+          .unwrap(),
+        LoadError::MissingExtension()
+      ));
     });
   }
 
@@ -82,7 +111,13 @@ mod tests {
       let file = match_dir.join("base.yml");
       std::fs::write(&file, "test").unwrap();
 
-      assert!(matches!(load_match_group(&file).unwrap_err().downcast::<LoadError>().unwrap(), LoadError::ParsingError(_)));
+      assert!(matches!(
+        load_match_group(&file)
+          .unwrap_err()
+          .downcast::<LoadError>()
+          .unwrap(),
+        LoadError::ParsingError(_)
+      ));
     });
   }
 
@@ -90,11 +125,15 @@ mod tests {
   fn load_group_yaml_format() {
     use_test_directory(|_, match_dir, _| {
       let file = match_dir.join("base.yml");
-      std::fs::write(&file, r#"
+      std::fs::write(
+        &file,
+        r#"
       matches:
         - trigger: "hello"
           replace: "world"
-      "#).unwrap();
+      "#,
+      )
+      .unwrap();
 
       assert_eq!(load_match_group(&file).unwrap().matches.len(), 1);
     });
@@ -104,11 +143,15 @@ mod tests {
   fn load_group_yaml_format_2() {
     use_test_directory(|_, match_dir, _| {
       let file = match_dir.join("base.yaml");
-      std::fs::write(&file, r#"
+      std::fs::write(
+        &file,
+        r#"
       matches:
         - trigger: "hello"
           replace: "world"
-      "#).unwrap();
+      "#,
+      )
+      .unwrap();
 
       assert_eq!(load_match_group(&file).unwrap().matches.len(), 1);
     });
@@ -118,11 +161,15 @@ mod tests {
   fn load_group_yaml_format_casing() {
     use_test_directory(|_, match_dir, _| {
       let file = match_dir.join("base.YML");
-      std::fs::write(&file, r#"
+      std::fs::write(
+        &file,
+        r#"
       matches:
         - trigger: "hello"
           replace: "world"
-      "#).unwrap();
+      "#,
+      )
+      .unwrap();
 
       assert_eq!(load_match_group(&file).unwrap().matches.len(), 1);
     });
