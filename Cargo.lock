@@ -227,6 +227,7 @@ dependencies = [
  "espanso-config",
  "espanso-detect",
  "espanso-inject",
+ "espanso-match",
  "espanso-ui",
  "maplit",
  "simplelog",
@@ -293,6 +294,18 @@ dependencies = [
  "serde",
  "serde_json",
  "thiserror",
+]
+
+[[package]]
+name = "espanso-match"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "lazy_static",
+ "log",
+ "regex",
+ "thiserror",
+ "unicase",
 ]
 
 [[package]]
@@ -811,6 +824,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "unicase"
+version = "2.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "50f37be617794602aabbeee0be4f259dc1778fabe05e2d67ee8f79326d5cb4f6"
+dependencies = [
+ "version_check",
+]
+
+[[package]]
 name = "unicode-segmentation"
 version = "1.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -827,6 +849,12 @@ name = "unicode-xid"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f7fe0bb3479651439c9112f72b6c505038574c9fbb575ed1bf3b797fa39dd564"
+
+[[package]]
+name = "version_check"
+version = "0.9.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b5a972e5669d67ba988ce3dc826706fb0a8b01471c088cb0b6110b805cc36aed"
 
 [[package]]
 name = "wasi"
