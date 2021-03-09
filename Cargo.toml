@@ -7,4 +7,5 @@ members = [
   "espanso-inject",
   "espanso-ipc",
   "espanso-config",
+  "espanso-match",
 ]
