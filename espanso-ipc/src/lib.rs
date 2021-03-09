@@ -17,11 +17,11 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::path::Path;
 use anyhow::Result;
-use serde::{Serialize, de::DeserializeOwned};
+use crossbeam::channel::{unbounded, Receiver};
+use serde::{de::DeserializeOwned, Serialize};
+use std::path::Path;
 use thiserror::Error;
-use crossbeam::channel::{Receiver, unbounded};
 
 #[cfg(target_os = "windows")]
 pub mod windows;
@@ -39,7 +39,10 @@ pub trait IPCClient<Event> {
 }
 
 #[cfg(not(target_os = "windows"))]
-pub fn server<Event: Send + Sync + DeserializeOwned>(id: &str, parent_dir: &Path) -> Result<(impl IPCServer<Event>, Receiver<Event>)> {
+pub fn server<Event: Send + Sync + DeserializeOwned>(
+  id: &str,
+  parent_dir: &Path,
+) -> Result<(impl IPCServer<Event>, Receiver<Event>)> {
   let (sender, receiver) = unbounded();
   let server = unix::UnixIPCServer::new(id, parent_dir, sender)?;
   Ok((server, receiver))
@@ -52,7 +55,10 @@ pub fn client<Event: Serialize>(id: &str, parent_dir: &Path) -> Result<impl IPCC
 }
 
 #[cfg(target_os = "windows")]
-pub fn server<Event: Send + Sync + DeserializeOwned>(id: &str, _: &Path) -> Result<(impl IPCServer<Event>, Receiver<Event>)> {
+pub fn server<Event: Send + Sync + DeserializeOwned>(
+  id: &str,
+  _: &Path,
+) -> Result<(impl IPCServer<Event>, Receiver<Event>)> {
   let (sender, receiver) = unbounded();
   let server = windows::WinIPCServer::new(id, sender)?;
   Ok((server, receiver))
@@ -76,7 +82,7 @@ pub enum IPCServerError {
 #[cfg(test)]
 mod tests {
   use super::*;
-  use serde::{Serialize, Deserialize};
+  use serde::{Deserialize, Serialize};
 
   #[derive(Serialize, Deserialize)]
   enum Event {
@@ -93,10 +99,10 @@ mod tests {
 
     // TODO: avoid delay and change the IPC code so that we can wait for the IPC
     //std::thread::sleep(std::time::Duration::from_secs(1));
-    
+
     let client = client::<Event>("testespansoipc", &std::env::temp_dir()).unwrap();
     client.send(Event::Foo("hello".to_string())).unwrap();
-    
+
     let event = receiver.recv().unwrap();
     assert!(matches!(event, Event::Foo(x) if x == "hello"));
 

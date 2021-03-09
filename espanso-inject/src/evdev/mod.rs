@@ -25,7 +25,7 @@ mod uinput;
 
 use std::{
   collections::{HashMap, HashSet},
-  ffi::{CString},
+  ffi::CString,
 };
 
 use context::Context;
@@ -34,10 +34,7 @@ use log::error;
 use std::iter::FromIterator;
 use uinput::UInputDevice;
 
-use crate::{
-  linux::raw_keys::{convert_to_sym_array},
-  InjectorCreationOptions,
-};
+use crate::{linux::raw_keys::convert_to_sym_array, InjectorCreationOptions};
 use anyhow::Result;
 use itertools::Itertools;
 use thiserror::Error;
@@ -120,7 +117,8 @@ impl EVDEVInjector {
     }
 
     let context = Context::new().expect("unable to obtain xkb context");
-    let keymap = Keymap::new(&context, options.evdev_keyboard_rmlvo).expect("unable to create xkb keymap");
+    let keymap =
+      Keymap::new(&context, options.evdev_keyboard_rmlvo).expect("unable to create xkb keymap");
 
     let (char_map, sym_map) =
       Self::generate_maps(&modifiers, max_modifier_combination_len, &keymap)?;
@@ -294,7 +292,7 @@ impl Injector for EVDEVInjector {
     // Compute all the key record sequence first to make sure a mapping is available
     let syms = convert_to_sym_array(keys)?;
     let records = self.convert_to_record_array(&syms)?;
-    
+
     let delay_us = options.delay as u32 * 1000; // Convert to micro seconds
 
     // First press the keys

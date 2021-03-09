@@ -1,3 +1,22 @@
+/*
+ * This file is part of espanso.
+ *
+ * Copyright (C) 2019-2021 Federico Terzi
+ *
+ * espanso is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * espanso is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 use crate::matches::{
   group::{path::resolve_imports, MatchGroup},
   Match, Variable,
@@ -140,9 +159,9 @@ impl TryFrom<YAMLVariable> for Variable {
 #[cfg(test)]
 mod tests {
   use super::*;
-  use std::fs::create_dir_all;
-  use serde_yaml::{Mapping, Value};
   use crate::{matches::Match, util::tests::use_test_directory};
+  use serde_yaml::{Mapping, Value};
+  use std::fs::create_dir_all;
 
   fn create_match(yaml: &str) -> Result<Match> {
     let yaml_match: YAMLMatch = serde_yaml::from_str(yaml)?;
@@ -388,7 +407,9 @@ mod tests {
       create_dir_all(&sub_dir).unwrap();
 
       let base_file = match_dir.join("base.yml");
-      std::fs::write(&base_file, r#"
+      std::fs::write(
+        &base_file,
+        r#"
       imports:
         - "sub/sub.yml"
         - "invalid/import.yml" # This should be discarded
@@ -400,14 +421,16 @@ mod tests {
       matches:
         - trigger: "hello"
           replace: "world"
-      "#).unwrap();
+      "#,
+      )
+      .unwrap();
 
       let sub_file = sub_dir.join("sub.yml");
-      std::fs::write(&sub_file, "").unwrap(); 
-      
+      std::fs::write(&sub_file, "").unwrap();
+
       let importer = YAMLImporter::new();
       let group = importer.load_group(&base_file).unwrap();
-      
+
       let vars = vec![Variable {
         name: "var1".to_string(),
         var_type: "test".to_string(),
@@ -418,23 +441,19 @@ mod tests {
       assert_eq!(
         group,
         MatchGroup {
-          imports: vec![
-            sub_file.to_string_lossy().to_string(),
-          ],
+          imports: vec![sub_file.to_string_lossy().to_string(),],
           global_vars: vars,
-          matches: vec![
-            Match {
-              cause: MatchCause::Trigger(TriggerCause {
-                triggers: vec!["hello".to_string()],
-                ..Default::default()
-              }),
-              effect: MatchEffect::Text(TextEffect {
-                replace: "world".to_string(),
-                ..Default::default()
-              }),
+          matches: vec![Match {
+            cause: MatchCause::Trigger(TriggerCause {
+              triggers: vec!["hello".to_string()],
               ..Default::default()
-            }
-          ],
+            }),
+            effect: MatchEffect::Text(TextEffect {
+              replace: "world".to_string(),
+              ..Default::default()
+            }),
+            ..Default::default()
+          }],
         }
       )
     });

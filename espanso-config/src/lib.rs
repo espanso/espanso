@@ -17,24 +17,24 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::path::Path;
+use anyhow::Result;
 use config::ConfigStore;
 use matches::store::MatchStore;
-use anyhow::Result;
+use std::path::Path;
 use thiserror::Error;
 
 #[macro_use]
 extern crate lazy_static;
 
-mod util;
-mod counter;
 pub mod config;
+mod counter;
 pub mod matches;
+mod util;
 
 pub fn load(base_path: &Path) -> Result<(impl ConfigStore, impl MatchStore)> {
   let config_dir = base_path.join("config");
   if !config_dir.exists() || !config_dir.is_dir() {
-    return Err(ConfigError::MissingConfigDir().into())
+    return Err(ConfigError::MissingConfigDir().into());
   }
 
   let config_store = config::load_store(&config_dir)?;
@@ -55,62 +55,100 @@ pub enum ConfigError {
 #[cfg(test)]
 mod tests {
   use super::*;
-  use config::{AppProperties, ConfigStore};
   use crate::util::tests::use_test_directory;
+  use config::{AppProperties, ConfigStore};
 
   #[test]
   fn load_works_correctly() {
     use_test_directory(|base, match_dir, config_dir| {
       let base_file = match_dir.join("base.yml");
-      std::fs::write(&base_file, r#"
+      std::fs::write(
+        &base_file,
+        r#"
       matches:
         - trigger: "hello"
           replace: "world"
-      "#).unwrap();
+      "#,
+      )
+      .unwrap();
 
       let another_file = match_dir.join("another.yml");
-      std::fs::write(&another_file, r#"
+      std::fs::write(
+        &another_file,
+        r#"
       imports:
         - "_sub.yml"
 
       matches:
         - trigger: "hello2"
           replace: "world2"
-      "#).unwrap();
-      
+      "#,
+      )
+      .unwrap();
+
       let under_file = match_dir.join("_sub.yml");
-      std::fs::write(&under_file, r#"
+      std::fs::write(
+        &under_file,
+        r#"
       matches:
         - trigger: "hello3"
           replace: "world3"
-      "#).unwrap();
+      "#,
+      )
+      .unwrap();
 
       let config_file = config_dir.join("default.yml");
       std::fs::write(&config_file, "").unwrap();
 
       let custom_config_file = config_dir.join("custom.yml");
-      std::fs::write(&custom_config_file, r#"
+      std::fs::write(
+        &custom_config_file,
+        r#"
       filter_title: "Chrome"
 
       use_standard_includes: false
       includes: ["../match/another.yml"]
-      "#).unwrap();
+      "#,
+      )
+      .unwrap();
 
       let (config_store, match_store) = load(&base).unwrap();
 
       assert_eq!(config_store.default().match_paths().len(), 2);
-      assert_eq!(config_store.active(&AppProperties {
-        title: Some("Google Chrome"),
-        class: None,
-        exec: None,
-      }).match_paths().len(), 1);
+      assert_eq!(
+        config_store
+          .active(&AppProperties {
+            title: Some("Google Chrome"),
+            class: None,
+            exec: None,
+          })
+          .match_paths()
+          .len(),
+        1
+      );
 
-      assert_eq!(match_store.query(config_store.default().match_paths()).matches.len(), 3);
-      assert_eq!(match_store.query(config_store.active(&AppProperties {
-        title: Some("Chrome"),
-        class: None,
-        exec: None,
-      }).match_paths()).matches.len(), 2);
+      assert_eq!(
+        match_store
+          .query(config_store.default().match_paths())
+          .matches
+          .len(),
+        3
+      );
+      assert_eq!(
+        match_store
+          .query(
+            config_store
+              .active(&AppProperties {
+                title: Some("Chrome"),
+                class: None,
+                exec: None,
+              })
+              .match_paths()
+          )
+          .matches
+          .len(),
+        2
+      );
     });
   }
 

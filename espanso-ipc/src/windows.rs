@@ -22,9 +22,7 @@ use crossbeam::channel::Sender;
 use log::{error, info};
 use named_pipe::{PipeClient, PipeOptions};
 use serde::{de::DeserializeOwned, Serialize};
-use std::{
-  io::{BufReader, Read, Write},
-};
+use std::io::{BufReader, Read, Write};
 
 use crate::{IPCClient, IPCServer, IPCServerError};
 
@@ -41,10 +39,7 @@ impl<Event> WinIPCServer<Event> {
 
     let options = PipeOptions::new(&pipe_name);
 
-    info!(
-      "binded to named pipe: {}",
-      pipe_name
-    );
+    info!("binded to named pipe: {}", pipe_name);
 
     Ok(Self { options, sender })
   }
@@ -116,4 +111,3 @@ impl<Event: Serialize> IPCClient<Event> for WinIPCClient {
     Ok(())
   }
 }
-

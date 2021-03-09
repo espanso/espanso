@@ -1,5 +1,5 @@
-use icons::TrayIcon;
 use anyhow::Result;
+use icons::TrayIcon;
 use thiserror::Error;
 
 pub mod event;
@@ -48,14 +48,15 @@ pub fn create_ui(options: UIOptions) -> Result<(Box<dyn UIRemote>, Box<dyn UIEve
   let (remote, eventloop) = win32::create(win32::Win32UIOptions {
     show_icon: options.show_icon,
     icon_paths: &options.icon_paths,
-    notification_icon_path: options.notification_icon_path.ok_or_else(|| UIError::MissingOption("notification icon".to_string()))?,
+    notification_icon_path: options
+      .notification_icon_path
+      .ok_or_else(|| UIError::MissingOption("notification icon".to_string()))?,
   })?;
   Ok((Box::new(remote), Box::new(eventloop)))
 }
 
 #[cfg(target_os = "macos")]
-pub fn create_ui(options: UIOptions) -> Result<(Box<dyn UIRemote>, Box<dyn 
-  UIEventLoop>)> {
+pub fn create_ui(options: UIOptions) -> Result<(Box<dyn UIRemote>, Box<dyn UIEventLoop>)> {
   let (remote, eventloop) = mac::create(mac::MacUIOptions {
     show_icon: options.show_icon,
     icon_paths: &options.icon_paths,
@@ -66,7 +67,9 @@ pub fn create_ui(options: UIOptions) -> Result<(Box<dyn UIRemote>, Box<dyn
 #[cfg(target_os = "linux")]
 pub fn create_ui(options: UIOptions) -> Result<(Box<dyn UIRemote>, Box<dyn UIEventLoop>)> {
   let (remote, eventloop) = linux::create(linux::LinuxUIOptions {
-    notification_icon_path: options.notification_icon_path.ok_or_else(|| UIError::MissingOption("notification icon".to_string()))?,
+    notification_icon_path: options
+      .notification_icon_path
+      .ok_or_else(|| UIError::MissingOption("notification icon".to_string()))?,
   });
   Ok((Box::new(remote), Box::new(eventloop)))
 }

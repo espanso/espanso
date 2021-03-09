@@ -31,10 +31,10 @@ use log::{error, trace, warn};
 use anyhow::Result;
 use thiserror::Error;
 
-use crate::{Source, SourceCallback, event::Status::*};
 use crate::event::Variant::*;
 use crate::event::{InputEvent, Key, KeyboardEvent, Variant};
 use crate::event::{Key::*, MouseButton, MouseEvent};
+use crate::{event::Status::*, Source, SourceCallback};
 
 const INPUT_EVENT_TYPE_KEYBOARD: i32 = 1;
 const INPUT_EVENT_TYPE_MOUSE: i32 = 2;
@@ -97,8 +97,6 @@ impl CocoaSource {
       receiver: LazyCell::new(),
     }
   }
-
-  
 }
 
 impl Source for CocoaSource {
@@ -139,7 +137,7 @@ impl Source for CocoaSource {
       }
     } else {
       error!("Unable to start event loop if CocoaSource receiver is null");
-      return Err(CocoaSourceError::Unknown().into())
+      return Err(CocoaSourceError::Unknown().into());
     }
 
     Ok(())

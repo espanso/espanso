@@ -1,7 +1,10 @@
 use std::time::Duration;
 
-use espanso_detect::{event::{InputEvent, Status}, get_source};
-use espanso_inject::{get_injector, Injector, keys};
+use espanso_detect::{
+  event::{InputEvent, Status},
+  get_source,
+};
+use espanso_inject::{get_injector, keys, Injector};
 use espanso_ui::{event::UIEvent::*, icons::TrayIcon, menu::*};
 use simplelog::{CombinedLogger, Config, LevelFilter, TermLogger, TerminalMode};
 
@@ -49,9 +52,12 @@ fn main() {
   //   icon_paths: &icon_paths,
   // });
   let (remote, mut eventloop) = espanso_ui::create_ui(espanso_ui::UIOptions {
-    notification_icon_path: Some(r"C:\Users\Freddy\Insync\Development\Espanso\Images\icongreensmall.png".to_string()),
+    notification_icon_path: Some(
+      r"C:\Users\Freddy\Insync\Development\Espanso\Images\icongreensmall.png".to_string(),
+    ),
     ..Default::default()
-  }).unwrap();
+  })
+  .unwrap();
 
   eventloop.initialize().unwrap();
 
@@ -59,21 +65,25 @@ fn main() {
     let injector = get_injector(Default::default()).unwrap();
     let mut source = get_source(Default::default()).unwrap();
     source.initialize().unwrap();
-    source.eventloop(Box::new(move |event: InputEvent| {
-      println!("ev {:?}", event);
-      match event {
-        InputEvent::Mouse(_) => {}
-        InputEvent::Keyboard(evt) => {
-          if evt.key == espanso_detect::event::Key::Escape && evt.status == Status::Released {
-            //remote.update_tray_icon(espanso_ui::icons::TrayIcon::Disabled);
-            //remote.show_notification("Espanso is running!");
-            injector.send_string("Hey guys! @", Default::default()).expect("error");
-            //std::thread::sleep(std::time::Duration::from_secs(2));
-            //injector.send_key_combination(&[keys::Key::Control, keys::Key::V], Default::default()).unwrap();
+    source
+      .eventloop(Box::new(move |event: InputEvent| {
+        println!("ev {:?}", event);
+        match event {
+          InputEvent::Mouse(_) => {}
+          InputEvent::Keyboard(evt) => {
+            if evt.key == espanso_detect::event::Key::Escape && evt.status == Status::Released {
+              //remote.update_tray_icon(espanso_ui::icons::TrayIcon::Disabled);
+              //remote.show_notification("Espanso is running!");
+              injector
+                .send_string("Hey guys! @", Default::default())
+                .expect("error");
+              //std::thread::sleep(std::time::Duration::from_secs(2));
+              //injector.send_key_combination(&[keys::Key::Control, keys::Key::V], Default::default()).unwrap();
+            }
           }
         }
-      }
-    })).unwrap();
+      }))
+      .unwrap();
   });
 
   eventloop.run(Box::new(move |event| {

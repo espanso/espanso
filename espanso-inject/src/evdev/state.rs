@@ -8,7 +8,13 @@ use scopeguard::ScopeGuard;
 use anyhow::Result;
 use thiserror::Error;
 
-use super::{ffi::{xkb_state, xkb_state_key_get_one_sym, xkb_state_key_get_utf8, xkb_state_new, xkb_state_unref, xkb_state_update_key}, keymap::Keymap};
+use super::{
+  ffi::{
+    xkb_state, xkb_state_key_get_one_sym, xkb_state_key_get_utf8, xkb_state_new, xkb_state_unref,
+    xkb_state_update_key,
+  },
+  keymap::Keymap,
+};
 
 pub struct State {
   state: *mut xkb_state,
