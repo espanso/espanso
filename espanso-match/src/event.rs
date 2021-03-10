@@ -21,7 +21,7 @@
 pub enum Event {
   Key {
     key: Key, 
-    char: Option<String>
+    chars: Option<String>
   },
   VirtualSeparator,
 }

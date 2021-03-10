@@ -18,6 +18,7 @@
  */
 
 use std::any::Any;
+use event::Event;
 
 #[macro_use]
 extern crate lazy_static;
@@ -25,7 +26,6 @@ extern crate lazy_static;
 pub mod event;
 pub mod rolling;
 
-pub trait Matcher {
-  // TODO: create suitable event type
-  fn process(&self, prev_state: Option<&dyn Any>, event: Option<bool>) -> (Box<dyn Any>,  Vec<i32>);
+pub trait Matcher<'a, State, Id> where Id: Clone {
+  fn process(&'a self, prev_state: Option<&'a State>, event: Event) -> (State,  Vec<Id>);
 }
