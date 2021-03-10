@@ -21,26 +21,37 @@ use unicase::UniCase;
 
 use crate::event::Key;
 
-use super::item::RollingItem;
+use super::RollingItem;
 
 #[derive(Debug)]
-pub(crate) enum MatcherTreeRef {
-  Matches(Vec<i32>),
-  Node(Box<MatcherTreeNode>),
+pub(crate) enum MatcherTreeRef<Id> {
+  Matches(Vec<Id>),
+  Node(Box<MatcherTreeNode<Id>>),
 }
 
 #[derive(Debug)]
-pub(crate) struct MatcherTreeNode {
-  pub word_separators: Option<MatcherTreeRef>,
-  pub keys: Vec<(Key, MatcherTreeRef)>,
-  pub chars: Vec<(String, MatcherTreeRef)>,
-  pub chars_insensitive: Vec<(UniCase<String>, MatcherTreeRef)>,
+pub(crate) struct MatcherTreeNode<Id> {
+  pub word_separators: Option<MatcherTreeRef<Id>>,
+  pub keys: Vec<(Key, MatcherTreeRef<Id>)>,
+  pub chars: Vec<(String, MatcherTreeRef<Id>)>,
+  pub chars_insensitive: Vec<(UniCase<String>, MatcherTreeRef<Id>)>,
 }
 
-impl MatcherTreeNode {
-  // TODO: test
-  pub fn from_items(items: &[RollingItem]) -> MatcherTreeNode {
-    todo!()
+impl <Id> Default for MatcherTreeNode<Id> {
+  fn default() -> Self {
+    Self {
+      word_separators: None,
+      keys: Vec::new(),
+      chars: Vec::new(),
+      chars_insensitive: Vec::new(),
+    }
   }
 }
 
+impl <Id> MatcherTreeNode<Id> {
+  // TODO: test
+  pub fn from_items(items: &[RollingItem]) -> MatcherTreeNode<Id> {
+    // TODO: implement the tree building algorithm
+    todo!()
+  }
+}
