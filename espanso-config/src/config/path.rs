@@ -24,7 +24,7 @@ use log::error;
 use regex::Regex;
 
 lazy_static! {
-  static ref ABSOLUTE_PATH: Regex = Regex::new(r"(?m)^([a-zA-Z]:/|/).*$").unwrap();
+  static ref ABSOLUTE_PATH: Regex = Regex::new(r"(?m)^([a-zA-Z]:\\|/).*$").unwrap();
 }
 
 pub fn calculate_paths<'a>(
