@@ -21,15 +21,15 @@ use unicase::UniCase;
 
 use crate::event::Key;
 
-use super::RollingItem;
+use super::{RollingItem, RollingMatch};
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub(crate) enum MatcherTreeRef<Id> {
   Matches(Vec<Id>),
   Node(Box<MatcherTreeNode<Id>>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub(crate) struct MatcherTreeNode<Id> {
   pub word_separators: Option<MatcherTreeRef<Id>>,
   pub keys: Vec<(Key, MatcherTreeRef<Id>)>,
@@ -37,7 +37,7 @@ pub(crate) struct MatcherTreeNode<Id> {
   pub chars_insensitive: Vec<(UniCase<String>, MatcherTreeRef<Id>)>,
 }
 
-impl <Id> Default for MatcherTreeNode<Id> {
+impl<Id> Default for MatcherTreeNode<Id> {
   fn default() -> Self {
     Self {
       word_separators: None,
@@ -48,10 +48,312 @@ impl <Id> Default for MatcherTreeNode<Id> {
   }
 }
 
-impl <Id> MatcherTreeNode<Id> {
-  // TODO: test
-  pub fn from_items(items: &[RollingItem]) -> MatcherTreeNode<Id> {
-    // TODO: implement the tree building algorithm
-    todo!()
+impl<Id> MatcherTreeNode<Id>
+where
+  Id: Clone,
+{
+  pub fn from_matches(matches: &[RollingMatch<Id>]) -> MatcherTreeNode<Id> {
+    let mut root = MatcherTreeNode::default();
+    for m in matches {
+      insert_items_recursively(m.id.clone(), &mut root, &m.items);
+    }
+    root
+  }
+}
+
+fn insert_items_recursively<Id>(id: Id, node: &mut MatcherTreeNode<Id>, items: &[RollingItem]) {
+  if items.is_empty() {
+    return;
+  }
+
+  if items.len() == 1 {
+    let item = items.get(0).unwrap();
+    match item {
+      RollingItem::WordSeparator => {
+        let mut new_matches = Vec::new();
+        if let Some(node_ref) = node.word_separators.take() {
+          if let MatcherTreeRef::Matches(matches) = node_ref {
+            new_matches.extend(matches);
+          }
+        }
+        new_matches.push(id);
+        node.word_separators = Some(MatcherTreeRef::Matches(new_matches))
+      }
+      RollingItem::Key(key) => {
+        if let Some(entry) = node.keys.iter_mut().find(|(_key, _)| _key == key) {
+          if let MatcherTreeRef::Matches(matches) = &mut entry.1 {
+            matches.push(id)
+          } else {
+            entry.1 = MatcherTreeRef::Matches(vec![id])
+          };
+        } else {
+          node
+            .keys
+            .push((key.clone(), MatcherTreeRef::Matches(vec![id])));
+        }
+      }
+      RollingItem::Char(c) => {
+        if let Some(entry) = node.chars.iter_mut().find(|(_c, _)| _c == c) {
+          if let MatcherTreeRef::Matches(matches) = &mut entry.1 {
+            matches.push(id)
+          } else {
+            entry.1 = MatcherTreeRef::Matches(vec![id])
+          };
+        } else {
+          node
+            .chars
+            .push((c.clone(), MatcherTreeRef::Matches(vec![id])));
+        }
+      }
+      RollingItem::CharInsensitive(c) => {
+        let uni_char = UniCase::new(c.clone());
+        if let Some(entry) = node
+          .chars_insensitive
+          .iter_mut()
+          .find(|(_c, _)| _c == &uni_char)
+        {
+          if let MatcherTreeRef::Matches(matches) = &mut entry.1 {
+            matches.push(id)
+          } else {
+            entry.1 = MatcherTreeRef::Matches(vec![id])
+          };
+        } else {
+          node
+            .chars_insensitive
+            .push((uni_char, MatcherTreeRef::Matches(vec![id])));
+        }
+      }
+    }
+  } else {
+    let item = items.get(0).unwrap();
+    match item {
+      RollingItem::WordSeparator => match node.word_separators.as_mut() {
+        Some(MatcherTreeRef::Node(next_node)) => {
+          insert_items_recursively(id, next_node.as_mut(), &items[1..])
+        }
+        None => {
+          let mut next_node = Box::new(MatcherTreeNode::default());
+          insert_items_recursively(id, next_node.as_mut(), &items[1..]);
+          node.word_separators = Some(MatcherTreeRef::Node(next_node));
+        }
+        _ => {}
+      },
+      RollingItem::Key(key) => {
+        if let Some(entry) = node.keys.iter_mut().find(|(_key, _)| _key == key) {
+          if let MatcherTreeRef::Node(next_node) = &mut entry.1 {
+            insert_items_recursively(id, next_node, &items[1..])
+          }
+        } else {
+          let mut next_node = Box::new(MatcherTreeNode::default());
+          insert_items_recursively(id, next_node.as_mut(), &items[1..]);
+          node
+            .keys
+            .push((key.clone(), MatcherTreeRef::Node(next_node)));
+        }
+      }
+      RollingItem::Char(c) => {
+        if let Some(entry) = node.chars.iter_mut().find(|(_c, _)| _c == c) {
+          if let MatcherTreeRef::Node(next_node) = &mut entry.1 {
+            insert_items_recursively(id, next_node, &items[1..])
+          }
+        } else {
+          let mut next_node = Box::new(MatcherTreeNode::default());
+          insert_items_recursively(id, next_node.as_mut(), &items[1..]);
+          node
+            .chars
+            .push((c.clone(), MatcherTreeRef::Node(next_node)));
+        }
+      }
+      RollingItem::CharInsensitive(c) => {
+        let uni_char = UniCase::new(c.clone());
+        if let Some(entry) = node
+          .chars_insensitive
+          .iter_mut()
+          .find(|(_c, _)| _c == &uni_char)
+        {
+          if let MatcherTreeRef::Node(next_node) = &mut entry.1 {
+            insert_items_recursively(id, next_node, &items[1..])
+          }
+        } else {
+          let mut next_node = Box::new(MatcherTreeNode::default());
+          insert_items_recursively(id, next_node.as_mut(), &items[1..]);
+          node
+            .chars_insensitive
+            .push((uni_char, MatcherTreeRef::Node(next_node)));
+        }
+      }
+    }
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+  use crate::rolling::StringMatchOptions;
+
+  #[test]
+  fn generate_tree_from_items_simple_strings() {
+    let root = MatcherTreeNode::from_matches(&[
+      RollingMatch::from_string(1, "hi", &StringMatchOptions::default()),
+      RollingMatch::from_string(2, "hey", &StringMatchOptions::default()),
+      RollingMatch::from_string(3, "my", &StringMatchOptions::default()),
+      RollingMatch::from_string(4, "myself", &StringMatchOptions::default()),
+    ]);
+
+    assert_eq!(
+      root,
+      MatcherTreeNode {
+        chars: vec![
+          (
+            "h".to_string(),
+            MatcherTreeRef::Node(Box::new(MatcherTreeNode {
+              chars: vec![
+                ("i".to_string(), MatcherTreeRef::Matches(vec![1])),
+                (
+                  "e".to_string(),
+                  MatcherTreeRef::Node(Box::new(MatcherTreeNode {
+                    chars: vec![("y".to_string(), MatcherTreeRef::Matches(vec![2]))],
+                    ..Default::default()
+                  }))
+                ),
+              ],
+              ..Default::default()
+            }))
+          ),
+          (
+            "m".to_string(),
+            MatcherTreeRef::Node(Box::new(MatcherTreeNode {
+              chars: vec![("y".to_string(), MatcherTreeRef::Matches(vec![3])),],
+              ..Default::default()
+            }))
+          )
+        ],
+        ..Default::default()
+      }
+    )
+  }
+
+  #[test]
+  fn generate_tree_from_items_keys() {
+    let root = MatcherTreeNode::from_matches(&[
+      RollingMatch::from_items(
+        1,
+        &[
+          RollingItem::Key(Key::ArrowUp),
+          RollingItem::Key(Key::ArrowLeft),
+        ],
+      ),
+      RollingMatch::from_items(
+        2,
+        &[
+          RollingItem::Key(Key::ArrowUp),
+          RollingItem::Key(Key::ArrowRight),
+        ],
+      ),
+    ]);
+
+    assert_eq!(
+      root,
+      MatcherTreeNode {
+        keys: vec![(
+          Key::ArrowUp,
+          MatcherTreeRef::Node(Box::new(MatcherTreeNode {
+            keys: vec![
+              (Key::ArrowLeft, MatcherTreeRef::Matches(vec![1])),
+              (Key::ArrowRight, MatcherTreeRef::Matches(vec![2])),
+            ],
+            ..Default::default()
+          }))
+        ),],
+        ..Default::default()
+      }
+    )
+  }
+
+  #[test]
+  fn generate_tree_from_items_mixed() {
+    let root = MatcherTreeNode::from_matches(&[
+      RollingMatch::from_items(
+        1,
+        &[
+          RollingItem::Key(Key::ArrowUp),
+          RollingItem::Key(Key::ArrowLeft),
+        ],
+      ),
+      RollingMatch::from_string(
+        2,
+        "my",
+        &StringMatchOptions {
+          left_word: true,
+          ..Default::default()
+        },
+      ),
+      RollingMatch::from_string(
+        3,
+        "hi",
+        &StringMatchOptions {
+          left_word: true,
+          right_word: true,
+          ..Default::default()
+        },
+      ),
+      RollingMatch::from_string(
+        4,
+        "no",
+        &StringMatchOptions {
+          case_insensitive: true,
+          ..Default::default()
+        },
+      ),
+    ]);
+
+    assert_eq!(
+      root,
+      MatcherTreeNode {
+        keys: vec![(
+          Key::ArrowUp,
+          MatcherTreeRef::Node(Box::new(MatcherTreeNode {
+            keys: vec![(Key::ArrowLeft, MatcherTreeRef::Matches(vec![1])),],
+            ..Default::default()
+          }))
+        ),],
+        word_separators: Some(MatcherTreeRef::Node(Box::new(MatcherTreeNode {
+          chars: vec![
+            (
+              "m".to_string(),
+              MatcherTreeRef::Node(Box::new(MatcherTreeNode {
+                chars: vec![("y".to_string(), MatcherTreeRef::Matches(vec![2])),],
+                ..Default::default()
+              }))
+            ),
+            (
+              "h".to_string(),
+              MatcherTreeRef::Node(Box::new(MatcherTreeNode {
+                chars: vec![(
+                  "i".to_string(),
+                  MatcherTreeRef::Node(Box::new(MatcherTreeNode {
+                    word_separators: Some(MatcherTreeRef::Matches(vec![3])),
+                    ..Default::default()
+                  }))
+                ),],
+                ..Default::default()
+              }))
+            ),
+          ],
+          ..Default::default()
+        }))),
+        chars_insensitive: vec![(
+          UniCase::new("n".to_string()),
+          MatcherTreeRef::Node(Box::new(MatcherTreeNode {
+            chars_insensitive: vec![(
+              UniCase::new("o".to_string()),
+              MatcherTreeRef::Matches(vec![4])
+            ),],
+            ..Default::default()
+          }))
+        ),],
+        ..Default::default()
+      }
+    )
   }
 }

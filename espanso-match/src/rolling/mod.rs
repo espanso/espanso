@@ -22,7 +22,7 @@ use crate::event::Key;
 mod matcher;
 mod tree;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum RollingItem {
   WordSeparator,
   Key(Key),
@@ -67,6 +67,13 @@ impl<Id> RollingMatch<Id> {
     }
 
     Self { id, items }
+  }
+
+  pub fn from_items(id: Id, items: &[RollingItem]) -> Self {
+    Self {
+      id,
+      items: items.to_vec(),
+    }
   }
 }
 

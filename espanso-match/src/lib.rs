@@ -17,7 +17,6 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::any::Any;
 use event::Event;
 
 #[macro_use]
@@ -27,5 +26,5 @@ pub mod event;
 pub mod rolling;
 
 pub trait Matcher<'a, State, Id> where Id: Clone {
-  fn process(&'a self, prev_state: Option<&'a State>, event: Event) -> (State,  Vec<Id>);
+  fn process(&'a self, prev_state: Option<&State>, event: Event) -> (State,  Vec<Id>);
 }
