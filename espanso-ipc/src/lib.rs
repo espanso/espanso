@@ -98,7 +98,7 @@ mod tests {
     });
 
     // TODO: avoid delay and change the IPC code so that we can wait for the IPC
-    //std::thread::sleep(std::time::Duration::from_secs(1));
+    std::thread::sleep(std::time::Duration::from_millis(300));
 
     let client = client::<Event>("testespansoipc", &std::env::temp_dir()).unwrap();
     client.send(Event::Foo("hello".to_string())).unwrap();
