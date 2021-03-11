@@ -26,7 +26,7 @@ pub enum Event {
   VirtualSeparator,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Key {
   // Modifiers
   Alt,
