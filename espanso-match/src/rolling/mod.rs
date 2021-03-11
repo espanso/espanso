@@ -32,8 +32,8 @@ pub enum RollingItem {
 
 #[derive(Debug, PartialEq)]
 pub struct RollingMatch<Id> {
-  id: Id,
-  items: Vec<RollingItem>,
+  pub id: Id,
+  pub items: Vec<RollingItem>,
 }
 
 impl<Id> RollingMatch<Id> {

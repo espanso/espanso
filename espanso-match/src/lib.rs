@@ -24,7 +24,9 @@ extern crate lazy_static;
 
 pub mod event;
 pub mod rolling;
+pub mod regex;
 
+// TODO: instead of returning Vec<Id>, return a Vec of structs which contain Id, trigger string and variables(if any)
 pub trait Matcher<'a, State, Id> where Id: Clone {
   fn process(&'a self, prev_state: Option<&State>, event: Event) -> (State,  Vec<Id>);
 }
