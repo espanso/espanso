@@ -41,33 +41,84 @@ mod tests {
 
   #[test]
   fn extract_string_from_events_all_chars() {
-    assert_eq!(extract_string_from_events(&[
-      Event::Key { key: Key::Other, chars: Some("h".to_string()) },
-      Event::Key { key: Key::Other, chars: Some("e".to_string()) },
-      Event::Key { key: Key::Other, chars: Some("l".to_string()) },
-      Event::Key { key: Key::Other, chars: Some("l".to_string()) },
-      Event::Key { key: Key::Other, chars: Some("o".to_string()) },
-    ]), "hello");
+    assert_eq!(
+      extract_string_from_events(&[
+        Event::Key {
+          key: Key::Other,
+          chars: Some("h".to_string())
+        },
+        Event::Key {
+          key: Key::Other,
+          chars: Some("e".to_string())
+        },
+        Event::Key {
+          key: Key::Other,
+          chars: Some("l".to_string())
+        },
+        Event::Key {
+          key: Key::Other,
+          chars: Some("l".to_string())
+        },
+        Event::Key {
+          key: Key::Other,
+          chars: Some("o".to_string())
+        },
+      ]),
+      "hello"
+    );
   }
 
   #[test]
   fn extract_string_from_events_no_chars() {
-    assert_eq!(extract_string_from_events(&[
-      Event::Key { key: Key::ArrowUp, chars: None },
-      Event::Key { key: Key::ArrowUp, chars: None },
-      Event::Key { key: Key::ArrowUp, chars: None },
-    ]), "");
+    assert_eq!(
+      extract_string_from_events(&[
+        Event::Key {
+          key: Key::ArrowUp,
+          chars: None
+        },
+        Event::Key {
+          key: Key::ArrowUp,
+          chars: None
+        },
+        Event::Key {
+          key: Key::ArrowUp,
+          chars: None
+        },
+      ]),
+      ""
+    );
   }
 
   #[test]
   fn extract_string_from_events_mixed() {
-    assert_eq!(extract_string_from_events(&[
-      Event::Key { key: Key::Other, chars: Some("h".to_string()) },
-      Event::Key { key: Key::Other, chars: Some("e".to_string()) },
-      Event::Key { key: Key::Other, chars: Some("l".to_string()) },
-      Event::Key { key: Key::Other, chars: Some("l".to_string()) },
-      Event::Key { key: Key::Other, chars: Some("o".to_string()) },
-      Event::Key { key: Key::ArrowUp, chars: None },
-    ]), "hello");
+    assert_eq!(
+      extract_string_from_events(&[
+        Event::Key {
+          key: Key::Other,
+          chars: Some("h".to_string())
+        },
+        Event::Key {
+          key: Key::Other,
+          chars: Some("e".to_string())
+        },
+        Event::Key {
+          key: Key::Other,
+          chars: Some("l".to_string())
+        },
+        Event::Key {
+          key: Key::Other,
+          chars: Some("l".to_string())
+        },
+        Event::Key {
+          key: Key::Other,
+          chars: Some("o".to_string())
+        },
+        Event::Key {
+          key: Key::ArrowUp,
+          chars: None
+        },
+      ]),
+      "hello"
+    );
   }
 }

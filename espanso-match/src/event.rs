@@ -19,10 +19,7 @@
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Event {
-  Key {
-    key: Key, 
-    chars: Option<String>
-  },
+  Key { key: Key, chars: Option<String> },
   VirtualSeparator,
 }
 

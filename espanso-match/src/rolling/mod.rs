@@ -119,10 +119,14 @@ mod tests {
   #[test]
   fn test_match_from_string_left_word() {
     assert_eq!(
-      RollingMatch::from_string(1, "test", &StringMatchOptions {
-        left_word: true,
-        ..Default::default()
-      }),
+      RollingMatch::from_string(
+        1,
+        "test",
+        &StringMatchOptions {
+          left_word: true,
+          ..Default::default()
+        }
+      ),
       RollingMatch {
         id: 1,
         items: vec![
@@ -139,10 +143,14 @@ mod tests {
   #[test]
   fn test_match_from_string_right_word() {
     assert_eq!(
-      RollingMatch::from_string(1, "test", &StringMatchOptions {
-        right_word: true,
-        ..Default::default()
-      }),
+      RollingMatch::from_string(
+        1,
+        "test",
+        &StringMatchOptions {
+          right_word: true,
+          ..Default::default()
+        }
+      ),
       RollingMatch {
         id: 1,
         items: vec![
@@ -159,10 +167,14 @@ mod tests {
   #[test]
   fn test_match_from_string_case_insensitive() {
     assert_eq!(
-      RollingMatch::from_string(1, "test", &StringMatchOptions {
-        case_insensitive: true,
-        ..Default::default()
-      }),
+      RollingMatch::from_string(
+        1,
+        "test",
+        &StringMatchOptions {
+          case_insensitive: true,
+          ..Default::default()
+        }
+      ),
       RollingMatch {
         id: 1,
         items: vec![
@@ -178,11 +190,15 @@ mod tests {
   #[test]
   fn test_match_from_string_preserve_case_markers() {
     assert_eq!(
-      RollingMatch::from_string(1, "test", &StringMatchOptions {
-        case_insensitive: true,
-        preserve_case_markers: true,
-        ..Default::default()
-      }),
+      RollingMatch::from_string(
+        1,
+        "test",
+        &StringMatchOptions {
+          case_insensitive: true,
+          preserve_case_markers: true,
+          ..Default::default()
+        }
+      ),
       RollingMatch {
         id: 1,
         items: vec![
