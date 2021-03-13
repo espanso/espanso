@@ -22,8 +22,8 @@ use std::collections::HashMap;
 use log::error;
 use regex::{Regex, RegexSet};
 
-use crate::{MatchResult, event::Event};
 use crate::Matcher;
+use crate::{event::Event, MatchResult};
 
 #[derive(Debug)]
 pub struct RegexMatch<Id> {
@@ -92,7 +92,6 @@ where
           if let Some(captures) = regex.captures(&buffer) {
             let full_match = captures.get(0).map_or("", |m| m.as_str());
             if !full_match.is_empty() {
-              
               // Now extract the captured names as variables
               let variables: HashMap<String, String> = regex
                 .capture_names()
@@ -110,12 +109,15 @@ where
             }
           }
         } else {
-          error!("received inconsistent index from regex set with index: {}", index);
+          error!(
+            "received inconsistent index from regex set with index: {}",
+            index
+          );
         }
       }
 
       if !matches.is_empty() {
-        return (RegexMatcherState::default(), matches)
+        return (RegexMatcherState::default(), matches);
       }
     }
 
@@ -144,8 +146,12 @@ impl<Id: Clone> RegexMatcher<Id> {
     }
 
     let regex_set = RegexSet::new(&good_regexes).expect("unable to build regex set");
-    
-    Self { ids, regex_set, regexes }
+
+    Self {
+      ids,
+      regex_set,
+      regexes,
+    }
   }
 }
 
@@ -155,9 +161,10 @@ mod tests {
   use crate::util::tests::get_matches_after_str;
 
   fn match_result<Id: Default>(id: Id, trigger: &str, vars: &[(&str, &str)]) -> MatchResult<Id> {
-    let vars: HashMap<String, String> = vars.iter().map(|(key, value)| {
-      (key.to_string(), value.to_string())
-    }).collect();
+    let vars: HashMap<String, String> = vars
+      .iter()
+      .map(|(key, value)| (key.to_string(), value.to_string()))
+      .collect();
 
     MatchResult {
       id,
@@ -173,10 +180,22 @@ mod tests {
       RegexMatch::new(2, "num\\d{1,3}s"),
     ]);
     assert_eq!(get_matches_after_str("hi", &matcher), vec![]);
-    assert_eq!(get_matches_after_str("hello", &matcher), vec![match_result(1, "hello", &[])]);
-    assert_eq!(get_matches_after_str("say hello", &matcher), vec![match_result(1, "hello", &[])]);
-    assert_eq!(get_matches_after_str("num1s", &matcher), vec![match_result(2, "num1s", &[])]);
-    assert_eq!(get_matches_after_str("num134s", &matcher), vec![match_result(2, "num134s", &[])]);
+    assert_eq!(
+      get_matches_after_str("hello", &matcher),
+      vec![match_result(1, "hello", &[])]
+    );
+    assert_eq!(
+      get_matches_after_str("say hello", &matcher),
+      vec![match_result(1, "hello", &[])]
+    );
+    assert_eq!(
+      get_matches_after_str("num1s", &matcher),
+      vec![match_result(2, "num1s", &[])]
+    );
+    assert_eq!(
+      get_matches_after_str("num134s", &matcher),
+      vec![match_result(2, "num134s", &[])]
+    );
     assert_eq!(get_matches_after_str("nums", &matcher), vec![]);
   }
 
@@ -187,8 +206,18 @@ mod tests {
       RegexMatch::new(2, "multi\\((?P<name1>.*?),(?P<name2>.*?)\\)"),
     ]);
     assert_eq!(get_matches_after_str("hi", &matcher), vec![]);
-    assert_eq!(get_matches_after_str("say hello(mary)", &matcher), vec![match_result(1, "hello(mary)", &[("name", "mary")])]);
+    assert_eq!(
+      get_matches_after_str("say hello(mary)", &matcher),
+      vec![match_result(1, "hello(mary)", &[("name", "mary")])]
+    );
     assert_eq!(get_matches_after_str("hello(mary", &matcher), vec![]);
-    assert_eq!(get_matches_after_str("multi(mary,jane)", &matcher), vec![match_result(2, "multi(mary,jane)", &[("name1", "mary"), ("name2", "jane")])]);
+    assert_eq!(
+      get_matches_after_str("multi(mary,jane)", &matcher),
+      vec![match_result(
+        2,
+        "multi(mary,jane)",
+        &[("name1", "mary"), ("name2", "jane")]
+      )]
+    );
   }
 }
