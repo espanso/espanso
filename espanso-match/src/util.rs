@@ -17,35 +17,27 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::collections::HashMap;
+#[cfg(test)]
+pub(crate) mod tests {
+  use crate::{MatchResult, Matcher, event::{Event, Key}};
 
-use event::Event;
+  pub(crate) fn get_matches_after_str<'a, Id: Clone, S, M: Matcher<'a, S, Id>>(string: &str, matcher: &'a M) -> Vec<MatchResult<Id>> {
+    let mut prev_state = None;
+    let mut matches = Vec::new();
 
-pub mod event;
-pub mod regex;
-pub mod rolling;
-mod util;
+    for c in string.chars() {
+      let (state, _matches) = matcher.process(
+        prev_state.as_ref(),
+        Event::Key {
+          key: Key::Other,
+          chars: Some(c.to_string()),
+        },
+      );
 
-#[derive(Debug, Clone, PartialEq)]
-pub struct MatchResult<Id> {
-  id: Id,
-  trigger: String,
-  vars: HashMap<String, String>,
-}
-
-impl<Id: Default> Default for MatchResult<Id> {
-  fn default() -> Self {
-    Self {
-      id: Id::default(),
-      trigger: "".to_string(),
-      vars: HashMap::new(),
+      prev_state = Some(state);
+      matches = _matches;
     }
-  }
-}
 
-pub trait Matcher<'a, State, Id>
-where
-  Id: Clone,
-{
-  fn process(&'a self, prev_state: Option<&State>, event: Event) -> (State, Vec<MatchResult<Id>>);
+    matches
+  }
 }

@@ -17,10 +17,12 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use std::collections::HashMap;
+
 use log::error;
 use regex::{Regex, RegexSet};
 
-use crate::event::Event;
+use crate::{MatchResult, event::Event};
 use crate::Matcher;
 
 #[derive(Debug)]
@@ -68,7 +70,7 @@ where
     &'a self,
     prev_state: Option<&RegexMatcherState>,
     event: Event,
-  ) -> (RegexMatcherState, Vec<Id>) {
+  ) -> (RegexMatcherState, Vec<MatchResult<Id>>) {
     let mut buffer = if let Some(prev_state) = prev_state {
       prev_state.buffer.clone()
     } else {
@@ -83,12 +85,37 @@ where
 
     // Find matches
     if self.regex_set.is_match(&buffer) {
+      let mut matches = Vec::new();
+
       for index in self.regex_set.matches(&buffer) {
         if let (Some(id), Some(regex)) = (self.ids.get(index), self.regexes.get(index)) {
-          // TODO: find complete match and captures
+          if let Some(captures) = regex.captures(&buffer) {
+            let full_match = captures.get(0).map_or("", |m| m.as_str());
+            if !full_match.is_empty() {
+              
+              // Now extract the captured names as variables
+              let variables: HashMap<String, String> = regex
+                .capture_names()
+                .flatten()
+                .filter_map(|n| Some((n.to_string(), captures.name(n)?.as_str().to_string())))
+                .collect();
+
+              let result = MatchResult {
+                id: (*id).clone(),
+                trigger: full_match.to_string(),
+                vars: variables,
+              };
+
+              matches.push(result);
+            }
+          }
         } else {
           error!("received inconsistent index from regex set with index: {}", index);
         }
+      }
+
+      if !matches.is_empty() {
+        return (RegexMatcherState::default(), matches)
       }
     }
 
@@ -122,4 +149,46 @@ impl<Id: Clone> RegexMatcher<Id> {
   }
 }
 
-// TODO: test
+#[cfg(test)]
+mod tests {
+  use super::*;
+  use crate::util::tests::get_matches_after_str;
+
+  fn match_result<Id: Default>(id: Id, trigger: &str, vars: &[(&str, &str)]) -> MatchResult<Id> {
+    let vars: HashMap<String, String> = vars.iter().map(|(key, value)| {
+      (key.to_string(), value.to_string())
+    }).collect();
+
+    MatchResult {
+      id,
+      trigger: trigger.to_string(),
+      vars,
+    }
+  }
+
+  #[test]
+  fn matcher_simple_matches() {
+    let matcher = RegexMatcher::new(&[
+      RegexMatch::new(1, "hello"),
+      RegexMatch::new(2, "num\\d{1,3}s"),
+    ]);
+    assert_eq!(get_matches_after_str("hi", &matcher), vec![]);
+    assert_eq!(get_matches_after_str("hello", &matcher), vec![match_result(1, "hello", &[])]);
+    assert_eq!(get_matches_after_str("say hello", &matcher), vec![match_result(1, "hello", &[])]);
+    assert_eq!(get_matches_after_str("num1s", &matcher), vec![match_result(2, "num1s", &[])]);
+    assert_eq!(get_matches_after_str("num134s", &matcher), vec![match_result(2, "num134s", &[])]);
+    assert_eq!(get_matches_after_str("nums", &matcher), vec![]);
+  }
+
+  #[test]
+  fn matcher_with_variables() {
+    let matcher = RegexMatcher::new(&[
+      RegexMatch::new(1, "hello\\((?P<name>.*?)\\)"),
+      RegexMatch::new(2, "multi\\((?P<name1>.*?),(?P<name2>.*?)\\)"),
+    ]);
+    assert_eq!(get_matches_after_str("hi", &matcher), vec![]);
+    assert_eq!(get_matches_after_str("say hello(mary)", &matcher), vec![match_result(1, "hello(mary)", &[("name", "mary")])]);
+    assert_eq!(get_matches_after_str("hello(mary", &matcher), vec![]);
+    assert_eq!(get_matches_after_str("multi(mary,jane)", &matcher), vec![match_result(2, "multi(mary,jane)", &[("name1", "mary"), ("name2", "jane")])]);
+  }
+}
