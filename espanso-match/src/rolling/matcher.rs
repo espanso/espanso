@@ -17,23 +17,28 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use super::{
-  tree::{MatcherTreeNode, MatcherTreeRef},
-  RollingMatch,
-};
-use crate::event::{Event, Key};
+use std::collections::HashMap;
+
+use super::{RollingMatch, tree::{MatcherTreeNode, MatcherTreeRef}, util::extract_string_from_events};
+use crate::{MatchResult, event::{Event, Key}};
 use crate::Matcher;
 use unicase::UniCase;
 
 #[derive(Clone)]
 pub struct RollingMatcherState<'a, Id> {
-  nodes: Vec<&'a MatcherTreeNode<Id>>,
+  paths: Vec<RollingMatcherStatePath<'a, Id>>,
 }
 
 impl<'a, Id> Default for RollingMatcherState<'a, Id> {
   fn default() -> Self {
-    Self { nodes: Vec::new() }
+    Self { paths: Vec::new() }
   }
+}
+
+#[derive(Clone)]
+struct RollingMatcherStatePath<'a, Id> {
+  node: &'a MatcherTreeNode<Id>,
+  events: Vec<Event>,
 }
 
 pub struct RollingMatcherOptions {
@@ -65,35 +70,53 @@ where
     &'a self,
     prev_state: Option<&RollingMatcherState<'a, Id>>,
     event: Event,
-  ) -> (RollingMatcherState<'a, Id>, Vec<Id>) {
+  ) -> (RollingMatcherState<'a, Id>, Vec<MatchResult<Id>>) {
     let mut next_refs = Vec::new();
 
     // First compute the old refs
     if let Some(prev_state) = prev_state {
-      for node_ref in prev_state.nodes.iter() {
-        next_refs.extend(self.find_refs(node_ref, &event));
+      for node_path in prev_state.paths.iter() {
+        next_refs.extend(self.find_refs(node_path.node, &event).into_iter().map(|node_ref| {
+          let mut new_events = node_path.events.clone();
+          new_events.push(event.clone());
+          (node_ref, new_events)
+        }));
       }
     }
 
     // Calculate new ones
     let root_refs = self.find_refs(&self.root, &event);
-    next_refs.extend(root_refs);
+    next_refs.extend(root_refs.into_iter().map(|node_ref| {
+      (node_ref, vec![event.clone()])
+    }));
 
-    let mut next_nodes = Vec::new();
+    let mut next_paths = Vec::new();
 
-    for node_ref in next_refs {
+    for (node_ref, events) in next_refs {
       match node_ref {
         MatcherTreeRef::Matches(matches) => {
+          let trigger = extract_string_from_events(&events);
+          let results = matches.iter().map(|id| {
+            MatchResult {
+              id: id.clone(), 
+              trigger: trigger.clone(), 
+              vars: HashMap::new(),
+            }
+          }).collect();
+
           // Reset the state and return the matches
-          return (RollingMatcherState::default(), matches.clone());
+          return (RollingMatcherState::default(), results);
         }
         MatcherTreeRef::Node(node) => {
-          next_nodes.push(node.as_ref());
+          next_paths.push(RollingMatcherStatePath {
+            node: node.as_ref(),
+            events,
+          });
         }
       }
     }
 
-    let current_state = RollingMatcherState { nodes: next_nodes };
+    let current_state = RollingMatcherState { paths: next_paths };
 
     (current_state, Vec::new())
   }
@@ -169,25 +192,14 @@ impl<Id: Clone> RollingMatcher<Id> {
 mod tests {
   use super::*;
   use crate::rolling::{StringMatchOptions};
+  use crate::util::tests::get_matches_after_str;
 
-  fn get_matches_after_str<Id: Clone>(string: &str, matcher: &RollingMatcher<Id>) -> Vec<Id> {
-    let mut prev_state = None;
-    let mut matches = Vec::new();
-
-    for c in string.chars() {
-      let (state, _matches) = matcher.process(
-        prev_state.as_ref(),
-        Event::Key {
-          key: Key::Other,
-          chars: Some(c.to_string()),
-        },
-      );
-
-      prev_state = Some(state);
-      matches = _matches;
+  fn match_result<Id: Default>(id: Id, trigger: &str) -> MatchResult<Id> {
+    MatchResult {
+      id,
+      trigger: trigger.to_string(),
+      ..Default::default()
     }
-
-    matches
   }
 
   #[test]
@@ -205,8 +217,9 @@ mod tests {
       },
     );
 
-    assert_eq!(get_matches_after_str("hi", &matcher), vec![1, 5]);
-    assert_eq!(get_matches_after_str("my", &matcher), vec![3]);
+    assert_eq!(get_matches_after_str("hi", &matcher), vec![match_result(1, "hi"), match_result(5, "hi")]);
+    assert_eq!(get_matches_after_str("my", &matcher), vec![match_result(3, "my")]);
+    assert_eq!(get_matches_after_str("mmy", &matcher), vec![match_result(3, "my")]);
     assert_eq!(get_matches_after_str("invalid", &matcher), vec![]);
   }
 
@@ -232,7 +245,7 @@ mod tests {
     );
 
     assert_eq!(get_matches_after_str("hi", &matcher), vec![]);
-    assert_eq!(get_matches_after_str(".hi,", &matcher), vec![1]);
+    assert_eq!(get_matches_after_str(".hi,", &matcher), vec![match_result(1, ".hi,")]);
   }
 
   #[test]
@@ -264,11 +277,11 @@ mod tests {
       },
     );
 
-    assert_eq!(get_matches_after_str("hi", &matcher), vec![1]);
-    assert_eq!(get_matches_after_str("Hi", &matcher), vec![1]);
-    assert_eq!(get_matches_after_str("HI", &matcher), vec![1]);
-    assert_eq!(get_matches_after_str("arty", &matcher), vec![3]);
-    assert_eq!(get_matches_after_str("arTY", &matcher), vec![3]);
+    assert_eq!(get_matches_after_str("hi", &matcher), vec![match_result(1, "hi")]);
+    assert_eq!(get_matches_after_str("Hi", &matcher), vec![match_result(1, "Hi")]);
+    assert_eq!(get_matches_after_str("HI", &matcher), vec![match_result(1, "HI")]);
+    assert_eq!(get_matches_after_str("arty", &matcher), vec![match_result(3, "arty")]);
+    assert_eq!(get_matches_after_str("arTY", &matcher), vec![match_result(3, "arTY")]);
     assert_eq!(get_matches_after_str("ARTY", &matcher), vec![]);
   }
 }

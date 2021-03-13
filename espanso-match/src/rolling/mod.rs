@@ -19,8 +19,9 @@
 
 use crate::event::Key;
 
-mod matcher;
+pub mod matcher;
 mod tree;
+mod util;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum RollingItem {
