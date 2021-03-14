@@ -45,7 +45,11 @@ pub mod tests {
     let config_dir = dir.path().join("config");
     create_dir_all(&config_dir).unwrap();
 
-    callback(&dir.path(), &match_dir, &config_dir);
+    callback(
+      &dunce::canonicalize(&dir.path()).unwrap(),
+      &dunce::canonicalize(match_dir).unwrap(),
+      &dunce::canonicalize(config_dir).unwrap(),
+    );
   }
 
   #[test]
