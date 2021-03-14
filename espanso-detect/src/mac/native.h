@@ -37,7 +37,7 @@
 #define INPUT_MOUSE_MIDDLE_BUTTON 3
 
 typedef struct {
-  // Keyboard or Mouse event
+  // Keyboard, Mouse or Hotkey event
   int32_t event_type;
 
   // Contains the string corresponding to the key, if any

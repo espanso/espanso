@@ -17,21 +17,25 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::ffi::{c_void, CStr};
+use std::{
+  collections::HashMap,
+  ffi::{c_void, CStr},
+};
 
 use lazycell::LazyCell;
-use log::{error, trace, warn};
+use log::{debug, error, trace, warn};
 
 use anyhow::Result;
 use thiserror::Error;
 
-use crate::event::Variant::*;
+use crate::event::{HotKeyEvent, Key::*, MouseButton, MouseEvent};
 use crate::event::{InputEvent, Key, KeyboardEvent, Variant};
-use crate::event::{Key::*, MouseButton, MouseEvent};
 use crate::{event::Status::*, Source, SourceCallback};
+use crate::{event::Variant::*, hotkey::HotKey};
 
 const INPUT_EVENT_TYPE_KEYBOARD: i32 = 1;
 const INPUT_EVENT_TYPE_MOUSE: i32 = 2;
+const INPUT_EVENT_TYPE_HOTKEY: i32 = 3;
 
 const INPUT_STATUS_PRESSED: i32 = 1;
 const INPUT_STATUS_RELEASED: i32 = 2;
@@ -53,6 +57,33 @@ pub struct RawInputEvent {
   pub key_sym: i32,
   pub key_code: i32,
   pub status: i32,
+  pub state: u32,
+}
+
+#[repr(C)]
+#[derive(Debug, Clone, Copy)]
+pub struct RawModifierIndexes {
+  pub ctrl: i32,
+  pub alt: i32,
+  pub shift: i32,
+  pub meta: i32,
+}
+
+#[repr(C)]
+pub struct RawHotKeyRequest {
+  pub key_sym: u32,
+  pub ctrl: i32,
+  pub alt: i32,
+  pub shift: i32,
+  pub meta: i32,
+}
+
+#[repr(C)]
+#[derive(Debug)]
+pub struct RawHotKeyResult {
+  pub success: i32,
+  pub key_code: i32,
+  pub state: u32,
 }
 
 #[allow(improper_ctypes)]
@@ -62,25 +93,40 @@ extern "C" {
 
   pub fn detect_initialize(_self: *const X11Source, error_code: *mut i32) -> *mut c_void;
 
+  pub fn detect_get_modifier_indexes(context: *const c_void) -> RawModifierIndexes;
+
+  pub fn detect_register_hotkey(
+    context: *const c_void,
+    request: RawHotKeyRequest,
+    mod_indexes: RawModifierIndexes,
+  ) -> RawHotKeyResult;
+
   pub fn detect_eventloop(
-    window: *const c_void,
+    context: *const c_void,
     event_callback: extern "C" fn(_self: *mut X11Source, event: RawInputEvent),
   ) -> i32;
 
-  pub fn detect_destroy(window: *const c_void) -> i32;
+  pub fn detect_destroy(context: *const c_void) -> i32;
 }
 
 pub struct X11Source {
   handle: *mut c_void,
   callback: LazyCell<SourceCallback>,
+  hotkeys: Vec<HotKey>,
+
+  raw_hotkey_mapping: HashMap<(i32, u32), i32>, // (key_code, state) -> hotkey ID
+  valid_modifiers_mask: u32,
 }
 
 #[allow(clippy::new_without_default)]
 impl X11Source {
-  pub fn new() -> X11Source {
+  pub fn new(hotkeys: &[HotKey]) -> X11Source {
     Self {
       handle: std::ptr::null_mut(),
       callback: LazyCell::new(),
+      hotkeys: hotkeys.to_vec(),
+      raw_hotkey_mapping: HashMap::new(),
+      valid_modifiers_mask: 0,
     }
   }
 
@@ -107,6 +153,29 @@ impl Source for X11Source {
       return Err(error.into());
     }
 
+    let mod_indexes = unsafe { detect_get_modifier_indexes(handle) };
+    self.valid_modifiers_mask |= 1 << mod_indexes.ctrl;
+    self.valid_modifiers_mask |= 1 << mod_indexes.alt;
+    self.valid_modifiers_mask |= 1 << mod_indexes.meta;
+    self.valid_modifiers_mask |= 1 << mod_indexes.shift;
+
+    // Register the hotkeys
+    let raw_hotkey_mapping = &mut self.raw_hotkey_mapping;
+    self.hotkeys.iter().for_each(|hk| {
+      let raw = convert_hotkey_to_raw(&hk);
+      if let Some(raw_hk) = raw {
+        let result = unsafe { detect_register_hotkey(handle, raw_hk, mod_indexes) };
+        if result.success == 0 {
+          error!("unable to register hotkey: {}", hk);
+        } else {
+          raw_hotkey_mapping.insert((result.key_code, result.state), hk.id);
+          debug!("registered hotkey: {}", hk);
+        }
+      } else {
+        error!("unable to generate raw hotkey mapping: {}", hk);
+      }
+    });
+
     self.handle = handle;
 
     Ok(())
@@ -124,8 +193,13 @@ impl Source for X11Source {
     }
 
     extern "C" fn callback(_self: *mut X11Source, event: RawInputEvent) {
-      let event: Option<InputEvent> = event.into();
-      if let Some(callback) = unsafe { (*_self).callback.borrow() } {
+      let source_self = unsafe { &*_self };
+      let event: Option<InputEvent> = convert_raw_input_event_to_input_event(
+        event,
+        &source_self.raw_hotkey_mapping,
+        source_self.valid_modifiers_mask,
+      );
+      if let Some(callback) = source_self.callback.borrow() {
         if let Some(event) = event {
           callback(event)
         } else {
@@ -160,6 +234,17 @@ impl Drop for X11Source {
   }
 }
 
+fn convert_hotkey_to_raw(hk: &HotKey) -> Option<RawHotKeyRequest> {
+  let key_sym = hk.key.to_code()?;
+  Some(RawHotKeyRequest {
+    key_sym,
+    ctrl: if hk.has_ctrl() { 1 } else { 0 },
+    alt: if hk.has_alt() { 1 } else { 0 },
+    shift: if hk.has_shift() { 1 } else { 0 },
+    meta: if hk.has_meta() { 1 } else { 0 },
+  })
+}
+
 #[derive(Error, Debug)]
 pub enum X11SourceError {
   #[error("cannot open displays")]
@@ -181,61 +266,70 @@ pub enum X11SourceError {
   Internal(),
 }
 
-impl From<RawInputEvent> for Option<InputEvent> {
-  fn from(raw: RawInputEvent) -> Option<InputEvent> {
-    let status = match raw.status {
-      INPUT_STATUS_RELEASED => Released,
-      INPUT_STATUS_PRESSED => Pressed,
-      _ => Pressed,
-    };
+fn convert_raw_input_event_to_input_event(
+  raw: RawInputEvent,
+  raw_hotkey_mapping: &HashMap<(i32, u32), i32>,
+  valid_modifiers_mask: u32,
+) -> Option<InputEvent> {
+  let status = match raw.status {
+    INPUT_STATUS_RELEASED => Released,
+    INPUT_STATUS_PRESSED => Pressed,
+    _ => Pressed,
+  };
 
-    match raw.event_type {
-      // Keyboard events
-      INPUT_EVENT_TYPE_KEYBOARD => {
-        let (key, variant) = key_sym_to_key(raw.key_sym);
-        let value = if raw.buffer_len > 0 {
-          let raw_string_result =
-            CStr::from_bytes_with_nul(&raw.buffer[..((raw.buffer_len + 1) as usize)]);
-          match raw_string_result {
-            Ok(c_string) => {
-              let string_result = c_string.to_str();
-              match string_result {
-                Ok(value) => Some(value.to_string()),
-                Err(err) => {
-                  warn!("char conversion error: {}", err);
-                  None
-                }
+  match raw.event_type {
+    // Keyboard events
+    INPUT_EVENT_TYPE_KEYBOARD => {
+      let (key, variant) = key_sym_to_key(raw.key_sym);
+      let value = if raw.buffer_len > 0 {
+        let raw_string_result =
+          CStr::from_bytes_with_nul(&raw.buffer[..((raw.buffer_len + 1) as usize)]);
+        match raw_string_result {
+          Ok(c_string) => {
+            let string_result = c_string.to_str();
+            match string_result {
+              Ok(value) => Some(value.to_string()),
+              Err(err) => {
+                warn!("char conversion error: {}", err);
+                None
               }
             }
-            Err(err) => {
-              warn!("Received malformed char: {}", err);
-              None
-            }
           }
-        } else {
-          None
-        };
-
-        return Some(InputEvent::Keyboard(KeyboardEvent {
-          key,
-          value,
-          status,
-          variant,
-        }));
-      }
-      // Mouse events
-      INPUT_EVENT_TYPE_MOUSE => {
-        let button = raw_to_mouse_button(raw.key_code);
-
-        if let Some(button) = button {
-          return Some(InputEvent::Mouse(MouseEvent { button, status }));
+          Err(err) => {
+            warn!("Received malformed char: {}", err);
+            None
+          }
         }
-      }
-      _ => {}
-    }
+      } else {
+        None
+      };
 
-    None
+      return Some(InputEvent::Keyboard(KeyboardEvent {
+        key,
+        value,
+        status,
+        variant,
+      }));
+    }
+    // Mouse events
+    INPUT_EVENT_TYPE_MOUSE => {
+      let button = raw_to_mouse_button(raw.key_code);
+
+      if let Some(button) = button {
+        return Some(InputEvent::Mouse(MouseEvent { button, status }));
+      }
+    }
+    // Hotkey events
+    INPUT_EVENT_TYPE_HOTKEY => {
+      let state = raw.state & valid_modifiers_mask;
+      if let Some(id) = raw_hotkey_mapping.get(&(raw.key_code, state)) {
+        return Some(InputEvent::HotKey(HotKeyEvent { hotkey_id: *id }));
+      }
+    }
+    _ => {}
   }
+
+  None
 }
 
 // Mappings from: https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values
@@ -327,6 +421,7 @@ mod tests {
       key_code: 0,
       key_sym: 0,
       status: INPUT_STATUS_PRESSED,
+      state: 0,
     }
   }
 
@@ -342,7 +437,7 @@ mod tests {
     raw.status = INPUT_STATUS_RELEASED;
     raw.key_sym = 0x4B;
 
-    let result: Option<InputEvent> = raw.into();
+    let result: Option<InputEvent> = convert_raw_input_event_to_input_event(raw, &HashMap::new(), 0);
     assert_eq!(
       result.unwrap(),
       InputEvent::Keyboard(KeyboardEvent {
@@ -361,12 +456,31 @@ mod tests {
     raw.status = INPUT_STATUS_RELEASED;
     raw.key_code = INPUT_MOUSE_RIGHT_BUTTON;
 
-    let result: Option<InputEvent> = raw.into();
+    let result: Option<InputEvent> = convert_raw_input_event_to_input_event(raw, &HashMap::new(), 0);
     assert_eq!(
       result.unwrap(),
       InputEvent::Mouse(MouseEvent {
         status: Released,
         button: MouseButton::Right,
+      })
+    );
+  }
+
+  #[test]
+  fn raw_to_input_event_hotkey_works_correctly() {
+    let mut raw = default_raw_input_event();
+    raw.event_type = INPUT_EVENT_TYPE_HOTKEY;
+    raw.state = 0b00000011;
+    raw.key_code = 10;
+
+    let mut raw_hotkey_mapping = HashMap::new();
+    raw_hotkey_mapping.insert((10, 1), 20);
+
+    let result: Option<InputEvent> = convert_raw_input_event_to_input_event(raw, &raw_hotkey_mapping, 1);
+    assert_eq!(
+      result.unwrap(),
+      InputEvent::HotKey(HotKeyEvent {
+        hotkey_id: 20,
       })
     );
   }
@@ -379,7 +493,7 @@ mod tests {
     raw.buffer = buffer;
     raw.buffer_len = 5;
 
-    let result: Option<InputEvent> = raw.into();
+    let result: Option<InputEvent> = convert_raw_input_event_to_input_event(raw, &HashMap::new(), 0);
     assert!(result.unwrap().into_keyboard().unwrap().value.is_none());
   }
 
@@ -387,7 +501,7 @@ mod tests {
   fn raw_to_input_event_returns_none_when_missing_type() {
     let mut raw = default_raw_input_event();
     raw.event_type = 0;
-    let result: Option<InputEvent> = raw.into();
+    let result: Option<InputEvent> = convert_raw_input_event_to_input_event(raw, &HashMap::new(), 0);
     assert!(result.is_none());
   }
 }

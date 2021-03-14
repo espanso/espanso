@@ -24,13 +24,14 @@
 
 #define INPUT_EVENT_TYPE_KEYBOARD 1
 #define INPUT_EVENT_TYPE_MOUSE 2
+#define INPUT_EVENT_TYPE_HOTKEY 3
 
 #define INPUT_STATUS_PRESSED 1
 #define INPUT_STATUS_RELEASED 2
 
 typedef struct
 {
-  // Keyboard or Mouse event
+  // Keyboard, Mouse or Hotkey event
   int32_t event_type;
 
   // Contains the string corresponding to the key, if any
@@ -42,12 +43,36 @@ typedef struct
   int32_t key_sym;
 
   // Virtual key code of the pressed key in case of keyboard events
-  // Mouse button code otherwise.
+  // Mouse button code for mouse events.
   int32_t key_code;
 
   // Pressed or Released status
   int32_t status;
+
+  // Keycode state (modifiers) in a Hotkey event
+  uint32_t state;
 } InputEvent;
+
+typedef struct {
+  int32_t key_sym;
+  int32_t ctrl;
+  int32_t alt;
+  int32_t shift;
+  int32_t meta;
+} HotKeyRequest;
+
+typedef struct {
+  int32_t success;
+  int32_t key_code;
+  uint32_t state;
+} HotKeyResult;
+
+typedef struct {
+  int32_t ctrl;
+  int32_t alt;
+  int32_t shift;
+  int32_t meta;
+} ModifierIndexes;
 
 typedef void (*EventCallback)(void *rust_istance, InputEvent data);
 
@@ -56,6 +81,12 @@ extern "C" int32_t detect_check_x11();
 
 // Initialize the XRecord API and return the context pointer
 extern "C" void *detect_initialize(void *rust_istance, int32_t *error_code);
+
+// Get the modifiers indexes in the field mask
+extern "C" ModifierIndexes detect_get_modifier_indexes(void *context);
+
+// Register the given hotkey
+extern "C" HotKeyResult detect_register_hotkey(void *context, HotKeyRequest request, ModifierIndexes mod_indexes);
 
 // Run the event loop. Blocking call.
 extern "C" int32_t detect_eventloop(void *context, EventCallback callback);
