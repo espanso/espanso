@@ -32,6 +32,7 @@ We will refer to this extension as RE from now on.
 #include <array>
 #include <string.h>
 #include <memory>
+#include <iostream>
 
 #include <X11/Xlibint.h>
 #include <X11/Xlib.h>
@@ -170,6 +171,85 @@ void *detect_initialize(void *_rust_instance, int32_t *error_code)
   return context.release();
 }
 
+ModifierIndexes detect_get_modifier_indexes(void *_context) {
+  DetectContext *context = (DetectContext *)_context;
+  XModifierKeymap *map = XGetModifierMapping(context->ctrl_disp);
+
+  ModifierIndexes indexes = {};
+
+  for (int i = 0; i<8; i++) {
+    if (map->max_keypermod > 0) {
+      int code = map->modifiermap[i * map->max_keypermod];
+      KeySym sym = XkbKeycodeToKeysym(context->ctrl_disp, code, 0, 0);
+      if (sym == XK_Control_L || sym == XK_Control_R) {
+        indexes.ctrl = i;
+      } else if (sym == XK_Super_L || sym == XK_Super_R) {
+        indexes.meta = i;
+      } else if (sym == XK_Shift_L || sym == XK_Shift_R) {
+        indexes.shift = i;
+      } else if (sym == XK_Alt_L || sym == XK_Alt_R) {
+        indexes.alt = i;
+      }
+    }
+  }
+
+  XFreeModifiermap(map);
+
+  return indexes;
+}
+
+HotKeyResult detect_register_hotkey(void *_context, HotKeyRequest request, ModifierIndexes mod_indexes) {
+  DetectContext *context = (DetectContext *)_context;
+  KeyCode key_code = XKeysymToKeycode(context->ctrl_disp, request.key_sym);
+
+  HotKeyResult result = {};
+  if (key_code == 0) {
+    return result;
+  }
+
+  uint32_t valid_modifiers = 0;
+  valid_modifiers |= 1 << mod_indexes.alt;
+  valid_modifiers |= 1 << mod_indexes.ctrl;
+  valid_modifiers |= 1 << mod_indexes.shift;
+  valid_modifiers |= 1 << mod_indexes.meta;
+
+  uint32_t target_modifiers = 0;
+  if (request.ctrl) {
+    target_modifiers |= 1 << mod_indexes.ctrl;
+  }
+  if (request.alt) {
+    target_modifiers |= 1 << mod_indexes.alt;
+  }
+  if (request.shift) {
+    target_modifiers |= 1 << mod_indexes.shift;
+  }
+  if (request.meta) {
+    target_modifiers |= 1 << mod_indexes.meta;
+  }
+
+  result.state = target_modifiers;
+  result.key_code = key_code;
+  result.success = 1;
+
+  Window root = DefaultRootWindow(context->ctrl_disp);
+
+  // We need to register an hotkey for all combinations of "useless" modifiers,
+  // such as the NumLock, as the XGrabKey method wants an exact match.
+  for (uint state = 0; state<256; state++) {
+    // Check if the current state includes a "useless modifier" but none of the valid ones
+    if ((state == 0 || (state & ~valid_modifiers) != 0) && (state & valid_modifiers) == 0) {
+      uint final_modifiers = state | target_modifiers;
+      
+      int res = XGrabKey(context->ctrl_disp, key_code, final_modifiers, root, False, GrabModeAsync, GrabModeAsync);
+      if (res == BadAccess || res == BadValue) {
+        result.success = 0;
+      }
+    }
+  }
+
+  return result;
+}
+
 int32_t detect_eventloop(void *_context, EventCallback _callback)
 {
   DetectContext *context = (DetectContext *)_context;
@@ -210,6 +290,15 @@ int32_t detect_eventloop(void *_context, EventCallback _callback)
         if (e->request == MappingKeyboard)
         {
           XRefreshKeyboardMapping(e);
+        }
+      } else if (event.type == KeyPress) {
+        InputEvent inputEvent = {};
+        inputEvent.event_type = INPUT_EVENT_TYPE_HOTKEY;
+        inputEvent.key_code = event.xkey.keycode;
+        inputEvent.state = event.xkey.state;
+        if (context->event_callback)
+        {
+          context->event_callback(context->rust_instance, inputEvent);
         }
       }
     }

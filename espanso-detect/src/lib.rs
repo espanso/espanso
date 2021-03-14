@@ -57,7 +57,7 @@ pub struct SourceCreationOptions {
   pub evdev_keyboard_rmlvo: Option<KeyboardConfig>,
 
   // List of global hotkeys the detection module has to register
-  // NOTE: Hotkeys are ignored on Linux
+  // NOTE: Hotkeys don't work under the EVDEV backend yet (Wayland)
   pub hotkeys: Vec<HotKey>,
 }
 
@@ -103,7 +103,7 @@ pub fn get_source(options: SourceCreationOptions) -> Result<Box<dyn Source>> {
     Ok(Box::new(evdev::EVDEVSource::new(options)))
   } else {
     info!("using X11Source");
-    Ok(Box::new(x11::X11Source::new()))
+    Ok(Box::new(x11::X11Source::new(&options.hotkeys)))
   }
 }
 

@@ -42,7 +42,7 @@
 #define INPUT_MOUSE_BUTTON_5      8
 
 typedef struct {
-  // Keyboard or Mouse event
+  // Keyboard, Mouse or Hotkey event
   int32_t event_type;
 
   // Contains the string corresponding to the key, if any
