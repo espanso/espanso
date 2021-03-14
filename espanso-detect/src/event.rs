@@ -24,6 +24,7 @@ use enum_as_inner::EnumAsInner;
 pub enum InputEvent {
   Mouse(MouseEvent),
   Keyboard(KeyboardEvent),
+  HotKey(HotKeyEvent),
 }
 
 #[derive(Debug, PartialEq)]
@@ -120,4 +121,9 @@ pub enum Key {
 
   // Other keys, includes the raw code provided by the operating system
   Other(i32),
+}
+
+#[derive(Debug, PartialEq)]
+pub struct HotKeyEvent {
+  pub hotkey_id: i32,
 }

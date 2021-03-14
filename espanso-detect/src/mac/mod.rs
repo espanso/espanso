@@ -17,13 +17,10 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::{
-  ffi::CStr,
-  sync::{
+use std::{convert::TryInto, ffi::CStr, sync::{
     mpsc::{channel, Receiver, Sender},
     Arc, Mutex,
-  },
-};
+  }};
 
 use lazycell::LazyCell;
 use log::{error, trace, warn};
@@ -31,13 +28,14 @@ use log::{error, trace, warn};
 use anyhow::Result;
 use thiserror::Error;
 
-use crate::event::Variant::*;
-use crate::event::{InputEvent, Key, KeyboardEvent, Variant};
+use crate::event::{HotKeyEvent, InputEvent, Key, KeyboardEvent, Variant};
 use crate::event::{Key::*, MouseButton, MouseEvent};
 use crate::{event::Status::*, Source, SourceCallback};
+use crate::{event::Variant::*, hotkey::HotKey};
 
 const INPUT_EVENT_TYPE_KEYBOARD: i32 = 1;
 const INPUT_EVENT_TYPE_MOUSE: i32 = 2;
+const INPUT_EVENT_TYPE_HOTKEY: i32 = 3;
 
 const INPUT_STATUS_PRESSED: i32 = 1;
 const INPUT_STATUS_RELEASED: i32 = 2;
@@ -58,10 +56,26 @@ pub struct RawInputEvent {
   pub status: i32,
 }
 
+#[repr(C)]
+pub struct RawHotKey {
+  pub id: i32,
+  pub code: u16,
+  pub flags: u32,
+}
+
+#[repr(C)]
+pub struct RawInitializationOptions {
+  pub hotkeys: *const RawHotKey,
+  pub hotkeys_count: i32,
+}
+
 #[allow(improper_ctypes)]
 #[link(name = "espansodetect", kind = "static")]
 extern "C" {
-  pub fn detect_initialize(callback: extern "C" fn(event: RawInputEvent));
+  pub fn detect_initialize(
+    callback: extern "C" fn(event: RawInputEvent),
+    options: RawInitializationOptions,
+  );
 }
 
 lazy_static! {
@@ -88,13 +102,15 @@ extern "C" fn native_callback(raw_event: RawInputEvent) {
 
 pub struct CocoaSource {
   receiver: LazyCell<Receiver<InputEvent>>,
+  hotkeys: Vec<HotKey>,
 }
 
 #[allow(clippy::new_without_default)]
 impl CocoaSource {
-  pub fn new() -> CocoaSource {
+  pub fn new(hotkeys: &[HotKey]) -> CocoaSource {
     Self {
       receiver: LazyCell::new(),
+      hotkeys: hotkeys.to_vec(),
     }
   }
 }
@@ -111,7 +127,24 @@ impl Source for CocoaSource {
       *lock = Some(sender);
     }
 
-    unsafe { detect_initialize(native_callback) };
+    // Generate the options
+    let hotkeys: Vec<RawHotKey> = self
+      .hotkeys
+      .iter()
+      .filter_map(|hk| {
+        let raw = convert_hotkey_to_raw(&hk);
+        if raw.is_none() {
+          error!("unable to register hotkey: {:?}", hk);
+        }
+        raw
+      })
+      .collect();
+    let options = RawInitializationOptions {
+      hotkeys: hotkeys.as_ptr(),
+      hotkeys_count: hotkeys.len() as i32,
+    };
+
+    unsafe { detect_initialize(native_callback, options) };
 
     if self.receiver.fill(receiver).is_err() {
       error!("Unable to set CocoaSource receiver");
@@ -153,6 +186,35 @@ impl Drop for CocoaSource {
         .expect("unable to acquire CocoaSource sender lock during initialization");
       *lock = None;
     }
+  }
+}
+
+fn convert_hotkey_to_raw(hk: &HotKey) -> Option<RawHotKey> {
+  let key_code = hk.key.to_code()?;
+  let code: Result<u16, _> = key_code.try_into();
+  if let Ok(code) = code {
+    let mut flags = 0;
+    if hk.has_ctrl() {
+      flags |= 1 << 12;
+    }
+    if hk.has_alt() {
+      flags |= 1 << 11;
+    }
+    if hk.has_meta() {
+      flags |= 1 << 8;
+    }
+    if hk.has_shift() {
+      flags |= 1 << 9;
+    }
+
+    Some(RawHotKey {
+      id: hk.id,
+      code,
+      flags,
+    })
+  } else {
+    error!("unable to generate raw hotkey, the key_code is overflowing");
+    None
   }
 }
 
@@ -212,6 +274,13 @@ impl From<RawInputEvent> for Option<InputEvent> {
         if let Some(button) = button {
           return Some(InputEvent::Mouse(MouseEvent { button, status }));
         }
+      }
+      // HOTKEYS
+      INPUT_EVENT_TYPE_HOTKEY => {
+        let id = raw.key_code;
+        return Some(InputEvent::HotKey(HotKeyEvent {
+          hotkey_id: id,
+        }))
       }
       _ => {}
     }

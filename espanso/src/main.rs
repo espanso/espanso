@@ -1,9 +1,6 @@
 use std::time::Duration;
 
-use espanso_detect::{
-  event::{InputEvent, Status},
-  get_source,
-};
+use espanso_detect::{SourceCreationOptions, event::{InputEvent, Status}, get_source, hotkey::HotKey};
 use espanso_inject::{get_injector, keys, Injector};
 use espanso_ui::{event::UIEvent::*, icons::TrayIcon, menu::*};
 use simplelog::{CombinedLogger, Config, LevelFilter, TermLogger, TerminalMode};
@@ -63,7 +60,13 @@ fn main() {
 
   let handle = std::thread::spawn(move || {
     let injector = get_injector(Default::default()).unwrap();
-    let mut source = get_source(Default::default()).unwrap();
+    let mut source = get_source(SourceCreationOptions {
+      hotkeys: vec![
+        HotKey::new(1, "OPTION+SPACE").unwrap(),
+        HotKey::new(2, "CMD+OPTION+3").unwrap(),
+      ],
+      ..Default::default()
+    }).unwrap();
     source.initialize().unwrap();
     source
       .eventloop(Box::new(move |event: InputEvent| {
@@ -80,6 +83,8 @@ fn main() {
               //std::thread::sleep(std::time::Duration::from_secs(2));
               //injector.send_key_combination(&[keys::Key::Control, keys::Key::V], Default::default()).unwrap();
             }
+          }
+          InputEvent::HotKey(_) => {
           }
         }
       }))
