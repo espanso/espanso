@@ -28,8 +28,35 @@ const unsigned long long FLAGS = NSEventMaskKeyDown | NSEventMaskKeyUp | NSEvent
                                  NSEventMaskLeftMouseUp | NSEventMaskRightMouseDown | NSEventMaskRightMouseUp | 
                                  NSEventMaskOtherMouseDown | NSEventMaskOtherMouseUp;
 
-void * detect_initialize(EventCallback callback) {
+OSStatus hotkey_event_handler(EventHandlerCallRef _next, EventRef evt, void *userData);
+
+void * detect_initialize(EventCallback callback, InitializeOptions options) {
+  HotKey * hotkeys_clone = (HotKey*) malloc(sizeof(HotKey) * options.hotkeys_count);
+  memcpy(hotkeys_clone, options.hotkeys, sizeof(HotKey) * options.hotkeys_count);
+
   dispatch_async(dispatch_get_main_queue(), ^(void) {
+    // Setup hotkeys
+    if (options.hotkeys_count > 0) {
+      EventHotKeyRef hotkey_ref;
+      EventHotKeyID hotkey_id;
+      hotkey_id.signature='htk1';
+
+      EventTypeSpec eventType;
+      eventType.eventClass = kEventClassKeyboard;
+      eventType.eventKind = kEventHotKeyPressed;    
+      
+      InstallApplicationEventHandler(&hotkey_event_handler, 1, &eventType, (void*)callback, NULL);
+
+      for (int i = 0; i<options.hotkeys_count; i++) {
+        hotkey_id.id=hotkeys_clone[i].hk_id;
+        RegisterEventHotKey(hotkeys_clone[i].key_code, hotkeys_clone[i].flags, hotkey_id, GetApplicationEventTarget(), 0, &hotkey_ref);  
+      }
+    }
+    
+    free(hotkeys_clone);
+
+    // Setup key detection
+
     [NSEvent addGlobalMonitorForEventsMatchingMask:FLAGS handler:^(NSEvent *event){
         InputEvent inputEvent = {};
         if (event.type == NSEventTypeKeyDown || event.type == NSEventTypeKeyUp ) {
@@ -75,4 +102,19 @@ void * detect_initialize(EventCallback callback) {
         }
     }];
   });
+}
+
+OSStatus hotkey_event_handler(EventHandlerCallRef _next, EventRef evt, void *userData)
+{
+    EventHotKeyID hotkey_id;
+    GetEventParameter(evt, kEventParamDirectObject, typeEventHotKeyID, NULL, sizeof(hotkey_id), NULL, &hotkey_id);
+    
+    EventCallback callback = (EventCallback) userData;
+
+    InputEvent inputEvent = {};
+    inputEvent.event_type = INPUT_EVENT_TYPE_HOTKEY;
+    inputEvent.key_code = hotkey_id.id;
+    callback(inputEvent);
+
+    return noErr;
 }

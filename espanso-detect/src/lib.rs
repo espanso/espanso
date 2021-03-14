@@ -18,9 +18,11 @@
  */
 
 use anyhow::Result;
+use hotkey::HotKey;
 use log::info;
 
 pub mod event;
+pub mod hotkey;
 
 #[cfg(target_os = "windows")]
 pub mod win32;
@@ -49,11 +51,15 @@ pub trait Source {
 #[allow(dead_code)]
 pub struct SourceCreationOptions {
   // Only relevant in X11 Linux systems, use the EVDEV backend instead of X11.
-  use_evdev: bool,
+  pub use_evdev: bool,
 
   // Can be used to overwrite the keymap configuration
   // used by espanso to inject key presses.
-  evdev_keyboard_rmlvo: Option<KeyboardConfig>,
+  pub evdev_keyboard_rmlvo: Option<KeyboardConfig>,
+
+  // List of global hotkeys the detection module has to register
+  // NOTE: Hotkeys are ignored on Linux
+  pub hotkeys: Vec<HotKey>,
 }
 
 // This struct identifies the keyboard layout that
@@ -73,6 +79,7 @@ impl Default for SourceCreationOptions {
     Self {
       use_evdev: false,
       evdev_keyboard_rmlvo: None,
+      hotkeys: Vec::new(),
     }
   }
 }
@@ -84,9 +91,9 @@ pub fn get_source(_options: SourceCreationOptions) -> Result<Box<dyn Source>> {
 }
 
 #[cfg(target_os = "macos")]
-pub fn get_source(_options: SourceCreationOptions) -> Result<Box<dyn Source>> {
+pub fn get_source(options: SourceCreationOptions) -> Result<Box<dyn Source>> {
   info!("using CocoaSource");
-  Ok(Box::new(mac::CocoaSource::new()))
+  Ok(Box::new(mac::CocoaSource::new(&options.hotkeys)))
 }
 
 #[cfg(target_os = "linux")]

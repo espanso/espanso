@@ -24,6 +24,7 @@
 
 #define INPUT_EVENT_TYPE_KEYBOARD 1
 #define INPUT_EVENT_TYPE_MOUSE    2
+#define INPUT_EVENT_TYPE_HOTKEY   3
 
 #define INPUT_STATUS_PRESSED      1
 #define INPUT_STATUS_RELEASED     2
@@ -45,7 +46,8 @@ typedef struct {
   int32_t buffer_len;
   
   // Virtual key code of the pressed key in case of keyboard events
-  // Mouse button code otherwise.
+  // Mouse button code if mouse_event.
+  // Hotkey ID in case of hotkeys
   int32_t key_code;
   
   // Pressed or Released status
@@ -54,8 +56,18 @@ typedef struct {
 
 typedef void (*EventCallback)(InputEvent data);
 
+typedef struct {
+  int32_t hk_id;
+  uint16_t key_code;
+  uint32_t flags;
+} HotKey;
+
+typedef struct {
+  HotKey *hotkeys;
+  int32_t hotkeys_count;
+} InitializeOptions;
 
 // Initialize the event global monitor
-extern "C" void * detect_initialize(EventCallback callback);
+extern "C" void * detect_initialize(EventCallback callback, InitializeOptions options);
 
 #endif //ESPANSO_DETECT_H

@@ -234,10 +234,10 @@ impl Display for Key {
 impl Key {
   pub fn parse(key: &str) -> Option<Key> {
     let parsed = match key {
-      "ALT" => Some(Key::Alt),
+      "ALT" | "OPTION" => Some(Key::Alt),
       "CAPSLOCK" => Some(Key::CapsLock),
       "CTRL" => Some(Key::Control),
-      "META" => Some(Key::Meta),
+      "META" | "CMD" => Some(Key::Meta),
       "NUMLOCK" => Some(Key::NumLock),
       "SHIFT" => Some(Key::Shift),
       "ENTER" => Some(Key::Enter),
