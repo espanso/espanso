@@ -63,7 +63,7 @@ fn main() {
     let mut source = get_source(SourceCreationOptions {
       hotkeys: vec![
         HotKey::new(1, "OPTION+SPACE").unwrap(),
-        HotKey::new(2, "CMD+OPTION+3").unwrap(),
+        HotKey::new(2, "CTRL+OPTION+3").unwrap(),
       ],
       ..Default::default()
     }).unwrap();

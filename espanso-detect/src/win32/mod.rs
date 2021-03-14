@@ -17,16 +17,16 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::ffi::c_void;
+use std::{convert::TryInto, ffi::c_void};
 
 use lazycell::LazyCell;
-use log::{error, trace, warn};
+use log::{debug, error, trace, warn};
 use widestring::U16CStr;
 
 use anyhow::Result;
 use thiserror::Error;
 
-use crate::event::Variant::*;
+use crate::{event::{HotKeyEvent, Variant::*}, hotkey::{HotKey}};
 use crate::event::{InputEvent, Key, KeyboardEvent, Variant};
 use crate::event::{Key::*, MouseButton, MouseEvent};
 use crate::{event::Status::*, Source, SourceCallback};
@@ -36,6 +36,7 @@ const INPUT_RIGHT_VARIANT: i32 = 2;
 
 const INPUT_EVENT_TYPE_KEYBOARD: i32 = 1;
 const INPUT_EVENT_TYPE_MOUSE: i32 = 2;
+const INPUT_EVENT_TYPE_HOTKEY: i32 = 3;
 
 const INPUT_STATUS_PRESSED: i32 = 1;
 const INPUT_STATUS_RELEASED: i32 = 2;
@@ -62,10 +63,18 @@ pub struct RawInputEvent {
   pub status: i32,
 }
 
+#[repr(C)]
+pub struct RawHotKey {
+  pub id: i32,
+  pub code: u32,
+  pub flags: u32,
+}
+
 #[allow(improper_ctypes)]
 #[link(name = "espansodetect", kind = "static")]
 extern "C" {
   pub fn detect_initialize(_self: *const Win32Source, error_code: *mut i32) -> *mut c_void;
+  pub fn detect_register_hotkey(window: *const c_void, hotkey: RawHotKey) -> i32;
 
   pub fn detect_eventloop(
     window: *const c_void,
@@ -78,20 +87,24 @@ extern "C" {
 pub struct Win32Source {
   handle: *mut c_void,
   callback: LazyCell<SourceCallback>,
+  hotkeys: Vec<HotKey>,
 }
 
 #[allow(clippy::new_without_default)]
 impl Win32Source {
-  pub fn new() -> Win32Source {
+  pub fn new(hotkeys: &[HotKey]) -> Win32Source {
     Self {
       handle: std::ptr::null_mut(),
       callback: LazyCell::new(),
+      hotkeys: hotkeys.to_vec(),
     }
   }
 }
 
 impl Source for Win32Source {
   fn initialize(&mut self) -> Result<()> {
+    
+
     let mut error_code = 0;
     let handle = unsafe { detect_initialize(self as *const Win32Source, &mut error_code) };
 
@@ -103,6 +116,23 @@ impl Source for Win32Source {
       };
       return Err(error.into());
     }
+
+    // Register the hotkeys
+    self
+      .hotkeys
+      .iter()
+      .for_each(|hk| {
+        let raw = convert_hotkey_to_raw(&hk);
+        if let Some(raw_hk) = raw {
+          if unsafe { detect_register_hotkey(handle, raw_hk) } == 0 {
+            error!("unable to register hotkey: {}", hk);
+          } else {
+            debug!("registered hotkey: {}", hk);
+          }
+        } else {
+          error!("unable to generate raw hotkey mapping: {}", hk);
+        }
+      });
 
     self.handle = handle;
 
@@ -153,6 +183,35 @@ impl Drop for Win32Source {
     if result != 0 {
       error!("Win32Source destruction returned non-zero code");
     }
+  }
+}
+
+fn convert_hotkey_to_raw(hk: &HotKey) -> Option<RawHotKey> {
+  let key_code = hk.key.to_code()?;
+  let code: Result<u32, _> = key_code.try_into();
+  if let Ok(code) = code {
+    let mut flags = 0x4000;  // NOREPEAT flags
+    if hk.has_ctrl() {
+      flags |= 0x0002;
+    }
+    if hk.has_alt() {
+      flags |= 0x0001;
+    }
+    if hk.has_meta() {
+      flags |= 0x0008;
+    }
+    if hk.has_shift() {
+      flags |= 0x0004;
+    }
+
+    Some(RawHotKey {
+      id: hk.id,
+      code,
+      flags,
+    })
+  } else {
+    error!("unable to generate raw hotkey, the key_code is overflowing");
+    None
   }
 }
 
@@ -224,6 +283,12 @@ impl From<RawInputEvent> for Option<InputEvent> {
         if let Some(button) = button {
           return Some(InputEvent::Mouse(MouseEvent { button, status }));
         }
+      }
+      // Hotkey events
+      INPUT_EVENT_TYPE_HOTKEY => {
+        return Some(InputEvent::HotKey(HotKeyEvent {
+          hotkey_id: raw.key_code
+        }))
       }
       _ => {}
     }

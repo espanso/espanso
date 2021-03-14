@@ -19,12 +19,18 @@
 
 pub mod keys;
 
+use std::fmt::Display;
 
 use anyhow::Result;
 use keys::ShortcutKey;
 use thiserror::Error;
 
-static MODIFIERS: &[ShortcutKey; 4] = &[ShortcutKey::Control, ShortcutKey::Alt, ShortcutKey::Shift, ShortcutKey::Meta];
+static MODIFIERS: &[ShortcutKey; 4] = &[
+  ShortcutKey::Control,
+  ShortcutKey::Alt,
+  ShortcutKey::Shift,
+  ShortcutKey::Meta,
+];
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct HotKey {
@@ -33,7 +39,6 @@ pub struct HotKey {
   pub modifiers: Vec<ShortcutKey>,
 }
 
-// TODO: test all methods
 impl HotKey {
   pub fn new(id: i32, shortcut: &str) -> Result<Self> {
     let tokens: Vec<String> = shortcut
@@ -85,6 +90,19 @@ impl HotKey {
   }
 }
 
+impl Display for HotKey {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    let str_modifiers: Vec<String> = self.modifiers.iter().map(|m| m.to_string()).collect();
+    let modifiers = str_modifiers.join("+");
+    write!(
+      f,
+      "{}+{}",
+      &modifiers,
+      &self.key
+    )
+  }
+}
+
 #[derive(Error, Debug)]
 pub enum HotKeyError {
   #[error("invalid hotkey shortcut, `{0}` is not a valid key")]
@@ -100,16 +118,22 @@ mod tests {
 
   #[test]
   fn parse_correctly() {
-    assert_eq!(HotKey::new(1, "CTRL+V").unwrap(), HotKey {
-      id: 1,
-      key: ShortcutKey::V,
-      modifiers: vec![ShortcutKey::Control],
-    });
-    assert_eq!(HotKey::new(2, "SHIFT + Ctrl + v").unwrap(), HotKey {
-      id: 2,
-      key: ShortcutKey::V,
-      modifiers: vec![ShortcutKey::Shift, ShortcutKey::Control],
-    });
+    assert_eq!(
+      HotKey::new(1, "CTRL+V").unwrap(),
+      HotKey {
+        id: 1,
+        key: ShortcutKey::V,
+        modifiers: vec![ShortcutKey::Control],
+      }
+    );
+    assert_eq!(
+      HotKey::new(2, "SHIFT + Ctrl + v").unwrap(),
+      HotKey {
+        id: 2,
+        key: ShortcutKey::V,
+        modifiers: vec![ShortcutKey::Shift, ShortcutKey::Control],
+      }
+    );
     assert!(HotKey::new(3, "invalid").is_err());
   }
 

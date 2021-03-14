@@ -75,6 +75,17 @@ LRESULT CALLBACK detect_window_procedure(HWND window, unsigned int msg, WPARAM w
     SetWindowLongPtrW(window, GWLP_USERDATA, NULL);
 
     return 0L;
+  case WM_HOTKEY: // Hotkeys
+  {
+    InputEvent event = {};
+    event.event_type = INPUT_EVENT_TYPE_HOTKEY;
+    event.key_code = (int32_t) wp;
+    if (variables->rust_instance != NULL && variables->event_callback != NULL)
+    {
+      variables->event_callback(variables->rust_instance, event);
+    }
+    break;
+  }
   case WM_INPUT: // Message relative to the RAW INPUT events
   {
     InputEvent event = {};
@@ -320,6 +331,10 @@ void * detect_initialize(void *_self, int32_t *error_code)
   }
 
   return window;
+}
+
+int32_t detect_register_hotkey(void * window, HotKey hotkey) {
+  return RegisterHotKey((HWND)window, hotkey.hk_id, hotkey.flags, hotkey.key_code);
 }
 
 int32_t detect_eventloop(void * window, EventCallback _callback)
