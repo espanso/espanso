@@ -24,6 +24,7 @@
 
 #define INPUT_EVENT_TYPE_KEYBOARD 1
 #define INPUT_EVENT_TYPE_MOUSE    2
+#define INPUT_EVENT_TYPE_HOTKEY   3
 
 #define INPUT_STATUS_PRESSED      1
 #define INPUT_STATUS_RELEASED     2
@@ -50,7 +51,8 @@ typedef struct {
   int32_t buffer_len;
   
   // Virtual key code of the pressed key in case of keyboard events
-  // Mouse button code otherwise.
+  // Mouse button code for mouse events.
+  // Hotkey id for hotkey events
   int32_t key_code;
   
   // Left or Right variant
@@ -60,11 +62,20 @@ typedef struct {
   int32_t status;
 } InputEvent;
 
+typedef struct {
+  int32_t hk_id;
+  uint32_t key_code;
+  uint32_t flags;
+} HotKey;
+
 typedef void (*EventCallback)(void * rust_istance, InputEvent data);
 
 
 // Initialize the Raw Input API and the Window.
 extern "C" void * detect_initialize(void * rust_istance, int32_t *error_code);
+
+// Register the given hotkey, return a non-zero code if successful
+extern "C" int32_t detect_register_hotkey(void * window, HotKey hotkey);
 
 // Run the event loop. Blocking call.
 extern "C" int32_t detect_eventloop(void * window, EventCallback callback);

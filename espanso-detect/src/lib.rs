@@ -37,7 +37,6 @@ pub mod evdev;
 #[cfg(target_os = "macos")]
 pub mod mac;
 
-#[cfg(target_os = "macos")]
 #[macro_use]
 extern crate lazy_static;
 
@@ -85,9 +84,9 @@ impl Default for SourceCreationOptions {
 }
 
 #[cfg(target_os = "windows")]
-pub fn get_source(_options: SourceCreationOptions) -> Result<Box<dyn Source>> {
+pub fn get_source(options: SourceCreationOptions) -> Result<Box<dyn Source>> {
   info!("using Win32Source");
-  Ok(Box::new(win32::Win32Source::new()))
+  Ok(Box::new(win32::Win32Source::new(&options.hotkeys)))
 }
 
 #[cfg(target_os = "macos")]
