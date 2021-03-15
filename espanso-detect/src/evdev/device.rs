@@ -36,6 +36,7 @@ pub enum RawInputEvent {
 #[derive(Debug)]
 pub struct RawKeyboardEvent {
   pub sym: u32,
+  pub code: u32,
   pub value: String,
   pub state: i32,
 }
@@ -171,6 +172,7 @@ impl Device {
 
     let event = RawKeyboardEvent {
       state: value,
+      code: keycode,
       sym,
       value: content,
     };

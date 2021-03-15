@@ -265,6 +265,7 @@ impl From<RawInputEvent> for Option<InputEvent> {
           value,
           status,
           variant,
+          code: raw.key_code.try_into().expect("unable to convert keycode to u32"),
         }));
       }
       // Mouse events

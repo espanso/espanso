@@ -17,10 +17,7 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::{
-  collections::HashMap,
-  ffi::{c_void, CStr},
-};
+use std::{collections::HashMap, convert::TryInto, ffi::{c_void, CStr}};
 
 use lazycell::LazyCell;
 use log::{debug, error, trace, warn};
@@ -309,6 +306,7 @@ fn convert_raw_input_event_to_input_event(
         value,
         status,
         variant,
+        code: raw.key_code.try_into().expect("invalid keycode conversion to u32"),
       }));
     }
     // Mouse events
@@ -436,6 +434,7 @@ mod tests {
     raw.buffer_len = 1;
     raw.status = INPUT_STATUS_RELEASED;
     raw.key_sym = 0x4B;
+    raw.key_code = 1;
 
     let result: Option<InputEvent> = convert_raw_input_event_to_input_event(raw, &HashMap::new(), 0);
     assert_eq!(
@@ -445,6 +444,7 @@ mod tests {
         status: Released,
         value: Some("k".to_string()),
         variant: None,
+        code: 1,
       })
     );
   }

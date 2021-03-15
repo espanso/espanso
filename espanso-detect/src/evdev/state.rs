@@ -1,8 +1,6 @@
 // This code is a port of the libxkbcommon "interactive-evdev.c" example
 // https://github.com/xkbcommon/libxkbcommon/blob/master/tools/interactive-evdev.c
 
-use std::ffi::CStr;
-
 use scopeguard::ScopeGuard;
 
 use anyhow::Result;
