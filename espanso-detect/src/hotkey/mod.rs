@@ -94,12 +94,7 @@ impl Display for HotKey {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     let str_modifiers: Vec<String> = self.modifiers.iter().map(|m| m.to_string()).collect();
     let modifiers = str_modifiers.join("+");
-    write!(
-      f,
-      "{}+{}",
-      &modifiers,
-      &self.key
-    )
+    write!(f, "{}+{}", &modifiers, &self.key)
   }
 }
 

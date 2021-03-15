@@ -7,9 +7,7 @@ use anyhow::Result;
 use thiserror::Error;
 
 use super::{
-  ffi::{
-    xkb_state, xkb_state_key_get_one_sym, xkb_state_new, xkb_state_unref,
-  },
+  ffi::{xkb_state, xkb_state_key_get_one_sym, xkb_state_new, xkb_state_unref},
   keymap::Keymap,
 };
 

@@ -17,7 +17,11 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::{collections::HashMap, convert::TryInto, ffi::{c_void, CStr}};
+use std::{
+  collections::HashMap,
+  convert::TryInto,
+  ffi::{c_void, CStr},
+};
 
 use lazycell::LazyCell;
 use log::{debug, error, trace, warn};
@@ -306,7 +310,10 @@ fn convert_raw_input_event_to_input_event(
         value,
         status,
         variant,
-        code: raw.key_code.try_into().expect("invalid keycode conversion to u32"),
+        code: raw
+          .key_code
+          .try_into()
+          .expect("invalid keycode conversion to u32"),
       }));
     }
     // Mouse events
@@ -436,7 +443,8 @@ mod tests {
     raw.key_sym = 0x4B;
     raw.key_code = 1;
 
-    let result: Option<InputEvent> = convert_raw_input_event_to_input_event(raw, &HashMap::new(), 0);
+    let result: Option<InputEvent> =
+      convert_raw_input_event_to_input_event(raw, &HashMap::new(), 0);
     assert_eq!(
       result.unwrap(),
       InputEvent::Keyboard(KeyboardEvent {
@@ -456,7 +464,8 @@ mod tests {
     raw.status = INPUT_STATUS_RELEASED;
     raw.key_code = INPUT_MOUSE_RIGHT_BUTTON;
 
-    let result: Option<InputEvent> = convert_raw_input_event_to_input_event(raw, &HashMap::new(), 0);
+    let result: Option<InputEvent> =
+      convert_raw_input_event_to_input_event(raw, &HashMap::new(), 0);
     assert_eq!(
       result.unwrap(),
       InputEvent::Mouse(MouseEvent {
@@ -476,12 +485,11 @@ mod tests {
     let mut raw_hotkey_mapping = HashMap::new();
     raw_hotkey_mapping.insert((10, 1), 20);
 
-    let result: Option<InputEvent> = convert_raw_input_event_to_input_event(raw, &raw_hotkey_mapping, 1);
+    let result: Option<InputEvent> =
+      convert_raw_input_event_to_input_event(raw, &raw_hotkey_mapping, 1);
     assert_eq!(
       result.unwrap(),
-      InputEvent::HotKey(HotKeyEvent {
-        hotkey_id: 20,
-      })
+      InputEvent::HotKey(HotKeyEvent { hotkey_id: 20 })
     );
   }
 
@@ -493,7 +501,8 @@ mod tests {
     raw.buffer = buffer;
     raw.buffer_len = 5;
 
-    let result: Option<InputEvent> = convert_raw_input_event_to_input_event(raw, &HashMap::new(), 0);
+    let result: Option<InputEvent> =
+      convert_raw_input_event_to_input_event(raw, &HashMap::new(), 0);
     assert!(result.unwrap().into_keyboard().unwrap().value.is_none());
   }
 
@@ -501,7 +510,8 @@ mod tests {
   fn raw_to_input_event_returns_none_when_missing_type() {
     let mut raw = default_raw_input_event();
     raw.event_type = 0;
-    let result: Option<InputEvent> = convert_raw_input_event_to_input_event(raw, &HashMap::new(), 0);
+    let result: Option<InputEvent> =
+      convert_raw_input_event_to_input_event(raw, &HashMap::new(), 0);
     assert!(result.is_none());
   }
 }
