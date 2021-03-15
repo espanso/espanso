@@ -43,6 +43,8 @@ pub type xkb_state_component = u32;
 
 pub const EV_KEY: u16 = 0x01;
 
+pub const XKB_KEYCODE_INVALID: u32 = 0xffffffff;
+
 #[link(name = "xkbcommon")]
 extern "C" {
   pub fn xkb_state_unref(state: *mut xkb_state);
@@ -57,6 +59,7 @@ extern "C" {
   pub fn xkb_context_unref(context: *mut xkb_context);
   pub fn xkb_state_get_keymap(state: *mut xkb_state) -> *mut xkb_keymap;
   pub fn xkb_keymap_key_repeats(keymap: *mut xkb_keymap, key: xkb_keycode_t) -> c_int;
+  pub fn xkb_keymap_key_by_name(keymap: *mut xkb_keymap, name: *const c_char) -> u32;
   pub fn xkb_state_update_key(
     state: *mut xkb_state,
     key: xkb_keycode_t,

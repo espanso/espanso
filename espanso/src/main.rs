@@ -61,6 +61,7 @@ fn main() {
   let handle = std::thread::spawn(move || {
     let injector = get_injector(Default::default()).unwrap();
     let mut source = get_source(SourceCreationOptions {
+      use_evdev: true,
       hotkeys: vec![
         HotKey::new(1, "OPTION+SPACE").unwrap(),
         HotKey::new(2, "CTRL+OPTION+3").unwrap(),

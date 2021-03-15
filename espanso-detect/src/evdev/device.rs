@@ -23,9 +23,9 @@ use super::{
 };
 
 const EVDEV_OFFSET: i32 = 8;
-const KEY_STATE_RELEASE: i32 = 0;
-const KEY_STATE_PRESS: i32 = 1;
-const KEY_STATE_REPEAT: i32 = 2;
+pub const KEY_STATE_RELEASE: i32 = 0;
+pub const KEY_STATE_PRESS: i32 = 1;
+pub const KEY_STATE_REPEAT: i32 = 2;
 
 #[derive(Debug)]
 pub enum RawInputEvent {
@@ -37,7 +37,7 @@ pub enum RawInputEvent {
 pub struct RawKeyboardEvent {
   pub sym: u32,
   pub value: String,
-  pub is_down: bool,
+  pub state: i32,
 }
 
 #[derive(Debug)]
@@ -170,7 +170,7 @@ impl Device {
     let content = content_raw.to_string_lossy().to_string();
 
     let event = RawKeyboardEvent {
-      is_down,
+      state: value,
       sym,
       value: content,
     };
