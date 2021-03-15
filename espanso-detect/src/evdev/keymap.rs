@@ -10,7 +10,13 @@ use thiserror::Error;
 
 use crate::KeyboardConfig;
 
-use super::{context::Context, ffi::{XKB_KEYMAP_COMPILE_NO_FLAGS, xkb_keymap, xkb_keymap_new_from_names, xkb_keymap_unref, xkb_rule_names}};
+use super::{
+  context::Context,
+  ffi::{
+    xkb_keymap, xkb_keymap_new_from_names, xkb_keymap_unref, xkb_rule_names,
+    XKB_KEYMAP_COMPILE_NO_FLAGS,
+  },
+};
 
 pub struct Keymap {
   keymap: *mut xkb_keymap,

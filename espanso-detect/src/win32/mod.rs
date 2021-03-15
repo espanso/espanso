@@ -26,10 +26,13 @@ use widestring::U16CStr;
 use anyhow::Result;
 use thiserror::Error;
 
-use crate::{event::{HotKeyEvent, Variant::*}, hotkey::{HotKey}};
 use crate::event::{InputEvent, Key, KeyboardEvent, Variant};
 use crate::event::{Key::*, MouseButton, MouseEvent};
 use crate::{event::Status::*, Source, SourceCallback};
+use crate::{
+  event::{HotKeyEvent, Variant::*},
+  hotkey::HotKey,
+};
 
 const INPUT_LEFT_VARIANT: i32 = 1;
 const INPUT_RIGHT_VARIANT: i32 = 2;
@@ -103,8 +106,6 @@ impl Win32Source {
 
 impl Source for Win32Source {
   fn initialize(&mut self) -> Result<()> {
-    
-
     let mut error_code = 0;
     let handle = unsafe { detect_initialize(self as *const Win32Source, &mut error_code) };
 
@@ -118,21 +119,18 @@ impl Source for Win32Source {
     }
 
     // Register the hotkeys
-    self
-      .hotkeys
-      .iter()
-      .for_each(|hk| {
-        let raw = convert_hotkey_to_raw(&hk);
-        if let Some(raw_hk) = raw {
-          if unsafe { detect_register_hotkey(handle, raw_hk) } == 0 {
-            error!("unable to register hotkey: {}", hk);
-          } else {
-            debug!("registered hotkey: {}", hk);
-          }
+    self.hotkeys.iter().for_each(|hk| {
+      let raw = convert_hotkey_to_raw(&hk);
+      if let Some(raw_hk) = raw {
+        if unsafe { detect_register_hotkey(handle, raw_hk) } == 0 {
+          error!("unable to register hotkey: {}", hk);
         } else {
-          error!("unable to generate raw hotkey mapping: {}", hk);
+          debug!("registered hotkey: {}", hk);
         }
-      });
+      } else {
+        error!("unable to generate raw hotkey mapping: {}", hk);
+      }
+    });
 
     self.handle = handle;
 
@@ -190,7 +188,7 @@ fn convert_hotkey_to_raw(hk: &HotKey) -> Option<RawHotKey> {
   let key_code = hk.key.to_code()?;
   let code: Result<u32, _> = key_code.try_into();
   if let Ok(code) = code {
-    let mut flags = 0x4000;  // NOREPEAT flags
+    let mut flags = 0x4000; // NOREPEAT flags
     if hk.has_ctrl() {
       flags |= 0x0002;
     }
@@ -274,7 +272,10 @@ impl From<RawInputEvent> for Option<InputEvent> {
           value,
           status,
           variant,
-          code: raw.key_code.try_into().expect("unable to convert keycode to u32"),
+          code: raw
+            .key_code
+            .try_into()
+            .expect("unable to convert keycode to u32"),
         }));
       }
       // Mouse events
@@ -288,7 +289,7 @@ impl From<RawInputEvent> for Option<InputEvent> {
       // Hotkey events
       INPUT_EVENT_TYPE_HOTKEY => {
         return Some(InputEvent::HotKey(HotKeyEvent {
-          hotkey_id: raw.key_code
+          hotkey_id: raw.key_code,
         }))
       }
       _ => {}

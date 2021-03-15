@@ -1,6 +1,11 @@
 use std::time::Duration;
 
-use espanso_detect::{SourceCreationOptions, event::{InputEvent, Status}, get_source, hotkey::HotKey};
+use espanso_detect::{
+  event::{InputEvent, Status},
+  get_source,
+  hotkey::HotKey,
+  SourceCreationOptions,
+};
 use espanso_inject::{get_injector, keys, Injector};
 use espanso_ui::{event::UIEvent::*, icons::TrayIcon, menu::*};
 use simplelog::{CombinedLogger, Config, LevelFilter, TermLogger, TerminalMode};
@@ -67,7 +72,8 @@ fn main() {
         HotKey::new(2, "CTRL+OPTION+3").unwrap(),
       ],
       ..Default::default()
-    }).unwrap();
+    })
+    .unwrap();
     source.initialize().unwrap();
     source
       .eventloop(Box::new(move |event: InputEvent| {
@@ -85,8 +91,7 @@ fn main() {
               //injector.send_key_combination(&[keys::Key::Control, keys::Key::V], Default::default()).unwrap();
             }
           }
-          InputEvent::HotKey(_) => {
-          }
+          InputEvent::HotKey(_) => {}
         }
       }))
       .unwrap();

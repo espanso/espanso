@@ -17,10 +17,14 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::{convert::TryInto, ffi::CStr, sync::{
+use std::{
+  convert::TryInto,
+  ffi::CStr,
+  sync::{
     mpsc::{channel, Receiver, Sender},
     Arc, Mutex,
-  }};
+  },
+};
 
 use lazycell::LazyCell;
 use log::{error, trace, warn};
@@ -265,7 +269,10 @@ impl From<RawInputEvent> for Option<InputEvent> {
           value,
           status,
           variant,
-          code: raw.key_code.try_into().expect("unable to convert keycode to u32"),
+          code: raw
+            .key_code
+            .try_into()
+            .expect("unable to convert keycode to u32"),
         }));
       }
       // Mouse events
@@ -279,9 +286,7 @@ impl From<RawInputEvent> for Option<InputEvent> {
       // HOTKEYS
       INPUT_EVENT_TYPE_HOTKEY => {
         let id = raw.key_code;
-        return Some(InputEvent::HotKey(HotKeyEvent {
-          hotkey_id: id,
-        }))
+        return Some(InputEvent::HotKey(HotKeyEvent { hotkey_id: id }));
       }
       _ => {}
     }

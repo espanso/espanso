@@ -19,12 +19,13 @@
 
 use log::error;
 
-use crate::{event::{KeyboardEvent, Status}, hotkey::HotKey};
+use crate::{
+  event::{KeyboardEvent, Status},
+  hotkey::HotKey,
+};
 use std::{collections::HashMap, time::Instant};
 
-use super::{
-  state::State,
-};
+use super::state::State;
 
 // Number of milliseconds that define how long the hotkey memory
 // should retain pressed keys
@@ -71,10 +72,7 @@ impl HotKeyFilter {
       .collect();
   }
 
-  pub fn process_event(
-    &mut self,
-    event: &KeyboardEvent,
-  ) -> Option<i32> {
+  pub fn process_event(&mut self, event: &KeyboardEvent) -> Option<i32> {
     let mut hotkey = None;
     let mut key_code = None;
 
@@ -94,13 +92,19 @@ impl HotKeyFilter {
     }
 
     // Remove the old entries
-    to_be_removed.extend(self.memory.iter().enumerate().filter_map(|(i, (_, instant))| {
-      if instant.elapsed().as_millis() > HOTKEY_WINDOW_TIMEOUT {
-        Some(i)
-      } else {
-        None
-      }
-    }));
+    to_be_removed.extend(
+      self
+        .memory
+        .iter()
+        .enumerate()
+        .filter_map(|(i, (_, instant))| {
+          if instant.elapsed().as_millis() > HOTKEY_WINDOW_TIMEOUT {
+            Some(i)
+          } else {
+            None
+          }
+        }),
+    );
 
     // Remove duplicates and revert
     if !to_be_removed.is_empty() {

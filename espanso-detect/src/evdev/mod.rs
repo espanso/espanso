@@ -27,7 +27,7 @@ mod hotkey;
 mod keymap;
 mod state;
 
-use std::{cell::RefCell};
+use std::cell::RefCell;
 
 use anyhow::Result;
 use context::Context;
@@ -42,10 +42,14 @@ use thiserror::Error;
 
 use crate::event::{InputEvent, Key, KeyboardEvent, Variant};
 use crate::event::{Key::*, MouseButton, MouseEvent};
+use crate::{event::HotKeyEvent, event::Variant::*, hotkey::HotKey};
 use crate::{event::Status::*, KeyboardConfig, Source, SourceCallback, SourceCreationOptions};
-use crate::{event::Variant::*, event::HotKeyEvent, hotkey::HotKey};
 
-use self::{device::{DeviceError, RawInputEvent, KEY_STATE_PRESS, KEY_STATE_RELEASE}, hotkey::{HotKeyFilter}, state::State};
+use self::{
+  device::{DeviceError, RawInputEvent, KEY_STATE_PRESS, KEY_STATE_RELEASE},
+  hotkey::HotKeyFilter,
+  state::State,
+};
 
 const BTN_LEFT: u16 = 0x110;
 const BTN_RIGHT: u16 = 0x111;
@@ -101,7 +105,10 @@ impl Source for EVDEVSource {
 
     // Initialize the hotkeys
     let state = State::new(&keymap)?;
-    self._hotkey_filter.borrow_mut().initialize(&state, &self.hotkeys);
+    self
+      ._hotkey_filter
+      .borrow_mut()
+      .initialize(&state, &self.hotkeys);
 
     if self._context.fill(context).is_err() {
       return Err(EVDEVSourceError::InitFailure().into());
@@ -171,9 +178,7 @@ impl Source for EVDEVSource {
                 // On Wayland we need to detect the global shortcuts manually
                 if let InputEvent::Keyboard(key_event) = &event {
                   if let Some(hotkey) = (*hotkey_filter).process_event(&key_event) {
-                    event_callback(InputEvent::HotKey(HotKeyEvent {
-                      hotkey_id: hotkey,
-                    }))
+                    event_callback(InputEvent::HotKey(HotKeyEvent { hotkey_id: hotkey }))
                   }
                 }
 
