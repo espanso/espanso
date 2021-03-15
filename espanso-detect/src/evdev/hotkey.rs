@@ -17,52 +17,128 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::{event::KeyboardEvent, hotkey::HotKey};
-use std::{
-  collections::{HashMap, VecDeque},
-  time::Instant,
+use log::error;
+
+use crate::{event::{KeyboardEvent, Status}, hotkey::HotKey};
+use std::{collections::HashMap, time::Instant};
+
+use super::{
+  state::State,
 };
 
-use super::state::State;
-
-// Number of milliseconds between the first and last codes of an hotkey
-// to be considered valid
-const HOTKEY_WINDOW: i32 = 5000;
+// Number of milliseconds that define how long the hotkey memory
+// should retain pressed keys
+const HOTKEY_WINDOW_TIMEOUT: u128 = 5000;
 
 pub type KeySym = u32;
 pub type KeyCode = u32;
-pub type SymMap = HashMap<KeySym, KeyCode>;
+pub type HotkeyMemoryMap = Vec<(KeyCode, Instant)>;
 
-pub type HotkeyMemoryMap = VecDeque<(KeyCode, Instant)>;
+pub struct HotKeyFilter {
+  map: HashMap<KeySym, KeyCode>,
+  memory: HotkeyMemoryMap,
+  hotkey_raw_map: HashMap<i32, Vec<KeyCode>>,
+}
 
-pub fn generate_sym_map(state: &State) -> HashMap<KeySym, KeyCode> {
-  let mut map = HashMap::new();
-  for code in 0..256 {
-    if let Some(sym) = state.get_sym(code) {
-      map.insert(sym, code);
+impl HotKeyFilter {
+  pub fn new() -> Self {
+    Self {
+      map: HashMap::new(),
+      memory: HotkeyMemoryMap::new(),
+      hotkey_raw_map: HashMap::new(),
     }
   }
-  map
-}
 
-pub fn convert_hotkey_to_codes(hk: &HotKey, map: &SymMap) -> Option<Vec<KeyCode>> {
-  let mut codes = Vec::new();
-  let key_code = map.get(&hk.key.to_code()?)?;
-  codes.push(*key_code);
+  pub fn initialize(&mut self, state: &State, hotkeys: &[HotKey]) {
+    // First load the map
+    self.map = HashMap::new();
+    for code in 0..256 {
+      if let Some(sym) = state.get_sym(code) {
+        self.map.insert(sym, code);
+      }
+    }
 
-  for modifier in hk.modifiers.iter() {
-    let code = map.get(&modifier.to_code()?)?;
-    codes.push(*code);
+    // Then the actual hotkeys
+    self.hotkey_raw_map = hotkeys
+      .iter()
+      .filter_map(|hk| {
+        let codes = Self::convert_hotkey_to_codes(self, hk);
+        if codes.is_none() {
+          error!("unable to register hotkey {:?}", hk);
+        }
+        Some((hk.id, codes?))
+      })
+      .collect();
   }
 
-  Some(codes)
-}
+  pub fn process_event(
+    &mut self,
+    event: &KeyboardEvent,
+  ) -> Option<i32> {
+    let mut hotkey = None;
+    let mut key_code = None;
 
-pub fn detect_hotkey(
-  event: &KeyboardEvent,
-  memory: &mut HotkeyMemoryMap,
-  hotkeys: &HashMap<i32, Vec<KeyCode>>,
-) -> Option<i32> {
-  // TODO: implement the actual matching mechanism
-  // We need to "clean" the old entries
+    let mut to_be_removed = Vec::new();
+
+    if event.status == Status::Released {
+      // Remove from the memory all the key occurrences
+      to_be_removed.extend(self.memory.iter().enumerate().filter_map(|(i, (code, _))| {
+        if *code == event.code {
+          Some(i)
+        } else {
+          None
+        }
+      }));
+    } else {
+      key_code = Some(event.code)
+    }
+
+    // Remove the old entries
+    to_be_removed.extend(self.memory.iter().enumerate().filter_map(|(i, (_, instant))| {
+      if instant.elapsed().as_millis() > HOTKEY_WINDOW_TIMEOUT {
+        Some(i)
+      } else {
+        None
+      }
+    }));
+
+    // Remove duplicates and revert
+    if !to_be_removed.is_empty() {
+      to_be_removed.sort();
+      to_be_removed.dedup();
+      to_be_removed.reverse();
+      to_be_removed.into_iter().for_each(|index| {
+        self.memory.remove(index);
+      })
+    }
+
+    if let Some(code) = key_code {
+      self.memory.push((code, Instant::now()));
+
+      for (id, codes) in self.hotkey_raw_map.iter() {
+        if codes
+          .iter()
+          .all(|hk_code| self.memory.iter().any(|(m_code, _)| m_code == hk_code))
+        {
+          hotkey = Some(*id);
+          break;
+        }
+      }
+    }
+
+    hotkey
+  }
+
+  fn convert_hotkey_to_codes(&self, hk: &HotKey) -> Option<Vec<KeyCode>> {
+    let mut codes = Vec::new();
+    let key_code = self.map.get(&hk.key.to_code()?)?;
+    codes.push(*key_code);
+
+    for modifier in hk.modifiers.iter() {
+      let code = self.map.get(&modifier.to_code()?)?;
+      codes.push(*code);
+    }
+
+    Some(codes)
+  }
 }

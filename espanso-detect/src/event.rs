@@ -63,6 +63,7 @@ pub struct KeyboardEvent {
   pub value: Option<String>,
   pub status: Status,
   pub variant: Option<Variant>,
+  pub code: u32,
 }
 
 // A subset of the Web's key values: https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values
