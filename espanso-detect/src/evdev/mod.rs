@@ -1,4 +1,4 @@
-// This code is a port of the libxkbcommon "interactive-evdev.c" example
+// This code is heavily inspired by the libxkbcommon "interactive-evdev.c" example
 // https://github.com/xkbcommon/libxkbcommon/blob/master/tools/interactive-evdev.c
 
 /*
@@ -24,10 +24,15 @@ mod context;
 mod device;
 mod ffi;
 mod keymap;
+mod hotkey;
+mod state;
+
+use std::collections::HashMap;
 
 use anyhow::Result;
 use context::Context;
 use device::{get_devices, Device};
+use hotkey::HotkeyMemoryMap;
 use keymap::Keymap;
 use lazycell::LazyCell;
 use libc::{
@@ -36,12 +41,12 @@ use libc::{
 use log::{error, trace};
 use thiserror::Error;
 
-use crate::event::Variant::*;
+use crate::{event::Variant::*, hotkey::HotKey};
 use crate::event::{InputEvent, Key, KeyboardEvent, Variant};
 use crate::event::{Key::*, MouseButton, MouseEvent};
 use crate::{event::Status::*, KeyboardConfig, Source, SourceCallback, SourceCreationOptions};
 
-use self::device::{DeviceError, RawInputEvent};
+use self::{device::{DeviceError, KEY_STATE_PRESS, KEY_STATE_RELEASE, RawInputEvent}, hotkey::{KeyCode, convert_hotkey_to_codes, generate_sym_map}, state::State};
 
 const BTN_LEFT: u16 = 0x110;
 const BTN_RIGHT: u16 = 0x111;
@@ -51,10 +56,12 @@ const BTN_EXTRA: u16 = 0x114;
 
 pub struct EVDEVSource {
   devices: Vec<Device>,
+  hotkeys: Vec<HotKey>,
 
   _keyboard_rmlvo: Option<KeyboardConfig>,
   _context: LazyCell<Context>,
   _keymap: LazyCell<Keymap>,
+  _hotkey_codes: HashMap<i32, Vec<KeyCode>>,
 }
 
 #[allow(clippy::new_without_default)]
@@ -62,9 +69,11 @@ impl EVDEVSource {
   pub fn new(options: SourceCreationOptions) -> EVDEVSource {
     Self {
       devices: Vec::new(),
+      hotkeys: options.hotkeys,
       _context: LazyCell::new(),
       _keymap: LazyCell::new(),
       _keyboard_rmlvo: options.evdev_keyboard_rmlvo,
+      _hotkey_codes: HashMap::new(),
     }
   }
 }
@@ -90,6 +99,17 @@ impl Source for EVDEVSource {
         return Err(error);
       }
     }
+
+    // Initialize the hotkeys
+    let state = State::new(&keymap)?;
+    let sym_map = generate_sym_map(&state);
+    self._hotkey_codes = self.hotkeys.iter().filter_map(|hk| {
+      let codes = convert_hotkey_to_codes(hk, &sym_map);
+      if codes.is_none() {
+        error!("unable to register hotkey {:?}", hk);
+      }
+      Some((hk.id, codes?))
+    }).collect();
 
     if self._context.fill(context).is_err() {
       return Err(EVDEVSourceError::InitFailure().into());
@@ -133,6 +153,8 @@ impl Source for EVDEVSource {
       }
     }
 
+    let mut hotkey_memory = HotkeyMemoryMap::new();
+
     // Read events indefinitely
     let mut evs: [epoll_event; 16] = unsafe { std::mem::zeroed() };
     loop {
@@ -154,6 +176,9 @@ impl Source for EVDEVSource {
             events.into_iter().for_each(|raw_event| {
               let event: Option<InputEvent> = raw_event.into();
               if let Some(event) = event {
+                // First process the hotkey
+
+
                 event_callback(event);
               } else {
                 trace!("unable to convert raw event to input event");
@@ -194,10 +219,13 @@ impl From<RawInputEvent> for Option<InputEvent> {
           Some(keyboard_event.value)
         };
 
-        let status = if keyboard_event.is_down {
+        let status = if keyboard_event.state == KEY_STATE_PRESS {
           Pressed
-        } else {
+        } else if keyboard_event.state == KEY_STATE_RELEASE {
           Released
+        } else {
+          // Filter out the "repeated" events
+          return None;
         };
 
         return Some(InputEvent::Keyboard(KeyboardEvent {
