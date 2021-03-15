@@ -402,6 +402,7 @@ mod tests {
         status: Released,
         value: Some("k".to_string()),
         variant: None,
+        code: 40,
       })
     );
   }
