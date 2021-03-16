@@ -1,4 +1,4 @@
-use std::time::Duration;
+use std::{path::PathBuf, time::Duration};
 
 use espanso_detect::{
   event::{InputEvent, Status},
@@ -66,7 +66,7 @@ fn main() {
   let handle = std::thread::spawn(move || {
     let injector = get_injector(Default::default()).unwrap();
     let mut source = get_source(SourceCreationOptions {
-      use_evdev: true,
+      //use_evdev: true,
       hotkeys: vec![
         HotKey::new(1, "OPTION+SPACE").unwrap(),
         HotKey::new(2, "CTRL+OPTION+3").unwrap(),
@@ -74,6 +74,7 @@ fn main() {
       ..Default::default()
     })
     .unwrap();
+    let clipboard = espanso_clipboard::get_clipboard(Default::default()).unwrap();
     source.initialize().unwrap();
     source
       .eventloop(Box::new(move |event: InputEvent| {
@@ -91,7 +92,15 @@ fn main() {
               //injector.send_key_combination(&[keys::Key::Control, keys::Key::V], Default::default()).unwrap();
             }
           }
-          InputEvent::HotKey(_) => {}
+          InputEvent::HotKey(hotkey) => {
+            if hotkey.hotkey_id == 2 {
+              println!("clip {:?}", clipboard.get_text());
+            } else if hotkey.hotkey_id == 1 {
+              //clipboard.set_text("test text").unwrap();
+              //clipboard.set_html("<i>test text</i>", Some("test text fallback")).unwrap();
+              clipboard.set_image(&PathBuf::from("/home/freddy/insync/Development/Espanso/Images/icongreen.png")).unwrap();
+            }
+          }
         }
       }))
       .unwrap();
