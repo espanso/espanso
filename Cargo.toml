@@ -8,4 +8,5 @@ members = [
   "espanso-ipc",
   "espanso-config",
   "espanso-match",
+  "espanso-clipboard",
 ]

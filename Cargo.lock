@@ -224,6 +224,7 @@ dependencies = [
 name = "espanso"
 version = "1.0.0"
 dependencies = [
+ "espanso-clipboard",
  "espanso-config",
  "espanso-detect",
  "espanso-inject",
@@ -231,6 +232,22 @@ dependencies = [
  "espanso-ui",
  "maplit",
  "simplelog",
+]
+
+[[package]]
+name = "espanso-clipboard"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "cc",
+ "itertools",
+ "lazy_static",
+ "lazycell",
+ "libc",
+ "log",
+ "scopeguard",
+ "thiserror",
+ "widestring",
 ]
 
 [[package]]
