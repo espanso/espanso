@@ -49,16 +49,13 @@ fn cc_config() {
       .file("src/x11/native/clip/clip_x11.cpp")
       .file("src/x11/native/clip/image.cpp")
       .file("src/x11/native/native.cpp")
-      .define("CLIP_X11_WITH_PNG", None)
       .compile("espansoclipboardx11");
 
     println!("cargo:rustc-link-search=native=/usr/lib/x86_64-linux-gnu/");
     println!("cargo:rustc-link-lib=static=espansoclipboardx11");
-
-    // TODO: link xcb, libpng?
-
     println!("cargo:rustc-link-lib=dylib=xcb");
-    //println!("cargo:rustc-link-lib=dylib=X11");
+  } else {
+    // TODO: wayland
   }
 }
 

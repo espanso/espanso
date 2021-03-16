@@ -7,7 +7,7 @@ build="build.rs"
 
 [features]
 # If the wayland feature is enabled, all X11 dependencies will be dropped
-# and only EVDEV-based methods will be supported.
+# and wayland support will be enabled
 wayland = []
 
 [dependencies]
