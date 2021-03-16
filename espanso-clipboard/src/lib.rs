@@ -30,13 +30,11 @@ mod win32;
 mod x11;
 
 //#[cfg(target_os = "linux")]
-//mod evdev;
+//#[cfg(feature = "wayland")]
+//mod wayland;
 
 #[cfg(target_os = "macos")]
 mod mac;
-
-#[macro_use]
-extern crate lazy_static;
 
 pub trait Clipboard {
   fn get_text(&self) -> Option<String>;
@@ -69,7 +67,7 @@ pub fn get_injector(_options: InjectorCreationOptions) -> Result<Box<dyn Injecto
 
 #[cfg(target_os = "linux")]
 #[cfg(not(feature = "wayland"))]
-pub fn get_clipboard(options: ClipboardOptions) -> Result<Box<dyn Clipboard>> {
+pub fn get_clipboard(_: ClipboardOptions) -> Result<Box<dyn Clipboard>> {
   info!("using X11NativeClipboard");
   Ok(Box::new(x11::native::X11NativeClipboard::new()?))
 }
