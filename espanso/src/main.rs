@@ -12,6 +12,7 @@ use simplelog::{CombinedLogger, Config, LevelFilter, TermLogger, TerminalMode};
 
 fn main() {
   println!("Hello, world!z");
+
   CombinedLogger::init(vec![
     TermLogger::new(LevelFilter::Debug, Config::default(), TerminalMode::Mixed),
     // WriteLogger::new(
@@ -21,6 +22,9 @@ fn main() {
     // ),
   ])
   .unwrap();
+
+  let clipboard = espanso_clipboard::get_clipboard(Default::default()).unwrap();
+  println!("clipboard: {:?}", clipboard.get_text());
 
   // let icon_paths = vec![
   //   (
@@ -68,7 +72,8 @@ fn main() {
     let mut source = get_source(SourceCreationOptions {
       //use_evdev: true,
       hotkeys: vec![
-        HotKey::new(1, "OPTION+SPACE").unwrap(),
+        HotKey::new(1, "CTRL+SPACE").unwrap(),
+        //HotKey::new(1, "OPTION+SPACE").unwrap(),
         HotKey::new(2, "CTRL+OPTION+3").unwrap(),
       ],
       ..Default::default()
@@ -96,9 +101,9 @@ fn main() {
             if hotkey.hotkey_id == 2 {
               println!("clip {:?}", clipboard.get_text());
             } else if hotkey.hotkey_id == 1 {
-              //clipboard.set_text("test text").unwrap();
+              clipboard.set_text("test text").unwrap();
               //clipboard.set_html("<i>test text</i>", Some("test text fallback")).unwrap();
-              clipboard.set_image(&PathBuf::from("/home/freddy/insync/Development/Espanso/Images/icongreen.png")).unwrap();
+              //clipboard.set_image(&PathBuf::from("/home/freddy/insync/Development/Espanso/Images/icongreen.png")).unwrap();
             }
           }
         }
