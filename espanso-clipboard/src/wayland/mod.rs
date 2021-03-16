@@ -17,4 +17,4 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub(crate) mod native;
+pub(crate) mod fallback;

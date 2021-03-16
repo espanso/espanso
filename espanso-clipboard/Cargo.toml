@@ -8,7 +8,7 @@ build="build.rs"
 [features]
 # If the wayland feature is enabled, all X11 dependencies will be dropped
 # and wayland support will be enabled
-wayland = []
+wayland = ["wait-timeout"]
 
 [dependencies]
 log = "0.4.14"
@@ -20,10 +20,8 @@ lazy_static = "1.4.0"
 [target.'cfg(windows)'.dependencies]
 widestring = "0.4.3"
 
-[target.'cfg(target_os="linux")'.dependencies]
-libc = "0.2.85"
-scopeguard = "1.1.0"
-itertools = "0.10.0"
+[target.'cfg(target_os = "linux")'.dependencies]
+wait-timeout = { version = "0.2.0", optional = true }
 
 [build-dependencies]
 cc = "1.0.66"

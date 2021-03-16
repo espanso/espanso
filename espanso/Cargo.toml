@@ -10,7 +10,7 @@ edition = "2018"
 
 [features]
 # If the wayland feature is enabled, all X11 dependencies will be dropped
-# and only EVDEV-based methods will be supported.
+# and only methods suitable for Wayland will be used
 wayland = ["espanso-detect/wayland", "espanso-inject/wayland", "espanso-clipboard/wayland"]
 
 [dependencies]

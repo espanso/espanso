@@ -73,18 +73,22 @@ impl HotKey {
     })
   }
 
+  #[allow(dead_code)]
   pub(crate) fn has_ctrl(&self) -> bool {
     self.modifiers.contains(&ShortcutKey::Control)
   }
 
+  #[allow(dead_code)]
   pub(crate) fn has_meta(&self) -> bool {
     self.modifiers.contains(&ShortcutKey::Meta)
   }
 
+  #[allow(dead_code)]
   pub(crate) fn has_alt(&self) -> bool {
     self.modifiers.contains(&ShortcutKey::Alt)
   }
 
+  #[allow(dead_code)]
   pub(crate) fn has_shift(&self) -> bool {
     self.modifiers.contains(&ShortcutKey::Shift)
   }
