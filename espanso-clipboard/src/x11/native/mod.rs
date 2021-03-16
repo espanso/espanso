@@ -21,7 +21,7 @@ use std::{ffi::{CStr, CString}, io::Read, path::PathBuf};
 
 use crate::Clipboard;
 use anyhow::Result;
-use libc::c_char;
+use std::os::raw::c_char;
 use thiserror::Error;
 
 mod ffi;
