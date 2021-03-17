@@ -61,12 +61,12 @@ fn cc_config() {
 
 #[cfg(target_os = "macos")]
 fn cc_config() {
-  println!("cargo:rerun-if-changed=src/mac/native.mm");
-  println!("cargo:rerun-if-changed=src/mac/native.h");
+  println!("cargo:rerun-if-changed=src/cocoa/native.mm");
+  println!("cargo:rerun-if-changed=src/cocoa/native.h");
   cc::Build::new()
     .cpp(true)
-    .include("src/mac/native.h")
-    .file("src/mac/native.mm")
+    .include("src/cocoa/native.h")
+    .file("src/cocoa/native.mm")
     .compile("espansoclipboard");
   println!("cargo:rustc-link-lib=dylib=c++");
   println!("cargo:rustc-link-lib=static=espansoclipboard");
