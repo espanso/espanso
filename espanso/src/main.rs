@@ -101,9 +101,9 @@ fn main() {
             if hotkey.hotkey_id == 2 {
               println!("clip {:?}", clipboard.get_text());
             } else if hotkey.hotkey_id == 1 {
-              clipboard.set_text("test text").unwrap();
-              //clipboard.set_html("<i>test text</i>", Some("test text fallback")).unwrap();
-              //clipboard.set_image(&PathBuf::from("/home/freddy/insync/Development/Espanso/Images/icongreen.png")).unwrap();
+              //clipboard.set_text("test text").unwrap();
+              clipboard.set_html("<i>test text</i>", Some("test text fallback")).unwrap();
+              //clipboard.set_image(&PathBuf::from(r"C:\Users\Freddy\Insync\Development\Espanso\Images\icongreen.png")).unwrap();
             }
           }
         }

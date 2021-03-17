@@ -55,7 +55,7 @@ fn cc_config() {
     println!("cargo:rustc-link-lib=static=espansoclipboardx11");
     println!("cargo:rustc-link-lib=dylib=xcb");
   } else {
-    // TODO: wayland
+    // Nothing to compile on wayland
   }
 }
 
