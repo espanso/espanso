@@ -34,7 +34,7 @@ mod x11;
 mod wayland;
 
 #[cfg(target_os = "macos")]
-mod mac;
+mod cocoa;
 
 pub trait Clipboard {
   fn get_text(&self) -> Option<String>;
@@ -66,9 +66,9 @@ pub fn get_clipboard(_: ClipboardOptions) -> Result<Box<dyn Clipboard>> {
 }
 
 #[cfg(target_os = "macos")]
-pub fn get_injector(_options: InjectorCreationOptions) -> Result<Box<dyn Injector>> {
-  info!("using MacInjector");
-  Ok(Box::new(mac::MacInjector::new()))
+pub fn get_clipboard(_: ClipboardOptions) -> Result<Box<dyn Clipboard>> {
+  info!("using CocoaClipboard");
+  Ok(Box::new(cocoa::CocoaClipboard::new()?))
 }
 
 #[cfg(target_os = "linux")]
