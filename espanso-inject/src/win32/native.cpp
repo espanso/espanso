@@ -42,7 +42,6 @@
 void inject_string(wchar_t *string)
 {
   std::wstring msg(string);
-  std::cout << msg.length() << std::endl;
 
   std::vector<INPUT> vec;
   for (auto ch : msg)
