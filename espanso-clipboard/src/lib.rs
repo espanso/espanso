@@ -60,9 +60,9 @@ impl Default for ClipboardOptions {
 }
 
 #[cfg(target_os = "windows")]
-pub fn get_injector(_options: InjectorCreationOptions) -> Result<Box<dyn Injector>> {
-  info!("using Win32Injector");
-  Ok(Box::new(win32::Win32Injector::new()))
+pub fn get_clipboard(_: ClipboardOptions) -> Result<Box<dyn Clipboard>> {
+  info!("using Win32Clipboard");
+  Ok(Box::new(win32::Win32Clipboard::new()?))
 }
 
 #[cfg(target_os = "macos")]
