@@ -33,6 +33,7 @@ mod util;
 lazy_static! {
   pub(crate) static ref VAR_REGEX: Regex =
     Regex::new(r"\{\{\s*((?P<name>\w+)(\.(?P<subname>(\w+)))?)\s*\}\}").unwrap();
+  static ref WORD_REGEX: Regex = Regex::new(r"(\w+)").unwrap();
 }
 
 pub(crate) struct DefaultRenderer {
@@ -198,6 +199,19 @@ impl Renderer for DefaultRenderer {
         let mut v: Vec<char> = body.chars().collect();
         v[0] = v[0].to_uppercase().next().unwrap();
         v.into_iter().collect()
+      },
+      CasingStyle::CapitalizeWords => {
+        // Capitalize the first letter of each word
+        WORD_REGEX.replace_all(&body, |caps: &Captures| {
+          if let Some(word_match) = caps.get(0) {
+            let mut v: Vec<char> = word_match.as_str().chars().collect();
+            v[0] = v[0].to_uppercase().next().unwrap();
+            let capitalized_word: String = v.into_iter().collect();
+            capitalized_word
+          } else {
+            "".to_string()
+          }
+        }).to_string()
       }
     };
 
@@ -313,6 +327,15 @@ mod tests {
       casing_style: CasingStyle::Capitalize,
     });
     assert!(matches!(res, RenderResult::Success(str) if str == "Plain body"));
+  }
+
+  #[test]
+  fn no_variable_capitalize_words() {
+    let renderer = get_renderer();
+    let res = renderer.render(&template_for_str("ordinary least squares, with other.punctuation !Marks"), &Default::default(), &RenderOptions {
+      casing_style: CasingStyle::CapitalizeWords,
+    });
+    assert!(matches!(res, RenderResult::Success(str) if str == "Ordinary Least Squares, With Other.Punctuation !Marks"));
   }
 
   #[test]

@@ -73,6 +73,7 @@ impl Default for RenderOptions {
 pub enum CasingStyle {
   None,
   Capitalize,
+  CapitalizeWords,
   Uppercase,
 }
 
