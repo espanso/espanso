@@ -18,3 +18,4 @@
  */
 
 pub mod date;
+pub mod echo;
