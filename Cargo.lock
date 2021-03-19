@@ -324,6 +324,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "espanso-render"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "enum-as-inner",
+ "lazy_static",
+ "log",
+ "regex",
+ "thiserror",
+]
+
+[[package]]
 name = "espanso-ui"
 version = "0.1.0"
 dependencies = [

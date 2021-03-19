@@ -9,4 +9,5 @@ members = [
   "espanso-config",
   "espanso-match",
   "espanso-clipboard",
+  "espanso-render",
 ]
