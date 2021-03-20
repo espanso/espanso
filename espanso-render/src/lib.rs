@@ -20,11 +20,11 @@
 #[macro_use]
 extern crate lazy_static;
 
-use std::collections::HashMap;
 use enum_as_inner::EnumAsInner;
+use std::collections::HashMap;
 
-mod renderer;
 pub mod extension;
+mod renderer;
 
 pub trait Renderer {
   fn render(&self, template: &Template, context: &Context, options: &RenderOptions)
@@ -113,7 +113,7 @@ impl Default for Variable {
 
 pub type Params = HashMap<String, Value>;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, EnumAsInner)]
 pub enum Value {
   Null,
   Bool(bool),
