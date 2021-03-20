@@ -23,9 +23,6 @@ fn main() {
   ])
   .unwrap();
 
-  let clipboard = espanso_clipboard::get_clipboard(Default::default()).unwrap();
-  println!("clipboard: {:?}", clipboard.get_text());
-
   // let icon_paths = vec![
   //   (
   //     espanso_ui::icons::TrayIcon::Normal,
@@ -80,6 +77,7 @@ fn main() {
     })
     .unwrap();
     let clipboard = espanso_clipboard::get_clipboard(Default::default()).unwrap();
+    let provider = espanso_info::get_provider().unwrap();
     source.initialize().unwrap();
     source
       .eventloop(Box::new(move |event: InputEvent| {
@@ -95,6 +93,9 @@ fn main() {
                 .expect("error");
               //std::thread::sleep(std::time::Duration::from_secs(2));
               //injector.send_key_combination(&[keys::Key::Control, keys::Key::V], Default::default()).unwrap();
+            }
+            if evt.key == espanso_detect::event::Key::Shift && evt.status == Status::Released {
+              println!("info {:?}", provider.get_info());
             }
           }
           InputEvent::HotKey(hotkey) => {
