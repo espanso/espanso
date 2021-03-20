@@ -46,9 +46,9 @@ pub struct AppInfo {
 }
 
 #[cfg(target_os = "windows")]
-pub fn get_clipboard(_: ClipboardOptions) -> Result<Box<dyn Clipboard>> {
-  info!("using Win32Clipboard");
-  Ok(Box::new(win32::Win32Clipboard::new()?))
+pub fn get_provider() -> Result<Box<dyn AppInfoProvider>> {
+  info!("using Win32AppInfoProvider");
+  Ok(Box::new(win32::WinAppInfoProvider::new()))
 }
 
 #[cfg(target_os = "macos")]

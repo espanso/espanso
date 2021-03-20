@@ -25,9 +25,9 @@ fn cc_config() {
     .cpp(true)
     .include("src/win32/native.h")
     .file("src/win32/native.cpp")
-    .compile("espansoclipboard");
+    .compile("espansoinfo");
 
-  println!("cargo:rustc-link-lib=static=espansoclipboard");
+  println!("cargo:rustc-link-lib=static=espansoinfo");
   println!("cargo:rustc-link-lib=dylib=user32");
   #[cfg(target_env = "gnu")]
   println!("cargo:rustc-link-lib=dylib=stdc++");
