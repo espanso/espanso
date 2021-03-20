@@ -188,7 +188,7 @@ impl Extension for ShellExtension {
             info!("exit status: '{}'", output.status);
             info!("stdout: '{}'", output_str);
             info!("stderr: '{}'", error_str);
-            info!("this debug information was shown because the match 'debug' option is true.");
+            info!("this debug information was shown because the 'debug' option is true.");
           }
 
           let ignore_error = params
