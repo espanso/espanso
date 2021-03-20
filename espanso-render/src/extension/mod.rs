@@ -21,4 +21,5 @@ pub mod date;
 pub mod echo;
 pub mod clipboard;
 pub mod shell;
+pub mod script;
 mod util;
