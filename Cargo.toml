@@ -10,4 +10,5 @@ members = [
   "espanso-match",
   "espanso-clipboard",
   "espanso-render",
+  "espanso-info",
 ]
