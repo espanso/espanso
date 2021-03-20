@@ -22,4 +22,5 @@ pub mod echo;
 pub mod clipboard;
 pub mod shell;
 pub mod script;
+pub mod random;
 mod util;
