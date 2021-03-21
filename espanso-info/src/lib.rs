@@ -52,9 +52,9 @@ pub fn get_provider() -> Result<Box<dyn AppInfoProvider>> {
 }
 
 #[cfg(target_os = "macos")]
-pub fn get_clipboard(_: ClipboardOptions) -> Result<Box<dyn Clipboard>> {
-  info!("using CocoaClipboard");
-  Ok(Box::new(cocoa::CocoaClipboard::new()?))
+pub fn get_provider() -> Result<Box<dyn AppInfoProvider>> {
+  info!("using CocoaAppInfoProvider");
+  Ok(Box::new(cocoa::CocoaAppInfoProvider::new()))
 }
 
 #[cfg(target_os = "linux")]
