@@ -34,21 +34,21 @@ pub(crate) struct DefaultMatchStore {
 }
 
 impl DefaultMatchStore {
-  pub fn new() -> Self {
+  pub fn new(paths: &[String]) -> Self {
+    let mut groups = HashMap::new();
+
+    // Because match groups can imports other match groups,
+    // we have to load them recursively starting from the
+    // top-level ones.
+    load_match_groups_recursively(&mut groups, paths);
+
     Self {
-      groups: HashMap::new(),
+      groups,
     }
   }
 }
 
 impl MatchStore for DefaultMatchStore {
-  fn load(&mut self, paths: &[String]) {
-    // Because match groups can imports other match groups,
-    // we have to load them recursively starting from the
-    // top-level ones.
-    load_match_groups_recursively(&mut self.groups, paths);
-  }
-
   fn query(&self, paths: &[String]) -> MatchSet {
     let mut matches: Vec<&Match> = Vec::new();
     let mut global_vars: Vec<&Variable> = Vec::new();
@@ -223,9 +223,7 @@ mod tests {
       )
       .unwrap();
 
-      let mut match_store = DefaultMatchStore::new();
-
-      match_store.load(&[base_file.to_string_lossy().to_string()]);
+      let match_store = DefaultMatchStore::new(&[base_file.to_string_lossy().to_string()]);
 
       assert_eq!(match_store.groups.len(), 3);
 
@@ -305,9 +303,7 @@ mod tests {
       )
       .unwrap();
 
-      let mut match_store = DefaultMatchStore::new();
-
-      match_store.load(&[base_file.to_string_lossy().to_string()]);
+      let match_store = DefaultMatchStore::new(&[base_file.to_string_lossy().to_string()]);
 
       assert_eq!(match_store.groups.len(), 3);
     });
@@ -368,9 +364,7 @@ mod tests {
       )
       .unwrap();
 
-      let mut match_store = DefaultMatchStore::new();
-
-      match_store.load(&[base_file.to_string_lossy().to_string()]);
+      let match_store = DefaultMatchStore::new(&[base_file.to_string_lossy().to_string()]);
 
       let match_set = match_store.query(&[base_file.to_string_lossy().to_string()]);
 
@@ -457,9 +451,7 @@ mod tests {
       )
       .unwrap();
 
-      let mut match_store = DefaultMatchStore::new();
-
-      match_store.load(&[base_file.to_string_lossy().to_string()]);
+      let match_store = DefaultMatchStore::new(&[base_file.to_string_lossy().to_string()]);
 
       let match_set = match_store.query(&[base_file.to_string_lossy().to_string()]);
 
@@ -540,12 +532,7 @@ mod tests {
       )
       .unwrap();
 
-      let mut match_store = DefaultMatchStore::new();
-
-      match_store.load(&[
-        base_file.to_string_lossy().to_string(),
-        sub_file.to_string_lossy().to_string(),
-      ]);
+      let match_store = DefaultMatchStore::new(&[base_file.to_string_lossy().to_string(), sub_file.to_string_lossy().to_string()]);
 
       let match_set = match_store.query(&[
         base_file.to_string_lossy().to_string(),
@@ -632,9 +619,7 @@ mod tests {
       )
       .unwrap();
 
-      let mut match_store = DefaultMatchStore::new();
-
-      match_store.load(&[base_file.to_string_lossy().to_string()]);
+      let match_store = DefaultMatchStore::new(&[base_file.to_string_lossy().to_string()]);
 
       let match_set = match_store.query(&[
         base_file.to_string_lossy().to_string(),
