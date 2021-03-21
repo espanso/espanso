@@ -23,7 +23,7 @@
 pub fn is_yaml_empty(yaml: &str) -> bool {
   for line in yaml.lines() {
     let trimmed_line = line.trim();
-    if !trimmed_line.starts_with("#") && !trimmed_line.is_empty() {
+    if !trimmed_line.starts_with('#') && !trimmed_line.is_empty() {
       return false;
     }
   }

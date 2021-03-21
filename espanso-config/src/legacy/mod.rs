@@ -17,22 +17,16 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use super::{Match, Variable};
+use std::path::Path;
+use anyhow::Result;
 
-mod default;
+use crate::{config::ConfigStore, matches::store::MatchStore};
 
-pub trait MatchStore {
-  fn query(&self, paths: &[String]) -> MatchSet;
-}
+mod config;
+mod model;
 
-#[derive(Debug, Clone, PartialEq)]
-pub struct MatchSet<'a> {
-  pub matches: Vec<&'a Match>,
-  pub global_vars: Vec<&'a Variable>,
-}
+pub fn load(base_dir: &Path) -> Result<(Box<dyn ConfigStore>, Box<dyn MatchStore>)> {
+  // TODO: load legacy config set and then convert it to the new format 
 
-pub fn new(paths: &[String]) -> impl MatchStore {
-  // TODO: here we can replace the DefaultMatchStore with a caching wrapper
-  // that returns the same response for the given "paths" query
-  default::DefaultMatchStore::new(paths)
+  todo!()
 }

@@ -28,6 +28,7 @@ extern crate lazy_static;
 
 pub mod config;
 mod counter;
+mod legacy;
 pub mod matches;
 mod util;
 
@@ -40,10 +41,13 @@ pub fn load(base_path: &Path) -> Result<(impl ConfigStore, impl MatchStore)> {
   let config_store = config::load_store(&config_dir)?;
   let root_paths = config_store.get_all_match_paths();
 
-  let mut match_store = matches::store::new();
-  match_store.load(&root_paths.into_iter().collect::<Vec<String>>());
+  let match_store = matches::store::new(&root_paths.into_iter().collect::<Vec<String>>());
 
   Ok((config_store, match_store))
+}
+
+pub fn is_legacy_config(base_dir: &Path) -> bool {
+  !base_dir.join("config").is_dir() && !base_dir.join("match").is_dir()
 }
 
 #[derive(Error, Debug)]
