@@ -61,9 +61,9 @@ fn cc_config() {
     .cpp(true)
     .include("src/cocoa/native.h")
     .file("src/cocoa/native.mm")
-    .compile("espansoclipboard");
+    .compile("espansoinfo");
   println!("cargo:rustc-link-lib=dylib=c++");
-  println!("cargo:rustc-link-lib=static=espansoclipboard");
+  println!("cargo:rustc-link-lib=static=espansoinfo");
   println!("cargo:rustc-link-lib=framework=Cocoa");
 }
 
