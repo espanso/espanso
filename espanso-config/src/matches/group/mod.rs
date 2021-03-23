@@ -22,7 +22,7 @@ use std::path::Path;
 
 use super::{Match, Variable};
 
-mod loader;
+pub(crate) mod loader;
 mod path;
 
 #[derive(Debug, Clone, PartialEq)]

@@ -106,6 +106,13 @@ impl DefaultConfigStore {
       customs,
     })
   }
+
+  pub fn from_configs(default: Box<dyn Config>, customs: Vec<Box<dyn Config>>) -> Result<Self> {
+    Ok(Self {
+      default,
+      customs,
+    })
+  }
 }
 
 #[cfg(test)]
