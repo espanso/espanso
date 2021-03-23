@@ -233,6 +233,7 @@ dependencies = [
  "espanso-clipboard",
  "espanso-config",
  "espanso-detect",
+ "espanso-info",
  "espanso-inject",
  "espanso-match",
  "espanso-ui",
@@ -285,6 +286,19 @@ dependencies = [
  "log",
  "regex",
  "scopeguard",
+ "thiserror",
+ "widestring",
+]
+
+[[package]]
+name = "espanso-info"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "cc",
+ "lazy_static",
+ "lazycell",
+ "log",
  "thiserror",
  "widestring",
 ]

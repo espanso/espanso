@@ -11,7 +11,7 @@ edition = "2018"
 [features]
 # If the wayland feature is enabled, all X11 dependencies will be dropped
 # and only methods suitable for Wayland will be used
-wayland = ["espanso-detect/wayland", "espanso-inject/wayland", "espanso-clipboard/wayland"]
+wayland = ["espanso-detect/wayland", "espanso-inject/wayland", "espanso-clipboard/wayland", "espanso-info/wayland"]
 
 [dependencies]
 espanso-detect = { path = "../espanso-detect" } 
@@ -20,5 +20,6 @@ espanso-inject = { path = "../espanso-inject" }
 espanso-config = { path = "../espanso-config" } 
 espanso-match = { path = "../espanso-match" } 
 espanso-clipboard = { path = "../espanso-clipboard" } 
+espanso-info = { path = "../espanso-info" } 
 maplit = "1.0.2"
 simplelog = "0.9.0"
