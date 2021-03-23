@@ -31,7 +31,7 @@ use crate::matches::{MatchCause, MatchEffect, TextEffect, TriggerCause};
 
 use super::Importer;
 
-mod parse;
+pub(crate) mod parse;
 
 pub(crate) struct YAMLImporter {}
 

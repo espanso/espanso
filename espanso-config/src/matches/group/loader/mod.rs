@@ -25,7 +25,7 @@ use self::yaml::YAMLImporter;
 
 use super::MatchGroup;
 
-mod yaml;
+pub(crate) mod yaml;
 
 trait Importer {
   fn is_supported(&self, extension: &str) -> bool;

@@ -24,8 +24,8 @@ use thiserror::Error;
 mod parse;
 mod path;
 mod resolve;
-mod store;
 mod util;
+pub(crate) mod store;
 
 pub trait Config {
   fn label(&self) -> &str;

@@ -153,13 +153,12 @@ fn default_modulo_path() -> Option<String> {
 fn default_post_inject_delay() -> u64 {
   100
 }
-
 fn default_wait_for_modifiers_release() -> bool {
   false
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct Configs {
+pub struct LegacyConfig {
   #[serde(default = "default_name")]
   pub name: String,
 
@@ -302,7 +301,7 @@ macro_rules! validate_field {
     };
 }
 
-impl Configs {
+impl LegacyConfig {
   /*
    * Validate the Config instance.
    * It makes sure that user defined config instances do not define
@@ -412,8 +411,8 @@ impl Default for BackendType {
   }
 }
 
-impl Configs {
-  fn load_config(path: &Path) -> Result<Configs, ConfigLoadError> {
+impl LegacyConfig {
+  fn load_config(path: &Path) -> Result<LegacyConfig, ConfigLoadError> {
     let file_res = File::open(path);
     if let Ok(mut file) = file_res {
       let mut contents = String::new();
@@ -435,7 +434,7 @@ impl Configs {
     }
   }
 
-  fn merge_overwrite(&mut self, new_config: Configs) {
+  fn merge_overwrite(&mut self, new_config: LegacyConfig) {
     // Merge matches
     let mut merged_matches = new_config.matches;
     let mut match_trigger_set = HashSet::new();
@@ -473,7 +472,7 @@ impl Configs {
     self.global_vars = merged_global_vars;
   }
 
-  fn merge_no_overwrite(&mut self, default: &Configs) {
+  fn merge_no_overwrite(&mut self, default: &LegacyConfig) {
     // Merge matches
     let mut match_trigger_set = HashSet::new();
     self.matches.iter().for_each(|m| {
@@ -527,20 +526,20 @@ fn name_for_global_var(v: &Value) -> String {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct ConfigSet {
-  pub default: Configs,
-  pub specific: Vec<Configs>,
+pub struct LegacyConfigSet {
+  pub default: LegacyConfig,
+  pub specific: Vec<LegacyConfig>,
 }
 
-impl ConfigSet {
-  pub fn load(config_dir: &Path, package_dir: &Path) -> Result<ConfigSet, ConfigLoadError> {
+impl LegacyConfigSet {
+  pub fn load(config_dir: &Path, package_dir: &Path) -> Result<LegacyConfigSet, ConfigLoadError> {
     if !config_dir.is_dir() {
       return Err(ConfigLoadError::InvalidConfigDirectory);
     }
 
     // Load default configuration
     let default_file = config_dir.join(DEFAULT_CONFIG_FILE_NAME);
-    let default = Configs::load_config(default_file.as_path())?;
+    let default = LegacyConfig::load_config(default_file.as_path())?;
 
     // Check that a compatible backend is used, otherwise warn the user
     if cfg!(not(target_os = "linux")) && default.backend == BackendType::Auto {
@@ -569,13 +568,13 @@ impl ConfigSet {
     // Load the user defined config files
 
     let mut name_set = HashSet::new();
-    let mut children_map: HashMap<String, Vec<Configs>> = HashMap::new();
-    let mut package_map: HashMap<String, Vec<Configs>> = HashMap::new();
+    let mut children_map: HashMap<String, Vec<LegacyConfig>> = HashMap::new();
+    let mut package_map: HashMap<String, Vec<LegacyConfig>> = HashMap::new();
     let mut root_configs = Vec::new();
     root_configs.push(default);
 
     let mut file_loader = |entry: walkdir::Result<DirEntry>,
-                           dest_map: &mut HashMap<String, Vec<Configs>>|
+                           dest_map: &mut HashMap<String, Vec<LegacyConfig>>|
      -> Result<(), ConfigLoadError> {
       match entry {
         Ok(entry) => {
@@ -598,12 +597,12 @@ impl ConfigSet {
             .unwrap_or_default()
             .to_str()
             .unwrap_or_default()
-            .starts_with(".")
+            .starts_with('.')
           {
             return Ok(());
           }
 
-          let mut config = Configs::load_config(&path)?;
+          let mut config = LegacyConfig::load_config(&path)?;
 
           // Make sure the config does not contain reserved fields
           if !config.validate_user_defined_config() {
@@ -651,7 +650,7 @@ impl ConfigSet {
     // Merge the children config files
     let mut configs_without_packages = Vec::new();
     for root_config in root_configs {
-      let config = ConfigSet::reduce_configs(root_config, &children_map, true);
+      let config = LegacyConfigSet::reduce_configs(root_config, &children_map, true);
       configs_without_packages.push(config);
     }
 
@@ -660,13 +659,13 @@ impl ConfigSet {
     //       than configs.
     let mut configs = Vec::new();
     for root_config in configs_without_packages {
-      let config = ConfigSet::reduce_configs(root_config, &package_map, false);
+      let config = LegacyConfigSet::reduce_configs(root_config, &package_map, false);
       configs.push(config);
     }
 
     // Separate default from specific
     let default = configs.get(0).unwrap().clone();
-    let mut specific = (&configs[1..]).to_vec().clone();
+    let mut specific = (&configs[1..]).to_vec();
 
     // Add default entries to specific configs when needed
     for config in specific.iter_mut() {
@@ -685,14 +684,14 @@ impl ConfigSet {
       }
     }
 
-    Ok(ConfigSet { default, specific })
+    Ok(LegacyConfigSet { default, specific })
   }
 
   fn reduce_configs(
-    target: Configs,
-    children_map: &HashMap<String, Vec<Configs>>,
+    target: LegacyConfig,
+    children_map: &HashMap<String, Vec<LegacyConfig>>,
     higher_priority: bool,
-  ) -> Configs {
+  ) -> LegacyConfig {
     if children_map.contains_key(&target.name) {
       let mut target = target;
       for children in children_map.get(&target.name).unwrap() {
@@ -709,7 +708,7 @@ impl ConfigSet {
     }
   }
 
-  fn has_conflicts(default: &Configs, specific: &Vec<Configs>) -> bool {
+  fn has_conflicts(default: &LegacyConfig, specific: &[LegacyConfig]) -> bool {
     let mut sorted_triggers: Vec<String> = default
       .matches
       .iter()
@@ -729,7 +728,7 @@ impl ConfigSet {
     has_conflicts
   }
 
-  fn list_has_conflicts(sorted_list: &Vec<String>) -> bool {
+  fn list_has_conflicts(sorted_list: &[String]) -> bool {
     if sorted_list.len() <= 1 {
       return false;
     }
@@ -817,7 +816,7 @@ mod tests {
 
   #[test]
   fn test_config_file_not_found() {
-    let config = Configs::load_config(Path::new("invalid/path"));
+    let config = LegacyConfig::load_config(Path::new("invalid/path"));
     assert_eq!(config.is_err(), true);
     assert_eq!(config.unwrap_err(), ConfigLoadError::FileNotFound);
   }
@@ -825,15 +824,14 @@ mod tests {
   #[test]
   fn test_config_file_with_bad_yaml_syntax() {
     let broken_config_file = create_tmp_file(TEST_CONFIG_FILE_WITH_BAD_YAML);
-    let config = Configs::load_config(broken_config_file.path());
+    let config = LegacyConfig::load_config(broken_config_file.path());
     match config {
-      Ok(_) => assert!(false),
+      Ok(_) => unreachable!(),
       Err(e) => {
         match e {
           ConfigLoadError::InvalidYAML(p, _) => assert_eq!(p, broken_config_file.path().to_owned()),
-          _ => assert!(false),
+          _ => unreachable!(),
         }
-        assert!(true);
       }
     }
   }
@@ -861,7 +859,7 @@ mod tests {
 
         "###,
     );
-    let config = Configs::load_config(working_config_file.path());
+    let config = LegacyConfig::load_config(working_config_file.path());
     assert_eq!(config.unwrap().validate_user_defined_config(), true);
   }
 
@@ -875,7 +873,7 @@ mod tests {
 
         "###,
     );
-    let config = Configs::load_config(working_config_file.path());
+    let config = LegacyConfig::load_config(working_config_file.path());
     assert_eq!(config.unwrap().validate_user_defined_config(), false);
   }
 
@@ -889,7 +887,7 @@ mod tests {
 
         "###,
     );
-    let config = Configs::load_config(working_config_file.path());
+    let config = LegacyConfig::load_config(working_config_file.path());
     assert_eq!(config.unwrap().validate_user_defined_config(), false);
   }
 
@@ -903,7 +901,7 @@ mod tests {
 
         "###,
     );
-    let config = Configs::load_config(working_config_file.path());
+    let config = LegacyConfig::load_config(working_config_file.path());
     assert_eq!(config.unwrap().validate_user_defined_config(), false);
   }
 
@@ -917,14 +915,14 @@ mod tests {
 
         "###,
     );
-    let config = Configs::load_config(working_config_file.path());
+    let config = LegacyConfig::load_config(working_config_file.path());
     assert_eq!(config.unwrap().validate_user_defined_config(), false);
   }
 
   #[test]
   fn test_config_loaded_correctly() {
     let working_config_file = create_tmp_file(TEST_WORKING_CONFIG_FILE);
-    let config = Configs::load_config(working_config_file.path());
+    let config = LegacyConfig::load_config(working_config_file.path());
     assert_eq!(config.is_ok(), true);
   }
 
@@ -981,13 +979,13 @@ mod tests {
   fn test_config_set_default_content_should_work_correctly() {
     let (data_dir, package_dir) = create_temp_espanso_directories();
 
-    let config_set = ConfigSet::load(data_dir.path(), package_dir.path());
+    let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path());
     assert!(config_set.is_ok());
   }
 
   #[test]
   fn test_config_set_load_fail_bad_directory() {
-    let config_set = ConfigSet::load(Path::new("invalid/path"), Path::new("invalid/path"));
+    let config_set = LegacyConfigSet::load(Path::new("invalid/path"), Path::new("invalid/path"));
     assert_eq!(config_set.is_err(), true);
     assert_eq!(
       config_set.unwrap_err(),
@@ -1000,7 +998,7 @@ mod tests {
     let data_dir = TempDir::new().expect("unable to create temp directory");
     let package_dir = TempDir::new().expect("unable to create package directory");
 
-    let config_set = ConfigSet::load(data_dir.path(), package_dir.path());
+    let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path());
     assert_eq!(config_set.is_err(), true);
     assert_eq!(config_set.unwrap_err(), ConfigLoadError::FileNotFound);
   }
@@ -1011,15 +1009,14 @@ mod tests {
       create_temp_espanso_directories_with_default_content(TEST_CONFIG_FILE_WITH_BAD_YAML);
     let default_path = data_dir.path().join(DEFAULT_CONFIG_FILE_NAME);
 
-    let config_set = ConfigSet::load(data_dir.path(), package_dir.path());
+    let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path());
     match config_set {
-      Ok(_) => assert!(false),
+      Ok(_) => unreachable!(),
       Err(e) => {
         match e {
           ConfigLoadError::InvalidYAML(p, _) => assert_eq!(p, default_path),
-          _ => assert!(false),
+          _ => unreachable!(),
         }
-        assert!(true);
       }
     }
   }
@@ -1035,13 +1032,11 @@ mod tests {
         config_caching_interval: 10000
         "###,
     );
-    let user_defined_path_copy = user_defined_path.clone();
-
-    let config_set = ConfigSet::load(data_dir.path(), package_dir.path());
+    let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path());
     assert!(config_set.is_err());
     assert_eq!(
       config_set.unwrap_err(),
-      ConfigLoadError::InvalidParameter(user_defined_path_copy)
+      ConfigLoadError::InvalidParameter(user_defined_path)
     )
   }
 
@@ -1056,13 +1051,12 @@ mod tests {
         backend: Clipboard
         "###,
     );
-    let user_defined_path_copy = user_defined_path.clone();
 
-    let config_set = ConfigSet::load(data_dir.path(), package_dir.path());
+    let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path());
     assert!(config_set.is_ok());
     assert_eq!(
       config_set.unwrap().specific[0].name,
-      user_defined_path_copy.to_str().unwrap_or_default()
+      user_defined_path.to_str().unwrap_or_default()
     )
   }
 
@@ -1086,7 +1080,7 @@ mod tests {
         "###,
     );
 
-    let config_set = ConfigSet::load(data_dir.path(), package_dir.path());
+    let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path());
     assert!(config_set.is_err());
     assert!(matches!(
       &config_set.unwrap_err(),
@@ -1118,25 +1112,22 @@ mod tests {
         "###,
     );
 
-    let config_set = ConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
+    let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
     assert_eq!(config_set.default.matches.len(), 2);
     assert_eq!(config_set.specific[0].matches.len(), 3);
 
     assert!(config_set.specific[0]
       .matches
       .iter()
-      .find(|x| triggers_for_match(x)[0] == "hello")
-      .is_some());
+      .any(|x| triggers_for_match(x)[0] == "hello"));
     assert!(config_set.specific[0]
       .matches
       .iter()
-      .find(|x| triggers_for_match(x)[0] == ":lol")
-      .is_some());
+      .any(|x| triggers_for_match(x)[0] == ":lol"));
     assert!(config_set.specific[0]
       .matches
       .iter()
-      .find(|x| triggers_for_match(x)[0] == ":yess")
-      .is_some());
+      .any(|x| triggers_for_match(x)[0] == ":yess"));
   }
 
   #[test]
@@ -1163,22 +1154,20 @@ mod tests {
         "###,
     );
 
-    let config_set = ConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
+    let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
     assert_eq!(config_set.default.matches.len(), 2);
     assert_eq!(config_set.specific[0].matches.len(), 2);
 
     assert!(config_set.specific[0]
       .matches
       .iter()
-      .find(|x| {
+      .any(|x| {
         triggers_for_match(x)[0] == ":lol" && replace_for_match(x) == "newstring"
-      })
-      .is_some());
+      }));
     assert!(config_set.specific[0]
       .matches
       .iter()
-      .find(|x| triggers_for_match(x)[0] == ":yess")
-      .is_some());
+      .any(|x| triggers_for_match(x)[0] == ":yess"));
   }
 
   #[test]
@@ -1207,17 +1196,16 @@ mod tests {
         "###,
     );
 
-    let config_set = ConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
+    let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
     assert_eq!(config_set.default.matches.len(), 2);
     assert_eq!(config_set.specific[0].matches.len(), 1);
 
     assert!(config_set.specific[0]
       .matches
       .iter()
-      .find(|x| {
+      .any(|x| {
         triggers_for_match(x)[0] == "hello" && replace_for_match(x) == "newstring"
-      })
-      .is_some());
+      }));
   }
 
   #[test]
@@ -1246,7 +1234,7 @@ mod tests {
         "###,
     );
 
-    let config_set = ConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
+    let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
     assert_eq!(config_set.specific.len(), 0);
   }
 
@@ -1276,7 +1264,7 @@ mod tests {
         "###,
     );
 
-    let config_set = ConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
+    let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
     assert_eq!(config_set.specific.len(), 0);
   }
 
@@ -1300,7 +1288,7 @@ mod tests {
         "###,
     );
 
-    let config_set = ConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
+    let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
     assert_eq!(config_set.specific.len(), 2);
   }
 
@@ -1326,7 +1314,7 @@ mod tests {
         "###,
     );
 
-    let config_set = ConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
+    let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
     assert_eq!(config_set.specific.len(), 0);
     assert_eq!(config_set.default.matches.len(), 2);
     assert!(config_set
@@ -1361,7 +1349,7 @@ mod tests {
         "###,
     );
 
-    let config_set = ConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
+    let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
     assert_eq!(config_set.specific.len(), 1);
     assert_eq!(config_set.default.matches.len(), 1);
     assert!(config_set
@@ -1415,7 +1403,7 @@ mod tests {
         "###,
     );
 
-    let config_set = ConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
+    let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
     assert_eq!(config_set.specific.len(), 0);
     assert_eq!(config_set.default.matches.len(), 3);
     assert!(config_set
@@ -1457,7 +1445,7 @@ mod tests {
         "###,
     );
 
-    let config_set = ConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
+    let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
     assert_eq!(config_set.specific.len(), 0);
     assert_eq!(config_set.default.matches.len(), 1);
     assert!(config_set.default.matches.iter().any(|m| {
@@ -1488,7 +1476,7 @@ mod tests {
         "###,
     );
 
-    let config_set = ConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
+    let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
     assert_eq!(config_set.specific.len(), 0);
     assert_eq!(config_set.default.matches.len(), 2);
     assert!(config_set
@@ -1526,7 +1514,7 @@ mod tests {
         "###,
     );
 
-    let config_set = ConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
+    let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
     assert_eq!(config_set.specific.len(), 0);
     assert_eq!(config_set.default.matches.len(), 1);
     assert_eq!(triggers_for_match(&config_set.default.matches[0])[0], "hasta");
@@ -1554,7 +1542,7 @@ mod tests {
         "###,
     );
 
-    let config_set = ConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
+    let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
     assert_eq!(config_set.specific.len(), 1);
     assert_eq!(config_set.default.matches.len(), 1);
     assert!(config_set
@@ -1604,7 +1592,7 @@ mod tests {
         "###,
     );
 
-    let config_set = ConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
+    let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
     assert_eq!(config_set.specific.len(), 1);
     assert_eq!(config_set.default.matches.len(), 1);
     assert!(config_set
@@ -1625,7 +1613,7 @@ mod tests {
   #[test]
   fn test_list_has_conflict_no_conflict() {
     assert_eq!(
-      ConfigSet::list_has_conflicts(&vec!(":ab".to_owned(), ":bc".to_owned())),
+      LegacyConfigSet::list_has_conflicts(&[":ab".to_owned(), ":bc".to_owned()]),
       false
     );
   }
@@ -1634,7 +1622,7 @@ mod tests {
   fn test_list_has_conflict_conflict() {
     let mut list = vec!["ac".to_owned(), "ab".to_owned(), "abc".to_owned()];
     list.sort();
-    assert_eq!(ConfigSet::list_has_conflicts(&list), true);
+    assert_eq!(LegacyConfigSet::list_has_conflicts(&list), true);
   }
 
   #[test]
@@ -1661,9 +1649,9 @@ mod tests {
         "###,
     );
 
-    let config_set = ConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
+    let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
     assert_eq!(
-      ConfigSet::has_conflicts(&config_set.default, &config_set.specific),
+      LegacyConfigSet::has_conflicts(&config_set.default, &config_set.specific),
       false
     );
   }
@@ -1694,9 +1682,9 @@ mod tests {
         "###,
     );
 
-    let config_set = ConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
+    let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
     assert_eq!(
-      ConfigSet::has_conflicts(&config_set.default, &config_set.specific),
+      LegacyConfigSet::has_conflicts(&config_set.default, &config_set.specific),
       true
     );
   }
@@ -1725,9 +1713,9 @@ mod tests {
         "###,
     );
 
-    let config_set = ConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
+    let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
     assert_eq!(
-      ConfigSet::has_conflicts(&config_set.default, &config_set.specific),
+      LegacyConfigSet::has_conflicts(&config_set.default, &config_set.specific),
       true
     );
   }
@@ -1767,9 +1755,9 @@ mod tests {
         "###,
     );
 
-    let config_set = ConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
+    let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
     assert_eq!(
-      ConfigSet::has_conflicts(&config_set.default, &config_set.specific),
+      LegacyConfigSet::has_conflicts(&config_set.default, &config_set.specific),
       false
     );
   }
@@ -1798,7 +1786,7 @@ mod tests {
         "###,
     );
 
-    let config_set = ConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
+    let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
     assert_eq!(config_set.specific.len(), 1);
     assert_eq!(config_set.default.global_vars.len(), 1);
     assert_eq!(config_set.specific[0].global_vars.len(), 2);
@@ -1837,7 +1825,7 @@ mod tests {
         "###,
     );
 
-    let config_set = ConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
+    let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
     assert_eq!(config_set.specific.len(), 0);
     assert_eq!(config_set.default.global_vars.len(), 2);
     assert!(config_set
@@ -1878,7 +1866,7 @@ mod tests {
         "###,
     );
 
-    let config_set = ConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
+    let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
     assert_eq!(config_set.specific.len(), 1);
     assert_eq!(config_set.default.global_vars.len(), 1);
     assert_eq!(config_set.specific[0].global_vars.len(), 1);
