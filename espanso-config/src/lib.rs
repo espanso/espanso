@@ -32,7 +32,7 @@ mod legacy;
 pub mod matches;
 mod util;
 
-pub fn load(base_path: &Path) -> Result<(impl ConfigStore, impl MatchStore)> {
+pub fn load(base_path: &Path) -> Result<(Box<dyn ConfigStore>, Box<dyn MatchStore>)> {
   let config_dir = base_path.join("config");
   if !config_dir.exists() || !config_dir.is_dir() {
     return Err(ConfigError::MissingConfigDir().into());
@@ -43,7 +43,11 @@ pub fn load(base_path: &Path) -> Result<(impl ConfigStore, impl MatchStore)> {
 
   let match_store = matches::store::new(&root_paths.into_iter().collect::<Vec<String>>());
 
-  Ok((config_store, match_store))
+  Ok((Box::new(config_store), Box::new(match_store)))
+}
+
+pub fn load_legacy(config_dir: &Path, package_dir: &Path) -> Result<(Box<dyn ConfigStore>, Box<dyn MatchStore>)> {
+  legacy::load(config_dir, package_dir)
 }
 
 pub fn is_legacy_config(base_dir: &Path) -> bool {
@@ -60,7 +64,7 @@ pub enum ConfigError {
 mod tests {
   use super::*;
   use crate::util::tests::use_test_directory;
-  use config::{AppProperties, ConfigStore};
+  use config::{AppProperties};
 
   #[test]
   fn load_works_correctly() {
