@@ -30,6 +30,7 @@ pub(crate) mod store;
 pub trait Config {
   fn label(&self) -> &str;
   fn match_paths(&self) -> &[String];
+  fn backend(&self) -> Backend;
 
   fn is_match(&self, app: &AppProperties) -> bool;
 }
@@ -45,6 +46,13 @@ pub struct AppProperties<'a> {
   pub title: Option<&'a str>,
   pub class: Option<&'a str>,
   pub exec: Option<&'a str>,
+}
+
+#[derive(Debug, Copy, Clone)]
+pub enum Backend {
+  Inject,
+  Clipboard,
+  Auto,
 }
 
 pub fn load_store(config_dir: &Path) -> Result<impl ConfigStore> {

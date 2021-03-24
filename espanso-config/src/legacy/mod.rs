@@ -92,8 +92,9 @@ fn split_config(config: LegacyConfig) -> (LegacyInteropConfig, LegacyMatchGroup)
 
 struct LegacyInteropConfig {
   pub name: String,
-
   match_paths: Vec<String>,
+
+  config: LegacyConfig,
 
   filter_title: Option<Regex>,
   filter_class: Option<Regex>,
@@ -103,6 +104,7 @@ struct LegacyInteropConfig {
 impl From<config::LegacyConfig> for LegacyInteropConfig {
   fn from(config: config::LegacyConfig) -> Self {
     Self {
+      config: config.clone(),
       name: config.name.clone(),
       match_paths: vec![config.name],
       filter_title: if !config.filter_title.is_empty() {
@@ -126,7 +128,15 @@ impl From<config::LegacyConfig> for LegacyInteropConfig {
 
 impl Config for LegacyInteropConfig {
   fn label(&self) -> &str {
-    &self.name
+    &self.config.name
+  }
+
+  fn backend(&self) -> crate::config::Backend {
+    match self.config.backend {
+      config::BackendType::Inject => crate::config::Backend::Inject,
+      config::BackendType::Clipboard => crate::config::Backend::Clipboard,
+      config::BackendType::Auto => crate::config::Backend::Auto,
+    }
   }
 
   fn match_paths(&self) -> &[String] {
@@ -237,7 +247,9 @@ mod tests {
   #[test]
   fn load_legacy_works_correctly() {
     use_test_directory(|base, user, packages| {
-      std::fs::write(base.join("default.yml"), r#"
+      std::fs::write(
+        base.join("default.yml"),
+        r#"
       backend: Clipboard
 
       global_vars:
@@ -247,25 +259,35 @@ mod tests {
       matches:
         - trigger: "hello"
           replace: "world"
-      "#).unwrap();
+      "#,
+      )
+      .unwrap();
 
-      std::fs::write(user.join("specific.yml"), r#"
+      std::fs::write(
+        user.join("specific.yml"),
+        r#"
       name: specific
       parent: default
 
       matches:
         - trigger: "foo"
           replace: "bar"
-      "#).unwrap();
+      "#,
+      )
+      .unwrap();
 
-      std::fs::write(user.join("separate.yml"), r#"
+      std::fs::write(
+        user.join("separate.yml"),
+        r#"
       name: separate
       filter_title: "Google"
 
       matches:
         - trigger: "eren"
           replace: "mikasa"
-      "#).unwrap();
+      "#,
+      )
+      .unwrap();
 
       let (config_store, match_store) = load(base, packages).unwrap();
 
@@ -286,44 +308,91 @@ mod tests {
       });
       assert_eq!(default_fallback.match_paths().len(), 1);
 
-      assert_eq!(match_store.query(default_config.match_paths()).matches.len(), 2); 
-      assert_eq!(match_store.query(default_config.match_paths()).global_vars.len(), 1); 
-      
-      assert_eq!(match_store.query(active_config.match_paths()).matches.len(), 3); 
-      assert_eq!(match_store.query(active_config.match_paths()).global_vars.len(), 1); 
+      assert_eq!(
+        match_store
+          .query(default_config.match_paths())
+          .matches
+          .len(),
+        2
+      );
+      assert_eq!(
+        match_store
+          .query(default_config.match_paths())
+          .global_vars
+          .len(),
+        1
+      );
 
-      assert_eq!(match_store.query(default_fallback.match_paths()).matches.len(), 2); 
-      assert_eq!(match_store.query(default_fallback.match_paths()).global_vars.len(), 1); 
+      assert_eq!(
+        match_store.query(active_config.match_paths()).matches.len(),
+        3
+      );
+      assert_eq!(
+        match_store
+          .query(active_config.match_paths())
+          .global_vars
+          .len(),
+        1
+      );
+
+      assert_eq!(
+        match_store
+          .query(default_fallback.match_paths())
+          .matches
+          .len(),
+        2
+      );
+      assert_eq!(
+        match_store
+          .query(default_fallback.match_paths())
+          .global_vars
+          .len(),
+        1
+      );
     });
   }
 
   #[test]
   fn load_legacy_with_packages() {
-    use_test_directory(|base, user, packages| {
-      std::fs::write(base.join("default.yml"), r#"
+    use_test_directory(|base, _, packages| {
+      std::fs::write(
+        base.join("default.yml"),
+        r#"
       backend: Clipboard
 
       matches:
         - trigger: "hello"
           replace: "world"
-      "#).unwrap();
+      "#,
+      )
+      .unwrap();
 
       create_dir_all(packages.join("test-package")).unwrap();
-      std::fs::write(packages.join("test-package").join("package.yml"), r#"
+      std::fs::write(
+        packages.join("test-package").join("package.yml"),
+        r#"
       name: test-package 
       parent: default
 
       matches:
         - trigger: "foo"
           replace: "bar"
-      "#).unwrap();
+      "#,
+      )
+      .unwrap();
 
       let (config_store, match_store) = load(base, packages).unwrap();
 
       let default_config = config_store.default();
       assert_eq!(default_config.match_paths().len(), 1);
 
-      assert_eq!(match_store.query(default_config.match_paths()).matches.len(), 2); 
+      assert_eq!(
+        match_store
+          .query(default_config.match_paths())
+          .matches
+          .len(),
+        2
+      );
     });
   }
 }

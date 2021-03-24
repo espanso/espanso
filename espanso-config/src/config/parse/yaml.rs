@@ -31,6 +31,9 @@ pub(crate) struct YAMLConfig {
   pub label: Option<String>,
 
   #[serde(default)]
+  pub backend: Option<String>,
+
+  #[serde(default)]
   pub includes: Option<Vec<String>>,
 
   #[serde(default)]
@@ -78,7 +81,7 @@ impl TryFrom<YAMLConfig> for ParsedConfig {
   fn try_from(yaml_config: YAMLConfig) -> Result<Self, Self::Error> {
     Ok(Self {
       label: yaml_config.label,
-
+      backend: yaml_config.backend,
       use_standard_includes: yaml_config.use_standard_includes,
       includes: yaml_config.includes,
       extra_includes: yaml_config.extra_includes,
@@ -103,6 +106,7 @@ mod tests {
     let config = YAMLConfig::parse_from_str(
       r#"
     label: "test"
+    backend: clipboard
       
     use_standard_includes: true
     includes: ["test1"]
@@ -123,6 +127,9 @@ mod tests {
       parsed_config,
       ParsedConfig {
         label: Some("test".to_string()),
+
+        backend: Some("clipboard".to_string()),
+
         use_standard_includes: Some(true),
         includes: Some(vec!["test1".to_string()]),
         extra_includes: Some(vec!["test2".to_string()]),
