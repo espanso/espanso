@@ -17,9 +17,10 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use super::{parse::ParsedConfig, path::calculate_paths, util::os_matches, AppProperties, Config};
+use super::{AppProperties, Backend, Config, parse::ParsedConfig, path::calculate_paths, util::os_matches};
 use crate::merge;
 use anyhow::Result;
+use log::error;
 use regex::Regex;
 use std::iter::FromIterator;
 use std::{collections::HashSet, path::Path};
@@ -109,6 +110,18 @@ impl Config for ResolvedConfig {
     // All the filters that have been specified must be true to define a match
     is_os_match && is_exec_match && is_title_match && is_class_match
   }
+
+  fn backend(&self) -> Backend {
+    match self.parsed.backend.as_deref().map(|b| b.to_lowercase()).as_deref() {
+      Some("clipboard") => Backend::Clipboard,
+      Some("inject") => Backend::Inject,
+      Some("auto") => Backend::Auto,
+      err => {
+        error!("invalid backend specified {:?}, falling back to Auto", err);
+        Backend::Auto
+      }
+    }
+  }
 }
 
 impl ResolvedConfig {
@@ -164,6 +177,7 @@ impl ResolvedConfig {
       parent,
       // Fields
       label,
+      backend,
       includes,
       excludes,
       extra_includes,

@@ -145,6 +145,10 @@ mod tests {
     fn is_match(&self, _: &crate::config::AppProperties) -> bool {
       self.is_match
     }
+
+    fn backend(&self) -> crate::config::Backend {
+      unimplemented!()
+    }
   }
 
   #[test]

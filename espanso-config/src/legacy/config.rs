@@ -509,7 +509,7 @@ impl LegacyConfig {
 
 fn triggers_for_match(m: &Value) -> Vec<String> {
   if let Some(triggers) = m.get("triggers").and_then(|v| v.as_sequence()) {
-    triggers.into_iter().filter_map(|v| v.as_str().map(|s| s.to_string())).collect()
+    triggers.iter().filter_map(|v| v.as_str().map(|s| s.to_string())).collect()
   } else if let Some(trigger) = m.get("trigger").and_then(|v| v.as_str()) {
     vec![trigger.to_string()]
   } else {
@@ -517,6 +517,7 @@ fn triggers_for_match(m: &Value) -> Vec<String> {
   }
 }
 
+#[allow(dead_code)]
 fn replace_for_match(m: &Value) -> String {
   m.get("replace").and_then(|v| v.as_str()).expect("match is missing replace field").to_string()
 }
@@ -752,6 +753,7 @@ impl LegacyConfigSet {
 
 // Error handling
 #[derive(Debug, PartialEq)]
+#[allow(dead_code)]
 pub enum ConfigLoadError {
   FileNotFound,
   UnableToReadFile,

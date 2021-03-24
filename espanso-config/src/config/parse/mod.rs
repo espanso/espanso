@@ -27,6 +27,8 @@ mod yaml;
 pub(crate) struct ParsedConfig {
   pub label: Option<String>,
 
+  pub backend: Option<String>,
+
   // Includes
   pub includes: Option<Vec<String>>,
   pub excludes: Option<Vec<String>>,
