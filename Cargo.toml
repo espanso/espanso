@@ -11,4 +11,5 @@ members = [
   "espanso-clipboard",
   "espanso-render",
   "espanso-info",
+  "espanso-path",
 ]
