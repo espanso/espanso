@@ -51,7 +51,7 @@ pub fn load_legacy(config_dir: &Path, package_dir: &Path) -> Result<(Box<dyn Con
 }
 
 pub fn is_legacy_config(base_dir: &Path) -> bool {
-  !base_dir.join("config").is_dir() && !base_dir.join("match").is_dir()
+  base_dir.join("user").is_dir() && base_dir.join("default.yml").is_file()
 }
 
 #[derive(Error, Debug)]
