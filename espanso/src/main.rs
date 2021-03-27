@@ -22,6 +22,10 @@ fn main() {
     // ),
   ])
   .unwrap();
+  
+  let paths = espanso_path::resolve_paths();
+  println!("paths: {:?}", paths);
+  let config = espanso_config::load_legacy(&paths.config, &paths.packages).unwrap();
 
   // let icon_paths = vec![
   //   (
