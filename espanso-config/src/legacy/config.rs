@@ -509,7 +509,10 @@ impl LegacyConfig {
 
 fn triggers_for_match(m: &Value) -> Vec<String> {
   if let Some(triggers) = m.get("triggers").and_then(|v| v.as_sequence()) {
-    triggers.iter().filter_map(|v| v.as_str().map(|s| s.to_string())).collect()
+    triggers
+      .iter()
+      .filter_map(|v| v.as_str().map(|s| s.to_string()))
+      .collect()
   } else if let Some(trigger) = m.get("trigger").and_then(|v| v.as_str()) {
     vec![trigger.to_string()]
   } else {
@@ -519,11 +522,17 @@ fn triggers_for_match(m: &Value) -> Vec<String> {
 
 #[allow(dead_code)]
 fn replace_for_match(m: &Value) -> String {
-  m.get("replace").and_then(|v| v.as_str()).expect("match is missing replace field").to_string()
+  m.get("replace")
+    .and_then(|v| v.as_str())
+    .expect("match is missing replace field")
+    .to_string()
 }
 
 fn name_for_global_var(v: &Value) -> String {
-  v.get("name").and_then(|v| v.as_str()).expect("global var is missing name field").to_string()
+  v.get("name")
+    .and_then(|v| v.as_str())
+    .expect("global var is missing name field")
+    .to_string()
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -546,7 +555,7 @@ impl LegacyConfigSet {
     if cfg!(not(target_os = "linux")) && default.backend == BackendType::Auto {
       eprintln!(
         "Warning: Using Auto backend is only supported on Linux, falling back to Inject backend."
-      );
+      )
     }
 
     // Analyze which config files have to be loaded
@@ -563,7 +572,7 @@ impl LegacyConfigSet {
       let dir_entry = WalkDir::new(package_dir);
       dir_entry.into_iter().collect()
     } else {
-      vec![]
+      Vec::new()
     };
 
     // Load the user defined config files
@@ -720,8 +729,11 @@ impl LegacyConfigSet {
     let mut has_conflicts = Self::list_has_conflicts(&sorted_triggers);
 
     for s in specific.iter() {
-      let mut specific_triggers: Vec<String> =
-        s.matches.iter().flat_map(|t| triggers_for_match(t)).collect();
+      let mut specific_triggers: Vec<String> = s
+        .matches
+        .iter()
+        .flat_map(|t| triggers_for_match(t))
+        .collect();
       specific_triggers.sort();
       has_conflicts |= Self::list_has_conflicts(&specific_triggers);
     }
@@ -799,10 +811,10 @@ impl Error for ConfigLoadError {
 #[cfg(test)]
 mod tests {
   use super::*;
+  use std::fs;
+  use std::fs::create_dir_all;
   use std::io::Write;
   use tempfile::{NamedTempFile, TempDir};
-  use std::fs;
-  use std::fs::{create_dir_all};
 
   const DEFAULT_CONFIG_FILE_CONTENT: &str = include_str!("res/test/default.yml");
   const TEST_WORKING_CONFIG_FILE: &str = include_str!("res/test/working_config.yml");
@@ -829,12 +841,10 @@ mod tests {
     let config = LegacyConfig::load_config(broken_config_file.path());
     match config {
       Ok(_) => unreachable!(),
-      Err(e) => {
-        match e {
-          ConfigLoadError::InvalidYAML(p, _) => assert_eq!(p, broken_config_file.path().to_owned()),
-          _ => unreachable!(),
-        }
-      }
+      Err(e) => match e {
+        ConfigLoadError::InvalidYAML(p, _) => assert_eq!(p, broken_config_file.path().to_owned()),
+        _ => unreachable!(),
+      },
     }
   }
 
@@ -987,7 +997,8 @@ mod tests {
 
   #[test]
   fn test_config_set_load_fail_bad_directory() {
-    let config_set = LegacyConfigSet::load(Path::new("invalid/path"), Path::new("invalid/path"));
+    let config_set =
+      LegacyConfigSet::load(Path::new("invalid/path"), Path::new("invalid/path"));
     assert_eq!(config_set.is_err(), true);
     assert_eq!(
       config_set.unwrap_err(),
@@ -1014,12 +1025,10 @@ mod tests {
     let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path());
     match config_set {
       Ok(_) => unreachable!(),
-      Err(e) => {
-        match e {
-          ConfigLoadError::InvalidYAML(p, _) => assert_eq!(p, default_path),
-          _ => unreachable!(),
-        }
-      }
+      Err(e) => match e {
+        ConfigLoadError::InvalidYAML(p, _) => assert_eq!(p, default_path),
+        _ => unreachable!(),
+      },
     }
   }
 
@@ -1163,9 +1172,7 @@ mod tests {
     assert!(config_set.specific[0]
       .matches
       .iter()
-      .any(|x| {
-        triggers_for_match(x)[0] == ":lol" && replace_for_match(x) == "newstring"
-      }));
+      .any(|x| { triggers_for_match(x)[0] == ":lol" && replace_for_match(x) == "newstring" }));
     assert!(config_set.specific[0]
       .matches
       .iter()
@@ -1205,9 +1212,7 @@ mod tests {
     assert!(config_set.specific[0]
       .matches
       .iter()
-      .any(|x| {
-        triggers_for_match(x)[0] == "hello" && replace_for_match(x) == "newstring"
-      }));
+      .any(|x| { triggers_for_match(x)[0] == "hello" && replace_for_match(x) == "newstring" }));
   }
 
   #[test]
@@ -1450,9 +1455,11 @@ mod tests {
     let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
     assert_eq!(config_set.specific.len(), 0);
     assert_eq!(config_set.default.matches.len(), 1);
-    assert!(config_set.default.matches.iter().any(|m| {
-      triggers_for_match(m)[0] == "hasta" && replace_for_match(m) == "world"
-    }));
+    assert!(config_set
+      .default
+      .matches
+      .iter()
+      .any(|m| { triggers_for_match(m)[0] == "hasta" && replace_for_match(m) == "world" }));
   }
 
   #[test]
@@ -1519,8 +1526,14 @@ mod tests {
     let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
     assert_eq!(config_set.specific.len(), 0);
     assert_eq!(config_set.default.matches.len(), 1);
-    assert_eq!(triggers_for_match(&config_set.default.matches[0])[0], "hasta");
-    assert_eq!(replace_for_match(&config_set.default.matches[0]), "Hasta la vista");
+    assert_eq!(
+      triggers_for_match(&config_set.default.matches[0])[0],
+      "hasta"
+    );
+    assert_eq!(
+      replace_for_match(&config_set.default.matches[0]),
+      "Hasta la vista"
+    );
   }
 
   #[test]
