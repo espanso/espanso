@@ -691,7 +691,7 @@ private:
 
   // Calls the current m_callback() to handle the clipboard content
   // received from the owner.
-  void call_callback(xcb_get_property_reply_t* reply) {
+  void call_callback(__attribute__((unused)) xcb_get_property_reply_t* reply) {
     m_callback_result = false;
     if (m_callback)
       m_callback_result = m_callback();
@@ -918,7 +918,7 @@ private:
       return 0;
   }
 
-  void encode_data_on_demand(std::pair<const xcb_atom_t, buffer_ptr>& e) {
+  void encode_data_on_demand(__attribute__((unused)) std::pair<const xcb_atom_t, buffer_ptr>& e) {
 #ifdef HAVE_PNG_H
     if (e.first == get_atom(MIME_IMAGE_PNG)) {
       assert(m_image.is_valid());
