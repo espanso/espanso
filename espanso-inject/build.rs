@@ -38,7 +38,7 @@ fn cc_config() {
   println!("cargo:rerun-if-changed=src/evdev/native.h");
   println!("cargo:rerun-if-changed=src/evdev/native.c");
   cc::Build::new()
-    .include("src/evdev/native.h")
+    .include("src/evdev")
     .file("src/evdev/native.c")
     .compile("espansoinjectev");
 
