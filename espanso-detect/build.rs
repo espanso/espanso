@@ -43,7 +43,7 @@ fn cc_config() {
   if cfg!(not(feature = "wayland")) {
     cc::Build::new()
       .cpp(true)
-      .include("src/x11/native.h")
+      .include("src/x11")
       .file("src/x11/native.cpp")
       .compile("espansodetect");
 
@@ -54,7 +54,7 @@ fn cc_config() {
 
   cc::Build::new()
     .cpp(true)
-    .include("src/evdev/native.h")
+    .include("src/evdev")
     .file("src/evdev/native.cpp")
     .compile("espansodetectevdev");
 
