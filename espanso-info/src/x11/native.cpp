@@ -82,8 +82,8 @@ char *get_property(Display *disp, Window win,
 // Function taken from Window Management Library for Ruby
 char *xwm_get_win_title(Display *disp, Window win)
 {
-  char *wname = (char *)get_property(disp, win, XA_STRING, "WM_NAME", NULL);
-  char *nwname = (char *)get_property(disp, win, XInternAtom(disp, "UTF8_STRING", False), "_NET_WM_NAME", NULL);
+  char *wname = (char *)get_property(disp, win, XA_STRING, (char*)"WM_NAME", NULL);
+  char *nwname = (char *)get_property(disp, win, XInternAtom(disp, (char*)"UTF8_STRING", False), (char*)"_NET_WM_NAME", NULL);
 
   return nwname ? nwname : (wname ? wname : NULL);
 }
@@ -143,7 +143,7 @@ int32_t info_get_exec(char *buffer, int32_t buffer_size)
   else
   {
     // Get the window process PID
-    char *pid_raw = (char *)get_property(display, focused, XA_CARDINAL, "_NET_WM_PID", NULL);
+    char *pid_raw = (char *)get_property(display, focused, XA_CARDINAL, (char*)"_NET_WM_PID", NULL);
     if (pid_raw == NULL)
     {
       result = -3;

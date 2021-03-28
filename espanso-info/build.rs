@@ -40,7 +40,7 @@ fn cc_config() {
     println!("cargo:rerun-if-changed=src/x11/native.c");
     cc::Build::new()
       .cpp(true)
-      .include("src/x11/native.h")
+      .include("src/x11")
       .file("src/x11/native.cpp")
       .compile("espansoinfo");
 
