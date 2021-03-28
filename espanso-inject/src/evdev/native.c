@@ -19,6 +19,7 @@
 
 #include "native.h"
 #include <linux/uinput.h>
+#include <unistd.h>
 #include <memory.h>
 
 unsigned long ui_dev_destroy()
@@ -56,15 +57,15 @@ int setup_uinput_device(int fd)
 
 void emit(int fd, int type, int code, int val)
 {
-   struct input_event ie;
-   ie.type = type;
-   ie.code = code;
-   ie.value = val;
-   // timestamp values below are ignored
-   ie.time.tv_sec = 0;
-   ie.time.tv_usec = 0;
+  struct input_event ie;
+  ie.type = type;
+  ie.code = code;
+  ie.value = val;
+  // timestamp values below are ignored
+  ie.time.tv_sec = 0;
+  ie.time.tv_usec = 0;
 
-   write(fd, &ie, sizeof(ie));
+  write(fd, &ie, sizeof(ie));
 }
 
 void uinput_emit(int fd, unsigned int code, int pressed) {
