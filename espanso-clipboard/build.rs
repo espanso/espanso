@@ -40,11 +40,8 @@ fn cc_config() {
     println!("cargo:rerun-if-changed=src/x11/native/native.c");
     cc::Build::new()
       .cpp(true)
-      .include("src/x11/native/clip/clip.h")
-      .include("src/x11/native/clip/clip_common.h")
-      .include("src/x11/native/clip/clip_lock_impl.h")
-      .include("src/x11/native/clip/clip_x11_png.h")
-      .include("src/x11/native/native.h")
+      .include("src/x11/native/clip")
+      .include("src/x11/native")
       .file("src/x11/native/clip/clip.cpp")
       .file("src/x11/native/clip/clip_x11.cpp")
       .file("src/x11/native/clip/image.cpp")
