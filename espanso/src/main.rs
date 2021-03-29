@@ -23,7 +23,7 @@ extern crate lazy_static;
 use clap::{App, AppSettings, Arg, SubCommand};
 use cli::{CliModule, CliModuleArgs};
 use logging::FileProxy;
-use simplelog::{CombinedLogger, Config, LevelFilter, TermLogger, TerminalMode, WriteLogger};
+use simplelog::{CombinedLogger, ConfigBuilder, LevelFilter, TermLogger, TerminalMode, WriteLogger};
 
 mod cli;
 mod engine;
@@ -211,9 +211,11 @@ fn main() {
   if let Some(handler) = handler {
     let log_proxy = FileProxy::new();
     if handler.enable_logs {
+      let config = ConfigBuilder::new().set_time_to_local(true).build();
+
       CombinedLogger::init(vec![
-        TermLogger::new(log_level, Config::default(), TerminalMode::Mixed),
-        WriteLogger::new(log_level, Config::default(), log_proxy.clone()),
+        TermLogger::new(log_level, config.clone(), TerminalMode::Mixed),
+        WriteLogger::new(log_level, config, log_proxy.clone()),
       ])
       .expect("unable to initialize logs");
     }
