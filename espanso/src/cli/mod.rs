@@ -23,6 +23,7 @@ use espanso_path::Paths;
 
 pub mod log;
 pub mod path;
+pub mod worker;
 
 pub struct CliModule {
   pub enable_logs: bool,

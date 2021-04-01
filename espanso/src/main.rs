@@ -28,7 +28,6 @@ use simplelog::{CombinedLogger, ConfigBuilder, LevelFilter, TermLogger, Terminal
 mod cli;
 mod engine;
 mod logging;
-mod util;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 const LOG_FILE_NAME: &str = "espanso.log";
@@ -37,6 +36,7 @@ lazy_static! {
   static ref CLI_HANDLERS: Vec<CliModule> = vec![
     cli::path::new(),
     cli::log::new(),
+    cli::worker::new(),
   ];
 }
 
@@ -170,19 +170,19 @@ fn main() {
         //     )
         // )
         // Package manager
-        .subcommand(SubCommand::with_name("package")
-            .about("Espanso package manager commands")
-            .subcommand(install_subcommand.clone())
-            .subcommand(uninstall_subcommand.clone())
-            .subcommand(SubCommand::with_name("list")
-                .about("List all installed packages")
-                .arg(Arg::with_name("full")
-                    .help("Print all package info")
-                    .long("full")))
+        // .subcommand(SubCommand::with_name("package")
+        //     .about("Espanso package manager commands")
+        //     .subcommand(install_subcommand.clone())
+        //     .subcommand(uninstall_subcommand.clone())
+        //     .subcommand(SubCommand::with_name("list")
+        //         .about("List all installed packages")
+        //         .arg(Arg::with_name("full")
+        //             .help("Print all package info")
+        //             .long("full")))
 
-            .subcommand(SubCommand::with_name("refresh")
-                .about("Update espanso package index"))
-        )
+        //     .subcommand(SubCommand::with_name("refresh")
+        //         .about("Update espanso package index"))
+        // )
         .subcommand(SubCommand::with_name("worker")
             .setting(AppSettings::Hidden)
             .arg(Arg::with_name("reload")
@@ -190,9 +190,9 @@ fn main() {
                 .long("reload")
                 .required(false)
                 .takes_value(false))
-        )
-        .subcommand(install_subcommand)
-        .subcommand(uninstall_subcommand);
+        );
+        // .subcommand(install_subcommand)
+        // .subcommand(uninstall_subcommand);
 
   // TODO: explain that the start and restart commands are only meaningful
   // when using the system daemon manager on macOS and Linux
