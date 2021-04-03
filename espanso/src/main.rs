@@ -201,7 +201,8 @@ fn main() {
   let log_level = match matches.occurrences_of("v") {
     0 => LevelFilter::Warn,
     1 => LevelFilter::Info,
-    _ => LevelFilter::Debug,
+    2 => LevelFilter::Debug,
+    _ => LevelFilter::Trace,
   };
 
   let handler = CLI_HANDLERS

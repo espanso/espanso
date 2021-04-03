@@ -25,14 +25,14 @@ use crate::engine::{event::{Event, keyboard::{Key, Status}, matches_detected::{M
 
 const MAX_HISTORY: usize = 3; // TODO: get as parameter
 
-pub struct MatchMiddleware<State> {
-  matchers: Vec<Box<dyn Matcher<State>>>,
+pub struct MatchMiddleware<'a, State> {
+  matchers: &'a [&'a dyn Matcher<'a, State>],
 
   matcher_states: RefCell<VecDeque<Vec<State>>>,
 }
 
-impl<State> MatchMiddleware<State> {
-  pub fn new(matchers: Vec<Box<dyn Matcher<State>>>) -> Self {
+impl<'a, State> MatchMiddleware<'a, State> {
+  pub fn new(matchers: &'a [&'a dyn Matcher<'a, State>]) -> Self {
     Self {
       matchers,
       matcher_states: RefCell::new(VecDeque::new()),
@@ -40,7 +40,7 @@ impl<State> MatchMiddleware<State> {
   }
 }
 
-impl<State> Middleware for MatchMiddleware<State> {
+impl<'a, State> Middleware for MatchMiddleware<'a, State> {
   fn next(&self, event: Event, _: &dyn FnMut(Event)) -> Event {
     let mut matcher_states = self.matcher_states.borrow_mut();
     let prev_states = if !matcher_states.is_empty() {
@@ -84,6 +84,8 @@ impl<State> Middleware for MatchMiddleware<State> {
       if matcher_states.len() > MAX_HISTORY {
         matcher_states.pop_front();
       }
+
+      println!("results: {:?}", all_results);
 
       if !all_results.is_empty() {
         return Event::MatchesDetected(MatchesDetectedEvent {

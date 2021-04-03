@@ -35,7 +35,7 @@ pub trait TextInjector {
   fn inject(&self, text: &str) -> Result<()>;
 }
 
-pub fn default(text_injector: impl TextInjector + 'static) -> impl Dispatcher {
+pub fn default<'a>(text_injector: &'a dyn TextInjector) -> impl Dispatcher + 'a {
   default::DefaultDispatcher::new(
     text_injector,
   )

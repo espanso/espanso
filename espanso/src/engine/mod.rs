@@ -18,7 +18,6 @@
  */
 
 use log::{debug, trace};
-use std::collections::VecDeque;
 
 use self::{
   dispatch::Dispatcher,
@@ -32,14 +31,14 @@ pub mod event;
 pub mod process;
 pub mod funnel;
 
-pub struct Engine<TFunnel: Funnel, TProcessor: Processor, TDispatcher: Dispatcher> {
-  funnel: TFunnel,
-  processor: TProcessor,
-  dispatcher: TDispatcher,
+pub struct Engine<'a> {
+  funnel: &'a dyn Funnel,
+  processor: &'a mut dyn Processor,
+  dispatcher: &'a dyn Dispatcher,
 }
 
-impl <TFunnel: Funnel, TProcessor: Processor, TDispatcher: Dispatcher> Engine<TFunnel, TProcessor, TDispatcher> {
-  pub fn new(funnel: TFunnel, processor: TProcessor, dispatcher: TDispatcher) -> Self {
+impl <'a> Engine<'a> {
+  pub fn new(funnel: &'a dyn Funnel, processor: &'a mut dyn Processor, dispatcher: &'a dyn Dispatcher) -> Self {
     Self {
       funnel,
       processor,
@@ -51,8 +50,6 @@ impl <TFunnel: Funnel, TProcessor: Processor, TDispatcher: Dispatcher> Engine<TF
     loop {
       match self.funnel.receive() {
         FunnelResult::Event(event) => {
-          trace!("received event from stream: {:?}", event);
-          
           let processed_events = self.processor.process(event);
           for event in processed_events {
             self.dispatcher.dispatch(event);

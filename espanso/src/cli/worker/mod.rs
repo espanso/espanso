@@ -17,10 +17,15 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::engine::{Engine, funnel};
+use funnel::Source;
+use process::Matcher;
+
+use crate::engine::{Engine, funnel, process, dispatch};
 use super::{CliModule, CliModuleArgs};
 
 mod source;
+mod matcher;
+mod executor;
 
 pub fn new() -> CliModule {
   #[allow(clippy::needless_update)]
@@ -35,10 +40,18 @@ pub fn new() -> CliModule {
 }
 
 fn worker_main(args: CliModuleArgs) {
-  let funnel = funnel::default(vec![
-    Box::new(),
-  ]);
+  let detect_source = source::detect::init_and_spawn().unwrap(); // TODO: handle error
+  let sources: Vec<&dyn Source> = vec![&detect_source];
+  let funnel = funnel::default(&sources);
 
-  let engine = Engine::new(funnel);
+  let matcher = matcher::rolling::RollingMatcherAdapter::new();
+  let matchers: Vec<&dyn Matcher<matcher::MatcherState>> = vec![&matcher];
+  let mut processor = process::default(&matchers);
+
+  let text_injector = executor::text_injector::TextInjectorAdapter::new();
+  let dispatcher = dispatch::default(&text_injector);
+
+  let mut engine = Engine::new(&funnel, &mut processor, &dispatcher);
+  engine.run();
 }
 

@@ -17,16 +17,18 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use log::trace;
+
 use super::{Event, Matcher, Middleware, Processor, middleware::matcher::MatchMiddleware};
 use std::collections::VecDeque;
 
-pub struct DefaultProcessor {
+pub struct DefaultProcessor<'a> {
   event_queue: VecDeque<Event>,
-  middleware: Vec<Box<dyn Middleware>>,
+  middleware: Vec<Box<dyn Middleware + 'a>>,
 }
 
-impl DefaultProcessor {
-  pub fn new<MatcherState: 'static>(matchers: Vec<Box<dyn Matcher<MatcherState>>>) -> Self {
+impl <'a> DefaultProcessor<'a> {
+  pub fn new<MatcherState>(matchers: &'a [&'a dyn Matcher<'a, MatcherState>]) -> DefaultProcessor<'a> {
     Self {
       event_queue: VecDeque::new(),
       middleware: vec![
@@ -41,13 +43,16 @@ impl DefaultProcessor {
       
       let mut current_queue = VecDeque::new();
       let dispatch = |event: Event| {
-        // TODO: add tracing information
+        trace!("dispatched event: {:?}", event);
         current_queue.push_front(event);
       };
 
       for middleware in self.middleware.iter() {
-        // TODO: add tracing information
+        trace!("middleware received event: {:?}", current_event);
+
         current_event = middleware.next(current_event, &dispatch);
+        
+        trace!("middleware produced event: {:?}", current_event);
       }
 
       while let Some(event) = current_queue.pop_back() {
@@ -61,7 +66,7 @@ impl DefaultProcessor {
   }
 }
 
-impl Processor for DefaultProcessor {
+impl <'a> Processor for DefaultProcessor<'a> {
   fn process(&mut self, event: Event) -> Vec<Event> {
     self.event_queue.push_front(event);
 
