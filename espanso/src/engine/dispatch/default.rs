@@ -20,12 +20,12 @@
 use super::{Dispatcher, Executor, TextInjector};
 use super::Event;
 
-pub struct DefaultDispatcher {
-  executors: Vec<Box<dyn Executor>>,
+pub struct DefaultDispatcher<'a> {
+  executors: Vec<Box<dyn Executor + 'a>>,
 }
 
-impl DefaultDispatcher {
-  pub fn new(text_injector: impl TextInjector + 'static) -> Self {
+impl <'a> DefaultDispatcher<'a> {
+  pub fn new(text_injector: &'a dyn TextInjector) -> Self {
     Self {
       executors: vec![
         Box::new(super::executor::text_inject::TextInjectExecutor::new(text_injector)),
@@ -34,7 +34,7 @@ impl DefaultDispatcher {
   }
 }
 
-impl Dispatcher for DefaultDispatcher {
+impl <'a> Dispatcher for DefaultDispatcher<'a> {
   fn dispatch(&self, event: Event) {
     for executor in self.executors.iter() {
       if executor.execute(&event) {

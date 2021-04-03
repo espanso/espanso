@@ -25,9 +25,9 @@ use super::Event;
 
 mod default;
 
-pub trait Source {
-  fn register(&self, select: &Select) -> i32;
-  fn receive(&self, select: &SelectedOperation) -> Event;
+pub trait Source<'a> {
+  fn register<'b>(&'a self, select: &mut Select<'a>) -> usize;
+  fn receive<'b>(&'a self, op: SelectedOperation) -> Event;
 }
 
 pub trait Funnel {
@@ -39,6 +39,6 @@ pub enum FunnelResult {
   EndOfStream,
 }
 
-pub fn default(sources: Vec<Box<dyn Source>>) -> impl Funnel {
+pub fn default<'a>(sources: &'a [&'a dyn Source<'a>]) -> impl Funnel + 'a {
   DefaultFunnel::new(sources)
 }

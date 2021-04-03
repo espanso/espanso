@@ -17,31 +17,21 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use super::super::{Event, Executor, TextInjector};
-use crate::engine::event::inject::TextInjectMode;
-use log::error;
+use crate::engine::dispatch::TextInjector;
 
-pub struct TextInjectExecutor<'a> {
-  injector: &'a dyn TextInjector,
-}
+pub struct TextInjectorAdapter {}
 
-impl<'a> TextInjectExecutor<'a> {
-  pub fn new(injector: &'a dyn TextInjector) -> Self {
-    Self { injector }
+impl TextInjectorAdapter {
+  pub fn new() -> Self {
+    Self {}
   }
 }
 
-impl<'a> Executor for TextInjectExecutor<'a> {
-  fn execute(&self, event: &Event) -> bool {
-    if let Event::TextInject(inject_event) = event {
-      if inject_event.mode == TextInjectMode::Keys {
-        if let Err(error) = self.injector.inject(&inject_event.text) {
-          error!("text injector reported an error: {:?}", error);
-        }
-        return true;
-      }
-    }
+impl TextInjector for TextInjectorAdapter {
+  fn inject(&self, text: &str) -> anyhow::Result<()> {
+    // TODO: implement
+    println!("INJECT: {}", text);
 
-    false
+    Ok(())
   }
 }

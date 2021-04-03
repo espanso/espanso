@@ -35,10 +35,11 @@ pub trait Processor {
 
 // Dependency inversion entities
 
-pub trait Matcher<State> {
-  fn process(&self, prev_state: Option<&State>, event: &MatcherEvent) -> (State, Vec<MatchResult>);
+pub trait Matcher<'a, State> {
+  fn process(&'a self, prev_state: Option<&State>, event: &MatcherEvent) -> (State, Vec<MatchResult>);
 }
 
+#[derive(Debug)]
 pub enum MatcherEvent {
   Key { key: Key, chars: Option<String> },
   VirtualSeparator,
@@ -46,11 +47,11 @@ pub enum MatcherEvent {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct MatchResult {
-  id: i32,
-  trigger: String,
-  vars: HashMap<String, String>,
+  pub id: i32,
+  pub trigger: String,
+  pub vars: HashMap<String, String>,
 }
 
-pub fn default<MatcherState: 'static>(matchers: Vec<Box<dyn Matcher<MatcherState>>>) -> impl Processor {
+pub fn default<'a, MatcherState>(matchers: &'a [&'a dyn Matcher<'a, MatcherState>]) -> impl Processor + 'a {
   default::DefaultProcessor::new(matchers)
 }

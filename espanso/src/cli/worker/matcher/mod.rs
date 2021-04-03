@@ -1,3 +1,5 @@
+use espanso_match::rolling::matcher::RollingMatcherState;
+
 /*
  * This file is part of espanso.
  *
@@ -17,31 +19,12 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use super::super::{Event, Executor, TextInjector};
-use crate::engine::event::inject::TextInjectMode;
-use log::error;
+use enum_as_inner::EnumAsInner;
 
-pub struct TextInjectExecutor<'a> {
-  injector: &'a dyn TextInjector,
-}
+pub mod rolling;
 
-impl<'a> TextInjectExecutor<'a> {
-  pub fn new(injector: &'a dyn TextInjector) -> Self {
-    Self { injector }
-  }
-}
-
-impl<'a> Executor for TextInjectExecutor<'a> {
-  fn execute(&self, event: &Event) -> bool {
-    if let Event::TextInject(inject_event) = event {
-      if inject_event.mode == TextInjectMode::Keys {
-        if let Err(error) = self.injector.inject(&inject_event.text) {
-          error!("text injector reported an error: {:?}", error);
-        }
-        return true;
-      }
-    }
-
-    false
-  }
+#[derive(Clone, EnumAsInner)]
+pub enum MatcherState<'a> {
+  Rolling(RollingMatcherState<'a, i32>),
+  // TODO: regex
 }

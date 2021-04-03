@@ -28,9 +28,9 @@ mod util;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct MatchResult<Id> {
-  id: Id,
-  trigger: String,
-  vars: HashMap<String, String>,
+  pub id: Id,
+  pub trigger: String,
+  pub vars: HashMap<String, String>,
 }
 
 impl<Id: Default> Default for MatchResult<Id> {
