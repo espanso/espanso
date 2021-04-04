@@ -17,16 +17,17 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicI32, Ordering};
 
-static STRUCT_COUNTER: AtomicUsize = AtomicUsize::new(0);
+thread_local! {
+  static STRUCT_COUNTER: AtomicI32 = AtomicI32::new(0);
+}
 
-pub type StructId = usize;
+pub type StructId = i32;
 
-/// For performance reasons, some structs need a unique id to be
-/// compared efficiently with one another.
+/// Some structs need a unique id.
 /// In order to generate it, we use an atomic static variable
 /// that is incremented for each struct.
 pub fn next_id() -> StructId {
-  STRUCT_COUNTER.fetch_add(1, Ordering::SeqCst)
+  STRUCT_COUNTER.with(|count| count.fetch_add(1, Ordering::SeqCst))
 }
