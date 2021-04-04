@@ -79,10 +79,10 @@ impl<Id> RollingMatch<Id> {
 }
 
 pub struct StringMatchOptions {
-  case_insensitive: bool,
-  preserve_case_markers: bool,
-  left_word: bool,
-  right_word: bool,
+  pub case_insensitive: bool,
+  pub preserve_case_markers: bool,
+  pub left_word: bool,
+  pub right_word: bool,
 }
 
 impl Default for StringMatchOptions {
