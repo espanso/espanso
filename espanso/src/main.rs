@@ -201,8 +201,12 @@ fn main() {
   let log_level = match matches.occurrences_of("v") {
     0 => LevelFilter::Warn,
     1 => LevelFilter::Info,
-    2 => LevelFilter::Debug,
-    _ => LevelFilter::Trace,
+
+    // Trace mode is only available in debug mode for security reasons
+    #[cfg(debug_assertions)]
+    3 => LevelFilter::Trace,
+    
+    _ => LevelFilter::Debug,
   };
 
   let handler = CLI_HANDLERS

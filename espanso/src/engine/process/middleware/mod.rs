@@ -18,3 +18,4 @@
  */
 
 pub mod matcher;
+pub mod match_select;

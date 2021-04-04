@@ -17,15 +17,21 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#[derive(Debug)]
-pub struct TextInjectEvent {
-  pub delete_count: i32,
-  pub text: String,
-  pub mode: TextInjectMode,
+use std::collections::HashMap;
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct MatchesDetectedEvent {
+  pub matches: Vec<DetectedMatch>,
 }
 
-#[derive(Debug, PartialEq)]
-pub enum TextInjectMode {
-  Keys,
-  Clipboard,
+#[derive(Debug, Clone, PartialEq)]
+pub struct DetectedMatch {
+  pub id: i32,
+  pub trigger: String,
+  pub vars: HashMap<String, String>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct MatchSelectedEvent {
+  pub chosen: DetectedMatch,
 }

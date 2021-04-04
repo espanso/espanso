@@ -19,7 +19,7 @@
 
 use log::trace;
 
-use super::{Event, Matcher, Middleware, Processor, middleware::matcher::MatchMiddleware};
+use super::{Event, MatchFilter, MatchSelector, Matcher, Middleware, Processor, middleware::match_select::MatchSelectMiddleware, middleware::matcher::MatchMiddleware};
 use std::collections::VecDeque;
 
 pub struct DefaultProcessor<'a> {
@@ -27,20 +27,25 @@ pub struct DefaultProcessor<'a> {
   middleware: Vec<Box<dyn Middleware + 'a>>,
 }
 
-impl <'a> DefaultProcessor<'a> {
-  pub fn new<MatcherState>(matchers: &'a [&'a dyn Matcher<'a, MatcherState>]) -> DefaultProcessor<'a> {
+impl<'a> DefaultProcessor<'a> {
+  pub fn new<MatcherState>(
+    matchers: &'a [&'a dyn Matcher<'a, MatcherState>],
+    match_filter: &'a dyn MatchFilter,
+    match_selector: &'a dyn MatchSelector,
+  ) -> DefaultProcessor<'a> {
     Self {
       event_queue: VecDeque::new(),
       middleware: vec![
         Box::new(MatchMiddleware::new(matchers)),
-      ]
+        Box::new(MatchSelectMiddleware::new(match_filter, match_selector)),
+      ],
     }
   }
 
   fn process_one(&mut self) -> Option<Event> {
     if let Some(event) = self.event_queue.pop_back() {
       let mut current_event = event;
-      
+
       let mut current_queue = VecDeque::new();
       let dispatch = |event: Event| {
         trace!("dispatched event: {:?}", event);
@@ -51,7 +56,7 @@ impl <'a> DefaultProcessor<'a> {
         trace!("middleware received event: {:?}", current_event);
 
         current_event = middleware.next(current_event, &dispatch);
-        
+
         trace!("middleware produced event: {:?}", current_event);
       }
 
@@ -66,7 +71,7 @@ impl <'a> DefaultProcessor<'a> {
   }
 }
 
-impl <'a> Processor for DefaultProcessor<'a> {
+impl<'a> Processor for DefaultProcessor<'a> {
   fn process(&mut self, event: Event) -> Vec<Event> {
     self.event_queue.push_front(event);
 

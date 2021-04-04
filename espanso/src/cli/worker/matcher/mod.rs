@@ -22,6 +22,7 @@ use espanso_match::rolling::matcher::RollingMatcherState;
 use enum_as_inner::EnumAsInner;
 
 pub mod rolling;
+pub mod convert;
 
 #[derive(Clone, EnumAsInner)]
 pub enum MatcherState<'a> {
