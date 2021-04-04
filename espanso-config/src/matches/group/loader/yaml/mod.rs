@@ -17,10 +17,10 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::matches::{
+use crate::{counter::next_id, matches::{
   group::{path::resolve_imports, MatchGroup},
   Match, Variable,
-};
+}};
 use anyhow::Result;
 use log::warn;
 use parse::YAMLMatchGroup;
@@ -138,7 +138,7 @@ impl TryFrom<YAMLMatch> for Match {
       cause,
       effect,
       label: None,
-      ..Default::default()
+      id: next_id(),
     })
   }
 }
@@ -151,7 +151,7 @@ impl TryFrom<YAMLVariable> for Variable {
       name: yaml_var.name,
       var_type: yaml_var.var_type,
       params: yaml_var.params,
-      ..Default::default()
+      id: next_id(),
     })
   }
 }
@@ -165,7 +165,14 @@ mod tests {
 
   fn create_match(yaml: &str) -> Result<Match> {
     let yaml_match: YAMLMatch = serde_yaml::from_str(yaml)?;
-    let m: Match = yaml_match.try_into()?;
+    let mut m: Match = yaml_match.try_into()?;
+
+    // Reset the IDs to correctly compare them
+    m.id = 0;
+    if let MatchEffect::Text(e) = &mut m.effect {
+      e.vars.iter_mut().for_each(|v| v.id = 0);
+    }
+    
     Ok(m)
   }
 
@@ -429,7 +436,10 @@ mod tests {
       std::fs::write(&sub_file, "").unwrap();
 
       let importer = YAMLImporter::new();
-      let group = importer.load_group(&base_file).unwrap();
+      let mut group = importer.load_group(&base_file).unwrap();
+      // Reset the ids to compare them correctly
+      group.matches.iter_mut().for_each(|mut m| m.id = 0);
+      group.global_vars.iter_mut().for_each(|mut v| v.id = 0);
 
       let vars = vec![Variable {
         name: "var1".to_string(),

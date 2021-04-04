@@ -42,9 +42,7 @@ impl DefaultMatchStore {
     // top-level ones.
     load_match_groups_recursively(&mut groups, paths);
 
-    Self {
-      groups,
-    }
+    Self { groups }
   }
 }
 
@@ -117,16 +115,16 @@ fn query_matches_for_paths<'a>(
         );
 
         for m in group.matches.iter() {
-          if !visited_matches.contains(&m._id) {
+          if !visited_matches.contains(&m.id) {
             matches.push(m);
-            visited_matches.insert(m._id);
+            visited_matches.insert(m.id);
           }
         }
 
         for var in group.global_vars.iter() {
-          if !visited_global_vars.contains(&var._id) {
+          if !visited_global_vars.contains(&var.id) {
             global_vars.push(var);
-            visited_global_vars.insert(var._id);
+            visited_global_vars.insert(var.id);
           }
         }
       }
@@ -232,16 +230,27 @@ mod tests {
         .get(&base_file.to_string_lossy().to_string())
         .unwrap()
         .matches;
-      assert_eq!(base_group, &create_matches(&[("hello", "world")]));
+      let base_group: Vec<Match> = base_group.iter().map(|m| {
+        let mut copy = m.clone();
+        copy.id = 0;
+        copy
+      }).collect();
+
+      assert_eq!(base_group, create_matches(&[("hello", "world")]));
 
       let another_group = &match_store
         .groups
         .get(&another_file.to_string_lossy().to_string())
         .unwrap()
         .matches;
+      let another_group: Vec<Match> = another_group.iter().map(|m| {
+        let mut copy = m.clone();
+        copy.id = 0;
+        copy
+      }).collect();
       assert_eq!(
         another_group,
-        &create_matches(&[("hello", "world2"), ("foo", "bar")])
+        create_matches(&[("hello", "world2"), ("foo", "bar")])
       );
 
       let sub_group = &match_store
@@ -249,7 +258,12 @@ mod tests {
         .get(&sub_file.to_string_lossy().to_string())
         .unwrap()
         .matches;
-      assert_eq!(sub_group, &create_matches(&[("hello", "world3")]));
+      let sub_group: Vec<Match> = sub_group.iter().map(|m| {
+        let mut copy = m.clone();
+        copy.id = 0;
+        copy
+      }).collect();
+      assert_eq!(sub_group, create_matches(&[("hello", "world3")]));
     });
   }
 
@@ -373,6 +387,7 @@ mod tests {
           .matches
           .into_iter()
           .cloned()
+          .map(|mut m| { m.id = 0; m })
           .collect::<Vec<Match>>(),
         create_matches(&[
           ("hello", "world3"),
@@ -387,6 +402,7 @@ mod tests {
           .global_vars
           .into_iter()
           .cloned()
+          .map(|mut v| { v.id = 0; v })
           .collect::<Vec<Variable>>(),
         create_vars(&["var2", "var1"])
       );
@@ -460,6 +476,7 @@ mod tests {
           .matches
           .into_iter()
           .cloned()
+          .map(|mut m| { m.id = 0; m })
           .collect::<Vec<Match>>(),
         create_matches(&[
           ("hello", "world3"),
@@ -474,6 +491,7 @@ mod tests {
           .global_vars
           .into_iter()
           .cloned()
+          .map(|mut v| { v.id = 0; v})
           .collect::<Vec<Variable>>(),
         create_vars(&["var2", "var1"])
       );
@@ -532,7 +550,10 @@ mod tests {
       )
       .unwrap();
 
-      let match_store = DefaultMatchStore::new(&[base_file.to_string_lossy().to_string(), sub_file.to_string_lossy().to_string()]);
+      let match_store = DefaultMatchStore::new(&[
+        base_file.to_string_lossy().to_string(),
+        sub_file.to_string_lossy().to_string(),
+      ]);
 
       let match_set = match_store.query(&[
         base_file.to_string_lossy().to_string(),
@@ -544,6 +565,7 @@ mod tests {
           .matches
           .into_iter()
           .cloned()
+          .map(|mut m| { m.id = 0; m })
           .collect::<Vec<Match>>(),
         create_matches(&[
           ("hello", "world2"),
@@ -558,6 +580,7 @@ mod tests {
           .global_vars
           .into_iter()
           .cloned()
+          .map(|mut v| { v.id = 0; v })
           .collect::<Vec<Variable>>(),
         create_vars(&["var1", "var2"])
       );
@@ -631,6 +654,7 @@ mod tests {
           .matches
           .into_iter()
           .cloned()
+          .map(|mut m| { m.id = 0; m })
           .collect::<Vec<Match>>(),
         create_matches(&[
           ("hello", "world3"), // This appears only once, though it appears 2 times
@@ -645,6 +669,7 @@ mod tests {
           .global_vars
           .into_iter()
           .cloned()
+          .map(|mut v| { v.id = 0; v })
           .collect::<Vec<Variable>>(),
         create_vars(&["var2", "var1"])
       );
