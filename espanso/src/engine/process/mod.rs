@@ -17,13 +17,12 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-
 use std::collections::HashMap;
 
-use super::{Event, event::keyboard::Key};
+use super::{event::keyboard::Key, Event};
 
-mod middleware;
 mod default;
+mod middleware;
 
 pub trait Middleware {
   fn next(&self, event: Event, dispatch: &dyn FnMut(Event)) -> Event;
@@ -36,7 +35,11 @@ pub trait Processor {
 // Dependency inversion entities
 
 pub trait Matcher<'a, State> {
-  fn process(&'a self, prev_state: Option<&State>, event: &MatcherEvent) -> (State, Vec<MatchResult>);
+  fn process(
+    &'a self,
+    prev_state: Option<&State>,
+    event: &MatcherEvent,
+  ) -> (State, Vec<MatchResult>);
 }
 
 #[derive(Debug)]
@@ -52,6 +55,18 @@ pub struct MatchResult {
   pub vars: HashMap<String, String>,
 }
 
-pub fn default<'a, MatcherState>(matchers: &'a [&'a dyn Matcher<'a, MatcherState>]) -> impl Processor + 'a {
-  default::DefaultProcessor::new(matchers)
+pub trait MatchFilter {
+  fn filter_active(&self, matches_ids: &[i32]) -> Vec<i32>;
+}
+
+pub trait MatchSelector {
+  fn select(&self, matches_ids: &[i32]) -> Option<i32>;
+}
+
+pub fn default<'a, MatcherState>(
+  matchers: &'a [&'a dyn Matcher<'a, MatcherState>],
+  match_filter: &'a dyn MatchFilter,
+  match_selector: &'a dyn MatchSelector,
+) -> impl Processor + 'a {
+  default::DefaultProcessor::new(matchers, match_filter, match_selector)
 }

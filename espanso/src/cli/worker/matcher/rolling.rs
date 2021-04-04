@@ -31,14 +31,8 @@ pub struct RollingMatcherAdapter {
 }
 
 impl RollingMatcherAdapter {
-  pub fn new() -> Self {
-    // TODO: pass actual matches
-    let matches = vec![
-      RollingMatch::from_string(1, "esp", &Default::default()),
-      RollingMatch::from_string(2, "test", &Default::default()),
-    ];
-
-    let matcher = RollingMatcher::new(&matches, Default::default());
+  pub fn new(matches: &[RollingMatch<i32>]) -> Self {
+    let matcher = RollingMatcher::new(matches, Default::default());
 
     Self { matcher }
   }

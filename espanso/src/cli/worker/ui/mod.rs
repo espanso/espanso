@@ -17,16 +17,4 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::collections::HashMap;
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct MatchesDetectedEvent {
-  pub results: Vec<MatchResult>,
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct MatchResult {
-  pub id: i32,
-  pub trigger: String,
-  pub vars: HashMap<String, String>,
-}
+pub mod selector;

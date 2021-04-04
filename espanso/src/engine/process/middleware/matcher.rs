@@ -21,7 +21,7 @@ use log::trace;
 use std::{cell::RefCell, collections::VecDeque};
 
 use super::super::Middleware;
-use crate::engine::{event::{Event, keyboard::{Key, Status}, matches_detected::{MatchResult, MatchesDetectedEvent}}, process::{Matcher, MatcherEvent}};
+use crate::engine::{event::{Event, keyboard::{Key, Status}, matches::{DetectedMatch, MatchesDetectedEvent}}, process::{Matcher, MatcherEvent}};
 
 const MAX_HISTORY: usize = 3; // TODO: get as parameter
 
@@ -85,12 +85,10 @@ impl<'a, State> Middleware for MatchMiddleware<'a, State> {
         matcher_states.pop_front();
       }
 
-      println!("results: {:?}", all_results);
-
       if !all_results.is_empty() {
         return Event::MatchesDetected(MatchesDetectedEvent {
-          results: all_results.into_iter().map(|result | {
-            MatchResult {
+          matches: all_results.into_iter().map(|result | {
+            DetectedMatch {
               id: result.id,
               trigger: result.trigger,
               vars: result.vars,
@@ -133,3 +131,5 @@ fn is_invalidating_key(key: &Key) -> bool {
     _ => false,
   }
 }
+
+// TODO: test

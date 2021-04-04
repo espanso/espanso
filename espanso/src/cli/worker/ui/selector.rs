@@ -17,15 +17,21 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#[derive(Debug)]
-pub struct TextInjectEvent {
-  pub delete_count: i32,
-  pub text: String,
-  pub mode: TextInjectMode,
+use crate::engine::process::MatchSelector;
+
+pub struct MatchSelectorAdapter {
+  // TODO: pass Modulo search UI manager
 }
 
-#[derive(Debug, PartialEq)]
-pub enum TextInjectMode {
-  Keys,
-  Clipboard,
+impl MatchSelectorAdapter {
+  pub fn new() -> Self {
+    Self {}
+  }
+}
+
+impl MatchSelector for MatchSelectorAdapter {
+  fn select(&self, matches_ids: &[i32]) -> Option<i32> {
+    // TODO: replace with actual selection
+    Some(*matches_ids.first().unwrap())
+  }
 }

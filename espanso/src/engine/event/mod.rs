@@ -19,7 +19,7 @@
 
 pub mod keyboard;
 pub mod inject;
-pub mod matches_detected;
+pub mod matches;
 
 #[derive(Debug)]
 pub enum Event {
@@ -29,7 +29,8 @@ pub enum Event {
   Keyboard(keyboard::KeyboardEvent),
 
   // Internal
-  MatchesDetected(matches_detected::MatchesDetectedEvent),
+  MatchesDetected(matches::MatchesDetectedEvent),
+  MatchSelected(matches::MatchSelectedEvent),
 
   // Effects
   TextInject(inject::TextInjectEvent),
