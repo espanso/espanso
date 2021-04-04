@@ -22,8 +22,8 @@ use regex::Regex;
 use std::{collections::HashMap, path::Path};
 
 use self::config::LegacyConfig;
-use crate::config::store::DefaultConfigStore;
 use crate::matches::group::loader::yaml::parse::{YAMLMatch, YAMLVariable};
+use crate::{config::store::DefaultConfigStore, counter::StructId};
 use crate::{
   config::Config,
   config::{AppProperties, ConfigStore},
@@ -43,13 +43,28 @@ pub fn load(
 ) -> Result<(Box<dyn ConfigStore>, Box<dyn MatchStore>)> {
   let config_set = config::LegacyConfigSet::load(base_dir, package_dir)?;
 
-  let (default_config, default_match_group) = split_config(config_set.default);
+  let mut match_deduplicate_map = HashMap::new();
+  let mut var_deduplicate_map = HashMap::new();
+
+  let (default_config, mut default_match_group) = split_config(config_set.default);
+  deduplicate_ids(
+    &mut default_match_group,
+    &mut match_deduplicate_map,
+    &mut var_deduplicate_map,
+  );
+
   let mut match_groups = HashMap::new();
   match_groups.insert("default".to_string(), default_match_group);
 
   let mut custom_configs: Vec<Box<dyn Config>> = Vec::new();
   for custom in config_set.specific {
-    let (custom_config, custom_match_group) = split_config(custom);
+    let (custom_config, mut custom_match_group) = split_config(custom);
+    deduplicate_ids(
+      &mut custom_match_group,
+      &mut match_deduplicate_map,
+      &mut var_deduplicate_map,
+    );
+
     match_groups.insert(custom_config.name.clone(), custom_match_group);
     custom_configs.push(Box::new(custom_config));
   }
@@ -88,6 +103,34 @@ fn split_config(config: LegacyConfig) -> (LegacyInteropConfig, LegacyMatchGroup)
 
   let config: LegacyInteropConfig = config.into();
   (config, match_group)
+}
+
+/// Due to the way the legacy configs are loaded (matches are copied multiple times in the various configs)
+/// we need to deduplicate the ids of those matches (and global vars).
+fn deduplicate_ids(
+  match_group: &mut LegacyMatchGroup,
+  match_map: &mut HashMap<Match, StructId>,
+  var_map: &mut HashMap<Variable, StructId>,
+) {
+  for m in match_group.matches.iter_mut() {
+    let mut m_without_id = m.clone();
+    m_without_id.id = 0;
+    if let Some(id) = match_map.get(&m_without_id) {
+      m.id = *id;
+    } else {
+      match_map.insert(m_without_id, m.id);
+    }
+  }
+
+  for v in match_group.global_vars.iter_mut() {
+    let mut v_without_id = v.clone();
+    v_without_id.id = 0;
+    if let Some(id) = var_map.get(&v_without_id) {
+      v.id = *id;
+    } else {
+      var_map.insert(v_without_id, v.id);
+    }
+  }
 }
 
 struct LegacyInteropConfig {
@@ -348,6 +391,75 @@ mod tests {
           .global_vars
           .len(),
         1
+      );
+    });
+  }
+
+  #[test]
+  fn load_legacy_deduplicates_ids_correctly() {
+    use_test_directory(|base, user, packages| {
+      std::fs::write(
+        base.join("default.yml"),
+        r#"
+      backend: Clipboard
+
+      global_vars:
+        - name: var1
+          type: test
+
+      matches:
+        - trigger: "hello"
+          replace: "world"
+      "#,
+      )
+      .unwrap();
+
+      std::fs::write(
+        user.join("specific.yml"),
+        r#"
+      name: specific
+      filter_title: "Google"
+      "#,
+      )
+      .unwrap();
+
+      let (config_store, match_store) = load(base, packages).unwrap();
+
+      let default_config = config_store.default();
+      let active_config = config_store.active(&AppProperties {
+        title: Some("Google"),
+        class: None,
+        exec: None,
+      });
+
+      assert_eq!(
+        match_store
+          .query(default_config.match_paths())
+          .matches
+          .first()
+          .unwrap()
+          .id,
+        match_store
+          .query(active_config.match_paths())
+          .matches
+          .first()
+          .unwrap()
+          .id,
+      );
+
+      assert_eq!(
+        match_store
+          .query(default_config.match_paths())
+          .global_vars
+          .first()
+          .unwrap()
+          .id,
+        match_store
+          .query(active_config.match_paths())
+          .global_vars
+          .first()
+          .unwrap()
+          .id,
       );
     });
   }

@@ -19,21 +19,20 @@
 
 use serde_yaml::Mapping;
 
-use crate::counter::{next_id, StructId};
+use crate::counter::{StructId};
 
 pub(crate) mod group;
 pub mod store;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Match {
-  cause: MatchCause,
-  effect: MatchEffect,
+  pub id: StructId,
+
+  pub cause: MatchCause,
+  pub effect: MatchEffect,
 
   // Metadata
-  label: Option<String>,
-
-  // Internals
-  _id: StructId,
+  pub label: Option<String>,
 }
 
 impl Default for Match {
@@ -42,20 +41,14 @@ impl Default for Match {
       cause: MatchCause::None,
       effect: MatchEffect::None,
       label: None,
-      _id: next_id(),
+      id: 0,
     }
-  }
-}
-
-impl PartialEq for Match {
-  fn eq(&self, other: &Self) -> bool {
-    self.cause == other.cause && self.effect == other.effect && self.label == other.label
   }
 }
 
 // Causes
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Eq, Hash, PartialEq)]
 pub enum MatchCause {
   None,
   Trigger(TriggerCause),
@@ -63,7 +56,7 @@ pub enum MatchCause {
   // TODO: shortcut
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct TriggerCause {
   pub triggers: Vec<String>,
 
@@ -86,7 +79,7 @@ impl Default for TriggerCause {
 
 // Effects
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum MatchEffect {
   None,
   Text(TextEffect),
@@ -94,7 +87,7 @@ pub enum MatchEffect {
   // TODO: rich text
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct TextEffect {
   pub replace: String,
   pub vars: Vec<Variable>,
@@ -109,29 +102,21 @@ impl Default for TextEffect {
   }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Variable {
+  pub id: StructId,
   pub name: String,
   pub var_type: String,
   pub params: Mapping,
-
-  // Internals
-  _id: StructId,
 }
 
 impl Default for Variable {
   fn default() -> Self {
     Self {
+      id: 0,
       name: String::new(),
       var_type: String::new(),
       params: Mapping::new(),
-      _id: next_id(),
     }
-  }
-}
-
-impl PartialEq for Variable {
-  fn eq(&self, other: &Self) -> bool {
-    self.name == other.name && self.var_type == other.var_type && self.params == other.params
   }
 }
