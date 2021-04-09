@@ -17,21 +17,25 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::{counter::next_id, matches::{
-  group::{path::resolve_imports, MatchGroup},
-  Match, Variable,
-}};
+use crate::{
+  counter::next_id,
+  matches::{
+    group::{path::resolve_imports, MatchGroup},
+    Match, Variable,
+  },
+};
 use anyhow::Result;
 use log::warn;
 use parse::YAMLMatchGroup;
 use std::convert::{TryFrom, TryInto};
 
-use self::parse::{YAMLMatch, YAMLVariable};
+use self::{parse::{YAMLMatch, YAMLVariable}, util::convert_params};
 use crate::matches::{MatchCause, MatchEffect, TextEffect, TriggerCause};
 
 use super::Importer;
 
 pub(crate) mod parse;
+mod util;
 
 pub(crate) struct YAMLImporter {}
 
@@ -150,7 +154,7 @@ impl TryFrom<YAMLVariable> for Variable {
     Ok(Self {
       name: yaml_var.name,
       var_type: yaml_var.var_type,
-      params: yaml_var.params,
+      params: convert_params(yaml_var.params)?,
       id: next_id(),
     })
   }
@@ -159,8 +163,7 @@ impl TryFrom<YAMLVariable> for Variable {
 #[cfg(test)]
 mod tests {
   use super::*;
-  use crate::{matches::Match, util::tests::use_test_directory};
-  use serde_yaml::{Mapping, Value};
+  use crate::{matches::{Match, Params, Value}, util::tests::use_test_directory};
   use std::fs::create_dir_all;
 
   fn create_match(yaml: &str) -> Result<Match> {
@@ -172,7 +175,7 @@ mod tests {
     if let MatchEffect::Text(e) = &mut m.effect {
       e.vars.iter_mut().for_each(|v| v.id = 0);
     }
-    
+
     Ok(m)
   }
 
@@ -331,8 +334,8 @@ mod tests {
 
   #[test]
   fn vars_maps_correctly() {
-    let mut params = Mapping::new();
-    params.insert(Value::String("param1".to_string()), Value::Bool(true));
+    let mut params = Params::new();
+    params.insert("param1".to_string(), Value::Bool(true));
     let vars = vec![Variable {
       name: "var1".to_string(),
       var_type: "test".to_string(),
@@ -371,7 +374,7 @@ mod tests {
     let vars = vec![Variable {
       name: "var1".to_string(),
       var_type: "test".to_string(),
-      params: Mapping::new(),
+      params: Params::new(),
       ..Default::default()
     }];
     assert_eq!(
@@ -444,7 +447,7 @@ mod tests {
       let vars = vec![Variable {
         name: "var1".to_string(),
         var_type: "test".to_string(),
-        params: Mapping::new(),
+        params: Params::new(),
         ..Default::default()
       }];
 

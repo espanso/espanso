@@ -17,7 +17,9 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use serde_yaml::Mapping;
+use std::collections::{BTreeMap};
+use enum_as_inner::EnumAsInner;
+use ordered_float::OrderedFloat;
 
 use crate::counter::{StructId};
 
@@ -107,7 +109,7 @@ pub struct Variable {
   pub id: StructId,
   pub name: String,
   pub var_type: String,
-  pub params: Mapping,
+  pub params: Params,
 }
 
 impl Default for Variable {
@@ -116,7 +118,25 @@ impl Default for Variable {
       id: 0,
       name: String::new(),
       var_type: String::new(),
-      params: Mapping::new(),
+      params: Params::new(),
     }
   }
+}
+
+pub type Params = BTreeMap<String, Value>;
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash, EnumAsInner)]
+pub enum Value {
+  Null,
+  Bool(bool),
+  Number(Number),
+  String(String),
+  Array(Vec<Value>),
+  Object(Params),
+}
+
+#[derive(Debug, Clone, Eq, Hash, PartialEq)]
+pub enum Number {
+  Integer(i64),
+  Float(OrderedFloat<f64>),
 }

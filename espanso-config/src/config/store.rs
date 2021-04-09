@@ -134,6 +134,10 @@ mod tests {
   }
 
   impl Config for MockConfig {
+    fn id(&self) -> i32 {
+      0
+    }
+
     fn label(&self) -> &str {
       &self.label
     }
