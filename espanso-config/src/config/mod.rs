@@ -28,6 +28,7 @@ mod util;
 pub(crate) mod store;
 
 pub trait Config {
+  fn id(&self) -> i32;
   fn label(&self) -> &str;
   fn match_paths(&self) -> &[String];
   fn backend(&self) -> Backend;

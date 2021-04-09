@@ -18,7 +18,7 @@
  */
 
 use super::{AppProperties, Backend, Config, parse::ParsedConfig, path::calculate_paths, util::os_matches};
-use crate::merge;
+use crate::{counter::next_id, merge};
 use anyhow::Result;
 use log::error;
 use regex::Regex;
@@ -34,6 +34,7 @@ pub(crate) struct ResolvedConfig {
   parsed: ParsedConfig,
 
   // Generated properties
+  id: i32,
   match_paths: Vec<String>,
 
   filter_title: Option<Regex>,
@@ -45,6 +46,7 @@ impl Default for ResolvedConfig {
   fn default() -> Self {
     Self {
       parsed: Default::default(),
+      id: 0,
       match_paths: Vec::new(),
       filter_title: None,
       filter_class: None,
@@ -54,6 +56,10 @@ impl Default for ResolvedConfig {
 }
 
 impl Config for ResolvedConfig {
+  fn id(&self) -> i32 {
+    self.id
+  }
+
   fn label(&self) -> &str {
     self.parsed.label.as_deref().unwrap_or("none")
   }
@@ -162,6 +168,7 @@ impl ResolvedConfig {
 
     Ok(Self {
       parsed: config,
+      id: next_id(),
       match_paths,
       filter_title,
       filter_class,

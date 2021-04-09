@@ -31,6 +31,7 @@ use crate::{
     store::{MatchSet, MatchStore},
     Match, Variable,
   },
+  counter::next_id,
 };
 use std::convert::TryInto;
 
@@ -137,6 +138,8 @@ struct LegacyInteropConfig {
   pub name: String,
   match_paths: Vec<String>,
 
+  id: i32,
+
   config: LegacyConfig,
 
   filter_title: Option<Regex>,
@@ -147,6 +150,7 @@ struct LegacyInteropConfig {
 impl From<config::LegacyConfig> for LegacyInteropConfig {
   fn from(config: config::LegacyConfig) -> Self {
     Self {
+      id: next_id(),
       config: config.clone(),
       name: config.name.clone(),
       match_paths: vec![config.name],
@@ -170,6 +174,10 @@ impl From<config::LegacyConfig> for LegacyInteropConfig {
 }
 
 impl Config for LegacyInteropConfig {
+  fn id(&self) -> i32 {
+    self.id
+  }
+
   fn label(&self) -> &str {
     &self.config.name
   }
