@@ -19,7 +19,13 @@
 
 use log::trace;
 
-use super::{Event, MatchFilter, MatchSelector, Matcher, Middleware, Processor, middleware::match_select::MatchSelectMiddleware, middleware::matcher::MatchMiddleware};
+use super::{
+  middleware::{
+    match_select::MatchSelectMiddleware, matcher::MatchMiddleware, multiplex::MultiplexMiddleware,
+    render::RenderMiddleware,
+  },
+  Event, MatchFilter, MatchSelector, Matcher, Middleware, Multiplexer, Processor, Renderer,
+};
 use std::collections::VecDeque;
 
 pub struct DefaultProcessor<'a> {
@@ -32,12 +38,16 @@ impl<'a> DefaultProcessor<'a> {
     matchers: &'a [&'a dyn Matcher<'a, MatcherState>],
     match_filter: &'a dyn MatchFilter,
     match_selector: &'a dyn MatchSelector,
+    multiplexer: &'a dyn Multiplexer,
+    renderer: &'a dyn Renderer<'a>,
   ) -> DefaultProcessor<'a> {
     Self {
       event_queue: VecDeque::new(),
       middleware: vec![
         Box::new(MatchMiddleware::new(matchers)),
         Box::new(MatchSelectMiddleware::new(match_filter, match_selector)),
+        Box::new(MultiplexMiddleware::new(multiplexer)),
+        Box::new(RenderMiddleware::new(renderer)),
       ],
     }
   }

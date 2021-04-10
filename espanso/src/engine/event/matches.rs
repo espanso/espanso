@@ -28,7 +28,7 @@ pub struct MatchesDetectedEvent {
 pub struct DetectedMatch {
   pub id: i32,
   pub trigger: String,
-  pub vars: HashMap<String, String>,
+  pub args: HashMap<String, String>,
 }
 
 #[derive(Debug, Clone, PartialEq)]

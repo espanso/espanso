@@ -17,9 +17,10 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::collections::HashMap;
-
 use super::{event::keyboard::Key, Event};
+use anyhow::Result;
+use std::collections::HashMap;
+use thiserror::Error;
 
 mod default;
 mod middleware;
@@ -52,7 +53,7 @@ pub enum MatcherEvent {
 pub struct MatchResult {
   pub id: i32,
   pub trigger: String,
-  pub vars: HashMap<String, String>,
+  pub args: HashMap<String, String>,
 }
 
 pub trait MatchFilter {
@@ -63,10 +64,32 @@ pub trait MatchSelector {
   fn select(&self, matches_ids: &[i32]) -> Option<i32>;
 }
 
+pub trait Multiplexer {
+  fn convert(&self, match_id: i32, trigger: String, trigger_args: HashMap<String, String>) -> Option<Event>;
+}
+
+pub trait Renderer<'a> {
+  fn render(&'a self, match_id: i32, trigger_args: HashMap<String, String>) -> Result<String>;
+}
+
+#[derive(Error, Debug)]
+pub enum RendererError {
+  #[error("rendering error")]
+  RenderingError(#[from] anyhow::Error),
+
+  #[error("match not found")]
+  NotFound,
+
+  #[error("aborted")]
+  Aborted,
+}
+
 pub fn default<'a, MatcherState>(
   matchers: &'a [&'a dyn Matcher<'a, MatcherState>],
   match_filter: &'a dyn MatchFilter,
   match_selector: &'a dyn MatchSelector,
+  multiplexer: &'a dyn Multiplexer,
+  renderer: &'a dyn Renderer<'a>,
 ) -> impl Processor + 'a {
-  default::DefaultProcessor::new(matchers, match_filter, match_selector)
+  default::DefaultProcessor::new(matchers, match_filter, match_selector, multiplexer, renderer)
 }

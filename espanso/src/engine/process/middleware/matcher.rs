@@ -91,7 +91,7 @@ impl<'a, State> Middleware for MatchMiddleware<'a, State> {
             DetectedMatch {
               id: result.id,
               trigger: result.trigger,
-              vars: result.vars,
+              args: result.args,
             }
           }).collect()
         })
