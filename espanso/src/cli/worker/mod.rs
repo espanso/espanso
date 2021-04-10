@@ -19,16 +19,13 @@
 
 use funnel::Source;
 use process::Matcher;
-use ui::selector::MatchSelectorAdapter;
+use engine::ui::selector::MatchSelectorAdapter;
 
 use crate::engine::{Engine, funnel, process, dispatch};
 use super::{CliModule, CliModuleArgs};
 
-mod ui;
+mod engine;
 mod config;
-mod source;
-mod matcher;
-mod executor;
 
 pub fn new() -> CliModule {
   #[allow(clippy::needless_update)]
@@ -48,21 +45,27 @@ fn worker_main(args: CliModuleArgs) {
 
   let app_info_provider = espanso_info::get_provider().expect("unable to initialize app info provider");
   let config_manager = config::ConfigManager::new(&*config_store, &*match_store, &*app_info_provider);
-  let match_converter = matcher::convert::MatchConverter::new(&*config_store, &*match_store);
+  let match_converter = engine::matcher::convert::MatchConverter::new(&*config_store, &*match_store);
+  let match_cache = engine::match_cache::MatchCache::load(&*config_store, &*match_store);
 
-  let detect_source = source::detect::init_and_spawn().expect("failed to initialize detector module");
+  let detect_source = engine::source::detect::init_and_spawn().expect("failed to initialize detector module");
   let sources: Vec<&dyn Source> = vec![&detect_source];
   let funnel = funnel::default(&sources);
 
-  let matcher = matcher::rolling::RollingMatcherAdapter::new(&match_converter.get_rolling_matches());
-  let matchers: Vec<&dyn Matcher<matcher::MatcherState>> = vec![&matcher];
+  let matcher = engine::matcher::rolling::RollingMatcherAdapter::new(&match_converter.get_rolling_matches());
+  let matchers: Vec<&dyn Matcher<engine::matcher::MatcherState>> = vec![&matcher];
   let selector = MatchSelectorAdapter::new();
-  let mut processor = process::default(&matchers, &config_manager, &selector);
+  let multiplexer = engine::multiplex::MultiplexAdapter::new(&match_cache);
 
-  let text_injector = executor::text_injector::TextInjectorAdapter::new();
+  // TODO: add extensions
+  let renderer = espanso_render::create(Vec::new());
+  let renderer_adapter = engine::render::RendererAdapter::new(&match_cache, &config_manager, &renderer);
+
+  let mut processor = process::default(&matchers, &config_manager, &selector, &multiplexer, &renderer_adapter);
+
+  let text_injector = engine::executor::text_injector::TextInjectorAdapter::new();
   let dispatcher = dispatch::default(&text_injector);
 
   let mut engine = Engine::new(&funnel, &mut processor, &dispatcher);
   engine.run();
 }
-

@@ -34,7 +34,7 @@ impl<'a> TextInjectExecutor<'a> {
 impl<'a> Executor for TextInjectExecutor<'a> {
   fn execute(&self, event: &Event) -> bool {
     if let Event::TextInject(inject_event) = event {
-      if inject_event.mode == TextInjectMode::Keys {
+      if let Some(TextInjectMode::Keys) = inject_event.force_mode {
         if let Err(error) = self.injector.inject(&inject_event.text) {
           error!("text injector reported an error: {:?}", error);
         }

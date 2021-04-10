@@ -20,10 +20,12 @@
 pub mod keyboard;
 pub mod inject;
 pub mod matches;
+pub mod render;
 
 #[derive(Debug)]
 pub enum Event {
   NOOP,
+  ProcessingError(String),
   
   // Inputs
   Keyboard(keyboard::KeyboardEvent),
@@ -32,6 +34,9 @@ pub enum Event {
   MatchesDetected(matches::MatchesDetectedEvent),
   MatchSelected(matches::MatchSelectedEvent),
 
+  RenderingRequested(render::RenderingRequestedEvent),
+  Rendered(render::RenderedEvent),
+
   // Effects
-  TextInject(inject::TextInjectEvent),
+  TextInject(inject::TextInjectRequest),
 }

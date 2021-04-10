@@ -17,15 +17,10 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#[derive(Debug)]
-pub struct TextInjectRequest {
-  pub delete_count: i32,
-  pub text: String,
-  pub force_mode: Option<TextInjectMode>,
-}
-
-#[derive(Debug, PartialEq)]
-pub enum TextInjectMode {
-  Keys,
-  Clipboard,
-}
+pub mod ui;
+pub mod source;
+pub mod render;
+pub mod matcher;
+pub mod executor;
+pub mod multiplex;
+pub mod match_cache;

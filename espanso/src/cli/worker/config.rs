@@ -17,7 +17,10 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::collections::HashSet;
+use std::{
+  cell::RefCell,
+  collections::{HashMap, HashSet},
+};
 
 use crate::engine::process::MatchFilter;
 use espanso_config::{
@@ -26,6 +29,8 @@ use espanso_config::{
 };
 use espanso_info::{AppInfo, AppInfoProvider};
 use std::iter::FromIterator;
+
+use super::engine::render::ConfigProvider;
 
 pub struct ConfigManager<'a> {
   config_store: &'a dyn ConfigStore,
@@ -46,22 +51,32 @@ impl<'a> ConfigManager<'a> {
     }
   }
 
-  fn active(&self) -> &'a dyn Config {
+  pub fn active(&self) -> &'a dyn Config {
     let current_app = self.app_info_provider.get_info();
     let info = to_app_properties(&current_app);
     self.config_store.active(&info)
   }
 
-  fn active_match_set(&self) -> MatchSet {
-    let match_paths = self.active().match_paths();
-    self.match_store.query(&match_paths)
+  pub fn active_context(&self) -> (&'a dyn Config, MatchSet) {
+    let config = self.active();
+    let match_paths = config.match_paths();
+    (config, self.match_store.query(&match_paths))
+  }
+}
+
+// TODO: test
+fn to_app_properties(info: &AppInfo) -> AppProperties {
+  AppProperties {
+    title: info.title.as_deref(),
+    class: info.class.as_deref(),
+    exec: info.exec.as_deref(),
   }
 }
 
 impl<'a> MatchFilter for ConfigManager<'a> {
   fn filter_active(&self, matches_ids: &[i32]) -> Vec<i32> {
     let ids_set: HashSet<i32> = HashSet::from_iter(matches_ids.iter().copied());
-    let match_set = self.active_match_set();
+    let (_, match_set) = self.active_context();
 
     match_set
       .matches
@@ -72,11 +87,14 @@ impl<'a> MatchFilter for ConfigManager<'a> {
   }
 }
 
-// TODO: test
-fn to_app_properties(info: &AppInfo) -> AppProperties {
-  AppProperties {
-    title: info.title.as_deref(),
-    class: info.class.as_deref(),
-    exec: info.exec.as_deref(),
+impl<'a> ConfigProvider<'a> for ConfigManager<'a> {
+  fn configs(&self) -> Vec<(&'a dyn Config, MatchSet)> {
+    self.config_store.configs().into_iter().map(|config| {
+      (config, self.match_store.query(config.match_paths()))
+    }).collect()
+  }
+
+  fn active(&self) -> (&'a dyn Config, MatchSet) {
+    self.active_context()
   }
 }

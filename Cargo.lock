@@ -296,6 +296,7 @@ dependencies = [
  "espanso-inject",
  "espanso-match",
  "espanso-path",
+ "espanso-render",
  "espanso-ui",
  "lazy_static",
  "log",
@@ -324,9 +325,11 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "dunce",
+ "enum-as-inner",
  "glob",
  "lazy_static",
  "log",
+ "ordered-float",
  "regex",
  "serde",
  "serde_yaml",
@@ -664,6 +667,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c92d4ddb4bd7b50d730c215ff871754d0da6b2178849f8a2a2ab69712d0c073b"
 dependencies = [
  "objc",
+]
+
+[[package]]
+name = "ordered-float"
+version = "2.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "766f840da25490628d8e63e529cd21c014f6600c6b8517add12a6fa6167a6218"
+dependencies = [
+ "num-traits",
 ]
 
 [[package]]

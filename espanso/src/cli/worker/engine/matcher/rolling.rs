@@ -81,7 +81,7 @@ impl From<espanso_match::MatchResult<i32>> for MatchResult {
     Self {
       id: result.id,
       trigger: result.trigger, 
-      vars: result.vars, 
+      args: result.vars, 
     }
   }
 }
