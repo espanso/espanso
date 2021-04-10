@@ -42,6 +42,17 @@ impl ConfigStore for DefaultConfigStore {
     self.default.as_ref()
   }
 
+  fn configs(&self) -> Vec<&dyn Config> {
+    let mut configs = Vec::new();
+
+    configs.push(self.default.as_ref());
+    for custom in self.customs.iter() {
+      configs.push(custom.as_ref());
+    }
+
+    configs
+  }
+
   // TODO: test
   fn get_all_match_paths(&self) -> HashSet<String> {
     let mut paths = HashSet::new();
@@ -108,10 +119,7 @@ impl DefaultConfigStore {
   }
 
   pub fn from_configs(default: Box<dyn Config>, customs: Vec<Box<dyn Config>>) -> Result<Self> {
-    Ok(Self {
-      default,
-      customs,
-    })
+    Ok(Self { default, customs })
   }
 }
 
