@@ -58,7 +58,7 @@ impl<'a> Default for Context<'a> {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct RenderOptions {
-  casing_style: CasingStyle,
+  pub casing_style: CasingStyle,
 }
 
 impl Default for RenderOptions {
@@ -79,9 +79,9 @@ pub enum CasingStyle {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Template {
-  ids: Vec<String>,
-  body: String,
-  vars: Vec<Variable>,
+  pub ids: Vec<String>,
+  pub body: String,
+  pub vars: Vec<Variable>,
 }
 
 impl Default for Template {
@@ -96,9 +96,9 @@ impl Default for Template {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Variable {
-  name: String,
-  var_type: String,
-  params: Params,
+  pub name: String,
+  pub var_type: String,
+  pub params: Params,
 }
 
 impl Default for Variable {
