@@ -39,6 +39,7 @@ pub trait Config {
 pub trait ConfigStore {
   fn default(&self) -> &dyn Config;
   fn active<'a>(&'a self, app: &AppProperties) -> &'a dyn Config;
+  fn configs(&self) -> Vec<&dyn Config>;
 
   fn get_all_match_paths(&self) -> HashSet<String>;
 }
