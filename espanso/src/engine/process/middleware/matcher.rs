@@ -21,7 +21,14 @@ use log::trace;
 use std::{cell::RefCell, collections::VecDeque};
 
 use super::super::Middleware;
-use crate::engine::{event::{Event, keyboard::{Key, Status}, matches::{DetectedMatch, MatchesDetectedEvent}}, process::{Matcher, MatcherEvent}};
+use crate::engine::{
+  event::{
+    keyboard::{Key, Status},
+    matches::{DetectedMatch, MatchesDetectedEvent},
+    Event,
+  },
+  process::{Matcher, MatcherEvent},
+};
 
 const MAX_HISTORY: usize = 3; // TODO: get as parameter
 
@@ -42,59 +49,63 @@ impl<'a, State> MatchMiddleware<'a, State> {
 
 impl<'a, State> Middleware for MatchMiddleware<'a, State> {
   fn next(&self, event: Event, _: &mut dyn FnMut(Event)) -> Event {
-    let mut matcher_states = self.matcher_states.borrow_mut();
-    let prev_states = if !matcher_states.is_empty() {
-      matcher_states.get(matcher_states.len() - 1)
-    } else {
-      None
-    };
+    if is_event_of_interest(&event) {
+      let mut matcher_states = self.matcher_states.borrow_mut();
+      let prev_states = if !matcher_states.is_empty() {
+        matcher_states.get(matcher_states.len() - 1)
+      } else {
+        None
+      };
 
-    if let Event::Keyboard(keyboard_event) = &event {
-      // Backspace handling
-      if keyboard_event.key == Key::Backspace {
-        trace!("popping the last matcher state");
-        matcher_states.pop_back();
-        return event;
+      if let Event::Keyboard(keyboard_event) = &event {
+        // Backspace handling
+        if keyboard_event.key == Key::Backspace {
+          trace!("popping the last matcher state");
+          matcher_states.pop_back();
+          return event;
+        }
+
+        // Some keys (such as the arrow keys) prevent espanso from building
+        // an accurate key buffer, so we need to invalidate it.
+        if is_invalidating_key(&keyboard_event.key) {
+          trace!("invalidating event detected, clearing matching state");
+          matcher_states.clear();
+          return event;
+        }
       }
 
-      // Some keys (such as the arrow keys) prevent espanso from building
-      // an accurate key buffer, so we need to invalidate it.
-      if is_invalidating_key(&keyboard_event.key) {
-        matcher_states.clear();
-        return event;
-      }
-    }
+      // TODO: test if the matcher detects a word match when the states are cleared (probably not :( )
 
-    // TODO: test if the matcher detects a word match when the states are cleared (probably not :( )
+      let mut all_results = Vec::new();
 
-    let mut all_results = Vec::new();
+      if let Some(matcher_event) = convert_to_matcher_event(&event) {
+        let mut new_states = Vec::new();
+        for (i, matcher) in self.matchers.iter().enumerate() {
+          let prev_state = prev_states.and_then(|states| states.get(i));
 
-    if let Some(matcher_event) = convert_to_matcher_event(&event) {
-      let mut new_states = Vec::new();
-      for (i, matcher) in self.matchers.iter().enumerate() {
-        let prev_state = prev_states.and_then(|states| states.get(i));
+          let (state, results) = matcher.process(prev_state, &matcher_event);
+          all_results.extend(results);
 
-        let (state, results) = matcher.process(prev_state, &matcher_event);
-        all_results.extend(results);
+          new_states.push(state);
+        }
 
-        new_states.push(state);
-      }
+        matcher_states.push_back(new_states);
+        if matcher_states.len() > MAX_HISTORY {
+          matcher_states.pop_front();
+        }
 
-      matcher_states.push_back(new_states);
-      if matcher_states.len() > MAX_HISTORY {
-        matcher_states.pop_front();
-      }
-
-      if !all_results.is_empty() {
-        return Event::MatchesDetected(MatchesDetectedEvent {
-          matches: all_results.into_iter().map(|result | {
-            DetectedMatch {
-              id: result.id,
-              trigger: result.trigger,
-              args: result.args,
-            }
-          }).collect()
-        })
+        if !all_results.is_empty() {
+          return Event::MatchesDetected(MatchesDetectedEvent {
+            matches: all_results
+              .into_iter()
+              .map(|result| DetectedMatch {
+                id: result.id,
+                trigger: result.trigger,
+                args: result.args,
+              })
+              .collect(),
+          });
+        }
       }
     }
 
@@ -102,14 +113,24 @@ impl<'a, State> Middleware for MatchMiddleware<'a, State> {
   }
 }
 
+fn is_event_of_interest(event: &Event) -> bool {
+  if let Event::Keyboard(keyboard_event) = &event {
+    if keyboard_event.status == Status::Pressed {
+      return true;
+    }
+  }
+
+  // TODO: handle mouse
+
+  false
+}
+
 fn convert_to_matcher_event(event: &Event) -> Option<MatcherEvent> {
   if let Event::Keyboard(keyboard_event) = event {
-    if keyboard_event.status == Status::Pressed {
-      return Some(MatcherEvent::Key {
-        key: keyboard_event.key.clone(),
-        chars: keyboard_event.value.clone(),
-      });
-    }
+    return Some(MatcherEvent::Key {
+      key: keyboard_event.key.clone(),
+      chars: keyboard_event.value.clone(),
+    });
   }
 
   // TODO: mouse event should act as separator
