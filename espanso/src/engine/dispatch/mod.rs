@@ -18,7 +18,7 @@
  */
 
 use anyhow::Result;
-use super::Event;
+use super::{Event, event::keyboard::Key};
 
 mod executor;
 mod default;
@@ -32,11 +32,16 @@ pub trait Dispatcher {
 }
 
 pub trait TextInjector {
-  fn inject(&self, text: &str) -> Result<()>;
+  fn inject_text(&self, text: &str) -> Result<()>;
 }
 
-pub fn default<'a>(text_injector: &'a dyn TextInjector) -> impl Dispatcher + 'a {
+pub trait KeyInjector {
+  fn inject_sequence(&self, keys: &[Key]) -> Result<()>;
+}
+
+pub fn default<'a>(text_injector: &'a dyn TextInjector, key_injector: &'a dyn KeyInjector) -> impl Dispatcher + 'a {
   default::DefaultDispatcher::new(
     text_injector,
+    key_injector,
   )
 }

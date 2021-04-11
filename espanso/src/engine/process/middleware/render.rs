@@ -20,7 +20,7 @@
 use log::{debug, error};
 
 use super::super::Middleware;
-use crate::engine::{event::{Event, inject::{TextInjectRequest, TextInjectMode}, matches::MatchSelectedEvent, render::RenderedEvent}, process::{MatchFilter, MatchSelector, Renderer, RendererError}};
+use crate::engine::{event::{Event, text::{TextInjectRequest, TextInjectMode}, matches::MatchSelectedEvent, render::RenderedEvent}, process::{MatchFilter, MatchSelector, Renderer, RendererError}};
 
 pub struct RenderMiddleware<'a> {
   renderer: &'a dyn Renderer<'a>,
@@ -33,7 +33,7 @@ impl<'a> RenderMiddleware<'a> {
 }
 
 impl<'a> Middleware for RenderMiddleware<'a> {
-  fn next(&self, event: Event, _: &dyn FnMut(Event)) -> Event {
+  fn next(&self, event: Event, _: &mut dyn FnMut(Event)) -> Event {
     if let Event::RenderingRequested(m_event) = event {
       match self.renderer.render(m_event.match_id, m_event.trigger_args) {
         Ok(body) => {

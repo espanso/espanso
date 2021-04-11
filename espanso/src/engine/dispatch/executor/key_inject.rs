@@ -17,15 +17,28 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#[derive(Debug)]
-pub struct TextInjectRequest {
-  pub delete_count: i32,
-  pub text: String,
-  pub force_mode: Option<TextInjectMode>,
+use super::super::{Event, Executor, KeyInjector};
+use log::error;
+
+pub struct KeyInjectExecutor<'a> {
+  injector: &'a dyn KeyInjector,
 }
 
-#[derive(Debug, PartialEq)]
-pub enum TextInjectMode {
-  Keys,
-  Clipboard,
+impl<'a> KeyInjectExecutor<'a> {
+  pub fn new(injector: &'a dyn KeyInjector) -> Self {
+    Self { injector }
+  }
+}
+
+impl<'a> Executor for KeyInjectExecutor<'a> {
+  fn execute(&self, event: &Event) -> bool {
+    if let Event::KeySequenceInject(inject_event) = event {
+      if let Err(error) = self.injector.inject_sequence(&inject_event.keys) {
+        error!("key injector reported an error: {}", error);
+      }
+      return true;
+    }
+
+    false
+  }
 }

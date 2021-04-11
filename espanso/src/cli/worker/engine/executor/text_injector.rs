@@ -17,21 +17,25 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use espanso_inject::Injector;
+
 use crate::engine::dispatch::TextInjector;
 
-pub struct TextInjectorAdapter {}
+pub struct TextInjectorAdapter<'a> {
+  injector: &'a dyn Injector,
+}
 
-impl TextInjectorAdapter {
-  pub fn new() -> Self {
-    Self {}
+impl <'a> TextInjectorAdapter<'a> {
+  pub fn new(injector: &'a dyn Injector) -> Self {
+    Self {
+      injector
+    }
   }
 }
 
-impl TextInjector for TextInjectorAdapter {
-  fn inject(&self, text: &str) -> anyhow::Result<()> {
-    // TODO: implement
-    println!("INJECT: {}", text);
-
-    Ok(())
+impl <'a> TextInjector for TextInjectorAdapter<'a> {
+  fn inject_text(&self, text: &str) -> anyhow::Result<()> {
+    // TODO: handle injection options
+    self.injector.send_string(text, Default::default())
   }
 }

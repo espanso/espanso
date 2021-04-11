@@ -18,7 +18,7 @@
  */
 
 pub mod keyboard;
-pub mod inject;
+pub mod text;
 pub mod matches;
 pub mod render;
 
@@ -38,5 +38,6 @@ pub enum Event {
   Rendered(render::RenderedEvent),
 
   // Effects
-  TextInject(inject::TextInjectRequest),
+  KeySequenceInject(keyboard::KeySequenceInjectRequest),
+  TextInject(text::TextInjectRequest),
 }
