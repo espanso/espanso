@@ -22,7 +22,7 @@ use log::trace;
 use super::{
   middleware::{
     match_select::MatchSelectMiddleware, matcher::MatchMiddleware, multiplex::MultiplexMiddleware,
-    render::RenderMiddleware,
+    render::RenderMiddleware, action::ActionMiddleware,
   },
   Event, MatchFilter, MatchSelector, Matcher, Middleware, Multiplexer, Processor, Renderer,
 };
@@ -48,6 +48,7 @@ impl<'a> DefaultProcessor<'a> {
         Box::new(MatchSelectMiddleware::new(match_filter, match_selector)),
         Box::new(MultiplexMiddleware::new(multiplexer)),
         Box::new(RenderMiddleware::new(renderer)),
+        Box::new(ActionMiddleware::new()),
       ],
     }
   }
@@ -57,7 +58,7 @@ impl<'a> DefaultProcessor<'a> {
       let mut current_event = event;
 
       let mut current_queue = VecDeque::new();
-      let dispatch = |event: Event| {
+      let mut dispatch = |event: Event| {
         trace!("dispatched event: {:?}", event);
         current_queue.push_front(event);
       };
@@ -65,7 +66,7 @@ impl<'a> DefaultProcessor<'a> {
       for middleware in self.middleware.iter() {
         trace!("middleware received event: {:?}", current_event);
 
-        current_event = middleware.next(current_event, &dispatch);
+        current_event = middleware.next(current_event, &mut dispatch);
 
         trace!("middleware produced event: {:?}", current_event);
       }

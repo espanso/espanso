@@ -17,5 +17,15 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub mod text_injector;
-pub mod key_injector;
+#[derive(Debug)]
+pub struct TextInjectRequest {
+  pub text: String,
+  pub force_mode: Option<TextInjectMode>,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum TextInjectMode {
+  Keys,
+  Clipboard,
+}
+

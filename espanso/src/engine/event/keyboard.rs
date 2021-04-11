@@ -37,6 +37,11 @@ pub struct KeyboardEvent {
   pub variant: Option<Variant>,
 }
 
+#[derive(Debug)]
+pub struct KeySequenceInjectRequest {
+  pub keys: Vec<Key>,
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum Key {
   // Modifiers

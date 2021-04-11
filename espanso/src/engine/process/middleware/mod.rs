@@ -17,6 +17,7 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+pub mod action;
 pub mod render;
 pub mod matcher;
 pub mod multiplex;

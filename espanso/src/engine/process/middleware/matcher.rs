@@ -41,7 +41,7 @@ impl<'a, State> MatchMiddleware<'a, State> {
 }
 
 impl<'a, State> Middleware for MatchMiddleware<'a, State> {
-  fn next(&self, event: Event, _: &dyn FnMut(Event)) -> Event {
+  fn next(&self, event: Event, _: &mut dyn FnMut(Event)) -> Event {
     let mut matcher_states = self.matcher_states.borrow_mut();
     let prev_states = if !matcher_states.is_empty() {
       matcher_states.get(matcher_states.len() - 1)

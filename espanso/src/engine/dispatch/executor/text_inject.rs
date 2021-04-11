@@ -18,7 +18,7 @@
  */
 
 use super::super::{Event, Executor, TextInjector};
-use crate::engine::event::inject::TextInjectMode;
+use crate::engine::event::text::TextInjectMode;
 use log::error;
 
 pub struct TextInjectExecutor<'a> {
@@ -35,7 +35,7 @@ impl<'a> Executor for TextInjectExecutor<'a> {
   fn execute(&self, event: &Event) -> bool {
     if let Event::TextInject(inject_event) = event {
       if let Some(TextInjectMode::Keys) = inject_event.force_mode {
-        if let Err(error) = self.injector.inject(&inject_event.text) {
+        if let Err(error) = self.injector.inject_text(&inject_event.text) {
           error!("text injector reported an error: {:?}", error);
         }
         return true;

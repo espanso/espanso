@@ -18,3 +18,4 @@
  */
 
 pub mod text_inject;
+pub mod key_inject;

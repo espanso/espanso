@@ -63,8 +63,11 @@ fn worker_main(args: CliModuleArgs) {
 
   let mut processor = process::default(&matchers, &config_manager, &selector, &multiplexer, &renderer_adapter);
 
-  let text_injector = engine::executor::text_injector::TextInjectorAdapter::new();
-  let dispatcher = dispatch::default(&text_injector);
+  let injector = espanso_inject::get_injector(Default::default()).expect("failed to initialize injector module"); // TODO: handle the options
+
+  let text_injector = engine::executor::text_injector::TextInjectorAdapter::new(&*injector);
+  let key_injector = engine::executor::key_injector::KeyInjectorAdapter::new(&*injector);
+  let dispatcher = dispatch::default(&text_injector, &key_injector);
 
   let mut engine = Engine::new(&funnel, &mut processor, &dispatcher);
   engine.run();

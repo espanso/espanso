@@ -26,7 +26,7 @@ mod default;
 mod middleware;
 
 pub trait Middleware {
-  fn next(&self, event: Event, dispatch: &dyn FnMut(Event)) -> Event;
+  fn next(&self, event: Event, dispatch: &mut dyn FnMut(Event)) -> Event;
 }
 
 pub trait Processor {

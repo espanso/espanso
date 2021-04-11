@@ -17,7 +17,7 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use super::{Dispatcher, Executor, TextInjector};
+use super::{Dispatcher, Executor, KeyInjector, TextInjector};
 use super::Event;
 
 pub struct DefaultDispatcher<'a> {
@@ -25,10 +25,11 @@ pub struct DefaultDispatcher<'a> {
 }
 
 impl <'a> DefaultDispatcher<'a> {
-  pub fn new(text_injector: &'a dyn TextInjector) -> Self {
+  pub fn new(text_injector: &'a dyn TextInjector, key_injector: &'a dyn KeyInjector) -> Self {
     Self {
       executors: vec![
         Box::new(super::executor::text_inject::TextInjectExecutor::new(text_injector)),
+        Box::new(super::executor::key_inject::KeyInjectExecutor::new(key_injector)),
       ]
     }
   }
