@@ -249,9 +249,45 @@
   link: https://rawkode.com/
   image: "davidmckay.jpeg"
 
+- name: "Andros Fenollosa Hurtado"
+  link: "https://programadorwebvalencia.com/"
+  image: retrato.jpg
+
 - name: "Fernanda and Paulo"
   image: ""
   link: ""
+
+- name: "Benjamin Stauß"
+  image: ""
+  link: ""
+
+- name: "Emil Erik Pula Bellamy Begtrup-Bright"
+  image: ""
+  link: ""
+
+- name: "Thor Weinreich"
+  image: "thor.png"
+  link: ""
+
+- name: "Chris"
+  image: ""
+  link: "https://briskets.io"
+
+- name: "Benjamin Metzler"
+  image: "4074316.jpeg"
+  link: "https://mtzlr.io/"
+
+- name: "Kattl Emmi"
+  image: ""
+  link: ""
+
+- name: "Patrick Maloney"
+  image: ""
+  link: ""
+
+- name: "Fabian Kirsch"
+  image: "fabian.jpg"
+  link: "https://fabiankirsch.xyz/"
 
 - name: "Joshua Grebler"
   link: ""
@@ -281,6 +317,18 @@
   link: "https://ditisnietmijn.nl/"
   image: ""
 
+- name: "Erik Terpstra"
+  link: "https://github.com/eterps"
+  image: "39518.jpeg"
+
+- name: "Frédéric Harper"
+  link: "https://fred.dev/"
+  image: "1170989.png"
+
+- name: "Luke Carrier"
+  link: "https://luke.carrier.im/"
+  image: "597015.jpeg"
+
 - name: sjs2109
   link: ""
   image: ""
@@ -304,3 +352,11 @@
 - name: "Chris Beardy"
   link: https://github.com/chrisbeardy
   image: ""
+
+- name: "Oskar Austegard"
+  link: "https://github.com/oaustegard"
+  image: "3268739.jpeg"
+
+- name: "Steven Klassen"
+  link: "https://mrxinu.com/"
+  image: "6706.jpeg"
