@@ -48,6 +48,10 @@ impl<'a, State> MatchMiddleware<'a, State> {
 }
 
 impl<'a, State> Middleware for MatchMiddleware<'a, State> {
+  fn name(&self) -> &'static str {
+    "match"
+  }
+
   fn next(&self, event: Event, _: &mut dyn FnMut(Event)) -> Event {
     if is_event_of_interest(&event) {
       let mut matcher_states = self.matcher_states.borrow_mut();
