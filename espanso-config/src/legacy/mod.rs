@@ -22,16 +22,16 @@ use regex::Regex;
 use std::{collections::HashMap, path::Path};
 
 use self::config::LegacyConfig;
-use crate::matches::group::loader::yaml::parse::{YAMLMatch, YAMLVariable};
+use crate::matches::{MatchEffect, group::loader::yaml::parse::{YAMLMatch, YAMLVariable}};
 use crate::{config::store::DefaultConfigStore, counter::StructId};
 use crate::{
   config::Config,
   config::{AppProperties, ConfigStore},
+  counter::next_id,
   matches::{
     store::{MatchSet, MatchStore},
     Match, Variable,
   },
-  counter::next_id,
 };
 use std::convert::TryInto;
 
@@ -113,7 +113,21 @@ fn deduplicate_ids(
   match_map: &mut HashMap<Match, StructId>,
   var_map: &mut HashMap<Variable, StructId>,
 ) {
-  for m in match_group.matches.iter_mut() {
+  deduplicate_vars(&mut match_group.global_vars, var_map);
+  deduplicate_matches(&mut match_group.matches, match_map, var_map);
+}
+
+fn deduplicate_matches(
+  matches: &mut [Match],
+  match_map: &mut HashMap<Match, StructId>,
+  var_map: &mut HashMap<Variable, StructId>,
+) {
+  for m in matches.iter_mut() {
+    // Deduplicate variables first
+    if let MatchEffect::Text(effect) = &mut m.effect {
+      deduplicate_vars(&mut effect.vars, var_map);
+    }
+
     let mut m_without_id = m.clone();
     m_without_id.id = 0;
     if let Some(id) = match_map.get(&m_without_id) {
@@ -122,8 +136,14 @@ fn deduplicate_ids(
       match_map.insert(m_without_id, m.id);
     }
   }
+}
 
-  for v in match_group.global_vars.iter_mut() {
+// TODO: test case of matches with inner variables
+fn deduplicate_vars(
+  vars: &mut [Variable],
+  var_map: &mut HashMap<Variable, StructId>,
+) {
+  for v in vars.iter_mut() {
     let mut v_without_id = v.clone();
     v_without_id.id = 0;
     if let Some(id) = var_map.get(&v_without_id) {
@@ -418,6 +438,14 @@ mod tests {
       matches:
         - trigger: "hello"
           replace: "world"
+        
+        - trigger: "withvars"
+          replace: "{{output}}"
+          vars:
+            - name: "output"
+              type: "echo"
+              params:
+                echo: "test"
       "#,
       )
       .unwrap();
@@ -440,20 +468,9 @@ mod tests {
         exec: None,
       });
 
-      assert_eq!(
-        match_store
-          .query(default_config.match_paths())
-          .matches
-          .first()
-          .unwrap()
-          .id,
-        match_store
-          .query(active_config.match_paths())
-          .matches
-          .first()
-          .unwrap()
-          .id,
-      );
+      for (i, m) in match_store.query(default_config.match_paths()).matches.into_iter().enumerate() {
+        assert_eq!(m.id, match_store.query(active_config.match_paths()).matches.get(i).unwrap().id);
+      }
 
       assert_eq!(
         match_store
