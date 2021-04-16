@@ -30,4 +30,6 @@ pub struct RenderingRequestedEvent {
 pub struct RenderedEvent {
   pub trigger: String,
   pub body: String,
+
+  pub cursor_hint_back_count: Option<usize>,
 }
