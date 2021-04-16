@@ -64,11 +64,11 @@ impl<'a> DefaultProcessor<'a> {
       };
 
       for middleware in self.middleware.iter() {
-        trace!("middleware received event: {:?}", current_event);
+        trace!("middleware '{}' received event: {:?}", middleware.name(), current_event);
 
         current_event = middleware.next(current_event, &mut dispatch);
 
-        trace!("middleware produced event: {:?}", current_event);
+        trace!("middleware '{}' produced event: {:?}", middleware.name(), current_event);
       }
 
       while let Some(event) = current_queue.pop_back() {

@@ -17,10 +17,8 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use log::{debug, error};
-
 use super::super::Middleware;
-use crate::engine::{event::{Event, keyboard::{Key, KeySequenceInjectRequest}, matches::MatchSelectedEvent, text::{TextInjectMode, TextInjectRequest}}, process::{MatchFilter, MatchSelector, Multiplexer}};
+use crate::engine::{event::{Event, keyboard::{Key, KeySequenceInjectRequest}, text::{TextInjectMode, TextInjectRequest}}, process::{MatchFilter, MatchSelector, Multiplexer}};
 
 pub struct ActionMiddleware {
 }
@@ -32,19 +30,26 @@ impl ActionMiddleware {
 }
 
 impl Middleware for ActionMiddleware {
+  fn name(&self) -> &'static str {
+    "action"
+  }
+  
   fn next(&self, event: Event, dispatch: &mut dyn FnMut(Event)) -> Event {
     if let Event::Rendered(m_event) = &event {
-      let delete_count = m_event.trigger.len();
-      let delete_sequence: Vec<_> = (0..delete_count).map(|_| Key::Backspace).collect();
-
       dispatch(Event::TextInject(TextInjectRequest {
         text: m_event.body.clone(),
         force_mode: Some(TextInjectMode::Keys),  // TODO: determine this one dynamically
       }));
 
+      if let Some(cursor_hint_back_count) = m_event.cursor_hint_back_count {
+        dispatch(Event::KeySequenceInject(KeySequenceInjectRequest {
+          keys: (0..cursor_hint_back_count).map(|_| Key::ArrowLeft).collect(),
+        }))
+      }
+
       // This is executed before the dispatched event
       return Event::KeySequenceInject(KeySequenceInjectRequest {
-        keys: delete_sequence
+        keys: (0..m_event.trigger.chars().count()).map(|_| Key::Backspace).collect()
       })
     }
 

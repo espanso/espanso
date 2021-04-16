@@ -17,10 +17,10 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use log::{debug, error};
+use log::{error};
 
 use super::super::Middleware;
-use crate::engine::{event::{Event, text::{TextInjectRequest, TextInjectMode}, matches::MatchSelectedEvent}, process::{MatchFilter, MatchSelector, Multiplexer}};
+use crate::engine::{event::Event, process::Multiplexer};
 
 pub struct MultiplexMiddleware<'a> {
   multiplexer: &'a dyn Multiplexer,
@@ -33,6 +33,10 @@ impl<'a> MultiplexMiddleware<'a> {
 }
 
 impl<'a> Middleware for MultiplexMiddleware<'a> {
+  fn name(&self) -> &'static str {
+    "multiplex"
+  }
+
   fn next(&self, event: Event, _: &mut dyn FnMut(Event)) -> Event {
     if let Event::MatchSelected(m_event) = event {
       return match self.multiplexer.convert(m_event.chosen.id, m_event.chosen.trigger, m_event.chosen.args) {

@@ -43,6 +43,10 @@ impl<'a> MatchSelectMiddleware<'a> {
 }
 
 impl<'a> Middleware for MatchSelectMiddleware<'a> {
+  fn name(&self) -> &'static str {
+    "match_select"
+  }
+  
   fn next(&self, event: Event, _: &mut dyn FnMut(Event)) -> Event {
     if let Event::MatchesDetected(m_event) = event {
       let matches_ids: Vec<i32> = m_event.matches.iter().map(|m| m.id).collect();

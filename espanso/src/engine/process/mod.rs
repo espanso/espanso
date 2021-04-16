@@ -26,6 +26,7 @@ mod default;
 mod middleware;
 
 pub trait Middleware {
+  fn name(&self) -> &'static str;
   fn next(&self, event: Event, dispatch: &mut dyn FnMut(Event)) -> Event;
 }
 
