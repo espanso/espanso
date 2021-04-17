@@ -20,8 +20,8 @@
 use log::trace;
 
 use super::{Event, MatchFilter, MatchInfoProvider, MatchSelector, Matcher, Middleware, Multiplexer, Processor, Renderer, middleware::{
-    match_select::MatchSelectMiddleware, matcher::MatchMiddleware, multiplex::MultiplexMiddleware,
-    render::RenderMiddleware, action::ActionMiddleware,
+    match_select::MatchSelectMiddleware, matcher::MatcherMiddleware, multiplex::MultiplexMiddleware,
+    render::RenderMiddleware, action::ActionMiddleware, cursor_hint::CursorHintMiddleware, cause::CauseCompensateMiddleware,
   }};
 use std::collections::VecDeque;
 
@@ -42,10 +42,12 @@ impl<'a> DefaultProcessor<'a> {
     Self {
       event_queue: VecDeque::new(),
       middleware: vec![
-        Box::new(MatchMiddleware::new(matchers)),
+        Box::new(MatcherMiddleware::new(matchers)),
         Box::new(MatchSelectMiddleware::new(match_filter, match_selector)),
+        Box::new(CauseCompensateMiddleware::new()),
         Box::new(MultiplexMiddleware::new(multiplexer)),
         Box::new(RenderMiddleware::new(renderer)),
+        Box::new(CursorHintMiddleware::new()),
         Box::new(ActionMiddleware::new(match_info_provider)),
       ],
     }

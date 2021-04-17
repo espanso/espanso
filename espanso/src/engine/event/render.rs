@@ -22,16 +22,12 @@ use std::collections::HashMap;
 #[derive(Debug, Clone, PartialEq)]
 pub struct RenderingRequestedEvent {
   pub match_id: i32,
-  pub trigger: String,
+  pub trigger: Option<String>,
   pub trigger_args: HashMap<String, String>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct RenderedEvent {
   pub match_id: i32,
-  
-  pub trigger: String,
   pub body: String,
-
-  pub cursor_hint_back_count: Option<usize>,
 }

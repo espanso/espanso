@@ -71,7 +71,7 @@ pub trait Multiplexer {
   fn convert(
     &self,
     match_id: i32,
-    trigger: String,
+    trigger: Option<String>,
     trigger_args: HashMap<String, String>,
   ) -> Option<Event>;
 }

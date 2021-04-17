@@ -32,13 +32,13 @@ use crate::engine::{
 
 const MAX_HISTORY: usize = 3; // TODO: get as parameter
 
-pub struct MatchMiddleware<'a, State> {
+pub struct MatcherMiddleware<'a, State> {
   matchers: &'a [&'a dyn Matcher<'a, State>],
 
   matcher_states: RefCell<VecDeque<Vec<State>>>,
 }
 
-impl<'a, State> MatchMiddleware<'a, State> {
+impl<'a, State> MatcherMiddleware<'a, State> {
   pub fn new(matchers: &'a [&'a dyn Matcher<'a, State>]) -> Self {
     Self {
       matchers,
@@ -47,9 +47,9 @@ impl<'a, State> MatchMiddleware<'a, State> {
   }
 }
 
-impl<'a, State> Middleware for MatchMiddleware<'a, State> {
+impl<'a, State> Middleware for MatcherMiddleware<'a, State> {
   fn name(&self) -> &'static str {
-    "match"
+    "matcher"
   }
 
   fn next(&self, event: Event, _: &mut dyn FnMut(Event)) -> Event {
@@ -104,7 +104,7 @@ impl<'a, State> Middleware for MatchMiddleware<'a, State> {
               .into_iter()
               .map(|result| DetectedMatch {
                 id: result.id,
-                trigger: result.trigger,
+                trigger: Some(result.trigger),
                 args: result.args,
               })
               .collect(),

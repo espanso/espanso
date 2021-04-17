@@ -17,19 +17,19 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Status {
   Pressed,
   Released,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Variant {
   Left,
   Right,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct KeyboardEvent {
   pub key: Key,
   pub value: Option<String>,
@@ -37,7 +37,7 @@ pub struct KeyboardEvent {
   pub variant: Option<Variant>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct KeySequenceInjectRequest {
   pub keys: Vec<Key>,
 }
