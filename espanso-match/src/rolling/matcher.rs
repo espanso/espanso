@@ -49,8 +49,8 @@ struct RollingMatcherStatePath<'a, Id> {
 }
 
 pub struct RollingMatcherOptions {
-  char_word_separators: Vec<String>,
-  key_word_separators: Vec<Key>,
+  pub char_word_separators: Vec<String>,
+  pub key_word_separators: Vec<Key>,
 }
 
 impl Default for RollingMatcherOptions {
@@ -85,7 +85,7 @@ where
       for node_path in prev_state.paths.iter() {
         next_refs.extend(
           self
-            .find_refs(node_path.node, &event)
+            .find_refs(node_path.node, &event, true)
             .into_iter()
             .map(|node_ref| {
               let mut new_events = node_path.events.clone();
@@ -97,7 +97,7 @@ where
     }
 
     // Calculate new ones
-    let root_refs = self.find_refs(&self.root, &event);
+    let root_refs = self.find_refs(&self.root, &event, prev_state.is_some());
     next_refs.extend(
       root_refs
         .into_iter()
@@ -151,6 +151,7 @@ impl<Id: Clone> RollingMatcher<Id> {
     &'a self,
     node: &'a MatcherTreeNode<Id>,
     event: &Event,
+    has_previous_state: bool,
   ) -> Vec<&'a MatcherTreeRef<Id>> {
     let mut refs = Vec::new();
 
@@ -181,6 +182,14 @@ impl<Id: Clone> RollingMatcher<Id> {
     if self.is_word_separator(event) {
       if let Some(node_ref) = node.word_separators.as_ref() {
         refs.push(node_ref)
+      }
+    }
+
+    // If there is no previous state, we handle it as a word separator, exploring a step forward
+    // in the state.
+    if !has_previous_state {
+      if let Some(MatcherTreeRef::Node(node)) = node.word_separators.as_ref() {
+        refs.extend(self.find_refs(&*node, event, true));
       }
     }
 
@@ -269,6 +278,11 @@ mod tests {
     );
 
     assert_eq!(get_matches_after_str("hi", &matcher), vec![]);
+    // Word matches are also triggered when there is no left separator but it's a new state
+    assert_eq!(
+      get_matches_after_str("hi,", &matcher),
+      vec![match_result(1, "hi,")]
+    );
     assert_eq!(
       get_matches_after_str(".hi,", &matcher),
       vec![match_result(1, ".hi,")]
