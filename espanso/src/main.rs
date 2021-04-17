@@ -23,7 +23,9 @@ extern crate lazy_static;
 use clap::{App, AppSettings, Arg, SubCommand};
 use cli::{CliModule, CliModuleArgs};
 use logging::FileProxy;
-use simplelog::{CombinedLogger, ConfigBuilder, LevelFilter, TermLogger, TerminalMode, WriteLogger};
+use simplelog::{
+  CombinedLogger, ConfigBuilder, LevelFilter, TermLogger, TerminalMode, WriteLogger,
+};
 
 mod cli;
 mod engine;
@@ -33,11 +35,8 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 const LOG_FILE_NAME: &str = "espanso.log";
 
 lazy_static! {
-  static ref CLI_HANDLERS: Vec<CliModule> = vec![
-    cli::path::new(),
-    cli::log::new(),
-    cli::worker::new(),
-  ];
+  static ref CLI_HANDLERS: Vec<CliModule> =
+    vec![cli::path::new(), cli::log::new(), cli::worker::new(),];
 }
 
 fn main() {
@@ -73,126 +72,133 @@ fn main() {
     .arg(Arg::with_name("package_name").help("Package name"));
 
   let mut clap_instance = App::new("espanso")
-        .version(VERSION)
-        .author("Federico Terzi")
-        .about("A Privacy-first, Cross-platform Text Expander")
-        .arg(Arg::with_name("v")
-            .short("v")
-            .multiple(true)
-            .help("Sets the level of verbosity"))
-        // .subcommand(SubCommand::with_name("cmd")
-        //     .about("Send a command to the espanso daemon.")
-        //     .subcommand(SubCommand::with_name("exit")
-        //         .about("Terminate the daemon."))
-        //     .subcommand(SubCommand::with_name("enable")
-        //         .about("Enable the espanso replacement engine."))
-        //     .subcommand(SubCommand::with_name("disable")
-        //         .about("Disable the espanso replacement engine."))
-        //     .subcommand(SubCommand::with_name("toggle")
-        //         .about("Toggle the status of the espanso replacement engine."))
-        // )
-        // .subcommand(SubCommand::with_name("edit")
-        //     .about("Open the default text editor to edit config files and reload them automatically when exiting")
-        //     .arg(Arg::with_name("config")
-        //         .help("Defaults to \"default\". The configuration file name to edit (without the .yml extension)."))
-        //     .arg(Arg::with_name("norestart")
-        //         .short("n")
-        //         .long("norestart")
-        //         .required(false)
-        //         .takes_value(false)
-        //         .help("Avoid restarting espanso after editing the file"))
-        // )
-        // .subcommand(SubCommand::with_name("detect")
-        //     .about("Tool to detect current window properties, to simplify filters creation."))
-        // .subcommand(SubCommand::with_name("daemon")
-        //     .about("Start the daemon without spawning a new process."))
-        // .subcommand(SubCommand::with_name("register")
-        //     .about("MacOS and Linux only. Register espanso in the system daemon manager."))
-        // .subcommand(SubCommand::with_name("unregister")
-        //     .about("MacOS and Linux only. Unregister espanso from the system daemon manager."))
-        .subcommand(SubCommand::with_name("log")
-            .about("Print the daemon logs."))
-        // .subcommand(SubCommand::with_name("start")
-        //     .about("Start the daemon spawning a new process in the background."))
-        // .subcommand(SubCommand::with_name("stop")
-        //     .about("Stop the espanso daemon."))
-        // .subcommand(SubCommand::with_name("restart")
-        //     .about("Restart the espanso daemon."))
-        // .subcommand(SubCommand::with_name("status")
-        //     .about("Check if the espanso daemon is running or not."))
-        .subcommand(SubCommand::with_name("path")
-            .about("Prints all the espanso directory paths to easily locate configuration and matches.")
-            .subcommand(SubCommand::with_name("config")
-                .about("Print the current config folder path."))
-            .subcommand(SubCommand::with_name("packages")
-                .about("Print the current packages folder path."))
-            .subcommand(SubCommand::with_name("data")
-                .about("Print the current data folder path.")
-                .setting(AppSettings::Hidden))  // Legacy path
-            .subcommand(SubCommand::with_name("runtime")
-                .about("Print the current runtime folder path."))
-            .subcommand(SubCommand::with_name("default")
-                .about("Print the default configuration file path."))
-            .subcommand(SubCommand::with_name("base")
-                .about("Print the default match file path."))
+    .version(VERSION)
+    .author("Federico Terzi")
+    .about("A Privacy-first, Cross-platform Text Expander")
+    .arg(
+      Arg::with_name("v")
+        .short("v")
+        .multiple(true)
+        .help("Sets the level of verbosity"),
+    )
+    // .subcommand(SubCommand::with_name("cmd")
+    //     .about("Send a command to the espanso daemon.")
+    //     .subcommand(SubCommand::with_name("exit")
+    //         .about("Terminate the daemon."))
+    //     .subcommand(SubCommand::with_name("enable")
+    //         .about("Enable the espanso replacement engine."))
+    //     .subcommand(SubCommand::with_name("disable")
+    //         .about("Disable the espanso replacement engine."))
+    //     .subcommand(SubCommand::with_name("toggle")
+    //         .about("Toggle the status of the espanso replacement engine."))
+    // )
+    // .subcommand(SubCommand::with_name("edit")
+    //     .about("Open the default text editor to edit config files and reload them automatically when exiting")
+    //     .arg(Arg::with_name("config")
+    //         .help("Defaults to \"default\". The configuration file name to edit (without the .yml extension)."))
+    //     .arg(Arg::with_name("norestart")
+    //         .short("n")
+    //         .long("norestart")
+    //         .required(false)
+    //         .takes_value(false)
+    //         .help("Avoid restarting espanso after editing the file"))
+    // )
+    // .subcommand(SubCommand::with_name("detect")
+    //     .about("Tool to detect current window properties, to simplify filters creation."))
+    // .subcommand(SubCommand::with_name("daemon")
+    //     .about("Start the daemon without spawning a new process."))
+    // .subcommand(SubCommand::with_name("register")
+    //     .about("MacOS and Linux only. Register espanso in the system daemon manager."))
+    // .subcommand(SubCommand::with_name("unregister")
+    //     .about("MacOS and Linux only. Unregister espanso from the system daemon manager."))
+    .subcommand(SubCommand::with_name("log").about("Print the daemon logs."))
+    // .subcommand(SubCommand::with_name("start")
+    //     .about("Start the daemon spawning a new process in the background."))
+    // .subcommand(SubCommand::with_name("stop")
+    //     .about("Stop the espanso daemon."))
+    // .subcommand(SubCommand::with_name("restart")
+    //     .about("Restart the espanso daemon."))
+    // .subcommand(SubCommand::with_name("status")
+    //     .about("Check if the espanso daemon is running or not."))
+    .subcommand(
+      SubCommand::with_name("path")
+        .about("Prints all the espanso directory paths to easily locate configuration and matches.")
+        .subcommand(SubCommand::with_name("config").about("Print the current config folder path."))
+        .subcommand(
+          SubCommand::with_name("packages").about("Print the current packages folder path."),
         )
-        // .subcommand(SubCommand::with_name("match")
-        //     .about("List and execute matches from the CLI")
-        //     .subcommand(SubCommand::with_name("list")
-        //         .about("Print all matches to standard output")
-        //         .arg(Arg::with_name("json")
-        //             .short("j")
-        //             .long("json")
-        //             .help("Return the matches as json")
-        //             .required(false)
-        //             .takes_value(false)
-        //         )
-        //         .arg(Arg::with_name("onlytriggers")
-        //             .short("t")
-        //             .long("onlytriggers")
-        //             .help("Print only triggers without replacement")
-        //             .required(false)
-        //             .takes_value(false)
-        //         )
-        //         .arg(Arg::with_name("preservenewlines")
-        //             .short("n")
-        //             .long("preservenewlines")
-        //             .help("Preserve newlines when printing replacements")
-        //             .required(false)
-        //             .takes_value(false)
-        //         )
-        //     )
-        //     .subcommand(SubCommand::with_name("exec")
-        //         .about("Triggers the expansion of the given match")
-        //         .arg(Arg::with_name("trigger")
-        //             .help("The trigger of the match to be expanded")
-        //         )
-        //     )
-        // )
-        // Package manager
-        // .subcommand(SubCommand::with_name("package")
-        //     .about("Espanso package manager commands")
-        //     .subcommand(install_subcommand.clone())
-        //     .subcommand(uninstall_subcommand.clone())
-        //     .subcommand(SubCommand::with_name("list")
-        //         .about("List all installed packages")
-        //         .arg(Arg::with_name("full")
-        //             .help("Print all package info")
-        //             .long("full")))
-
-        //     .subcommand(SubCommand::with_name("refresh")
-        //         .about("Update espanso package index"))
-        // )
-        .subcommand(SubCommand::with_name("worker")
-            .setting(AppSettings::Hidden)
-            .arg(Arg::with_name("reload")
-                .short("r")
-                .long("reload")
-                .required(false)
-                .takes_value(false))
-        );
-        // .subcommand(install_subcommand)
-        // .subcommand(uninstall_subcommand);
+        .subcommand(
+          SubCommand::with_name("data")
+            .about("Print the current data folder path.")
+            .setting(AppSettings::Hidden),
+        ) // Legacy path
+        .subcommand(
+          SubCommand::with_name("runtime").about("Print the current runtime folder path."),
+        )
+        .subcommand(
+          SubCommand::with_name("default").about("Print the default configuration file path."),
+        )
+        .subcommand(SubCommand::with_name("base").about("Print the default match file path.")),
+    )
+    // .subcommand(SubCommand::with_name("match")
+    //     .about("List and execute matches from the CLI")
+    //     .subcommand(SubCommand::with_name("list")
+    //         .about("Print all matches to standard output")
+    //         .arg(Arg::with_name("json")
+    //             .short("j")
+    //             .long("json")
+    //             .help("Return the matches as json")
+    //             .required(false)
+    //             .takes_value(false)
+    //         )
+    //         .arg(Arg::with_name("onlytriggers")
+    //             .short("t")
+    //             .long("onlytriggers")
+    //             .help("Print only triggers without replacement")
+    //             .required(false)
+    //             .takes_value(false)
+    //         )
+    //         .arg(Arg::with_name("preservenewlines")
+    //             .short("n")
+    //             .long("preservenewlines")
+    //             .help("Preserve newlines when printing replacements")
+    //             .required(false)
+    //             .takes_value(false)
+    //         )
+    //     )
+    //     .subcommand(SubCommand::with_name("exec")
+    //         .about("Triggers the expansion of the given match")
+    //         .arg(Arg::with_name("trigger")
+    //             .help("The trigger of the match to be expanded")
+    //         )
+    //     )
+    // )
+    // Package manager
+    // .subcommand(SubCommand::with_name("package")
+    //     .about("Espanso package manager commands")
+    //     .subcommand(install_subcommand.clone())
+    //     .subcommand(uninstall_subcommand.clone())
+    //     .subcommand(SubCommand::with_name("list")
+    //         .about("List all installed packages")
+    //         .arg(Arg::with_name("full")
+    //             .help("Print all package info")
+    //             .long("full")))
+    //     .subcommand(SubCommand::with_name("refresh")
+    //         .about("Update espanso package index"))
+    // )
+    .subcommand(
+      SubCommand::with_name("worker")
+        .setting(AppSettings::Hidden)
+        .arg(
+          Arg::with_name("reload")
+            .short("r")
+            .long("reload")
+            .required(false)
+            .takes_value(false),
+        ),
+    );
+  // .subcommand(install_subcommand)
+  // .subcommand(uninstall_subcommand);
 
   // TODO: explain that the start and restart commands are only meaningful
   // when using the system daemon manager on macOS and Linux
@@ -205,7 +211,7 @@ fn main() {
     // Trace mode is only available in debug mode for security reasons
     #[cfg(debug_assertions)]
     3 => LevelFilter::Trace,
-    
+
     _ => LevelFilter::Debug,
   };
 
@@ -216,7 +222,10 @@ fn main() {
   if let Some(handler) = handler {
     let log_proxy = FileProxy::new();
     if handler.enable_logs {
-      let config = ConfigBuilder::new().set_time_to_local(true).build();
+      let config = ConfigBuilder::new()
+        .set_time_to_local(true)
+        .set_location_level(LevelFilter::Off)
+        .build();
 
       CombinedLogger::init(vec![
         TermLogger::new(log_level, config.clone(), TerminalMode::Mixed),
