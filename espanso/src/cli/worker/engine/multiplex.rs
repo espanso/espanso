@@ -41,7 +41,7 @@ impl<'a> MultiplexAdapter<'a> {
 }
 
 impl<'a> Multiplexer for MultiplexAdapter<'a> {
-  fn convert(&self, match_id: i32, trigger: String, trigger_args: HashMap<String, String>) -> Option<Event> {
+  fn convert(&self, match_id: i32, trigger: Option<String>, trigger_args: HashMap<String, String>) -> Option<Event> {
     let m = self.provider.get(match_id)?;
 
     match &m.effect {

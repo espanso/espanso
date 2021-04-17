@@ -17,15 +17,12 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#[derive(Debug, Clone)]
-pub struct TextInjectRequest {
-  pub text: String,
-  pub force_mode: Option<TextInjectMode>,
+#[derive(Debug, Clone, PartialEq)]
+pub struct TriggerCompensationEvent {
+  pub trigger: String,
 }
 
-#[derive(Debug, PartialEq, Clone)]
-pub enum TextInjectMode {
-  Keys,
-  Clipboard,
+#[derive(Debug, Clone, PartialEq)]
+pub struct CursorHintCompensationEvent {
+  pub cursor_hint_back_count: usize,
 }
-

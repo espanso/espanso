@@ -21,23 +21,31 @@ pub mod keyboard;
 pub mod text;
 pub mod matches;
 pub mod render;
+pub mod effect;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Event {
   NOOP,
-  ProcessingError(String),
+  ProcessingError(String), // TODO: create dedicated event
   
   // Inputs
+  // TODO: Move to the input mode
   Keyboard(keyboard::KeyboardEvent),
 
   // Internal
+  // TODO: move to the "internal" mode (maybe, change name?)
   MatchesDetected(matches::MatchesDetectedEvent),
   MatchSelected(matches::MatchSelectedEvent),
+  CauseCompensatedMatch(matches::CauseCompensatedMatchEvent),
 
   RenderingRequested(render::RenderingRequestedEvent),
   Rendered(render::RenderedEvent),
 
   // Effects
+  TriggerCompensation(effect::TriggerCompensationEvent),
+  CursorHintCompensation(effect::CursorHintCompensationEvent),
+
+  // TODO: move to the "effect" mod
   KeySequenceInject(keyboard::KeySequenceInjectRequest),
   TextInject(text::TextInjectRequest),
 }

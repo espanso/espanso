@@ -38,8 +38,8 @@ impl<'a> Middleware for MultiplexMiddleware<'a> {
   }
 
   fn next(&self, event: Event, _: &mut dyn FnMut(Event)) -> Event {
-    if let Event::MatchSelected(m_event) = event {
-      return match self.multiplexer.convert(m_event.chosen.id, m_event.chosen.trigger, m_event.chosen.args) {
+    if let Event::CauseCompensatedMatch(m_event) = event {
+      return match self.multiplexer.convert(m_event.m.id, m_event.m.trigger, m_event.m.args) {
         Some(event) => event,
         None => {
           error!("match multiplexing failed");

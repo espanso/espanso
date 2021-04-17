@@ -49,31 +49,27 @@ impl<'a> Middleware for ActionMiddleware<'a> {
   }
 
   fn next(&self, event: Event, dispatch: &mut dyn FnMut(Event)) -> Event {
-    if let Event::Rendered(m_event) = &event {
-      dispatch(Event::TextInject(TextInjectRequest {
+    match &event {
+      Event::Rendered(m_event) => Event::TextInject(TextInjectRequest {
         text: m_event.body.clone(),
         force_mode: self.match_info_provider.get_force_mode(m_event.match_id),
-      }));
-
-      if let Some(cursor_hint_back_count) = m_event.cursor_hint_back_count {
-        dispatch(Event::KeySequenceInject(KeySequenceInjectRequest {
-          keys: (0..cursor_hint_back_count)
+      }),
+      Event::CursorHintCompensation(m_event) => {
+        Event::KeySequenceInject(KeySequenceInjectRequest {
+          keys: (0..m_event.cursor_hint_back_count)
             .map(|_| Key::ArrowLeft)
             .collect(),
-        }))
+        })
       }
-
-      // This is executed before the dispatched event
-      return Event::KeySequenceInject(KeySequenceInjectRequest {
+      Event::TriggerCompensation(m_event) => Event::KeySequenceInject(KeySequenceInjectRequest {
         keys: (0..m_event.trigger.chars().count())
           .map(|_| Key::Backspace)
           .collect(),
-      });
+      }),
+      _ => event,
     }
 
     // TODO: handle images
-
-    event
   }
 }
 

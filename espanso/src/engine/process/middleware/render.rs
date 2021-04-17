@@ -17,11 +17,12 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use log::{error};
+use log::error;
 
 use super::super::Middleware;
 use crate::engine::{
   event::{
+    effect::{CursorHintCompensationEvent, TriggerCompensationEvent},
     render::RenderedEvent,
     Event,
   },
@@ -47,13 +48,9 @@ impl<'a> Middleware for RenderMiddleware<'a> {
     if let Event::RenderingRequested(m_event) = event {
       match self.renderer.render(m_event.match_id, m_event.trigger_args) {
         Ok(body) => {
-          let (body, cursor_hint_back_count) = process_cursor_hint(body);
-
           return Event::Rendered(RenderedEvent {
             match_id: m_event.match_id,
-            trigger: m_event.trigger,
             body,
-            cursor_hint_back_count,
           });
         }
         Err(err) => {
@@ -69,26 +66,6 @@ impl<'a> Middleware for RenderMiddleware<'a> {
     }
 
     event
-  }
-}
-
-// TODO: test
-fn process_cursor_hint(body: String) -> (String, Option<usize>) {
-  if let Some(index) = body.find("$|$") {
-    // Convert the byte index to a char index
-    let char_str = &body[0..index];
-    let char_index = char_str.chars().count();
-    let total_size = body.chars().count();
-
-    // Remove the $|$ placeholder
-    let body = body.replace("$|$", "");
-
-    // Calculate the amount of rewind moves needed (LEFT ARROW).
-    // Subtract also 3, equal to the number of chars of the placeholder "$|$"
-    let moves = total_size - char_index - 3;
-    (body, Some(moves))
-  } else {
-    (body, None)
   }
 }
 

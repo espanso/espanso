@@ -27,11 +27,16 @@ pub struct MatchesDetectedEvent {
 #[derive(Debug, Clone, PartialEq)]
 pub struct DetectedMatch {
   pub id: i32,
-  pub trigger: String,
+  pub trigger: Option<String>,
   pub args: HashMap<String, String>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct MatchSelectedEvent {
   pub chosen: DetectedMatch,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct CauseCompensatedMatchEvent {
+  pub m: DetectedMatch,
 }
