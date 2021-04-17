@@ -36,6 +36,8 @@ pub trait Processor {
 
 // Dependency inversion entities
 
+// TODO: move these traits inside the various modules and then re-export it
+
 pub trait Matcher<'a, State> {
   fn process(
     &'a self,
@@ -66,7 +68,12 @@ pub trait MatchSelector {
 }
 
 pub trait Multiplexer {
-  fn convert(&self, match_id: i32, trigger: String, trigger_args: HashMap<String, String>) -> Option<Event>;
+  fn convert(
+    &self,
+    match_id: i32,
+    trigger: String,
+    trigger_args: HashMap<String, String>,
+  ) -> Option<Event>;
 }
 
 pub trait Renderer<'a> {
@@ -85,12 +92,22 @@ pub enum RendererError {
   Aborted,
 }
 
+pub use middleware::action::MatchInfoProvider;
+
 pub fn default<'a, MatcherState>(
   matchers: &'a [&'a dyn Matcher<'a, MatcherState>],
   match_filter: &'a dyn MatchFilter,
   match_selector: &'a dyn MatchSelector,
   multiplexer: &'a dyn Multiplexer,
   renderer: &'a dyn Renderer<'a>,
+  match_info_provider: &'a dyn MatchInfoProvider,
 ) -> impl Processor + 'a {
-  default::DefaultProcessor::new(matchers, match_filter, match_selector, multiplexer, renderer)
+  default::DefaultProcessor::new(
+    matchers,
+    match_filter,
+    match_selector,
+    multiplexer,
+    renderer,
+    match_info_provider,
+  )
 }

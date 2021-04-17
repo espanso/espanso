@@ -50,6 +50,7 @@ impl<'a> Middleware for RenderMiddleware<'a> {
           let (body, cursor_hint_back_count) = process_cursor_hint(body);
 
           return Event::Rendered(RenderedEvent {
+            match_id: m_event.match_id,
             trigger: m_event.trigger,
             body,
             cursor_hint_back_count,
