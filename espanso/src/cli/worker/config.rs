@@ -22,7 +22,7 @@ use std::{
   collections::{HashMap, HashSet},
 };
 
-use crate::engine::process::MatchFilter;
+use crate::engine::{dispatch::ModeProvider, process::MatchFilter};
 use espanso_config::{
   config::{AppProperties, Config, ConfigStore},
   matches::store::{MatchSet, MatchStore},
@@ -89,12 +89,24 @@ impl<'a> MatchFilter for ConfigManager<'a> {
 
 impl<'a> ConfigProvider<'a> for ConfigManager<'a> {
   fn configs(&self) -> Vec<(&'a dyn Config, MatchSet)> {
-    self.config_store.configs().into_iter().map(|config| {
-      (config, self.match_store.query(config.match_paths()))
-    }).collect()
+    self
+      .config_store
+      .configs()
+      .into_iter()
+      .map(|config| (config, self.match_store.query(config.match_paths())))
+      .collect()
   }
 
   fn active(&self) -> (&'a dyn Config, MatchSet) {
     self.active_context()
+  }
+}
+
+impl<'a> ModeProvider for ConfigManager<'a> {
+  fn active_mode(&self) -> crate::engine::dispatch::Mode {
+    // TODO: implement the actual active mode detection starting from the active config
+    crate::engine::dispatch::Mode::Auto {
+      clipboard_threshold: 100
+    }
   }
 }

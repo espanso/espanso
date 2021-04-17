@@ -28,6 +28,8 @@ pub struct RenderingRequestedEvent {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct RenderedEvent {
+  pub match_id: i32,
+  
   pub trigger: String,
   pub body: String,
 

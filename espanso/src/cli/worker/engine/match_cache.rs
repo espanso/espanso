@@ -19,10 +19,9 @@
 
 use std::{collections::HashMap, iter::FromIterator};
 
-use espanso_config::{
-  config::ConfigStore,
-  matches::{store::MatchStore, Match},
-};
+use espanso_config::{config::ConfigStore, matches::{Match, MatchEffect, store::MatchStore}};
+
+use crate::engine::process::MatchInfoProvider;
 
 use super::{multiplex::MatchProvider, render::MatchIterator};
 
@@ -54,5 +53,16 @@ impl<'a> MatchProvider<'a> for MatchCache<'a> {
 impl<'a> MatchIterator<'a> for MatchCache<'a> {
   fn matches(&self) -> Vec<&'a Match> {
     self.cache.iter().map(|(_, m)| *m).collect()
+  }
+}
+
+impl<'a> MatchInfoProvider for MatchCache<'a> {
+  fn get_force_mode(&self, match_id: i32) -> Option<crate::engine::event::text::TextInjectMode> {
+    let m = self.cache.get(&match_id)?;
+    if let MatchEffect::Text(text_effect) = &m.effect {
+      // TODO: read match effect and convert it to the actual injection mode
+    }
+
+    None
   }
 }

@@ -17,29 +17,40 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use super::{Dispatcher, Executor, KeyInjector, TextInjector};
 use super::Event;
+use super::{ModeProvider, Dispatcher, Executor, KeyInjector, TextInjector};
 
 pub struct DefaultDispatcher<'a> {
   executors: Vec<Box<dyn Executor + 'a>>,
 }
 
-impl <'a> DefaultDispatcher<'a> {
-  pub fn new(text_injector: &'a dyn TextInjector, key_injector: &'a dyn KeyInjector) -> Self {
+impl<'a> DefaultDispatcher<'a> {
+  pub fn new(
+    event_injector: &'a dyn TextInjector,
+    clipboard_injector: &'a dyn TextInjector,
+    mode_provider: &'a dyn ModeProvider,
+    key_injector: &'a dyn KeyInjector,
+  ) -> Self {
     Self {
       executors: vec![
-        Box::new(super::executor::text_inject::TextInjectExecutor::new(text_injector)),
-        Box::new(super::executor::key_inject::KeyInjectExecutor::new(key_injector)),
-      ]
+        Box::new(super::executor::text_inject::TextInjectExecutor::new(
+          event_injector,
+          clipboard_injector,
+          mode_provider,
+        )),
+        Box::new(super::executor::key_inject::KeyInjectExecutor::new(
+          key_injector,
+        )),
+      ],
     }
   }
 }
 
-impl <'a> Dispatcher for DefaultDispatcher<'a> {
+impl<'a> Dispatcher for DefaultDispatcher<'a> {
   fn dispatch(&self, event: Event) {
     for executor in self.executors.iter() {
       if executor.execute(&event) {
-        break
+        break;
       }
     }
   }

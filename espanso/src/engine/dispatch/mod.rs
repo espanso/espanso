@@ -18,10 +18,11 @@
  */
 
 use anyhow::Result;
-use super::{Event, event::keyboard::Key};
 
-mod executor;
+use super::{event::keyboard::Key, Event};
+
 mod default;
+mod executor;
 
 pub trait Executor {
   fn execute(&self, event: &Event) -> bool;
@@ -31,17 +32,19 @@ pub trait Dispatcher {
   fn dispatch(&self, event: Event);
 }
 
-pub trait TextInjector {
-  fn inject_text(&self, text: &str) -> Result<()>;
-}
+// Re-export dependency injection entities
+pub use executor::text_inject::{ModeProvider, Mode, TextInjector};
 
+// TODO: move into module
 pub trait KeyInjector {
   fn inject_sequence(&self, keys: &[Key]) -> Result<()>;
 }
 
-pub fn default<'a>(text_injector: &'a dyn TextInjector, key_injector: &'a dyn KeyInjector) -> impl Dispatcher + 'a {
-  default::DefaultDispatcher::new(
-    text_injector,
-    key_injector,
-  )
+pub fn default<'a>(
+  event_injector: &'a dyn TextInjector,
+  clipboard_injector: &'a dyn TextInjector,
+  mode_provider: &'a dyn ModeProvider,
+  key_injector: &'a dyn KeyInjector,
+) -> impl Dispatcher + 'a {
+  default::DefaultDispatcher::new(event_injector, clipboard_injector, mode_provider, key_injector)
 }

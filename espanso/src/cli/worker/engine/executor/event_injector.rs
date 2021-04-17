@@ -21,11 +21,11 @@ use espanso_inject::Injector;
 
 use crate::engine::dispatch::TextInjector;
 
-pub struct TextInjectorAdapter<'a> {
+pub struct EventInjectorAdapter<'a> {
   injector: &'a dyn Injector,
 }
 
-impl <'a> TextInjectorAdapter<'a> {
+impl <'a> EventInjectorAdapter<'a> {
   pub fn new(injector: &'a dyn Injector) -> Self {
     Self {
       injector
@@ -33,7 +33,11 @@ impl <'a> TextInjectorAdapter<'a> {
   }
 }
 
-impl <'a> TextInjector for TextInjectorAdapter<'a> {
+impl <'a> TextInjector for EventInjectorAdapter<'a> {
+  fn name(&self) -> &'static str {
+    "event"
+  }
+  
   fn inject_text(&self, text: &str) -> anyhow::Result<()> {
     // TODO: handle injection options
     self.injector.send_string(text, Default::default())
