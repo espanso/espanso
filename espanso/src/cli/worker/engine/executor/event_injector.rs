@@ -39,7 +39,25 @@ impl <'a> TextInjector for EventInjectorAdapter<'a> {
   }
   
   fn inject_text(&self, text: &str) -> anyhow::Result<()> {
-    // TODO: handle injection options
-    self.injector.send_string(text, Default::default())
+    // Handle CRLF or LF line endings correctly
+    let split_sequence = if text.contains("\r\n") {
+      "\r\n"
+    } else {
+      "\n"
+    };
+
+    // We don't use the lines() method because it skips emtpy lines, which is not what we want.
+    for (i, line) in text.split(split_sequence).enumerate() {
+      // We simulate an Return press between lines
+      if i > 0 {
+        // TODO: handle injection options
+        self.injector.send_keys(&[espanso_inject::keys::Key::Enter], Default::default())?
+      }
+
+      // TODO: handle injection options
+      self.injector.send_string(line, Default::default())?;
+    }
+
+    Ok(())
   }
 }
