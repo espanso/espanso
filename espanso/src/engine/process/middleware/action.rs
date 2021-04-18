@@ -61,11 +61,18 @@ impl<'a> Middleware for ActionMiddleware<'a> {
             .collect(),
         })
       }
-      Event::TriggerCompensation(m_event) => Event::KeySequenceInject(KeySequenceInjectRequest {
-        keys: (0..m_event.trigger.chars().count())
-          .map(|_| Key::Backspace)
-          .collect(),
-      }),
+      Event::TriggerCompensation(m_event) => {
+        let mut backspace_count = m_event.trigger.chars().count();
+
+        // We want to preserve the left separator if present
+        if let Some(left_separator) = &m_event.left_separator {
+          backspace_count -= left_separator.chars().count();
+        }
+
+        Event::KeySequenceInject(KeySequenceInjectRequest {
+          keys: (0..backspace_count).map(|_| Key::Backspace).collect(),
+        })
+      }
       _ => event,
     }
 

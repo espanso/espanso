@@ -105,6 +105,8 @@ impl<'a, State> Middleware for MatcherMiddleware<'a, State> {
               .map(|result| DetectedMatch {
                 id: result.id,
                 trigger: Some(result.trigger),
+                right_separator: result.right_separator,
+                left_separator: result.left_separator,
                 args: result.args,
               })
               .collect(),

@@ -17,7 +17,10 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use espanso_match::rolling::{matcher::RollingMatcher, RollingMatch};
+use espanso_match::rolling::{
+  matcher::{RollingMatcher, RollingMatcherOptions},
+  RollingMatch,
+};
 
 use crate::engine::{
   event::keyboard::Key,
@@ -32,13 +35,30 @@ pub struct RollingMatcherAdapter {
 
 impl RollingMatcherAdapter {
   pub fn new(matches: &[RollingMatch<i32>]) -> Self {
-    let matcher = RollingMatcher::new(matches, Default::default());
+    // TODO: load them from config
+
+    let matcher = RollingMatcher::new(
+      matches,
+      RollingMatcherOptions {
+        char_word_separators: vec![
+          " ".to_string(),
+          ",".to_string(),
+          ".".to_string(),
+          "?".to_string(),
+          "!".to_string(),
+          "\r".to_string(),
+          "\n".to_string(),
+          (22u8 as char).to_string(),
+        ],
+        key_word_separators: vec![],
+      },
+    );
 
     Self { matcher }
   }
 }
 
-impl <'a> Matcher<'a, MatcherState<'a>> for RollingMatcherAdapter {
+impl<'a> Matcher<'a, MatcherState<'a>> for RollingMatcherAdapter {
   fn process(
     &'a self,
     prev_state: Option<&MatcherState<'a>>,
@@ -80,8 +100,10 @@ impl From<espanso_match::MatchResult<i32>> for MatchResult {
   fn from(result: espanso_match::MatchResult<i32>) -> Self {
     Self {
       id: result.id,
-      trigger: result.trigger, 
-      args: result.vars, 
+      trigger: result.trigger,
+      left_separator: result.left_separator,
+      right_separator: result.right_separator,
+      args: result.vars,
     }
   }
 }

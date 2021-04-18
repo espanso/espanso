@@ -48,6 +48,12 @@ impl<'a> Middleware for RenderMiddleware<'a> {
     if let Event::RenderingRequested(m_event) = event {
       match self.renderer.render(m_event.match_id, m_event.trigger_args) {
         Ok(body) => {
+          let body = if let Some(right_separator) = m_event.right_separator {
+            format!("{}{}", body, right_separator)
+          } else {
+            body
+          };
+
           return Event::Rendered(RenderedEvent {
             match_id: m_event.match_id,
             body,

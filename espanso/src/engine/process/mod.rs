@@ -17,7 +17,7 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use super::{event::keyboard::Key, Event};
+use super::{Event, event::{keyboard::Key, matches::DetectedMatch}};
 use anyhow::Result;
 use std::collections::HashMap;
 use thiserror::Error;
@@ -56,6 +56,8 @@ pub enum MatcherEvent {
 pub struct MatchResult {
   pub id: i32,
   pub trigger: String,
+  pub left_separator: Option<String>,
+  pub right_separator: Option<String>,
   pub args: HashMap<String, String>,
 }
 
@@ -70,9 +72,7 @@ pub trait MatchSelector {
 pub trait Multiplexer {
   fn convert(
     &self,
-    match_id: i32,
-    trigger: Option<String>,
-    trigger_args: HashMap<String, String>,
+    m: DetectedMatch,
   ) -> Option<Event>;
 }
 
