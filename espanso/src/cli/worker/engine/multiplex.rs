@@ -21,10 +21,7 @@ use std::collections::HashMap;
 
 use espanso_config::matches::{Match, MatchEffect};
 
-use crate::engine::{
-  event::{render::RenderingRequestedEvent, Event},
-  process::Multiplexer,
-};
+use crate::engine::{event::{Event, matches::DetectedMatch, render::RenderingRequestedEvent}, process::Multiplexer};
 
 pub trait MatchProvider<'a> {
   fn get(&self, match_id: i32) -> Option<&'a Match>;
@@ -41,14 +38,16 @@ impl<'a> MultiplexAdapter<'a> {
 }
 
 impl<'a> Multiplexer for MultiplexAdapter<'a> {
-  fn convert(&self, match_id: i32, trigger: Option<String>, trigger_args: HashMap<String, String>) -> Option<Event> {
-    let m = self.provider.get(match_id)?;
+  fn convert(&self, detected_match: DetectedMatch) -> Option<Event> {
+    let m = self.provider.get(detected_match.id)?;
 
     match &m.effect {
       MatchEffect::Text(_) => Some(Event::RenderingRequested(RenderingRequestedEvent {
-        match_id,
-        trigger,
-        trigger_args,
+        match_id: detected_match.id,
+        trigger: detected_match.trigger,
+        left_separator: detected_match.left_separator,
+        right_separator: detected_match.right_separator,
+        trigger_args: detected_match.args,
       })),
       // TODO: think about rich text and image
       MatchEffect::None => None,

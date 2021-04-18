@@ -20,6 +20,7 @@
 #[derive(Debug, Clone, PartialEq)]
 pub struct TriggerCompensationEvent {
   pub trigger: String,
+  pub left_separator: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq)]

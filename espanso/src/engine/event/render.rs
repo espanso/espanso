@@ -23,6 +23,8 @@ use std::collections::HashMap;
 pub struct RenderingRequestedEvent {
   pub match_id: i32,
   pub trigger: Option<String>,
+  pub left_separator: Option<String>,
+  pub right_separator: Option<String>,
   pub trigger_args: HashMap<String, String>,
 }
 

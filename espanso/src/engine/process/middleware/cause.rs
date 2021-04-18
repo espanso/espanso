@@ -53,6 +53,7 @@ impl Middleware for CauseCompensateMiddleware {
         // Before the event, place a trigger compensation
         return Event::TriggerCompensation(TriggerCompensationEvent {
           trigger: trigger.clone(),
+          left_separator: m_event.chosen.left_separator.clone(),
         });
       } else {
         return compensated_event;
