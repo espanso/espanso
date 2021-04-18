@@ -120,28 +120,24 @@ impl<'a, State> Middleware for MatcherMiddleware<'a, State> {
 }
 
 fn is_event_of_interest(event: &Event) -> bool {
-  if let Event::Keyboard(keyboard_event) = &event {
-    if keyboard_event.status == Status::Pressed {
-      return true;
-    }
+  match event {
+    Event::Keyboard(keyboard_event) if keyboard_event.status == Status::Pressed => true,
+    // TODO: handle mouse
+    Event::MatchInjected => true,
+    _ => false,
   }
-
-  // TODO: handle mouse
-
-  false
 }
 
 fn convert_to_matcher_event(event: &Event) -> Option<MatcherEvent> {
-  if let Event::Keyboard(keyboard_event) = event {
-    return Some(MatcherEvent::Key {
+  match event {
+    Event::Keyboard(keyboard_event) => Some(MatcherEvent::Key {
       key: keyboard_event.key.clone(),
       chars: keyboard_event.value.clone(),
-    });
+    }),
+    Event::MatchInjected => Some(MatcherEvent::VirtualSeparator),
+    // TODO: mouse event should act as separator
+    _ => None,
   }
-
-  // TODO: mouse event should act as separator
-
-  None
 }
 
 fn is_invalidating_key(key: &Key) -> bool {

@@ -50,10 +50,14 @@ impl<'a> Middleware for ActionMiddleware<'a> {
 
   fn next(&self, event: Event, dispatch: &mut dyn FnMut(Event)) -> Event {
     match &event {
-      Event::Rendered(m_event) => Event::TextInject(TextInjectRequest {
-        text: m_event.body.clone(),
-        force_mode: self.match_info_provider.get_force_mode(m_event.match_id),
-      }),
+      Event::Rendered(m_event) => {
+        dispatch(Event::MatchInjected);
+
+        Event::TextInject(TextInjectRequest {
+          text: m_event.body.clone(),
+          force_mode: self.match_info_provider.get_force_mode(m_event.match_id),
+        })
+      }
       Event::CursorHintCompensation(m_event) => {
         Event::KeySequenceInject(KeySequenceInjectRequest {
           keys: (0..m_event.cursor_hint_back_count)
