@@ -31,6 +31,8 @@ use crate::{
 };
 use unicase::UniCase;
 
+pub(crate) type IsWordSeparator = bool;
+
 #[derive(Clone)]
 pub struct RollingMatcherState<'a, Id> {
   paths: Vec<RollingMatcherStatePath<'a, Id>>,
@@ -45,7 +47,7 @@ impl<'a, Id> Default for RollingMatcherState<'a, Id> {
 #[derive(Clone)]
 struct RollingMatcherStatePath<'a, Id> {
   node: &'a MatcherTreeNode<Id>,
-  events: Vec<Event>,
+  events: Vec<(Event, IsWordSeparator)>,
 }
 
 pub struct RollingMatcherOptions {
@@ -87,9 +89,9 @@ where
           self
             .find_refs(node_path.node, &event, true)
             .into_iter()
-            .map(|node_ref| {
+            .map(|(node_ref, is_word_separator)| {
               let mut new_events = node_path.events.clone();
-              new_events.push(event.clone());
+              new_events.push((event.clone(), is_word_separator));
               (node_ref, new_events)
             }),
         );
@@ -101,7 +103,7 @@ where
     next_refs.extend(
       root_refs
         .into_iter()
-        .map(|node_ref| (node_ref, vec![event.clone()])),
+        .map(|(node_ref, is_word_separator)| (node_ref, vec![(event.clone(), is_word_separator)])),
     );
 
     let mut next_paths = Vec::new();
@@ -109,12 +111,14 @@ where
     for (node_ref, events) in next_refs {
       match node_ref {
         MatcherTreeRef::Matches(matches) => {
-          let trigger = extract_string_from_events(&events);
+          let (trigger, left_separator, right_separator) = extract_string_from_events(&events);
           let results = matches
             .iter()
             .map(|id| MatchResult {
               id: id.clone(),
               trigger: trigger.clone(),
+              left_separator: left_separator.clone(),
+              right_separator: right_separator.clone(),
               vars: HashMap::new(),
             })
             .collect();
@@ -152,19 +156,19 @@ impl<Id: Clone> RollingMatcher<Id> {
     node: &'a MatcherTreeNode<Id>,
     event: &Event,
     has_previous_state: bool,
-  ) -> Vec<&'a MatcherTreeRef<Id>> {
+  ) -> Vec<(&'a MatcherTreeRef<Id>, IsWordSeparator)> {
     let mut refs = Vec::new();
 
     if let Event::Key { key, chars } = event {
       // Key matching
       if let Some((_, node_ref)) = node.keys.iter().find(|(_key, _)| _key == key) {
-        refs.push(node_ref);
+        refs.push((node_ref, false));
       }
 
       if let Some(char) = chars {
         // Char matching
         if let Some((_, node_ref)) = node.chars.iter().find(|(_char, _)| _char == char) {
-          refs.push(node_ref);
+          refs.push((node_ref, false));
         }
 
         // Char case-insensitive
@@ -174,14 +178,14 @@ impl<Id: Clone> RollingMatcher<Id> {
           .iter()
           .find(|(_char, _)| *_char == insensitive_char)
         {
-          refs.push(node_ref);
+          refs.push((node_ref, false));
         }
       }
     }
 
     if self.is_word_separator(event) {
       if let Some(node_ref) = node.word_separators.as_ref() {
-        refs.push(node_ref)
+        refs.push((node_ref, true))
       }
     }
 
@@ -222,6 +226,16 @@ mod tests {
     MatchResult {
       id,
       trigger: trigger.to_string(),
+      ..Default::default()
+    }
+  }
+
+  fn match_result_with_sep<Id: Default>(id: Id, trigger: &str, left: Option<&str>, right: Option<&str>) -> MatchResult<Id> {
+    MatchResult {
+      id,
+      trigger: trigger.to_string(),
+      left_separator: left.map(str::to_owned),
+      right_separator: right.map(str::to_owned),
       ..Default::default()
     }
   }
@@ -281,11 +295,11 @@ mod tests {
     // Word matches are also triggered when there is no left separator but it's a new state
     assert_eq!(
       get_matches_after_str("hi,", &matcher),
-      vec![match_result(1, "hi,")]
+      vec![match_result_with_sep(1, "hi,", None, Some(","))]
     );
     assert_eq!(
       get_matches_after_str(".hi,", &matcher),
-      vec![match_result(1, ".hi,")]
+      vec![match_result_with_sep(1, ".hi,", Some("."), Some(","))]
     );
   }
 

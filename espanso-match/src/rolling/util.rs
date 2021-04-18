@@ -19,19 +19,33 @@
 
 use crate::Event;
 
-// TODO: test
-pub(crate) fn extract_string_from_events(events: &[Event]) -> String {
+use super::matcher::IsWordSeparator;
+
+pub(crate) fn extract_string_from_events(
+  events: &[(Event, IsWordSeparator)],
+) -> (String, Option<String>, Option<String>) {
   let mut string = String::new();
 
-  for event in events {
+  let mut left_separator = None;
+  let mut right_separator = None;
+
+  for (i, (event, is_word_separator)) in events.iter().enumerate() {
     if let Event::Key { key: _, chars } = event {
       if let Some(chars) = chars {
         string.push_str(chars);
+
+        if *is_word_separator {
+          if i == 0 {
+            left_separator = Some(chars.clone());
+          } else if i == (events.len() - 1) {
+            right_separator = Some(chars.clone());
+          }
+        }
       }
     }
   }
 
-  string
+  (string, left_separator, right_separator)
 }
 
 #[cfg(test)]
@@ -43,28 +57,84 @@ mod tests {
   fn extract_string_from_events_all_chars() {
     assert_eq!(
       extract_string_from_events(&[
-        Event::Key {
-          key: Key::Other,
-          chars: Some("h".to_string())
-        },
-        Event::Key {
-          key: Key::Other,
-          chars: Some("e".to_string())
-        },
-        Event::Key {
-          key: Key::Other,
-          chars: Some("l".to_string())
-        },
-        Event::Key {
-          key: Key::Other,
-          chars: Some("l".to_string())
-        },
-        Event::Key {
-          key: Key::Other,
-          chars: Some("o".to_string())
-        },
+        (
+          Event::Key {
+            key: Key::Other,
+            chars: Some("h".to_string())
+          },
+          false
+        ),
+        (
+          Event::Key {
+            key: Key::Other,
+            chars: Some("e".to_string())
+          },
+          false
+        ),
+        (
+          Event::Key {
+            key: Key::Other,
+            chars: Some("l".to_string())
+          },
+          false
+        ),
+        (
+          Event::Key {
+            key: Key::Other,
+            chars: Some("l".to_string())
+          },
+          false
+        ),
+        (
+          Event::Key {
+            key: Key::Other,
+            chars: Some("o".to_string())
+          },
+          false
+        ),
       ]),
-      "hello"
+      ("hello".to_string(), None, None)
+    );
+  }
+
+  #[test]
+  fn extract_string_from_events_word_separators() {
+    assert_eq!(
+      extract_string_from_events(&[
+        (
+          Event::Key {
+            key: Key::Other,
+            chars: Some(".".to_string())
+          },
+          true
+        ),
+        (
+          Event::Key {
+            key: Key::Other,
+            chars: Some("h".to_string())
+          },
+          false
+        ),
+        (
+          Event::Key {
+            key: Key::Other,
+            chars: Some("i".to_string())
+          },
+          false
+        ),
+        (
+          Event::Key {
+            key: Key::Other,
+            chars: Some(",".to_string())
+          },
+          true
+        ),
+      ]),
+      (
+        ".hi,".to_string(),
+        Some(".".to_string()),
+        Some(",".to_string())
+      ),
     );
   }
 
@@ -72,20 +142,29 @@ mod tests {
   fn extract_string_from_events_no_chars() {
     assert_eq!(
       extract_string_from_events(&[
-        Event::Key {
-          key: Key::ArrowUp,
-          chars: None
-        },
-        Event::Key {
-          key: Key::ArrowUp,
-          chars: None
-        },
-        Event::Key {
-          key: Key::ArrowUp,
-          chars: None
-        },
+        (
+          Event::Key {
+            key: Key::ArrowUp,
+            chars: None
+          },
+          false
+        ),
+        (
+          Event::Key {
+            key: Key::ArrowUp,
+            chars: None
+          },
+          false
+        ),
+        (
+          Event::Key {
+            key: Key::ArrowUp,
+            chars: None
+          },
+          false
+        ),
       ]),
-      ""
+      ("".to_string(), None, None)
     );
   }
 
@@ -93,32 +172,50 @@ mod tests {
   fn extract_string_from_events_mixed() {
     assert_eq!(
       extract_string_from_events(&[
-        Event::Key {
-          key: Key::Other,
-          chars: Some("h".to_string())
-        },
-        Event::Key {
-          key: Key::Other,
-          chars: Some("e".to_string())
-        },
-        Event::Key {
-          key: Key::Other,
-          chars: Some("l".to_string())
-        },
-        Event::Key {
-          key: Key::Other,
-          chars: Some("l".to_string())
-        },
-        Event::Key {
-          key: Key::Other,
-          chars: Some("o".to_string())
-        },
-        Event::Key {
-          key: Key::ArrowUp,
-          chars: None
-        },
+        (
+          Event::Key {
+            key: Key::Other,
+            chars: Some("h".to_string())
+          },
+          false
+        ),
+        (
+          Event::Key {
+            key: Key::Other,
+            chars: Some("e".to_string())
+          },
+          false
+        ),
+        (
+          Event::Key {
+            key: Key::Other,
+            chars: Some("l".to_string())
+          },
+          false
+        ),
+        (
+          Event::Key {
+            key: Key::Other,
+            chars: Some("l".to_string())
+          },
+          false
+        ),
+        (
+          Event::Key {
+            key: Key::Other,
+            chars: Some("o".to_string())
+          },
+          false
+        ),
+        (
+          Event::Key {
+            key: Key::ArrowUp,
+            chars: None
+          },
+          false
+        ),
       ]),
-      "hello"
+      ("hello".to_string(), None, None)
     );
   }
 }

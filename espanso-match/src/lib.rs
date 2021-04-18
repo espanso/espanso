@@ -30,6 +30,8 @@ mod util;
 pub struct MatchResult<Id> {
   pub id: Id,
   pub trigger: String,
+  pub left_separator: Option<String>,
+  pub right_separator: Option<String>,
   pub vars: HashMap<String, String>,
 }
 
@@ -38,6 +40,8 @@ impl<Id: Default> Default for MatchResult<Id> {
     Self {
       id: Id::default(),
       trigger: "".to_string(),
+      left_separator: None,
+      right_separator: None,
       vars: HashMap::new(),
     }
   }
