@@ -102,6 +102,8 @@ where
               let result = MatchResult {
                 id: (*id).clone(),
                 trigger: full_match.to_string(),
+                left_separator: None,
+                right_separator: None,
                 vars: variables,
               };
 
@@ -169,6 +171,8 @@ mod tests {
     MatchResult {
       id,
       trigger: trigger.to_string(),
+      left_separator: None,
+      right_separator: None,
       vars,
     }
   }
