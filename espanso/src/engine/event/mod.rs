@@ -40,6 +40,7 @@ pub enum Event {
 
   RenderingRequested(render::RenderingRequestedEvent),
   Rendered(render::RenderedEvent),
+  MatchInjected,
 
   // Effects
   TriggerCompensation(effect::TriggerCompensationEvent),
