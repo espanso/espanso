@@ -92,6 +92,9 @@ pub struct YAMLMatch {
   pub propagate_case: Option<bool>,
 
   #[serde(default)]
+  pub uppercase_style: Option<String>,
+
+  #[serde(default)]
   pub force_clipboard: Option<bool>,
 
   #[serde(default)]
