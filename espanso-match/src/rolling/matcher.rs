@@ -230,7 +230,12 @@ mod tests {
     }
   }
 
-  fn match_result_with_sep<Id: Default>(id: Id, trigger: &str, left: Option<&str>, right: Option<&str>) -> MatchResult<Id> {
+  fn match_result_with_sep<Id: Default>(
+    id: Id,
+    trigger: &str,
+    left: Option<&str>,
+    right: Option<&str>,
+  ) -> MatchResult<Id> {
     MatchResult {
       id,
       trigger: trigger.to_string(),
@@ -321,7 +326,6 @@ mod tests {
           "arty",
           &StringMatchOptions {
             case_insensitive: true,
-            preserve_case_markers: true,
             ..Default::default()
           },
         ),
@@ -352,6 +356,9 @@ mod tests {
       get_matches_after_str("arTY", &matcher),
       vec![match_result(3, "arTY")]
     );
-    assert_eq!(get_matches_after_str("ARTY", &matcher), vec![]);
+    assert_eq!(
+      get_matches_after_str("ARTY", &matcher),
+      vec![match_result(3, "ARTY")]
+    );
   }
 }

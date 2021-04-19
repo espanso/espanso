@@ -49,15 +49,9 @@ impl<Id> RollingMatch<Id> {
       items.push(RollingItem::WordSeparator);
     }
 
-    for (index, c) in string.chars().enumerate() {
+    for c in string.chars() {
       if opt.case_insensitive {
-        // If preserve case markers is true, we want to keep the first two chars
-        // as case-sensitive. This is needed to implement the "propagate_case" option.
-        if opt.preserve_case_markers && index < 2 {
-          items.push(RollingItem::Char(c.to_string()))
-        } else {
-          items.push(RollingItem::CharInsensitive(c.to_string()))
-        }
+        items.push(RollingItem::CharInsensitive(c.to_string()))
       } else {
         items.push(RollingItem::Char(c.to_string()))
       }
@@ -80,7 +74,6 @@ impl<Id> RollingMatch<Id> {
 
 pub struct StringMatchOptions {
   pub case_insensitive: bool,
-  pub preserve_case_markers: bool,
   pub left_word: bool,
   pub right_word: bool,
 }
@@ -89,7 +82,6 @@ impl Default for StringMatchOptions {
   fn default() -> Self {
     Self {
       case_insensitive: false,
-      preserve_case_markers: false,
       left_word: false,
       right_word: false,
     }
@@ -180,30 +172,6 @@ mod tests {
         items: vec![
           RollingItem::CharInsensitive("t".to_string()),
           RollingItem::CharInsensitive("e".to_string()),
-          RollingItem::CharInsensitive("s".to_string()),
-          RollingItem::CharInsensitive("t".to_string()),
-        ]
-      }
-    )
-  }
-
-  #[test]
-  fn test_match_from_string_preserve_case_markers() {
-    assert_eq!(
-      RollingMatch::from_string(
-        1,
-        "test",
-        &StringMatchOptions {
-          case_insensitive: true,
-          preserve_case_markers: true,
-          ..Default::default()
-        }
-      ),
-      RollingMatch {
-        id: 1,
-        items: vec![
-          RollingItem::Char("t".to_string()),
-          RollingItem::Char("e".to_string()),
           RollingItem::CharInsensitive("s".to_string()),
           RollingItem::CharInsensitive("t".to_string()),
         ]
