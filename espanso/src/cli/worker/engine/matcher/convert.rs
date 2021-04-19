@@ -53,7 +53,6 @@ impl<'a> MatchConverter<'a> {
             &trigger,
             &StringMatchOptions {
               case_insensitive: cause.propagate_case, 
-              preserve_case_markers: cause.propagate_case, 
               left_word: cause.left_word,
               right_word: cause.right_word, 
             },

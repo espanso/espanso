@@ -46,7 +46,7 @@ impl<'a> Middleware for RenderMiddleware<'a> {
 
   fn next(&self, event: Event, _: &mut dyn FnMut(Event)) -> Event {
     if let Event::RenderingRequested(m_event) = event {
-      match self.renderer.render(m_event.match_id, m_event.trigger_args) {
+      match self.renderer.render(m_event.match_id, m_event.trigger.as_deref(), m_event.trigger_args) {
         Ok(body) => {
           let body = if let Some(right_separator) = m_event.right_separator {
             format!("{}{}", body, right_separator)

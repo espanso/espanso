@@ -77,7 +77,7 @@ pub trait Multiplexer {
 }
 
 pub trait Renderer<'a> {
-  fn render(&'a self, match_id: i32, trigger_args: HashMap<String, String>) -> Result<String>;
+  fn render(&'a self, match_id: i32, trigger: Option<&str>, trigger_args: HashMap<String, String>) -> Result<String>;
 }
 
 #[derive(Error, Debug)]
