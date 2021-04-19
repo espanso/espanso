@@ -19,11 +19,14 @@
 
 use std::{collections::HashMap, iter::FromIterator};
 
-use espanso_config::{config::ConfigStore, matches::{Match, MatchEffect, store::MatchStore}};
+use espanso_config::{
+  config::ConfigStore,
+  matches::{store::MatchStore, Match, MatchEffect},
+};
 
 use crate::engine::process::MatchInfoProvider;
 
-use super::{multiplex::MatchProvider, render::MatchIterator};
+use super::multiplex::MatchProvider;
 
 pub struct MatchCache<'a> {
   cache: HashMap<i32, &'a Match>,
@@ -50,9 +53,13 @@ impl<'a> MatchProvider<'a> for MatchCache<'a> {
   }
 }
 
-impl<'a> MatchIterator<'a> for MatchCache<'a> {
+impl<'a> super::render::MatchProvider<'a> for MatchCache<'a> {
   fn matches(&self) -> Vec<&'a Match> {
     self.cache.iter().map(|(_, m)| *m).collect()
+  }
+
+  fn get(&self, id: i32) -> Option<&'a Match> {
+    self.cache.get(&id).map(|m| *m)
   }
 }
 

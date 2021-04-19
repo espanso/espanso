@@ -21,14 +21,17 @@ use std::{cell::RefCell, collections::HashMap, convert::TryInto};
 
 use espanso_config::{
   config::Config,
-  matches::{store::MatchSet, Match, MatchCause, MatchEffect},
+  matches::{store::MatchSet, Match, MatchCause, MatchEffect, UpperCasingStyle},
 };
 use espanso_render::{CasingStyle, Context, RenderOptions, Template, Value, Variable};
 
-use crate::{cli::worker::config::ConfigManager, engine::process::{Renderer, RendererError}};
+use crate::{
+  engine::process::{Renderer, RendererError},
+};
 
-pub trait MatchIterator<'a> {
+pub trait MatchProvider<'a> {
   fn matches(&self) -> Vec<&'a Match>;
+  fn get(&self, id: i32) -> Option<&'a Match>;
 }
 
 pub trait ConfigProvider<'a> {
@@ -38,6 +41,7 @@ pub trait ConfigProvider<'a> {
 
 pub struct RendererAdapter<'a> {
   renderer: &'a dyn espanso_render::Renderer,
+  match_provider: &'a dyn MatchProvider<'a>,
   config_provider: &'a dyn ConfigProvider<'a>,
 
   template_map: HashMap<i32, Option<Template>>,
@@ -48,16 +52,17 @@ pub struct RendererAdapter<'a> {
 
 impl<'a> RendererAdapter<'a> {
   pub fn new(
-    match_iterator: &'a dyn MatchIterator,
+    match_provider: &'a dyn MatchProvider<'a>,
     config_provider: &'a dyn ConfigProvider<'a>,
     renderer: &'a dyn espanso_render::Renderer,
   ) -> Self {
-    let template_map = generate_template_map(match_iterator);
+    let template_map = generate_template_map(match_provider);
     let global_vars_map = generate_global_vars_map(config_provider);
 
     Self {
       renderer,
       config_provider,
+      match_provider,
       template_map,
       global_vars_map,
       context_cache: RefCell::new(HashMap::new()),
@@ -66,9 +71,9 @@ impl<'a> RendererAdapter<'a> {
 }
 
 // TODO: test
-fn generate_template_map(match_iterator: &dyn MatchIterator) -> HashMap<i32, Option<Template>> {
+fn generate_template_map(match_provider: &dyn MatchProvider) -> HashMap<i32, Option<Template>> {
   let mut template_map = HashMap::new();
-  for m in match_iterator.matches() {
+  for m in match_provider.matches() {
     let entry = convert_to_template(m);
     template_map.insert(m.id, entry);
   }
@@ -113,7 +118,7 @@ fn generate_context<'a>(
 
   Context {
     templates,
-    global_vars
+    global_vars,
   }
 }
 
@@ -180,16 +185,29 @@ fn convert_value(value: espanso_config::matches::Value) -> espanso_render::Value
 }
 
 impl<'a> Renderer<'a> for RendererAdapter<'a> {
-  fn render(&'a self, match_id: i32, trigger_vars: HashMap<String, String>) -> anyhow::Result<String> {
+  fn render(
+    &'a self,
+    match_id: i32,
+    trigger: Option<&str>,
+    trigger_vars: HashMap<String, String>,
+  ) -> anyhow::Result<String> {
     if let Some(Some(template)) = self.template_map.get(&match_id) {
       let (config, match_set) = self.config_provider.active();
 
       let mut context_cache = self.context_cache.borrow_mut();
-      let context = context_cache.entry(config.id()).or_insert(generate_context(&match_set, &self.template_map, &self.global_vars_map));
+      let context = context_cache
+        .entry(config.id())
+        .or_insert_with(|| generate_context(&match_set, &self.template_map, &self.global_vars_map));
+      
+      let raw_match = self.match_provider.get(match_id);
+      let preferred_uppercasing_style = raw_match.and_then(extract_uppercasing_style);
 
-      // TODO: calculate the casing style instead of hardcoding it
       let options = RenderOptions {
-        casing_style: CasingStyle::None,
+        casing_style: if let Some(trigger) = trigger {
+          calculate_casing_style(trigger, preferred_uppercasing_style)
+        } else {
+          CasingStyle::None
+        },
       };
 
       // If some trigger vars are specified, augment the template with them
@@ -199,9 +217,9 @@ impl<'a> Renderer<'a> for RendererAdapter<'a> {
           let mut params = espanso_render::Params::new();
           params.insert("echo".to_string(), Value::String(value));
           augmented.vars.push(Variable {
-              name, 
-              var_type: "echo".to_string(), 
-              params, 
+            name,
+            var_type: "echo".to_string(),
+            params,
           })
         }
         Some(augmented)
@@ -218,7 +236,7 @@ impl<'a> Renderer<'a> for RendererAdapter<'a> {
       match self.renderer.render(template, context, &options) {
         espanso_render::RenderResult::Success(body) => Ok(body),
         espanso_render::RenderResult::Aborted => Err(RendererError::Aborted.into()),
-        espanso_render::RenderResult::Error(err) => Err(RendererError::RenderingError(err).into()), 
+        espanso_render::RenderResult::Error(err) => Err(RendererError::RenderingError(err).into()),
       }
     } else {
       Err(RendererError::NotFound.into())
@@ -226,3 +244,58 @@ impl<'a> Renderer<'a> for RendererAdapter<'a> {
   }
 }
 
+fn extract_uppercasing_style(m: &Match) -> Option<UpperCasingStyle> {
+  if let MatchCause::Trigger(cause) = &m.cause {
+    Some(cause.uppercase_style.clone())
+  } else {
+    None
+  }
+}
+
+// TODO: test
+fn calculate_casing_style(
+  trigger: &str,
+  uppercasing_style: Option<UpperCasingStyle>,
+) -> CasingStyle {
+  let mut first_alphabetic = None;
+  let mut second_alphabetic = None;
+
+  for c in trigger.chars() {
+    if c.is_alphabetic() {
+      if first_alphabetic.is_none() {
+        first_alphabetic = Some(c);
+      } else if second_alphabetic.is_none() {
+        second_alphabetic = Some(c);
+      } else {
+        break;
+      }
+    }
+  }
+
+  if let Some(first) = first_alphabetic {
+    if let Some(second) = second_alphabetic {
+      if first.is_uppercase() {
+        if second.is_uppercase() {
+          CasingStyle::Uppercase
+        } else {
+          match uppercasing_style {
+            Some(UpperCasingStyle::CapitalizeWords) => CasingStyle::CapitalizeWords,
+            _ => CasingStyle::Capitalize,
+          }
+        }
+      } else {
+        CasingStyle::None
+      }
+    } else if first.is_uppercase() {
+      match uppercasing_style {
+        Some(UpperCasingStyle::Capitalize) => CasingStyle::Capitalize,
+        Some(UpperCasingStyle::CapitalizeWords) => CasingStyle::CapitalizeWords,
+        _ => CasingStyle::Uppercase,
+      }
+    } else {
+      CasingStyle::None
+    }
+  } else {
+    CasingStyle::None
+  }
+}

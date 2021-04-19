@@ -78,8 +78,6 @@ impl<'a, State> Middleware for MatcherMiddleware<'a, State> {
         }
       }
 
-      // TODO: test if the matcher detects a word match when the states are cleared (probably not :( )
-
       let mut all_results = Vec::new();
 
       if let Some(matcher_event) = convert_to_matcher_event(&event) {
@@ -121,7 +119,24 @@ impl<'a, State> Middleware for MatcherMiddleware<'a, State> {
 
 fn is_event_of_interest(event: &Event) -> bool {
   match event {
-    Event::Keyboard(keyboard_event) if keyboard_event.status == Status::Pressed => true,
+    Event::Keyboard(keyboard_event) => {
+      if keyboard_event.status != Status::Pressed {
+        // Skip non-press events
+        false
+      } else {
+        match keyboard_event.key {
+          // Skip modifier keys
+          Key::Alt => false,
+          Key::Shift => false,
+          Key::CapsLock => false,
+          Key::Meta => false,
+          Key::NumLock => false,
+          Key::Control => false,
+
+          _ => true
+        }
+      }
+    },
     // TODO: handle mouse
     Event::MatchInjected => true,
     _ => false,
