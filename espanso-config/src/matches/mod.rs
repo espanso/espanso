@@ -50,7 +50,7 @@ impl Default for Match {
 
 // Causes
 
-#[derive(Debug, Clone, Eq, Hash, PartialEq)]
+#[derive(Debug, Clone, Eq, Hash, PartialEq, EnumAsInner)]
 pub enum MatchCause {
   None,
   Trigger(TriggerCause),
@@ -66,6 +66,7 @@ pub struct TriggerCause {
   pub right_word: bool,
 
   pub propagate_case: bool,
+  pub uppercase_style: UpperCasingStyle,
 }
 
 impl Default for TriggerCause {
@@ -75,13 +76,21 @@ impl Default for TriggerCause {
       left_word: false,
       right_word: false,
       propagate_case: false,
+      uppercase_style: UpperCasingStyle::Uppercase,
     }
   }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum UpperCasingStyle {
+  Uppercase,
+  Capitalize,
+  CapitalizeWords,
+}
+
 // Effects
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, EnumAsInner)]
 pub enum MatchEffect {
   None,
   Text(TextEffect),

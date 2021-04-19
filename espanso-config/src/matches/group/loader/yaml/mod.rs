@@ -21,15 +21,18 @@ use crate::{
   counter::next_id,
   matches::{
     group::{path::resolve_imports, MatchGroup},
-    Match, Variable,
+    Match, UpperCasingStyle, Variable,
   },
 };
 use anyhow::Result;
-use log::warn;
+use log::{error, warn};
 use parse::YAMLMatchGroup;
 use std::convert::{TryFrom, TryInto};
 
-use self::{parse::{YAMLMatch, YAMLVariable}, util::convert_params};
+use self::{
+  parse::{YAMLMatch, YAMLVariable},
+  util::convert_params,
+};
 use crate::matches::{MatchCause, MatchEffect, TextEffect, TriggerCause};
 
 use super::Importer;
@@ -89,12 +92,34 @@ impl TryFrom<YAMLMatch> for Match {
   type Error = anyhow::Error;
 
   fn try_from(yaml_match: YAMLMatch) -> Result<Self, Self::Error> {
+    if yaml_match.uppercase_style.is_some() && yaml_match.propagate_case.is_none() {
+      warn!("specifying the 'uppercase_style' option without 'propagate_case' has no effect");
+    }
+
     let triggers = if let Some(trigger) = yaml_match.trigger {
       Some(vec![trigger])
     } else if let Some(triggers) = yaml_match.triggers {
       Some(triggers)
     } else {
       None
+    };
+
+    let uppercase_style = match yaml_match
+      .uppercase_style
+      .map(|s| s.to_lowercase())
+      .as_deref()
+    {
+      Some("uppercase") => UpperCasingStyle::Uppercase,
+      Some("capitalize") => UpperCasingStyle::Capitalize,
+      Some("capitalize_words") => UpperCasingStyle::CapitalizeWords,
+      Some(style) => {
+        error!(
+          "unrecognized uppercase_style: {:?}, falling back to the default",
+          style
+        );
+        TriggerCause::default().uppercase_style
+      }
+      _ => TriggerCause::default().uppercase_style,
     };
 
     let cause = if let Some(triggers) = triggers {
@@ -111,6 +136,7 @@ impl TryFrom<YAMLMatch> for Match {
         propagate_case: yaml_match
           .propagate_case
           .unwrap_or(TriggerCause::default().propagate_case),
+        uppercase_style,
       })
     } else {
       MatchCause::None
@@ -163,7 +189,10 @@ impl TryFrom<YAMLVariable> for Variable {
 #[cfg(test)]
 mod tests {
   use super::*;
-  use crate::{matches::{Match, Params, Value}, util::tests::use_test_directory};
+  use crate::{
+    matches::{Match, Params, Value},
+    util::tests::use_test_directory,
+  };
   use std::fs::create_dir_all;
 
   fn create_match(yaml: &str) -> Result<Match> {
@@ -330,6 +359,73 @@ mod tests {
         ..Default::default()
       }
     )
+  }
+
+  #[test]
+  fn uppercase_style_maps_correctly() {
+    assert_eq!(
+      create_match(
+        r#"
+        trigger: "Hello"
+        replace: "world"
+        uppercase_style: "capitalize"
+        "#
+      )
+      .unwrap()
+      .cause
+      .into_trigger()
+      .unwrap()
+      .uppercase_style,
+      UpperCasingStyle::Capitalize,
+    );
+
+    assert_eq!(
+      create_match(
+        r#"
+        trigger: "Hello"
+        replace: "world"
+        uppercase_style: "capitalize_words"
+        "#
+      )
+      .unwrap()
+      .cause
+      .into_trigger()
+      .unwrap()
+      .uppercase_style,
+      UpperCasingStyle::CapitalizeWords,
+    );
+
+    assert_eq!(
+      create_match(
+        r#"
+        trigger: "Hello"
+        replace: "world"
+        uppercase_style: "uppercase"
+        "#
+      )
+      .unwrap()
+      .cause
+      .into_trigger()
+      .unwrap()
+      .uppercase_style,
+      UpperCasingStyle::Uppercase,
+    );
+
+    assert_eq!(
+      create_match(
+        r#"
+        trigger: "Hello"
+        replace: "world"
+        uppercase_style: "invalid"
+        "#
+      )
+      .unwrap()
+      .cause
+      .into_trigger()
+      .unwrap()
+      .uppercase_style,
+      UpperCasingStyle::Uppercase,
+    );
   }
 
   #[test]
