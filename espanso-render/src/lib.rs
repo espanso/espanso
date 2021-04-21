@@ -31,7 +31,7 @@ pub trait Renderer {
     -> RenderResult;
 }
 
-pub fn create(extensions: Vec<Box<dyn Extension>>) -> impl Renderer {
+pub fn create<'a>(extensions: Vec<&'a dyn Extension>) -> impl Renderer + 'a {
   renderer::DefaultRenderer::new(extensions)
 }
 

@@ -179,6 +179,7 @@ pub enum ScriptExtensionError {
 #[cfg(test)]
 mod tests {
   use super::*;
+  #[cfg(not(target_os = "windows"))]
   use crate::Scope;
   use std::iter::FromIterator;
 
