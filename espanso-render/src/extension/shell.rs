@@ -343,10 +343,13 @@ mod tests {
       )
     } else {
       Params::from_iter(
-        vec![(
-          "cmd".to_string(),
-          Value::String("echo %ESPANSO_VAR1%".to_string()),
-        )]
+        vec![
+          (
+            "cmd".to_string(),
+            Value::String("echo %ESPANSO_VAR1%".to_string()),
+          ),
+          ("shell".to_string(), Value::String("cmd".to_string())),
+        ]
         .into_iter(),
       )
     };
@@ -365,8 +368,13 @@ mod tests {
   fn invalid_command() {
     let extension = ShellExtension::new(&PathBuf::new());
 
-    let param =
-      Params::from_iter(vec![("cmd".to_string(), Value::String("nonexistentcommand".to_string()))].into_iter());
+    let param = Params::from_iter(
+      vec![(
+        "cmd".to_string(),
+        Value::String("nonexistentcommand".to_string()),
+      )]
+      .into_iter(),
+    );
     assert!(matches!(
       extension.calculate(&Default::default(), &Default::default(), &param),
       ExtensionResult::Error(_)
