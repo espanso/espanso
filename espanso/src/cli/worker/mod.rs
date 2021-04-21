@@ -46,6 +46,8 @@ fn worker_main(args: CliModuleArgs) {
   let match_store = args
     .match_store
     .expect("missing match store in worker main");
+  
+  let paths = args.paths.expect("missing paths in worker main");
 
   let app_info_provider =
     espanso_info::get_provider().expect("unable to initialize app info provider");
@@ -66,8 +68,27 @@ fn worker_main(args: CliModuleArgs) {
   let selector = MatchSelectorAdapter::new();
   let multiplexer = engine::multiplex::MultiplexAdapter::new(&match_cache);
 
-  // TODO: add extensions
-  let renderer = espanso_render::create(Vec::new());
+  let injector =
+    espanso_inject::get_injector(Default::default()).expect("failed to initialize injector module"); // TODO: handle the options
+  let clipboard = espanso_clipboard::get_clipboard(Default::default())
+    .expect("failed to initialize clipboard module"); // TODO: handle options
+
+  let clipboard_adapter = engine::render::clipboard::ClipboardAdapter::new(&*clipboard);
+  let clipboard_extension = espanso_render::extension::clipboard::ClipboardExtension::new(&clipboard_adapter);
+  let date_extension = espanso_render::extension::date::DateExtension::new();
+  let echo_extension = espanso_render::extension::echo::EchoExtension::new();
+  let random_extension = espanso_render::extension::random::RandomExtension::new();
+  let home_path = dirs::home_dir().expect("unable to obtain home dir path");
+  let script_extension = espanso_render::extension::script::ScriptExtension::new(&paths.config, &home_path, &paths.packages);
+  let shell_extension = espanso_render::extension::shell::ShellExtension::new(&paths.config);
+  let renderer = espanso_render::create(vec![
+    &clipboard_extension,
+    &date_extension,
+    &echo_extension,
+    &random_extension,
+    &script_extension,
+    &shell_extension,
+  ]);
   let renderer_adapter =
     engine::render::RendererAdapter::new(&match_cache, &config_manager, &renderer);
 
@@ -80,10 +101,6 @@ fn worker_main(args: CliModuleArgs) {
     &match_cache,
   );
 
-  let injector =
-    espanso_inject::get_injector(Default::default()).expect("failed to initialize injector module"); // TODO: handle the options
-  let clipboard = espanso_clipboard::get_clipboard(Default::default())
-    .expect("failed to initialize clipboard module"); // TODO: handle options
 
   let event_injector = engine::executor::event_injector::EventInjectorAdapter::new(&*injector);
   let clipboard_injector =

@@ -17,7 +17,9 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::{cell::RefCell, collections::HashMap, convert::TryInto};
+use std::{cell::RefCell, collections::HashMap};
+
+pub mod clipboard;
 
 use espanso_config::{
   config::Config,
