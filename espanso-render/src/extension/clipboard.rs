@@ -24,18 +24,18 @@ pub trait ClipboardProvider {
   fn get_text(&self) -> Option<String>;
 }
 
-pub struct ClipboardExtension {
-  provider: Box<dyn ClipboardProvider>,
+pub struct ClipboardExtension<'a> {
+  provider: &'a dyn ClipboardProvider,
 }
 
 #[allow(clippy::new_without_default)]
-impl ClipboardExtension {
-  pub fn new(provider: Box<dyn ClipboardProvider>) -> Self {
+impl <'a> ClipboardExtension<'a> {
+  pub fn new(provider: &'a dyn ClipboardProvider) -> Self {
     Self { provider }
   }
 }
 
-impl Extension for ClipboardExtension {
+impl <'a> Extension for ClipboardExtension<'a> {
   fn name(&self) -> &str {
     "clipboard"
   }
@@ -76,7 +76,7 @@ mod tests {
   #[test]
   fn clipboard_works_correctly() {
     let provider = MockClipboardProvider { return_none: false };
-    let extension = ClipboardExtension::new(Box::new(provider));
+    let extension = ClipboardExtension::new(&provider);
 
     assert_eq!(
       extension
@@ -90,7 +90,7 @@ mod tests {
   #[test]
   fn none_clipboard_produces_error() {
     let provider = MockClipboardProvider { return_none: true };
-    let extension = ClipboardExtension::new(Box::new(provider));
+    let extension = ClipboardExtension::new(&provider);
 
     assert!(matches!(
       extension.calculate(&Default::default(), &Default::default(), &Params::new()),
