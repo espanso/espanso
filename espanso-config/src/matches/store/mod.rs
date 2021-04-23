@@ -21,7 +21,7 @@ use super::{Match, Variable};
 
 mod default;
 
-pub trait MatchStore {
+pub trait MatchStore: Send {
   fn query(&self, paths: &[String]) -> MatchSet;
 }
 
