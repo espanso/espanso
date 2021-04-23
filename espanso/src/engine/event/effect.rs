@@ -17,6 +17,8 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use super::input::Key;
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct TriggerCompensationEvent {
   pub trigger: String,
@@ -26,4 +28,21 @@ pub struct TriggerCompensationEvent {
 #[derive(Debug, Clone, PartialEq)]
 pub struct CursorHintCompensationEvent {
   pub cursor_hint_back_count: usize,
+}
+
+#[derive(Debug, Clone)]
+pub struct TextInjectRequest {
+  pub text: String,
+  pub force_mode: Option<TextInjectMode>,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub enum TextInjectMode {
+  Keys,
+  Clipboard,
+}
+
+#[derive(Debug, Clone)]
+pub struct KeySequenceInjectRequest {
+  pub keys: Vec<Key>,
 }

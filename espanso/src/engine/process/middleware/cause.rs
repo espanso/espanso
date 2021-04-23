@@ -22,8 +22,8 @@ use crate::engine::{
   dispatch::Mode,
   event::{
     effect::TriggerCompensationEvent,
-    keyboard::{Key, KeySequenceInjectRequest},
-    matches::CauseCompensatedMatchEvent,
+    input::{Key, KeySequenceInjectRequest},
+    internal::CauseCompensatedMatchEvent,
     text::{TextInjectMode, TextInjectRequest},
     Event,
   },

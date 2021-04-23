@@ -22,7 +22,7 @@ use log::{debug, error};
 use super::super::Middleware;
 use crate::engine::{
   event::{
-    matches::{MatchSelectedEvent},
+    internal::{MatchSelectedEvent},
     Event,
   },
   process::{MatchFilter, MatchSelector},

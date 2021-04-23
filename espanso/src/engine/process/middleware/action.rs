@@ -19,10 +19,9 @@
 
 use super::super::Middleware;
 use crate::engine::{
-  dispatch::Mode,
   event::{
-    keyboard::{Key, KeySequenceInjectRequest},
-    text::{TextInjectMode, TextInjectRequest},
+    input::{Key},
+    effect::{TextInjectMode, TextInjectRequest, KeySequenceInjectRequest},
     Event,
   },
 };

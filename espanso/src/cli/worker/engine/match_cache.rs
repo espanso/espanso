@@ -64,7 +64,7 @@ impl<'a> super::render::MatchProvider<'a> for MatchCache<'a> {
 }
 
 impl<'a> MatchInfoProvider for MatchCache<'a> {
-  fn get_force_mode(&self, match_id: i32) -> Option<crate::engine::event::text::TextInjectMode> {
+  fn get_force_mode(&self, match_id: i32) -> Option<crate::engine::event::effect::TextInjectMode> {
     let m = self.cache.get(&match_id)?;
     if let MatchEffect::Text(text_effect) = &m.effect {
       // TODO: read match effect and convert it to the actual injection mode

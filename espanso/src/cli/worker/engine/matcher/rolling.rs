@@ -23,7 +23,7 @@ use espanso_match::rolling::{
 };
 
 use crate::engine::{
-  event::keyboard::Key,
+  event::input::Key,
   process::{MatchResult, Matcher, MatcherEvent},
 };
 

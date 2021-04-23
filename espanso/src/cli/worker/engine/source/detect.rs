@@ -24,7 +24,7 @@ use log::{error, trace};
 
 use crate::engine::{
   event::{
-    keyboard::{Key, KeyboardEvent, Status, Variant},
+    input::{Key, KeyboardEvent, Status, Variant},
     Event,
   },
   funnel, process,
@@ -51,7 +51,7 @@ impl<'a> funnel::Source<'a> for DetectSource {
         status: keyboard_event.status.into(),
         variant: keyboard_event.variant.map(|variant| variant.into()),
       }),
-      InputEvent::Mouse(_) => todo!(),  // TODO
+      InputEvent::Mouse(mouse_event) => todo!(),  // TODO
       InputEvent::HotKey(_) => todo!(), // TODO
     }
   }

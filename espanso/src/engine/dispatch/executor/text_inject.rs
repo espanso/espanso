@@ -19,7 +19,7 @@
 
 use anyhow::Result;
 use super::super::{Event, Executor};
-use crate::engine::event::text::TextInjectMode;
+use crate::engine::event::effect::TextInjectMode;
 use log::{error, trace};
 
 pub trait TextInjector {

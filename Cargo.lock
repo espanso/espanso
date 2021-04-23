@@ -288,6 +288,7 @@ dependencies = [
  "anyhow",
  "clap",
  "crossbeam",
+ "dirs 3.0.1",
  "enum-as-inner",
  "espanso-clipboard",
  "espanso-config",
