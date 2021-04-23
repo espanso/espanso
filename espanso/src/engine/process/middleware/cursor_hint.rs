@@ -18,7 +18,7 @@
  */
 
 use super::super::Middleware;
-use crate::engine::{dispatch::Mode, event::{Event, effect::CursorHintCompensationEvent, input::{Key}, internal::RenderedEvent}};
+use crate::engine::{event::{Event, effect::CursorHintCompensationEvent, internal::RenderedEvent}};
 
 pub struct CursorHintMiddleware {}
 

@@ -137,7 +137,7 @@ fn is_event_of_interest(event: &Event) -> bool {
         }
       }
     },
-    // TODO: handle mouse
+    Event::Mouse(mouse_event) => mouse_event.status == Status::Pressed,
     Event::MatchInjected => true,
     _ => false,
   }
@@ -149,8 +149,8 @@ fn convert_to_matcher_event(event: &Event) -> Option<MatcherEvent> {
       key: keyboard_event.key.clone(),
       chars: keyboard_event.value.clone(),
     }),
+    Event::Mouse(_) => Some(MatcherEvent::VirtualSeparator),
     Event::MatchInjected => Some(MatcherEvent::VirtualSeparator),
-    // TODO: mouse event should act as separator
     _ => None,
   }
 }

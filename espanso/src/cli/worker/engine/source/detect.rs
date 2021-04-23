@@ -24,7 +24,7 @@ use log::{error, trace};
 
 use crate::engine::{
   event::{
-    input::{Key, KeyboardEvent, Status, Variant},
+    input::{Key, KeyboardEvent, MouseButton, MouseEvent, Status, Variant},
     Event,
   },
   funnel, process,
@@ -51,7 +51,10 @@ impl<'a> funnel::Source<'a> for DetectSource {
         status: keyboard_event.status.into(),
         variant: keyboard_event.variant.map(|variant| variant.into()),
       }),
-      InputEvent::Mouse(mouse_event) => todo!(),  // TODO
+      InputEvent::Mouse(mouse_event) => Event::Mouse(MouseEvent {
+        status: mouse_event.status.into(),
+        button: mouse_event.button.into(),
+      }),
       InputEvent::HotKey(_) => todo!(), // TODO
     }
   }
@@ -76,11 +79,13 @@ pub fn init_and_spawn() -> Result<DetectSource> {
               .send(true)
               .expect("unable to send to the init_tx channel");
 
-            source.eventloop(Box::new(move |event| {
-              sender
-                .send(event)
-                .expect("unable to send to the source channel");
-            })).expect("detect eventloop crashed");
+            source
+              .eventloop(Box::new(move |event| {
+                sender
+                  .send(event)
+                  .expect("unable to send to the source channel");
+              }))
+              .expect("detect eventloop crashed");
           }
         }
         Err(error) => {
@@ -177,6 +182,21 @@ impl From<espanso_detect::event::Status> for Status {
     match status {
       espanso_detect::event::Status::Pressed => Status::Pressed,
       espanso_detect::event::Status::Released => Status::Released,
+    }
+  }
+}
+
+impl From<espanso_detect::event::MouseButton> for MouseButton {
+  fn from(button: espanso_detect::event::MouseButton) -> Self {
+    match button {
+      espanso_detect::event::MouseButton::Left => MouseButton::Left,
+      espanso_detect::event::MouseButton::Right => MouseButton::Right,
+      espanso_detect::event::MouseButton::Middle => MouseButton::Middle,
+      espanso_detect::event::MouseButton::Button1 => MouseButton::Button1,
+      espanso_detect::event::MouseButton::Button2 => MouseButton::Button2,
+      espanso_detect::event::MouseButton::Button3 => MouseButton::Button3,
+      espanso_detect::event::MouseButton::Button4 => MouseButton::Button4,
+      espanso_detect::event::MouseButton::Button5 => MouseButton::Button5,
     }
   }
 }
