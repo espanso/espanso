@@ -27,7 +27,7 @@ mod resolve;
 mod util;
 pub(crate) mod store;
 
-pub trait Config {
+pub trait Config: Send {
   fn id(&self) -> i32;
   fn label(&self) -> &str;
   fn match_paths(&self) -> &[String];
@@ -36,7 +36,7 @@ pub trait Config {
   fn is_match(&self, app: &AppProperties) -> bool;
 }
 
-pub trait ConfigStore {
+pub trait ConfigStore: Send {
   fn default(&self) -> &dyn Config;
   fn active<'a>(&'a self, app: &AppProperties) -> &'a dyn Config;
   fn configs(&self) -> Vec<&dyn Config>;
