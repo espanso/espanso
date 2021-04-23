@@ -17,36 +17,32 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub mod keyboard;
 pub mod text;
-pub mod matches;
-pub mod render;
+pub mod input;
 pub mod effect;
+pub mod internal;
 
 #[derive(Debug, Clone)]
 pub enum Event {
   NOOP,
-  ProcessingError(String), // TODO: create dedicated event
+  ProcessingError(String),
   
   // Inputs
-  // TODO: Move to the input mode
-  Keyboard(keyboard::KeyboardEvent),
+  Keyboard(input::KeyboardEvent),
 
   // Internal
-  // TODO: move to the "internal" mode (maybe, change name?)
-  MatchesDetected(matches::MatchesDetectedEvent),
-  MatchSelected(matches::MatchSelectedEvent),
-  CauseCompensatedMatch(matches::CauseCompensatedMatchEvent),
+  MatchesDetected(internal::MatchesDetectedEvent),
+  MatchSelected(internal::MatchSelectedEvent),
+  CauseCompensatedMatch(internal::CauseCompensatedMatchEvent),
 
-  RenderingRequested(render::RenderingRequestedEvent),
-  Rendered(render::RenderedEvent),
+  RenderingRequested(internal::RenderingRequestedEvent),
+  Rendered(internal::RenderedEvent),
   MatchInjected,
 
   // Effects
   TriggerCompensation(effect::TriggerCompensationEvent),
   CursorHintCompensation(effect::CursorHintCompensationEvent),
 
-  // TODO: move to the "effect" mod
-  KeySequenceInject(keyboard::KeySequenceInjectRequest),
-  TextInject(text::TextInjectRequest),
+  KeySequenceInject(effect::KeySequenceInjectRequest),
+  TextInject(effect::TextInjectRequest),
 }

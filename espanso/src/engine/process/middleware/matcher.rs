@@ -23,8 +23,8 @@ use std::{cell::RefCell, collections::VecDeque};
 use super::super::Middleware;
 use crate::engine::{
   event::{
-    keyboard::{Key, Status},
-    matches::{DetectedMatch, MatchesDetectedEvent},
+    input::{Key, Status},
+    internal::{DetectedMatch, MatchesDetectedEvent},
     Event,
   },
   process::{Matcher, MatcherEvent},

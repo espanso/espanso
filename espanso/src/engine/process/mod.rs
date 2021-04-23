@@ -17,7 +17,7 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use super::{Event, event::{keyboard::Key, matches::DetectedMatch}};
+use super::{Event, event::{input::Key, internal::DetectedMatch}};
 use anyhow::Result;
 use std::collections::HashMap;
 use thiserror::Error;

@@ -19,7 +19,7 @@
 
 use anyhow::Result;
 
-use super::{event::keyboard::Key, Event};
+use super::{event::input::Key, Event};
 
 mod default;
 mod executor;

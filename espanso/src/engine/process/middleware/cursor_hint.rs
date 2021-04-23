@@ -18,7 +18,7 @@
  */
 
 use super::super::Middleware;
-use crate::engine::{dispatch::Mode, event::{Event, effect::CursorHintCompensationEvent, keyboard::{Key, KeySequenceInjectRequest}, render::RenderedEvent, text::{TextInjectMode, TextInjectRequest}}};
+use crate::engine::{dispatch::Mode, event::{Event, effect::CursorHintCompensationEvent, input::{Key, KeySequenceInjectRequest}, internal::RenderedEvent, text::{TextInjectMode, TextInjectRequest}}};
 
 pub struct CursorHintMiddleware {}
 

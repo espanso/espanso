@@ -21,7 +21,7 @@ use std::collections::HashMap;
 
 use espanso_config::matches::{Match, MatchEffect};
 
-use crate::engine::{event::{Event, matches::DetectedMatch, render::RenderingRequestedEvent}, process::Multiplexer};
+use crate::engine::{event::{Event, internal::DetectedMatch, internal::RenderingRequestedEvent}, process::Multiplexer};
 
 pub trait MatchProvider<'a> {
   fn get(&self, match_id: i32) -> Option<&'a Match>;

@@ -23,7 +23,7 @@ use super::super::Middleware;
 use crate::engine::{
   event::{
     effect::{CursorHintCompensationEvent, TriggerCompensationEvent},
-    render::RenderedEvent,
+    internal::RenderedEvent,
     Event,
   },
   process::{Renderer, RendererError},
