@@ -37,9 +37,22 @@ pub struct KeyboardEvent {
   pub variant: Option<Variant>,
 }
 
-#[derive(Debug, Clone)]
-pub struct KeySequenceInjectRequest {
-  pub keys: Vec<Key>,
+#[derive(Debug, Clone, PartialEq)]
+pub enum MouseButton {
+  Left,
+  Right,
+  Middle,
+  Button1,
+  Button2,
+  Button3,
+  Button4,
+  Button5,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct MouseEvent {
+  pub button: MouseButton,
+  pub status: Status,
 }
 
 #[derive(Debug, Clone, PartialEq)]

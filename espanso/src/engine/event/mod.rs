@@ -28,6 +28,8 @@ pub enum Event {
   
   // Inputs
   Keyboard(input::KeyboardEvent),
+  Mouse(input::MouseEvent),
+  // TODO: hotkeys
 
   // Internal
   MatchesDetected(internal::MatchesDetectedEvent),

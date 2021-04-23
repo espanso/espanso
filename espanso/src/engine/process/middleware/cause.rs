@@ -19,10 +19,8 @@
 
 use super::super::Middleware;
 use crate::engine::{
-  dispatch::Mode,
   event::{
     effect::TriggerCompensationEvent,
-    input::{Key, KeySequenceInjectRequest},
     internal::CauseCompensatedMatchEvent,
     Event,
   },
