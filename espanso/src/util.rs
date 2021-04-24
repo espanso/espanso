@@ -17,5 +17,17 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub mod modulo;
-pub mod selector;
+use std::process::Command;
+
+#[cfg(target_os = "windows")]
+pub fn set_command_flags(command: &mut Command) {
+  use std::os::windows::process::CommandExt;
+  // Avoid showing the shell window
+  // See: https://github.com/federico-terzi/espanso/issues/249
+  command.creation_flags(0x08000000);
+}
+
+#[cfg(not(target_os = "windows"))]
+pub fn set_command_flags(_: &mut Command) {
+  // NOOP on Linux and macOS
+}
