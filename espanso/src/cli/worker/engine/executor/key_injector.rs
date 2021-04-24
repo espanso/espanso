@@ -33,6 +33,8 @@ impl<'a> KeyInjectorAdapter<'a> {
 
 impl<'a> KeyInjector for KeyInjectorAdapter<'a> {
   fn inject_sequence(&self, keys: &[crate::engine::event::input::Key]) -> anyhow::Result<()> {
+    // TODO: wait for modifiers release
+    
     let converted_keys: Vec<_> = keys.iter().map(convert_to_inject_key).collect();
     self.injector.send_keys(&converted_keys, Default::default()) // TODO: handle options
   }

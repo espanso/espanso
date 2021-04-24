@@ -55,6 +55,7 @@ fn worker_main(args: CliModuleArgs) {
     icon_paths: convert_icon_paths_to_tray_vec(&icon_paths),
     notification_icon_path: icon_paths
       .logo
+      .as_ref()
       .map(|path| path.to_string_lossy().to_string()),
     ..Default::default()
   })
@@ -66,7 +67,7 @@ fn worker_main(args: CliModuleArgs) {
 
   // TODO: pass the remote
   // Initialize the engine on another thread and start it
-  engine::initialize_and_spawn(paths.clone(), config_store, match_store)
+  engine::initialize_and_spawn(paths.clone(), config_store, match_store, icon_paths)
     .expect("unable to initialize engine");
 
   eventloop.run(Box::new(move |event| {

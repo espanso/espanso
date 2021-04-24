@@ -302,6 +302,8 @@ dependencies = [
  "lazy_static",
  "log",
  "maplit",
+ "serde",
+ "serde_json",
  "simplelog",
  "thiserror",
 ]

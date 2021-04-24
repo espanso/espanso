@@ -28,6 +28,7 @@ use simplelog::{
 };
 
 mod cli;
+mod util;
 mod engine;
 mod logging;
 

@@ -22,6 +22,8 @@ use espanso_config::{config::ConfigStore, matches::store::MatchStore};
 use espanso_path::Paths;
 use ui::selector::MatchSelectorAdapter;
 
+use super::ui::icon::IconPaths;
+
 pub mod executor;
 pub mod match_cache;
 pub mod matcher;
@@ -30,10 +32,17 @@ pub mod render;
 pub mod source;
 pub mod ui;
 
-pub fn initialize_and_spawn(paths: Paths, config_store: Box<dyn ConfigStore>, match_store: Box<dyn MatchStore>) -> Result<()> {
+pub fn initialize_and_spawn(
+  paths: Paths,
+  config_store: Box<dyn ConfigStore>,
+  match_store: Box<dyn MatchStore>,
+  icon_paths: IconPaths,
+) -> Result<()> {
   std::thread::Builder::new()
     .name("engine thread".to_string())
     .spawn(move || {
+      // TODO: properly order the initializations if necessary
+
       let app_info_provider =
         espanso_info::get_provider().expect("unable to initialize app info provider");
       let config_manager =
@@ -42,15 +51,19 @@ pub fn initialize_and_spawn(paths: Paths, config_store: Box<dyn ConfigStore>, ma
         super::engine::matcher::convert::MatchConverter::new(&*config_store, &*match_store);
       let match_cache = super::engine::match_cache::MatchCache::load(&*config_store, &*match_store);
 
-      let detect_source =
-        super::engine::source::detect::init_and_spawn().expect("failed to initialize detector module");
+      let modulo_manager = ui::modulo::ModuloManager::new();
+
+      let detect_source = super::engine::source::detect::init_and_spawn()
+        .expect("failed to initialize detector module");
       let sources: Vec<&dyn crate::engine::funnel::Source> = vec![&detect_source];
       let funnel = crate::engine::funnel::default(&sources);
 
       let matcher = super::engine::matcher::rolling::RollingMatcherAdapter::new(
         &match_converter.get_rolling_matches(),
       );
-      let matchers: Vec<&dyn crate::engine::process::Matcher<super::engine::matcher::MatcherState>> = vec![&matcher];
+      let matchers: Vec<
+        &dyn crate::engine::process::Matcher<super::engine::matcher::MatcherState>,
+      > = vec![&matcher];
       let selector = MatchSelectorAdapter::new();
       let multiplexer = super::engine::multiplex::MultiplexAdapter::new(&match_cache);
 
@@ -72,6 +85,8 @@ pub fn initialize_and_spawn(paths: Paths, config_store: Box<dyn ConfigStore>, ma
         &paths.packages,
       );
       let shell_extension = espanso_render::extension::shell::ShellExtension::new(&paths.config);
+      let form_adapter = ui::modulo::form::ModuloFormProviderAdapter::new(&modulo_manager, icon_paths.form_icon);
+      let form_extension = espanso_render::extension::form::FormExtension::new(&form_adapter);
       let renderer = espanso_render::create(vec![
         &clipboard_extension,
         &date_extension,
@@ -79,6 +94,7 @@ pub fn initialize_and_spawn(paths: Paths, config_store: Box<dyn ConfigStore>, ma
         &random_extension,
         &script_extension,
         &shell_extension,
+        &form_extension,
       ]);
       let renderer_adapter =
         super::engine::render::RendererAdapter::new(&match_cache, &config_manager, &renderer);
@@ -92,11 +108,13 @@ pub fn initialize_and_spawn(paths: Paths, config_store: Box<dyn ConfigStore>, ma
         &match_cache,
       );
 
-      let event_injector = super::engine::executor::event_injector::EventInjectorAdapter::new(&*injector);
-      let clipboard_injector = super::engine::executor::clipboard_injector::ClipboardInjectorAdapter::new(
-        &*injector,
-        &*clipboard,
-      );
+      let event_injector =
+        super::engine::executor::event_injector::EventInjectorAdapter::new(&*injector);
+      let clipboard_injector =
+        super::engine::executor::clipboard_injector::ClipboardInjectorAdapter::new(
+          &*injector,
+          &*clipboard,
+        );
       let key_injector = super::engine::executor::key_injector::KeyInjectorAdapter::new(&*injector);
       let dispatcher = crate::engine::dispatch::default(
         &event_injector,

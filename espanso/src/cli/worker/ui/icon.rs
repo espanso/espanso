@@ -33,6 +33,8 @@ const WINDOWS_RED_ICO_BINARY: &[u8] = include_bytes!("../../../res/windows/espan
 
 #[derive(Debug, Default)]
 pub struct IconPaths {
+  pub form_icon: Option<PathBuf>,
+
   pub tray_icon_normal: Option<PathBuf>,
   pub tray_icon_disabled: Option<PathBuf>,
   pub tray_icon_system_disabled: Option<PathBuf>, // TODO: secure input
@@ -43,6 +45,7 @@ pub struct IconPaths {
 #[cfg(target_os = "windows")]
 pub fn load_icon_paths(runtime_dir: &Path) -> Result<IconPaths> {
   Ok(IconPaths {
+    form_icon: Some(extract_icon(WINDOWS_ICO_BINARY, &runtime_dir.join("form.ico"))?),
     tray_icon_normal: Some(extract_icon(WINDOWS_ICO_BINARY, &runtime_dir.join("normal.ico"))?),
     tray_icon_disabled: Some(extract_icon(WINDOWS_RED_ICO_BINARY, &runtime_dir.join("disabled.ico"))?),
     logo: Some(extract_icon(ICON_BINARY, &runtime_dir.join("icon.png"))?),
