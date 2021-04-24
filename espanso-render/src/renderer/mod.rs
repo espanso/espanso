@@ -21,8 +21,9 @@ use std::collections::{HashMap, HashSet};
 
 use crate::{
   CasingStyle, Context, Extension, ExtensionOutput, ExtensionResult, RenderOptions, RenderResult,
-  Renderer, Scope, Template, Value, Variable
+  Renderer, Scope, Template, Value, Variable,
 };
+use anyhow::Result;
 use log::{error, warn};
 use regex::{Captures, Regex};
 use thiserror::Error;
@@ -40,7 +41,7 @@ pub(crate) struct DefaultRenderer<'a> {
   extensions: HashMap<String, &'a dyn Extension>,
 }
 
-impl <'a> DefaultRenderer<'a> {
+impl<'a> DefaultRenderer<'a> {
   pub fn new(extensions: Vec<&'a dyn Extension>) -> Self {
     let extensions = extensions
       .into_iter()
@@ -50,7 +51,7 @@ impl <'a> DefaultRenderer<'a> {
   }
 }
 
-impl <'a> Renderer for DefaultRenderer<'a> {
+impl<'a> Renderer for DefaultRenderer<'a> {
   fn render(
     &self,
     template: &Template,
@@ -150,42 +151,12 @@ impl <'a> Renderer for DefaultRenderer<'a> {
       }
 
       // Replace the variables
-      let mut replacing_error = None;
-      let output = VAR_REGEX
-        .replace_all(&template.body, |caps: &Captures| {
-          let var_name = caps.name("name").unwrap().as_str();
-          let var_subname = caps.name("subname");
-          match scope.get(var_name) {
-            Some(output) => match output {
-              ExtensionOutput::Single(output) => output,
-              ExtensionOutput::Multiple(results) => match var_subname {
-                Some(var_subname) => {
-                  let var_subname = var_subname.as_str();
-                  results.get(var_subname).map_or("", |value| &*value)
-                }
-                None => {
-                  error!(
-                    "nested name missing from multi-value variable: {}",
-                    var_name
-                  );
-                  replacing_error = Some(RendererError::MissingVariable(format!("nested name missing from multi-value variable: {}", var_name)));
-                  ""
-                }
-              },
-            },
-            None => {
-              replacing_error = Some(RendererError::MissingVariable(format!("variable {} is missing", var_name)));
-              ""
-            },
-          }
-        })
-        .to_string();
-      
-      if let Some(error) = replacing_error {
-        return RenderResult::Error(error.into());
+      match render_variables(&template.body, &scope) {
+        Ok(output) => output,
+        Err(error) => {
+          return RenderResult::Error(error.into());
+        }
       }
-
-      output
     } else {
       template.body.clone()
     };
@@ -199,24 +170,72 @@ impl <'a> Renderer for DefaultRenderer<'a> {
         let mut v: Vec<char> = body.chars().collect();
         v[0] = v[0].to_uppercase().next().unwrap();
         v.into_iter().collect()
-      },
+      }
       CasingStyle::CapitalizeWords => {
         // Capitalize the first letter of each word
-        WORD_REGEX.replace_all(&body, |caps: &Captures| {
-          if let Some(word_match) = caps.get(0) {
-            let mut v: Vec<char> = word_match.as_str().chars().collect();
-            v[0] = v[0].to_uppercase().next().unwrap();
-            let capitalized_word: String = v.into_iter().collect();
-            capitalized_word
-          } else {
-            "".to_string()
-          }
-        }).to_string()
+        WORD_REGEX
+          .replace_all(&body, |caps: &Captures| {
+            if let Some(word_match) = caps.get(0) {
+              let mut v: Vec<char> = word_match.as_str().chars().collect();
+              v[0] = v[0].to_uppercase().next().unwrap();
+              let capitalized_word: String = v.into_iter().collect();
+              capitalized_word
+            } else {
+              "".to_string()
+            }
+          })
+          .to_string()
       }
     };
 
     RenderResult::Success(body_with_casing)
   }
+}
+
+// TODO: test
+pub(crate) fn render_variables(body: &str, scope: &Scope) -> Result<String> {
+  let mut replacing_error = None;
+  let output = VAR_REGEX
+    .replace_all(&body, |caps: &Captures| {
+      let var_name = caps.name("name").unwrap().as_str();
+      let var_subname = caps.name("subname");
+      match scope.get(var_name) {
+        Some(output) => match output {
+          ExtensionOutput::Single(output) => output,
+          ExtensionOutput::Multiple(results) => match var_subname {
+            Some(var_subname) => {
+              let var_subname = var_subname.as_str();
+              results.get(var_subname).map_or("", |value| &*value)
+            }
+            None => {
+              error!(
+                "nested name missing from multi-value variable: {}",
+                var_name
+              );
+              replacing_error = Some(RendererError::MissingVariable(format!(
+                "nested name missing from multi-value variable: {}",
+                var_name
+              )));
+              ""
+            }
+          },
+        },
+        None => {
+          replacing_error = Some(RendererError::MissingVariable(format!(
+            "variable {} is missing",
+            var_name
+          )));
+          ""
+        }
+      }
+    })
+    .to_string();
+  
+  if let Some(error) = replacing_error {
+    return Err(error.into());
+  }
+
+  Ok(output)
 }
 
 fn get_matching_template<'a>(
@@ -280,7 +299,7 @@ mod tests {
         return ExtensionResult::Aborted;
       }
       if params.get("error").is_some() {
-        return ExtensionResult::Error(RendererError::MissingVariable("missing".to_string()).into())
+        return ExtensionResult::Error(RendererError::MissingVariable("missing".to_string()).into());
       }
       ExtensionResult::Aborted
     }
@@ -294,56 +313,77 @@ mod tests {
     Template {
       ids: vec!["id".to_string()],
       body: str.to_string(),
-      vars: Vec::new(), 
+      vars: Vec::new(),
     }
   }
 
   pub fn template(body: &str, vars: &[(&str, &str)]) -> Template {
-    let vars = vars.iter().map(|(name, value)| {
-      Variable {
+    let vars = vars
+      .iter()
+      .map(|(name, value)| Variable {
         name: (*name).to_string(),
         var_type: "mock".to_string(),
-        params: Params::from_iter(vec![("echo".to_string(), Value::String((*value).to_string()))].into_iter())
-      }
-    }).collect();
+        params: Params::from_iter(
+          vec![("echo".to_string(), Value::String((*value).to_string()))].into_iter(),
+        ),
+      })
+      .collect();
     Template {
       ids: vec!["id".to_string()],
       body: body.to_string(),
-      vars, 
+      vars,
     }
   }
 
   #[test]
   fn no_variable_no_styling() {
     let renderer = get_renderer();
-    let res = renderer.render(&template_for_str("plain body"), &Default::default(), &Default::default());
+    let res = renderer.render(
+      &template_for_str("plain body"),
+      &Default::default(),
+      &Default::default(),
+    );
     assert!(matches!(res, RenderResult::Success(str) if str == "plain body"));
   }
 
   #[test]
   fn no_variable_capitalize() {
     let renderer = get_renderer();
-    let res = renderer.render(&template_for_str("plain body"), &Default::default(), &RenderOptions {
-      casing_style: CasingStyle::Capitalize,
-    });
+    let res = renderer.render(
+      &template_for_str("plain body"),
+      &Default::default(),
+      &RenderOptions {
+        casing_style: CasingStyle::Capitalize,
+      },
+    );
     assert!(matches!(res, RenderResult::Success(str) if str == "Plain body"));
   }
 
   #[test]
   fn no_variable_capitalize_words() {
     let renderer = get_renderer();
-    let res = renderer.render(&template_for_str("ordinary least squares, with other.punctuation !Marks"), &Default::default(), &RenderOptions {
-      casing_style: CasingStyle::CapitalizeWords,
-    });
-    assert!(matches!(res, RenderResult::Success(str) if str == "Ordinary Least Squares, With Other.Punctuation !Marks"));
+    let res = renderer.render(
+      &template_for_str("ordinary least squares, with other.punctuation !Marks"),
+      &Default::default(),
+      &RenderOptions {
+        casing_style: CasingStyle::CapitalizeWords,
+      },
+    );
+    assert!(
+      matches!(res, RenderResult::Success(str) if str == "Ordinary Least Squares, With Other.Punctuation !Marks")
+    );
   }
 
   #[test]
   fn no_variable_uppercase() {
     let renderer = get_renderer();
-    let res = renderer.render(&template_for_str("plain body"), &Default::default(), &RenderOptions {
-      casing_style: CasingStyle::Uppercase,
-    });
+    let res = renderer.render(
+      &template_for_str("plain body"),
+      &Default::default(),
+      &RenderOptions {
+        casing_style: CasingStyle::Uppercase,
+      },
+    );
     assert!(matches!(res, RenderResult::Success(str) if str == "PLAIN BODY"));
   }
 
@@ -367,16 +407,21 @@ mod tests {
   fn global_variable() {
     let renderer = get_renderer();
     let template = template("hello {{var}}", &[]);
-    let res = renderer.render(&template, &Context {
-      global_vars: vec![
-        &Variable {
+    let res = renderer.render(
+      &template,
+      &Context {
+        global_vars: vec![&Variable {
           name: "var".to_string(),
           var_type: "mock".to_string(),
-          params: Params::from_iter(vec![("echo".to_string(), Value::String("world".to_string()))])
-        }
-      ],
-      ..Default::default()
-    }, &Default::default());
+          params: Params::from_iter(vec![(
+            "echo".to_string(),
+            Value::String("world".to_string()),
+          )]),
+        }],
+        ..Default::default()
+      },
+      &Default::default(),
+    );
     assert!(matches!(res, RenderResult::Success(str) if str == "hello world"));
   }
 
@@ -384,31 +429,38 @@ mod tests {
   fn global_variable_explicit_ordering() {
     let renderer = get_renderer();
     let template = Template {
-      body: "hello {{var}} {{local}}".to_string(), 
+      body: "hello {{var}} {{local}}".to_string(),
       vars: vec![
         Variable {
           name: "local".to_string(),
           var_type: "mock".to_string(),
-          params: Params::from_iter(vec![("echo".to_string(), Value::String("Bob".to_string()))].into_iter())
+          params: Params::from_iter(
+            vec![("echo".to_string(), Value::String("Bob".to_string()))].into_iter(),
+          ),
         },
         Variable {
           name: "var".to_string(),
           var_type: "global".to_string(),
           ..Default::default()
-        }
+        },
       ],
       ..Default::default()
     };
-    let res = renderer.render(&template, &Context {
-      global_vars: vec![
-        &Variable {
+    let res = renderer.render(
+      &template,
+      &Context {
+        global_vars: vec![&Variable {
           name: "var".to_string(),
           var_type: "mock".to_string(),
-          params: Params::from_iter(vec![("read".to_string(), Value::String("local".to_string()))])
-        }
-      ],
-      ..Default::default()
-    }, &Default::default());
+          params: Params::from_iter(vec![(
+            "read".to_string(),
+            Value::String("local".to_string()),
+          )]),
+        }],
+        ..Default::default()
+      },
+      &Default::default(),
+    );
     assert!(matches!(res, RenderResult::Success(str) if str == "hello Bob Bob"));
   }
 
@@ -416,25 +468,29 @@ mod tests {
   fn nested_match() {
     let renderer = get_renderer();
     let template = Template {
-      body: "hello {{var}}".to_string(), 
-      vars: vec![
-        Variable {
-          name: "var".to_string(),
-          var_type: "match".to_string(),
-          params: Params::from_iter(vec![("trigger".to_string(), Value::String("nested".to_string()))].into_iter())
-        },
-      ],
+      body: "hello {{var}}".to_string(),
+      vars: vec![Variable {
+        name: "var".to_string(),
+        var_type: "match".to_string(),
+        params: Params::from_iter(
+          vec![("trigger".to_string(), Value::String("nested".to_string()))].into_iter(),
+        ),
+      }],
       ..Default::default()
     };
     let nested_template = Template {
       ids: vec!["nested".to_string()],
-      body: "world".to_string(), 
+      body: "world".to_string(),
       ..Default::default()
     };
-    let res = renderer.render(&template, &Context {
-      templates: vec![&nested_template],
-      ..Default::default()
-    }, &Default::default());
+    let res = renderer.render(
+      &template,
+      &Context {
+        templates: vec![&nested_template],
+        ..Default::default()
+      },
+      &Default::default(),
+    );
     assert!(matches!(res, RenderResult::Success(str) if str == "hello world"));
   }
 
@@ -442,35 +498,37 @@ mod tests {
   fn missing_nested_match() {
     let renderer = get_renderer();
     let template = Template {
-      body: "hello {{var}}".to_string(), 
-      vars: vec![
-        Variable {
-          name: "var".to_string(),
-          var_type: "match".to_string(),
-          params: Params::from_iter(vec![("trigger".to_string(), Value::String("nested".to_string()))].into_iter())
-        },
-      ],
+      body: "hello {{var}}".to_string(),
+      vars: vec![Variable {
+        name: "var".to_string(),
+        var_type: "match".to_string(),
+        params: Params::from_iter(
+          vec![("trigger".to_string(), Value::String("nested".to_string()))].into_iter(),
+        ),
+      }],
       ..Default::default()
     };
-    let res = renderer.render(&template, &Context {
-      ..Default::default()
-    }, &Default::default());
+    let res = renderer.render(
+      &template,
+      &Context {
+        ..Default::default()
+      },
+      &Default::default(),
+    );
     assert!(matches!(res, RenderResult::Error(_)));
   }
-  
+
   #[test]
   fn extension_aborting_propagates() {
     let renderer = get_renderer();
     let template = Template {
       body: "hello {{var}}".to_string(),
-      vars: vec![
-        Variable {
-          name: "var".to_string(),
-          var_type: "mock".to_string(),
-          params: Params::from_iter(vec![("abort".to_string(), Value::Null)].into_iter()),
-        }
-      ],
-      ..Default::default() 
+      vars: vec![Variable {
+        name: "var".to_string(),
+        var_type: "mock".to_string(),
+        params: Params::from_iter(vec![("abort".to_string(), Value::Null)].into_iter()),
+      }],
+      ..Default::default()
     };
     let res = renderer.render(&template, &Default::default(), &Default::default());
     assert!(matches!(res, RenderResult::Aborted));
@@ -481,14 +539,12 @@ mod tests {
     let renderer = get_renderer();
     let template = Template {
       body: "hello {{var}}".to_string(),
-      vars: vec![
-        Variable {
-          name: "var".to_string(),
-          var_type: "mock".to_string(),
-          params: Params::from_iter(vec![("error".to_string(), Value::Null)].into_iter()),
-        }
-      ],
-      ..Default::default() 
+      vars: vec![Variable {
+        name: "var".to_string(),
+        var_type: "mock".to_string(),
+        params: Params::from_iter(vec![("error".to_string(), Value::Null)].into_iter()),
+      }],
+      ..Default::default()
     };
     let res = renderer.render(&template, &Default::default(), &Default::default());
     assert!(matches!(res, RenderResult::Error(_)));
