@@ -21,12 +21,13 @@ use crate::{
   counter::next_id,
   matches::{
     group::{path::resolve_imports, MatchGroup},
-    Match, UpperCasingStyle, Variable,
+    Match, UpperCasingStyle, Variable, Params, Value,
   },
 };
 use anyhow::Result;
 use log::{error, warn};
 use parse::YAMLMatchGroup;
+use regex::{Regex, Captures};
 use std::convert::{TryFrom, TryInto};
 
 use self::{
@@ -39,6 +40,10 @@ use super::Importer;
 
 pub(crate) mod parse;
 mod util;
+
+lazy_static! {
+  static ref VAR_REGEX: Regex = Regex::new("\\{\\{\\s*(\\w+)(\\.\\w+)?\\s*\\}\\}").unwrap();
+}
 
 pub(crate) struct YAMLImporter {}
 
@@ -152,6 +157,35 @@ impl TryFrom<YAMLMatch> for Match {
       MatchEffect::Text(TextEffect {
         replace,
         vars: vars?,
+      })
+    } else if let Some(form_layout) = yaml_match.form { // TODO: test form case
+      // Replace all the form fields with actual variables
+      let resolved_layout = VAR_REGEX.replace_all(&form_layout, |caps: &Captures| {
+        let var_name = caps.get(1).unwrap().as_str();
+        format!("{{{{form1.{}}}}}", var_name)
+      }).to_string();
+
+      // Convert escaped brakets in forms
+      let resolved_layout = resolved_layout.replace("\\{", "{ ").replace("\\}", " }");
+
+      // Convert the form data to valid variables
+      let mut params = Params::new();
+      params.insert("layout".to_string(), Value::String(form_layout));
+
+      if let Some(fields) = yaml_match.form_fields {
+        params.insert("fields".to_string(), Value::Object(convert_params(fields)?));
+      }
+
+      let vars = vec![Variable {
+        id: next_id(),
+        name: "form1".to_owned(),
+        var_type: "form".to_owned(),
+        params,
+      }];
+
+      MatchEffect::Text(TextEffect {
+        replace: resolved_layout,
+        vars,
       })
     } else {
       MatchEffect::None
