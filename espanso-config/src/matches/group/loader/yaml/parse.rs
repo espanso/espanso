@@ -71,10 +71,10 @@ pub struct YAMLMatch {
   pub image_path: Option<String>, // TODO: map
 
   #[serde(default)]
-  pub form: Option<String>, // TODO: map
+  pub form: Option<String>,
 
   #[serde(default)]
-  pub form_fields: Option<HashMap<String, Value>>, // TODO: map
+  pub form_fields: Option<Mapping>,
 
   #[serde(default)]
   pub vars: Option<Vec<YAMLVariable>>,
