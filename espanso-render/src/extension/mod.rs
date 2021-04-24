@@ -19,6 +19,7 @@
 
 pub mod date;
 pub mod echo;
+pub mod form;
 pub mod clipboard;
 pub mod shell;
 pub mod script;
