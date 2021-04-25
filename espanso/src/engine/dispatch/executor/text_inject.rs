@@ -19,7 +19,7 @@
 
 use anyhow::Result;
 use super::super::{Event, Executor};
-use crate::engine::event::effect::TextInjectMode;
+use crate::engine::event::{EventType, effect::TextInjectMode};
 use log::{error, trace};
 
 pub trait TextInjector {
@@ -63,7 +63,7 @@ impl<'a> TextInjectExecutor<'a> {
 
 impl<'a> Executor for TextInjectExecutor<'a> {
   fn execute(&self, event: &Event) -> bool {
-    if let Event::TextInject(inject_event) = event {
+    if let EventType::TextInject(inject_event) = &event.etype {
       let active_mode = self.mode_provider.active_mode();
 
       let injector = if let Some(force_mode) = &inject_event.force_mode {

@@ -17,30 +17,32 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::engine::event::EventType;
+use std::sync::{
+  atomic::{AtomicU32, Ordering},
+  Arc,
+};
 
-use super::super::{Event, Executor, KeyInjector};
-use log::error;
+use crate::engine::{event::SourceId, process::EventSequenceProvider};
 
-pub struct KeyInjectExecutor<'a> {
-  injector: &'a dyn KeyInjector,
+#[derive(Clone)]
+pub struct Sequencer {
+  current_id: Arc<AtomicU32>,
 }
 
-impl<'a> KeyInjectExecutor<'a> {
-  pub fn new(injector: &'a dyn KeyInjector) -> Self {
-    Self { injector }
+impl Sequencer {
+  pub fn new() -> Self {
+    Self {
+      current_id: Arc::new(AtomicU32::new(0)),
+    }
+  }
+
+  pub fn next_id(&self) -> SourceId {
+    self.current_id.fetch_add(1, Ordering::SeqCst)
   }
 }
 
-impl<'a> Executor for KeyInjectExecutor<'a> {
-  fn execute(&self, event: &Event) -> bool {
-    if let EventType::KeySequenceInject(inject_event) = &event.etype {
-      if let Err(error) = self.injector.inject_sequence(&inject_event.keys) {
-        error!("key injector reported an error: {}", error);
-      }
-      return true;
-    }
-
-    false
+impl EventSequenceProvider for Sequencer {
+  fn get_next_id(&self) -> SourceId {
+    self.next_id()
   }
 }

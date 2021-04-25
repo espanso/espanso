@@ -24,19 +24,22 @@ use thiserror::Error;
 
 use detect::DetectSource;
 
-use self::modifier::{Modifier, ModifierStateStore};
+use self::{modifier::{Modifier, ModifierStateStore}, sequencer::Sequencer};
 
 pub mod detect;
 pub mod modifier;
+pub mod sequencer;
 
 // TODO: pass options
-pub fn init_and_spawn() -> Result<(DetectSource, ModifierStateStore)> {
+pub fn init_and_spawn() -> Result<(DetectSource, ModifierStateStore, Sequencer)> {
   let (sender, receiver) = crossbeam::channel::unbounded();
   let (init_tx, init_rx) = crossbeam::channel::unbounded();
 
   let modifier_state_store = ModifierStateStore::new();
+  let sequencer = Sequencer::new();
 
   let state_store_clone = modifier_state_store.clone();
+  let sequencer_clone = sequencer.clone();
   if let Err(error) = std::thread::Builder::new()
     .name("detect thread".to_string())
     .spawn(
@@ -58,8 +61,11 @@ pub fn init_and_spawn() -> Result<(DetectSource, ModifierStateStore)> {
                   state_store_clone.update_state(modifier, is_pressed);
                 }
 
+                // Generate a monotonically increasing id for the current event
+                let source_id = sequencer_clone.next_id();
+
                 sender
-                  .send(event)
+                  .send((event, source_id))
                   .expect("unable to send to the source channel");
               }))
               .expect("detect eventloop crashed");
@@ -86,7 +92,7 @@ pub fn init_and_spawn() -> Result<(DetectSource, ModifierStateStore)> {
     return Err(DetectSourceError::InitFailed.into());
   }
 
-  Ok((DetectSource { receiver }, modifier_state_store))
+  Ok((DetectSource { receiver }, modifier_state_store, sequencer))
 }
 
 #[derive(Error, Debug)]

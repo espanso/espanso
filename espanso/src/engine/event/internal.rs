@@ -57,3 +57,9 @@ pub struct RenderedEvent {
   pub match_id: i32,
   pub body: String,
 }
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct DiscardPreviousEvent {
+  // All Events with a source_id smaller than this one will be discarded
+  pub minimum_source_id: u32,
+}

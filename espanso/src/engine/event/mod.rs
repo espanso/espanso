@@ -21,8 +21,30 @@ pub mod input;
 pub mod effect;
 pub mod internal;
 
+pub type SourceId = u32;
+
 #[derive(Debug, Clone)]
-pub enum Event {
+pub struct Event {
+  // The source id is a unique, monothonically increasing number
+  // that is given to each event by the source and is propagated
+  // to all consequential events.
+  // For example, if a keyboard event with source_id = 5 generates
+  // a detected match event, this event will have source_id = 5
+  pub source_id: SourceId,
+  pub etype: EventType,
+}
+
+impl Event {
+  pub fn caused_by(cause_id: SourceId, event_type: EventType) -> Event {
+    Event {
+      source_id: cause_id,
+      etype: event_type,
+    }
+  } 
+}
+
+#[derive(Debug, Clone)]
+pub enum EventType {
   NOOP,
   ProcessingError(String),
   
@@ -39,6 +61,7 @@ pub enum Event {
   RenderingRequested(internal::RenderingRequestedEvent),
   Rendered(internal::RenderedEvent),
   MatchInjected,
+  DiscardPrevious(internal::DiscardPreviousEvent),
 
   // Effects
   TriggerCompensation(effect::TriggerCompensationEvent),

@@ -18,7 +18,7 @@
  */
 
 use super::super::Middleware;
-use crate::engine::{event::{Event, effect::CursorHintCompensationEvent, internal::RenderedEvent}};
+use crate::engine::{event::{Event, EventType, effect::CursorHintCompensationEvent, internal::RenderedEvent}};
 
 pub struct CursorHintMiddleware {}
 
@@ -34,20 +34,20 @@ impl Middleware for CursorHintMiddleware {
   }
 
   fn next(&self, event: Event, dispatch: &mut dyn FnMut(Event)) -> Event {
-    if let Event::Rendered(m_event) = event {
+    if let EventType::Rendered(m_event) = event.etype {
       let (body, cursor_hint_back_count) = process_cursor_hint(m_event.body);
 
       if let Some(cursor_hint_back_count) = cursor_hint_back_count {
-        dispatch(Event::CursorHintCompensation(CursorHintCompensationEvent {
+        dispatch(Event::caused_by(event.source_id, EventType::CursorHintCompensation(CursorHintCompensationEvent {
           cursor_hint_back_count,
-        }))
+        })));
       }
 
       // Alter the rendered event to remove the cursor hint from the body
-      return Event::Rendered(RenderedEvent {
+      return Event::caused_by(event.source_id, EventType::Rendered(RenderedEvent {
         body,
         ..m_event
-      })
+      }));
     }
 
     event

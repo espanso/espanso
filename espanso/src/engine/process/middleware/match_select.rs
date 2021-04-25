@@ -20,13 +20,7 @@
 use log::{debug, error};
 
 use super::super::Middleware;
-use crate::engine::{
-  event::{
-    internal::{MatchSelectedEvent},
-    Event,
-  },
-  process::{MatchFilter, MatchSelector},
-};
+use crate::engine::{event::{Event, EventType, internal::{MatchSelectedEvent}}, process::{MatchFilter, MatchSelector}};
 
 pub struct MatchSelectMiddleware<'a> {
   match_filter: &'a dyn MatchFilter,
@@ -48,14 +42,14 @@ impl<'a> Middleware for MatchSelectMiddleware<'a> {
   }
   
   fn next(&self, event: Event, _: &mut dyn FnMut(Event)) -> Event {
-    if let Event::MatchesDetected(m_event) = event {
+    if let EventType::MatchesDetected(m_event) = event.etype {
       let matches_ids: Vec<i32> = m_event.matches.iter().map(|m| m.id).collect();
 
       // Find the matches that are actually valid in the current context
       let valid_ids = self.match_filter.filter_active(&matches_ids);
 
       return match valid_ids.len() {
-        0 => Event::NOOP, // No valid matches, consume the event
+        0 => Event::caused_by(event.source_id, EventType::NOOP), // No valid matches, consume the event
         1 => {
           // Only one match, no need to show a selection dialog
           let m = m_event
@@ -63,10 +57,10 @@ impl<'a> Middleware for MatchSelectMiddleware<'a> {
             .into_iter()
             .find(|m| m.id == *valid_ids.first().unwrap());
           if let Some(m) = m {
-            Event::MatchSelected(MatchSelectedEvent { chosen: m })
+            Event::caused_by(event.source_id, EventType::MatchSelected(MatchSelectedEvent { chosen: m }))
           } else {
             error!("MatchSelectMiddleware could not find the correspondent match");
-            Event::NOOP
+            Event::caused_by(event.source_id, EventType::NOOP)
           }
         }
         _ => {
@@ -77,14 +71,14 @@ impl<'a> Middleware for MatchSelectMiddleware<'a> {
               .into_iter()
               .find(|m| m.id == selected_id);
             if let Some(m) = m {
-              Event::MatchSelected(MatchSelectedEvent { chosen: m })
+              Event::caused_by(event.source_id, EventType::MatchSelected(MatchSelectedEvent { chosen: m }))
             } else {
               error!("MatchSelectMiddleware could not find the correspondent match");
-              Event::NOOP
+              Event::caused_by(event.source_id, EventType::NOOP)
             }
           } else {
             debug!("MatchSelectMiddleware did not receive any match selection");
-            Event::NOOP
+            Event::caused_by(event.source_id, EventType::NOOP)
           }
         }
       };
