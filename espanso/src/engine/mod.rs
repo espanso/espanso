@@ -17,11 +17,11 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use log::{debug, trace};
+use log::{debug};
 
 use self::{
   dispatch::Dispatcher,
-  event::Event,
+  event::{Event},
   process::Processor,
   funnel::{Funnel, FunnelResult},
 };

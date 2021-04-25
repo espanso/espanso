@@ -25,7 +25,7 @@ use crate::engine::{
   event::{
     input::{Key, Status},
     internal::{DetectedMatch, MatchesDetectedEvent},
-    Event,
+    Event, EventType,
   },
   process::{Matcher, MatcherEvent},
 };
@@ -53,7 +53,7 @@ impl<'a, State> Middleware for MatcherMiddleware<'a, State> {
   }
 
   fn next(&self, event: Event, _: &mut dyn FnMut(Event)) -> Event {
-    if is_event_of_interest(&event) {
+    if is_event_of_interest(&event.etype) {
       let mut matcher_states = self.matcher_states.borrow_mut();
       let prev_states = if !matcher_states.is_empty() {
         matcher_states.get(matcher_states.len() - 1)
@@ -61,7 +61,7 @@ impl<'a, State> Middleware for MatcherMiddleware<'a, State> {
         None
       };
 
-      if let Event::Keyboard(keyboard_event) = &event {
+      if let EventType::Keyboard(keyboard_event) = &event.etype {
         // Backspace handling
         if keyboard_event.key == Key::Backspace {
           trace!("popping the last matcher state");
@@ -80,7 +80,7 @@ impl<'a, State> Middleware for MatcherMiddleware<'a, State> {
 
       let mut all_results = Vec::new();
 
-      if let Some(matcher_event) = convert_to_matcher_event(&event) {
+      if let Some(matcher_event) = convert_to_matcher_event(&event.etype) {
         let mut new_states = Vec::new();
         for (i, matcher) in self.matchers.iter().enumerate() {
           let prev_state = prev_states.and_then(|states| states.get(i));
@@ -97,18 +97,21 @@ impl<'a, State> Middleware for MatcherMiddleware<'a, State> {
         }
 
         if !all_results.is_empty() {
-          return Event::MatchesDetected(MatchesDetectedEvent {
-            matches: all_results
-              .into_iter()
-              .map(|result| DetectedMatch {
-                id: result.id,
-                trigger: Some(result.trigger),
-                right_separator: result.right_separator,
-                left_separator: result.left_separator,
-                args: result.args,
-              })
-              .collect(),
-          });
+          return Event::caused_by(
+            event.source_id,
+            EventType::MatchesDetected(MatchesDetectedEvent {
+              matches: all_results
+                .into_iter()
+                .map(|result| DetectedMatch {
+                  id: result.id,
+                  trigger: Some(result.trigger),
+                  right_separator: result.right_separator,
+                  left_separator: result.left_separator,
+                  args: result.args,
+                })
+                .collect(),
+            }),
+          );
         }
       }
     }
@@ -117,9 +120,9 @@ impl<'a, State> Middleware for MatcherMiddleware<'a, State> {
   }
 }
 
-fn is_event_of_interest(event: &Event) -> bool {
-  match event {
-    Event::Keyboard(keyboard_event) => {
+fn is_event_of_interest(event_type: &EventType) -> bool {
+  match event_type {
+    EventType::Keyboard(keyboard_event) => {
       if keyboard_event.status != Status::Pressed {
         // Skip non-press events
         false
@@ -133,24 +136,24 @@ fn is_event_of_interest(event: &Event) -> bool {
           Key::NumLock => false,
           Key::Control => false,
 
-          _ => true
+          _ => true,
         }
       }
-    },
-    Event::Mouse(mouse_event) => mouse_event.status == Status::Pressed,
-    Event::MatchInjected => true,
+    }
+    EventType::Mouse(mouse_event) => mouse_event.status == Status::Pressed,
+    EventType::MatchInjected => true,
     _ => false,
   }
 }
 
-fn convert_to_matcher_event(event: &Event) -> Option<MatcherEvent> {
-  match event {
-    Event::Keyboard(keyboard_event) => Some(MatcherEvent::Key {
+fn convert_to_matcher_event(event_type: &EventType) -> Option<MatcherEvent> {
+  match event_type {
+    EventType::Keyboard(keyboard_event) => Some(MatcherEvent::Key {
       key: keyboard_event.key.clone(),
       chars: keyboard_event.value.clone(),
     }),
-    Event::Mouse(_) => Some(MatcherEvent::VirtualSeparator),
-    Event::MatchInjected => Some(MatcherEvent::VirtualSeparator),
+    EventType::Mouse(_) => Some(MatcherEvent::VirtualSeparator),
+    EventType::MatchInjected => Some(MatcherEvent::VirtualSeparator),
     _ => None,
   }
 }

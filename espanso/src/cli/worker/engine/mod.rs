@@ -53,7 +53,7 @@ pub fn initialize_and_spawn(
 
       let modulo_manager = ui::modulo::ModuloManager::new();
 
-      let (detect_source, modifier_state_store) =
+      let (detect_source, modifier_state_store, sequencer) =
         super::engine::source::init_and_spawn().expect("failed to initialize detector module");
       let sources: Vec<&dyn crate::engine::funnel::Source> = vec![&detect_source];
       let funnel = crate::engine::funnel::default(&sources);
@@ -108,6 +108,7 @@ pub fn initialize_and_spawn(
         &renderer_adapter,
         &match_cache,
         &modifier_state_store,
+        &sequencer,
       );
 
       let event_injector =

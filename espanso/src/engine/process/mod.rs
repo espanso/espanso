@@ -17,7 +17,7 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use super::{Event, event::{input::Key, internal::DetectedMatch}};
+use super::{Event, event::{EventType, input::Key, internal::DetectedMatch}};
 use anyhow::Result;
 use std::collections::HashMap;
 use thiserror::Error;
@@ -73,7 +73,7 @@ pub trait Multiplexer {
   fn convert(
     &self,
     m: DetectedMatch,
-  ) -> Option<Event>;
+  ) -> Option<EventType>;
 }
 
 pub trait Renderer<'a> {
@@ -92,7 +92,7 @@ pub enum RendererError {
   Aborted,
 }
 
-pub use middleware::action::MatchInfoProvider;
+pub use middleware::action::{MatchInfoProvider, EventSequenceProvider};
 pub use middleware::delay_modifiers::ModifierStatusProvider;
 
 pub fn default<'a, MatcherState>(
@@ -103,6 +103,7 @@ pub fn default<'a, MatcherState>(
   renderer: &'a dyn Renderer<'a>,
   match_info_provider: &'a dyn MatchInfoProvider,
   modifier_status_provider: &'a dyn ModifierStatusProvider,
+  event_sequence_provider: &'a dyn EventSequenceProvider,
 ) -> impl Processor + 'a {
   default::DefaultProcessor::new(
     matchers,
@@ -112,5 +113,6 @@ pub fn default<'a, MatcherState>(
     renderer,
     match_info_provider,
     modifier_status_provider,
+    event_sequence_provider,
   )
 }

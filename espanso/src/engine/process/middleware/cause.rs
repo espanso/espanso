@@ -18,13 +18,7 @@
  */
 
 use super::super::Middleware;
-use crate::engine::{
-  event::{
-    effect::TriggerCompensationEvent,
-    internal::CauseCompensatedMatchEvent,
-    Event,
-  },
-};
+use crate::engine::{event::{Event, EventType, effect::TriggerCompensationEvent, internal::CauseCompensatedMatchEvent}};
 
 pub struct CauseCompensateMiddleware {}
 
@@ -36,22 +30,22 @@ impl CauseCompensateMiddleware {
 
 impl Middleware for CauseCompensateMiddleware {
   fn name(&self) -> &'static str {
-    "cause_compensate"
+    "discard"
   }
 
   fn next(&self, event: Event, dispatch: &mut dyn FnMut(Event)) -> Event {
-    if let Event::MatchSelected(m_event) = &event {
+    if let EventType::MatchSelected(m_event) = &event.etype {
       let compensated_event =
-        Event::CauseCompensatedMatch(CauseCompensatedMatchEvent { m: m_event.chosen.clone() });
+        Event::caused_by(event.source_id, EventType::CauseCompensatedMatch(CauseCompensatedMatchEvent { m: m_event.chosen.clone() }));
 
       if let Some(trigger) = &m_event.chosen.trigger {
         dispatch(compensated_event);
 
         // Before the event, place a trigger compensation
-        return Event::TriggerCompensation(TriggerCompensationEvent {
+        return Event::caused_by(event.source_id, EventType::TriggerCompensation(TriggerCompensationEvent {
           trigger: trigger.clone(),
           left_separator: m_event.chosen.left_separator.clone(),
-        });
+        }));
       } else {
         return compensated_event;
       }

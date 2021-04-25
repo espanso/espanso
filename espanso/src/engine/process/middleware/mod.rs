@@ -24,4 +24,5 @@ pub mod delay_modifiers;
 pub mod match_select;
 pub mod matcher;
 pub mod multiplex;
+pub mod past_discard;
 pub mod render;

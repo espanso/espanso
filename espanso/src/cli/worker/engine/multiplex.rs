@@ -17,11 +17,9 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::collections::HashMap;
-
 use espanso_config::matches::{Match, MatchEffect};
 
-use crate::engine::{event::{Event, internal::DetectedMatch, internal::RenderingRequestedEvent}, process::Multiplexer};
+use crate::engine::{event::{EventType, internal::DetectedMatch, internal::RenderingRequestedEvent}, process::Multiplexer};
 
 pub trait MatchProvider<'a> {
   fn get(&self, match_id: i32) -> Option<&'a Match>;
@@ -38,11 +36,11 @@ impl<'a> MultiplexAdapter<'a> {
 }
 
 impl<'a> Multiplexer for MultiplexAdapter<'a> {
-  fn convert(&self, detected_match: DetectedMatch) -> Option<Event> {
+  fn convert(&self, detected_match: DetectedMatch) -> Option<EventType> {
     let m = self.provider.get(detected_match.id)?;
 
     match &m.effect {
-      MatchEffect::Text(_) => Some(Event::RenderingRequested(RenderingRequestedEvent {
+      MatchEffect::Text(_) => Some(EventType::RenderingRequested(RenderingRequestedEvent {
         match_id: detected_match.id,
         trigger: detected_match.trigger,
         left_separator: detected_match.left_separator,

@@ -22,9 +22,8 @@ use log::error;
 use super::super::Middleware;
 use crate::engine::{
   event::{
-    effect::{CursorHintCompensationEvent, TriggerCompensationEvent},
     internal::RenderedEvent,
-    Event,
+    Event, EventType,
   },
   process::{Renderer, RendererError},
 };
@@ -45,8 +44,12 @@ impl<'a> Middleware for RenderMiddleware<'a> {
   }
 
   fn next(&self, event: Event, _: &mut dyn FnMut(Event)) -> Event {
-    if let Event::RenderingRequested(m_event) = event {
-      match self.renderer.render(m_event.match_id, m_event.trigger.as_deref(), m_event.trigger_args) {
+    if let EventType::RenderingRequested(m_event) = event.etype {
+      match self.renderer.render(
+        m_event.match_id,
+        m_event.trigger.as_deref(),
+        m_event.trigger_args,
+      ) {
         Ok(body) => {
           let body = if let Some(right_separator) = m_event.right_separator {
             format!("{}{}", body, right_separator)
@@ -54,20 +57,21 @@ impl<'a> Middleware for RenderMiddleware<'a> {
             body
           };
 
-          return Event::Rendered(RenderedEvent {
-            match_id: m_event.match_id,
-            body,
-          });
+          return Event::caused_by(
+            event.source_id,
+            EventType::Rendered(RenderedEvent {
+              match_id: m_event.match_id,
+              body,
+            }),
+          );
         }
-        Err(err) => {
-          match err.downcast_ref::<RendererError>() {
-            Some(RendererError::Aborted) => return Event::NOOP,
-            _ => {
-              error!("error during rendering: {}", err);
-              return Event::ProcessingError("An error has occurred during rendering, please examine the logs or contact support.".to_string());
-            }
+        Err(err) => match err.downcast_ref::<RendererError>() {
+          Some(RendererError::Aborted) => return Event::caused_by(event.source_id, EventType::NOOP),
+          _ => {
+            error!("error during rendering: {}", err);
+            return Event::caused_by(event.source_id, EventType::ProcessingError("An error has occurred during rendering, please examine the logs or contact support.".to_string()));
           }
-        }
+        },
       }
     }
 

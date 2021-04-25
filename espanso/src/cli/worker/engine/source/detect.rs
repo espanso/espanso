@@ -18,18 +18,12 @@
  */
 
 use crossbeam::channel::{Receiver, Select, SelectedOperation};
-use espanso_detect::{event::InputEvent};
+use espanso_detect::event::InputEvent;
 
-use crate::engine::{
-  event::{
-    input::{Key, KeyboardEvent, MouseButton, MouseEvent, Status, Variant},
-    Event,
-  },
-  funnel
-};
+use crate::engine::{event::{Event, EventType, SourceId, input::{Key, KeyboardEvent, MouseButton, MouseEvent, Status, Variant}}, funnel};
 
 pub struct DetectSource {
-  pub receiver: Receiver<InputEvent>,
+  pub receiver: Receiver<(InputEvent, SourceId)>,
 }
 
 impl<'a> funnel::Source<'a> for DetectSource {
@@ -38,20 +32,26 @@ impl<'a> funnel::Source<'a> for DetectSource {
   }
 
   fn receive(&self, op: SelectedOperation) -> Event {
-    let input_event = op
+    let (input_event, source_id) = op
       .recv(&self.receiver)
       .expect("unable to select data from DetectSource receiver");
     match input_event {
-      InputEvent::Keyboard(keyboard_event) => Event::Keyboard(KeyboardEvent {
-        key: keyboard_event.key.into(),
-        value: keyboard_event.value,
-        status: keyboard_event.status.into(),
-        variant: keyboard_event.variant.map(|variant| variant.into()),
-      }),
-      InputEvent::Mouse(mouse_event) => Event::Mouse(MouseEvent {
-        status: mouse_event.status.into(),
-        button: mouse_event.button.into(),
-      }),
+      InputEvent::Keyboard(keyboard_event) => Event {
+        source_id,
+        etype: EventType::Keyboard(KeyboardEvent {
+          key: keyboard_event.key.into(),
+          value: keyboard_event.value,
+          status: keyboard_event.status.into(),
+          variant: keyboard_event.variant.map(|variant| variant.into()),
+        }),
+      },
+      InputEvent::Mouse(mouse_event) => Event {
+        source_id,
+        etype: EventType::Mouse(MouseEvent {
+          status: mouse_event.status.into(),
+          button: mouse_event.button.into(),
+        }),
+      },
       InputEvent::HotKey(_) => todo!(), // TODO
     }
   }

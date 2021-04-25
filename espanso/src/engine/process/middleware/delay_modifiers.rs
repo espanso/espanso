@@ -26,9 +26,7 @@ use std::{
 use log::{trace, warn};
 
 use super::super::Middleware;
-use crate::engine::event::{
-  Event,
-};
+use crate::engine::event::{Event, EventType};
 
 // TODO: pass through config
 const MODIFIER_DELAY_TIMEOUT: Duration = Duration::from_secs(3);
@@ -55,7 +53,7 @@ impl <'a> Middleware for DelayForModifierReleaseMiddleware<'a> {
   }
 
   fn next(&self, event: Event, _: &mut dyn FnMut(Event)) -> Event {
-    if is_injection_event(&event) {
+    if is_injection_event(&event.etype) {
       let start = Instant::now();
       while self.provider.is_any_modifier_pressed() {
         if Instant::now().duration_since(start) > MODIFIER_DELAY_TIMEOUT {
@@ -71,12 +69,12 @@ impl <'a> Middleware for DelayForModifierReleaseMiddleware<'a> {
   }
 }
 
-fn is_injection_event(event: &Event) -> bool {
-  match event {
-    Event::TriggerCompensation(_) => true,
-    Event::CursorHintCompensation(_) => true,
-    Event::KeySequenceInject(_) => true,
-    Event::TextInject(_) => true,
+fn is_injection_event(event_type: &EventType) -> bool {
+  match event_type {
+    EventType::TriggerCompensation(_) => true,
+    EventType::CursorHintCompensation(_) => true,
+    EventType::KeySequenceInject(_) => true,
+    EventType::TextInject(_) => true,
     _ => false,
   }
 }

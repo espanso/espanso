@@ -17,10 +17,13 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use log::{error};
+use log::error;
 
 use super::super::Middleware;
-use crate::engine::{event::Event, process::Multiplexer};
+use crate::engine::{
+  event::{Event, EventType},
+  process::Multiplexer,
+};
 
 pub struct MultiplexMiddleware<'a> {
   multiplexer: &'a dyn Multiplexer,
@@ -38,14 +41,14 @@ impl<'a> Middleware for MultiplexMiddleware<'a> {
   }
 
   fn next(&self, event: Event, _: &mut dyn FnMut(Event)) -> Event {
-    if let Event::CauseCompensatedMatch(m_event) = event {
+    if let EventType::CauseCompensatedMatch(m_event) = event.etype {
       return match self.multiplexer.convert(m_event.m) {
-        Some(event) => event,
+        Some(new_event) => Event::caused_by(event.source_id, new_event),
         None => {
           error!("match multiplexing failed");
-          Event::NOOP
-        },
-      }
+          Event::caused_by(event.source_id, EventType::NOOP)
+        }
+      };
     }
 
     event
