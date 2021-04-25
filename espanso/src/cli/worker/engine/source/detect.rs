@@ -17,22 +17,19 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use anyhow::Result;
 use crossbeam::channel::{Receiver, Select, SelectedOperation};
-use espanso_detect::{event::InputEvent, Source};
-use log::{error, trace};
+use espanso_detect::{event::InputEvent};
 
 use crate::engine::{
   event::{
     input::{Key, KeyboardEvent, MouseButton, MouseEvent, Status, Variant},
     Event,
   },
-  funnel, process,
+  funnel
 };
-use thiserror::Error;
 
 pub struct DetectSource {
-  receiver: Receiver<InputEvent>,
+  pub receiver: Receiver<InputEvent>,
 }
 
 impl<'a> funnel::Source<'a> for DetectSource {
@@ -58,67 +55,6 @@ impl<'a> funnel::Source<'a> for DetectSource {
       InputEvent::HotKey(_) => todo!(), // TODO
     }
   }
-}
-
-// TODO: pass options
-pub fn init_and_spawn() -> Result<DetectSource> {
-  let (sender, receiver) = crossbeam::channel::unbounded();
-  let (init_tx, init_rx) = crossbeam::channel::unbounded();
-
-  if let Err(error) = std::thread::Builder::new()
-    .name("detect thread".to_string())
-    .spawn(
-      move || match espanso_detect::get_source(Default::default()) {
-        Ok(mut source) => {
-          if source.initialize().is_err() {
-            init_tx
-              .send(false)
-              .expect("unable to send to the init_tx channel");
-          } else {
-            init_tx
-              .send(true)
-              .expect("unable to send to the init_tx channel");
-
-            source
-              .eventloop(Box::new(move |event| {
-                sender
-                  .send(event)
-                  .expect("unable to send to the source channel");
-              }))
-              .expect("detect eventloop crashed");
-          }
-        }
-        Err(error) => {
-          error!("cannot initialize event source: {:?}", error);
-          init_tx
-            .send(false)
-            .expect("unable to send to the init_tx channel");
-        }
-      },
-    )
-  {
-    error!("detection thread initialization failed: {:?}", error);
-    return Err(DetectSourceError::ThreadInitFailed.into());
-  }
-
-  // Wait for the initialization status
-  let has_initialized = init_rx
-    .recv()
-    .expect("unable to receive from the init_rx channel");
-  if !has_initialized {
-    return Err(DetectSourceError::InitFailed.into());
-  }
-
-  Ok(DetectSource { receiver })
-}
-
-#[derive(Error, Debug)]
-pub enum DetectSourceError {
-  #[error("detection thread initialization failed")]
-  ThreadInitFailed,
-
-  #[error("detection source initialization failed")]
-  InitFailed,
 }
 
 impl From<espanso_detect::event::Key> for Key {

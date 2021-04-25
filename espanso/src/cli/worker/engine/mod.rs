@@ -53,8 +53,8 @@ pub fn initialize_and_spawn(
 
       let modulo_manager = ui::modulo::ModuloManager::new();
 
-      let detect_source = super::engine::source::detect::init_and_spawn()
-        .expect("failed to initialize detector module");
+      let (detect_source, modifier_state_store) =
+        super::engine::source::init_and_spawn().expect("failed to initialize detector module");
       let sources: Vec<&dyn crate::engine::funnel::Source> = vec![&detect_source];
       let funnel = crate::engine::funnel::default(&sources);
 
@@ -85,7 +85,8 @@ pub fn initialize_and_spawn(
         &paths.packages,
       );
       let shell_extension = espanso_render::extension::shell::ShellExtension::new(&paths.config);
-      let form_adapter = ui::modulo::form::ModuloFormProviderAdapter::new(&modulo_manager, icon_paths.form_icon);
+      let form_adapter =
+        ui::modulo::form::ModuloFormProviderAdapter::new(&modulo_manager, icon_paths.form_icon);
       let form_extension = espanso_render::extension::form::FormExtension::new(&form_adapter);
       let renderer = espanso_render::create(vec![
         &clipboard_extension,
@@ -106,6 +107,7 @@ pub fn initialize_and_spawn(
         &multiplexer,
         &renderer_adapter,
         &match_cache,
+        &modifier_state_store,
       );
 
       let event_injector =

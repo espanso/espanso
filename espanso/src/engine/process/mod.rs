@@ -93,6 +93,7 @@ pub enum RendererError {
 }
 
 pub use middleware::action::MatchInfoProvider;
+pub use middleware::delay_modifiers::ModifierStatusProvider;
 
 pub fn default<'a, MatcherState>(
   matchers: &'a [&'a dyn Matcher<'a, MatcherState>],
@@ -101,6 +102,7 @@ pub fn default<'a, MatcherState>(
   multiplexer: &'a dyn Multiplexer,
   renderer: &'a dyn Renderer<'a>,
   match_info_provider: &'a dyn MatchInfoProvider,
+  modifier_status_provider: &'a dyn ModifierStatusProvider,
 ) -> impl Processor + 'a {
   default::DefaultProcessor::new(
     matchers,
@@ -109,5 +111,6 @@ pub fn default<'a, MatcherState>(
     multiplexer,
     renderer,
     match_info_provider,
+    modifier_status_provider,
   )
 }

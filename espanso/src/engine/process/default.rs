@@ -22,6 +22,7 @@ use log::trace;
 use super::{Event, MatchFilter, MatchInfoProvider, MatchSelector, Matcher, Middleware, Multiplexer, Processor, Renderer, middleware::{
     match_select::MatchSelectMiddleware, matcher::MatcherMiddleware, multiplex::MultiplexMiddleware,
     render::RenderMiddleware, action::ActionMiddleware, cursor_hint::CursorHintMiddleware, cause::CauseCompensateMiddleware,
+    delay_modifiers::{DelayForModifierReleaseMiddleware, ModifierStatusProvider},
   }};
 use std::collections::VecDeque;
 
@@ -38,6 +39,7 @@ impl<'a> DefaultProcessor<'a> {
     multiplexer: &'a dyn Multiplexer,
     renderer: &'a dyn Renderer<'a>,
     match_info_provider: &'a dyn MatchInfoProvider,
+    modifier_status_provider: &'a dyn ModifierStatusProvider,
   ) -> DefaultProcessor<'a> {
     Self {
       event_queue: VecDeque::new(),
@@ -49,6 +51,7 @@ impl<'a> DefaultProcessor<'a> {
         Box::new(RenderMiddleware::new(renderer)),
         Box::new(CursorHintMiddleware::new()),
         Box::new(ActionMiddleware::new(match_info_provider)),
+        Box::new(DelayForModifierReleaseMiddleware::new(modifier_status_provider)),
       ],
     }
   }
@@ -63,6 +66,7 @@ impl<'a> DefaultProcessor<'a> {
         current_queue.push_front(event);
       };
 
+      trace!("--------------- new event -----------------");
       for middleware in self.middleware.iter() {
         trace!("middleware '{}' received event: {:?}", middleware.name(), current_event);
 

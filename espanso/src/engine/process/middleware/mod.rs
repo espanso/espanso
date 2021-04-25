@@ -20,6 +20,7 @@
 pub mod action;
 pub mod cause;
 pub mod cursor_hint;
+pub mod delay_modifiers;
 pub mod match_select;
 pub mod matcher;
 pub mod multiplex;
