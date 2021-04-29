@@ -19,7 +19,14 @@
 
 use espanso_config::matches::{Match, MatchEffect};
 
-use crate::engine::{event::{EventType, internal::DetectedMatch, internal::RenderingRequestedEvent}, process::Multiplexer};
+use crate::engine::{
+  event::{
+    internal::DetectedMatch,
+    internal::{RenderingRequestedEvent, TextFormat},
+    EventType,
+  },
+  process::Multiplexer,
+};
 
 pub trait MatchProvider<'a> {
   fn get(&self, match_id: i32) -> Option<&'a Match>;
@@ -40,15 +47,24 @@ impl<'a> Multiplexer for MultiplexAdapter<'a> {
     let m = self.provider.get(detected_match.id)?;
 
     match &m.effect {
-      MatchEffect::Text(_) => Some(EventType::RenderingRequested(RenderingRequestedEvent {
+      MatchEffect::Text(effect) => Some(EventType::RenderingRequested(RenderingRequestedEvent {
         match_id: detected_match.id,
         trigger: detected_match.trigger,
         left_separator: detected_match.left_separator,
         right_separator: detected_match.right_separator,
         trigger_args: detected_match.args,
+        format: convert_format(&effect.format),
       })),
-      // TODO: think about rich text and image
+      // TODO: think about image
       MatchEffect::None => None,
     }
+  }
+}
+
+fn convert_format(format: &espanso_config::matches::TextFormat) -> TextFormat {
+  match format {
+    espanso_config::matches::TextFormat::Plain => TextFormat::Plain,
+    espanso_config::matches::TextFormat::Markdown => TextFormat::Markdown, 
+    espanso_config::matches::TextFormat::Html => TextFormat::Html, 
   }
 }

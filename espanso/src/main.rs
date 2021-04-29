@@ -226,6 +226,7 @@ fn main() {
       let config = ConfigBuilder::new()
         .set_time_to_local(true)
         .set_location_level(LevelFilter::Off)
+        .add_filter_ignore_str("html5ever")
         .build();
 
       CombinedLogger::init(vec![

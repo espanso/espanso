@@ -22,7 +22,7 @@ use log::trace;
 use super::{MatchFilter, MatchInfoProvider, MatchSelector, Matcher, Middleware, Multiplexer, Processor, Renderer, middleware::{
     match_select::MatchSelectMiddleware, matcher::MatcherMiddleware, multiplex::MultiplexMiddleware,
     render::RenderMiddleware, action::{ActionMiddleware, EventSequenceProvider}, cursor_hint::CursorHintMiddleware, cause::CauseCompensateMiddleware,
-    delay_modifiers::{DelayForModifierReleaseMiddleware, ModifierStatusProvider},
+    delay_modifiers::{DelayForModifierReleaseMiddleware, ModifierStatusProvider}, markdown::MarkdownMiddleware,
     past_discard::PastEventsDiscardMiddleware,
   }};
 use crate::engine::event::{Event, EventType};
@@ -55,6 +55,7 @@ impl<'a> DefaultProcessor<'a> {
         Box::new(RenderMiddleware::new(renderer)),
         Box::new(CursorHintMiddleware::new()),
         Box::new(ActionMiddleware::new(match_info_provider, event_sequence_provider)),
+        Box::new(MarkdownMiddleware::new()),
         Box::new(DelayForModifierReleaseMiddleware::new(modifier_status_provider)),
       ],
     }

@@ -69,4 +69,6 @@ pub enum EventType {
 
   KeySequenceInject(effect::KeySequenceInjectRequest),
   TextInject(effect::TextInjectRequest),
+  MarkdownInject(effect::MarkdownInjectRequest),
+  HtmlInject(effect::HtmlInjectRequest),
 }

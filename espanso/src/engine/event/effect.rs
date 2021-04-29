@@ -36,6 +36,16 @@ pub struct TextInjectRequest {
   pub force_mode: Option<TextInjectMode>,
 }
 
+#[derive(Debug, Clone)]
+pub struct MarkdownInjectRequest {
+  pub markdown: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct HtmlInjectRequest {
+  pub html: String,
+}
+
 #[derive(Debug, PartialEq, Clone)]
 pub enum TextInjectMode {
   Keys,

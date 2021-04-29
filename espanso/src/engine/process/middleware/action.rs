@@ -18,12 +18,7 @@
  */
 
 use super::super::Middleware;
-use crate::engine::event::{
-  effect::{KeySequenceInjectRequest, TextInjectMode, TextInjectRequest},
-  input::Key,
-  internal::DiscardPreviousEvent,
-  Event, EventType,
-};
+use crate::engine::event::{Event, EventType, effect::{HtmlInjectRequest, KeySequenceInjectRequest, MarkdownInjectRequest, TextInjectMode, TextInjectRequest}, input::Key, internal::{DiscardPreviousEvent, TextFormat}};
 
 pub trait MatchInfoProvider {
   fn get_force_mode(&self, match_id: i32) -> Option<TextInjectMode>;
@@ -68,10 +63,18 @@ impl<'a> Middleware for ActionMiddleware<'a> {
 
         Event::caused_by(
           event.source_id,
-          EventType::TextInject(TextInjectRequest {
-            text: m_event.body.clone(),
-            force_mode: self.match_info_provider.get_force_mode(m_event.match_id),
-          }),
+          match m_event.format {
+            TextFormat::Plain => EventType::TextInject(TextInjectRequest {
+              text: m_event.body.clone(),
+              force_mode: self.match_info_provider.get_force_mode(m_event.match_id),
+            }),
+            TextFormat::Html => EventType::HtmlInject(HtmlInjectRequest {
+              html: m_event.body.clone(),
+            }),
+            TextFormat::Markdown => EventType::MarkdownInject(MarkdownInjectRequest {
+              markdown: m_event.body.clone(),
+            }),
+          },
         )
       }
       EventType::CursorHintCompensation(m_event) => {

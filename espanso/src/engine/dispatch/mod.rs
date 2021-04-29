@@ -33,7 +33,8 @@ pub trait Dispatcher {
 }
 
 // Re-export dependency injection entities
-pub use executor::text_inject::{ModeProvider, Mode, TextInjector};
+pub use executor::html_inject::HtmlInjector;
+pub use executor::text_inject::{Mode, ModeProvider, TextInjector};
 
 // TODO: move into module
 pub trait KeyInjector {
@@ -45,6 +46,13 @@ pub fn default<'a>(
   clipboard_injector: &'a dyn TextInjector,
   mode_provider: &'a dyn ModeProvider,
   key_injector: &'a dyn KeyInjector,
+  html_injector: &'a dyn HtmlInjector,
 ) -> impl Dispatcher + 'a {
-  default::DefaultDispatcher::new(event_injector, clipboard_injector, mode_provider, key_injector)
+  default::DefaultDispatcher::new(
+    event_injector,
+    clipboard_injector,
+    mode_provider,
+    key_injector,
+    html_injector,
+  )
 }

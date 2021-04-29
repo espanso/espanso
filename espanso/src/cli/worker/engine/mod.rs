@@ -124,6 +124,7 @@ pub fn initialize_and_spawn(
         &clipboard_injector,
         &config_manager,
         &key_injector,
+        &clipboard_injector,
       );
 
       let mut engine = crate::engine::Engine::new(&funnel, &mut processor, &dispatcher);
