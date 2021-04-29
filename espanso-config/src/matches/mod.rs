@@ -17,11 +17,11 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::collections::{BTreeMap};
 use enum_as_inner::EnumAsInner;
 use ordered_float::OrderedFloat;
+use std::collections::BTreeMap;
 
-use crate::counter::{StructId};
+use crate::counter::StructId;
 
 pub(crate) mod group;
 pub mod store;
@@ -95,13 +95,20 @@ pub enum MatchEffect {
   None,
   Text(TextEffect),
   // TODO: image
-  // TODO: rich text
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct TextEffect {
   pub replace: String,
   pub vars: Vec<Variable>,
+  pub format: TextFormat,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum TextFormat {
+  Plain,
+  Markdown,
+  Html,
 }
 
 impl Default for TextEffect {
@@ -109,6 +116,7 @@ impl Default for TextEffect {
     Self {
       replace: String::new(),
       vars: Vec::new(),
+      format: TextFormat::Plain,
     }
   }
 }
