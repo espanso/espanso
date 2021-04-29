@@ -17,17 +17,11 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::{
-  counter::next_id,
-  matches::{
-    group::{path::resolve_imports, MatchGroup},
-    Match, UpperCasingStyle, Variable, Params, Value,
-  },
-};
+use crate::{counter::next_id, matches::{Match, Params, TextFormat, UpperCasingStyle, Value, Variable, group::{path::resolve_imports, MatchGroup}}};
 use anyhow::Result;
 use log::{error, warn};
 use parse::YAMLMatchGroup;
-use regex::{Regex, Captures};
+use regex::{Captures, Regex};
 use std::convert::{TryFrom, TryInto};
 
 use self::{
@@ -147,49 +141,66 @@ impl TryFrom<YAMLMatch> for Match {
       MatchCause::None
     };
 
-    let effect = if let Some(replace) = yaml_match.replace {
-      let vars: Result<Vec<Variable>> = yaml_match
-        .vars
-        .unwrap_or_default()
-        .into_iter()
-        .map(|var| var.try_into())
-        .collect();
-      MatchEffect::Text(TextEffect {
-        replace,
-        vars: vars?,
-      })
-    } else if let Some(form_layout) = yaml_match.form { // TODO: test form case
-      // Replace all the form fields with actual variables
-      let resolved_layout = VAR_REGEX.replace_all(&form_layout, |caps: &Captures| {
-        let var_name = caps.get(1).unwrap().as_str();
-        format!("{{{{form1.{}}}}}", var_name)
-      }).to_string();
+    let effect =
+      if yaml_match.replace.is_some() || yaml_match.markdown.is_some() || yaml_match.html.is_some()
+      { // TODO: test markdown and html cases
+        let (replace, format) = if let Some(plain) = yaml_match.replace {
+          (plain, TextFormat::Plain)
+        } else if let Some(markdown) = yaml_match.markdown {
+          (markdown, TextFormat::Markdown)
+        } else if let Some(html) = yaml_match.html {
+          (html, TextFormat::Html)
+        } else {
+          unreachable!();
+        };
 
-      // Convert escaped brakets in forms
-      let resolved_layout = resolved_layout.replace("\\{", "{ ").replace("\\}", " }");
+        let vars: Result<Vec<Variable>> = yaml_match
+          .vars
+          .unwrap_or_default()
+          .into_iter()
+          .map(|var| var.try_into())
+          .collect();
+        MatchEffect::Text(TextEffect {
+          replace,
+          vars: vars?,
+          format,
+        })
+      } else if let Some(form_layout) = yaml_match.form {
+        // TODO: test form case
+        // Replace all the form fields with actual variables
+        let resolved_layout = VAR_REGEX
+          .replace_all(&form_layout, |caps: &Captures| {
+            let var_name = caps.get(1).unwrap().as_str();
+            format!("{{{{form1.{}}}}}", var_name)
+          })
+          .to_string();
 
-      // Convert the form data to valid variables
-      let mut params = Params::new();
-      params.insert("layout".to_string(), Value::String(form_layout));
+        // Convert escaped brakets in forms
+        let resolved_layout = resolved_layout.replace("\\{", "{ ").replace("\\}", " }");
 
-      if let Some(fields) = yaml_match.form_fields {
-        params.insert("fields".to_string(), Value::Object(convert_params(fields)?));
-      }
+        // Convert the form data to valid variables
+        let mut params = Params::new();
+        params.insert("layout".to_string(), Value::String(form_layout));
 
-      let vars = vec![Variable {
-        id: next_id(),
-        name: "form1".to_owned(),
-        var_type: "form".to_owned(),
-        params,
-      }];
+        if let Some(fields) = yaml_match.form_fields {
+          params.insert("fields".to_string(), Value::Object(convert_params(fields)?));
+        }
 
-      MatchEffect::Text(TextEffect {
-        replace: resolved_layout,
-        vars,
-      })
-    } else {
-      MatchEffect::None
-    };
+        let vars = vec![Variable {
+          id: next_id(),
+          name: "form1".to_owned(),
+          var_type: "form".to_owned(),
+          params,
+        }];
+
+        MatchEffect::Text(TextEffect {
+          replace: resolved_layout,
+          vars,
+          format: TextFormat::Plain,
+        })
+      } else {
+        MatchEffect::None
+      };
 
     if let MatchEffect::None = effect {
       warn!(
@@ -493,6 +504,7 @@ mod tests {
         effect: MatchEffect::Text(TextEffect {
           replace: "world".to_string(),
           vars,
+          ..Default::default()
         }),
         ..Default::default()
       }
@@ -526,6 +538,7 @@ mod tests {
         effect: MatchEffect::Text(TextEffect {
           replace: "world".to_string(),
           vars,
+          ..Default::default()
         }),
         ..Default::default()
       }

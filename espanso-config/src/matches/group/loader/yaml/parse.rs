@@ -98,13 +98,13 @@ pub struct YAMLMatch {
   pub force_clipboard: Option<bool>,
 
   #[serde(default)]
-  pub markdown: Option<String>, // TODO: map
+  pub markdown: Option<String>,
 
   #[serde(default)]
-  pub paragraph: Option<bool>, // TODO: map
+  pub paragraph: Option<bool>,
 
   #[serde(default)]
-  pub html: Option<String>, // TODO: map
+  pub html: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
