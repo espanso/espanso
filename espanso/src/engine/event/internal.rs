@@ -50,12 +50,21 @@ pub struct RenderingRequestedEvent {
   pub left_separator: Option<String>,
   pub right_separator: Option<String>,
   pub trigger_args: HashMap<String, String>,
+  pub format: TextFormat,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum TextFormat {
+  Plain,
+  Markdown,
+  Html, 
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct RenderedEvent {
   pub match_id: i32,
   pub body: String,
+  pub format: TextFormat,
 }
 
 #[derive(Debug, Clone, PartialEq)]

@@ -18,7 +18,7 @@
  */
 
 use super::Event;
-use super::{ModeProvider, Dispatcher, Executor, KeyInjector, TextInjector};
+use super::{ModeProvider, Dispatcher, Executor, KeyInjector, TextInjector, HtmlInjector};
 
 pub struct DefaultDispatcher<'a> {
   executors: Vec<Box<dyn Executor + 'a>>,
@@ -30,6 +30,7 @@ impl<'a> DefaultDispatcher<'a> {
     clipboard_injector: &'a dyn TextInjector,
     mode_provider: &'a dyn ModeProvider,
     key_injector: &'a dyn KeyInjector,
+    html_injector: &'a dyn HtmlInjector,
   ) -> Self {
     Self {
       executors: vec![
@@ -41,6 +42,9 @@ impl<'a> DefaultDispatcher<'a> {
         Box::new(super::executor::key_inject::KeyInjectExecutor::new(
           key_injector,
         )),
+        Box::new(super::executor::html_inject::HtmlInjectExecutor::new(
+          html_injector,
+        ))
       ],
     }
   }

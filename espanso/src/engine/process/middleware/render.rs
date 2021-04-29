@@ -62,6 +62,7 @@ impl<'a> Middleware for RenderMiddleware<'a> {
             EventType::Rendered(RenderedEvent {
               match_id: m_event.match_id,
               body,
+              format: m_event.format,
             }),
           );
         }

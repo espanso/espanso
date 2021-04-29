@@ -20,7 +20,7 @@
 use espanso_inject::{Injector, keys::Key};
 use espanso_clipboard::Clipboard;
 
-use crate::engine::{dispatch::TextInjector};
+use crate::engine::{dispatch::TextInjector, dispatch::HtmlInjector};
 
 pub struct ClipboardInjectorAdapter<'a> {
   injector: &'a dyn Injector,
@@ -34,6 +34,16 @@ impl <'a> ClipboardInjectorAdapter<'a> {
       clipboard,
     }
   }
+
+  fn send_paste_combination(&self) -> anyhow::Result<()> {
+    // TODO: handle delay duration
+    std::thread::sleep(std::time::Duration::from_millis(100));
+
+    // TODO: handle options
+    self.injector.send_key_combination(&[Key::Control, Key::V], Default::default())?;
+
+    Ok(())
+  }
 }
 
 impl <'a> TextInjector for ClipboardInjectorAdapter<'a> {
@@ -45,11 +55,18 @@ impl <'a> TextInjector for ClipboardInjectorAdapter<'a> {
     // TODO: handle clipboard restoration
     self.clipboard.set_text(text)?;
 
-    // TODO: handle delay duration
-    std::thread::sleep(std::time::Duration::from_millis(100));
+    self.send_paste_combination()?;
 
-    // TODO: handle options
-    self.injector.send_key_combination(&[Key::Control, Key::V], Default::default())?;
+    Ok(())
+  }
+}
+
+impl <'a> HtmlInjector for ClipboardInjectorAdapter<'a> {
+  fn inject_html(&self, html: &str, fallback_text: &str) -> anyhow::Result<()> {
+    // TODO: handle clipboard restoration
+    self.clipboard.set_html(html, Some(fallback_text))?;
+
+    self.send_paste_combination()?;
 
     Ok(())
   }

@@ -19,3 +19,4 @@
 
 pub mod text_inject;
 pub mod key_inject;
+pub mod html_inject;
