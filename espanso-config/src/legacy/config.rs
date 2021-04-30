@@ -193,7 +193,7 @@ pub struct LegacyConfig {
   pub config_caching_interval: i32,
 
   #[serde(default = "default_word_separators")]
-  pub word_separators: Vec<char>, // TODO: add parsing test
+  pub word_separators: Vec<char>,
 
   #[serde(default = "default_toggle_key")]
   pub toggle_key: KeyModifier,
