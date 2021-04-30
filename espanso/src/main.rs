@@ -201,7 +201,7 @@ fn main() {
   // .subcommand(install_subcommand)
   // .subcommand(uninstall_subcommand);
 
-  // TODO: explain that the start and restart commands are only meaningful
+  // TODO: explain that the register and unregister commands are only meaningful
   // when using the system daemon manager on macOS and Linux
 
   let matches = clap_instance.clone().get_matches();

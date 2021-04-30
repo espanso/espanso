@@ -39,8 +39,6 @@ impl <'a> TextInjector for EventInjectorAdapter<'a> {
   }
   
   fn inject_text(&self, text: &str) -> anyhow::Result<()> {
-    // TODO: wait for modifiers release
-
     // Handle CRLF or LF line endings correctly
     let split_sequence = if text.contains("\r\n") {
       "\r\n"
