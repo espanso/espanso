@@ -155,7 +155,6 @@ bool read_png(const uint8_t* buf,
   spec.green_shift = 8;
   spec.blue_shift  = 16;
 
-  // TODO indexed images with alpha
   if (color_type == PNG_COLOR_TYPE_RGB_ALPHA ||
       color_type == PNG_COLOR_TYPE_GRAY_ALPHA) {
     spec.alpha_mask = 0xff000000;
@@ -175,7 +174,7 @@ bool read_png(const uint8_t* buf,
     image img(spec);
 
     // We want RGB 24-bit or RGBA 32-bit as a result
-    png_set_strip_16(png); // Down to 8-bit (TODO we might support 16-bit values)
+    png_set_strip_16(png); // Down to 8-bit
     png_set_packing(png);  // Use one byte if color depth < 8-bit
     png_set_expand_gray_1_2_4_to_8(png);
     png_set_palette_to_rgb(png);
