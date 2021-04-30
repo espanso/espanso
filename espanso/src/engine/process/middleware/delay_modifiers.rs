@@ -17,8 +17,6 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// TODO: explain why this is needed
-
 use std::{
   time::{Duration, Instant},
 };
@@ -28,13 +26,18 @@ use log::{trace, warn};
 use super::super::Middleware;
 use crate::engine::event::{Event, EventType};
 
-// TODO: pass through config
+/// Maximum time to wait for modifiers being released before
+/// giving up.
 const MODIFIER_DELAY_TIMEOUT: Duration = Duration::from_secs(3);
 
 pub trait ModifierStatusProvider {
   fn is_any_modifier_pressed(&self) -> bool;
 }
 
+/// This middleware is used to delay the injection of text until
+/// all modifiers have been released. This is needed as otherwise,
+/// injections might misbehave as pressed modifiers might alter
+/// the keys being injected.
 pub struct DelayForModifierReleaseMiddleware<'a> {
   provider: &'a dyn ModifierStatusProvider,
 }

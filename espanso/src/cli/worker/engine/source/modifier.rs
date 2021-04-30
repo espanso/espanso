@@ -26,7 +26,10 @@ use log::warn;
 
 use crate::engine::process::ModifierStatusProvider;
 
-// TODO: explain
+/// This duration represents the maximum length for which a pressed modifier
+/// event is considered valid. This is useful when the "release" event is
+/// lost for whatever reason, so that espanso becomes eventually consistent
+/// after a while.
 const MAXIMUM_MODIFIERS_PRESS_TIME_RECORD: Duration = Duration::from_secs(30);
 
 #[derive(Debug, Hash, PartialEq, Eq)]
