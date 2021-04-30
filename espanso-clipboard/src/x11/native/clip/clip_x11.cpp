@@ -157,7 +157,6 @@ public:
   bool try_lock() {
     bool res = m_lock.try_lock();
     if (!res) {
-      // TODO make this configurable (the same for Windows retries)
       for (int i=0; i<5 && !res; ++i) {
         res = m_lock.try_lock();
         std::this_thread::sleep_for(std::chrono::milliseconds(20));
@@ -662,7 +661,6 @@ private:
     xcb_get_property_reply_t* reply =
       xcb_get_property_reply(m_connection, cookie, &err);
     if (err) {
-      // TODO report error
       free(err);
     }
     return reply;
@@ -931,7 +929,6 @@ private:
           std::make_shared<std::vector<uint8_t>>(
             std::move(output));
       }
-      // else { TODO report png conversion errors }
     }
 #endif
   }
