@@ -19,13 +19,13 @@
 
 use log::trace;
 
-use super::{MatchFilter, MatchInfoProvider, MatchSelector, Matcher, Middleware, Multiplexer, Processor, Renderer, middleware::{
+use super::{MatchFilter, MatchInfoProvider, MatchSelector, Matcher, Middleware, Multiplexer, PathProvider, Processor, Renderer, middleware::{
     match_select::MatchSelectMiddleware, matcher::MatcherMiddleware, multiplex::MultiplexMiddleware,
     render::RenderMiddleware, action::{ActionMiddleware, EventSequenceProvider}, cursor_hint::CursorHintMiddleware, cause::CauseCompensateMiddleware,
     delay_modifiers::{DelayForModifierReleaseMiddleware, ModifierStatusProvider}, markdown::MarkdownMiddleware,
     past_discard::PastEventsDiscardMiddleware,
   }};
-use crate::engine::event::{Event, EventType};
+use crate::engine::{event::{Event, EventType}, process::middleware::image_resolve::ImageResolverMiddleware};
 use std::collections::VecDeque;
 
 pub struct DefaultProcessor<'a> {
@@ -43,6 +43,7 @@ impl<'a> DefaultProcessor<'a> {
     match_info_provider: &'a dyn MatchInfoProvider,
     modifier_status_provider: &'a dyn ModifierStatusProvider,
     event_sequence_provider: &'a dyn EventSequenceProvider,
+    path_provider: &'a dyn PathProvider,
   ) -> DefaultProcessor<'a> {
     Self {
       event_queue: VecDeque::new(),
@@ -53,6 +54,7 @@ impl<'a> DefaultProcessor<'a> {
         Box::new(CauseCompensateMiddleware::new()),
         Box::new(MultiplexMiddleware::new(multiplexer)),
         Box::new(RenderMiddleware::new(renderer)),
+        Box::new(ImageResolverMiddleware::new(path_provider)),
         Box::new(CursorHintMiddleware::new()),
         Box::new(ActionMiddleware::new(match_info_provider, event_sequence_provider)),
         Box::new(MarkdownMiddleware::new()),

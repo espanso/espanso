@@ -56,3 +56,8 @@ pub enum TextInjectMode {
 pub struct KeySequenceInjectRequest {
   pub keys: Vec<Key>,
 }
+
+#[derive(Debug, Clone)]
+pub struct ImageInjectRequest {
+  pub image_path: String,
+}

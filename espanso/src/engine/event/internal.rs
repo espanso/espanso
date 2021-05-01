@@ -61,6 +61,17 @@ pub enum TextFormat {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+pub struct ImageRequestedEvent {
+  pub match_id: i32,
+  pub image_path: String,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct ImageResolvedEvent {
+  pub image_path: String,
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct RenderedEvent {
   pub match_id: i32,
   pub body: String,

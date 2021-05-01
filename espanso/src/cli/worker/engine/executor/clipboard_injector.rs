@@ -17,10 +17,12 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use std::path::PathBuf;
+
 use espanso_inject::{Injector, keys::Key};
 use espanso_clipboard::Clipboard;
 
-use crate::engine::{dispatch::TextInjector, dispatch::HtmlInjector};
+use crate::engine::{dispatch::HtmlInjector, dispatch::{ImageInjector, TextInjector}};
 
 pub struct ClipboardInjectorAdapter<'a> {
   injector: &'a dyn Injector,
@@ -65,6 +67,22 @@ impl <'a> HtmlInjector for ClipboardInjectorAdapter<'a> {
   fn inject_html(&self, html: &str, fallback_text: &str) -> anyhow::Result<()> {
     // TODO: handle clipboard restoration
     self.clipboard.set_html(html, Some(fallback_text))?;
+
+    self.send_paste_combination()?;
+
+    Ok(())
+  }
+}
+
+impl <'a> ImageInjector for ClipboardInjectorAdapter<'a> {
+  fn inject_image(&self, image_path: &str) -> anyhow::Result<()> {
+    let path = PathBuf::from(image_path);
+    if !path.is_file() {
+      return Err(std::io::Error::new(std::io::ErrorKind::NotFound, "image can't be found in the given path").into());
+    }
+
+    // TODO: handle clipboard restoration
+    self.clipboard.set_image(&path)?;
 
     self.send_paste_combination()?;
 

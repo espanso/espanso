@@ -22,12 +22,15 @@ use espanso_config::{config::ConfigStore, matches::store::MatchStore};
 use espanso_path::Paths;
 use ui::selector::MatchSelectorAdapter;
 
+use crate::cli::worker::engine::path::PathProviderAdapter;
+
 use super::ui::icon::IconPaths;
 
 pub mod executor;
 pub mod match_cache;
 pub mod matcher;
 pub mod multiplex;
+pub mod path;
 pub mod render;
 pub mod source;
 pub mod ui;
@@ -99,6 +102,7 @@ pub fn initialize_and_spawn(
       ]);
       let renderer_adapter =
         super::engine::render::RendererAdapter::new(&match_cache, &config_manager, &renderer);
+      let path_provider = PathProviderAdapter::new(&paths);
 
       let mut processor = crate::engine::process::default(
         &matchers,
@@ -109,6 +113,7 @@ pub fn initialize_and_spawn(
         &match_cache,
         &modifier_state_store,
         &sequencer,
+        &path_provider,
       );
 
       let event_injector =
@@ -124,6 +129,7 @@ pub fn initialize_and_spawn(
         &clipboard_injector,
         &config_manager,
         &key_injector,
+        &clipboard_injector,
         &clipboard_injector,
       );
 
