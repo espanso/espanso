@@ -17,11 +17,11 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::{collections::HashMap, path::Path};
+use std::{path::Path};
 
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
-use serde_yaml::{Mapping, Value};
+use serde_yaml::{Mapping};
 
 use crate::util::is_yaml_empty;
 
@@ -68,7 +68,7 @@ pub struct YAMLMatch {
   pub replace: Option<String>,
 
   #[serde(default)]
-  pub image_path: Option<String>, // TODO: map
+  pub image_path: Option<String>,
 
   #[serde(default)]
   pub form: Option<String>,
