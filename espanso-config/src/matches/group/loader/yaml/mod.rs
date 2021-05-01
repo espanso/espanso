@@ -17,7 +17,7 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::{counter::next_id, matches::{Match, Params, TextFormat, UpperCasingStyle, Value, Variable, group::{path::resolve_imports, MatchGroup}}};
+use crate::{counter::next_id, matches::{ImageEffect, Match, Params, TextFormat, UpperCasingStyle, Value, Variable, group::{path::resolve_imports, MatchGroup}}};
 use anyhow::Result;
 use log::{error, warn};
 use parse::YAMLMatchGroup;
@@ -197,6 +197,10 @@ impl TryFrom<YAMLMatch> for Match {
           replace: resolved_layout,
           vars,
           format: TextFormat::Plain,
+        })
+      } else if let Some(image_path) = yaml_match.image_path {  // TODO: test image case
+        MatchEffect::Image(ImageEffect {
+          path: image_path,
         })
       } else {
         MatchEffect::None

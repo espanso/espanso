@@ -94,7 +94,7 @@ pub enum UpperCasingStyle {
 pub enum MatchEffect {
   None,
   Text(TextEffect),
-  // TODO: image
+  Image(ImageEffect),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -117,6 +117,19 @@ impl Default for TextEffect {
       replace: String::new(),
       vars: Vec::new(),
       format: TextFormat::Plain,
+    }
+  }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct ImageEffect {
+  pub path: String,
+}
+
+impl Default for ImageEffect {
+  fn default() -> Self {
+    Self {
+      path: String::new(),
     }
   }
 }
