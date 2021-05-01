@@ -18,7 +18,15 @@
  */
 
 use super::super::Middleware;
-use crate::engine::event::{Event, EventType, effect::{HtmlInjectRequest, KeySequenceInjectRequest, MarkdownInjectRequest, TextInjectMode, TextInjectRequest}, input::Key, internal::{DiscardPreviousEvent, TextFormat}};
+use crate::engine::event::{
+  effect::{
+    HtmlInjectRequest, ImageInjectRequest, KeySequenceInjectRequest, MarkdownInjectRequest,
+    TextInjectMode, TextInjectRequest,
+  },
+  input::Key,
+  internal::{DiscardPreviousEvent, TextFormat},
+  Event, EventType,
+};
 
 pub trait MatchInfoProvider {
   fn get_force_mode(&self, match_id: i32) -> Option<TextInjectMode>;
@@ -52,7 +60,7 @@ impl<'a> Middleware for ActionMiddleware<'a> {
 
   fn next(&self, event: Event, dispatch: &mut dyn FnMut(Event)) -> Event {
     match &event.etype {
-      EventType::Rendered(m_event) => {
+      EventType::Rendered(_) | EventType::ImageResolved(_) => {
         dispatch(Event::caused_by(event.source_id, EventType::MatchInjected));
         dispatch(Event::caused_by(
           event.source_id,
@@ -61,21 +69,30 @@ impl<'a> Middleware for ActionMiddleware<'a> {
           }),
         ));
 
-        Event::caused_by(
-          event.source_id,
-          match m_event.format {
-            TextFormat::Plain => EventType::TextInject(TextInjectRequest {
-              text: m_event.body.clone(),
-              force_mode: self.match_info_provider.get_force_mode(m_event.match_id),
+        match &event.etype {
+          EventType::Rendered(m_event) => Event::caused_by(
+            event.source_id,
+            match m_event.format {
+              TextFormat::Plain => EventType::TextInject(TextInjectRequest {
+                text: m_event.body.clone(),
+                force_mode: self.match_info_provider.get_force_mode(m_event.match_id),
+              }),
+              TextFormat::Html => EventType::HtmlInject(HtmlInjectRequest {
+                html: m_event.body.clone(),
+              }),
+              TextFormat::Markdown => EventType::MarkdownInject(MarkdownInjectRequest {
+                markdown: m_event.body.clone(),
+              }),
+            },
+          ),
+          EventType::ImageResolved(m_event) => Event::caused_by(
+            event.source_id,
+            EventType::ImageInject(ImageInjectRequest {
+              image_path: m_event.image_path.clone(),
             }),
-            TextFormat::Html => EventType::HtmlInject(HtmlInjectRequest {
-              html: m_event.body.clone(),
-            }),
-            TextFormat::Markdown => EventType::MarkdownInject(MarkdownInjectRequest {
-              markdown: m_event.body.clone(),
-            }),
-          },
-        )
+          ),
+          _ => unreachable!()
+        }
       }
       EventType::CursorHintCompensation(m_event) => {
         dispatch(Event::caused_by(

@@ -59,7 +59,9 @@ pub enum EventType {
   CauseCompensatedMatch(internal::CauseCompensatedMatchEvent),
 
   RenderingRequested(internal::RenderingRequestedEvent),
+  ImageRequested(internal::ImageRequestedEvent),
   Rendered(internal::RenderedEvent),
+  ImageResolved(internal::ImageResolvedEvent),
   MatchInjected,
   DiscardPrevious(internal::DiscardPreviousEvent),
 
@@ -71,4 +73,5 @@ pub enum EventType {
   TextInject(effect::TextInjectRequest),
   MarkdownInject(effect::MarkdownInjectRequest),
   HtmlInject(effect::HtmlInjectRequest),
+  ImageInject(effect::ImageInjectRequest),
 }

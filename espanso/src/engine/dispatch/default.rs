@@ -17,7 +17,7 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use super::Event;
+use super::{Event, ImageInjector};
 use super::{ModeProvider, Dispatcher, Executor, KeyInjector, TextInjector, HtmlInjector};
 
 pub struct DefaultDispatcher<'a> {
@@ -31,6 +31,7 @@ impl<'a> DefaultDispatcher<'a> {
     mode_provider: &'a dyn ModeProvider,
     key_injector: &'a dyn KeyInjector,
     html_injector: &'a dyn HtmlInjector,
+    image_injector: &'a dyn ImageInjector,
   ) -> Self {
     Self {
       executors: vec![
@@ -44,6 +45,9 @@ impl<'a> DefaultDispatcher<'a> {
         )),
         Box::new(super::executor::html_inject::HtmlInjectExecutor::new(
           html_injector,
+        )),
+        Box::new(super::executor::image_inject::ImageInjectExecutor::new(
+          image_injector,
         ))
       ],
     }

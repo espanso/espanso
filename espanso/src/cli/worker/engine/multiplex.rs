@@ -19,14 +19,7 @@
 
 use espanso_config::matches::{Match, MatchEffect};
 
-use crate::engine::{
-  event::{
-    internal::DetectedMatch,
-    internal::{RenderingRequestedEvent, TextFormat},
-    EventType,
-  },
-  process::Multiplexer,
-};
+use crate::engine::{event::{EventType, internal::DetectedMatch, internal::{ImageRequestedEvent, RenderingRequestedEvent, TextFormat}}, process::Multiplexer};
 
 pub trait MatchProvider<'a> {
   fn get(&self, match_id: i32) -> Option<&'a Match>;
@@ -55,7 +48,10 @@ impl<'a> Multiplexer for MultiplexAdapter<'a> {
         trigger_args: detected_match.args,
         format: convert_format(&effect.format),
       })),
-      // TODO: think about image
+      MatchEffect::Image(effect) => Some(EventType::ImageRequested(ImageRequestedEvent {
+        match_id: detected_match.id,
+        image_path: effect.path.clone(),
+      })),
       MatchEffect::None => None,
     }
   }

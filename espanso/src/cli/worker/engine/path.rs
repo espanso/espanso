@@ -17,7 +17,24 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub mod text_inject;
-pub mod key_inject;
-pub mod html_inject;
-pub mod image_inject;
+use espanso_path::Paths;
+
+use crate::engine::process::PathProvider;
+
+pub struct PathProviderAdapter<'a> {
+  paths: &'a Paths,
+}
+
+impl <'a> PathProviderAdapter<'a> {
+  pub fn new(paths: &'a Paths) -> Self {
+    Self {
+      paths,
+    }
+  }
+}
+
+impl <'a> PathProvider for PathProviderAdapter<'a> {
+  fn get_config_path(&self) -> &std::path::Path {
+    &self.paths.config
+  }
+}
