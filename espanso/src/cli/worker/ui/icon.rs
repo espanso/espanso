@@ -29,7 +29,6 @@ const WINDOWS_ICO_BINARY: &[u8] = include_bytes!("../../../res/windows/espanso.i
 const WINDOWS_RED_ICO_BINARY: &[u8] = include_bytes!("../../../res/windows/espansored.ico");
 
 // TODO: macos
-// TODO: linux
 
 #[derive(Debug, Default)]
 pub struct IconPaths {
@@ -53,8 +52,15 @@ pub fn load_icon_paths(runtime_dir: &Path) -> Result<IconPaths> {
   })
 }
 
+#[cfg(target_os = "linux")]
+pub fn load_icon_paths(runtime_dir: &Path) -> Result<IconPaths> {
+  Ok(IconPaths {
+    logo: Some(extract_icon(ICON_BINARY, &runtime_dir.join("icon.png"))?),
+    ..Default::default()
+  })
+}
+
 // TODO: macos
-// TODO: linux
 
 // TODO: test
 fn extract_icon(data: &[u8], target_file: &Path) -> Result<PathBuf> {
