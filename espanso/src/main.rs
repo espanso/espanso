@@ -20,17 +20,20 @@
 #[macro_use]
 extern crate lazy_static;
 
-use clap::{App, AppSettings, Arg, SubCommand};
+use std::path::PathBuf;
+
+use clap::{App, AppSettings, Arg, ArgMatches, SubCommand};
 use cli::{CliModule, CliModuleArgs};
+use log::{error, info};
 use logging::FileProxy;
 use simplelog::{
   CombinedLogger, ConfigBuilder, LevelFilter, TermLogger, TerminalMode, WriteLogger,
 };
 
 mod cli;
-mod util;
 mod engine;
 mod logging;
+mod util;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 const LOG_FILE_NAME: &str = "espanso.log";
@@ -81,6 +84,18 @@ fn main() {
         .short("v")
         .multiple(true)
         .help("Sets the level of verbosity"),
+    )
+    .arg(
+      Arg::with_name("config_dir")
+        .long("config_dir")
+        .takes_value(true)
+        .help("Specify a custom path from which espanso should read the configuration"),
+    )
+    .arg(
+      Arg::with_name("runtime_dir")
+        .long("runtime_dir")
+        .takes_value(true)
+        .help("Specify a custom path for the espanso runtime directory"),
     )
     // .subcommand(SubCommand::with_name("cmd")
     //     .about("Send a command to the espanso daemon.")
@@ -239,8 +254,14 @@ fn main() {
     let mut cli_args: CliModuleArgs = CliModuleArgs::default();
 
     if handler.requires_paths || handler.requires_config {
-      // TODO: here take into account env variable and/or command line flag
-      let paths = espanso_path::resolve_paths();
+      let force_config_path = get_path_override(&matches, "config_dir", "ESPANSO_CONFIG_DIR");
+      let force_runtime_path = get_path_override(&matches, "runtime_dir", "ESPANSO_RUNTIME_DIR");
+      
+      let paths = espanso_path::resolve_paths(force_config_path.as_deref(), force_runtime_path.as_deref());
+
+      info!("reading configs from: {:?}", paths.config);
+      info!("reading packages from: {:?}", paths.packages);
+      info!("using runtime dir: {:?}", paths.runtime);
 
       if handler.requires_config {
         let (config_store, match_store, is_legacy_config) =
@@ -279,5 +300,27 @@ fn main() {
       .print_long_help()
       .expect("unable to print help");
     println!();
+  }
+}
+
+fn get_path_override(matches: &ArgMatches, argument: &str, env_var: &str) -> Option<PathBuf> {
+  if let Some(path) = matches.value_of(argument) {
+    let path = PathBuf::from(path.trim());
+    if path.is_dir() {
+      return Some(path)
+    } else {
+      error!("{} argument was specified, but it doesn't point to a valid directory. Make sure to create it first.", argument);
+      std::process::exit(1);
+    }
+  } else if let Ok(path) = std::env::var(env_var) {
+    let path = PathBuf::from(path.trim());
+    if path.is_dir() {
+      return Some(path)
+    } else {
+      error!("{} env variable was specified, but it doesn't point to a valid directory. Make sure to create it first.", env_var);
+      std::process::exit(1);
+    }
+  } else {
+    None
   }
 }
