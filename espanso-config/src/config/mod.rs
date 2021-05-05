@@ -32,6 +32,7 @@ pub trait Config: Send {
   fn label(&self) -> &str;
   fn match_paths(&self) -> &[String];
   fn backend(&self) -> Backend;
+  fn clipboard_threshold(&self) -> usize;
 
   fn is_match(&self, app: &AppProperties) -> bool;
 }
