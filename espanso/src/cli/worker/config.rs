@@ -104,9 +104,13 @@ impl<'a> ConfigProvider<'a> for ConfigManager<'a> {
 
 impl<'a> ModeProvider for ConfigManager<'a> {
   fn active_mode(&self) -> crate::engine::dispatch::Mode {
-    // TODO: implement the actual active mode detection starting from the active config
-    crate::engine::dispatch::Mode::Auto {
-      clipboard_threshold: 100
+    let config = self.active();
+    match config.backend() {
+      espanso_config::config::Backend::Inject => crate::engine::dispatch::Mode::Event, 
+      espanso_config::config::Backend::Clipboard => crate::engine::dispatch::Mode::Clipboard, 
+      espanso_config::config::Backend::Auto => crate::engine::dispatch::Mode::Auto {
+        clipboard_threshold: config.clipboard_threshold(),
+      },
     }
   }
 }
