@@ -68,14 +68,14 @@ impl<'a, State> Middleware for MatcherMiddleware<'a, State> {
           matcher_states.pop_back();
           return event;
         }
+      }
 
-        // Some keys (such as the arrow keys) prevent espanso from building
-        // an accurate key buffer, so we need to invalidate it.
-        if is_invalidating_key(&keyboard_event.key) {
-          trace!("invalidating event detected, clearing matching state");
-          matcher_states.clear();
-          return event;
-        }
+      // Some keys (such as the arrow keys) and mouse clicks prevent espanso from building
+      // an accurate key buffer, so we need to invalidate it.
+      if is_invalidating_event(&event.etype) {
+        trace!("invalidating event detected, clearing matching state");
+        matcher_states.clear();
+        return event;
       }
 
       let mut all_results = Vec::new();
@@ -158,17 +158,21 @@ fn convert_to_matcher_event(event_type: &EventType) -> Option<MatcherEvent> {
   }
 }
 
-fn is_invalidating_key(key: &Key) -> bool {
-  match key {
-    Key::ArrowDown => true,
-    Key::ArrowLeft => true,
-    Key::ArrowRight => true,
-    Key::ArrowUp => true,
-    Key::End => true,
-    Key::Home => true,
-    Key::PageDown => true,
-    Key::PageUp => true,
-    Key::Escape => true,
+fn is_invalidating_event(event_type: &EventType) -> bool {
+  match event_type {
+    EventType::Keyboard(keyboard_event) => match keyboard_event.key {
+      Key::ArrowDown => true,
+      Key::ArrowLeft => true,
+      Key::ArrowRight => true,
+      Key::ArrowUp => true,
+      Key::End => true,
+      Key::Home => true,
+      Key::PageDown => true,
+      Key::PageUp => true,
+      Key::Escape => true,
+      _ => false,
+    },
+    EventType::Mouse(_) => true,
     _ => false,
   }
 }
