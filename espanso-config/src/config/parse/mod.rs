@@ -28,6 +28,7 @@ pub(crate) struct ParsedConfig {
   pub label: Option<String>,
 
   pub backend: Option<String>,
+  pub clipboard_threshold: Option<usize>,
 
   // Includes
   pub includes: Option<Vec<String>>,

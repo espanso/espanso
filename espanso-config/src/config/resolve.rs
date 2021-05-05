@@ -128,6 +128,10 @@ impl Config for ResolvedConfig {
       }
     }
   }
+
+  fn clipboard_threshold(&self) -> usize {
+    self.parsed.clipboard_threshold.unwrap_or(100)
+  }
 }
 
 impl ResolvedConfig {
@@ -185,6 +189,7 @@ impl ResolvedConfig {
       // Fields
       label,
       backend,
+      clipboard_threshold,
       includes,
       excludes,
       extra_includes,

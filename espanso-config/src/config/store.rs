@@ -161,6 +161,10 @@ mod tests {
     fn backend(&self) -> crate::config::Backend {
       unimplemented!()
     }
+    
+    fn clipboard_threshold(&self) -> usize {
+      unimplemented!()
+    }
   }
 
   #[test]

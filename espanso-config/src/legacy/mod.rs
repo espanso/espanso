@@ -252,6 +252,10 @@ impl Config for LegacyInteropConfig {
     // All the filters that have been specified must be true to define a match
     is_exec_match && is_title_match && is_class_match
   }
+
+  fn clipboard_threshold(&self) -> usize {
+    100
+  }
 }
 
 struct LegacyMatchGroup {
