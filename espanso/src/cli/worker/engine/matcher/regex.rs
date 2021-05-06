@@ -17,47 +17,30 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use espanso_match::rolling::{
-  matcher::{RollingMatcher, RollingMatcherOptions},
-  RollingMatch,
-};
-
-use crate::engine::{
-  process::{MatchResult, Matcher, MatcherEvent},
-};
+use crate::engine::process::{MatchResult, Matcher, MatcherEvent};
+use espanso_match::regex::{RegexMatch, RegexMatcher, RegexMatcherOptions};
 
 use super::MatcherState;
 
-pub struct RollingMatcherAdapter {
-  matcher: RollingMatcher<i32>,
+pub struct RegexMatcherAdapterOptions {
+  pub max_buffer_size: usize,
 }
 
-impl RollingMatcherAdapter {
-  pub fn new(matches: &[RollingMatch<i32>]) -> Self {
-    // TODO: load them from config
+pub struct RegexMatcherAdapter {
+  matcher: RegexMatcher<i32>,
+}
 
-    let matcher = RollingMatcher::new(
-      matches,
-      RollingMatcherOptions {
-        char_word_separators: vec![
-          " ".to_string(),
-          ",".to_string(),
-          ".".to_string(),
-          "?".to_string(),
-          "!".to_string(),
-          "\r".to_string(),
-          "\n".to_string(),
-          (22u8 as char).to_string(),
-        ],
-        key_word_separators: vec![],
-      },
-    );
+impl RegexMatcherAdapter {
+  pub fn new(matches: &[RegexMatch<i32>], options: &RegexMatcherAdapterOptions) -> Self {
+    let matcher = RegexMatcher::new(matches, RegexMatcherOptions {
+      max_buffer_size: options.max_buffer_size,
+    });
 
     Self { matcher }
   }
 }
 
-impl<'a> Matcher<'a, MatcherState<'a>> for RollingMatcherAdapter {
+impl<'a> Matcher<'a, MatcherState<'a>> for RegexMatcherAdapter {
   fn process(
     &'a self,
     prev_state: Option<&MatcherState<'a>>,
@@ -66,17 +49,17 @@ impl<'a> Matcher<'a, MatcherState<'a>> for RollingMatcherAdapter {
     use espanso_match::Matcher;
 
     let prev_state = prev_state.map(|state| {
-      if let Some(state) = state.as_rolling() {
+      if let Some(state) = state.as_regex() {
         state
       } else {
-        panic!("invalid state type received in RollingMatcherAdapter")
+        panic!("invalid state type received in RegexMatcherAdapter")
       }
     });
     let event = event.into();
 
     let (state, results) = self.matcher.process(prev_state, event);
 
-    let enum_state = MatcherState::Rolling(state);
+    let enum_state = MatcherState::Regex(state);
     let results: Vec<MatchResult> = results.into_iter().map(|result| result.into()).collect();
 
     (enum_state, results)
