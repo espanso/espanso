@@ -53,6 +53,18 @@ impl Default for RegexMatcherState {
   }
 }
 
+pub struct RegexMatcherOptions {
+  pub max_buffer_size: usize,
+}
+
+impl Default for RegexMatcherOptions {
+  fn default() -> Self {
+    Self {
+      max_buffer_size: 30,
+    }
+  }
+}
+
 pub struct RegexMatcher<Id> {
   ids: Vec<Id>,
   // The RegexSet is used to efficiently determine which regexes match
@@ -60,6 +72,8 @@ pub struct RegexMatcher<Id> {
 
   // The single regexes are then used to find the captures
   regexes: Vec<Regex>,
+
+  max_buffer_size: usize,
 }
 
 impl<'a, Id> Matcher<'a, RegexMatcherState, Id> for RegexMatcher<Id>
@@ -81,6 +95,11 @@ where
       if let Some(chars) = chars {
         buffer.push_str(&chars);
       }
+    }
+
+    // Keep the buffer length in check
+    if buffer.len() > self.max_buffer_size {
+      buffer.remove(0);
     }
 
     // Find matches
@@ -129,7 +148,7 @@ where
 }
 
 impl<Id: Clone> RegexMatcher<Id> {
-  pub fn new(matches: &[RegexMatch<Id>]) -> Self {
+  pub fn new(matches: &[RegexMatch<Id>], opt: RegexMatcherOptions) -> Self {
     let mut ids = Vec::new();
     let mut regexes = Vec::new();
     let mut good_regexes = Vec::new();
@@ -153,6 +172,7 @@ impl<Id: Clone> RegexMatcher<Id> {
       ids,
       regex_set,
       regexes,
+      max_buffer_size: opt.max_buffer_size,
     }
   }
 }
@@ -179,10 +199,13 @@ mod tests {
 
   #[test]
   fn matcher_simple_matches() {
-    let matcher = RegexMatcher::new(&[
-      RegexMatch::new(1, "hello"),
-      RegexMatch::new(2, "num\\d{1,3}s"),
-    ]);
+    let matcher = RegexMatcher::new(
+      &[
+        RegexMatch::new(1, "hello"),
+        RegexMatch::new(2, "num\\d{1,3}s"),
+      ],
+      RegexMatcherOptions::default(),
+    );
     assert_eq!(get_matches_after_str("hi", &matcher), vec![]);
     assert_eq!(
       get_matches_after_str("hello", &matcher),
@@ -205,10 +228,13 @@ mod tests {
 
   #[test]
   fn matcher_with_variables() {
-    let matcher = RegexMatcher::new(&[
-      RegexMatch::new(1, "hello\\((?P<name>.*?)\\)"),
-      RegexMatch::new(2, "multi\\((?P<name1>.*?),(?P<name2>.*?)\\)"),
-    ]);
+    let matcher = RegexMatcher::new(
+      &[
+        RegexMatch::new(1, "hello\\((?P<name>.*?)\\)"),
+        RegexMatch::new(2, "multi\\((?P<name1>.*?),(?P<name2>.*?)\\)"),
+      ],
+      RegexMatcherOptions::default(),
+    );
     assert_eq!(get_matches_after_str("hi", &matcher), vec![]);
     assert_eq!(
       get_matches_after_str("say hello(mary)", &matcher),
@@ -223,5 +249,23 @@ mod tests {
         &[("name1", "mary"), ("name2", "jane")]
       )]
     );
+  }
+
+  #[test]
+  fn matcher_max_buffer_size() {
+    let matcher = RegexMatcher::new(
+      &[
+        RegexMatch::new(1, "hello\\((?P<name>.*?)\\)"),
+        RegexMatch::new(2, "multi\\((?P<name1>.*?),(?P<name2>.*?)\\)"),
+      ],
+      RegexMatcherOptions {
+        max_buffer_size: 15
+      },
+    );
+    assert_eq!(
+      get_matches_after_str("say hello(mary)", &matcher),
+      vec![match_result(1, "hello(mary)", &[("name", "mary")])]
+    );
+    assert_eq!(get_matches_after_str("hello(very long name over buffer)", &matcher), vec![]);
   }
 }
