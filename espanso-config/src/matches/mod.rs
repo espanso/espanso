@@ -54,7 +54,7 @@ impl Default for Match {
 pub enum MatchCause {
   None,
   Trigger(TriggerCause),
-  // TODO: regex
+  Regex(RegexCause),
   // TODO: shortcut
 }
 
@@ -86,6 +86,19 @@ pub enum UpperCasingStyle {
   Uppercase,
   Capitalize,
   CapitalizeWords,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct RegexCause {
+  pub regex: String,
+}
+
+impl Default for RegexCause {
+  fn default() -> Self {
+    Self {
+      regex: String::new(),
+    }
+  }
 }
 
 // Effects

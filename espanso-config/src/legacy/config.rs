@@ -491,7 +491,7 @@ fn triggers_for_match(m: &Value) -> Vec<String> {
   } else if let Some(trigger) = m.get("trigger").and_then(|v| v.as_str()) {
     vec![trigger.to_string()]
   } else {
-    panic!("Match does not have any trigger defined: {:?}", m)
+    vec![]
   }
 }
 
