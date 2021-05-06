@@ -22,7 +22,7 @@ use espanso_config::{config::ConfigStore, matches::store::MatchStore};
 use espanso_path::Paths;
 use ui::selector::MatchSelectorAdapter;
 
-use crate::cli::worker::engine::path::PathProviderAdapter;
+use crate::cli::worker::engine::{matcher::regex::RegexMatcherAdapterOptions, path::PathProviderAdapter};
 
 use super::ui::icon::IconPaths;
 
@@ -61,12 +61,18 @@ pub fn initialize_and_spawn(
       let sources: Vec<&dyn crate::engine::funnel::Source> = vec![&detect_source];
       let funnel = crate::engine::funnel::default(&sources);
 
-      let matcher = super::engine::matcher::rolling::RollingMatcherAdapter::new(
+      let rolling_matcher = super::engine::matcher::rolling::RollingMatcherAdapter::new(
         &match_converter.get_rolling_matches(),
+      );
+      let regex_matcher = super::engine::matcher::regex::RegexMatcherAdapter::new(
+        &match_converter.get_regex_matches(),
+        &RegexMatcherAdapterOptions {
+          max_buffer_size: 30,  // TODO: load from configs
+        }
       );
       let matchers: Vec<
         &dyn crate::engine::process::Matcher<super::engine::matcher::MatcherState>,
-      > = vec![&matcher];
+      > = vec![&rolling_matcher, &regex_matcher];
       let selector = MatchSelectorAdapter::new();
       let multiplexer = super::engine::multiplex::MultiplexAdapter::new(&match_cache);
 

@@ -218,7 +218,7 @@ impl<'a> Renderer<'a> for RendererAdapter<'a> {
         for (name, value) in trigger_vars {
           let mut params = espanso_render::Params::new();
           params.insert("echo".to_string(), Value::String(value));
-          augmented.vars.push(Variable {
+          augmented.vars.insert(0, Variable {
             name,
             var_type: "echo".to_string(),
             params,

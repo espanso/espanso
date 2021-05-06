@@ -24,7 +24,10 @@ use espanso_config::{
     MatchCause,
   },
 };
-use espanso_match::rolling::{RollingMatch, StringMatchOptions};
+use espanso_match::{
+  regex::RegexMatch,
+  rolling::{RollingMatch, StringMatchOptions},
+};
 use std::iter::FromIterator;
 
 pub struct MatchConverter<'a> {
@@ -52,12 +55,29 @@ impl<'a> MatchConverter<'a> {
             m.id,
             &trigger,
             &StringMatchOptions {
-              case_insensitive: cause.propagate_case, 
+              case_insensitive: cause.propagate_case,
               left_word: cause.left_word,
-              right_word: cause.right_word, 
+              right_word: cause.right_word,
             },
           ))
         }
+      }
+    }
+
+    matches
+  }
+
+  // TODO: test (might need to move the conversion logic into a separate function)
+  pub fn get_regex_matches(&self) -> Vec<RegexMatch<i32>> {
+    let match_set = self.global_match_set();
+    let mut matches = Vec::new();
+
+    for m in match_set.matches {
+      if let MatchCause::Regex(cause) = &m.cause {
+        matches.push(RegexMatch::new(
+          m.id,
+          &cause.regex,
+        ))
       }
     }
 
