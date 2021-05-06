@@ -17,7 +17,7 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::{counter::next_id, matches::{ImageEffect, Match, Params, TextFormat, UpperCasingStyle, Value, Variable, group::{path::resolve_imports, MatchGroup}}};
+use crate::{counter::next_id, matches::{ImageEffect, Match, Params, RegexCause, TextFormat, UpperCasingStyle, Value, Variable, group::{path::resolve_imports, MatchGroup}}};
 use anyhow::Result;
 use log::{error, warn};
 use parse::YAMLMatchGroup;
@@ -136,6 +136,10 @@ impl TryFrom<YAMLMatch> for Match {
           .propagate_case
           .unwrap_or(TriggerCause::default().propagate_case),
         uppercase_style,
+      })
+    } else if let Some(regex) = yaml_match.regex {  // TODO: add test case
+      MatchCause::Regex(RegexCause {
+        regex,
       })
     } else {
       MatchCause::None

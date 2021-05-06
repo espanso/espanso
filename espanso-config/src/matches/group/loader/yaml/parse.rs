@@ -65,6 +65,9 @@ pub struct YAMLMatch {
   pub triggers: Option<Vec<String>>,
 
   #[serde(default)]
+  pub regex: Option<String>,
+
+  #[serde(default)]
   pub replace: Option<String>,
 
   #[serde(default)]
