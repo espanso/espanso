@@ -18,4 +18,6 @@
  */
 
 pub mod form;
-pub mod selector;
+pub mod manager;
+
+// TODO: implement FormUI and SearchUI traits using ModuloManager
