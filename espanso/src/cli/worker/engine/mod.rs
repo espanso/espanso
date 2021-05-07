@@ -54,7 +54,8 @@ pub fn initialize_and_spawn(
         super::engine::matcher::convert::MatchConverter::new(&*config_store, &*match_store);
       let match_cache = super::engine::match_cache::MatchCache::load(&*config_store, &*match_store);
 
-      let modulo_manager = ui::modulo::ModuloManager::new();
+      let modulo_manager = crate::gui::modulo::manager::ModuloManager::new();
+      let modulo_form_ui = crate::gui::modulo::form::ModuloFormUI::new(&modulo_manager, icon_paths.form_icon);
 
       let (detect_source, modifier_state_store, sequencer) =
         super::engine::source::init_and_spawn().expect("failed to initialize detector module");
@@ -94,8 +95,7 @@ pub fn initialize_and_spawn(
         &paths.packages,
       );
       let shell_extension = espanso_render::extension::shell::ShellExtension::new(&paths.config);
-      let form_adapter =
-        ui::modulo::form::ModuloFormProviderAdapter::new(&modulo_manager, icon_paths.form_icon);
+      let form_adapter = ui::form::FormProviderAdapter::new(&modulo_form_ui);
       let form_extension = espanso_render::extension::form::FormExtension::new(&form_adapter);
       let renderer = espanso_render::create(vec![
         &clipboard_extension,

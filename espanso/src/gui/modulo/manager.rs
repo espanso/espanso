@@ -23,8 +23,6 @@ use std::io::Write;
 use std::process::Command;
 use thiserror::Error;
 
-pub mod form;
-
 pub struct ModuloManager {
   modulo_path: Option<String>,
 }

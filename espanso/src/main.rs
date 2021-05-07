@@ -32,6 +32,7 @@ use simplelog::{
 
 mod cli;
 mod engine;
+mod gui;
 mod logging;
 mod util;
 

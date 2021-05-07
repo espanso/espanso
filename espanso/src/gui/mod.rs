@@ -17,5 +17,39 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub mod form;
-pub mod selector;
+use std::collections::HashMap;
+
+use anyhow::Result;
+
+pub mod modulo;
+
+pub trait SearchUI {
+  fn show(&self, items: &SearchItem) -> Result<Option<String>>;
+}
+
+#[derive(Debug)]
+pub struct SearchItem {
+  pub id: String,
+  pub label: String,
+  pub tag: Option<String>,
+}
+
+pub trait FormUI {
+  fn show(&self, layout: &str, fields: &HashMap<String, FormField>) -> Result<Option<HashMap<String, String>>>;
+}
+
+#[derive(Debug)]
+pub enum FormField {
+  Text {
+    default: Option<String>,
+    multiline: bool,
+  },
+  Choice {
+    default: Option<String>,
+    values: Vec<String>,
+  },
+  List {
+    default: Option<String>,
+    values: Vec<String>,
+  }
+}
