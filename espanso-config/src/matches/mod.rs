@@ -48,6 +48,32 @@ impl Default for Match {
   }
 }
 
+impl Match {
+  // TODO: test
+  pub fn description<'a>(&'a self) -> &'a str {
+    if let Some(label) = &self.label {
+      &label
+    } else if let MatchEffect::Text(text_effect) = &self.effect {
+      &text_effect.replace
+    } else if let MatchEffect::Image(_) = &self.effect {
+      "Image content"
+    } else {
+      "No description available for this match"
+    }
+  }
+
+  // TODO: test
+  pub fn cause_description<'a>(&'a self) -> Option<&'a str> {
+    if let MatchCause::Trigger(trigger_cause) = &self.cause {
+      trigger_cause.triggers.first().map(|s| s.as_str())
+    } else {
+      None
+    }
+    // TODO: insert rendering for hotkey/shortcut
+    // TODO: insert rendering for regex? I'm worried it might be too long
+  }
+}
+
 // Causes
 
 #[derive(Debug, Clone, Eq, Hash, PartialEq, EnumAsInner)]
