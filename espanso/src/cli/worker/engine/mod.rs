@@ -129,6 +129,7 @@ pub fn initialize_and_spawn(
         super::engine::executor::clipboard_injector::ClipboardInjectorAdapter::new(
           &*injector,
           &*clipboard,
+          &config_manager,
         );
       let key_injector = super::engine::executor::key_injector::KeyInjectorAdapter::new(&*injector);
       let dispatcher = crate::engine::dispatch::default(
