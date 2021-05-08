@@ -21,3 +21,4 @@ ordered-float = "2.0"
 [dev-dependencies]
 tempdir = "0.3.7"
 tempfile = "3.2.0"
+mockall = "0.9.1"

@@ -126,52 +126,22 @@ impl DefaultConfigStore {
 #[cfg(test)]
 mod tests {
   use super::*;
+  use crate::config::MockConfig;
 
-  struct MockConfig {
-    label: String,
-    is_match: bool,
-  }
-
-  impl MockConfig {
-    pub fn new(label: &str, is_match: bool) -> Self {
-      Self {
-        label: label.to_string(),
-        is_match,
-      }
-    }
-  }
-
-  impl Config for MockConfig {
-    fn id(&self) -> i32 {
-      0
-    }
-
-    fn label(&self) -> &str {
-      &self.label
-    }
-
-    fn match_paths(&self) -> &[String] {
-      unimplemented!()
-    }
-
-    fn is_match(&self, _: &crate::config::AppProperties) -> bool {
-      self.is_match
-    }
-
-    fn backend(&self) -> crate::config::Backend {
-      unimplemented!()
-    }
-    
-    fn clipboard_threshold(&self) -> usize {
-      unimplemented!()
-    }
+  pub fn new_mock(label: &'static str, is_match: bool) -> MockConfig {
+    let label = label.to_owned();
+    let mut mock = MockConfig::new();
+    mock.expect_id().return_const(0);
+    mock.expect_label().return_const(label);
+    mock.expect_is_match().return_const(is_match);
+    mock
   }
 
   #[test]
   fn config_store_selects_correctly() {
-    let default = MockConfig::new("default", false);
-    let custom1 = MockConfig::new("custom1", false);
-    let custom2 = MockConfig::new("custom2", true);
+    let default = new_mock("default", false);
+    let custom1 = new_mock("custom1", false);
+    let custom2 = new_mock("custom2", true);
 
     let store = DefaultConfigStore {
       default: Box::new(default),
@@ -193,9 +163,9 @@ mod tests {
 
   #[test]
   fn config_store_active_fallback_to_default_if_no_match() {
-    let default = MockConfig::new("default", false);
-    let custom1 = MockConfig::new("custom1", false);
-    let custom2 = MockConfig::new("custom2", false);
+    let default = new_mock("default", false);
+    let custom1 = new_mock("custom1", false);
+    let custom2 = new_mock("custom2", false);
 
     let store = DefaultConfigStore {
       default: Box::new(default),

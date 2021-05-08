@@ -30,6 +30,8 @@ pub(crate) struct ParsedConfig {
   pub backend: Option<String>,
   pub clipboard_threshold: Option<usize>,
 
+  pub pre_paste_delay: Option<usize>,
+
   // Includes
   pub includes: Option<Vec<String>>,
   pub excludes: Option<Vec<String>>,

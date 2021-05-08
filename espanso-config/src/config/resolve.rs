@@ -17,7 +17,13 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use super::{AppProperties, Backend, Config, parse::ParsedConfig, path::calculate_paths, util::os_matches};
+use super::{
+  default::{DEFAULT_CLIPBOARD_THRESHOLD, DEFAULT_PRE_PASTE_DELAY},
+  parse::ParsedConfig,
+  path::calculate_paths,
+  util::os_matches,
+  AppProperties, Backend, Config,
+};
 use crate::{counter::next_id, merge};
 use anyhow::Result;
 use log::error;
@@ -118,7 +124,13 @@ impl Config for ResolvedConfig {
   }
 
   fn backend(&self) -> Backend {
-    match self.parsed.backend.as_deref().map(|b| b.to_lowercase()).as_deref() {
+    match self
+      .parsed
+      .backend
+      .as_deref()
+      .map(|b| b.to_lowercase())
+      .as_deref()
+    {
       Some("clipboard") => Backend::Clipboard,
       Some("inject") => Backend::Inject,
       Some("auto") => Backend::Auto,
@@ -130,7 +142,17 @@ impl Config for ResolvedConfig {
   }
 
   fn clipboard_threshold(&self) -> usize {
-    self.parsed.clipboard_threshold.unwrap_or(100)
+    self
+      .parsed
+      .clipboard_threshold
+      .unwrap_or(DEFAULT_CLIPBOARD_THRESHOLD)
+  }
+
+  fn pre_paste_delay(&self) -> usize {
+    self
+      .parsed
+      .pre_paste_delay
+      .unwrap_or(DEFAULT_PRE_PASTE_DELAY)
   }
 }
 
@@ -190,6 +212,7 @@ impl ResolvedConfig {
       label,
       backend,
       clipboard_threshold,
+      pre_paste_delay,
       includes,
       excludes,
       extra_includes,
