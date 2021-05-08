@@ -106,11 +106,25 @@ impl<'a> ModeProvider for ConfigManager<'a> {
   fn active_mode(&self) -> crate::engine::dispatch::Mode {
     let config = self.active();
     match config.backend() {
-      espanso_config::config::Backend::Inject => crate::engine::dispatch::Mode::Event, 
-      espanso_config::config::Backend::Clipboard => crate::engine::dispatch::Mode::Clipboard, 
+      espanso_config::config::Backend::Inject => crate::engine::dispatch::Mode::Event,
+      espanso_config::config::Backend::Clipboard => crate::engine::dispatch::Mode::Clipboard,
       espanso_config::config::Backend::Auto => crate::engine::dispatch::Mode::Auto {
         clipboard_threshold: config.clipboard_threshold(),
       },
+    }
+  }
+}
+
+impl<'a> super::engine::executor::clipboard_injector::ClipboardParamsProvider
+  for ConfigManager<'a>
+{
+  fn get(&self) -> super::engine::executor::clipboard_injector::ClipboardParams {
+    let active = self.active();
+    super::engine::executor::clipboard_injector::ClipboardParams {
+      pre_paste_delay: active.pre_paste_delay(),
+      paste_shortcut_event_delay: 5, // TODO: read from config
+      paste_shortcut: None, // TODO: read from config
+      disable_x11_fast_inject: false, // TODO: read from config
     }
   }
 }

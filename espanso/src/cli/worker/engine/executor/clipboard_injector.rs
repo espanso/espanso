@@ -17,54 +17,81 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::path::PathBuf;
+use std::{convert::TryInto, path::PathBuf};
 
-use espanso_inject::{InjectionOptions, Injector, keys::Key};
 use espanso_clipboard::Clipboard;
+use espanso_inject::{keys::Key, InjectionOptions, Injector};
 
-use crate::engine::{dispatch::HtmlInjector, dispatch::{ImageInjector, TextInjector}};
+use crate::engine::{
+  dispatch::HtmlInjector,
+  dispatch::{ImageInjector, TextInjector},
+};
+
+pub trait ClipboardParamsProvider {
+  fn get(&self) -> ClipboardParams;
+}
+
+pub struct ClipboardParams {
+  pub pre_paste_delay: usize,
+  pub paste_shortcut_event_delay: usize,
+  pub paste_shortcut: Option<String>,
+  pub disable_x11_fast_inject: bool,
+}
 
 pub struct ClipboardInjectorAdapter<'a> {
   injector: &'a dyn Injector,
   clipboard: &'a dyn Clipboard,
+  params_provider: &'a dyn ClipboardParamsProvider,
 }
 
-impl <'a> ClipboardInjectorAdapter<'a> {
-  pub fn new(injector: &'a dyn Injector, clipboard: &'a dyn Clipboard) -> Self {
+impl<'a> ClipboardInjectorAdapter<'a> {
+  pub fn new(
+    injector: &'a dyn Injector,
+    clipboard: &'a dyn Clipboard,
+    params_provider: &'a dyn ClipboardParamsProvider,
+  ) -> Self {
     Self {
       injector,
       clipboard,
+      params_provider,
     }
   }
 
   fn send_paste_combination(&self) -> anyhow::Result<()> {
-    // TODO: handle delay duration
-    std::thread::sleep(std::time::Duration::from_millis(100));
+    let params = self.params_provider.get();
 
+    std::thread::sleep(std::time::Duration::from_millis(
+      params.pre_paste_delay.try_into().unwrap(),
+    ));
+
+    // TODO: handle case of custom combination
     let combination = if cfg!(target_os = "macos") {
       &[Key::Meta, Key::V]
     } else {
       &[Key::Control, Key::V]
-    }; // TODO: handle case of custom combination
+    }; 
 
     // TODO: handle user-specified delays
-    let paste_combination_delay = if cfg!(target_os = "macos") {
-      5
-    } else {
-      InjectionOptions::default().delay
-    };
+    // let paste_combination_delay = if cfg!(target_os = "macos") {
+    //   5
+    // } else {
+    //   InjectionOptions::default().delay
+    // };
 
     // TODO: handle options
-    self.injector.send_key_combination(combination, InjectionOptions {
-      delay: paste_combination_delay,
-      ..Default::default()
-    })?;
+    self.injector.send_key_combination(
+      combination,
+      InjectionOptions {
+        delay: params.paste_shortcut_event_delay as i32,
+        ..Default::default()
+      },
+    )?;
 
     Ok(())
   }
 }
 
-impl <'a> TextInjector for ClipboardInjectorAdapter<'a> {
+impl<'a> TextInjector for ClipboardInjectorAdapter<'a> {
   fn name(&self) -> &'static str {
     "clipboard"
   }
@@ -79,7 +106,7 @@ impl <'a> TextInjector for ClipboardInjectorAdapter<'a> {
   }
 }
 
-impl <'a> HtmlInjector for ClipboardInjectorAdapter<'a> {
+impl<'a> HtmlInjector for ClipboardInjectorAdapter<'a> {
   fn inject_html(&self, html: &str, fallback_text: &str) -> anyhow::Result<()> {
     // TODO: handle clipboard restoration
     self.clipboard.set_html(html, Some(fallback_text))?;
@@ -90,11 +117,17 @@ impl <'a> HtmlInjector for ClipboardInjectorAdapter<'a> {
   }
 }
 
-impl <'a> ImageInjector for ClipboardInjectorAdapter<'a> {
+impl<'a> ImageInjector for ClipboardInjectorAdapter<'a> {
   fn inject_image(&self, image_path: &str) -> anyhow::Result<()> {
     let path = PathBuf::from(image_path);
     if !path.is_file() {
-      return Err(std::io::Error::new(std::io::ErrorKind::NotFound, "image can't be found in the given path").into());
+      return Err(
+        std::io::Error::new(
+          std::io::ErrorKind::NotFound,
+          "image can't be found in the given path",
+        )
+        .into(),
+      );
     }
 
     // TODO: handle clipboard restoration
