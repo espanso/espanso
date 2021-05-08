@@ -31,10 +31,10 @@ pub struct ModuloFormUI<'a> {
 }
 
 impl<'a> ModuloFormUI<'a> {
-  pub fn new(manager: &'a ModuloManager, icon_path: Option<PathBuf>) -> Self {
+  pub fn new(manager: &'a ModuloManager, icon_path: &Option<PathBuf>) -> Self {
     Self {
       manager,
-      icon_path: icon_path.map(|path| path.to_string_lossy().to_string()),
+      icon_path: icon_path.as_ref().map(|path| path.to_string_lossy().to_string()),
     }
   }
 }

@@ -63,6 +63,14 @@ impl<'a> super::render::MatchProvider<'a> for MatchCache<'a> {
   }
 }
 
+impl<'a> super::ui::selector::MatchProvider<'a> for MatchCache<'a> {
+  fn get_matches(&self, ids: &[i32]) -> Vec<&'a Match> {
+    ids.iter().flat_map(|id| {
+      self.cache.get(&id).map(|m| *m)
+    }).collect()
+  }
+}
+
 impl<'a> MatchInfoProvider for MatchCache<'a> {
   fn get_force_mode(&self, match_id: i32) -> Option<crate::engine::event::effect::TextInjectMode> {
     let m = self.cache.get(&match_id)?;

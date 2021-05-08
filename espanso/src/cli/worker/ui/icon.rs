@@ -33,6 +33,7 @@ const WINDOWS_RED_ICO_BINARY: &[u8] = include_bytes!("../../../res/windows/espan
 #[derive(Debug, Default)]
 pub struct IconPaths {
   pub form_icon: Option<PathBuf>,
+  pub search_icon: Option<PathBuf>,
 
   pub tray_icon_normal: Option<PathBuf>,
   pub tray_icon_disabled: Option<PathBuf>,
@@ -45,6 +46,7 @@ pub struct IconPaths {
 pub fn load_icon_paths(runtime_dir: &Path) -> Result<IconPaths> {
   Ok(IconPaths {
     form_icon: Some(extract_icon(WINDOWS_ICO_BINARY, &runtime_dir.join("form.ico"))?),
+    search_icon: Some(extract_icon(ICON_BINARY, &runtime_dir.join("search.png"))?),
     tray_icon_normal: Some(extract_icon(WINDOWS_ICO_BINARY, &runtime_dir.join("normal.ico"))?),
     tray_icon_disabled: Some(extract_icon(WINDOWS_RED_ICO_BINARY, &runtime_dir.join("disabled.ico"))?),
     logo: Some(extract_icon(ICON_BINARY, &runtime_dir.join("icon.png"))?),
@@ -56,6 +58,7 @@ pub fn load_icon_paths(runtime_dir: &Path) -> Result<IconPaths> {
 pub fn load_icon_paths(runtime_dir: &Path) -> Result<IconPaths> {
   Ok(IconPaths {
     logo: Some(extract_icon(ICON_BINARY, &runtime_dir.join("icon.png"))?),
+    search_icon: Some(extract_icon(ICON_BINARY, &runtime_dir.join("search.png"))?),
     ..Default::default()
   })
 }
