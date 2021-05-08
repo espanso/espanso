@@ -28,7 +28,13 @@ const WINDOWS_ICO_BINARY: &[u8] = include_bytes!("../../../res/windows/espanso.i
 #[cfg(target_os = "windows")]
 const WINDOWS_RED_ICO_BINARY: &[u8] = include_bytes!("../../../res/windows/espansored.ico");
 
-// TODO: macos
+
+#[cfg(target_os = "macos")]
+const MAC_BINARY: &[u8] = include_bytes!("../../../res/macos/icon.png");
+#[cfg(target_os = "macos")]
+const MAC_DISABLED_BINARY: &[u8] = include_bytes!("../../../res/macos/icondisabled.png");
+#[cfg(target_os = "macos")]
+const MAC_SYSTEM_DISABLED_BINARY: &[u8] = include_bytes!("../../../res/macos/iconsystemdisabled.png");
 
 #[derive(Debug, Default)]
 pub struct IconPaths {
@@ -54,6 +60,18 @@ pub fn load_icon_paths(runtime_dir: &Path) -> Result<IconPaths> {
   })
 }
 
+#[cfg(target_os = "macos")]
+pub fn load_icon_paths(runtime_dir: &Path) -> Result<IconPaths> {
+  Ok(IconPaths {
+    search_icon: Some(extract_icon(ICON_BINARY, &runtime_dir.join("search.png"))?),
+    tray_icon_normal: Some(extract_icon(MAC_BINARY, &runtime_dir.join("normal.png"))?),
+    tray_icon_disabled: Some(extract_icon(MAC_DISABLED_BINARY, &runtime_dir.join("disabled.png"))?),
+    tray_icon_system_disabled: Some(extract_icon(MAC_SYSTEM_DISABLED_BINARY, &runtime_dir.join("systemdisabled.png"))?),
+    logo: Some(extract_icon(ICON_BINARY, &runtime_dir.join("icon.png"))?),
+    ..Default::default()
+  })
+}
+
 #[cfg(target_os = "linux")]
 pub fn load_icon_paths(runtime_dir: &Path) -> Result<IconPaths> {
   Ok(IconPaths {
@@ -62,8 +80,6 @@ pub fn load_icon_paths(runtime_dir: &Path) -> Result<IconPaths> {
     ..Default::default()
   })
 }
-
-// TODO: macos
 
 // TODO: test
 fn extract_icon(data: &[u8], target_file: &Path) -> Result<PathBuf> {
