@@ -19,7 +19,7 @@
 
 use std::path::PathBuf;
 
-use espanso_inject::{Injector, keys::Key};
+use espanso_inject::{InjectionOptions, Injector, keys::Key};
 use espanso_clipboard::Clipboard;
 
 use crate::engine::{dispatch::HtmlInjector, dispatch::{ImageInjector, TextInjector}};
@@ -41,8 +41,24 @@ impl <'a> ClipboardInjectorAdapter<'a> {
     // TODO: handle delay duration
     std::thread::sleep(std::time::Duration::from_millis(100));
 
+    let combination = if cfg!(target_os = "macos") {
+      &[Key::Meta, Key::V]
+    } else {
+      &[Key::Control, Key::V]
+    }; // TODO: handle case of custom combination
+
+    // TODO: handle user-specified delays
+    let paste_combination_delay = if cfg!(target_os = "macos") {
+      5
+    } else {
+      InjectionOptions::default().delay
+    };
+
     // TODO: handle options
-    self.injector.send_key_combination(&[Key::Control, Key::V], Default::default())?;
+    self.injector.send_key_combination(combination, InjectionOptions {
+      delay: paste_combination_delay,
+      ..Default::default()
+    })?;
 
     Ok(())
   }
