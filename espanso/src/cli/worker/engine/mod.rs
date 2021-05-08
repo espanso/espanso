@@ -55,7 +55,8 @@ pub fn initialize_and_spawn(
       let match_cache = super::engine::match_cache::MatchCache::load(&*config_store, &*match_store);
 
       let modulo_manager = crate::gui::modulo::manager::ModuloManager::new();
-      let modulo_form_ui = crate::gui::modulo::form::ModuloFormUI::new(&modulo_manager, icon_paths.form_icon);
+      let modulo_form_ui = crate::gui::modulo::form::ModuloFormUI::new(&modulo_manager, &icon_paths.form_icon);
+      let modulo_search_ui = crate::gui::modulo::search::ModuloSearchUI::new(&modulo_manager, &icon_paths.search_icon);
 
       let (detect_source, modifier_state_store, sequencer) =
         super::engine::source::init_and_spawn().expect("failed to initialize detector module");
@@ -74,7 +75,7 @@ pub fn initialize_and_spawn(
       let matchers: Vec<
         &dyn crate::engine::process::Matcher<super::engine::matcher::MatcherState>,
       > = vec![&rolling_matcher, &regex_matcher];
-      let selector = MatchSelectorAdapter::new();
+      let selector = MatchSelectorAdapter::new(&modulo_search_ui, &match_cache);
       let multiplexer = super::engine::multiplex::MultiplexAdapter::new(&match_cache);
 
       let injector = espanso_inject::get_injector(Default::default())

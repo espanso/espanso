@@ -19,5 +19,4 @@
 
 pub mod form;
 pub mod manager;
-
-// TODO: implement FormUI and SearchUI traits using ModuloManager
+pub mod search;

@@ -24,7 +24,7 @@ use anyhow::Result;
 pub mod modulo;
 
 pub trait SearchUI {
-  fn show(&self, items: &SearchItem) -> Result<Option<String>>;
+  fn show(&self, items: &[SearchItem]) -> Result<Option<String>>;
 }
 
 #[derive(Debug)]
