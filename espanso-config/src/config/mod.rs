@@ -25,16 +25,33 @@ mod parse;
 mod path;
 mod resolve;
 mod util;
+pub(crate) mod default;
 pub(crate) mod store;
 
+#[cfg(test)]
+use mockall::{automock, predicate::*};
+#[cfg_attr(test, automock)]
 pub trait Config: Send {
   fn id(&self) -> i32;
   fn label(&self) -> &str;
   fn match_paths(&self) -> &[String];
   fn backend(&self) -> Backend;
-  fn clipboard_threshold(&self) -> usize;
 
-  fn is_match(&self, app: &AppProperties) -> bool;
+  // Number of chars after which a match is injected with the clipboard
+  // backend instead of the default one. This is done for efficiency
+  // reasons, as injecting a long match through separate events becomes 
+  // slow for long strings.
+  fn clipboard_threshold(&self) -> usize;
+  
+  // Delay (in ms) that espanso should wait to trigger the paste shortcut
+  // after copying the content in the clipboard. This is needed because
+  // if we trigger a "paste" shortcut before the content is actually
+  // copied in the clipboard, the operation will fail.
+  fn pre_paste_delay(&self) -> usize;
+
+  // TODO: add other delay options (start by the ones needed in clipboard injector)
+
+  fn is_match<'a>(&self, app: &AppProperties<'a>) -> bool;
 }
 
 pub trait ConfigStore: Send {

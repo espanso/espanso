@@ -22,7 +22,10 @@ use regex::Regex;
 use std::{collections::HashMap, path::Path};
 
 use self::config::LegacyConfig;
-use crate::matches::{MatchEffect, group::loader::yaml::parse::{YAMLMatch, YAMLVariable}};
+use crate::matches::{
+  group::loader::yaml::parse::{YAMLMatch, YAMLVariable},
+  MatchEffect,
+};
 use crate::{config::store::DefaultConfigStore, counter::StructId};
 use crate::{
   config::Config,
@@ -139,10 +142,7 @@ fn deduplicate_matches(
 }
 
 // TODO: test case of matches with inner variables
-fn deduplicate_vars(
-  vars: &mut [Variable],
-  var_map: &mut HashMap<Variable, StructId>,
-) {
+fn deduplicate_vars(vars: &mut [Variable], var_map: &mut HashMap<Variable, StructId>) {
   for v in vars.iter_mut() {
     let mut v_without_id = v.clone();
     v_without_id.id = 0;
@@ -254,7 +254,11 @@ impl Config for LegacyInteropConfig {
   }
 
   fn clipboard_threshold(&self) -> usize {
-    100
+    crate::config::default::DEFAULT_CLIPBOARD_THRESHOLD
+  }
+
+  fn pre_paste_delay(&self) -> usize {
+    crate::config::default::DEFAULT_PRE_PASTE_DELAY
   }
 }
 
@@ -472,8 +476,21 @@ mod tests {
         exec: None,
       });
 
-      for (i, m) in match_store.query(default_config.match_paths()).matches.into_iter().enumerate() {
-        assert_eq!(m.id, match_store.query(active_config.match_paths()).matches.get(i).unwrap().id);
+      for (i, m) in match_store
+        .query(default_config.match_paths())
+        .matches
+        .into_iter()
+        .enumerate()
+      {
+        assert_eq!(
+          m.id,
+          match_store
+            .query(active_config.match_paths())
+            .matches
+            .get(i)
+            .unwrap()
+            .id
+        );
       }
 
       assert_eq!(
