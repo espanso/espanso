@@ -50,12 +50,12 @@ pub trait Injector {
 #[allow(dead_code)]
 pub struct InjectionOptions {
   // Delay between injected events
-  delay: i32,
+  pub delay: i32,
 
   // Use original libxdo methods instead of patched version
   // using XSendEvent rather than XTestFakeKeyEvent
   // NOTE: Only relevant on X11 linux systems.
-  disable_fast_inject: bool,
+  pub disable_fast_inject: bool,
 }
 
 impl Default for InjectionOptions {
@@ -63,7 +63,7 @@ impl Default for InjectionOptions {
     let default_delay = if cfg!(target_os = "windows") {
       0
     } else if cfg!(target_os = "macos") {
-      2
+      1
     } else if cfg!(target_os = "linux") {
       if cfg!(feature = "wayland") {
         1
@@ -84,19 +84,19 @@ impl Default for InjectionOptions {
 #[allow(dead_code)]
 pub struct InjectorCreationOptions {
   // Only relevant in X11 Linux systems, use the EVDEV backend instead of X11.
-  use_evdev: bool,
+  pub use_evdev: bool,
 
   // Overwrite the list of modifiers to be scanned when
   // populating the evdev injector lookup maps
-  evdev_modifiers: Option<Vec<u32>>,
+  pub evdev_modifiers: Option<Vec<u32>>,
 
   // Overwrite the maximum number of modifiers used tested in
   // a single combination to populate the lookup maps
-  evdev_max_modifier_combination_len: Option<i32>,
+  pub evdev_max_modifier_combination_len: Option<i32>,
 
   // Can be used to overwrite the keymap configuration
   // used by espanso to inject key presses.
-  evdev_keyboard_rmlvo: Option<KeyboardConfig>,
+  pub evdev_keyboard_rmlvo: Option<KeyboardConfig>,
 }
 
 // This struct identifies the keyboard layout that
