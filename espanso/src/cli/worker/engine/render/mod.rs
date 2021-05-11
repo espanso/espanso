@@ -202,10 +202,13 @@ impl<'a> Renderer<'a> for RendererAdapter<'a> {
         .or_insert_with(|| generate_context(&match_set, &self.template_map, &self.global_vars_map));
       
       let raw_match = self.match_provider.get(match_id);
+      let propagate_case = raw_match.map(is_propagate_case).unwrap_or(false);
       let preferred_uppercasing_style = raw_match.and_then(extract_uppercasing_style);
 
       let options = RenderOptions {
-        casing_style: if let Some(trigger) = trigger {
+        casing_style: if !propagate_case {
+          CasingStyle::None
+        } else if let Some(trigger) = trigger {
           calculate_casing_style(trigger, preferred_uppercasing_style)
         } else {
           CasingStyle::None
@@ -251,6 +254,14 @@ fn extract_uppercasing_style(m: &Match) -> Option<UpperCasingStyle> {
     Some(cause.uppercase_style.clone())
   } else {
     None
+  }
+}
+
+fn is_propagate_case(m: &Match) -> bool {
+  if let MatchCause::Trigger(cause) = &m.cause {
+    cause.propagate_case
+  } else {
+    false
   }
 }
 
