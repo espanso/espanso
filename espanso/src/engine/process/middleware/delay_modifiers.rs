@@ -31,7 +31,7 @@ use crate::engine::event::{Event, EventType};
 const MODIFIER_DELAY_TIMEOUT: Duration = Duration::from_secs(3);
 
 pub trait ModifierStatusProvider {
-  fn is_any_modifier_pressed(&self) -> bool;
+  fn is_any_conflicting_modifier_pressed(&self) -> bool;
 }
 
 /// This middleware is used to delay the injection of text until
@@ -58,11 +58,14 @@ impl <'a> Middleware for DelayForModifierReleaseMiddleware<'a> {
   fn next(&self, event: Event, _: &mut dyn FnMut(Event)) -> Event {
     if is_injection_event(&event.etype) {
       let start = Instant::now();
-      while self.provider.is_any_modifier_pressed() {
+      while self.provider.is_any_conflicting_modifier_pressed() {
         if Instant::now().duration_since(start) > MODIFIER_DELAY_TIMEOUT {
           warn!("injection delay has timed out, please release the modifier keys (SHIFT, CTRL, ALT, CMD) to trigger an expansion");
           break;
         }
+
+        // TODO: here we might show a popup window to tell the users to release those keys
+
         trace!("delaying injection event as some modifiers are pressed");
         std::thread::sleep(Duration::from_millis(100));
       }
