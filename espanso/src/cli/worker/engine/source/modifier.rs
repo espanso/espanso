@@ -32,6 +32,11 @@ use crate::engine::process::ModifierStatusProvider;
 /// after a while.
 const MAXIMUM_MODIFIERS_PRESS_TIME_RECORD: Duration = Duration::from_secs(30);
 
+// TODO: should we add also Shift on Linux to avoid any conflict in the expansion process? Investigate
+/// These are the modifiers that might conflict with the expansion process. For example,
+/// if espanso injects some texts while Alt or Ctrl are pressed, strange things might happen.
+const CONFLICTING_MODIFIERS: &[Modifier] = &[Modifier::Ctrl, Modifier::Alt, Modifier::Meta];
+
 #[derive(Debug, Hash, PartialEq, Eq)]
 pub enum Modifier {
   Ctrl,
@@ -52,7 +57,7 @@ impl ModifierStateStore {
     }
   }
 
-  pub fn is_any_modifier_pressed(&self) -> bool {
+  pub fn is_any_conflicting_modifier_pressed(&self) -> bool {
     let mut state = self.state.lock().expect("unable to obtain modifier state");
     let mut is_any_modifier_pressed = false;
     for (modifier, status) in &mut state.modifiers {
@@ -64,7 +69,7 @@ impl ModifierStateStore {
         status.release();
       }
 
-      if status.is_pressed() {
+      if status.is_pressed() && CONFLICTING_MODIFIERS.contains(modifier) {
         is_any_modifier_pressed = true;
       }
     }
@@ -131,7 +136,7 @@ impl ModifierStatus {
 }
 
 impl ModifierStatusProvider for ModifierStateStore {
-  fn is_any_modifier_pressed(&self) -> bool {
-    self.is_any_modifier_pressed()
+  fn is_any_conflicting_modifier_pressed(&self) -> bool {
+    self.is_any_conflicting_modifier_pressed()
   }
 }
