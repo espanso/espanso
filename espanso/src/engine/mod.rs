@@ -19,12 +19,7 @@
 
 use log::{debug};
 
-use self::{
-  dispatch::Dispatcher,
-  event::{Event},
-  process::Processor,
-  funnel::{Funnel, FunnelResult},
-};
+use self::{dispatch::Dispatcher, event::{Event, EventType}, funnel::{Funnel, FunnelResult}, process::Processor};
 
 pub mod dispatch;
 pub mod event;
@@ -47,11 +42,16 @@ impl <'a> Engine<'a> {
   }
 
   pub fn run(&mut self) {
-    loop {
+    'main: loop {
       match self.funnel.receive() {
         FunnelResult::Event(event) => {
           let processed_events = self.processor.process(event);
           for event in processed_events {
+            if let EventType::Exit = &event.etype {
+              debug!("exit event received, exiting engine");
+              break 'main;
+            }
+
             self.dispatcher.dispatch(event);
           }
         } 

@@ -17,15 +17,32 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub mod action;
-pub mod cause;
-pub mod cursor_hint;
-pub mod delay_modifiers;
-pub mod exit;
-pub mod image_resolve;
-pub mod match_select;
-pub mod matcher;
-pub mod markdown;
-pub mod multiplex;
-pub mod past_discard;
-pub mod render;
+use log::debug;
+
+use super::super::Middleware;
+use crate::engine::{event::{Event, EventType}};
+
+pub struct ExitMiddleware {}
+
+impl ExitMiddleware {
+  pub fn new() -> Self {
+    Self {}
+  }
+}
+
+impl Middleware for ExitMiddleware {
+  fn name(&self) -> &'static str {
+    "exit"
+  }
+
+  fn next(&self, event: Event, _: &mut dyn FnMut(Event)) -> Event {
+    if let EventType::ExitRequested = &event.etype {
+      debug!("received ExitRequested event, dispatching exit");
+      return Event::caused_by(event.source_id, EventType::Exit);
+    }
+
+    event
+  }
+}
+
+// TODO: test

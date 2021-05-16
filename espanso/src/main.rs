@@ -35,6 +35,7 @@ use crate::cli::LogMode;
 mod cli;
 mod engine;
 mod gui;
+mod ipc;
 mod lock;
 mod logging;
 mod util;

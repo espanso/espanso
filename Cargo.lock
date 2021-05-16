@@ -307,6 +307,7 @@ dependencies = [
  "espanso-detect",
  "espanso-info",
  "espanso-inject",
+ "espanso-ipc",
  "espanso-match",
  "espanso-path",
  "espanso-render",

@@ -17,7 +17,8 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use log::error;
+use crossbeam::channel::unbounded;
+use log::{error, info};
 
 use crate::lock::acquire_worker_lock;
 
@@ -27,6 +28,7 @@ use super::{CliModule, CliModuleArgs};
 
 mod config;
 mod engine;
+mod ipc;
 mod ui;
 
 pub fn new() -> CliModule {
@@ -77,12 +79,26 @@ fn worker_main(args: CliModuleArgs) {
     .initialize()
     .expect("unable to initialize UI module");
 
-  // TODO: pass the remote
+  let (engine_exit_notify, engine_exit_receiver) = unbounded();
+
   // Initialize the engine on another thread and start it
-  engine::initialize_and_spawn(paths.clone(), config_store, match_store, icon_paths)
-    .expect("unable to initialize engine");
+  engine::initialize_and_spawn(
+    paths.clone(),
+    config_store,
+    match_store,
+    icon_paths,
+    remote,
+    engine_exit_receiver,
+  )
+  .expect("unable to initialize engine");
+
+  // Setup the IPC server
+  ipc::initialize_and_spawn(&paths.runtime, engine_exit_notify)
+    .expect("unable to initialize IPC server");
 
   eventloop.run(Box::new(move |event| {
     // TODO: handle event
   }));
+
+  info!("exiting worker process...");
 }

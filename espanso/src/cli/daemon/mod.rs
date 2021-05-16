@@ -19,9 +19,10 @@
 
 use std::process::Command;
 
+use espanso_ipc::IPCClient;
 use log::{error, info};
 
-use crate::lock::acquire_daemon_lock;
+use crate::{ipc::{IPCEvent, create_ipc_client_to_worker}, lock::acquire_daemon_lock};
 
 use super::{CliModule, CliModuleArgs};
 
@@ -53,6 +54,8 @@ fn daemon_main(args: CliModuleArgs) {
   info!("espanso version: {}", VERSION);
   // TODO: print os system and version? (with os_info crate)
 
+  let ipc_client = create_ipc_client_to_worker(&paths.runtime)
+    .expect("unable to create IPC client to worker process");
 
   // TODO: check worker lock file, if taken stop the worker process through IPC
 
@@ -60,14 +63,23 @@ fn daemon_main(args: CliModuleArgs) {
 
   let espanso_exe_path =
     std::env::current_exe().expect("unable to obtain espanso executable location");
-  
+
   info!("spawning the worker process...");
 
   let mut command = Command::new(&espanso_exe_path.to_string_lossy().to_string());
   command.args(&["worker"]);
-  command.env("ESPANSO_CONFIG_DIR", paths.config.to_string_lossy().to_string());
-  command.env("ESPANSO_PACKAGE_DIR", paths.packages.to_string_lossy().to_string());
-  command.env("ESPANSO_RUNTIME_DIR", paths.runtime.to_string_lossy().to_string());
+  command.env(
+    "ESPANSO_CONFIG_DIR",
+    paths.config.to_string_lossy().to_string(),
+  );
+  command.env(
+    "ESPANSO_PACKAGE_DIR",
+    paths.packages.to_string_lossy().to_string(),
+  );
+  command.env(
+    "ESPANSO_RUNTIME_DIR",
+    paths.runtime.to_string_lossy().to_string(),
+  );
 
   // On windows, we need to spawn the process as "Detached"
   #[cfg(target_os = "windows")]
