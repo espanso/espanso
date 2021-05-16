@@ -17,6 +17,8 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use std::process::Command;
+
 use log::info;
 
 use super::{CliModule, CliModuleArgs};
@@ -37,7 +39,36 @@ pub fn new() -> CliModule {
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 fn daemon_main(args: CliModuleArgs) {
-  let paths = args.paths.expect("missing paths in worker main");
+  let paths = args.paths.expect("missing paths in daemon main");
 
   info!("espanso version: {}", VERSION);
+  // TODO: print os system and version? (with os_info crate)
+
+  // TODO: check daemon lock file to avoid duplicates
+
+  // TODO: check worker lock file, if taken stop the worker process through IPC
+
+  // TODO: start IPC server
+
+  // TODO: start file watcher thread
+
+  let espanso_exe_path =
+    std::env::current_exe().expect("unable to obtain espanso executable location");
+  
+  info!("spawning the worker process...");
+
+  let mut command = Command::new(&espanso_exe_path.to_string_lossy().to_string());
+  command.args(&["worker"]);
+  command.env("ESPANSO_CONFIG_DIR", paths.config.to_string_lossy().to_string());
+  command.env("ESPANSO_PACKAGE_DIR", paths.packages.to_string_lossy().to_string());
+  command.env("ESPANSO_RUNTIME_DIR", paths.runtime.to_string_lossy().to_string());
+
+  // On windows, we need to spawn the process as "Detached"
+  #[cfg(target_os = "windows")]
+  {
+    use std::os::windows::process::CommandExt;
+    command.creation_flags(0x08000008); // Detached process without window
+  }
+
+  command.spawn().expect("unable to spawn worker process");
 }
