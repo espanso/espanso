@@ -17,6 +17,9 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+// This is needed to avoid showing a console window when starting espanso on Windows
+// TODO #![windows_subsystem = "windows"]
+
 #[macro_use]
 extern crate lazy_static;
 
@@ -309,8 +312,8 @@ fn main() {
         log_proxy
           .set_output_file(
             &paths.runtime.join(LOG_FILE_NAME),
-            handler.log_mode == LogMode::Write,
-            handler.log_mode == LogMode::Append,
+            handler.log_mode == LogMode::Read,
+            handler.log_mode == LogMode::CleanAndAppend,
           )
           .expect("unable to set up log output file");
       }
