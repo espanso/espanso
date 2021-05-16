@@ -94,6 +94,12 @@ LRESULT CALLBACK ui_window_procedure(HWND window, unsigned int msg, WPARAM wp, L
   {
   case WM_DESTROY:
     PostQuitMessage(0);
+    
+    // Remove tray icon
+    if (variables->options.show_icon)
+    {
+      Shell_NotifyIcon(NIM_DELETE, &variables->nid);
+    }
 
     // Free the tray icons
     for (int i = 0; i < variables->options.icon_paths_count; i++)
@@ -314,6 +320,14 @@ int32_t ui_destroy(void *window)
     return DestroyWindow((HWND)window);
   }
   return -1;
+}
+
+void ui_exit(void *window)
+{
+  if (window)
+  {
+    PostMessage((HWND)window, WM_CLOSE, 0, 0);
+  }
 }
 
 void ui_update_tray_icon(void *window, int32_t index)

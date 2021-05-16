@@ -54,6 +54,9 @@ extern "C" int32_t ui_eventloop(void * window, EventCallback callback);
 // Destroy the given window.
 extern "C" int32_t ui_destroy(void * window);
 
+// Send a termination event that exits the event loop
+extern "C" void ui_exit(void * window);
+
 // Updates the tray icon to the given one. The method accepts an index that refers to
 // the icon within the UIOptions.icon_paths array.
 extern "C" void ui_update_tray_icon(void * window, int32_t index);

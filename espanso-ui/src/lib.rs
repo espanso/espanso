@@ -15,10 +15,11 @@ pub mod linux;
 #[cfg(target_os = "macos")]
 pub mod mac;
 
-pub trait UIRemote {
+pub trait UIRemote: Send {
   fn update_tray_icon(&self, icon: TrayIcon);
   fn show_notification(&self, message: &str);
   fn show_context_menu(&self, menu: &menu::Menu);
+  fn exit(&self);
 }
 
 pub type UIEventCallback = Box<dyn Fn(event::UIEvent)>;
