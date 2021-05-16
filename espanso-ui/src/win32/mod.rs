@@ -74,6 +74,7 @@ extern "C" {
     event_callback: extern "C" fn(_self: *mut Win32EventLoop, event: RawUIEvent),
   ) -> i32;
   pub fn ui_destroy(window_handle: *const c_void) -> i32;
+  pub fn ui_exit(window_handle: *const c_void) -> i32;
   pub fn ui_update_tray_icon(window_handle: *const c_void, index: i32);
   pub fn ui_show_notification(window_handle: *const c_void, message: *const u16);
   pub fn ui_show_context_menu(window_handle: *const c_void, payload: *const c_char);
@@ -347,6 +348,16 @@ impl UIRemote for Win32Remote {
         error!("Unable to show context menu, {}", error);
       }
     }
+  }
+
+  fn exit(&self) {
+    let handle = self.handle.load(Ordering::Acquire);
+    if handle.is_null() {
+      error!("Unable to exit eventloop, pointer is null");
+      return;
+    }
+
+    unsafe { ui_exit(handle) };
   }
 }
 
