@@ -263,6 +263,9 @@ fn main() {
         WriteLogger::new(LevelFilter::Info, config, log_proxy.clone()),
       ])
       .expect("unable to initialize logs");
+
+      // Activate logging for panics
+      log_panics::init();
     }
 
     let mut cli_args: CliModuleArgs = CliModuleArgs::default();
