@@ -17,12 +17,12 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::process::Command;
+use std::{path::Path, process::Command, time::Instant};
 
 use espanso_ipc::IPCClient;
-use log::{error, info};
+use log::{error, info, warn};
 
-use crate::{ipc::{IPCEvent, create_ipc_client_to_worker}, lock::acquire_daemon_lock};
+use crate::{ipc::{IPCEvent, create_ipc_client_to_worker}, lock::{acquire_daemon_lock, acquire_worker_lock}};
 
 use super::{CliModule, CliModuleArgs};
 
@@ -54,10 +54,10 @@ fn daemon_main(args: CliModuleArgs) {
   info!("espanso version: {}", VERSION);
   // TODO: print os system and version? (with os_info crate)
 
-  let ipc_client = create_ipc_client_to_worker(&paths.runtime)
+  let worker_ipc = create_ipc_client_to_worker(&paths.runtime)
     .expect("unable to create IPC client to worker process");
 
-  // TODO: check worker lock file, if taken stop the worker process through IPC
+  terminate_worker_if_already_running(&paths.runtime, worker_ipc);
 
   // TODO: register signals to terminate the worker if the daemon terminates
 
@@ -97,4 +97,28 @@ fn daemon_main(args: CliModuleArgs) {
   loop {
     std::thread::sleep(std::time::Duration::from_millis(1000));
   }
+}
+
+fn terminate_worker_if_already_running(runtime_dir: &Path, worker_ipc: impl IPCClient<IPCEvent>) {
+  let lock_file = acquire_worker_lock(&runtime_dir);
+  if lock_file.is_some() {
+    return;
+  }
+
+  warn!("a worker process is already running, sending termination signal...");
+  if let Err(err) = worker_ipc.send(IPCEvent::Exit) {
+    error!("unable to send termination signal to worker process: {}", err);
+  }
+
+  let now = Instant::now();
+  while now.elapsed() < std::time::Duration::from_secs(3) {
+    let lock_file = acquire_worker_lock(runtime_dir);
+    if lock_file.is_some() {
+      return;
+    }
+
+    std::thread::sleep(std::time::Duration::from_millis(200));
+  } 
+
+  panic!("could not terminate worker process, please kill it manually, otherwise espanso won't start")
 }
