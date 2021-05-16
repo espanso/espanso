@@ -23,6 +23,7 @@ espanso-clipboard = { path = "../espanso-clipboard" }
 espanso-info = { path = "../espanso-info" } 
 espanso-render = { path = "../espanso-render" } 
 espanso-path = { path = "../espanso-path" } 
+espanso-ipc = { path = "../espanso-ipc" } 
 maplit = "1.0.2"
 simplelog = "0.9.0"
 log = "0.4.14"

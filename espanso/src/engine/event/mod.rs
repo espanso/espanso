@@ -47,6 +47,8 @@ impl Event {
 pub enum EventType {
   NOOP,
   ProcessingError(String),
+  ExitRequested,
+  Exit,
   
   // Inputs
   Keyboard(input::KeyboardEvent),

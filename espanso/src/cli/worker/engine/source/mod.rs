@@ -27,6 +27,7 @@ use detect::DetectSource;
 use self::{modifier::{Modifier, ModifierStateStore}, sequencer::Sequencer};
 
 pub mod detect;
+pub mod exit;
 pub mod modifier;
 pub mod sequencer;
 

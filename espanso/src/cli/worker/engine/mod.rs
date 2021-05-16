@@ -17,9 +17,14 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use std::thread::JoinHandle;
+
 use anyhow::Result;
+use crossbeam::channel::Receiver;
 use espanso_config::{config::ConfigStore, matches::store::MatchStore};
 use espanso_path::Paths;
+use espanso_ui::UIRemote;
+use log::info;
 use ui::selector::MatchSelectorAdapter;
 
 use crate::cli::worker::engine::{matcher::regex::RegexMatcherAdapterOptions, path::PathProviderAdapter};
@@ -40,8 +45,10 @@ pub fn initialize_and_spawn(
   config_store: Box<dyn ConfigStore>,
   match_store: Box<dyn MatchStore>,
   icon_paths: IconPaths,
-) -> Result<()> {
-  std::thread::Builder::new()
+  ui_remote: Box<dyn UIRemote>,
+  exit_signal: Receiver<()>,
+) -> Result<JoinHandle<()>> {
+  let handle = std::thread::Builder::new()
     .name("engine thread".to_string())
     .spawn(move || {
       // TODO: properly order the initializations if necessary
@@ -60,7 +67,8 @@ pub fn initialize_and_spawn(
 
       let (detect_source, modifier_state_store, sequencer) =
         super::engine::source::init_and_spawn().expect("failed to initialize detector module");
-      let sources: Vec<&dyn crate::engine::funnel::Source> = vec![&detect_source];
+      let exit_source = super::engine::source::exit::ExitSource::new(exit_signal, &sequencer);
+      let sources: Vec<&dyn crate::engine::funnel::Source> = vec![&detect_source, &exit_source];
       let funnel = crate::engine::funnel::default(&sources);
 
       let rolling_matcher = super::engine::matcher::rolling::RollingMatcherAdapter::new(
@@ -143,7 +151,10 @@ pub fn initialize_and_spawn(
 
       let mut engine = crate::engine::Engine::new(&funnel, &mut processor, &dispatcher);
       engine.run();
+
+      info!("engine eventloop has terminated, propagating exit event...");
+      ui_remote.exit();
     })?;
 
-  Ok(())
+  Ok(handle)
 }
