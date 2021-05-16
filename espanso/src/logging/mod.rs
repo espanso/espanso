@@ -46,13 +46,19 @@ impl FileProxy {
     }
   }
 
-  pub fn set_output_file(&self, path: &Path, truncate: bool, append: bool) -> Result<()> {
+  pub fn set_output_file(&self, path: &Path, read_only: bool, create_new: bool) -> Result<()> {
+    // Remove previous log, if present
+    if create_new && !read_only {
+      if path.is_file() {
+        std::fs::remove_file(path)?;
+      }
+    }
+
     let mut log_file = OpenOptions::new()
       .read(true)
-      .write(true)
+      .write(!read_only)
       .create(true)
-      .truncate(truncate)
-      .append(append)
+      .append(true)
       .open(path)?;
     let mut lock = self.output.lock().expect("unable to obtain FileProxy lock");
 

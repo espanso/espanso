@@ -51,8 +51,8 @@ impl Default for CliModule {
 #[derive(Debug, PartialEq)]
 pub enum LogMode {
   Read,
-  Write,
-  Append,
+  AppendOnly,
+  CleanAndAppend,
 }
 
 pub struct CliModuleArgs {
