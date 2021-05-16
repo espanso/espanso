@@ -19,7 +19,9 @@
 
 use std::process::Command;
 
-use log::info;
+use log::{error, info};
+
+use crate::lock::acquire_daemon_lock;
 
 use super::{CliModule, CliModuleArgs};
 
@@ -41,16 +43,20 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 fn daemon_main(args: CliModuleArgs) {
   let paths = args.paths.expect("missing paths in daemon main");
 
+  // Make sure only one instance of the daemon is running
+  let lock_file = acquire_daemon_lock(&paths.runtime);
+  if lock_file.is_none() {
+    error!("daemon is already running!");
+    std::process::exit(1);
+  }
+
   info!("espanso version: {}", VERSION);
   // TODO: print os system and version? (with os_info crate)
 
-  // TODO: check daemon lock file to avoid duplicates
 
   // TODO: check worker lock file, if taken stop the worker process through IPC
 
-  // TODO: start IPC server
-
-  // TODO: start file watcher thread
+  // TODO: register signals to terminate the worker if the daemon terminates
 
   let espanso_exe_path =
     std::env::current_exe().expect("unable to obtain espanso executable location");
@@ -71,4 +77,12 @@ fn daemon_main(args: CliModuleArgs) {
   }
 
   command.spawn().expect("unable to spawn worker process");
+
+  // TODO: start IPC server
+
+  // TODO: start file watcher thread
+
+  loop {
+    std::thread::sleep(std::time::Duration::from_millis(1000));
+  }
 }

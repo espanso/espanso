@@ -311,6 +311,7 @@ dependencies = [
  "espanso-path",
  "espanso-render",
  "espanso-ui",
+ "fs2",
  "html2text",
  "lazy_static",
  "log",
@@ -483,6 +484,16 @@ name = "fragile"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "69a039c3498dc930fe810151a34ba0c1c70b02b8625035592e74432f678591f2"
+
+[[package]]
+name = "fs2"
+version = "0.4.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9564fc758e15025b46aa6643b1b77d047d1a56a1aea6e01002ac0c7026876213"
+dependencies = [
+ "libc",
+ "winapi",
+]
 
 [[package]]
 name = "fuchsia-cprng"
