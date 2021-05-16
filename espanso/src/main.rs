@@ -35,6 +35,7 @@ use crate::cli::LogMode;
 mod cli;
 mod engine;
 mod gui;
+mod lock;
 mod logging;
 mod util;
 
@@ -253,7 +254,7 @@ fn main() {
     if handler.enable_logs {
       let config = ConfigBuilder::new()
         .set_time_to_local(true)
-        .set_time_format(format!("%H:%M:%S [{}]", handler.subcommand))
+        .set_time_format(format!("%H:%M:%S [{}({})]", handler.subcommand, std::process::id()))
         .set_location_level(LevelFilter::Off)
         .add_filter_ignore_str("html5ever")
         .build();

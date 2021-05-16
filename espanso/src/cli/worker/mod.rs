@@ -17,6 +17,10 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use log::error;
+
+use crate::lock::acquire_worker_lock;
+
 use self::ui::util::convert_icon_paths_to_tray_vec;
 
 use super::{CliModule, CliModuleArgs};
@@ -39,14 +43,21 @@ pub fn new() -> CliModule {
 }
 
 fn worker_main(args: CliModuleArgs) {
+  let paths = args.paths.expect("missing paths in worker main");
+
+  // Avoid running multiple worker instances
+  let lock_file = acquire_worker_lock(&paths.runtime);
+  if lock_file.is_none() {
+    error!("worker is already running!");
+    std::process::exit(1);
+  }
+
   let config_store = args
     .config_store
     .expect("missing config store in worker main");
   let match_store = args
     .match_store
     .expect("missing match store in worker main");
-
-  let paths = args.paths.expect("missing paths in worker main");
 
   let icon_paths =
     self::ui::icon::load_icon_paths(&paths.runtime).expect("unable to initialize icons");
