@@ -93,6 +93,12 @@ fn main() {
         .help("Specify a custom path from which espanso should read the configuration"),
     )
     .arg(
+      Arg::with_name("package_dir")
+        .long("package_dir")
+        .takes_value(true)
+        .help("Specify a custom path for the espanso package directory"),
+    )
+    .arg(
       Arg::with_name("runtime_dir")
         .long("runtime_dir")
         .takes_value(true)
@@ -256,9 +262,10 @@ fn main() {
 
     if handler.requires_paths || handler.requires_config {
       let force_config_path = get_path_override(&matches, "config_dir", "ESPANSO_CONFIG_DIR");
+      let force_package_path = get_path_override(&matches, "package_dir", "ESPANSO_PACKAGE_DIR");
       let force_runtime_path = get_path_override(&matches, "runtime_dir", "ESPANSO_RUNTIME_DIR");
       
-      let paths = espanso_path::resolve_paths(force_config_path.as_deref(), force_runtime_path.as_deref());
+      let paths = espanso_path::resolve_paths(force_config_path.as_deref(), force_package_path.as_deref(), force_runtime_path.as_deref());
 
       info!("reading configs from: {:?}", paths.config);
       info!("reading packages from: {:?}", paths.packages);
