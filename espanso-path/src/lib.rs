@@ -30,7 +30,11 @@ pub struct Paths {
   pub packages: PathBuf,
 }
 
-pub fn resolve_paths(force_config_dir: Option<&Path>, force_runtime_dir: Option<&Path>) -> Paths {
+pub fn resolve_paths(
+  force_config_dir: Option<&Path>,
+  force_package_dir: Option<&Path>,
+  force_runtime_dir: Option<&Path>,
+) -> Paths {
   let config_dir = if let Some(config_dir) = force_config_dir {
     config_dir.to_path_buf()
   } else if let Some(config_dir) = get_config_dir() {
@@ -59,7 +63,9 @@ pub fn resolve_paths(force_config_dir: Option<&Path>, force_runtime_dir: Option<
     runtime_dir
   };
 
-  let packages_dir = if let Some(package_dir) = get_packages_dir(&config_dir, &runtime_dir) {
+  let packages_dir = if let Some(package_dir) = force_package_dir {
+    package_dir.to_path_buf()
+  } else if let Some(package_dir) = get_packages_dir(&config_dir, &runtime_dir) {
     package_dir
   } else {
     // Create the packages directory if not already present
@@ -71,8 +77,8 @@ pub fn resolve_paths(force_config_dir: Option<&Path>, force_runtime_dir: Option<
 
   Paths {
     config: config_dir,
-    runtime: runtime_dir, 
-    packages: packages_dir, 
+    runtime: runtime_dir,
+    packages: packages_dir,
   }
 }
 
