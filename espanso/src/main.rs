@@ -30,6 +30,8 @@ use simplelog::{
   CombinedLogger, ConfigBuilder, LevelFilter, TermLogger, TerminalMode, WriteLogger,
 };
 
+use crate::cli::LogMode;
+
 mod cli;
 mod engine;
 mod gui;
@@ -40,8 +42,12 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 const LOG_FILE_NAME: &str = "espanso.log";
 
 lazy_static! {
-  static ref CLI_HANDLERS: Vec<CliModule> =
-    vec![cli::path::new(), cli::log::new(), cli::worker::new(),];
+  static ref CLI_HANDLERS: Vec<CliModule> = vec![
+    cli::path::new(),
+    cli::log::new(),
+    cli::worker::new(),
+    cli::daemon::new()
+  ];
 }
 
 fn main() {
@@ -128,8 +134,9 @@ fn main() {
     // )
     // .subcommand(SubCommand::with_name("detect")
     //     .about("Tool to detect current window properties, to simplify filters creation."))
-    // .subcommand(SubCommand::with_name("daemon")
-    //     .about("Start the daemon without spawning a new process."))
+    .subcommand(SubCommand::with_name("daemon")
+      .setting(AppSettings::Hidden)
+      .about("Start the daemon without spawning a new process."))
     // .subcommand(SubCommand::with_name("register")
     //     .about("MacOS and Linux only. Register espanso in the system daemon manager."))
     // .subcommand(SubCommand::with_name("unregister")
@@ -228,8 +235,7 @@ fn main() {
 
   let matches = clap_instance.clone().get_matches();
   let log_level = match matches.occurrences_of("v") {
-    0 => LevelFilter::Warn,
-    1 => LevelFilter::Info,
+    0 | 1 => LevelFilter::Info,
 
     // Trace mode is only available in debug mode for security reasons
     #[cfg(debug_assertions)]
@@ -247,13 +253,14 @@ fn main() {
     if handler.enable_logs {
       let config = ConfigBuilder::new()
         .set_time_to_local(true)
+        .set_time_format(format!("%H:%M:%S [{}]", handler.subcommand))
         .set_location_level(LevelFilter::Off)
         .add_filter_ignore_str("html5ever")
         .build();
 
       CombinedLogger::init(vec![
         TermLogger::new(log_level, config.clone(), TerminalMode::Mixed),
-        WriteLogger::new(log_level, config, log_proxy.clone()),
+        WriteLogger::new(LevelFilter::Info, config, log_proxy.clone()),
       ])
       .expect("unable to initialize logs");
     }
@@ -264,8 +271,12 @@ fn main() {
       let force_config_path = get_path_override(&matches, "config_dir", "ESPANSO_CONFIG_DIR");
       let force_package_path = get_path_override(&matches, "package_dir", "ESPANSO_PACKAGE_DIR");
       let force_runtime_path = get_path_override(&matches, "runtime_dir", "ESPANSO_RUNTIME_DIR");
-      
-      let paths = espanso_path::resolve_paths(force_config_path.as_deref(), force_package_path.as_deref(), force_runtime_path.as_deref());
+
+      let paths = espanso_path::resolve_paths(
+        force_config_path.as_deref(),
+        force_package_path.as_deref(),
+        force_runtime_path.as_deref(),
+      );
 
       info!("reading configs from: {:?}", paths.config);
       info!("reading packages from: {:?}", paths.packages);
@@ -291,7 +302,11 @@ fn main() {
 
       if handler.enable_logs {
         log_proxy
-          .set_output_file(&paths.runtime.join(LOG_FILE_NAME))
+          .set_output_file(
+            &paths.runtime.join(LOG_FILE_NAME),
+            handler.log_mode == LogMode::Write,
+            handler.log_mode == LogMode::Append,
+          )
           .expect("unable to set up log output file");
       }
 
@@ -315,7 +330,7 @@ fn get_path_override(matches: &ArgMatches, argument: &str, env_var: &str) -> Opt
   if let Some(path) = matches.value_of(argument) {
     let path = PathBuf::from(path.trim());
     if path.is_dir() {
-      return Some(path)
+      return Some(path);
     } else {
       error!("{} argument was specified, but it doesn't point to a valid directory. Make sure to create it first.", argument);
       std::process::exit(1);
@@ -323,7 +338,7 @@ fn get_path_override(matches: &ArgMatches, argument: &str, env_var: &str) -> Opt
   } else if let Ok(path) = std::env::var(env_var) {
     let path = PathBuf::from(path.trim());
     if path.is_dir() {
-      return Some(path)
+      return Some(path);
     } else {
       error!("{} env variable was specified, but it doesn't point to a valid directory. Make sure to create it first.", env_var);
       std::process::exit(1);

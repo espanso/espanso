@@ -31,6 +31,7 @@ pub fn new() -> CliModule {
     requires_paths: true,
     requires_config: true,
     enable_logs: true,
+    log_mode: super::LogMode::Append,
     subcommand: "worker".to_string(),
     entry: worker_main,
     ..Default::default()
