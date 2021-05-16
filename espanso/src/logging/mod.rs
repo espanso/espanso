@@ -31,25 +31,37 @@ use std::{
 /// decision of the output file
 #[derive(Clone)]
 pub(crate) struct FileProxy {
-  output: Arc<Mutex<Option<File>>>,
+  output: Arc<Mutex<Output>>,
+}
+
+enum Output {
+  Memory(Vec<u8>),
+  File(File),
 }
 
 impl FileProxy {
   pub fn new() -> Self {
     Self {
-      output: Arc::new(Mutex::new(None)),
+      output: Arc::new(Mutex::new(Output::Memory(Vec::new()))),
     }
   }
 
-  pub fn set_output_file(&self, path: &Path) -> Result<()> {
-    let log_file = OpenOptions::new()
+  pub fn set_output_file(&self, path: &Path, truncate: bool, append: bool) -> Result<()> {
+    let mut log_file = OpenOptions::new()
       .read(true)
       .write(true)
       .create(true)
-      .append(true)
+      .truncate(truncate)
+      .append(append)
       .open(path)?;
     let mut lock = self.output.lock().expect("unable to obtain FileProxy lock");
-    *lock = Some(log_file);
+
+    // Transfer the log content that has been buffered into the file
+    if let Output::Memory(buffered) = &mut (*lock) {
+      log_file.write_all(&buffered)?;
+      buffered.clear();
+    }
+    *lock = Output::File(log_file);
     Ok(())
   }
 }
@@ -57,11 +69,15 @@ impl FileProxy {
 impl Write for FileProxy {
   fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
     match self.output.lock() {
-      Ok(lock) => {
-        if let Some(mut output) = lock.as_ref() {
-          output.write(buf)
-        } else {
-          Ok(0)
+      Ok(mut lock) => {
+        match &mut (*lock) {
+          // Write to the memory buffer until a file is ready
+          Output::Memory(buffer) => {
+            buffer.write(buf)
+          }
+          Output::File(output) => {
+            output.write(buf)
+          }
         }
       }
       Err(_) => Err(std::io::Error::new(
@@ -73,11 +89,14 @@ impl Write for FileProxy {
 
   fn flush(&mut self) -> std::io::Result<()> {
     match self.output.lock() {
-      Ok(lock) => {
-        if let Some(mut output) = lock.as_ref() {
-          output.flush()
-        } else {
-          Ok(())
+      Ok(mut lock) => {
+        match &mut (*lock) {
+          Output::Memory(buffer) => {
+            buffer.flush()
+          }
+          Output::File(output) => {
+            output.flush()
+          }
         }
       }
       Err(_) => Err(std::io::Error::new(

@@ -21,12 +21,14 @@ use clap::ArgMatches;
 use espanso_config::{config::ConfigStore, matches::store::MatchStore};
 use espanso_path::Paths;
 
+pub mod daemon;
 pub mod log;
 pub mod path;
 pub mod worker;
 
 pub struct CliModule {
   pub enable_logs: bool,
+  pub log_mode: LogMode,
   pub requires_paths: bool,
   pub requires_config: bool,
   pub subcommand: String,
@@ -37,12 +39,20 @@ impl Default for CliModule {
   fn default() -> Self {
     Self {
       enable_logs: false,
+      log_mode: LogMode::Read,
       requires_paths: false, 
       requires_config: false, 
       subcommand: "".to_string(), 
       entry: |_| {},
     }
   }
+}
+
+#[derive(Debug, PartialEq)]
+pub enum LogMode {
+  Read,
+  Write,
+  Append,
 }
 
 pub struct CliModuleArgs {
