@@ -23,7 +23,7 @@ use anyhow::Result;
 use crossbeam::channel::Receiver;
 use espanso_config::{config::ConfigStore, matches::store::MatchStore};
 use espanso_path::Paths;
-use espanso_ui::UIRemote;
+use espanso_ui::{UIRemote, event::UIEvent};
 use log::info;
 use ui::selector::MatchSelectorAdapter;
 
@@ -47,6 +47,7 @@ pub fn initialize_and_spawn(
   icon_paths: IconPaths,
   ui_remote: Box<dyn UIRemote>,
   exit_signal: Receiver<()>,
+  ui_event_receiver: Receiver<UIEvent>,
 ) -> Result<JoinHandle<()>> {
   let handle = std::thread::Builder::new()
     .name("engine thread".to_string())
@@ -68,7 +69,8 @@ pub fn initialize_and_spawn(
       let (detect_source, modifier_state_store, sequencer) =
         super::engine::source::init_and_spawn().expect("failed to initialize detector module");
       let exit_source = super::engine::source::exit::ExitSource::new(exit_signal, &sequencer);
-      let sources: Vec<&dyn crate::engine::funnel::Source> = vec![&detect_source, &exit_source];
+      let ui_source = super::engine::source::ui::UISource::new(ui_event_receiver, &sequencer);
+      let sources: Vec<&dyn crate::engine::funnel::Source> = vec![&detect_source, &exit_source, &ui_source];
       let funnel = crate::engine::funnel::default(&sources);
 
       let rolling_matcher = super::engine::matcher::rolling::RollingMatcherAdapter::new(
@@ -140,6 +142,7 @@ pub fn initialize_and_spawn(
           &config_manager,
         );
       let key_injector = super::engine::executor::key_injector::KeyInjectorAdapter::new(&*injector);
+      let context_menu_adapter = super::engine::executor::context_menu::ContextMenuHandlerAdapter::new(&*ui_remote);
       let dispatcher = crate::engine::dispatch::default(
         &event_injector,
         &clipboard_injector,
@@ -147,6 +150,7 @@ pub fn initialize_and_spawn(
         &key_injector,
         &clipboard_injector,
         &clipboard_injector,
+        &context_menu_adapter,
       );
 
       let mut engine = crate::engine::Engine::new(&funnel, &mut processor, &dispatcher);

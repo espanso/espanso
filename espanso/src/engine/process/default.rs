@@ -25,7 +25,7 @@ use super::{MatchFilter, MatchInfoProvider, MatchSelector, Matcher, Middleware, 
     delay_modifiers::{DelayForModifierReleaseMiddleware, ModifierStatusProvider}, markdown::MarkdownMiddleware,
     past_discard::PastEventsDiscardMiddleware,
   }};
-use crate::engine::{event::{Event, EventType}, process::middleware::{exit::ExitMiddleware, image_resolve::ImageResolverMiddleware}};
+use crate::engine::{event::{Event, EventType}, process::middleware::{context_menu::ContextMenuMiddleware, exit::ExitMiddleware, image_resolve::ImageResolverMiddleware}};
 use std::collections::VecDeque;
 
 pub struct DefaultProcessor<'a> {
@@ -50,6 +50,7 @@ impl<'a> DefaultProcessor<'a> {
       middleware: vec![
         Box::new(PastEventsDiscardMiddleware::new()),
         Box::new(MatcherMiddleware::new(matchers)),
+        Box::new(ContextMenuMiddleware::new()),
         Box::new(MatchSelectMiddleware::new(match_filter, match_selector)),
         Box::new(CauseCompensateMiddleware::new()),
         Box::new(MultiplexMiddleware::new(multiplexer)),

@@ -80,6 +80,7 @@ fn worker_main(args: CliModuleArgs) -> i32 {
     .expect("unable to initialize UI module");
 
   let (engine_exit_notify, engine_exit_receiver) = unbounded();
+  let (engine_ui_event_sender, engine_ui_event_receiver) = unbounded();
 
   // Initialize the engine on another thread and start it
   engine::initialize_and_spawn(
@@ -89,6 +90,7 @@ fn worker_main(args: CliModuleArgs) -> i32 {
     icon_paths,
     remote,
     engine_exit_receiver,
+    engine_ui_event_receiver,
   )
   .expect("unable to initialize engine");
 
@@ -97,8 +99,10 @@ fn worker_main(args: CliModuleArgs) -> i32 {
     .expect("unable to initialize IPC server");
 
   eventloop.run(Box::new(move |event| {
-    // TODO: handle event
-  }));
+    if let Err(error) = engine_ui_event_sender.send(event) {
+      error!("unable to send UIEvent to engine: {}", error);
+    }
+  })).expect("unable to run main eventloop");
 
   info!("exiting worker process...");
    

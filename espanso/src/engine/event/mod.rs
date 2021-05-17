@@ -20,6 +20,7 @@
 pub mod input;
 pub mod effect;
 pub mod internal;
+pub mod ui;
 
 pub type SourceId = u32;
 
@@ -54,6 +55,8 @@ pub enum EventType {
   Keyboard(input::KeyboardEvent),
   Mouse(input::MouseEvent),
   // TODO: hotkeys
+  TrayIconClicked,
+  ContextMenuClicked(input::ContextMenuClickedEvent),
 
   // Internal
   MatchesDetected(internal::MatchesDetectedEvent),
@@ -76,4 +79,7 @@ pub enum EventType {
   MarkdownInject(effect::MarkdownInjectRequest),
   HtmlInject(effect::HtmlInjectRequest),
   ImageInject(effect::ImageInjectRequest),
+
+  // UI
+  ShowContextMenu(ui::ShowContextMenuEvent),
 }

@@ -111,3 +111,8 @@ pub enum Key {
   // Other keys, includes the raw code provided by the operating system
   Other(i32),
 }
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct ContextMenuClickedEvent {
+  pub context_item_id: u32,
+}
