@@ -19,6 +19,7 @@
 
 pub mod action;
 pub mod cause;
+pub mod context_menu;
 pub mod cursor_hint;
 pub mod delay_modifiers;
 pub mod exit;

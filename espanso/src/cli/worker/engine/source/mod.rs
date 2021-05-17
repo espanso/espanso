@@ -30,6 +30,7 @@ pub mod detect;
 pub mod exit;
 pub mod modifier;
 pub mod sequencer;
+pub mod ui;
 
 // TODO: pass options
 pub fn init_and_spawn() -> Result<(DetectSource, ModifierStateStore, Sequencer)> {

@@ -17,8 +17,26 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub mod context_menu;
-pub mod image_inject;
-pub mod html_inject;
-pub mod key_inject;
-pub mod text_inject;
+#[derive(Debug, Clone, PartialEq)]
+pub struct ShowContextMenuEvent {
+  pub items: Vec<MenuItem>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum MenuItem {
+  Simple(SimpleMenuItem),
+  Sub(SubMenuItem),
+  Separator,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct SimpleMenuItem {
+  pub id: u32,
+  pub label: String,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct SubMenuItem {
+  pub label: String,
+  pub items: Vec<MenuItem>,
+}
