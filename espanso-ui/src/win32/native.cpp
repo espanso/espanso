@@ -358,12 +358,12 @@ void _insert_separator_menu(HMENU parent)
 
 void _insert_single_menu(HMENU parent, json item)
 {
-  if (!item["label"].is_string() || !item["raw_id"].is_number())
+  if (!item["label"].is_string() || !item["id"].is_number())
   {
     return;
   }
   std::string label = item["label"];
-  uint32_t raw_id = item["raw_id"];
+  uint32_t raw_id = item["id"];
 
   // Convert to wide chars
   std::wstring wide_label(label.length(), L'#');
