@@ -100,7 +100,7 @@ void addSeparatorMenu(NSMenu * parent)
 void addSingleMenu(NSMenu * parent, id item)
 {
   id label = [item objectForKey:@"label"];
-  id raw_id = [item objectForKey:@"raw_id"];
+  id raw_id = [item objectForKey:@"id"];
   if (label == nil || raw_id == nil)
   {
     return;
