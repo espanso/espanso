@@ -32,7 +32,7 @@ pub struct CliModule {
   pub requires_paths: bool,
   pub requires_config: bool,
   pub subcommand: String,
-  pub entry: fn(CliModuleArgs),
+  pub entry: fn(CliModuleArgs)->i32,
 }
 
 impl Default for CliModule {
@@ -43,7 +43,7 @@ impl Default for CliModule {
       requires_paths: false, 
       requires_config: false, 
       subcommand: "".to_string(), 
-      entry: |_| {},
+      entry: |_| {0},
     }
   }
 }

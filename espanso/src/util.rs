@@ -31,3 +31,15 @@ pub fn set_command_flags(command: &mut Command) {
 pub fn set_command_flags(_: &mut Command) {
   // NOOP on Linux and macOS
 }
+
+#[cfg(target_os = "windows")]
+pub fn attach_console() {
+  // When using the windows subsystem we loose the terminal output.
+  // Therefore we try to attach to the current console if available.
+  unsafe { winapi::um::wincon::AttachConsole(0xFFFFFFFF) };
+}
+
+#[cfg(not(target_os = "windows"))]
+pub fn attach_console() {
+  // Not necessary on Linux and macOS
+}

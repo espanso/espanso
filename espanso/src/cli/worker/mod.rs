@@ -37,21 +37,21 @@ pub fn new() -> CliModule {
     requires_paths: true,
     requires_config: true,
     enable_logs: true,
-    log_mode: super::LogMode::Append,
+    log_mode: super::LogMode::AppendOnly,
     subcommand: "worker".to_string(),
     entry: worker_main,
     ..Default::default()
   }
 }
 
-fn worker_main(args: CliModuleArgs) {
+fn worker_main(args: CliModuleArgs) -> i32 {
   let paths = args.paths.expect("missing paths in worker main");
 
   // Avoid running multiple worker instances
   let lock_file = acquire_worker_lock(&paths.runtime);
   if lock_file.is_none() {
     error!("worker is already running!");
-    std::process::exit(1);
+    return 1;
   }
 
   let config_store = args
@@ -101,4 +101,6 @@ fn worker_main(args: CliModuleArgs) {
   }));
 
   info!("exiting worker process...");
+   
+  0
 }
