@@ -29,7 +29,7 @@ pub fn new() -> CliModule {
   }
 }
 
-fn path_main(args: CliModuleArgs) {
+fn path_main(args: CliModuleArgs) -> i32 {
   let paths = args.paths.expect("missing paths argument");
   let cli_args = args.cli_args.expect("missing cli_args argument");
 
@@ -56,4 +56,6 @@ fn path_main(args: CliModuleArgs) {
     println!("Packages: {}", paths.packages.to_string_lossy());
     println!("Runtime: {}", paths.runtime.to_string_lossy());
   }
+  
+  0
 }

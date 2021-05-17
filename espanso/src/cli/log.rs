@@ -31,13 +31,13 @@ pub fn new() -> CliModule {
   }
 }
 
-fn log_main(args: CliModuleArgs) {
+fn log_main(args: CliModuleArgs) -> i32 {
   let paths = args.paths.expect("missing paths argument");
   let log_file = paths.runtime.join(crate::LOG_FILE_NAME);
 
   if !log_file.exists() {
     eprintln!("No log file found.");
-    std::process::exit(2);
+    return 2;
   }
 
   let log_file = File::open(log_file);
@@ -50,6 +50,8 @@ fn log_main(args: CliModuleArgs) {
     }
   } else {
     eprintln!("Error reading log file");
-    std::process::exit(1);
+    return 1;
   }
+
+  0
 }

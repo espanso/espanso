@@ -1,0 +1,56 @@
+/*
+ * This file is part of espanso.
+ *
+ * Copyright (C) 2019-2021 Federico Terzi
+ *
+ * espanso is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * espanso is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+use std::path::Path;
+
+use anyhow::Result;
+use crossbeam::channel::{Sender};
+use log::{error, warn};
+
+use crate::ipc::IPCEvent;
+
+use super::ExitCode;
+
+pub fn initialize_and_spawn(runtime_dir: &Path, exit_notify: Sender<i32>) -> Result<()> {
+  let receiver = crate::ipc::spawn_daemon_ipc_server(runtime_dir)?;
+
+  std::thread::Builder::new()
+    .name("daemon-ipc-handler".to_string())
+    .spawn(move || loop {
+      match receiver.recv() {
+        Ok(event) => {
+          match event {
+            IPCEvent::Exit => {
+              if let Err(err) = exit_notify.send(ExitCode::Success as i32) {
+                error!("experienced error while sending exit signal from daemon ipc handler: {}", err);
+              }
+            },
+            unexpected_event => {
+              warn!("received unexpected event in daemon ipc handler: {:?}", unexpected_event);
+            },
+          }
+        }
+        Err(err) => {
+          error!("experienced error while receiving ipc event from daemon handler: {}", err);
+        }
+      }
+    })?;
+
+  Ok(())
+}

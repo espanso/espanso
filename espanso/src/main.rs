@@ -18,7 +18,7 @@
  */
 
 // This is needed to avoid showing a console window when starting espanso on Windows
-// TODO #![windows_subsystem = "windows"]
+#![windows_subsystem = "windows"]
 
 #[macro_use]
 extern crate lazy_static;
@@ -56,7 +56,7 @@ lazy_static! {
 }
 
 fn main() {
-  // TODO: attach console
+  util::attach_console();
 
   let install_subcommand = SubCommand::with_name("install")
     .about("Install a package. Equivalent to 'espanso package install'")
@@ -325,7 +325,9 @@ fn main() {
       cli_args.cli_args = Some(args.clone());
     }
 
-    (handler.entry)(cli_args)
+    let exit_code = (handler.entry)(cli_args);
+
+    std::process::exit(exit_code);
   } else {
     clap_instance
       .print_long_help()
