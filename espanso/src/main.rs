@@ -37,6 +37,7 @@ use crate::cli::LogMode;
 
 mod cli;
 mod engine;
+mod exit_code;
 mod gui;
 mod ipc;
 mod lock;

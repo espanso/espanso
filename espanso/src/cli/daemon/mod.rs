@@ -27,19 +27,11 @@ use espanso_ipc::IPCClient;
 use espanso_path::Paths;
 use log::{error, info, warn};
 
-use crate::{
-  ipc::{create_ipc_client_to_worker, IPCEvent},
-  lock::{acquire_daemon_lock, acquire_worker_lock},
-};
+use crate::{exit_code::{DAEMON_ALREADY_RUNNING, DAEMON_GENERAL_ERROR, DAEMON_SUCCESS, WORKER_EXIT_ALL_PROCESSES, WORKER_SUCCESS}, ipc::{create_ipc_client_to_worker, IPCEvent}, lock::{acquire_daemon_lock, acquire_worker_lock}};
 
 use super::{CliModule, CliModuleArgs};
 
 mod ipc;
-
-pub enum ExitCode {
-  Success = 0,
-  ExitCodeUnwrapError = 100,
-}
 
 pub fn new() -> CliModule {
   #[allow(clippy::needless_update)]
@@ -63,7 +55,7 @@ fn daemon_main(args: CliModuleArgs) -> i32 {
   let lock_file = acquire_daemon_lock(&paths.runtime);
   if lock_file.is_none() {
     error!("daemon is already running!");
-    return 1;
+    return DAEMON_ALREADY_RUNNING;
   }
 
   // TODO: we might need to check preconditions: accessibility on macOS, presence of binaries on Linux, etc
@@ -87,18 +79,26 @@ fn daemon_main(args: CliModuleArgs) -> i32 {
 
   // TODO: start file watcher thread
 
-  let mut exit_code: i32 = ExitCode::Success as i32;
+  let mut exit_code: i32 = DAEMON_SUCCESS;
 
   loop {
     select! {
       recv(exit_signal) -> code => {
         match code {
           Ok(code) => {
-            exit_code = code
+            match code {
+              WORKER_EXIT_ALL_PROCESSES => {
+                info!("worker requested a general exit, quitting the daemon");
+              }
+              _ => {
+                error!("received unexpected exit code from worker {}, exiting", code);
+                exit_code = code
+              }
+            }
           },
           Err(err) => {
             error!("received error when unwrapping exit_code: {}", err);
-            exit_code = ExitCode::ExitCodeUnwrapError as i32;
+            exit_code = DAEMON_GENERAL_ERROR;
           },
         }
         break;
@@ -177,11 +177,7 @@ fn spawn_worker(paths: &Paths, exit_notify: Sender<i32>) {
       let result = child.wait();
       if let Ok(status) = result {
         if let Some(code) = status.code() {
-          if code != 0 {
-            error!(
-              "worker process exited with non-zero code: {}, exiting",
-              code
-            );
+          if code != WORKER_SUCCESS {
             exit_notify
               .send(code)
               .expect("unable to forward worker exit code");

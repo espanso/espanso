@@ -17,32 +17,11 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use log::debug;
+pub const WORKER_SUCCESS: i32 = 0;
+pub const WORKER_ALREADY_RUNNING: i32 = 1;
+pub const WORKER_GENERAL_ERROR: i32 = 2;
+pub const WORKER_EXIT_ALL_PROCESSES: i32 = 101;
 
-use super::super::Middleware;
-use crate::engine::{event::{Event, EventType}};
-
-pub struct ExitMiddleware {}
-
-impl ExitMiddleware {
-  pub fn new() -> Self {
-    Self {}
-  }
-}
-
-impl Middleware for ExitMiddleware {
-  fn name(&self) -> &'static str {
-    "exit"
-  }
-
-  fn next(&self, event: Event, _: &mut dyn FnMut(Event)) -> Event {
-    if let EventType::ExitRequested(exit_all_processes) = &event.etype {
-      debug!("received ExitRequested event with 'exit_all_processes: {}', dispatching exit", exit_all_processes);
-      return Event::caused_by(event.source_id, EventType::Exit(*exit_all_processes));
-    }
-
-    event
-  }
-}
-
-// TODO: test
+pub const DAEMON_SUCCESS: i32 = 0;
+pub const DAEMON_ALREADY_RUNNING: i32 = 1;
+pub const DAEMON_GENERAL_ERROR: i32 = 2;

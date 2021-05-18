@@ -23,9 +23,7 @@ use anyhow::Result;
 use crossbeam::channel::{Sender};
 use log::{error, warn};
 
-use crate::ipc::IPCEvent;
-
-use super::ExitCode;
+use crate::{exit_code::DAEMON_SUCCESS, ipc::IPCEvent};
 
 pub fn initialize_and_spawn(runtime_dir: &Path, exit_notify: Sender<i32>) -> Result<()> {
   let receiver = crate::ipc::spawn_daemon_ipc_server(runtime_dir)?;
@@ -37,7 +35,7 @@ pub fn initialize_and_spawn(runtime_dir: &Path, exit_notify: Sender<i32>) -> Res
         Ok(event) => {
           match event {
             IPCEvent::Exit => {
-              if let Err(err) = exit_notify.send(ExitCode::Success as i32) {
+              if let Err(err) = exit_notify.send(DAEMON_SUCCESS) {
                 error!("experienced error while sending exit signal from daemon ipc handler: {}", err);
               }
             },

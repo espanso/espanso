@@ -18,8 +18,7 @@
  */
 
 use std::{
-  cell::RefCell,
-  collections::{HashMap, HashSet},
+  collections::{HashSet},
 };
 
 use crate::engine::{dispatch::ModeProvider, process::MatchFilter};

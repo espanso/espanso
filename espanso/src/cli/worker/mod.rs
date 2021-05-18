@@ -20,7 +20,7 @@
 use crossbeam::channel::unbounded;
 use log::{error, info};
 
-use crate::lock::acquire_worker_lock;
+use crate::{exit_code::{WORKER_ALREADY_RUNNING, WORKER_EXIT_ALL_PROCESSES, WORKER_GENERAL_ERROR, WORKER_SUCCESS}, lock::acquire_worker_lock};
 
 use self::ui::util::convert_icon_paths_to_tray_vec;
 
@@ -51,7 +51,7 @@ fn worker_main(args: CliModuleArgs) -> i32 {
   let lock_file = acquire_worker_lock(&paths.runtime);
   if lock_file.is_none() {
     error!("worker is already running!");
-    return 1;
+    return WORKER_ALREADY_RUNNING;
   }
 
   let config_store = args
@@ -83,7 +83,7 @@ fn worker_main(args: CliModuleArgs) -> i32 {
   let (engine_ui_event_sender, engine_ui_event_receiver) = unbounded();
 
   // Initialize the engine on another thread and start it
-  engine::initialize_and_spawn(
+  let engine_handle = engine::initialize_and_spawn(
     paths.clone(),
     config_store,
     match_store,
@@ -98,13 +98,28 @@ fn worker_main(args: CliModuleArgs) -> i32 {
   ipc::initialize_and_spawn(&paths.runtime, engine_exit_notify)
     .expect("unable to initialize IPC server");
 
-  eventloop.run(Box::new(move |event| {
-    if let Err(error) = engine_ui_event_sender.send(event) {
-      error!("unable to send UIEvent to engine: {}", error);
-    }
-  })).expect("unable to run main eventloop");
+  eventloop
+    .run(Box::new(move |event| {
+      if let Err(error) = engine_ui_event_sender.send(event) {
+        error!("unable to send UIEvent to engine: {}", error);
+      }
+    }))
+    .expect("unable to run main eventloop");
 
-  info!("exiting worker process...");
-   
-  0
+  info!("waiting for engine exit mode...");
+  match engine_handle.join() {
+    Ok(exit_all_processes) => {
+      if exit_all_processes {
+        info!("exiting worker process and daemon...");
+        return WORKER_EXIT_ALL_PROCESSES;
+      } else {
+        info!("exiting worker process...");
+        return WORKER_SUCCESS;
+      }
+    }
+    Err(err) => {
+      error!("unable to read engine exit mode: {:?}", err);
+      return WORKER_GENERAL_ERROR;
+    }
+  }
 }

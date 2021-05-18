@@ -48,7 +48,7 @@ pub fn initialize_and_spawn(
   ui_remote: Box<dyn UIRemote>,
   exit_signal: Receiver<()>,
   ui_event_receiver: Receiver<UIEvent>,
-) -> Result<JoinHandle<()>> {
+) -> Result<JoinHandle<bool>> {
   let handle = std::thread::Builder::new()
     .name("engine thread".to_string())
     .spawn(move || {
@@ -154,10 +154,12 @@ pub fn initialize_and_spawn(
       );
 
       let mut engine = crate::engine::Engine::new(&funnel, &mut processor, &dispatcher);
-      engine.run();
+      let exit_all_processes = engine.run();
 
       info!("engine eventloop has terminated, propagating exit event...");
       ui_remote.exit();
+
+      exit_all_processes
     })?;
 
   Ok(handle)

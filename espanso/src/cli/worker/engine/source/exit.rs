@@ -48,7 +48,7 @@ impl<'a> funnel::Source<'a> for ExitSource<'a> {
       .expect("unable to select data from ExitSource receiver");
     Event {
       source_id: self.sequencer.next_id(),
-      etype: EventType::ExitRequested,
+      etype: EventType::ExitRequested(false),
     }
   }
 }

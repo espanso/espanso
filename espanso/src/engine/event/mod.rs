@@ -48,8 +48,8 @@ impl Event {
 pub enum EventType {
   NOOP,
   ProcessingError(String),
-  ExitRequested,
-  Exit,
+  ExitRequested(bool),  // If true, exit also the daemon process and not just the worker
+  Exit(bool),
   
   // Inputs
   Keyboard(input::KeyboardEvent),
