@@ -18,10 +18,14 @@
  */
 
 use super::super::Middleware;
-use crate::engine::{event::{Event, EventType, ui::{MenuItem, ShowContextMenuEvent, SimpleMenuItem}}};
+use crate::engine::event::{
+  ui::{MenuItem, ShowContextMenuEvent, SimpleMenuItem},
+  Event, EventType,
+};
 
-pub struct ContextMenuMiddleware {
-}
+const CONTEXT_ITEM_EXIT: u32 = 0;
+
+pub struct ContextMenuMiddleware {}
 
 impl ContextMenuMiddleware {
   pub fn new() -> Self {
@@ -35,30 +39,38 @@ impl Middleware for ContextMenuMiddleware {
   }
 
   fn next(&self, event: Event, _: &mut dyn FnMut(Event)) -> Event {
-    if let EventType::TrayIconClicked = event.etype {
-      // TODO: fetch top matches for the active config to be added
+    match &event.etype {
+      EventType::TrayIconClicked => {
+        // TODO: fetch top matches for the active config to be added
 
-      // TODO: my idea is to use a set of reserved u32 ids for built-in
-      // actions such as Exit, Open Editor etc
-      // then we need some u32 for the matches, so we need to create
-      // a mapping structure match_id <-> context-menu-id
-      return Event::caused_by(
-        event.source_id,
-        EventType::ShowContextMenu(ShowContextMenuEvent {
-          // TODO: add actual entries
-          items: vec![
-            MenuItem::Simple(SimpleMenuItem {
-              id: 0,
+        // TODO: my idea is to use a set of reserved u32 ids for built-in
+        // actions such as Exit, Open Editor etc
+        // then we need some u32 for the matches, so we need to create
+        // a mapping structure match_id <-> context-menu-id
+        return Event::caused_by(
+          event.source_id,
+          EventType::ShowContextMenu(ShowContextMenuEvent {
+            // TODO: add actual entries
+            items: vec![MenuItem::Simple(SimpleMenuItem {
+              id: CONTEXT_ITEM_EXIT,
               label: "Exit espanso".to_string(),
-            })
-          ]
-        }),
-      )
+            })],
+          }),
+        );
+      }
+      EventType::ContextMenuClicked(context_click_event) => {
+        match context_click_event.context_item_id {
+          CONTEXT_ITEM_EXIT => {
+            Event::caused_by(event.source_id, EventType::ExitRequested(true))
+          }
+          custom => {
+            // TODO: handle dynamic items
+            todo!()
+          }
+        }
+      }
+      _ => event,
     }
-
-    // TODO: handle context menu clicks
-
-    event
   }
 }
 

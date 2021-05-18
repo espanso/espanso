@@ -41,15 +41,15 @@ impl <'a> Engine<'a> {
     }
   }
 
-  pub fn run(&mut self) {
-    'main: loop {
+  pub fn run(&mut self) -> bool {
+    loop {
       match self.funnel.receive() {
         FunnelResult::Event(event) => {
           let processed_events = self.processor.process(event);
           for event in processed_events {
-            if let EventType::Exit = &event.etype {
+            if let EventType::Exit(exit_all_processes) = &event.etype {
               debug!("exit event received, exiting engine");
-              break 'main;
+              return *exit_all_processes;
             }
 
             self.dispatcher.dispatch(event);
@@ -57,7 +57,7 @@ impl <'a> Engine<'a> {
         } 
         FunnelResult::EndOfStream => {
           debug!("end of stream received");
-          break;
+          return false;
         }
       }
     }
