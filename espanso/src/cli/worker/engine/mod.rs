@@ -27,7 +27,7 @@ use espanso_ui::{UIRemote, event::UIEvent};
 use log::info;
 use ui::selector::MatchSelectorAdapter;
 
-use crate::cli::worker::engine::{matcher::regex::RegexMatcherAdapterOptions, path::PathProviderAdapter};
+use crate::{cli::worker::engine::{matcher::regex::RegexMatcherAdapterOptions, path::PathProviderAdapter}, engine::event::ExitMode};
 
 use super::ui::icon::IconPaths;
 
@@ -48,7 +48,7 @@ pub fn initialize_and_spawn(
   ui_remote: Box<dyn UIRemote>,
   exit_signal: Receiver<()>,
   ui_event_receiver: Receiver<UIEvent>,
-) -> Result<JoinHandle<bool>> {
+) -> Result<JoinHandle<ExitMode>> {
   let handle = std::thread::Builder::new()
     .name("engine thread".to_string())
     .spawn(move || {
@@ -154,12 +154,12 @@ pub fn initialize_and_spawn(
       );
 
       let mut engine = crate::engine::Engine::new(&funnel, &mut processor, &dispatcher);
-      let exit_all_processes = engine.run();
+      let exit_mode = engine.run();
 
       info!("engine eventloop has terminated, propagating exit event...");
       ui_remote.exit();
 
-      exit_all_processes
+      exit_mode
     })?;
 
   Ok(handle)

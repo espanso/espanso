@@ -20,10 +20,11 @@
 use super::super::Middleware;
 use crate::engine::event::{
   ui::{MenuItem, ShowContextMenuEvent, SimpleMenuItem},
-  Event, EventType,
+  Event, EventType, ExitMode,
 };
 
 const CONTEXT_ITEM_EXIT: u32 = 0;
+const CONTEXT_ITEM_RELOAD: u32 = 1;
 
 pub struct ContextMenuMiddleware {}
 
@@ -51,18 +52,30 @@ impl Middleware for ContextMenuMiddleware {
           event.source_id,
           EventType::ShowContextMenu(ShowContextMenuEvent {
             // TODO: add actual entries
-            items: vec![MenuItem::Simple(SimpleMenuItem {
-              id: CONTEXT_ITEM_EXIT,
-              label: "Exit espanso".to_string(),
-            })],
+            items: vec![
+              MenuItem::Simple(SimpleMenuItem {
+                id: CONTEXT_ITEM_RELOAD,
+                label: "Reload config".to_string(),
+              }),
+              MenuItem::Separator,
+              MenuItem::Simple(SimpleMenuItem {
+                id: CONTEXT_ITEM_EXIT,
+                label: "Exit espanso".to_string(),
+              }),
+            ],
           }),
         );
       }
       EventType::ContextMenuClicked(context_click_event) => {
         match context_click_event.context_item_id {
-          CONTEXT_ITEM_EXIT => {
-            Event::caused_by(event.source_id, EventType::ExitRequested(true))
-          }
+          CONTEXT_ITEM_EXIT => Event::caused_by(
+            event.source_id,
+            EventType::ExitRequested(ExitMode::ExitAllProcesses),
+          ),
+          CONTEXT_ITEM_RELOAD => Event::caused_by(
+            event.source_id,
+            EventType::ExitRequested(ExitMode::RestartWorker),
+          ),
           custom => {
             // TODO: handle dynamic items
             todo!()

@@ -19,7 +19,7 @@
 
 use crossbeam::channel::{Receiver, Select, SelectedOperation};
 
-use crate::engine::{event::{Event, EventType}, funnel};
+use crate::engine::{event::{Event, EventType, ExitMode}, funnel};
 
 use super::sequencer::Sequencer;
 
@@ -48,7 +48,7 @@ impl<'a> funnel::Source<'a> for ExitSource<'a> {
       .expect("unable to select data from ExitSource receiver");
     Event {
       source_id: self.sequencer.next_id(),
-      etype: EventType::ExitRequested(false),
+      etype: EventType::ExitRequested(ExitMode::Exit),
     }
   }
 }

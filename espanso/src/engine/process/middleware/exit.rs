@@ -36,9 +36,9 @@ impl Middleware for ExitMiddleware {
   }
 
   fn next(&self, event: Event, _: &mut dyn FnMut(Event)) -> Event {
-    if let EventType::ExitRequested(exit_all_processes) = &event.etype {
-      debug!("received ExitRequested event with 'exit_all_processes: {}', dispatching exit", exit_all_processes);
-      return Event::caused_by(event.source_id, EventType::Exit(*exit_all_processes));
+    if let EventType::ExitRequested(mode) = &event.etype {
+      debug!("received ExitRequested event with mode: {:?}, dispatching exit", mode);
+      return Event::caused_by(event.source_id, EventType::Exit(mode.clone()));
     }
 
     event

@@ -20,7 +20,14 @@
 use crossbeam::channel::unbounded;
 use log::{error, info};
 
-use crate::{exit_code::{WORKER_ALREADY_RUNNING, WORKER_EXIT_ALL_PROCESSES, WORKER_GENERAL_ERROR, WORKER_SUCCESS}, lock::acquire_worker_lock};
+use crate::{
+  engine::event::ExitMode,
+  exit_code::{
+    WORKER_ALREADY_RUNNING, WORKER_EXIT_ALL_PROCESSES, WORKER_GENERAL_ERROR, WORKER_RESTART,
+    WORKER_SUCCESS,
+  },
+  lock::acquire_worker_lock,
+};
 
 use self::ui::util::convert_icon_paths_to_tray_vec;
 
@@ -108,15 +115,20 @@ fn worker_main(args: CliModuleArgs) -> i32 {
 
   info!("waiting for engine exit mode...");
   match engine_handle.join() {
-    Ok(exit_all_processes) => {
-      if exit_all_processes {
-        info!("exiting worker process and daemon...");
-        return WORKER_EXIT_ALL_PROCESSES;
-      } else {
+    Ok(mode) => match mode {
+      ExitMode::Exit => {
         info!("exiting worker process...");
         return WORKER_SUCCESS;
       }
-    }
+      ExitMode::ExitAllProcesses => {
+        info!("exiting worker process and daemon...");
+        return WORKER_EXIT_ALL_PROCESSES;
+      }
+      ExitMode::RestartWorker => {
+        info!("exiting worker (to be restarted)");
+        return WORKER_RESTART;
+      }
+    },
     Err(err) => {
       error!("unable to read engine exit mode: {:?}", err);
       return WORKER_GENERAL_ERROR;

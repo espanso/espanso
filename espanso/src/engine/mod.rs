@@ -19,7 +19,7 @@
 
 use log::{debug};
 
-use self::{dispatch::Dispatcher, event::{Event, EventType}, funnel::{Funnel, FunnelResult}, process::Processor};
+use self::{dispatch::Dispatcher, event::{Event, EventType, ExitMode}, funnel::{Funnel, FunnelResult}, process::Processor};
 
 pub mod dispatch;
 pub mod event;
@@ -41,15 +41,15 @@ impl <'a> Engine<'a> {
     }
   }
 
-  pub fn run(&mut self) -> bool {
+  pub fn run(&mut self) -> ExitMode {
     loop {
       match self.funnel.receive() {
         FunnelResult::Event(event) => {
           let processed_events = self.processor.process(event);
           for event in processed_events {
-            if let EventType::Exit(exit_all_processes) = &event.etype {
-              debug!("exit event received, exiting engine");
-              return *exit_all_processes;
+            if let EventType::Exit(mode) = &event.etype {
+              debug!("exit event received with mode {:?}, exiting engine", mode);
+              return mode.clone();
             }
 
             self.dispatcher.dispatch(event);
@@ -57,7 +57,7 @@ impl <'a> Engine<'a> {
         } 
         FunnelResult::EndOfStream => {
           debug!("end of stream received");
-          return false;
+          return ExitMode::Exit;
         }
       }
     }
