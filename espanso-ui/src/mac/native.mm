@@ -45,6 +45,11 @@ int32_t ui_eventloop(EventCallback _callback)
   return 1;
 }
 
+void ui_exit() {
+  [NSApp stop:nil];
+  [NSApp abortModal];
+}
+
 void ui_update_tray_icon(int32_t index)
 {
   dispatch_async(dispatch_get_main_queue(), ^(void) {

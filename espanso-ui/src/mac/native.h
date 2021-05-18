@@ -58,6 +58,9 @@ extern "C" void ui_initialize(void * self, UIOptions options);
 // Run the event loop. Blocking call.
 extern "C" int32_t ui_eventloop(EventCallback callback);
 
+// Stops the application eventloop.
+extern "C" void ui_exit();
+
 // Updates the tray icon to the given one. The method accepts an index that refers to
 // the icon within the UIOptions.icon_paths array.
 extern "C" void ui_update_tray_icon(int32_t index);

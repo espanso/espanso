@@ -55,6 +55,7 @@ extern "C" {
   pub fn ui_eventloop(
     event_callback: extern "C" fn(_self: *mut MacEventLoop, event: RawUIEvent),
   ) -> i32;
+  pub fn ui_exit();
   pub fn ui_update_tray_icon(index: i32);
   pub fn ui_show_notification(message: *const c_char, delay: f64);
   pub fn ui_show_context_menu(payload: *const c_char);
@@ -216,6 +217,10 @@ impl UIRemote for MacRemote {
         error!("Unable to show context menu, {}", error);
       }
     }
+  }
+
+  fn exit(&self) {
+    unsafe { ui_exit() };
   }
 }
 
