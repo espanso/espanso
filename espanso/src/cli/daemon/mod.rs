@@ -27,7 +27,14 @@ use espanso_ipc::IPCClient;
 use espanso_path::Paths;
 use log::{error, info, warn};
 
-use crate::{exit_code::{DAEMON_ALREADY_RUNNING, DAEMON_GENERAL_ERROR, DAEMON_SUCCESS, WORKER_EXIT_ALL_PROCESSES, WORKER_SUCCESS}, ipc::{create_ipc_client_to_worker, IPCEvent}, lock::{acquire_daemon_lock, acquire_worker_lock}};
+use crate::{
+  exit_code::{
+    DAEMON_ALREADY_RUNNING, DAEMON_GENERAL_ERROR, DAEMON_SUCCESS, WORKER_EXIT_ALL_PROCESSES,
+    WORKER_RESTART, WORKER_SUCCESS,
+  },
+  ipc::{create_ipc_client_to_worker, IPCEvent},
+  lock::{acquire_daemon_lock, acquire_worker_lock},
+};
 
 use super::{CliModule, CliModuleArgs};
 
@@ -74,12 +81,10 @@ fn daemon_main(args: CliModuleArgs) -> i32 {
 
   spawn_worker(&paths, exit_notify.clone());
 
-  ipc::initialize_and_spawn(&paths.runtime, exit_notify)
+  ipc::initialize_and_spawn(&paths.runtime, exit_notify.clone())
     .expect("unable to initialize ipc server for daemon");
 
   // TODO: start file watcher thread
-
-  let mut exit_code: i32 = DAEMON_SUCCESS;
 
   loop {
     select! {
@@ -89,24 +94,28 @@ fn daemon_main(args: CliModuleArgs) -> i32 {
             match code {
               WORKER_EXIT_ALL_PROCESSES => {
                 info!("worker requested a general exit, quitting the daemon");
+                break;
+              }
+              WORKER_RESTART => {
+                info!("worker requested a restart, spawning a new one...");
+                spawn_worker(&paths, exit_notify.clone());
               }
               _ => {
                 error!("received unexpected exit code from worker {}, exiting", code);
-                exit_code = code
+                return code;
               }
             }
           },
           Err(err) => {
             error!("received error when unwrapping exit_code: {}", err);
-            exit_code = DAEMON_GENERAL_ERROR;
+            return DAEMON_GENERAL_ERROR;
           },
         }
-        break;
       },
     }
   }
 
-  exit_code
+  DAEMON_SUCCESS
 }
 
 fn terminate_worker_if_already_running(runtime_dir: &Path, worker_ipc: impl IPCClient<IPCEvent>) {

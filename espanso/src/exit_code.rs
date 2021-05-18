@@ -21,6 +21,7 @@ pub const WORKER_SUCCESS: i32 = 0;
 pub const WORKER_ALREADY_RUNNING: i32 = 1;
 pub const WORKER_GENERAL_ERROR: i32 = 2;
 pub const WORKER_EXIT_ALL_PROCESSES: i32 = 101;
+pub const WORKER_RESTART: i32 = 102;
 
 pub const DAEMON_SUCCESS: i32 = 0;
 pub const DAEMON_ALREADY_RUNNING: i32 = 1;
