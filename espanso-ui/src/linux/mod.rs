@@ -54,6 +54,10 @@ impl UIRemote for LinuxRemote {
   fn show_context_menu(&self, _: &crate::menu::Menu) {
     // NOOP on linux
   }
+
+  fn exit(&self) {
+    self.stop().expect("unable to send termination signal to ui eventloop");
+  }
 }
 
 pub struct LinuxEventLoop {
