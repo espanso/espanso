@@ -41,7 +41,6 @@
 #pragma comment(lib, "Shell32.lib")
 #include <shellapi.h>
 
-#pragma comment(lib, "Gdi32.lib")
 #include <Windows.h>
 
 #include "WinToast/wintoastlib.h"

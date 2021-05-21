@@ -5,6 +5,11 @@ authors = ["Federico Terzi <federico-terzi@users.noreply.github.com>"]
 edition = "2018"
 build="build.rs"
 
+[features]
+# If enabled, avoid linking with the gdiplus library on Windows, which
+# might conflict with wxWidgets
+avoid-gdi = []
+
 [dependencies]
 log = "0.4.14"
 serde_json = "1.0.61"
