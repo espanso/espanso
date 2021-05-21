@@ -12,4 +12,5 @@ members = [
   "espanso-render",
   "espanso-info",
   "espanso-path",
+  "espanso-modulo",
 ]

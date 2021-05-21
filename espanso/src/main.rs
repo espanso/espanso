@@ -52,7 +52,8 @@ lazy_static! {
     cli::path::new(),
     cli::log::new(),
     cli::worker::new(),
-    cli::daemon::new()
+    cli::daemon::new(),
+    cli::modulo::new(),
   ];
 }
 
@@ -140,14 +141,54 @@ fn main() {
     // )
     // .subcommand(SubCommand::with_name("detect")
     //     .about("Tool to detect current window properties, to simplify filters creation."))
-    .subcommand(SubCommand::with_name("daemon")
-      .setting(AppSettings::Hidden)
-      .about("Start the daemon without spawning a new process."))
+    .subcommand(
+      SubCommand::with_name("daemon")
+        .setting(AppSettings::Hidden)
+        .about("Start the daemon without spawning a new process."),
+    )
     // .subcommand(SubCommand::with_name("register")
     //     .about("MacOS and Linux only. Register espanso in the system daemon manager."))
     // .subcommand(SubCommand::with_name("unregister")
     //     .about("MacOS and Linux only. Unregister espanso from the system daemon manager."))
     .subcommand(SubCommand::with_name("log").about("Print the daemon logs."))
+    .subcommand(
+      SubCommand::with_name("modulo")
+        .setting(AppSettings::Hidden)
+        .subcommand(
+          SubCommand::with_name("form")
+            .about("Display a customizable form")
+            .arg(
+              Arg::with_name("input_file")
+                .short("i")
+                .takes_value(true)
+                .help("Input file or - for stdin"),
+            )
+            .arg(
+              Arg::with_name("json")
+                .short("j")
+                .required(false)
+                .takes_value(false)
+                .help("Interpret the input data as JSON"),
+            ),
+        )
+        .subcommand(
+          SubCommand::with_name("search")
+            .about("Display a search box")
+            .arg(
+              Arg::with_name("input_file")
+                .short("i")
+                .takes_value(true)
+                .help("Input file or - for stdin"),
+            )
+            .arg(
+              Arg::with_name("json")
+                .short("j")
+                .required(false)
+                .takes_value(false)
+                .help("Interpret the input data as JSON"),
+            ),
+        ),
+    )
     // .subcommand(SubCommand::with_name("start")
     //     .about("Start the daemon spawning a new process in the background."))
     // .subcommand(SubCommand::with_name("stop")
@@ -259,7 +300,11 @@ fn main() {
     if handler.enable_logs {
       let config = ConfigBuilder::new()
         .set_time_to_local(true)
-        .set_time_format(format!("%H:%M:%S [{}({})]", handler.subcommand, std::process::id()))
+        .set_time_format(format!(
+          "%H:%M:%S [{}({})]",
+          handler.subcommand,
+          std::process::id()
+        ))
         .set_location_level(LevelFilter::Off)
         .add_filter_ignore_str("html5ever")
         .build();
