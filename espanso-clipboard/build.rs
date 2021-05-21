@@ -30,6 +30,11 @@ fn cc_config() {
   println!("cargo:rustc-link-lib=static=espansoclipboard");
   println!("cargo:rustc-link-lib=dylib=user32");
   println!("cargo:rustc-link-lib=dylib=gdi32");
+
+  if cfg!(not(feature = "avoid-gdi")) {
+    println!("cargo:rustc-link-lib=dylib=gdiplus");
+  }
+
   #[cfg(target_env = "gnu")]
   println!("cargo:rustc-link-lib=dylib=stdc++");
 }
