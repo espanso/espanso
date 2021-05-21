@@ -38,7 +38,6 @@
 #include <winuser.h>
 #include <strsafe.h>
 
-#pragma comment(lib, "gdiplus.lib")
 #include <gdiplus.h>
 
 #include <Windows.h>
