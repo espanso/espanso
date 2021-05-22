@@ -19,8 +19,9 @@
 
 use clap::{ArgMatches};
 use espanso_modulo::form::*;
+use crate::icon::IconPaths;
 
-pub fn form_main(matches: &ArgMatches) -> i32 {
+pub fn form_main(matches: &ArgMatches, _icon_paths: &IconPaths) -> i32 {
   let as_json: bool = matches.is_present("json");
 
   let input_file = matches
@@ -42,6 +43,8 @@ pub fn form_main(matches: &ArgMatches) -> i32 {
   } else {
     serde_json::from_str(&data).expect("unable to parse form configuration")
   };
+  
+  // TODO: inject the icon on Windows
 
   let form = generator::generate(config);
   let values = show(form);

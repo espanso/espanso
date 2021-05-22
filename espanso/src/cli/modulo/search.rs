@@ -20,8 +20,9 @@
 use std::collections::HashMap;
 use clap::{ArgMatches};
 use espanso_modulo::search::*;
+use crate::icon::IconPaths;
 
-pub fn search_main(matches: &ArgMatches) -> i32 {
+pub fn search_main(matches: &ArgMatches, icon_paths: &IconPaths) -> i32 {
   let as_json: bool = matches.is_present("json");
 
   let input_file = matches
@@ -38,11 +39,14 @@ pub fn search_main(matches: &ArgMatches) -> i32 {
     std::fs::read_to_string(input_file).expect("unable to read input file")
   };
 
-  let config: config::SearchConfig = if !as_json {
+  let mut config: config::SearchConfig = if !as_json {
     serde_yaml::from_str(&data).expect("unable to parse search configuration")
   } else {
     serde_json::from_str(&data).expect("unable to parse search configuration")
   };
+
+  // Overwrite the icon
+  config.icon = icon_paths.logo.as_deref().map(|path| path.to_string_lossy().to_string());
 
   let algorithm = algorithm::get_algorithm(&config.algorithm);
 
