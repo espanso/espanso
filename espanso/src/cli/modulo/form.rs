@@ -38,13 +38,14 @@ pub fn form_main(matches: &ArgMatches, _icon_paths: &IconPaths) -> i32 {
     std::fs::read_to_string(input_file).expect("unable to read input file")
   };
 
-  let config: config::FormConfig = if !as_json {
+  let mut config: config::FormConfig = if !as_json {
     serde_yaml::from_str(&data).expect("unable to parse form configuration")
   } else {
     serde_json::from_str(&data).expect("unable to parse form configuration")
   };
   
-  // TODO: inject the icon on Windows
+  // Overwrite the icon
+  config.icon = _icon_paths.form_icon.as_deref().map(|path| path.to_string_lossy().to_string());
 
   let form = generator::generate(config);
   let values = show(form);
