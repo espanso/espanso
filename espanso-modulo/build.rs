@@ -88,7 +88,9 @@ fn build_native() {
       ])
       .spawn()
       .expect("failed to execute nmake");
-    handle.wait().expect("unable to wait for nmake command");
+    if !handle.wait().expect("unable to wait for nmake command").success() {
+      panic!("nmake returned non-zero exit code!");
+    }
   }
 
   // Make sure wxWidgets is compiled
@@ -128,50 +130,90 @@ fn build_native() {
   );
 }
 
-// TODO: add documentation for macos
-// Install LLVM:
-// brew install llvm
-// Compile wxWidgets:
-// mkdir build-cocoa
-// cd build-cocoa
-// ../configure --disable-shared --enable-macosx_arch=x86_64
-// make -j6
-//
-// Run
-// WXMAC=/Users/freddy/wxWidgets cargo run
 #[cfg(target_os = "macos")]
 fn build_native() {
-  let wx_location = std::env::var("WXMAC").expect(
-    "unable to find wxWidgets directory, please add a WXMAC env variable with the absolute path",
-  );
-  let wx_path = PathBuf::from(&wx_location);
-  println!("{}", wx_location);
-  if !wx_path.is_dir() {
-    panic!("The given WXMAC directory is not valid");
+  use std::process::Command;
+
+  let project_dir =
+    PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").expect("missing CARGO_MANIFEST_DIR"));
+  let wx_archive = project_dir.join("vendor").join(WX_WIDGETS_ARCHIVE_NAME);
+  if !wx_archive.is_file() {
+    panic!("could not find wxWidgets archive!");
+  }
+
+  let out_dir = PathBuf::from(std::env::var("OUT_DIR").expect("missing OUT_DIR"));
+  let out_wx_dir = out_dir.join("wx");
+
+  if !out_wx_dir.is_dir() {
+    // Extract the wxWidgets archive
+    let wx_archive =
+      std::fs::File::open(&wx_archive).expect("unable to open wxWidgets source archive");
+    let mut archive = zip::ZipArchive::new(wx_archive).expect("unable to read wxWidgets archive");
+    archive
+      .extract(&out_wx_dir)
+      .expect("unable to extract wxWidgets source dir");
+
+    // Compile wxWidgets
+    let build_dir = out_wx_dir.join("build-cocoa");
+    std::fs::create_dir_all(&build_dir).expect("unable to create build-cocoa directory");
+
+    let target_arch = match std::env::var("CARGO_CFG_TARGET_ARCH").expect("unable to read target arch").as_str() {
+      "x86_64" => "x86_64",
+      "aarch64" => "arm64",
+      arch => panic!("unsupported arch {}", arch),
+    };
+
+    let mut handle = Command::new(out_wx_dir.join("configure"))
+      .current_dir(
+        build_dir.to_string_lossy().to_string()
+      )
+      .args(&[
+        "--disable-shared",
+        "--without-libtiff",
+        &format!("--enable-macosx_arch={}", target_arch),
+      ])
+      .spawn()
+      .expect("failed to execute configure");
+    if !handle.wait().expect("unable to wait for configure command").success() {
+      panic!("configure returned non-zero exit code!");
+    }
+
+    let mut handle = Command::new("make")
+      .current_dir(
+        build_dir.to_string_lossy().to_string()
+      )
+      .args(&[
+        "-j8",
+      ])
+      .spawn()
+      .expect("failed to execute make");
+    if !handle.wait().expect("unable to wait for make command").success() {
+      panic!("make returned non-zero exit code!");
+    }
   }
 
   // Make sure wxWidgets is compiled
-  if !wx_path.join("build-cocoa").is_dir() {
+  if !out_wx_dir.join("build-cocoa").is_dir() {
     panic!("wxWidgets is not compiled correctly, missing 'build-cocoa/' directory")
   }
 
-  let config_path = wx_path.join("build-cocoa").join("wx-config");
+  let config_path = out_wx_dir.join("build-cocoa").join("wx-config");
   let cpp_flags = get_cpp_flags(&config_path);
 
   let mut build = cc::Build::new();
   build
     .cpp(true)
-    .file("native/form.cpp")
-    .file("native/common.cpp")
-    .file("native/search.cpp")
-    .file("native/mac.mm");
+    .file("src/sys/form/form.cpp")
+    .file("src/sys/common/common.cpp")
+    .file("src/sys/search/search.cpp")
+    .file("src/sys/common/mac.mm");
   build.flag("-std=c++17");
 
   for flag in cpp_flags {
     build.flag(&flag);
   }
 
-  build.compile("modulosys");
+  build.compile("espansomodulosys");
 
   // Render linker flags
 
