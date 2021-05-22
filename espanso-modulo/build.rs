@@ -22,6 +22,7 @@ use std::path::{PathBuf};
 #[cfg(not(target_os = "windows"))]
 use std::path::{Path};
 
+#[cfg(not(target_os = "linux"))]
 const WX_WIDGETS_ARCHIVE_NAME: &str = "wxWidgets-3.1.5.zip";
 
 #[cfg(target_os = "windows")]
@@ -238,8 +239,7 @@ fn get_cpp_flags(wx_config_path: &Path) -> Vec<String> {
   let config_libs =
     String::from_utf8(config_output.stdout).expect("unable to parse wx-config output");
   let cpp_flags: Vec<String> = config_libs
-    .split(" ")
-    .into_iter()
+    .split(' ')
     .filter_map(|s| {
       if !s.trim().is_empty() {
         Some(s.trim().to_owned())
@@ -261,8 +261,7 @@ fn generate_linker_flags(wx_config_path: &Path) {
   let config_libs =
     String::from_utf8(config_output.stdout).expect("unable to parse wx-config libs output");
   let linker_flags: Vec<String> = config_libs
-    .split(" ")
-    .into_iter()
+    .split(' ')
     .filter_map(|s| {
       if !s.trim().is_empty() {
         Some(s.trim().to_owned())
@@ -282,7 +281,7 @@ fn generate_linker_flags(wx_config_path: &Path) {
       println!("cargo:rustc-link-search=native={}", path);
     } else if flag.starts_with("-framework") {
       println!("cargo:rustc-link-lib=framework={}", linker_flags[i + 1]);
-    } else if flag.starts_with("/") {
+    } else if flag.starts_with('/') {
       let captures = static_lib_extract
         .captures(flag)
         .expect("unable to capture flag regex");
@@ -329,10 +328,9 @@ fn macos_link_search_path() -> Option<String> {
 #[cfg(target_os = "linux")]
 fn build_native() {
   // Make sure wxWidgets is installed
-  if !std::process::Command::new("wx-config")
+  if std::process::Command::new("wx-config")
     .arg("--version")
-    .output()
-    .is_ok()
+    .output().is_err()
   {
     panic!("wxWidgets is not installed, as `wx-config` cannot be exectued")
   }
@@ -343,16 +341,16 @@ fn build_native() {
   let mut build = cc::Build::new();
   build
     .cpp(true)
-    .file("native/form.cpp")
-    .file("native/search.cpp")
-    .file("native/common.cpp");
+    .file("src/sys/form/form.cpp")
+    .file("src/sys/search/search.cpp")
+    .file("src/sys/common/common.cpp");
   build.flag("-std=c++17");
 
   for flag in cpp_flags {
     build.flag(&flag);
   }
 
-  build.compile("modulosys");
+  build.compile("espansomodulosys");
 
   // Render linker flags
 
