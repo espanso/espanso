@@ -39,6 +39,7 @@ mod cli;
 mod engine;
 mod exit_code;
 mod gui;
+mod icon;
 mod ipc;
 mod lock;
 mod logging;

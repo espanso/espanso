@@ -29,7 +29,7 @@ use ui::selector::MatchSelectorAdapter;
 
 use crate::{cli::worker::engine::{matcher::regex::RegexMatcherAdapterOptions, path::PathProviderAdapter}, engine::event::ExitMode};
 
-use super::ui::icon::IconPaths;
+use crate::icon::IconPaths;
 
 pub mod executor;
 pub mod match_cache;

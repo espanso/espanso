@@ -21,20 +21,20 @@ use anyhow::Result;
 use log::{debug, info};
 use std::path::{Path, PathBuf};
 
-const ICON_BINARY: &[u8] = include_bytes!("../../../res/icon.png");
+const ICON_BINARY: &[u8] = include_bytes!("res/icon.png");
 
 #[cfg(target_os = "windows")]
-const WINDOWS_ICO_BINARY: &[u8] = include_bytes!("../../../res/windows/espanso.ico");
+const WINDOWS_ICO_BINARY: &[u8] = include_bytes!("res/windows/espanso.ico");
 #[cfg(target_os = "windows")]
-const WINDOWS_RED_ICO_BINARY: &[u8] = include_bytes!("../../../res/windows/espansored.ico");
+const WINDOWS_RED_ICO_BINARY: &[u8] = include_bytes!("res/windows/espansored.ico");
 
 
 #[cfg(target_os = "macos")]
-const MAC_BINARY: &[u8] = include_bytes!("../../../res/macos/icon.png");
+const MAC_BINARY: &[u8] = include_bytes!("res/macos/icon.png");
 #[cfg(target_os = "macos")]
-const MAC_DISABLED_BINARY: &[u8] = include_bytes!("../../../res/macos/icondisabled.png");
+const MAC_DISABLED_BINARY: &[u8] = include_bytes!("res/macos/icondisabled.png");
 #[cfg(target_os = "macos")]
-const MAC_SYSTEM_DISABLED_BINARY: &[u8] = include_bytes!("../../../res/macos/iconsystemdisabled.png");
+const MAC_SYSTEM_DISABLED_BINARY: &[u8] = include_bytes!("res/macos/iconsystemdisabled.png");
 
 #[derive(Debug, Default)]
 pub struct IconPaths {

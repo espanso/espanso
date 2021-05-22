@@ -39,13 +39,14 @@ pub fn new() -> CliModule {
 fn modulo_main(args: CliModuleArgs) -> i32 {
   let paths = args.paths.expect("missing paths in modulo main");
   let cli_args = args.cli_args.expect("missing cli_args in modulo main");
+  let icon_paths = crate::icon::load_icon_paths(&paths.runtime).expect("unable to load icon paths");
 
   if let Some(matches) = cli_args.subcommand_matches("form") {
-    return form::form_main(matches);
+    return form::form_main(matches, &icon_paths);
   }
 
   if let Some(matches) = cli_args.subcommand_matches("search") {
-    return search::search_main(matches);
+    return search::search_main(matches, &icon_paths);
   }
 
   0

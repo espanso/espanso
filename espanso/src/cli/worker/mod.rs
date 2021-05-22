@@ -69,7 +69,7 @@ fn worker_main(args: CliModuleArgs) -> i32 {
     .expect("missing match store in worker main");
 
   let icon_paths =
-    self::ui::icon::load_icon_paths(&paths.runtime).expect("unable to initialize icons");
+    crate::icon::load_icon_paths(&paths.runtime).expect("unable to initialize icons");
 
   let (remote, mut eventloop) = espanso_ui::create_ui(espanso_ui::UIOptions {
     // TODO: handle show icon
