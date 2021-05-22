@@ -39,21 +39,6 @@ impl ModuloManager {
     Self { is_support_enabled }
   }
 
-  // pub fn is_valid(&self) -> bool {
-  //   self.modulo_path.is_some()
-  // }
-
-  // pub fn get_version(&self) -> Option<String> {
-  //   if let Some(ref modulo_path) = self.modulo_path {
-  //     if let Ok(output) = Command::new(modulo_path).arg("--version").output() {
-  //       let version = String::from_utf8_lossy(&output.stdout);
-  //       return Some(version.to_string());
-  //     }
-  //   }
-
-  //   None
-  // }
-
   pub fn invoke(&self, args: &[&str], body: &str) -> Result<String> {
     if self.is_support_enabled {
       let exec_path = std::env::current_exe().expect("unable to obtain current exec path");
