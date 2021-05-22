@@ -19,7 +19,7 @@
 
 use serde::Serialize;
 use serde_json::{json, Map, Value};
-use std::{collections::HashMap, path::PathBuf};
+use std::{collections::HashMap};
 
 use crate::gui::{FormField, FormUI};
 
@@ -27,14 +27,12 @@ use super::manager::ModuloManager;
 
 pub struct ModuloFormUI<'a> {
   manager: &'a ModuloManager,
-  icon_path: Option<String>,
 }
 
 impl<'a> ModuloFormUI<'a> {
-  pub fn new(manager: &'a ModuloManager, icon_path: &Option<PathBuf>) -> Self {
+  pub fn new(manager: &'a ModuloManager) -> Self {
     Self {
       manager,
-      icon_path: icon_path.as_ref().map(|path| path.to_string_lossy().to_string()),
     }
   }
 }
@@ -46,7 +44,6 @@ impl<'a> FormUI for ModuloFormUI<'a> {
     fields: &HashMap<String, FormField>,
   ) -> anyhow::Result<Option<HashMap<String, String>>> {
     let modulo_form_config = ModuloFormConfig {
-      icon: self.icon_path.as_deref(),
       title: "espanso",
       layout,
       fields: convert_fields_into_object(fields),
@@ -74,7 +71,6 @@ impl<'a> FormUI for ModuloFormUI<'a> {
 
 #[derive(Debug, Serialize)]
 struct ModuloFormConfig<'a> {
-  icon: Option<&'a str>,
   title: &'a str,
   layout: &'a str,
   fields: Map<String, Value>,

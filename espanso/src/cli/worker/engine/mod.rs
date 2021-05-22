@@ -29,8 +29,6 @@ use ui::selector::MatchSelectorAdapter;
 
 use crate::{cli::worker::engine::{matcher::regex::RegexMatcherAdapterOptions, path::PathProviderAdapter}, engine::event::ExitMode};
 
-use crate::icon::IconPaths;
-
 pub mod executor;
 pub mod match_cache;
 pub mod matcher;
@@ -44,7 +42,6 @@ pub fn initialize_and_spawn(
   paths: Paths,
   config_store: Box<dyn ConfigStore>,
   match_store: Box<dyn MatchStore>,
-  icon_paths: IconPaths,
   ui_remote: Box<dyn UIRemote>,
   exit_signal: Receiver<()>,
   ui_event_receiver: Receiver<UIEvent>,
@@ -63,8 +60,8 @@ pub fn initialize_and_spawn(
       let match_cache = super::engine::match_cache::MatchCache::load(&*config_store, &*match_store);
 
       let modulo_manager = crate::gui::modulo::manager::ModuloManager::new();
-      let modulo_form_ui = crate::gui::modulo::form::ModuloFormUI::new(&modulo_manager, &icon_paths.form_icon);
-      let modulo_search_ui = crate::gui::modulo::search::ModuloSearchUI::new(&modulo_manager, &icon_paths.search_icon);
+      let modulo_form_ui = crate::gui::modulo::form::ModuloFormUI::new(&modulo_manager);
+      let modulo_search_ui = crate::gui::modulo::search::ModuloSearchUI::new(&modulo_manager);
 
       let (detect_source, modifier_state_store, sequencer) =
         super::engine::source::init_and_spawn().expect("failed to initialize detector module");

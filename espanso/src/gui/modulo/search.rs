@@ -19,7 +19,7 @@
 
 use serde::Serialize;
 use serde_json::Value;
-use std::{collections::HashMap, path::PathBuf};
+use std::{collections::HashMap};
 
 use crate::gui::{SearchItem, SearchUI};
 
@@ -27,14 +27,12 @@ use super::manager::ModuloManager;
 
 pub struct ModuloSearchUI<'a> {
   manager: &'a ModuloManager,
-  icon_path: Option<String>,
 }
 
 impl<'a> ModuloSearchUI<'a> {
-  pub fn new(manager: &'a ModuloManager, icon_path: &Option<PathBuf>) -> Self {
+  pub fn new(manager: &'a ModuloManager) -> Self {
     Self {
       manager,
-      icon_path: icon_path.as_ref().map(|path| path.to_string_lossy().to_string()),
     }
   }
 }
@@ -42,7 +40,6 @@ impl<'a> ModuloSearchUI<'a> {
 impl<'a> SearchUI for ModuloSearchUI<'a> {
   fn show(&self, items: &[SearchItem]) -> anyhow::Result<Option<String>> {
     let modulo_config = ModuloSearchConfig {
-      icon: self.icon_path.as_deref(),
       title: "espanso",
       items: convert_items(&items),
     };
@@ -69,7 +66,6 @@ impl<'a> SearchUI for ModuloSearchUI<'a> {
 
 #[derive(Debug, Serialize)]
 struct ModuloSearchConfig<'a> {
-  icon: Option<&'a str>,
   title: &'a str,
   items: Vec<ModuloSearchItemConfig<'a>>,
 }

@@ -94,7 +94,6 @@ fn worker_main(args: CliModuleArgs) -> i32 {
     paths.clone(),
     config_store,
     match_store,
-    icon_paths,
     remote,
     engine_exit_receiver,
     engine_ui_event_receiver,
