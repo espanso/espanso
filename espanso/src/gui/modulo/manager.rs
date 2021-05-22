@@ -18,50 +18,25 @@
  */
 
 use anyhow::Result;
-use log::{error, info};
+use log::{error, warn};
 use std::io::Write;
 use std::process::Command;
 use thiserror::Error;
 
 pub struct ModuloManager {
-  modulo_path: Option<String>,
+  is_support_enabled: bool,
 }
 
 impl ModuloManager {
   pub fn new() -> Self {
-    let mut modulo_path: Option<String> = None;
-    // Check if the `MODULO_PATH` env variable is configured
-    if let Some(_modulo_path) = std::env::var_os("MODULO_PATH") {
-      info!("using modulo from env variable at {:?}", _modulo_path);
-      modulo_path = Some(_modulo_path.to_string_lossy().to_string())
+    let is_support_enabled = if cfg!(feature = "modulo") {
+      true
     } else {
-      // Check in the same directory of espanso
-      if let Ok(exe_path) = std::env::current_exe() {
-        if let Some(parent) = exe_path.parent() {
-          let possible_path = parent.join("modulo");
-          let possible_path = possible_path.to_string_lossy().to_string();
+      warn!("this version of espanso doesn't come with modulo support, so graphical features (such as Forms and Search) might not be available");
+      false
+    };
 
-          if let Ok(output) = Command::new(&possible_path).arg("--version").output() {
-            if output.status.success() {
-              info!("using modulo from exe directory at {:?}", possible_path);
-              modulo_path = Some(possible_path);
-            }
-          }
-        }
-      }
-
-      // Otherwise check if present in the PATH
-      if modulo_path.is_none() {
-        if let Ok(output) = Command::new("modulo").arg("--version").output() {
-          if output.status.success() {
-            info!("using modulo executable found in PATH");
-            modulo_path = Some("modulo".to_owned());
-          }
-        }
-      }
-    }
-
-    Self { modulo_path }
+    Self { is_support_enabled }
   }
 
   // pub fn is_valid(&self) -> bool {
@@ -80,10 +55,13 @@ impl ModuloManager {
   // }
 
   pub fn invoke(&self, args: &[&str], body: &str) -> Result<String> {
-    if let Some(modulo_path) = &self.modulo_path {
-      let mut command = Command::new(modulo_path);
+    if self.is_support_enabled {
+      let exec_path = std::env::current_exe().expect("unable to obtain current exec path");
+      let mut command = Command::new(exec_path);
+      let mut full_args = vec!["modulo"];
+      full_args.extend(args);
       command
-        .args(args)
+        .args(full_args)
         .stdin(std::process::Stdio::piped())
         .stdout(std::process::Stdio::piped())
         .stderr(std::process::Stdio::piped());
@@ -109,37 +87,37 @@ impl ModuloManager {
                     }
 
                     if !output.trim().is_empty() {
-                      return Ok(output.to_string());
+                      Ok(output.to_string())
                     } else {
-                      return Err(ModuloError::EmptyOutput.into());
+                      Err(ModuloError::EmptyOutput.into())
                     }
                   }
                   Err(error) => {
-                    return Err(ModuloError::Error(error).into());
+                    Err(ModuloError::Error(error).into())
                   }
                 }
               }
               Err(error) => {
-                return Err(ModuloError::Error(error).into());
+                Err(ModuloError::Error(error).into())
               }
             }
           } else {
-            return Err(ModuloError::StdinError.into());
+            Err(ModuloError::StdinError.into())
           }
         }
         Err(error) => {
-          return Err(ModuloError::Error(error).into());
+          Err(ModuloError::Error(error).into())
         }
       }
     } else {
-      return Err(ModuloError::MissingModulo.into());
+      Err(ModuloError::MissingModulo.into())
     }
   }
 }
 
 #[derive(Error, Debug)]
 pub enum ModuloError {
-  #[error("attempt to invoke modulo even though it's not configured")]
+  #[error("attempt to invoke modulo, but this version of espanso is not compiled with support for it")]
   MissingModulo,
 
   #[error("modulo returned an empty output")]
