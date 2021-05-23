@@ -24,10 +24,6 @@ use espanso_config::{
   matches::{store::MatchStore, Match, MatchEffect},
 };
 
-use crate::engine::process::MatchInfoProvider;
-
-use super::multiplex::MatchProvider;
-
 pub struct MatchCache<'a> {
   cache: HashMap<i32, &'a Match>,
 }
@@ -47,13 +43,13 @@ impl<'a> MatchCache<'a> {
   }
 }
 
-impl<'a> MatchProvider<'a> for MatchCache<'a> {
+impl<'a> super::engine::process::middleware::multiplex::MatchProvider<'a> for MatchCache<'a> {
   fn get(&self, match_id: i32) -> Option<&'a Match> {
     self.cache.get(&match_id).map(|m| *m)
   }
 }
 
-impl<'a> super::render::MatchProvider<'a> for MatchCache<'a> {
+impl<'a> super::engine::process::middleware::render::MatchProvider<'a> for MatchCache<'a> {
   fn matches(&self) -> Vec<&'a Match> {
     self.cache.iter().map(|(_, m)| *m).collect()
   }
@@ -63,7 +59,7 @@ impl<'a> super::render::MatchProvider<'a> for MatchCache<'a> {
   }
 }
 
-impl<'a> super::ui::selector::MatchProvider<'a> for MatchCache<'a> {
+impl<'a> super::engine::process::middleware::match_select::MatchProvider<'a> for MatchCache<'a> {
   fn get_matches(&self, ids: &[i32]) -> Vec<&'a Match> {
     ids.iter().flat_map(|id| {
       self.cache.get(&id).map(|m| *m)
@@ -71,7 +67,7 @@ impl<'a> super::ui::selector::MatchProvider<'a> for MatchCache<'a> {
   }
 }
 
-impl<'a> MatchInfoProvider for MatchCache<'a> {
+impl<'a> crate::engine::process::MatchInfoProvider for MatchCache<'a> {
   fn get_force_mode(&self, match_id: i32) -> Option<crate::engine::event::effect::TextInjectMode> {
     let m = self.cache.get(&match_id)?;
     if let MatchEffect::Text(text_effect) = &m.effect {

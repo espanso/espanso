@@ -17,9 +17,4 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub mod disable;
-pub mod image_resolve;
-pub mod matcher;
-pub mod match_select;
-pub mod multiplex;
-pub mod render;
+pub mod executor;
