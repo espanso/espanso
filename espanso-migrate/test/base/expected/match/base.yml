@@ -1,0 +1,12 @@
+global_vars:
+  - name: "name"
+    type: "echo"
+    params:
+      echo: "John"
+
+matches:
+  - name: ":hi"
+    trigger: "Hello"
+  
+  - name: ":greet"
+    trigger: "Hi {{name}}"
