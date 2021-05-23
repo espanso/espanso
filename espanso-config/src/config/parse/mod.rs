@@ -32,6 +32,8 @@ pub(crate) struct ParsedConfig {
 
   pub pre_paste_delay: Option<usize>,
 
+  pub toggle_key: Option<String>,
+
   // Includes
   pub includes: Option<Vec<String>>,
   pub excludes: Option<Vec<String>>,

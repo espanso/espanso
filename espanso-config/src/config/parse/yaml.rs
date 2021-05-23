@@ -40,6 +40,9 @@ pub(crate) struct YAMLConfig {
   pub pre_paste_delay: Option<usize>,
 
   #[serde(default)]
+  pub toggle_key: Option<String>,
+
+  #[serde(default)]
   pub includes: Option<Vec<String>>,
 
   #[serde(default)]
@@ -92,6 +95,8 @@ impl TryFrom<YAMLConfig> for ParsedConfig {
 
       pre_paste_delay: yaml_config.pre_paste_delay,
 
+      toggle_key: yaml_config.toggle_key,
+
       use_standard_includes: yaml_config.use_standard_includes,
       includes: yaml_config.includes,
       extra_includes: yaml_config.extra_includes,
@@ -119,6 +124,7 @@ mod tests {
     backend: clipboard
     clipboard_threshold: 200
     pre_paste_delay: 300
+    toggle_key: CTRL
       
     use_standard_includes: true
     includes: ["test1"]
@@ -144,6 +150,8 @@ mod tests {
         clipboard_threshold: Some(200),
 
         pre_paste_delay: Some(300),
+        
+        toggle_key: Some("CTRL".to_string()),
 
         use_standard_includes: Some(true),
         includes: Some(vec!["test1".to_string()]),

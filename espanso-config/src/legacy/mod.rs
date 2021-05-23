@@ -260,6 +260,26 @@ impl Config for LegacyInteropConfig {
   fn pre_paste_delay(&self) -> usize {
     crate::config::default::DEFAULT_PRE_PASTE_DELAY
   }
+
+  fn toggle_key(&self) -> Option<crate::config::ToggleKey> {
+    match self.config.toggle_key {
+      model::KeyModifier::CTRL => Some(crate::config::ToggleKey::Ctrl),
+      model::KeyModifier::SHIFT => Some(crate::config::ToggleKey::Shift),
+      model::KeyModifier::ALT => Some(crate::config::ToggleKey::Alt),
+      model::KeyModifier::META => Some(crate::config::ToggleKey::Meta), 
+      model::KeyModifier::BACKSPACE => None,
+      model::KeyModifier::OFF => None, 
+      model::KeyModifier::LEFT_CTRL => Some(crate::config::ToggleKey::LeftCtrl),
+      model::KeyModifier::RIGHT_CTRL => Some(crate::config::ToggleKey::RightCtrl),
+      model::KeyModifier::LEFT_ALT => Some(crate::config::ToggleKey::LeftAlt),
+      model::KeyModifier::RIGHT_ALT => Some(crate::config::ToggleKey::RightAlt),
+      model::KeyModifier::LEFT_META => Some(crate::config::ToggleKey::LeftMeta),
+      model::KeyModifier::RIGHT_META => Some(crate::config::ToggleKey::RightMeta),
+      model::KeyModifier::LEFT_SHIFT => Some(crate::config::ToggleKey::LeftShift),
+      model::KeyModifier::RIGHT_SHIFT => Some(crate::config::ToggleKey::RightShift),
+      model::KeyModifier::CAPS_LOCK => None
+    }
+  }
 }
 
 struct LegacyMatchGroup {

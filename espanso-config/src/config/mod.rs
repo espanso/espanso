@@ -51,6 +51,9 @@ pub trait Config: Send {
 
   // TODO: add other delay options (start by the ones needed in clipboard injector)
 
+  // Defines the key that disables/enables espanso when double pressed
+  fn toggle_key(&self) -> Option<ToggleKey>;
+
   fn is_match<'a>(&self, app: &AppProperties<'a>) -> bool;
 }
 
@@ -73,6 +76,23 @@ pub enum Backend {
   Inject,
   Clipboard,
   Auto,
+}
+
+
+#[derive(Debug, Copy, Clone)]
+pub enum ToggleKey {
+  Ctrl,
+  Meta,
+  Alt,
+  Shift,
+  RightCtrl,
+  RightAlt,
+  RightShift,
+  RightMeta,
+  LeftCtrl,
+  LeftAlt,
+  LeftShift,
+  LeftMeta,
 }
 
 pub fn load_store(config_dir: &Path) -> Result<impl ConfigStore> {
