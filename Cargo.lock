@@ -479,6 +479,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "espanso-migrate"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "dunce",
+ "glob",
+ "include_dir",
+ "lazy_static",
+ "log",
+ "regex",
+ "tempdir",
+ "tempfile",
+ "test-case",
+ "thiserror",
+ "walkdir",
+]
+
+[[package]]
 name = "espanso-modulo"
 version = "0.1.0"
 dependencies = [
@@ -652,6 +670,30 @@ dependencies = [
  "log",
  "mac",
  "markup5ever",
+ "proc-macro2",
+ "quote 1.0.9",
+ "syn 1.0.60",
+]
+
+[[package]]
+name = "include_dir"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "23d58bdeb22b1c4691106c084b1063781904c35d0f22eda2a283598968eac61a"
+dependencies = [
+ "glob",
+ "include_dir_impl",
+ "proc-macro-hack",
+]
+
+[[package]]
+name = "include_dir_impl"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "327869970574819d24d1dca25c891856144d29159ab797fa9dc725c5c3f57215"
+dependencies = [
+ "anyhow",
+ "proc-macro-hack",
  "proc-macro2",
  "quote 1.0.9",
  "syn 1.0.60",
@@ -1024,6 +1066,12 @@ dependencies = [
  "predicates-core",
  "treeline",
 ]
+
+[[package]]
+name = "proc-macro-hack"
+version = "0.5.19"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dbf0c48bc1d91375ae5c3cd81e3722dff1abcf81a30960240640d223f59fe0e5"
 
 [[package]]
 name = "proc-macro2"
@@ -1442,6 +1490,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2dfed899f0eb03f32ee8c6a0aabdb8a7949659e3466561fc0adf54e26d88c5f4"
 dependencies = [
  "winapi-util",
+]
+
+[[package]]
+name = "test-case"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "956044ef122917dde830c19dec5f76d0670329fde4104836d62ebcb14f4865f1"
+dependencies = [
+ "cfg-if",
+ "proc-macro2",
+ "quote 1.0.9",
+ "syn 1.0.60",
+ "version_check",
 ]
 
 [[package]]

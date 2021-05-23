@@ -13,4 +13,5 @@ members = [
   "espanso-info",
   "espanso-path",
   "espanso-modulo",
+  "espanso-migrate",
 ]
