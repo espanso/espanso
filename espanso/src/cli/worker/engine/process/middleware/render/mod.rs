@@ -19,7 +19,7 @@
 
 use std::{cell::RefCell, collections::HashMap};
 
-pub mod clipboard;
+pub mod extension;
 
 use espanso_config::{
   config::Config,

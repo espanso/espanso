@@ -17,19 +17,14 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::{
-  collections::{HashSet},
-};
+use std::collections::HashSet;
 
-use crate::engine::{dispatch::ModeProvider, process::MatchFilter};
 use espanso_config::{
   config::{AppProperties, Config, ConfigStore},
   matches::store::{MatchSet, MatchStore},
 };
 use espanso_info::{AppInfo, AppInfoProvider};
 use std::iter::FromIterator;
-
-use super::engine::render::ConfigProvider;
 
 pub struct ConfigManager<'a> {
   config_store: &'a dyn ConfigStore,
@@ -76,7 +71,7 @@ fn to_app_properties(info: &AppInfo) -> AppProperties {
   }
 }
 
-impl<'a> MatchFilter for ConfigManager<'a> {
+impl<'a> crate::engine::process::MatchFilter for ConfigManager<'a> {
   fn filter_active(&self, matches_ids: &[i32]) -> Vec<i32> {
     let ids_set: HashSet<i32> = HashSet::from_iter(matches_ids.iter().copied());
     let (_, match_set) = self.active_context();
@@ -90,7 +85,7 @@ impl<'a> MatchFilter for ConfigManager<'a> {
   }
 }
 
-impl<'a> ConfigProvider<'a> for ConfigManager<'a> {
+impl<'a> super::engine::process::middleware::render::ConfigProvider<'a> for ConfigManager<'a> {
   fn configs(&self) -> Vec<(&'a dyn Config, MatchSet)> {
     self
       .config_store
@@ -105,7 +100,7 @@ impl<'a> ConfigProvider<'a> for ConfigManager<'a> {
   }
 }
 
-impl<'a> ModeProvider for ConfigManager<'a> {
+impl<'a> crate::engine::dispatch::ModeProvider for ConfigManager<'a> {
   fn active_mode(&self) -> crate::engine::dispatch::Mode {
     let config = self.active();
     match config.backend() {
@@ -118,15 +113,15 @@ impl<'a> ModeProvider for ConfigManager<'a> {
   }
 }
 
-impl<'a> super::engine::executor::clipboard_injector::ClipboardParamsProvider
+impl<'a> super::engine::dispatch::executor::clipboard_injector::ClipboardParamsProvider
   for ConfigManager<'a>
 {
-  fn get(&self) -> super::engine::executor::clipboard_injector::ClipboardParams {
+  fn get(&self) -> super::engine::dispatch::executor::clipboard_injector::ClipboardParams {
     let active = self.active();
-    super::engine::executor::clipboard_injector::ClipboardParams {
+    super::engine::dispatch::executor::clipboard_injector::ClipboardParams {
       pre_paste_delay: active.pre_paste_delay(),
-      paste_shortcut_event_delay: 5, // TODO: read from config
-      paste_shortcut: None, // TODO: read from config
+      paste_shortcut_event_delay: 5,  // TODO: read from config
+      paste_shortcut: None,           // TODO: read from config
       disable_x11_fast_inject: false, // TODO: read from config
     }
   }

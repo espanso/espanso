@@ -23,21 +23,40 @@ use anyhow::Result;
 use crossbeam::channel::Receiver;
 use espanso_config::{config::ConfigStore, matches::store::MatchStore};
 use espanso_path::Paths;
-use espanso_ui::{UIRemote, event::UIEvent};
+use espanso_ui::{event::UIEvent, UIRemote};
 use log::info;
-use ui::selector::MatchSelectorAdapter;
 
-use crate::{cli::worker::engine::{matcher::regex::RegexMatcherAdapterOptions, path::PathProviderAdapter}, engine::event::ExitMode};
+use crate::{
+  cli::worker::{
+    engine::{
+      dispatch::executor::{
+        clipboard_injector::ClipboardInjectorAdapter, context_menu::ContextMenuHandlerAdapter,
+        event_injector::EventInjectorAdapter, icon::IconHandlerAdapter,
+        key_injector::KeyInjectorAdapter,
+      },
+      process::middleware::{
+        image_resolve::PathProviderAdapter,
+        match_select::MatchSelectorAdapter,
+        matcher::{
+          convert::MatchConverter,
+          regex::{RegexMatcherAdapter, RegexMatcherAdapterOptions},
+          rolling::RollingMatcherAdapter,
+        },
+        multiplex::MultiplexAdapter,
+        render::{
+          extension::{clipboard::ClipboardAdapter, form::FormProviderAdapter},
+          RendererAdapter,
+        },
+      },
+    },
+    match_cache::MatchCache,
+  },
+  engine::event::ExitMode,
+};
 
-pub mod executor;
-pub mod match_cache;
-pub mod matcher;
-pub mod multiplex;
-pub mod path;
+pub mod dispatch;
+pub mod funnel;
 pub mod process;
-pub mod render;
-pub mod source;
-pub mod ui;
 
 pub fn initialize_and_spawn(
   paths: Paths,
@@ -56,42 +75,42 @@ pub fn initialize_and_spawn(
         espanso_info::get_provider().expect("unable to initialize app info provider");
       let config_manager =
         super::config::ConfigManager::new(&*config_store, &*match_store, &*app_info_provider);
-      let match_converter =
-        super::engine::matcher::convert::MatchConverter::new(&*config_store, &*match_store);
-      let match_cache = super::engine::match_cache::MatchCache::load(&*config_store, &*match_store);
+      let match_converter = MatchConverter::new(&*config_store, &*match_store);
+      let match_cache = MatchCache::load(&*config_store, &*match_store);
 
       let modulo_manager = crate::gui::modulo::manager::ModuloManager::new();
       let modulo_form_ui = crate::gui::modulo::form::ModuloFormUI::new(&modulo_manager);
       let modulo_search_ui = crate::gui::modulo::search::ModuloSearchUI::new(&modulo_manager);
 
       let (detect_source, modifier_state_store, sequencer) =
-        super::engine::source::init_and_spawn().expect("failed to initialize detector module");
-      let exit_source = super::engine::source::exit::ExitSource::new(exit_signal, &sequencer);
-      let ui_source = super::engine::source::ui::UISource::new(ui_event_receiver, &sequencer);
-      let sources: Vec<&dyn crate::engine::funnel::Source> = vec![&detect_source, &exit_source, &ui_source];
+        super::engine::funnel::init_and_spawn().expect("failed to initialize detector module");
+      let exit_source = super::engine::funnel::exit::ExitSource::new(exit_signal, &sequencer);
+      let ui_source = super::engine::funnel::ui::UISource::new(ui_event_receiver, &sequencer);
+      let sources: Vec<&dyn crate::engine::funnel::Source> =
+        vec![&detect_source, &exit_source, &ui_source];
       let funnel = crate::engine::funnel::default(&sources);
 
-      let rolling_matcher = super::engine::matcher::rolling::RollingMatcherAdapter::new(
-        &match_converter.get_rolling_matches(),
-      );
-      let regex_matcher = super::engine::matcher::regex::RegexMatcherAdapter::new(
+      let rolling_matcher = RollingMatcherAdapter::new(&match_converter.get_rolling_matches());
+      let regex_matcher = RegexMatcherAdapter::new(
         &match_converter.get_regex_matches(),
         &RegexMatcherAdapterOptions {
-          max_buffer_size: 30,  // TODO: load from configs
-        }
+          max_buffer_size: 30, // TODO: load from configs
+        },
       );
       let matchers: Vec<
-        &dyn crate::engine::process::Matcher<super::engine::matcher::MatcherState>,
+        &dyn crate::engine::process::Matcher<
+          super::engine::process::middleware::matcher::MatcherState,
+        >,
       > = vec![&rolling_matcher, &regex_matcher];
       let selector = MatchSelectorAdapter::new(&modulo_search_ui, &match_cache);
-      let multiplexer = super::engine::multiplex::MultiplexAdapter::new(&match_cache);
+      let multiplexer = MultiplexAdapter::new(&match_cache);
 
       let injector = espanso_inject::get_injector(Default::default())
         .expect("failed to initialize injector module"); // TODO: handle the options
       let clipboard = espanso_clipboard::get_clipboard(Default::default())
         .expect("failed to initialize clipboard module"); // TODO: handle options
 
-      let clipboard_adapter = super::engine::render::clipboard::ClipboardAdapter::new(&*clipboard);
+      let clipboard_adapter = ClipboardAdapter::new(&*clipboard);
       let clipboard_extension =
         espanso_render::extension::clipboard::ClipboardExtension::new(&clipboard_adapter);
       let date_extension = espanso_render::extension::date::DateExtension::new();
@@ -104,7 +123,7 @@ pub fn initialize_and_spawn(
         &paths.packages,
       );
       let shell_extension = espanso_render::extension::shell::ShellExtension::new(&paths.config);
-      let form_adapter = ui::form::FormProviderAdapter::new(&modulo_form_ui);
+      let form_adapter = FormProviderAdapter::new(&modulo_form_ui);
       let form_extension = espanso_render::extension::form::FormExtension::new(&form_adapter);
       let renderer = espanso_render::create(vec![
         &clipboard_extension,
@@ -115,11 +134,11 @@ pub fn initialize_and_spawn(
         &shell_extension,
         &form_extension,
       ]);
-      let renderer_adapter =
-        super::engine::render::RendererAdapter::new(&match_cache, &config_manager, &renderer);
+      let renderer_adapter = RendererAdapter::new(&match_cache, &config_manager, &renderer);
       let path_provider = PathProviderAdapter::new(&paths);
 
-      let disable_options = process::middleware::disable::extract_disable_options(config_manager.default());
+      let disable_options =
+        process::middleware::disable::extract_disable_options(config_manager.default());
 
       let mut processor = crate::engine::process::default(
         &matchers,
@@ -134,17 +153,12 @@ pub fn initialize_and_spawn(
         disable_options,
       );
 
-      let event_injector =
-        super::engine::executor::event_injector::EventInjectorAdapter::new(&*injector);
+      let event_injector = EventInjectorAdapter::new(&*injector);
       let clipboard_injector =
-        super::engine::executor::clipboard_injector::ClipboardInjectorAdapter::new(
-          &*injector,
-          &*clipboard,
-          &config_manager,
-        );
-      let key_injector = super::engine::executor::key_injector::KeyInjectorAdapter::new(&*injector);
-      let context_menu_adapter = super::engine::executor::context_menu::ContextMenuHandlerAdapter::new(&*ui_remote);
-      let icon_adapter = super::engine::executor::icon::IconHandlerAdapter::new(&*ui_remote);
+        ClipboardInjectorAdapter::new(&*injector, &*clipboard, &config_manager);
+      let key_injector = KeyInjectorAdapter::new(&*injector);
+      let context_menu_adapter = ContextMenuHandlerAdapter::new(&*ui_remote);
+      let icon_adapter = IconHandlerAdapter::new(&*ui_remote);
       let dispatcher = crate::engine::dispatch::default(
         &event_injector,
         &clipboard_injector,

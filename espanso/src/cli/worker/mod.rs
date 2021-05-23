@@ -36,6 +36,7 @@ use super::{CliModule, CliModuleArgs};
 mod config;
 mod engine;
 mod ipc;
+mod match_cache;
 mod ui;
 
 pub fn new() -> CliModule {
