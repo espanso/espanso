@@ -17,6 +17,8 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use std::cell::RefCell;
+
 use super::super::Middleware;
 use crate::engine::event::{
   ui::{MenuItem, ShowContextMenuEvent, SimpleMenuItem},
@@ -25,12 +27,18 @@ use crate::engine::event::{
 
 const CONTEXT_ITEM_EXIT: u32 = 0;
 const CONTEXT_ITEM_RELOAD: u32 = 1;
+const CONTEXT_ITEM_ENABLE: u32 = 2;
+const CONTEXT_ITEM_DISABLE: u32 = 3;
 
-pub struct ContextMenuMiddleware {}
+pub struct ContextMenuMiddleware {
+  is_enabled: RefCell<bool>,
+}
 
 impl ContextMenuMiddleware {
   pub fn new() -> Self {
-    Self {}
+    Self {
+      is_enabled: RefCell::new(true),
+    }
   }
 }
 
@@ -39,7 +47,9 @@ impl Middleware for ContextMenuMiddleware {
     "context_menu"
   }
 
-  fn next(&self, event: Event, _: &mut dyn FnMut(Event)) -> Event {
+  fn next(&self, event: Event, dispatch: &mut dyn FnMut(Event)) -> Event {
+    let mut is_enabled = self.is_enabled.borrow_mut();
+
     match &event.etype {
       EventType::TrayIconClicked => {
         // TODO: fetch top matches for the active config to be added
@@ -53,6 +63,18 @@ impl Middleware for ContextMenuMiddleware {
           EventType::ShowContextMenu(ShowContextMenuEvent {
             // TODO: add actual entries
             items: vec![
+              MenuItem::Simple(if *is_enabled {
+                SimpleMenuItem {
+                  id: CONTEXT_ITEM_DISABLE,
+                  label: "Disable".to_string(),
+                }
+              } else {
+                SimpleMenuItem {
+                  id: CONTEXT_ITEM_ENABLE,
+                  label: "Enable".to_string(),
+                }
+              }),
+              MenuItem::Separator,
               MenuItem::Simple(SimpleMenuItem {
                 id: CONTEXT_ITEM_RELOAD,
                 label: "Reload config".to_string(),
@@ -76,11 +98,27 @@ impl Middleware for ContextMenuMiddleware {
             event.source_id,
             EventType::ExitRequested(ExitMode::RestartWorker),
           ),
+          CONTEXT_ITEM_ENABLE => {
+            dispatch(Event::caused_by(event.source_id, EventType::EnableRequest));
+            Event::caused_by(event.source_id, EventType::NOOP)
+          }
+          CONTEXT_ITEM_DISABLE => {
+            dispatch(Event::caused_by(event.source_id, EventType::DisableRequest));
+            Event::caused_by(event.source_id, EventType::NOOP)
+          }
           custom => {
             // TODO: handle dynamic items
             todo!()
           }
         }
+      }
+      EventType::Disabled => {
+        *is_enabled = false;
+        event
+      }
+      EventType::Enabled => {
+        *is_enabled = true;
+        event
       }
       _ => event,
     }
