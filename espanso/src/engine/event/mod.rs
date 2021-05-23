@@ -72,6 +72,8 @@ pub enum EventType {
 
   Disabled,
   Enabled,
+  DisableRequest,
+  EnableRequest,
   SecureInputEnabled,
   SecureInputDisabled,
 

@@ -22,16 +22,18 @@ use std::{
   time::{Duration, Instant},
 };
 
-use log::{info};
+use log::info;
 
 use super::super::Middleware;
-use crate::engine::{event::{Event, EventType, input::{Key, KeyboardEvent, Status, Variant}}};
+use crate::engine::event::{
+  input::{Key, KeyboardEvent, Status, Variant},
+  Event, EventType,
+};
 
 pub struct DisableOptions {
   pub toggle_key: Option<Key>,
   pub toggle_key_variant: Option<Variant>,
   pub toggle_key_maximum_window: Duration,
-
   // TODO: toggle shortcut?
 }
 
@@ -60,21 +62,32 @@ impl Middleware for DisableMiddleware {
     let mut has_status_changed = false;
     let mut enabled = self.enabled.borrow_mut();
 
-    if let EventType::Keyboard(m_event) = &event.etype {
-      if is_toggle_key(m_event, &self.options) {
-        let mut last_toggle_press = self.last_toggle_press.borrow_mut();
-        if let Some(previous_press) = *last_toggle_press {
-          if previous_press.elapsed() < self.options.toggle_key_maximum_window {
-            *enabled = !*enabled;
-            *last_toggle_press = None;
-            has_status_changed = true;
+    match &event.etype {
+      EventType::Keyboard(m_event) => {
+        if is_toggle_key(m_event, &self.options) {
+          let mut last_toggle_press = self.last_toggle_press.borrow_mut();
+          if let Some(previous_press) = *last_toggle_press {
+            if previous_press.elapsed() < self.options.toggle_key_maximum_window {
+              *enabled = !*enabled;
+              *last_toggle_press = None;
+              has_status_changed = true;
+            } else {
+              *last_toggle_press = Some(Instant::now());
+            }
           } else {
             *last_toggle_press = Some(Instant::now());
           }
-        } else {
-          *last_toggle_press = Some(Instant::now());
         }
+      },
+      EventType::EnableRequest => {
+        *enabled = true;
+        has_status_changed = true;
+      },
+      EventType::DisableRequest => {
+        *enabled = false;
+        has_status_changed = true;
       }
+      _ => {}
     }
 
     if has_status_changed {
