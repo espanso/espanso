@@ -17,8 +17,4 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub mod clipboard_injector;
-pub mod context_menu;
-pub mod event_injector;
-pub mod icon;
-pub mod key_injector;
+pub mod middleware;

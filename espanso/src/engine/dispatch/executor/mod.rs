@@ -18,6 +18,7 @@
  */
 
 pub mod context_menu;
+pub mod icon_update;
 pub mod image_inject;
 pub mod html_inject;
 pub mod key_inject;

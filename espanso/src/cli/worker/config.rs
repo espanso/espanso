@@ -61,6 +61,10 @@ impl<'a> ConfigManager<'a> {
     let match_paths = config.match_paths();
     (config, self.match_store.query(&match_paths))
   }
+
+  pub fn default(&self) -> &'a dyn Config {
+    self.config_store.default()
+  }
 }
 
 // TODO: test

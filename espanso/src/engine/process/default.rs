@@ -19,13 +19,13 @@
 
 use log::trace;
 
-use super::{MatchFilter, MatchInfoProvider, MatchSelector, Matcher, Middleware, Multiplexer, PathProvider, Processor, Renderer, middleware::{
+use super::{DisableOptions, MatchFilter, MatchInfoProvider, MatchSelector, Matcher, Middleware, Multiplexer, PathProvider, Processor, Renderer, middleware::{
     match_select::MatchSelectMiddleware, matcher::MatcherMiddleware, multiplex::MultiplexMiddleware,
     render::RenderMiddleware, action::{ActionMiddleware, EventSequenceProvider}, cursor_hint::CursorHintMiddleware, cause::CauseCompensateMiddleware,
     delay_modifiers::{DelayForModifierReleaseMiddleware, ModifierStatusProvider}, markdown::MarkdownMiddleware,
     past_discard::PastEventsDiscardMiddleware,
   }};
-use crate::engine::{event::{Event, EventType}, process::middleware::{context_menu::ContextMenuMiddleware, exit::ExitMiddleware, image_resolve::ImageResolverMiddleware}};
+use crate::engine::{event::{Event, EventType}, process::middleware::{context_menu::ContextMenuMiddleware, disable::DisableMiddleware, exit::ExitMiddleware, icon_status::IconStatusMiddleware, image_resolve::ImageResolverMiddleware}};
 use std::collections::VecDeque;
 
 pub struct DefaultProcessor<'a> {
@@ -44,11 +44,14 @@ impl<'a> DefaultProcessor<'a> {
     modifier_status_provider: &'a dyn ModifierStatusProvider,
     event_sequence_provider: &'a dyn EventSequenceProvider,
     path_provider: &'a dyn PathProvider,
+    disable_options: DisableOptions,
   ) -> DefaultProcessor<'a> {
     Self {
       event_queue: VecDeque::new(),
       middleware: vec![
         Box::new(PastEventsDiscardMiddleware::new()),
+        Box::new(DisableMiddleware::new(disable_options)),
+        Box::new(IconStatusMiddleware::new()),
         Box::new(MatcherMiddleware::new(matchers)),
         Box::new(ContextMenuMiddleware::new()),
         Box::new(MatchSelectMiddleware::new(match_filter, match_selector)),

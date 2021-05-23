@@ -37,6 +37,7 @@ pub use executor::html_inject::HtmlInjector;
 pub use executor::text_inject::{Mode, ModeProvider, TextInjector};
 pub use executor::image_inject::{ImageInjector};
 pub use executor::context_menu::{ContextMenuHandler};
+pub use executor::icon_update::IconHandler;
 
 // TODO: move into module
 pub trait KeyInjector {
@@ -51,6 +52,7 @@ pub fn default<'a>(
   html_injector: &'a dyn HtmlInjector,
   image_injector: &'a dyn ImageInjector,
   context_menu_handler: &'a dyn ContextMenuHandler,
+  icon_handler: &'a dyn IconHandler,
 ) -> impl Dispatcher + 'a {
   default::DefaultDispatcher::new(
     event_injector,
@@ -60,5 +62,6 @@ pub fn default<'a>(
     html_injector,
     image_injector,
     context_menu_handler,
+    icon_handler,
   )
 }

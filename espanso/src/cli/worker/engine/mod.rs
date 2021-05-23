@@ -34,6 +34,7 @@ pub mod match_cache;
 pub mod matcher;
 pub mod multiplex;
 pub mod path;
+pub mod process;
 pub mod render;
 pub mod source;
 pub mod ui;
@@ -118,6 +119,8 @@ pub fn initialize_and_spawn(
         super::engine::render::RendererAdapter::new(&match_cache, &config_manager, &renderer);
       let path_provider = PathProviderAdapter::new(&paths);
 
+      let disable_options = process::middleware::disable::extract_disable_options(config_manager.default());
+
       let mut processor = crate::engine::process::default(
         &matchers,
         &config_manager,
@@ -128,6 +131,7 @@ pub fn initialize_and_spawn(
         &modifier_state_store,
         &sequencer,
         &path_provider,
+        disable_options,
       );
 
       let event_injector =
@@ -140,6 +144,7 @@ pub fn initialize_and_spawn(
         );
       let key_injector = super::engine::executor::key_injector::KeyInjectorAdapter::new(&*injector);
       let context_menu_adapter = super::engine::executor::context_menu::ContextMenuHandlerAdapter::new(&*ui_remote);
+      let icon_adapter = super::engine::executor::icon::IconHandlerAdapter::new(&*ui_remote);
       let dispatcher = crate::engine::dispatch::default(
         &event_injector,
         &clipboard_injector,
@@ -148,6 +153,7 @@ pub fn initialize_and_spawn(
         &clipboard_injector,
         &clipboard_injector,
         &context_menu_adapter,
+        &icon_adapter,
       );
 
       let mut engine = crate::engine::Engine::new(&funnel, &mut processor, &dispatcher);

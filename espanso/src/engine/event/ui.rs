@@ -40,3 +40,15 @@ pub struct SubMenuItem {
   pub label: String,
   pub items: Vec<MenuItem>,
 }
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct IconStatusChangeEvent {
+  pub status: IconStatus
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum IconStatus {
+  Enabled,
+  Disabled,
+  SecureInputDisabled,
+}
