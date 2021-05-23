@@ -95,6 +95,7 @@ pub enum RendererError {
 pub use middleware::action::{MatchInfoProvider, EventSequenceProvider};
 pub use middleware::delay_modifiers::ModifierStatusProvider;
 pub use middleware::image_resolve::PathProvider;
+pub use middleware::disable::DisableOptions;
 
 pub fn default<'a, MatcherState>(
   matchers: &'a [&'a dyn Matcher<'a, MatcherState>],
@@ -106,6 +107,7 @@ pub fn default<'a, MatcherState>(
   modifier_status_provider: &'a dyn ModifierStatusProvider,
   event_sequence_provider: &'a dyn EventSequenceProvider,
   path_provider: &'a dyn PathProvider,
+  disable_options: DisableOptions,
 ) -> impl Processor + 'a {
   default::DefaultProcessor::new(
     matchers,
@@ -117,5 +119,6 @@ pub fn default<'a, MatcherState>(
     modifier_status_provider,
     event_sequence_provider,
     path_provider,
+    disable_options,
   )
 }

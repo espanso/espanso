@@ -70,6 +70,11 @@ pub enum EventType {
   MatchInjected,
   DiscardPrevious(internal::DiscardPreviousEvent),
 
+  Disabled,
+  Enabled,
+  SecureInputEnabled,
+  SecureInputDisabled,
+
   // Effects
   TriggerCompensation(effect::TriggerCompensationEvent),
   CursorHintCompensation(effect::CursorHintCompensationEvent),
@@ -82,6 +87,7 @@ pub enum EventType {
 
   // UI
   ShowContextMenu(ui::ShowContextMenuEvent),
+  IconStatusChange(ui::IconStatusChangeEvent),
 }
 
 #[derive(Debug, Clone)]

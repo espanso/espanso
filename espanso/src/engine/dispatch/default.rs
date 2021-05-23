@@ -17,7 +17,7 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use super::{ContextMenuHandler, Event, ImageInjector};
+use super::{ContextMenuHandler, Event, IconHandler, ImageInjector};
 use super::{ModeProvider, Dispatcher, Executor, KeyInjector, TextInjector, HtmlInjector};
 
 pub struct DefaultDispatcher<'a> {
@@ -33,6 +33,7 @@ impl<'a> DefaultDispatcher<'a> {
     html_injector: &'a dyn HtmlInjector,
     image_injector: &'a dyn ImageInjector,
     context_menu_handler: &'a dyn ContextMenuHandler,
+    icon_handler: &'a dyn IconHandler,
   ) -> Self {
     Self {
       executors: vec![
@@ -52,6 +53,9 @@ impl<'a> DefaultDispatcher<'a> {
         )),
         Box::new(super::executor::context_menu::ContextMenuExecutor::new(
           context_menu_handler,
+        )),
+        Box::new(super::executor::icon_update::IconUpdateExecutor::new(
+          icon_handler,
         ))
       ],
     }
