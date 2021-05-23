@@ -22,7 +22,7 @@ use super::{
   parse::ParsedConfig,
   path::calculate_paths,
   util::os_matches,
-  AppProperties, Backend, Config,
+  AppProperties, Backend, Config, ToggleKey,
 };
 use crate::{counter::next_id, merge};
 use anyhow::Result;
@@ -124,6 +124,7 @@ impl Config for ResolvedConfig {
   }
 
   fn backend(&self) -> Backend {
+    // TODO: test
     match self
       .parsed
       .backend
@@ -134,6 +135,7 @@ impl Config for ResolvedConfig {
       Some("clipboard") => Backend::Clipboard,
       Some("inject") => Backend::Inject,
       Some("auto") => Backend::Auto,
+      None => Backend::Auto,
       err => {
         error!("invalid backend specified {:?}, falling back to Auto", err);
         Backend::Auto
@@ -153,6 +155,36 @@ impl Config for ResolvedConfig {
       .parsed
       .pre_paste_delay
       .unwrap_or(DEFAULT_PRE_PASTE_DELAY)
+  }
+
+  fn toggle_key(&self) -> Option<ToggleKey> {
+    // TODO: test
+    match self
+      .parsed
+      .toggle_key
+      .as_deref()
+      .map(|key| key.to_lowercase())
+      .as_deref()
+    {
+      Some("ctrl") => Some(ToggleKey::Ctrl),
+      Some("alt") => Some(ToggleKey::Alt),
+      Some("shift") => Some(ToggleKey::Shift),
+      Some("meta") | Some("cmd") => Some(ToggleKey::Meta),
+      Some("right_ctrl") => Some(ToggleKey::RightCtrl),
+      Some("right_alt") => Some(ToggleKey::RightAlt),
+      Some("right_shift") => Some(ToggleKey::RightShift),
+      Some("right_meta") | Some("right_cmd")=> Some(ToggleKey::RightMeta),
+      Some("left_ctrl") => Some(ToggleKey::LeftCtrl),
+      Some("left_alt") => Some(ToggleKey::LeftAlt),
+      Some("left_shift") => Some(ToggleKey::LeftShift),
+      Some("left_meta") | Some("left_cmd") => Some(ToggleKey::LeftMeta),
+      Some("off") => None,
+      None => Some(ToggleKey::Alt),
+      err => {
+        error!("invalid toggle_key specified {:?}, falling back to ALT", err);
+        Some(ToggleKey::Alt)
+      }
+    }
   }
 }
 
@@ -213,6 +245,7 @@ impl ResolvedConfig {
       backend,
       clipboard_threshold,
       pre_paste_delay,
+      toggle_key,
       includes,
       excludes,
       extra_includes,
