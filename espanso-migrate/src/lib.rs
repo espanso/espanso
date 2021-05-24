@@ -31,6 +31,9 @@ extern crate test_case;
 use anyhow::Result;
 use thiserror::Error;
 
+mod convert;
+mod load;
+
 // TODO: implement
 // Use yaml-rust with "preserve-order" = true
 // Strategy:
@@ -50,9 +53,17 @@ use thiserror::Error;
 
 // TODO: test case with packages
 
+// TODO: keep other non-standard directories such as "images/" and "script/"
+
+// TODO: test also with non-lowercase file names
+
+// TODO: test packages in another directory
+
 #[cfg(test)]
 mod tests {
-  use super::*;
+  use std::path::PathBuf;
+
+use super::*;
   use test_case::test_case;
   use include_dir::{include_dir, Dir};
 
@@ -60,6 +71,9 @@ mod tests {
 
   #[test_case(&BASE_CASE; "base case")]
   fn test_migration(test_data: &Dir) {
+    let input_files = load::load(&PathBuf::from(r"")).unwrap();
+    convert::convert(input_files);
+
     // TODO
     assert!(false);
   }

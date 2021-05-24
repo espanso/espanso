@@ -13,6 +13,8 @@ regex = "1.4.3"
 lazy_static = "1.4.0"
 dunce = "1.0.1"
 walkdir = "2.3.1"
+yaml-rust = "0.4.5"
+path-slash = "0.1.4"
 
 [dev-dependencies]
 tempdir = "0.3.7"
