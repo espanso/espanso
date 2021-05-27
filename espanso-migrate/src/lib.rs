@@ -66,7 +66,7 @@ mod load;
 
 #[cfg(test)]
 mod tests {
-  use std::{fs::create_dir_all, path::{Path}};
+  use std::{collections::HashMap, fs::create_dir_all, path::{Path}};
 
   use super::*;
   use include_dir::{include_dir, Dir};
@@ -101,6 +101,12 @@ mod tests {
     action(&legacy_path, &expected_path);
   }
 
+  fn to_sorted_list<T>(hash: HashMap<String, T>) -> Vec<(String, T)> {
+    let mut tuples: Vec<(String, T)> = hash.into_iter().map(|(k, v)| (k, v)).collect();
+    tuples.sort_by_key(|(k, _)| k.clone());
+    tuples
+  }
+
   static SIMPLE_CASE: Dir = include_dir!("test/simple");
   static BASE_CASE: Dir = include_dir!("test/base");
 
@@ -115,7 +121,7 @@ mod tests {
 
       assert_eq!(converted_files.len(), expected_files.len());
 
-      for (file, content) in converted_files {
+      for (file, content) in to_sorted_list(converted_files) {
         assert_peq!(&content, expected_files.get(&file).unwrap());
       }
     });
