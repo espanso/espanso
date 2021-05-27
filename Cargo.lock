@@ -25,6 +25,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "ansi_term"
+version = "0.12.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d52a9bb7ec0cf484c551830a7ce27bd20d67eac647e1befb56b0be4ee39a55d2"
+dependencies = [
+ "winapi",
+]
+
+[[package]]
 name = "anyhow"
 version = "1.0.38"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -152,7 +161,7 @@ version = "2.33.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "37e58ac78573c40708d45522f0d80fa2f01cc4f9b4e2bf749807255454312002"
 dependencies = [
- "ansi_term",
+ "ansi_term 0.11.0",
  "atty",
  "bitflags 1.2.1",
  "strsim",
@@ -253,6 +262,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "ctor"
+version = "0.1.20"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5e98e2ad1a782e33928b96fc3948e7c355e5af34ba4de7670fe8bac2a3b2006d"
+dependencies = [
+ "quote 1.0.9",
+ "syn 1.0.67",
+]
+
+[[package]]
 name = "dbus"
 version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -261,6 +280,12 @@ dependencies = [
  "libc",
  "libdbus-sys",
 ]
+
+[[package]]
+name = "diff"
+version = "0.1.12"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0e25ea47919b1560c4e3b7fe0aaab9becf5b84a10325ddf7db0f0ba5e1026499"
 
 [[package]]
 name = "difference"
@@ -332,7 +357,7 @@ dependencies = [
  "heck",
  "proc-macro2",
  "quote 1.0.9",
- "syn 1.0.60",
+ "syn 1.0.67",
 ]
 
 [[package]]
@@ -489,6 +514,7 @@ dependencies = [
  "lazy_static",
  "log",
  "path-slash",
+ "pretty_assertions",
  "regex",
  "tempdir",
  "tempfile",
@@ -674,7 +700,7 @@ dependencies = [
  "markup5ever",
  "proc-macro2",
  "quote 1.0.9",
- "syn 1.0.60",
+ "syn 1.0.67",
 ]
 
 [[package]]
@@ -698,7 +724,7 @@ dependencies = [
  "proc-macro-hack",
  "proc-macro2",
  "quote 1.0.9",
- "syn 1.0.60",
+ "syn 1.0.67",
 ]
 
 [[package]]
@@ -886,7 +912,7 @@ dependencies = [
  "cfg-if",
  "proc-macro2",
  "quote 1.0.9",
- "syn 1.0.60",
+ "syn 1.0.67",
 ]
 
 [[package]]
@@ -976,6 +1002,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "766f840da25490628d8e63e529cd21c014f6600c6b8517add12a6fa6167a6218"
 dependencies = [
  "num-traits",
+]
+
+[[package]]
+name = "output_vt100"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "53cdc5b785b7a58c5aad8216b3dfa114df64b0b06ae6e1501cef91df2fbdf8f9"
+dependencies = [
+ "winapi",
 ]
 
 [[package]]
@@ -1073,6 +1108,18 @@ checksum = "15f553275e5721409451eb85e15fd9a860a6e5ab4496eb215987502b5f5391f2"
 dependencies = [
  "predicates-core",
  "treeline",
+]
+
+[[package]]
+name = "pretty_assertions"
+version = "0.7.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1cab0e7c02cf376875e9335e0ba1da535775beb5450d21e1dffca068818ed98b"
+dependencies = [
+ "ansi_term 0.12.1",
+ "ctor",
+ "diff",
+ "output_vt100",
 ]
 
 [[package]]
@@ -1335,7 +1382,7 @@ checksum = "9391c295d64fc0abb2c556bad848f33cb8296276b1ad2677d1ae1ace4f258f31"
 dependencies = [
  "proc-macro2",
  "quote 1.0.9",
- "syn 1.0.60",
+ "syn 1.0.67",
 ]
 
 [[package]]
@@ -1438,9 +1485,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "1.0.60"
+version = "1.0.67"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c700597eca8a5a762beb35753ef6b94df201c81cca676604f547495a0d7f0081"
+checksum = "6498a9efc342871f91cc2d0d694c674368b4ceb40f62b65a7a08c3792935e702"
 dependencies = [
  "proc-macro2",
  "quote 1.0.9",
@@ -1509,7 +1556,7 @@ dependencies = [
  "cfg-if",
  "proc-macro2",
  "quote 1.0.9",
- "syn 1.0.60",
+ "syn 1.0.67",
  "version_check",
 ]
 
@@ -1539,7 +1586,7 @@ checksum = "9be73a2caec27583d0046ef3796c3794f868a5bc813db689eed00c7631275cd1"
 dependencies = [
  "proc-macro2",
  "quote 1.0.9",
- "syn 1.0.60",
+ "syn 1.0.67",
 ]
 
 [[package]]

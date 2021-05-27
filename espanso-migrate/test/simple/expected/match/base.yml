@@ -1,9 +1,3 @@
-global_vars:
-  - name: "name"
-    type: "dummy"
-    params:
-      echo: "John"
-
 matches:
   - name: ":hi"
     trigger: "Hello"

@@ -66,23 +66,58 @@ mod load;
 
 #[cfg(test)]
 mod tests {
-  use std::path::PathBuf;
+  use std::{fs::create_dir_all, path::{Path}};
 
   use super::*;
   use include_dir::{include_dir, Dir};
+  use tempdir::TempDir;
   use test_case::test_case;
 
+  use pretty_assertions::{assert_eq as assert_peq};
+
+  fn run_with_temp_dir(test_data: &Dir, action: impl FnOnce(&Path, &Path)) {
+    let tmp_dir = TempDir::new("espanso-migration").unwrap();
+    let tmp_path = tmp_dir.path();
+    let legacy_path = tmp_dir.path().join("legacy");
+    let expected_path = tmp_dir.path().join("expected");
+
+    for entry in test_data.find("**/*").unwrap() {
+      let entry_path = entry.path();
+
+      let entry_path_str = entry_path.to_string_lossy().to_string();
+      if entry_path_str.is_empty() {
+        continue;
+      } 
+
+      let target = tmp_path.join(entry_path);
+
+      if entry_path.extension().is_none() {
+        create_dir_all(target).unwrap();
+      } else {
+        std::fs::write(target, test_data.get_file(entry_path).unwrap().contents()).unwrap();
+      }      
+    }
+
+    action(&legacy_path, &expected_path);
+  }
+
+  static SIMPLE_CASE: Dir = include_dir!("test/simple");
   static BASE_CASE: Dir = include_dir!("test/base");
 
+  #[test_case(&SIMPLE_CASE; "simple case")]
   #[test_case(&BASE_CASE; "base case")]
   fn test_migration(test_data: &Dir) {
-    let input_files = load::load(&PathBuf::from(
-      r"",
-    ))
-    .unwrap();
-    convert::convert(input_files);
+    run_with_temp_dir(test_data, |legacy, expected| {
+      let legacy_files = load::load(legacy).unwrap();
+      let expected_files = load::load(expected).unwrap();
 
-    // TODO
-    assert!(false);
+      let converted_files = convert::convert(legacy_files);
+
+      assert_eq!(converted_files.len(), expected_files.len());
+
+      for (file, content) in converted_files {
+        assert_peq!(&content, expected_files.get(&file).unwrap());
+      }
+    });
   }
 }
