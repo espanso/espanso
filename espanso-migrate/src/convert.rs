@@ -39,7 +39,7 @@ pub fn convert(input_files: HashMap<String, Hash>) -> HashMap<String, Hash> {
     let yaml_name = yaml_get_string(yaml, "name");
 
     let should_generate_match = yaml_matches.is_some() || yaml_global_vars.is_some();
-    if should_generate_match {
+    let match_file_path_if_unlisted = if should_generate_match {
       let should_underscore = !input_path.starts_with("default") && yaml_parent != Some("default");
       let match_output_path = calculate_output_match_path(&input_path, should_underscore);
       if match_output_path.is_none() {
@@ -55,7 +55,7 @@ pub fn convert(input_files: HashMap<String, Hash>) -> HashMap<String, Hash> {
         config_names_to_path.insert(name.to_string(), match_output_path.clone());
       }
 
-      let output_yaml = output_files.entry(match_output_path).or_insert(Hash::new());
+      let output_yaml = output_files.entry(match_output_path.clone()).or_insert(Hash::new());
 
       if let Some(global_vars) = yaml_global_vars {
         let output_global_vars = output_yaml
@@ -78,7 +78,15 @@ pub fn convert(input_files: HashMap<String, Hash>) -> HashMap<String, Hash> {
           eprintln!("unable to transform matches for file: {}", input_path);
         }
       }
-    }
+      
+      if should_underscore {
+        Some(match_output_path)
+      } else {
+        None
+      }
+    } else {
+      None
+    };
 
     let yaml_filter_class = yaml_get_string(yaml, "filter_class");
     let yaml_filter_title = yaml_get_string(yaml, "filter_title");
@@ -97,11 +105,22 @@ pub fn convert(input_files: HashMap<String, Hash>) -> HashMap<String, Hash> {
       copy_field_if_present(yaml, "filter_title", &mut output_yaml, "filter_title");
       copy_field_if_present(yaml, "filter_class", &mut output_yaml, "filter_class");
       copy_field_if_present(yaml, "filter_exec", &mut output_yaml, "filter_exec");
+      copy_field_if_present(yaml, "enable_active", &mut output_yaml, "enable");
+
+      // TODO: warn if passive mode parameters are used
 
       // TODO: copy other config fields: https://github.com/federico-terzi/espanso/blob/master/src/config/mod.rs#L169
 
-      // TODO: if a match file was created above of type "underscored", then explicitly include it here
-      // depending on whether "exclude_default_entries" is set, use "includes" or "extra_includes"
+      // Link any unlisted match file (the ones starting with the _ underscore, which are excluded by the 
+      // default.yml config) explicitly, if present.
+      if let Some(match_file_path) = match_file_path_if_unlisted {
+        let yaml_exclude_default_entries = yaml_get_bool(yaml, "exclude_default_entries").unwrap_or(false);
+        let key_name = if yaml_exclude_default_entries { "includes" } else { "extra_includes" };
+        
+        let includes = vec![Yaml::String(format!("../{}", match_file_path))];
+
+        output_yaml.insert(Yaml::String(key_name.to_string()), Yaml::Array(includes));
+      }
 
       output_files.insert(config_output_path, output_yaml);
     }
@@ -114,16 +133,15 @@ pub fn convert(input_files: HashMap<String, Hash>) -> HashMap<String, Hash> {
   // TODO: here resolve parent: name imports
 
   // TODO: remove this prints
-  for (file, content) in output_files {
-    let mut out_str = String::new();
-    {
-      let mut emitter = YamlEmitter::new(&mut out_str);
-      emitter.dump(&Yaml::Hash(content)).unwrap(); // dump the YAML object to a String
-    }
-    println!("\n------- {} ------------\n{}", file, out_str);
-  }
+  // for (file, content) in output_files {
+  //   let mut out_str = String::new();
+  //   {
+  //     let mut emitter = YamlEmitter::new(&mut out_str);
+  //     emitter.dump(&Yaml::Hash(content)).unwrap(); // dump the YAML object to a String
+  //   }
+  //   println!("\n------- {} ------------\n{}", file, out_str);
+  // }
 
-  todo!();
   output_files
 }
 
@@ -186,6 +204,12 @@ fn yaml_get_string<'a>(yaml: &'a Hash, name: &str) -> Option<&'a str> {
   yaml
     .get(&Yaml::String(name.to_string()))
     .and_then(|v| v.as_str())
+}
+
+fn yaml_get_bool<'a>(yaml: &'a Hash, name: &str) -> Option<bool> {
+  yaml
+    .get(&Yaml::String(name.to_string()))
+    .and_then(|v| v.as_bool())
 }
 
 fn copy_field_if_present(

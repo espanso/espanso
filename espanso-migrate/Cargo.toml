@@ -19,5 +19,6 @@ path-slash = "0.1.4"
 [dev-dependencies]
 tempdir = "0.3.7"
 tempfile = "3.2.0"
-include_dir = "0.6.0"
+include_dir = { version = "0.6.0", features = ["search"] }
 test-case = "1.1.0"
+pretty_assertions = "0.7.2"

@@ -22,16 +22,16 @@ use path_slash::PathExt;
 use std::{collections::HashMap, path::Path};
 use thiserror::Error;
 use walkdir::WalkDir;
-use yaml_rust::{Yaml, YamlLoader, yaml::Hash};
+use yaml_rust::{yaml::Hash, Yaml, YamlLoader};
 
-pub fn load(legacy_config_dir: &Path) -> Result<HashMap<String, Hash>> {
-  if !legacy_config_dir.is_dir() {
+pub fn load(config_dir: &Path) -> Result<HashMap<String, Hash>> {
+  if !config_dir.is_dir() {
     return Err(LoadError::NotDirectory.into());
   }
 
   let mut input_files = HashMap::new();
 
-  for entry in WalkDir::new(legacy_config_dir) {
+  for entry in WalkDir::new(config_dir) {
     match entry {
       Ok(entry) => {
         // Skip directories
@@ -50,7 +50,7 @@ pub fn load(legacy_config_dir: &Path) -> Result<HashMap<String, Hash>> {
           continue;
         }
 
-        match entry.path().strip_prefix(legacy_config_dir) {
+        match entry.path().strip_prefix(config_dir) {
           Ok(relative_path) => {
             let corrected_path = relative_path.to_slash_lossy();
 
@@ -59,30 +59,40 @@ pub fn load(legacy_config_dir: &Path) -> Result<HashMap<String, Hash>> {
             }
 
             match std::fs::read_to_string(entry.path()) {
-              Ok(content) => match YamlLoader::load_from_str(&content) {
-                Ok(mut yaml) => {
-                  if !yaml.is_empty() {
-                    let yaml = yaml.remove(0);
-                    if let Yaml::Hash(hash) = yaml {
-                      input_files.insert(corrected_path, hash);
-                    } else {
-                      eprintln!("yaml file does not have a valid format: {}", entry.path().display());
+              Ok(content) => {
+                // Empty files are not valid YAML, but we want to handle them anyway
+                if content.trim().is_empty() {
+                  input_files.insert(corrected_path, Hash::new());
+                } else {
+                  match YamlLoader::load_from_str(&content) {
+                    Ok(mut yaml) => {
+                      if !yaml.is_empty() {
+                        let yaml = yaml.remove(0);
+                        if let Yaml::Hash(hash) = yaml {
+                          input_files.insert(corrected_path, hash);
+                        } else {
+                          eprintln!(
+                            "yaml file does not have a valid format: {}",
+                            entry.path().display()
+                          );
+                        }
+                      } else {
+                        eprintln!(
+                          "error, found empty document while reading entry: {}",
+                          entry.path().display()
+                        );
+                      }
                     }
-                  } else {
-                    eprintln!(
-                      "error, found empty document while reading entry: {}",
-                      entry.path().display()
-                    );
+                    Err(err) => {
+                      eprintln!(
+                        "experienced error while parsing file: {}, error: {}",
+                        entry.path().display(),
+                        err
+                      );
+                    }
                   }
                 }
-                Err(err) => {
-                  eprintln!(
-                    "experienced error while parsing file: {}, error: {}",
-                    entry.path().display(),
-                    err
-                  );
-                }
-              },
+              }
               Err(err) => {
                 eprintln!(
                   "error while reading entry: {}, error: {}",
