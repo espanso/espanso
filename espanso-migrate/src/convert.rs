@@ -55,7 +55,9 @@ pub fn convert(input_files: HashMap<String, Hash>) -> HashMap<String, Hash> {
         config_names_to_path.insert(name.to_string(), match_output_path.clone());
       }
 
-      let output_yaml = output_files.entry(match_output_path.clone()).or_insert(Hash::new());
+      let output_yaml = output_files
+        .entry(match_output_path.clone())
+        .or_insert(Hash::new());
 
       if let Some(global_vars) = yaml_global_vars {
         let output_global_vars = output_yaml
@@ -78,7 +80,7 @@ pub fn convert(input_files: HashMap<String, Hash>) -> HashMap<String, Hash> {
           eprintln!("unable to transform matches for file: {}", input_path);
         }
       }
-      
+
       if should_underscore {
         Some(match_output_path)
       } else {
@@ -106,17 +108,55 @@ pub fn convert(input_files: HashMap<String, Hash>) -> HashMap<String, Hash> {
       copy_field_if_present(yaml, "filter_class", &mut output_yaml, "filter_class");
       copy_field_if_present(yaml, "filter_exec", &mut output_yaml, "filter_exec");
       copy_field_if_present(yaml, "enable_active", &mut output_yaml, "enable");
+      copy_field_if_present(yaml, "backend", &mut output_yaml, "backend");
+      map_field_if_present(
+        yaml,
+        "paste_shortcut",
+        &mut output_yaml,
+        "paste_shortcut",
+        |val| match val {
+          Yaml::String(shortcut) if shortcut == "CtrlV" => Some(Yaml::String("CTRL+V".to_string())),
+          Yaml::String(shortcut) if shortcut == "CtrlShiftV" => Some(Yaml::String("CTRL+SHIFT+V".to_string())),
+          Yaml::String(shortcut) if shortcut == "ShiftInsert" => Some(Yaml::String("SHIFT+INSERT".to_string())),
+          Yaml::String(shortcut) if shortcut == "CtrlAltV" => Some(Yaml::String("CTRL+ALT+V".to_string())),
+          Yaml::String(shortcut) if shortcut == "MetaV" => Some(Yaml::String("META+V".to_string())),
+          Yaml::String(_) => None,
+          _ => None,
+        },
+      );
+      copy_field_if_present(yaml, "secure_input_watcher_enabled", &mut output_yaml, "secure_input_watcher_enabled");
+      copy_field_if_present(yaml, "secure_input_watcher_interval", &mut output_yaml, "secure_input_watcher_interval");
+      copy_field_if_present(yaml, "secure_input_notification", &mut output_yaml, "secure_input_notification");
+      copy_field_if_present(yaml, "config_caching_interval", &mut output_yaml, "config_caching_interval");
+      copy_field_if_present(yaml, "toggle_interval", &mut output_yaml, "toggle_interval");
+      copy_field_if_present(yaml, "toggle_key", &mut output_yaml, "toggle_key");
+      copy_field_if_present(yaml, "preserve_clipboard", &mut output_yaml, "preserve_clipboard");
+      copy_field_if_present(yaml, "backspace_limit", &mut output_yaml, "backspace_limit");
+      copy_field_if_present(yaml, "fast_inject", &mut output_yaml, "x11_fast_inject");
+      copy_field_if_present(yaml, "auto_restart", &mut output_yaml, "auto_restart");
+      copy_field_if_present(yaml, "undo_backspace", &mut output_yaml, "undo_backspace");
+      copy_field_if_present(yaml, "show_icon", &mut output_yaml, "show_icon");
+      copy_field_if_present(yaml, "show_notifications", &mut output_yaml, "show_notifications");
+      copy_field_if_present(yaml, "inject_delay", &mut output_yaml, "inject_delay");
+      copy_field_if_present(yaml, "restore_clipboard_delay", &mut output_yaml, "restore_clipboard_delay");
+      copy_field_if_present(yaml, "use_system_agent", &mut output_yaml, "use_system_agent");
+      copy_field_if_present(yaml, "word_separators", &mut output_yaml, "word_separators");
 
       // TODO: warn if passive mode parameters are used
 
       // TODO: copy other config fields: https://github.com/federico-terzi/espanso/blob/master/src/config/mod.rs#L169
 
-      // Link any unlisted match file (the ones starting with the _ underscore, which are excluded by the 
+      // Link any unlisted match file (the ones starting with the _ underscore, which are excluded by the
       // default.yml config) explicitly, if present.
       if let Some(match_file_path) = match_file_path_if_unlisted {
-        let yaml_exclude_default_entries = yaml_get_bool(yaml, "exclude_default_entries").unwrap_or(false);
-        let key_name = if yaml_exclude_default_entries { "includes" } else { "extra_includes" };
-        
+        let yaml_exclude_default_entries =
+          yaml_get_bool(yaml, "exclude_default_entries").unwrap_or(false);
+        let key_name = if yaml_exclude_default_entries {
+          "includes"
+        } else {
+          "extra_includes"
+        };
+
         let includes = vec![Yaml::String(format!("../{}", match_file_path))];
 
         output_yaml.insert(Yaml::String(key_name.to_string()), Yaml::Array(includes));
@@ -220,5 +260,22 @@ fn copy_field_if_present(
 ) {
   if let Some(value) = input_yaml.get(&Yaml::String(input_field_name.to_string())) {
     output_yaml.insert(Yaml::String(output_field_name.to_string()), value.clone());
+  }
+}
+
+fn map_field_if_present(
+  input_yaml: &Hash,
+  input_field_name: &str,
+  output_yaml: &mut Hash,
+  output_field_name: &str,
+  transform: impl FnOnce(&Yaml) -> Option<Yaml>,
+) {
+  if let Some(value) = input_yaml.get(&Yaml::String(input_field_name.to_string())) {
+    let transformed = transform(value);
+    if let Some(transformed) = transformed {
+      output_yaml.insert(Yaml::String(output_field_name.to_string()), transformed);
+    } else {
+      eprintln!("could not convert value for field: {}", input_field_name);
+    }
   }
 }

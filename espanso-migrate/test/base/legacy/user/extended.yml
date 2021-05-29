@@ -1,5 +1,3 @@
-parent: default
-
 filter_exec: "Executable"
 
 global_vars:
