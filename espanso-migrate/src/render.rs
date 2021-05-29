@@ -35,6 +35,7 @@ pub fn render(converted_files: HashMap<String, ConvertedFile>) -> Result<Vec<(St
 fn render_file(file: ConvertedFile) -> Result<String> {
   let mut dump_str = String::new();
   let mut emitter = YamlEmitter::new(&mut dump_str);
+  emitter.multiline_strings(true);
   emitter.dump(&Yaml::Hash(file.content))?;
 
   let lines: Vec<&str> = dump_str.lines().collect();
