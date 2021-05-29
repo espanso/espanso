@@ -74,6 +74,7 @@ mod tests {
   use test_case::test_case;
 
   use pretty_assertions::{assert_eq as assert_peq};
+use yaml_rust::{yaml::Hash, Yaml};
 
   fn run_with_temp_dir(test_data: &Dir, action: impl FnOnce(&Path, &Path)) {
     let tmp_dir = TempDir::new("espanso-migration").unwrap();
@@ -107,11 +108,19 @@ mod tests {
     tuples
   }
 
+  fn to_sorted_hash(hash: &Hash) -> Vec<(String, &Yaml)> {
+    let mut tuples: Vec<(String, &Yaml)> = hash.into_iter().map(|(k, v)| (k.as_str().unwrap().to_string(), v)).collect();
+    tuples.sort_by_key(|(k, _)| k.clone());
+    tuples
+  }
+
   static SIMPLE_CASE: Dir = include_dir!("test/simple");
   static BASE_CASE: Dir = include_dir!("test/base");
+  static ALL_PARAMS_CASE: Dir = include_dir!("test/all_params");
 
   #[test_case(&SIMPLE_CASE; "simple case")]
   #[test_case(&BASE_CASE; "base case")]
+  #[test_case(&ALL_PARAMS_CASE; "all config parameters case")]
   fn test_migration(test_data: &Dir) {
     run_with_temp_dir(test_data, |legacy, expected| {
       let legacy_files = load::load(legacy).unwrap();
@@ -122,7 +131,7 @@ mod tests {
       assert_eq!(converted_files.len(), expected_files.len());
 
       for (file, content) in to_sorted_list(converted_files) {
-        assert_peq!(&content, expected_files.get(&file).unwrap());
+        assert_peq!(to_sorted_hash(&content), to_sorted_hash(&expected_files.get(&file).unwrap()));
       }
     });
   }
