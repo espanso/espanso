@@ -522,7 +522,7 @@ dependencies = [
  "test-case",
  "thiserror",
  "walkdir",
- "yaml-rust",
+ "yaml-rust 0.4.5 (git+https://github.com/federico-terzi/yaml-rust)",
 ]
 
 [[package]]
@@ -1412,7 +1412,7 @@ dependencies = [
  "dtoa",
  "linked-hash-map",
  "serde",
- "yaml-rust",
+ "yaml-rust 0.4.5 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -1799,6 +1799,14 @@ name = "yaml-rust"
 version = "0.4.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "56c1936c4cc7a1c9ab21a1ebb602eb942ba868cbd44a99cb7cdc5892335e1c85"
+dependencies = [
+ "linked-hash-map",
+]
+
+[[package]]
+name = "yaml-rust"
+version = "0.4.5"
+source = "git+https://github.com/federico-terzi/yaml-rust#b1a195252fcdabf743f68d03f4d84d151a5a3f62"
 dependencies = [
  "linked-hash-map",
 ]

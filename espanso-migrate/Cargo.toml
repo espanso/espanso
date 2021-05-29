@@ -13,7 +13,7 @@ regex = "1.4.3"
 lazy_static = "1.4.0"
 dunce = "1.0.1"
 walkdir = "2.3.1"
-yaml-rust = "0.4.5"
+yaml-rust = { git = "https://github.com/federico-terzi/yaml-rust" }
 path-slash = "0.1.4"
 tempdir = "0.3.7"
 fs_extra = "1.2.0"
