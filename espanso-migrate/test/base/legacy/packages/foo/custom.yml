@@ -1,0 +1,6 @@
+name: foo
+parent: default
+
+matches:
+  - trigger: "custom"
+    replace: "match"
