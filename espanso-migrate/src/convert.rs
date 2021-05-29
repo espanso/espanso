@@ -30,8 +30,6 @@ pub fn convert(input_files: HashMap<String, Hash>) -> HashMap<String, ConvertedF
 
   let sorted_input_files = sort_input_files(&input_files);
 
-  let mut config_names_to_path = HashMap::new();
-
   for input_path in sorted_input_files {
     let yaml = input_files
       .get(&input_path)
@@ -41,7 +39,12 @@ pub fn convert(input_files: HashMap<String, Hash>) -> HashMap<String, ConvertedF
     let yaml_global_vars = yaml_get_vec(yaml, "global_vars");
 
     let yaml_parent = yaml_get_string(yaml, "parent");
-    let yaml_name = yaml_get_string(yaml, "name");
+
+    if let Some(parent) = yaml_parent {
+      if parent != "default" {
+        eprintln!("WARNING: nested 'parent' instructions are not currently supported by the migration tool");
+      }
+    }
 
     let should_generate_match = yaml_matches.is_some() || yaml_global_vars.is_some();
     let match_file_path_if_unlisted = if should_generate_match {
@@ -55,10 +58,6 @@ pub fn convert(input_files: HashMap<String, Hash>) -> HashMap<String, ConvertedF
         continue;
       }
       let match_output_path = match_output_path.unwrap();
-
-      if let Some(name) = yaml_name {
-        config_names_to_path.insert(name.to_string(), match_output_path.clone());
-      }
 
       let output_yaml = output_files
         .entry(match_output_path.clone())
@@ -152,8 +151,6 @@ pub fn convert(input_files: HashMap<String, Hash>) -> HashMap<String, ConvertedF
 
       // TODO: warn if passive mode parameters are used
 
-      // TODO: copy other config fields: https://github.com/federico-terzi/espanso/blob/master/src/config/mod.rs#L169
-
       // Link any unlisted match file (the ones starting with the _ underscore, which are excluded by the
       // default.yml config) explicitly, if present.
       if let Some(match_file_path) = match_file_path_if_unlisted {
@@ -175,23 +172,7 @@ pub fn convert(input_files: HashMap<String, Hash>) -> HashMap<String, ConvertedF
         content: output_yaml,
       });
     }
-
-    // TODO: create config file
-
-    // TODO: execute the actual conversion
   }
-
-  // TODO: here resolve parent: name imports
-
-  // TODO: remove this prints
-  // for (file, content) in output_files {
-  //   let mut out_str = String::new();
-  //   {
-  //     let mut emitter = YamlEmitter::new(&mut out_str);
-  //     emitter.dump(&Yaml::Hash(content)).unwrap(); // dump the YAML object to a String
-  //   }
-  //   println!("\n------- {} ------------\n{}", file, out_str);
-  // }
 
   output_files
 }
