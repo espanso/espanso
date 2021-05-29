@@ -149,7 +149,10 @@ pub fn convert(input_files: HashMap<String, Hash>) -> HashMap<String, ConvertedF
       copy_field_if_present(yaml, "use_system_agent", &mut output_yaml, "use_system_agent");
       copy_field_if_present(yaml, "word_separators", &mut output_yaml, "word_separators");
 
-      // TODO: warn if passive mode parameters are used
+      if yaml.get(&Yaml::String("enable_passive".to_string())).is_some() {
+        eprintln!("WARNING: passive-mode directives were detected, but passive-mode is not supported anymore.");
+        eprintln!("Please follow this issue to discover the alternatives: https://github.com/federico-terzi/espanso/issues/540");
+      }
 
       // Link any unlisted match file (the ones starting with the _ underscore, which are excluded by the
       // default.yml config) explicitly, if present.
