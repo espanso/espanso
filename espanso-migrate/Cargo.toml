@@ -15,9 +15,10 @@ dunce = "1.0.1"
 walkdir = "2.3.1"
 yaml-rust = "0.4.5"
 path-slash = "0.1.4"
+tempdir = "0.3.7"
+fs_extra = "1.2.0"
 
 [dev-dependencies]
-tempdir = "0.3.7"
 tempfile = "3.2.0"
 include_dir = { version = "0.6.0", features = ["search"] }
 test-case = "1.1.0"

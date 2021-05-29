@@ -18,9 +18,14 @@
  */
 
 use std::{cmp::Ordering, collections::HashMap, path::PathBuf};
-use yaml_rust::{yaml::Hash, Yaml, YamlEmitter};
+use yaml_rust::{yaml::Hash, Yaml};
 
-pub fn convert(input_files: HashMap<String, Hash>) -> HashMap<String, Hash> {
+pub struct ConvertedFile {
+  pub origin: String,
+  pub content: Hash,
+}
+
+pub fn convert(input_files: HashMap<String, Hash>) -> HashMap<String, ConvertedFile> {
   let mut output_files = HashMap::new();
 
   let sorted_input_files = sort_input_files(&input_files);
@@ -57,10 +62,13 @@ pub fn convert(input_files: HashMap<String, Hash>) -> HashMap<String, Hash> {
 
       let output_yaml = output_files
         .entry(match_output_path.clone())
-        .or_insert(Hash::new());
+        .or_insert(ConvertedFile { 
+          origin: input_path.to_string(),
+          content: Hash::new(),
+        });
 
       if let Some(global_vars) = yaml_global_vars {
-        let output_global_vars = output_yaml
+        let output_global_vars = output_yaml.content
           .entry(Yaml::String("global_vars".to_string()))
           .or_insert(Yaml::Array(Vec::new()));
         if let Yaml::Array(out_global_vars) = output_global_vars {
@@ -71,7 +79,7 @@ pub fn convert(input_files: HashMap<String, Hash>) -> HashMap<String, Hash> {
       }
 
       if let Some(matches) = yaml_matches {
-        let output_matches = output_yaml
+        let output_matches = output_yaml.content
           .entry(Yaml::String("matches".to_string()))
           .or_insert(Yaml::Array(Vec::new()));
         if let Yaml::Array(out_matches) = output_matches {
@@ -162,7 +170,10 @@ pub fn convert(input_files: HashMap<String, Hash>) -> HashMap<String, Hash> {
         output_yaml.insert(Yaml::String(key_name.to_string()), Yaml::Array(includes));
       }
 
-      output_files.insert(config_output_path, output_yaml);
+      output_files.insert(config_output_path, ConvertedFile {
+        origin: input_path,
+        content: output_yaml,
+      });
     }
 
     // TODO: create config file
