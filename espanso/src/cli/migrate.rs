@@ -19,6 +19,8 @@
 
 use std::path::PathBuf;
 
+use crate::lock::acquire_legacy_lock;
+
 use super::{CliModule, CliModuleArgs};
 use colored::*;
 use dialoguer::Confirm;
@@ -46,7 +48,11 @@ fn migrate_main(args: CliModuleArgs) -> i32 {
     return 1;
   }
 
-  // TODO: check if legacy version is still running
+  let legacy_lock_file = acquire_legacy_lock(&paths.runtime);
+  if legacy_lock_file.is_none() {
+    eprintln!("An instance of legacy espanso is running, please terminate it, otherwise the migration can't be performed");
+    return 2;
+  }
 
   let target_backup_dir = find_available_backup_dir();
 
