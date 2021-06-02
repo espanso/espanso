@@ -17,25 +17,24 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::{EventHandlerResponse, IPCClientError, util::read_line};
 use anyhow::Result;
-use crossbeam::channel::Sender;
 use log::{error, info};
 use serde::{de::DeserializeOwned, Serialize};
 use std::{
-  io::{BufReader, Read, Write},
+  io::{Write},
   os::unix::net::{UnixListener, UnixStream},
-  path::{Path, PathBuf},
+  path::{Path},
 };
 
-use crate::{IPCClient, IPCServer, IPCServerError};
+use crate::{EventHandler, IPCClient, IPCServer};
 
-pub struct UnixIPCServer<Event> {
+pub struct UnixIPCServer {
   listener: UnixListener,
-  sender: Sender<Event>,
 }
 
-impl<Event> UnixIPCServer<Event> {
-  pub fn new(id: &str, parent_dir: &Path, sender: Sender<Event>) -> Result<Self> {
+impl UnixIPCServer {
+  pub fn new(id: &str, parent_dir: &Path) -> Result<Self> {
     let socket_path = parent_dir.join(format!("{}.sock", id));
 
     // Remove previous Unix socket
@@ -50,72 +49,97 @@ impl<Event> UnixIPCServer<Event> {
       socket_path.to_string_lossy()
     );
 
-    Ok(Self { listener, sender })
+    Ok(Self { listener })
   }
 }
 
-impl<Event: Send + Sync + DeserializeOwned> IPCServer<Event> for UnixIPCServer<Event> {
-  fn run(&self) -> anyhow::Result<()> {
+impl<Event: Send + Sync + DeserializeOwned + Serialize> IPCServer<Event> for UnixIPCServer {
+  fn run(self, handler: EventHandler<Event>) -> Result<()> {
     loop {
-      self.accept_one()?;
-    }
-  }
+      let (mut stream, _) = self.listener.accept()?;
 
-  fn accept_one(&self) -> Result<()> {
-    let connection = self.listener.accept();
-
-    match connection {
-      Ok((stream, _)) => {
-        let mut json_str = String::new();
-        let mut buf_reader = BufReader::new(stream);
-        let result = buf_reader.read_to_string(&mut json_str);
-
-        match result {
-          Ok(_) => {
-            let event: Result<Event, serde_json::Error> = serde_json::from_str(&json_str);
+      // Read multiple commands from the client
+      loop {
+        match read_line(&mut stream) {
+          Ok(Some(line)) => {
+            let event: Result<Event, serde_json::Error> = serde_json::from_str(&line);
             match event {
-              Ok(event) => {
-                if self.sender.send(event).is_err() {
-                  return Err(IPCServerError::SendFailed().into());
+              Ok(event) => match handler(event) {
+                EventHandlerResponse::Response(response) => {
+                  let mut json_event = serde_json::to_string(&response)?;
+                  json_event.push('\n');
+                  stream.write_all(json_event.as_bytes())?;
+                  stream.flush()?;
                 }
-              }
+                EventHandlerResponse::NoResponse => {
+                  // Async event, no need to reply
+                }
+                EventHandlerResponse::Error(err) => {
+                  error!("ipc handler reported an error: {}", err);
+                }
+                EventHandlerResponse::Exit => {
+                  return Ok(());
+                }
+              },
               Err(error) => {
                 error!("received malformed event from ipc stream: {}", error);
+                break;
               }
             }
           }
+          Ok(None) => {
+            // EOF reached
+            break;
+          }
           Err(error) => {
             error!("error reading ipc stream: {}", error);
+            break;
           }
         }
       }
-      Err(err) => {
-        return Err(IPCServerError::StreamEnded(err).into());
-      }
-    };
-
-    Ok(())
+    }
   }
 }
 
 pub struct UnixIPCClient {
-  socket_path: PathBuf,
+  stream: UnixStream,
 }
 
 impl UnixIPCClient {
   pub fn new(id: &str, parent_dir: &Path) -> Result<Self> {
     let socket_path = parent_dir.join(format!("{}.sock", id));
+    let stream = UnixStream::connect(&socket_path)?;
 
-    Ok(Self { socket_path })
+    Ok(Self { stream })
   }
 }
 
-impl<Event: Serialize> IPCClient<Event> for UnixIPCClient {
-  fn send(&self, event: Event) -> Result<()> {
-    let mut stream = UnixStream::connect(&self.socket_path)?;
+impl<Event: Serialize + DeserializeOwned> IPCClient<Event> for UnixIPCClient {
+  fn send_sync(&mut self, event: Event) -> Result<Event> {
+    {
+      let mut json_event = serde_json::to_string(&event)?;
+      json_event.push('\n');
+      self.stream.write_all(json_event.as_bytes())?;
+      self.stream.flush()?;
+    }
 
-    let json_event = serde_json::to_string(&event)?;
-    stream.write_all(json_event.as_bytes())?;
+    // Read the response
+    if let Some(line) = read_line(&mut self.stream)? {
+      let event: Result<Event, serde_json::Error> = serde_json::from_str(&line);
+      match event {
+        Ok(response) => Ok(response),
+        Err(err) => Err(IPCClientError::MalformedResponse(err.into()).into()),
+      }
+    } else {
+      Err(IPCClientError::EmptyResponse.into())
+    }
+  }
+
+  fn send_async(&mut self, event: Event) -> Result<()> {
+    let mut json_event = serde_json::to_string(&event)?;
+    json_event.push('\n');
+    self.stream.write_all(json_event.as_bytes())?;
+    self.stream.flush()?;
 
     Ok(())
   }
