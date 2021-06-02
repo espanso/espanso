@@ -60,6 +60,7 @@ fn worker_main(args: CliModuleArgs) -> i32 {
     error!("an instance of legacy espanso is running, please terminate it, otherwise the new version cannot start");
     return WORKER_LEGACY_ALREADY_RUNNING;
   }
+  drop(legacy_lock_file);
 
   let config_store = args
     .config_store
