@@ -20,14 +20,7 @@
 use crossbeam::channel::unbounded;
 use log::{error, info};
 
-use crate::{
-  engine::event::ExitMode,
-  exit_code::{
-    WORKER_ALREADY_RUNNING, WORKER_EXIT_ALL_PROCESSES, WORKER_GENERAL_ERROR, WORKER_RESTART,
-    WORKER_SUCCESS,
-  },
-  lock::acquire_worker_lock,
-};
+use crate::{engine::event::ExitMode, exit_code::{WORKER_ALREADY_RUNNING, WORKER_EXIT_ALL_PROCESSES, WORKER_GENERAL_ERROR, WORKER_LEGACY_ALREADY_RUNNING, WORKER_RESTART, WORKER_SUCCESS}, lock::{acquire_legacy_lock, acquire_worker_lock}};
 
 use self::ui::util::convert_icon_paths_to_tray_vec;
 
@@ -60,6 +53,12 @@ fn worker_main(args: CliModuleArgs) -> i32 {
   if lock_file.is_none() {
     error!("worker is already running!");
     return WORKER_ALREADY_RUNNING;
+  }
+
+  let legacy_lock_file = acquire_legacy_lock(&paths.runtime);
+  if legacy_lock_file.is_none() {
+    error!("an instance of legacy espanso is running, please terminate it, otherwise the new version cannot start");
+    return WORKER_LEGACY_ALREADY_RUNNING;
   }
 
   let config_store = args

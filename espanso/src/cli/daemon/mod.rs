@@ -27,14 +27,7 @@ use espanso_ipc::IPCClient;
 use espanso_path::Paths;
 use log::{error, info, warn};
 
-use crate::{
-  exit_code::{
-    DAEMON_ALREADY_RUNNING, DAEMON_GENERAL_ERROR, DAEMON_SUCCESS, WORKER_EXIT_ALL_PROCESSES,
-    WORKER_RESTART, WORKER_SUCCESS,
-  },
-  ipc::{create_ipc_client_to_worker, IPCEvent},
-  lock::{acquire_daemon_lock, acquire_worker_lock},
-};
+use crate::{exit_code::{DAEMON_ALREADY_RUNNING, DAEMON_GENERAL_ERROR, DAEMON_LEGACY_ALREADY_RUNNING, DAEMON_SUCCESS, WORKER_EXIT_ALL_PROCESSES, WORKER_RESTART, WORKER_SUCCESS}, ipc::{create_ipc_client_to_worker, IPCEvent}, lock::{acquire_daemon_lock, acquire_legacy_lock, acquire_worker_lock}};
 
 use super::{CliModule, CliModuleArgs};
 
@@ -63,6 +56,14 @@ fn daemon_main(args: CliModuleArgs) -> i32 {
   if lock_file.is_none() {
     error!("daemon is already running!");
     return DAEMON_ALREADY_RUNNING;
+  }
+
+  let legacy_lock_file = acquire_legacy_lock(&paths.runtime);
+  if legacy_lock_file.is_none() {
+    // TODO: show a (blocking) alert message using modulo
+
+    error!("an instance of legacy espanso is running, please terminate it, otherwise the new version cannot start");
+    return DAEMON_LEGACY_ALREADY_RUNNING;
   }
 
   // TODO: we might need to check preconditions: accessibility on macOS, presence of binaries on Linux, etc
