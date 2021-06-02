@@ -234,14 +234,14 @@ fn get_default_runtime_path() -> PathBuf {
 }
 
 fn get_packages_dir(config_dir: &Path, legacy_data_dir: &Path) -> Option<PathBuf> {
-  if let Some(packages_dir) = get_legacy_embedded_packages_dir(config_dir) {
+  if let Some(packages_dir) = get_default_packages_dir(config_dir) {
+    debug!("detected default packages dir: {:?}", packages_dir);
+    Some(packages_dir)
+  } else if let Some(packages_dir) = get_legacy_embedded_packages_dir(config_dir) {
     debug!("detected legacy packages dir: {:?}", packages_dir);
     Some(packages_dir)
   } else if let Some(packages_dir) = get_legacy_packages_dir(legacy_data_dir) {
     debug!("detected legacy packages dir: {:?}", packages_dir);
-    Some(packages_dir)
-  } else if let Some(packages_dir) = get_default_packages_dir(config_dir) {
-    debug!("detected default packages dir: {:?}", packages_dir);
     Some(packages_dir)
   } else {
     None
