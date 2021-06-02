@@ -28,6 +28,8 @@ pub mod windows;
 #[cfg(not(target_os = "windows"))]
 pub mod unix;
 
+mod util;
+
 pub type EventHandler<Event> = Box<dyn Fn(Event) -> EventHandlerResponse<Event>>;
 
 pub enum EventHandlerResponse<Event> {
@@ -47,17 +49,16 @@ pub trait IPCClient<Event> {
 }
 
 #[cfg(not(target_os = "windows"))]
-pub fn server<Event: Send + Sync + DeserializeOwned>(
+pub fn server<Event: Send + Sync + DeserializeOwned + Serialize>(
   id: &str,
   parent_dir: &Path,
-) -> Result<(impl IPCServer<Event>, Receiver<Event>)> {
-  let (sender, receiver) = unbounded();
-  let server = unix::UnixIPCServer::new(id, parent_dir, sender)?;
-  Ok((server, receiver))
+) -> Result<impl IPCServer<Event>> {
+  let server = unix::UnixIPCServer::new(id, parent_dir)?;
+  Ok(server)
 }
 
 #[cfg(not(target_os = "windows"))]
-pub fn client<Event: Serialize>(id: &str, parent_dir: &Path) -> Result<impl IPCClient<Event>> {
+pub fn client<Event: Serialize + DeserializeOwned>(id: &str, parent_dir: &Path) -> Result<impl IPCClient<Event>> {
   let client = unix::UnixIPCClient::new(id, parent_dir)?;
   Ok(client)
 }
