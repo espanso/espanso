@@ -4,3 +4,7 @@ default_to_workspace = false
 [tasks.test]
 command = "cargo"
 args = ["test", "--workspace", "--exclude", "espanso-modulo", "--no-default-features"]
+
+[tasks.test-output]
+command = "cargo"
+args = ["test", "--workspace", "--exclude", "espanso-modulo", "--no-default-features", "--", "--nocapture"]

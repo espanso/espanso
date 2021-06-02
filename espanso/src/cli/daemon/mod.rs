@@ -27,11 +27,19 @@ use espanso_ipc::IPCClient;
 use espanso_path::Paths;
 use log::{error, info, warn};
 
-use crate::{exit_code::{DAEMON_ALREADY_RUNNING, DAEMON_GENERAL_ERROR, DAEMON_LEGACY_ALREADY_RUNNING, DAEMON_SUCCESS, WORKER_EXIT_ALL_PROCESSES, WORKER_RESTART, WORKER_SUCCESS}, ipc::{create_ipc_client_to_worker, IPCEvent}, lock::{acquire_daemon_lock, acquire_legacy_lock, acquire_worker_lock}};
+use crate::{
+  exit_code::{
+    DAEMON_ALREADY_RUNNING, DAEMON_GENERAL_ERROR, DAEMON_LEGACY_ALREADY_RUNNING, DAEMON_SUCCESS,
+    WORKER_EXIT_ALL_PROCESSES, WORKER_RESTART, WORKER_SUCCESS,
+  },
+  ipc::{create_ipc_client_to_worker, IPCEvent},
+  lock::{acquire_daemon_lock, acquire_legacy_lock, acquire_worker_lock},
+};
 
 use super::{CliModule, CliModuleArgs};
 
 mod ipc;
+mod watcher;
 
 pub fn new() -> CliModule {
   #[allow(clippy::needless_update)]
@@ -72,10 +80,7 @@ fn daemon_main(args: CliModuleArgs) -> i32 {
   info!("espanso version: {}", VERSION);
   // TODO: print os system and version? (with os_info crate)
 
-  let worker_ipc = create_ipc_client_to_worker(&paths.runtime)
-    .expect("unable to create IPC client to worker process");
-
-  terminate_worker_if_already_running(&paths.runtime, worker_ipc);
+  terminate_worker_if_already_running(&paths.runtime);
 
   let (exit_notify, exit_signal) = unbounded::<i32>();
 
@@ -86,10 +91,49 @@ fn daemon_main(args: CliModuleArgs) -> i32 {
   ipc::initialize_and_spawn(&paths.runtime, exit_notify.clone())
     .expect("unable to initialize ipc server for daemon");
 
-  // TODO: start file watcher thread
+  let (watcher_notify, watcher_signal) = unbounded::<()>();
+  // TODO: check if "auto_restart" config option is enabled before starting it
+  watcher::initialize_and_spawn(&paths.config, watcher_notify)
+    .expect("unable to initialize config watcher thread");
 
   loop {
     select! {
+      recv(watcher_signal) -> _ => {
+        info!("configuration change detected, restarting worker process...");
+
+        match create_ipc_client_to_worker(&paths.runtime) {
+          Ok(mut worker_ipc) => {
+            if let Err(err) = worker_ipc.send_async(IPCEvent::Exit) {
+              error!(
+                "unable to send termination signal to worker process: {}",
+                err
+              );
+            }
+          }
+          Err(err) => {
+            error!("could not establish IPC connection with worker: {}", err);
+          }
+        }
+
+        // Wait until the worker process has terminated
+        let start = Instant::now();
+        let mut has_timed_out = true;
+        while start.elapsed() < std::time::Duration::from_secs(30) {
+          let lock_file = acquire_worker_lock(&paths.runtime);
+          if lock_file.is_some() {
+            has_timed_out = false;
+            break;
+          }
+
+          std::thread::sleep(std::time::Duration::from_millis(100));
+        }
+
+        if !has_timed_out {
+          spawn_worker(&paths, exit_notify.clone());
+        } else {
+          error!("could not restart worker, as the exit process has timed out");
+        }
+      }
       recv(exit_signal) -> code => {
         match code {
           Ok(code) => {
@@ -120,18 +164,26 @@ fn daemon_main(args: CliModuleArgs) -> i32 {
   DAEMON_SUCCESS
 }
 
-fn terminate_worker_if_already_running(runtime_dir: &Path, worker_ipc: impl IPCClient<IPCEvent>) {
+fn terminate_worker_if_already_running(runtime_dir: &Path) {
   let lock_file = acquire_worker_lock(&runtime_dir);
   if lock_file.is_some() {
     return;
   }
 
   warn!("a worker process is already running, sending termination signal...");
-  if let Err(err) = worker_ipc.send(IPCEvent::Exit) {
-    error!(
-      "unable to send termination signal to worker process: {}",
-      err
-    );
+
+  match create_ipc_client_to_worker(runtime_dir) {
+    Ok(mut worker_ipc) => {
+      if let Err(err) = worker_ipc.send_async(IPCEvent::Exit) {
+        error!(
+          "unable to send termination signal to worker process: {}",
+          err
+        );
+      }
+    }
+    Err(err) => {
+      error!("could not establish IPC connection with worker: {}", err);
+    }
   }
 
   let now = Instant::now();

@@ -68,6 +68,8 @@ fn worker_main(args: CliModuleArgs) -> i32 {
   let match_store = args
     .match_store
     .expect("missing match store in worker main");
+  
+  // TODO: show config loading errors in a GUI, if any
 
   let icon_paths =
     crate::icon::load_icon_paths(&paths.runtime).expect("unable to initialize icons");

@@ -18,7 +18,6 @@
  */
 
 use anyhow::Result;
-use crossbeam::channel::Receiver;
 use espanso_ipc::{IPCServer, IPCClient};
 use std::path::Path;
 use serde::{Serialize, Deserialize};
@@ -28,31 +27,23 @@ pub enum IPCEvent {
   Exit,
 }
 
-pub fn spawn_daemon_ipc_server(runtime_dir: &Path) -> Result<Receiver<IPCEvent>> {
-  spawn_ipc_server(runtime_dir, "daemonv2")
+pub fn create_daemon_ipc_server(runtime_dir: &Path) -> Result<impl IPCServer<IPCEvent>> {
+  create_ipc_server(runtime_dir, "daemonv2")
 }
 
-pub fn spawn_worker_ipc_server(runtime_dir: &Path) -> Result<Receiver<IPCEvent>> {
-  spawn_ipc_server(runtime_dir, "workerv2")
+pub fn create_worker_ipc_server(runtime_dir: &Path) -> Result<impl IPCServer<IPCEvent>> {
+  create_ipc_server(runtime_dir, "workerv2")
 }
 
 pub fn create_ipc_client_to_worker(runtime_dir: &Path) -> Result<impl IPCClient<IPCEvent>> {
   create_ipc_client(runtime_dir, "workerv2")
 }
 
-fn spawn_ipc_server(
+fn create_ipc_server(
   runtime_dir: &Path,
   name: &str,
-) -> Result<Receiver<IPCEvent>> {
-  let (server, receiver) = espanso_ipc::server(&format!("espanso{}", name), runtime_dir)?;
-
-  std::thread::Builder::new().name(format!("espanso-ipc-server-{}", name)).spawn(move || {
-    server.run().expect("unable to run ipc server");
-  })?;
-
-  // TODO: refactor the ipc server to handle a graceful exit?
-
-  Ok(receiver)
+) -> Result<impl IPCServer<IPCEvent>> {
+  espanso_ipc::server(&format!("espanso{}", name), runtime_dir)
 }
 
 
