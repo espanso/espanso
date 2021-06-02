@@ -29,15 +29,15 @@ pub enum IPCEvent {
 }
 
 pub fn spawn_daemon_ipc_server(runtime_dir: &Path) -> Result<Receiver<IPCEvent>> {
-  spawn_ipc_server(runtime_dir, "daemon")
+  spawn_ipc_server(runtime_dir, "daemonv2")
 }
 
 pub fn spawn_worker_ipc_server(runtime_dir: &Path) -> Result<Receiver<IPCEvent>> {
-  spawn_ipc_server(runtime_dir, "worker")
+  spawn_ipc_server(runtime_dir, "workerv2")
 }
 
 pub fn create_ipc_client_to_worker(runtime_dir: &Path) -> Result<impl IPCClient<IPCEvent>> {
-  create_ipc_client(runtime_dir, "worker")
+  create_ipc_client(runtime_dir, "workerv2")
 }
 
 fn spawn_ipc_server(
