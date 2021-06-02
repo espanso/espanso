@@ -27,7 +27,7 @@ use std::path::PathBuf;
 
 use clap::{App, AppSettings, Arg, ArgMatches, SubCommand};
 use cli::{CliModule, CliModuleArgs};
-use log::{error, info};
+use log::{error, info, warn};
 use logging::FileProxy;
 use simplelog::{
   CombinedLogger, ConfigBuilder, LevelFilter, TermLogger, TerminalMode, WriteLogger,
@@ -55,6 +55,7 @@ lazy_static! {
     cli::worker::new(),
     cli::daemon::new(),
     cli::modulo::new(),
+    cli::migrate::new(),
   ];
 }
 
@@ -218,6 +219,10 @@ fn main() {
         )
         .subcommand(SubCommand::with_name("base").about("Print the default match file path.")),
     )
+    .subcommand(
+      SubCommand::with_name("migrate")
+        .about("Automatically migrate legacy config files to the new v2 format.")
+    )
     // .subcommand(SubCommand::with_name("match")
     //     .about("List and execute matches from the CLI")
     //     .subcommand(SubCommand::with_name("list")
@@ -353,6 +358,11 @@ fn main() {
         cli_args.is_legacy_config = is_legacy_config;
         cli_args.config_store = Some(config_store);
         cli_args.match_store = Some(match_store);
+
+        if is_legacy_config {
+          warn!("espanso is reading the configuration using compatibility mode, thus some features might not be available");
+          warn!("you can migrate to the new configuration format by running 'espanso migrate' in a terminal");
+        }
       }
 
       if handler.enable_logs {
