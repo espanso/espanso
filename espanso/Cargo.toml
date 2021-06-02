@@ -31,6 +31,7 @@ espanso-render = { path = "../espanso-render" }
 espanso-path = { path = "../espanso-path" } 
 espanso-ipc = { path = "../espanso-ipc" } 
 espanso-modulo = { path = "../espanso-modulo", optional = true }
+espanso-migrate = { path = "../espanso-migrate" } 
 maplit = "1.0.2"
 simplelog = "0.9.0"
 log = "0.4.14"
@@ -48,6 +49,10 @@ html2text = "0.2.1"
 log-panics = "2.0.0"
 fs2 = "0.4.3"
 serde_yaml = "0.8.17"
+fs_extra = "1.2.0"
+dialoguer = "0.8.0"
+colored = "2.0.0"
+tempdir = "0.3.7"
 
 [target.'cfg(windows)'.dependencies]
 named_pipe = "0.4.1"

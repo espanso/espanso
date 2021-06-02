@@ -23,6 +23,7 @@ use espanso_path::Paths;
 
 pub mod daemon;
 pub mod log;
+pub mod migrate;
 pub mod modulo;
 pub mod path;
 pub mod worker;
