@@ -53,6 +53,7 @@ fs_extra = "1.2.0"
 dialoguer = "0.8.0"
 colored = "2.0.0"
 tempdir = "0.3.7"
+notify = "4.0.17"
 
 [target.'cfg(windows)'.dependencies]
 named_pipe = "0.4.1"

@@ -20,34 +20,40 @@
 use std::path::Path;
 
 use anyhow::Result;
-use crossbeam::channel::{Sender};
+use crossbeam::channel::Sender;
+use espanso_ipc::{EventHandlerResponse, IPCServer};
 use log::{error, warn};
 
 use crate::ipc::IPCEvent;
 
 pub fn initialize_and_spawn(runtime_dir: &Path, exit_notify: Sender<()>) -> Result<()> {
-  let receiver = crate::ipc::spawn_worker_ipc_server(runtime_dir)?;
+  let server = crate::ipc::create_worker_ipc_server(runtime_dir)?;
 
   std::thread::Builder::new()
     .name("worker-ipc-handler".to_string())
-    .spawn(move || loop {
-      match receiver.recv() {
-        Ok(event) => {
-          match event {
+    .spawn(move || {
+      server.run(Box::new(move |event| {
+        match event {
             IPCEvent::Exit => {
               if let Err(err) = exit_notify.send(()) {
-                error!("experienced error while sending exit signal from worker ipc handler: {}", err);
+                error!(
+                  "experienced error while sending exit signal from worker ipc handler: {}",
+                  err
+                );
               }
-            },
+
+              EventHandlerResponse::NoResponse
+            }
             unexpected_event => {
-              warn!("received unexpected event in worker ipc handler: {:?}", unexpected_event);
-            },
+              warn!(
+                "received unexpected event in worker ipc handler: {:?}",
+                unexpected_event
+              );
+
+              EventHandlerResponse::NoResponse
+            }
           }
-        }
-        Err(err) => {
-          error!("experienced error while receiving ipc event from worker handler: {}", err);
-        }
-      }
+      })).expect("unable to spawn IPC server");
     })?;
 
   Ok(())
