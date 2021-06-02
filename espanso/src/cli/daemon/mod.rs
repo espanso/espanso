@@ -65,6 +65,7 @@ fn daemon_main(args: CliModuleArgs) -> i32 {
     error!("an instance of legacy espanso is running, please terminate it, otherwise the new version cannot start");
     return DAEMON_LEGACY_ALREADY_RUNNING;
   }
+  drop(legacy_lock_file);
 
   // TODO: we might need to check preconditions: accessibility on macOS, presence of binaries on Linux, etc
 
