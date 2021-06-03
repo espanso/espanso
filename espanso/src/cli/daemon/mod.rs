@@ -58,6 +58,9 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 fn daemon_main(args: CliModuleArgs) -> i32 {
   let paths = args.paths.expect("missing paths in daemon main");
+  let config_store = args
+    .config_store
+    .expect("missing config store in worker main");
 
   // Make sure only one instance of the daemon is running
   let lock_file = acquire_daemon_lock(&paths.runtime);
@@ -92,9 +95,11 @@ fn daemon_main(args: CliModuleArgs) -> i32 {
     .expect("unable to initialize ipc server for daemon");
 
   let (watcher_notify, watcher_signal) = unbounded::<()>();
-  // TODO: check if "auto_restart" config option is enabled before starting it
-  watcher::initialize_and_spawn(&paths.config, watcher_notify)
-    .expect("unable to initialize config watcher thread");
+  
+  if config_store.default().auto_restart() {
+    watcher::initialize_and_spawn(&paths.config, watcher_notify)
+      .expect("unable to initialize config watcher thread");
+  }
 
   loop {
     select! {
