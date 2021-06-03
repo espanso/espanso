@@ -20,13 +20,21 @@
 use crossbeam::channel::unbounded;
 use log::{error, info};
 
-use crate::{engine::event::ExitMode, exit_code::{WORKER_ALREADY_RUNNING, WORKER_EXIT_ALL_PROCESSES, WORKER_GENERAL_ERROR, WORKER_LEGACY_ALREADY_RUNNING, WORKER_RESTART, WORKER_SUCCESS}, lock::{acquire_legacy_lock, acquire_worker_lock}};
+use crate::{
+  engine::event::ExitMode,
+  exit_code::{
+    WORKER_ALREADY_RUNNING, WORKER_EXIT_ALL_PROCESSES, WORKER_GENERAL_ERROR,
+    WORKER_LEGACY_ALREADY_RUNNING, WORKER_RESTART, WORKER_SUCCESS,
+  },
+  lock::{acquire_legacy_lock, acquire_worker_lock},
+};
 
 use self::ui::util::convert_icon_paths_to_tray_vec;
 
 use super::{CliModule, CliModuleArgs};
 
 mod config;
+mod daemon_monitor;
 mod engine;
 mod ipc;
 mod match_cache;
@@ -47,6 +55,7 @@ pub fn new() -> CliModule {
 
 fn worker_main(args: CliModuleArgs) -> i32 {
   let paths = args.paths.expect("missing paths in worker main");
+  let cli_args = args.cli_args.expect("missing cli_args in worker main");
 
   // Avoid running multiple worker instances
   let lock_file = acquire_worker_lock(&paths.runtime);
@@ -68,7 +77,7 @@ fn worker_main(args: CliModuleArgs) -> i32 {
   let match_store = args
     .match_store
     .expect("missing match store in worker main");
-  
+
   // TODO: show config loading errors in a GUI, if any
 
   let icon_paths =
@@ -104,8 +113,17 @@ fn worker_main(args: CliModuleArgs) -> i32 {
   .expect("unable to initialize engine");
 
   // Setup the IPC server
-  ipc::initialize_and_spawn(&paths.runtime, engine_exit_notify)
+  ipc::initialize_and_spawn(&paths.runtime, engine_exit_notify.clone())
     .expect("unable to initialize IPC server");
+
+  // If specified, automatically monitor the daemon status and
+  // terminate the worker if the daemon terminates
+  // This is needed to avoid "dangling" worker processes
+  // if the daemon crashes or is forcefully terminated.
+  if cli_args.is_present("monitor-daemon") {
+    daemon_monitor::initialize_and_spawn(&paths.runtime, engine_exit_notify.clone())
+      .expect("unable to initialize daemon monitor thread");
+  }
 
   eventloop
     .run(Box::new(move |event| {
