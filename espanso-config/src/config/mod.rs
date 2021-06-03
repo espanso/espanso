@@ -54,6 +54,8 @@ pub trait Config: Send {
   // Defines the key that disables/enables espanso when double pressed
   fn toggle_key(&self) -> Option<ToggleKey>;
 
+  fn auto_restart(&self) -> bool;
+
   fn is_match<'a>(&self, app: &AppProperties<'a>) -> bool;
 }
 

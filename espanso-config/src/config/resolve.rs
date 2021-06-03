@@ -150,6 +150,10 @@ impl Config for ResolvedConfig {
       .unwrap_or(DEFAULT_CLIPBOARD_THRESHOLD)
   }
 
+  fn auto_restart(&self) -> bool {
+    self.parsed.auto_restart.unwrap_or(true)
+  }
+
   fn pre_paste_delay(&self) -> usize {
     self
       .parsed
@@ -244,6 +248,7 @@ impl ResolvedConfig {
       label,
       backend,
       clipboard_threshold,
+      auto_restart,
       pre_paste_delay,
       toggle_key,
       includes,
