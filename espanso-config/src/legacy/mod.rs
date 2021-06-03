@@ -210,6 +210,10 @@ impl Config for LegacyInteropConfig {
     }
   }
 
+  fn auto_restart(&self) -> bool {
+    self.config.auto_restart
+  }
+
   fn match_paths(&self) -> &[String] {
     &self.match_paths
   }
