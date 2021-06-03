@@ -95,7 +95,7 @@ fn daemon_main(args: CliModuleArgs) -> i32 {
     .expect("unable to initialize ipc server for daemon");
 
   let (watcher_notify, watcher_signal) = unbounded::<()>();
-  
+
   if config_store.default().auto_restart() {
     watcher::initialize_and_spawn(&paths.config, watcher_notify)
       .expect("unable to initialize config watcher thread");
@@ -213,7 +213,7 @@ fn spawn_worker(paths: &Paths, exit_notify: Sender<i32>) {
     std::env::current_exe().expect("unable to obtain espanso executable location");
 
   let mut command = Command::new(&espanso_exe_path.to_string_lossy().to_string());
-  command.args(&["worker"]);
+  command.args(&["worker", "--monitor-daemon"]);
   command.env(
     "ESPANSO_CONFIG_DIR",
     paths.config.to_string_lossy().to_string(),

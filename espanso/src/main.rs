@@ -273,9 +273,8 @@ fn main() {
       SubCommand::with_name("worker")
         .setting(AppSettings::Hidden)
         .arg(
-          Arg::with_name("reload")
-            .short("r")
-            .long("reload")
+          Arg::with_name("monitor-daemon")
+            .long("monitor-daemon")
             .required(false)
             .takes_value(false),
         ),
