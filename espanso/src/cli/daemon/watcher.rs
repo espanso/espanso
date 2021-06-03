@@ -32,7 +32,7 @@ pub fn initialize_and_spawn(config_dir: &Path, watcher_notify: Sender<()>) -> Re
 
   std::thread::Builder::new()
     .name("watcher".to_string())
-    .spawn(move || loop {
+    .spawn(move || {
       watcher_main(&config_dir, &watcher_notify);
     })?;
 
