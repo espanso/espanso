@@ -49,7 +49,22 @@ pub trait Config: Send {
   // copied in the clipboard, the operation will fail.
   fn pre_paste_delay(&self) -> usize;
 
-  // TODO: add other delay options (start by the ones needed in clipboard injector)
+  // Number of milliseconds between keystrokes when simulating the Paste shortcut
+  // For example: CTRL + (wait 5ms) + V + (wait 5ms) + release V + (wait 5ms) + release CTRL
+  // This is needed as sometimes (for example on macOS), without a delay some keystrokes
+  // were not registered correctly
+  fn paste_shortcut_event_delay(&self) -> usize;
+
+  // Customize the keyboard shortcut used to paste an expansion.
+  // This should follow this format: CTRL+SHIFT+V
+  fn paste_shortcut(&self) -> Option<String>;
+
+  // NOTE: This is only relevant on Linux under X11 environments
+  // Switch to a slower (but sometimes more supported) way of injecting
+  // key events based on XTestFakeKeyEvent instead of XSendEvent.
+  // From my experiements, disabling fast inject becomes particularly slow when
+  // using the Gnome desktop environment.
+  fn disable_x11_fast_inject(&self) -> bool;
 
   // Defines the key that disables/enables espanso when double pressed
   fn toggle_key(&self) -> Option<ToggleKey>;
