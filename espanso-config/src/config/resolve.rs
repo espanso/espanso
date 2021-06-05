@@ -177,7 +177,7 @@ impl Config for ResolvedConfig {
       Some("right_ctrl") => Some(ToggleKey::RightCtrl),
       Some("right_alt") => Some(ToggleKey::RightAlt),
       Some("right_shift") => Some(ToggleKey::RightShift),
-      Some("right_meta") | Some("right_cmd")=> Some(ToggleKey::RightMeta),
+      Some("right_meta") | Some("right_cmd") => Some(ToggleKey::RightMeta),
       Some("left_ctrl") => Some(ToggleKey::LeftCtrl),
       Some("left_alt") => Some(ToggleKey::LeftAlt),
       Some("left_shift") => Some(ToggleKey::LeftShift),
@@ -185,10 +185,21 @@ impl Config for ResolvedConfig {
       Some("off") => None,
       None => Some(ToggleKey::Alt),
       err => {
-        error!("invalid toggle_key specified {:?}, falling back to ALT", err);
+        error!(
+          "invalid toggle_key specified {:?}, falling back to ALT",
+          err
+        );
         Some(ToggleKey::Alt)
       }
     }
+  }
+
+  fn preserve_clipboard(&self) -> bool {
+    self.parsed.preserve_clipboard.unwrap_or(true)
+  }
+
+  fn restore_clipboard_delay(&self) -> usize {
+    self.parsed.restore_clipboard_delay.unwrap_or(300)
   }
 }
 
@@ -250,6 +261,8 @@ impl ResolvedConfig {
       clipboard_threshold,
       auto_restart,
       pre_paste_delay,
+      preserve_clipboard,
+      restore_clipboard_delay,
       toggle_key,
       includes,
       excludes,

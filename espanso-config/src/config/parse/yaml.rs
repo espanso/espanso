@@ -46,6 +46,12 @@ pub(crate) struct YAMLConfig {
   pub auto_restart: Option<bool>,
 
   #[serde(default)]
+  pub preserve_clipboard: Option<bool>,
+
+  #[serde(default)]
+  pub restore_clipboard_delay: Option<usize>,
+
+  #[serde(default)]
   pub includes: Option<Vec<String>>,
 
   #[serde(default)]
@@ -96,8 +102,10 @@ impl TryFrom<YAMLConfig> for ParsedConfig {
       backend: yaml_config.backend,
       clipboard_threshold: yaml_config.clipboard_threshold,
       auto_restart: yaml_config.auto_restart,
+      preserve_clipboard: yaml_config.preserve_clipboard,
 
       pre_paste_delay: yaml_config.pre_paste_delay,
+      restore_clipboard_delay: yaml_config.restore_clipboard_delay,
 
       toggle_key: yaml_config.toggle_key,
 
@@ -130,6 +138,8 @@ mod tests {
     pre_paste_delay: 300
     toggle_key: CTRL
     auto_restart: false
+    preserve_clipboard: false
+    restore_clipboard_delay: 400
       
     use_standard_includes: true
     includes: ["test1"]
@@ -154,6 +164,8 @@ mod tests {
         backend: Some("clipboard".to_string()),
         clipboard_threshold: Some(200),
         auto_restart: Some(false),
+        preserve_clipboard: Some(false),
+        restore_clipboard_delay: Some(400),
 
         pre_paste_delay: Some(300),
         
