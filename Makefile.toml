@@ -1,6 +1,35 @@
 [config]
 default_to_workspace = false
 
+[tasks.build-debug]
+command = "cargo"
+args = ["build"]
+
+# TODO: we need to pass the version (debug/release) to the create-bundle task
+[tasks.create-bundle]
+script = '''
+TARGET_DIR=target/mac/Espanso.app
+
+VERSION=$(cat espanso/Cargo.toml | grep version | head -1 | awk -F '"' '{ print $2 }')
+
+mkdir -p $TARGET_DIR/Contents
+mkdir -p $TARGET_DIR/Contents/MacOS
+mkdir -p $TARGET_DIR/Contents/Resources
+
+sed	-e "s/VERSION/$VERSION/" espanso/src/res/macos/Info.plist > $TARGET_DIR/Contents/Info.plist
+
+/bin/echo "APPL????" > $TARGET_DIR/Contents/PkgInfo
+
+cp -f espanso/src/res/macos/icon.icns $TARGET_DIR/Contents/Resources/icon.icns
+cp -f target/debug/espanso $TARGET_DIR/Contents/MacOS/espanso
+'''
+dependencies=["build-debug"]
+
+[tasks.run-debug-bundle]
+command="target/mac/Espanso.app/Contents/MacOS/espanso"
+args=["${@}"]
+dependencies=["create-bundle"]
+
 [tasks.test]
 command = "cargo"
 args = ["test", "--workspace", "--exclude", "espanso-modulo", "--no-default-features"]
