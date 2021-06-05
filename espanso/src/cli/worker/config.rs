@@ -120,11 +120,11 @@ impl<'a> super::engine::dispatch::executor::clipboard_injector::ClipboardParamsP
     let active = self.active();
     super::engine::dispatch::executor::clipboard_injector::ClipboardParams {
       pre_paste_delay: active.pre_paste_delay(),
-      paste_shortcut_event_delay: 5,  // TODO: read from config
-      paste_shortcut: None,           // TODO: read from config
-      disable_x11_fast_inject: false, // TODO: read from config
-      restore_clipboard: true,        // TODO: read from config
-      restore_clipboard_delay: 300,   // TODO: read from config
+      paste_shortcut_event_delay: active.paste_shortcut_event_delay(),
+      paste_shortcut: active.paste_shortcut(),
+      disable_x11_fast_inject: active.disable_x11_fast_inject(),
+      restore_clipboard: active.preserve_clipboard(),
+      restore_clipboard_delay: active.restore_clipboard_delay(),
     }
   }
 }
