@@ -17,13 +17,7 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use super::{
-  default::{DEFAULT_CLIPBOARD_THRESHOLD, DEFAULT_PRE_PASTE_DELAY},
-  parse::ParsedConfig,
-  path::calculate_paths,
-  util::os_matches,
-  AppProperties, Backend, Config, ToggleKey,
-};
+use super::{AppProperties, Backend, Config, ToggleKey, default::{DEFAULT_CLIPBOARD_THRESHOLD, DEFAULT_PRE_PASTE_DELAY, DEFAULT_RESTORE_CLIPBOARD_DELAY, DEFAULT_SHORTCUT_EVENT_DELAY}, parse::ParsedConfig, path::calculate_paths, util::os_matches};
 use crate::{counter::next_id, merge};
 use anyhow::Result;
 use log::error;
@@ -199,7 +193,19 @@ impl Config for ResolvedConfig {
   }
 
   fn restore_clipboard_delay(&self) -> usize {
-    self.parsed.restore_clipboard_delay.unwrap_or(300)
+    self.parsed.restore_clipboard_delay.unwrap_or(DEFAULT_RESTORE_CLIPBOARD_DELAY)
+  }
+
+  fn paste_shortcut_event_delay(&self) -> usize {
+    self.parsed.paste_shortcut_event_delay.unwrap_or(DEFAULT_SHORTCUT_EVENT_DELAY)
+  }
+
+  fn paste_shortcut(&self) -> Option<String> {
+    self.parsed.paste_shortcut.clone()
+  }
+
+  fn disable_x11_fast_inject(&self) -> bool {
+    self.parsed.disable_x11_fast_inject.unwrap_or(false)
   }
 }
 
@@ -263,6 +269,9 @@ impl ResolvedConfig {
       pre_paste_delay,
       preserve_clipboard,
       restore_clipboard_delay,
+      paste_shortcut,
+      paste_shortcut_event_delay,
+      disable_x11_fast_inject,
       toggle_key,
       includes,
       excludes,

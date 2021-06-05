@@ -292,6 +292,25 @@ impl Config for LegacyInteropConfig {
   fn restore_clipboard_delay(&self) -> usize {
     self.config.restore_clipboard_delay.try_into().unwrap()
   }
+
+  fn paste_shortcut_event_delay(&self) -> usize {
+    crate::config::default::DEFAULT_SHORTCUT_EVENT_DELAY
+  }
+
+  fn paste_shortcut(&self) -> Option<String> {
+    match self.config.paste_shortcut {
+      model::PasteShortcut::Default => None,
+      model::PasteShortcut::CtrlV => Some("CTRL+V".to_string()),
+      model::PasteShortcut::CtrlShiftV => Some("CTRL+SHIFT+V".to_string()), 
+      model::PasteShortcut::ShiftInsert => Some("SHIFT+INSERT".to_string()), 
+      model::PasteShortcut::CtrlAltV => Some("CTRL+ALT+V".to_string()), 
+      model::PasteShortcut::MetaV => Some("META+V".to_string()), 
+    }
+  }
+
+  fn disable_x11_fast_inject(&self) -> bool {
+    self.config.fast_inject
+  }
 }
 
 struct LegacyMatchGroup {

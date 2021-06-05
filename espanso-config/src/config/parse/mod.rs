@@ -31,11 +31,13 @@ pub(crate) struct ParsedConfig {
   pub clipboard_threshold: Option<usize>,
   pub auto_restart: Option<bool>,
   pub preserve_clipboard: Option<bool>,
+  pub toggle_key: Option<String>,
+  pub paste_shortcut: Option<String>,
+  pub disable_x11_fast_inject: Option<bool>,
 
   pub pre_paste_delay: Option<usize>,
   pub restore_clipboard_delay: Option<usize>,
-
-  pub toggle_key: Option<String>,
+  pub paste_shortcut_event_delay: Option<usize>,
 
 
   // Includes
