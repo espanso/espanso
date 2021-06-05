@@ -20,18 +20,28 @@
 use crate::{Extension, ExtensionOutput, ExtensionResult, Params, Value};
 use thiserror::Error;
 
-pub struct EchoExtension {}
+pub struct EchoExtension {
+  alias: String
+}
 
 #[allow(clippy::new_without_default)]
 impl EchoExtension {
   pub fn new() -> Self {
-    Self {}
+    Self {
+      alias: "echo".to_string(),
+    }
+  }
+
+  pub fn new_with_alias(alias: &str) -> Self {
+    Self {
+      alias: alias.to_string(),
+    }
   }
 }
 
 impl Extension for EchoExtension {
   fn name(&self) -> &str {
-    "echo"
+    self.alias.as_str()
   }
 
   fn calculate(
@@ -80,5 +90,14 @@ mod tests {
 
     let param = Params::new();
     assert!(matches!(extension.calculate(&Default::default(), &Default::default(), &param), ExtensionResult::Error(_)));
+  }
+
+  #[test]
+  fn alias() {
+    let extension_with_alias = EchoExtension::new_with_alias("dummy");
+    let extension = EchoExtension::new();
+
+    assert_eq!(extension.name(), "echo");
+    assert_eq!(extension_with_alias.name(), "dummy");
   }
 }
