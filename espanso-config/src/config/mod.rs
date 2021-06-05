@@ -54,7 +54,19 @@ pub trait Config: Send {
   // Defines the key that disables/enables espanso when double pressed
   fn toggle_key(&self) -> Option<ToggleKey>;
 
+  // If true, instructs the daemon process to restart the worker (and refresh
+  // the configuration) after a configuration file change is detected on disk.
   fn auto_restart(&self) -> bool;
+
+  // If true, espanso will attempt to preserve the previous clipboard content
+  // after an expansion has taken place (when using the Clipboard backend).
+  fn preserve_clipboard(&self) -> bool;
+
+  // The number of milliseconds to wait before restoring the previous clipboard
+  // content after an expansion. This is needed as without this delay, sometimes
+  // the target application detects the previous clipboard content instead of
+  // the expansion content.
+  fn restore_clipboard_delay(&self) -> usize;
 
   fn is_match<'a>(&self, app: &AppProperties<'a>) -> bool;
 }

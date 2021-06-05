@@ -270,9 +270,9 @@ impl Config for LegacyInteropConfig {
       model::KeyModifier::CTRL => Some(crate::config::ToggleKey::Ctrl),
       model::KeyModifier::SHIFT => Some(crate::config::ToggleKey::Shift),
       model::KeyModifier::ALT => Some(crate::config::ToggleKey::Alt),
-      model::KeyModifier::META => Some(crate::config::ToggleKey::Meta), 
+      model::KeyModifier::META => Some(crate::config::ToggleKey::Meta),
       model::KeyModifier::BACKSPACE => None,
-      model::KeyModifier::OFF => None, 
+      model::KeyModifier::OFF => None,
       model::KeyModifier::LEFT_CTRL => Some(crate::config::ToggleKey::LeftCtrl),
       model::KeyModifier::RIGHT_CTRL => Some(crate::config::ToggleKey::RightCtrl),
       model::KeyModifier::LEFT_ALT => Some(crate::config::ToggleKey::LeftAlt),
@@ -281,8 +281,16 @@ impl Config for LegacyInteropConfig {
       model::KeyModifier::RIGHT_META => Some(crate::config::ToggleKey::RightMeta),
       model::KeyModifier::LEFT_SHIFT => Some(crate::config::ToggleKey::LeftShift),
       model::KeyModifier::RIGHT_SHIFT => Some(crate::config::ToggleKey::RightShift),
-      model::KeyModifier::CAPS_LOCK => None
+      model::KeyModifier::CAPS_LOCK => None,
     }
+  }
+
+  fn preserve_clipboard(&self) -> bool {
+    self.config.preserve_clipboard
+  }
+
+  fn restore_clipboard_delay(&self) -> usize {
+    self.config.restore_clipboard_delay.try_into().unwrap()
   }
 }
 
