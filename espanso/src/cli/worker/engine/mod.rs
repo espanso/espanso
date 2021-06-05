@@ -115,6 +115,8 @@ pub fn initialize_and_spawn(
         espanso_render::extension::clipboard::ClipboardExtension::new(&clipboard_adapter);
       let date_extension = espanso_render::extension::date::DateExtension::new();
       let echo_extension = espanso_render::extension::echo::EchoExtension::new();
+      // For backwards compatiblity purposes, the echo extension can also be called with "dummy" type
+      let dummy_extension = espanso_render::extension::echo::EchoExtension::new_with_alias("dummy");
       let random_extension = espanso_render::extension::random::RandomExtension::new();
       let home_path = dirs::home_dir().expect("unable to obtain home dir path");
       let script_extension = espanso_render::extension::script::ScriptExtension::new(
@@ -129,6 +131,7 @@ pub fn initialize_and_spawn(
         &clipboard_extension,
         &date_extension,
         &echo_extension,
+        &dummy_extension,
         &random_extension,
         &script_extension,
         &shell_extension,
