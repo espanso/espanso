@@ -21,6 +21,7 @@ use std::{convert::TryInto, path::PathBuf};
 
 use espanso_clipboard::Clipboard;
 use espanso_inject::{keys::Key, InjectionOptions, Injector};
+use log::error;
 
 use crate::engine::{
   dispatch::HtmlInjector,
@@ -36,6 +37,8 @@ pub struct ClipboardParams {
   pub paste_shortcut_event_delay: usize,
   pub paste_shortcut: Option<String>,
   pub disable_x11_fast_inject: bool,
+  pub restore_clipboard: bool,
+  pub restore_clipboard_delay: usize,
 }
 
 pub struct ClipboardInjectorAdapter<'a> {
@@ -69,7 +72,7 @@ impl<'a> ClipboardInjectorAdapter<'a> {
       &[Key::Meta, Key::V]
     } else {
       &[Key::Control, Key::V]
-    }; 
+    };
 
     // TODO: handle user-specified delays
     // let paste_combination_delay = if cfg!(target_os = "macos") {
@@ -89,6 +92,19 @@ impl<'a> ClipboardInjectorAdapter<'a> {
 
     Ok(())
   }
+
+  fn restore_clipboard_guard(&self) -> Option<ClipboardRestoreGuard<'a>> {
+    let params = self.params_provider.get();
+
+    if params.restore_clipboard {
+      Some(ClipboardRestoreGuard::lock(
+        self.clipboard,
+        params.restore_clipboard_delay.try_into().unwrap(),
+      ))
+    } else {
+      None
+    }
+  }
 }
 
 impl<'a> TextInjector for ClipboardInjectorAdapter<'a> {
@@ -97,7 +113,8 @@ impl<'a> TextInjector for ClipboardInjectorAdapter<'a> {
   }
 
   fn inject_text(&self, text: &str) -> anyhow::Result<()> {
-    // TODO: handle clipboard restoration
+    let _guard = self.restore_clipboard_guard();
+
     self.clipboard.set_text(text)?;
 
     self.send_paste_combination()?;
@@ -108,7 +125,8 @@ impl<'a> TextInjector for ClipboardInjectorAdapter<'a> {
 
 impl<'a> HtmlInjector for ClipboardInjectorAdapter<'a> {
   fn inject_html(&self, html: &str, fallback_text: &str) -> anyhow::Result<()> {
-    // TODO: handle clipboard restoration
+    let _guard = self.restore_clipboard_guard();
+
     self.clipboard.set_html(html, Some(fallback_text))?;
 
     self.send_paste_combination()?;
@@ -130,11 +148,47 @@ impl<'a> ImageInjector for ClipboardInjectorAdapter<'a> {
       );
     }
 
-    // TODO: handle clipboard restoration
+    let _guard = self.restore_clipboard_guard();
+
     self.clipboard.set_image(&path)?;
 
     self.send_paste_combination()?;
 
     Ok(())
+  }
+}
+
+struct ClipboardRestoreGuard<'a> {
+  clipboard: &'a dyn Clipboard,
+  content: Option<String>,
+  restore_delay: u64,
+}
+
+impl<'a> ClipboardRestoreGuard<'a> {
+  pub fn lock(clipboard: &'a dyn Clipboard, restore_delay: u64) -> Self {
+    let clipboard_content = clipboard.get_text();
+
+    Self {
+      clipboard,
+      content: clipboard_content,
+      restore_delay,
+    }
+  }
+}
+
+impl<'a> Drop for ClipboardRestoreGuard<'a> {
+  fn drop(&mut self) {
+    if let Some(content) = self.content.take() {
+      // Sometimes an expansion gets overwritten before pasting by the previous content
+      // A delay is needed to mitigate the problem
+      std::thread::sleep(std::time::Duration::from_millis(self.restore_delay));
+
+      if let Err(error) = self.clipboard.set_text(&content) {
+        error!(
+          "unable to restore clipboard content after expansion: {}",
+          error
+        );
+      }
+    }
   }
 }
