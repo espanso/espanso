@@ -123,6 +123,8 @@ impl<'a> super::engine::dispatch::executor::clipboard_injector::ClipboardParamsP
       paste_shortcut_event_delay: 5,  // TODO: read from config
       paste_shortcut: None,           // TODO: read from config
       disable_x11_fast_inject: false, // TODO: read from config
+      restore_clipboard: true,        // TODO: read from config
+      restore_clipboard_delay: 300,   // TODO: read from config
     }
   }
 }
