@@ -24,9 +24,11 @@ use std::path::{Path, PathBuf};
 const ICON_BINARY: &[u8] = include_bytes!("res/icon.png");
 
 #[cfg(target_os = "windows")]
-const WINDOWS_ICO_BINARY: &[u8] = include_bytes!("res/windows/espanso.ico");
+const WINDOWS_NORMAL_DARK_ICO_BINARY: &[u8] = include_bytes!("res/windows/normal_dark.ico");
 #[cfg(target_os = "windows")]
-const WINDOWS_RED_ICO_BINARY: &[u8] = include_bytes!("res/windows/espansored.ico");
+const WINDOWS_DISABLED_DARK_ICO_BINARY: &[u8] = include_bytes!("res/windows/disabled_dark.ico");
+#[cfg(target_os = "windows")]
+const WINDOWS_LOGO_ICO_BINARY: &[u8] = include_bytes!("res/windows/logo.ico");
 
 
 #[cfg(target_os = "macos")]
@@ -51,10 +53,10 @@ pub struct IconPaths {
 #[cfg(target_os = "windows")]
 pub fn load_icon_paths(runtime_dir: &Path) -> Result<IconPaths> {
   Ok(IconPaths {
-    form_icon: Some(extract_icon(WINDOWS_ICO_BINARY, &runtime_dir.join("form.ico"))?),
+    form_icon: Some(extract_icon(WINDOWS_LOGO_ICO_BINARY, &runtime_dir.join("form.ico"))?),
     search_icon: Some(extract_icon(ICON_BINARY, &runtime_dir.join("search.png"))?),
-    tray_icon_normal: Some(extract_icon(WINDOWS_ICO_BINARY, &runtime_dir.join("normal.ico"))?),
-    tray_icon_disabled: Some(extract_icon(WINDOWS_RED_ICO_BINARY, &runtime_dir.join("disabled.ico"))?),
+    tray_icon_normal: Some(extract_icon(WINDOWS_NORMAL_DARK_ICO_BINARY, &runtime_dir.join("normal.ico"))?),
+    tray_icon_disabled: Some(extract_icon(WINDOWS_DISABLED_DARK_ICO_BINARY, &runtime_dir.join("disabled.ico"))?),
     logo: Some(extract_icon(ICON_BINARY, &runtime_dir.join("icon.png"))?),
     ..Default::default()
   })
