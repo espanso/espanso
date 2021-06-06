@@ -141,6 +141,7 @@ pub struct TextEffect {
   pub replace: String,
   pub vars: Vec<Variable>,
   pub format: TextFormat,
+  pub force_mode: Option<TextInjectMode>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -150,12 +151,19 @@ pub enum TextFormat {
   Html,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum TextInjectMode {
+  Keys,
+  Clipboard,
+}
+
 impl Default for TextEffect {
   fn default() -> Self {
     Self {
       replace: String::new(),
       vars: Vec::new(),
       format: TextFormat::Plain,
+      force_mode: None,
     }
   }
 }

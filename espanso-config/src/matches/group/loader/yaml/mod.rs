@@ -17,7 +17,14 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::{counter::next_id, matches::{ImageEffect, Match, Params, RegexCause, TextFormat, UpperCasingStyle, Value, Variable, group::{path::resolve_imports, MatchGroup}}};
+use crate::{
+  counter::next_id,
+  matches::{
+    group::{path::resolve_imports, MatchGroup},
+    ImageEffect, Match, Params, RegexCause, TextFormat, TextInjectMode, UpperCasingStyle, Value,
+    Variable,
+  },
+};
 use anyhow::Result;
 use log::{error, warn};
 use parse::YAMLMatchGroup;
@@ -137,17 +144,30 @@ impl TryFrom<YAMLMatch> for Match {
           .unwrap_or(TriggerCause::default().propagate_case),
         uppercase_style,
       })
-    } else if let Some(regex) = yaml_match.regex {  // TODO: add test case
-      MatchCause::Regex(RegexCause {
-        regex,
-      })
+    } else if let Some(regex) = yaml_match.regex {
+      // TODO: add test case
+      MatchCause::Regex(RegexCause { regex })
     } else {
       MatchCause::None
     };
 
+    // TODO: test force_mode/force_clipboard
+    let force_mode = if let Some(true) = yaml_match.force_clipboard {
+      Some(TextInjectMode::Clipboard)
+    } else if let Some(mode) = yaml_match.force_mode {
+      match mode.to_lowercase().as_str() {
+        "clipboard" => Some(TextInjectMode::Clipboard),
+        "keys" => Some(TextInjectMode::Keys),
+        _ => None,
+      }
+    } else {
+      None
+    };
+
     let effect =
       if yaml_match.replace.is_some() || yaml_match.markdown.is_some() || yaml_match.html.is_some()
-      { // TODO: test markdown and html cases
+      {
+        // TODO: test markdown and html cases
         let (replace, format) = if let Some(plain) = yaml_match.replace {
           (plain, TextFormat::Plain)
         } else if let Some(markdown) = yaml_match.markdown {
@@ -164,10 +184,12 @@ impl TryFrom<YAMLMatch> for Match {
           .into_iter()
           .map(|var| var.try_into())
           .collect();
+
         MatchEffect::Text(TextEffect {
           replace,
           vars: vars?,
           format,
+          force_mode,
         })
       } else if let Some(form_layout) = yaml_match.form {
         // TODO: test form case
@@ -201,11 +223,11 @@ impl TryFrom<YAMLMatch> for Match {
           replace: resolved_layout,
           vars,
           format: TextFormat::Plain,
+          force_mode,
         })
-      } else if let Some(image_path) = yaml_match.image_path {  // TODO: test image case
-        MatchEffect::Image(ImageEffect {
-          path: image_path,
-        })
+      } else if let Some(image_path) = yaml_match.image_path {
+        // TODO: test image case
+        MatchEffect::Image(ImageEffect { path: image_path })
       } else {
         MatchEffect::None
       };
