@@ -101,6 +101,9 @@ pub struct YAMLMatch {
   pub force_clipboard: Option<bool>,
 
   #[serde(default)]
+  pub force_mode: Option<String>,
+
+  #[serde(default)]
   pub markdown: Option<String>,
 
   #[serde(default)]
