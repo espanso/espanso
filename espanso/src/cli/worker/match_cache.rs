@@ -61,9 +61,10 @@ impl<'a> super::engine::process::middleware::render::MatchProvider<'a> for Match
 
 impl<'a> super::engine::process::middleware::match_select::MatchProvider<'a> for MatchCache<'a> {
   fn get_matches(&self, ids: &[i32]) -> Vec<&'a Match> {
-    ids.iter().flat_map(|id| {
-      self.cache.get(&id).map(|m| *m)
-    }).collect()
+    ids
+      .iter()
+      .flat_map(|id| self.cache.get(&id).map(|m| *m))
+      .collect()
   }
 }
 
@@ -71,7 +72,16 @@ impl<'a> crate::engine::process::MatchInfoProvider for MatchCache<'a> {
   fn get_force_mode(&self, match_id: i32) -> Option<crate::engine::event::effect::TextInjectMode> {
     let m = self.cache.get(&match_id)?;
     if let MatchEffect::Text(text_effect) = &m.effect {
-      // TODO: read match effect and convert it to the actual injection mode
+      if let Some(force_mode) = &text_effect.force_mode {
+        match force_mode {
+          espanso_config::matches::TextInjectMode::Keys => {
+            return Some(crate::engine::event::effect::TextInjectMode::Keys)
+          }
+          espanso_config::matches::TextInjectMode::Clipboard => {
+            return Some(crate::engine::event::effect::TextInjectMode::Clipboard)
+          }
+        }
+      }
     }
 
     None
