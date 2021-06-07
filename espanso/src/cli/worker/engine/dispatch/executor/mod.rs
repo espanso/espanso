@@ -22,3 +22,13 @@ pub mod context_menu;
 pub mod event_injector;
 pub mod icon;
 pub mod key_injector;
+
+pub trait InjectParamsProvider {
+  fn get(&self) -> InjectParams;
+}
+
+pub struct InjectParams {
+  pub inject_delay: Option<usize>,
+  pub key_delay: Option<usize>,
+  pub disable_x11_fast_inject: bool,
+}

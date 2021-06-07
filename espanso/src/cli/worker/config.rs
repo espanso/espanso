@@ -128,3 +128,16 @@ impl<'a> super::engine::dispatch::executor::clipboard_injector::ClipboardParamsP
     }
   }
 }
+
+impl<'a> super::engine::dispatch::executor::InjectParamsProvider
+  for ConfigManager<'a>
+{
+  fn get(&self) -> super::engine::dispatch::executor::InjectParams {
+    let active = self.active();
+    super::engine::dispatch::executor::InjectParams {
+      disable_x11_fast_inject: active.disable_x11_fast_inject(),
+      inject_delay: active.inject_delay(),
+      key_delay: active.key_delay(),
+    }
+  }
+}

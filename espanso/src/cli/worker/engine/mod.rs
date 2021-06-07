@@ -156,10 +156,10 @@ pub fn initialize_and_spawn(
         disable_options,
       );
 
-      let event_injector = EventInjectorAdapter::new(&*injector);
+      let event_injector = EventInjectorAdapter::new(&*injector, &config_manager);
       let clipboard_injector =
         ClipboardInjectorAdapter::new(&*injector, &*clipboard, &config_manager);
-      let key_injector = KeyInjectorAdapter::new(&*injector);
+      let key_injector = KeyInjectorAdapter::new(&*injector, &config_manager);
       let context_menu_adapter = ContextMenuHandlerAdapter::new(&*ui_remote);
       let icon_adapter = IconHandlerAdapter::new(&*ui_remote);
       let dispatcher = crate::engine::dispatch::default(

@@ -17,24 +17,39 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use espanso_inject::Injector;
+use std::convert::TryInto;
+use espanso_inject::{InjectionOptions, Injector};
 
 use crate::engine::dispatch::KeyInjector;
 
+use super::InjectParamsProvider;
+
 pub struct KeyInjectorAdapter<'a> {
   injector: &'a dyn Injector,
+  params_provider: &'a dyn InjectParamsProvider,
 }
 
 impl<'a> KeyInjectorAdapter<'a> {
-  pub fn new(injector: &'a dyn Injector) -> Self {
-    Self { injector }
+  pub fn new(injector: &'a dyn Injector, params_provider: &'a dyn InjectParamsProvider) -> Self {
+    Self { injector, params_provider }
   }
 }
 
 impl<'a> KeyInjector for KeyInjectorAdapter<'a> {
   fn inject_sequence(&self, keys: &[crate::engine::event::input::Key]) -> anyhow::Result<()> {
+    let params = self.params_provider.get();
+
+    let injection_options = InjectionOptions {
+      delay: params
+        .key_delay
+        .unwrap_or(InjectionOptions::default().delay.try_into().unwrap())
+        .try_into()
+        .unwrap(),
+      disable_fast_inject: params.disable_x11_fast_inject,
+    };
+
     let converted_keys: Vec<_> = keys.iter().map(convert_to_inject_key).collect();
-    self.injector.send_keys(&converted_keys, Default::default()) // TODO: handle options
+    self.injector.send_keys(&converted_keys, injection_options)
   }
 }
 
