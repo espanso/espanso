@@ -83,6 +83,14 @@ pub trait Config: Send {
   // the expansion content.
   fn restore_clipboard_delay(&self) -> usize;
 
+  // Number of milliseconds between text injection events. Increase if the target
+  // application is missing some characters.
+  fn inject_delay(&self) -> Option<usize>;
+
+  // Number of milliseconds between key injection events. Increase if the target
+  // application is missing some key events.
+  fn key_delay(&self) -> Option<usize>;
+
   fn is_match<'a>(&self, app: &AppProperties<'a>) -> bool;
 }
 
