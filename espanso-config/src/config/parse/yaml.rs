@@ -60,6 +60,15 @@ pub(crate) struct YAMLConfig {
   #[serde(default)]
   pub disable_x11_fast_inject: Option<bool>,
 
+  #[serde(default)]
+  pub inject_delay: Option<usize>,
+
+  #[serde(default)]
+  pub key_delay: Option<usize>,
+
+  #[serde(default)]
+  pub backspace_delay: Option<usize>,
+
   // Include/Exclude
   #[serde(default)]
   pub includes: Option<Vec<String>>,
@@ -116,6 +125,8 @@ impl TryFrom<YAMLConfig> for ParsedConfig {
       preserve_clipboard: yaml_config.preserve_clipboard,
       paste_shortcut: yaml_config.paste_shortcut,
       disable_x11_fast_inject: yaml_config.disable_x11_fast_inject,
+      inject_delay: yaml_config.inject_delay,
+      key_delay: yaml_config.key_delay.or(yaml_config.backspace_delay),
 
       pre_paste_delay: yaml_config.pre_paste_delay,
       restore_clipboard_delay: yaml_config.restore_clipboard_delay,
@@ -155,6 +166,9 @@ mod tests {
     paste_shortcut: CTRL+ALT+V
     paste_shortcut_event_delay: 10
     disable_x11_fast_inject: true
+    inject_delay: 10
+    key_delay: 20
+    backspace_delay: 30
       
     use_standard_includes: true
     includes: ["test1"]
@@ -184,6 +198,8 @@ mod tests {
         paste_shortcut: Some("CTRL+ALT+V".to_string()),
         paste_shortcut_event_delay: Some(10),
         disable_x11_fast_inject: Some(true),
+        inject_delay: Some(10),
+        key_delay: Some(20),
 
         pre_paste_delay: Some(300),
         

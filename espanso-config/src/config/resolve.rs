@@ -207,6 +207,14 @@ impl Config for ResolvedConfig {
   fn disable_x11_fast_inject(&self) -> bool {
     self.parsed.disable_x11_fast_inject.unwrap_or(false)
   }
+
+  fn inject_delay(&self) -> Option<usize> {
+    self.parsed.inject_delay
+  }
+
+  fn key_delay(&self) -> Option<usize> {
+    self.parsed.key_delay
+  }
 }
 
 impl ResolvedConfig {
@@ -273,6 +281,8 @@ impl ResolvedConfig {
       paste_shortcut_event_delay,
       disable_x11_fast_inject,
       toggle_key,
+      inject_delay,
+      key_delay,
       includes,
       excludes,
       extra_includes,

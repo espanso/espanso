@@ -38,6 +38,8 @@ pub(crate) struct ParsedConfig {
   pub pre_paste_delay: Option<usize>,
   pub restore_clipboard_delay: Option<usize>,
   pub paste_shortcut_event_delay: Option<usize>,
+  pub inject_delay: Option<usize>,
+  pub key_delay: Option<usize>,
 
 
   // Includes

@@ -301,15 +301,31 @@ impl Config for LegacyInteropConfig {
     match self.config.paste_shortcut {
       model::PasteShortcut::Default => None,
       model::PasteShortcut::CtrlV => Some("CTRL+V".to_string()),
-      model::PasteShortcut::CtrlShiftV => Some("CTRL+SHIFT+V".to_string()), 
-      model::PasteShortcut::ShiftInsert => Some("SHIFT+INSERT".to_string()), 
-      model::PasteShortcut::CtrlAltV => Some("CTRL+ALT+V".to_string()), 
-      model::PasteShortcut::MetaV => Some("META+V".to_string()), 
+      model::PasteShortcut::CtrlShiftV => Some("CTRL+SHIFT+V".to_string()),
+      model::PasteShortcut::ShiftInsert => Some("SHIFT+INSERT".to_string()),
+      model::PasteShortcut::CtrlAltV => Some("CTRL+ALT+V".to_string()),
+      model::PasteShortcut::MetaV => Some("META+V".to_string()),
     }
   }
 
   fn disable_x11_fast_inject(&self) -> bool {
     self.config.fast_inject
+  }
+
+  fn inject_delay(&self) -> Option<usize> {
+    if self.config.inject_delay == 0 {
+      None
+    } else {
+      Some(self.config.inject_delay.try_into().unwrap())
+    }
+  }
+
+  fn key_delay(&self) -> Option<usize> {
+    if self.config.backspace_delay == 0 {
+      None
+    } else {
+      Some(self.config.backspace_delay.try_into().unwrap())
+    }
   }
 }
 
