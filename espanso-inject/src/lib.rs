@@ -48,6 +48,7 @@ pub trait Injector {
 }
 
 #[allow(dead_code)]
+#[derive(Clone, Copy)]
 pub struct InjectionOptions {
   // Delay between injected events
   pub delay: i32,
