@@ -67,26 +67,28 @@ impl<'a> ClipboardInjectorAdapter<'a> {
       params.pre_paste_delay.try_into().unwrap(),
     ));
 
-    // TODO: handle case of custom combination
-    let combination = if cfg!(target_os = "macos") {
-      &[Key::Meta, Key::V]
+    let mut custom_combination = None;
+    if let Some(custom_shortcut) = params.paste_shortcut {
+      if let Some(combination) = parse_combination(&custom_shortcut) {
+        custom_combination = Some(combination);
+      } else {
+        error!("'{}' is not a valid paste shortcut", custom_shortcut);
+      }
+    } 
+
+    let combination = if let Some(custom_combination) = custom_combination {
+      custom_combination
+    } else if cfg!(target_os = "macos") {
+      vec![Key::Meta, Key::V]
     } else {
-      &[Key::Control, Key::V]
+      vec![Key::Control, Key::V]
     };
 
-    // TODO: handle user-specified delays
-    // let paste_combination_delay = if cfg!(target_os = "macos") {
-    //   5
-    // } else {
-    //   InjectionOptions::default().delay
-    // };
-
-    // TODO: handle options
     self.injector.send_key_combination(
-      combination,
+      &combination,
       InjectionOptions {
         delay: params.paste_shortcut_event_delay as i32,
-        ..Default::default()
+        disable_fast_inject: params.disable_x11_fast_inject,
       },
     )?;
 
@@ -191,4 +193,14 @@ impl<'a> Drop for ClipboardRestoreGuard<'a> {
       }
     }
   }
+}
+
+fn parse_combination(combination: &str) -> Option<Vec<Key>> {
+  let tokens = combination.split("+");
+  let mut keys: Vec<Key> = Vec::new();
+  for token in tokens {
+    keys.push(Key::parse(token)?);
+  }
+
+  Some(keys)
 }
