@@ -17,15 +17,18 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#[cfg(target_os = "macos")]
 use std::{ffi::CStr, os::raw::c_char};
 
 #[macro_use]
+#[cfg(target_os = "macos")]
 extern crate lazy_static;
 
 mod ffi;
 
 /// Check whether an application is currently holding the Secure Input.
 /// Return None if no application has claimed SecureInput, its PID otherwise.
+#[cfg(target_os = "macos")]
 pub fn get_secure_input_pid() -> Option<i64> {
   unsafe {
     let mut pid: i64 = -1;
@@ -41,6 +44,7 @@ pub fn get_secure_input_pid() -> Option<i64> {
 
 /// Check whether an application is currently holding the Secure Input.
 /// Return None if no application has claimed SecureInput, Some((AppName, AppPath)) otherwise.
+#[cfg(target_os = "macos")]
 pub fn get_secure_input_application() -> Option<(String, String)> {
   unsafe {
     let pid = get_secure_input_pid();
@@ -73,6 +77,7 @@ pub fn get_secure_input_application() -> Option<(String, String)> {
   }
 }
 
+#[cfg(target_os = "macos")]
 fn get_app_name_from_path(path: &str) -> Option<String> {
   use regex::Regex;
 
@@ -89,6 +94,7 @@ fn get_app_name_from_path(path: &str) -> Option<String> {
 }
 
 #[cfg(test)]
+#[cfg(target_os = "macos")]
 mod tests {
   use super::*;
 
