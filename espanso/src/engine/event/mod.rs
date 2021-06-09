@@ -74,7 +74,7 @@ pub enum EventType {
   Enabled,
   DisableRequest,
   EnableRequest,
-  SecureInputEnabled,
+  SecureInputEnabled(internal::SecureInputEnabledEvent),
   SecureInputDisabled,
 
   // Effects

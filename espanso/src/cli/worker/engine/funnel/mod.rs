@@ -29,6 +29,7 @@ use self::{modifier::{Modifier, ModifierStateStore}, sequencer::Sequencer};
 pub mod detect;
 pub mod exit;
 pub mod modifier;
+pub mod secure_input;
 pub mod sequencer;
 pub mod ui;
 

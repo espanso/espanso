@@ -54,6 +54,8 @@ use crate::{
   engine::event::ExitMode,
 };
 
+use super::secure_input::SecureInputEvent;
+
 pub mod dispatch;
 pub mod funnel;
 pub mod process;
@@ -65,6 +67,7 @@ pub fn initialize_and_spawn(
   ui_remote: Box<dyn UIRemote>,
   exit_signal: Receiver<()>,
   ui_event_receiver: Receiver<UIEvent>,
+  secure_input_receiver: Receiver<SecureInputEvent>,
 ) -> Result<JoinHandle<ExitMode>> {
   let handle = std::thread::Builder::new()
     .name("engine thread".to_string())
@@ -86,8 +89,9 @@ pub fn initialize_and_spawn(
         super::engine::funnel::init_and_spawn().expect("failed to initialize detector module");
       let exit_source = super::engine::funnel::exit::ExitSource::new(exit_signal, &sequencer);
       let ui_source = super::engine::funnel::ui::UISource::new(ui_event_receiver, &sequencer);
+      let secure_input_source = super::engine::funnel::secure_input::SecureInputSource::new(secure_input_receiver, &sequencer);
       let sources: Vec<&dyn crate::engine::funnel::Source> =
-        vec![&detect_source, &exit_source, &ui_source];
+        vec![&detect_source, &exit_source, &ui_source, &secure_input_source];
       let funnel = crate::engine::funnel::default(&sources);
 
       let rolling_matcher = RollingMatcherAdapter::new(&match_converter.get_rolling_matches());
