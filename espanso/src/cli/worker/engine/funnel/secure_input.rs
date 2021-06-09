@@ -45,22 +45,34 @@ impl<'a> SecureInputSource<'a> {
 
 impl<'a> funnel::Source<'a> for SecureInputSource<'a> {
   fn register(&'a self, select: &mut Select<'a>) -> usize {
-    select.recv(&self.receiver)
+    if cfg!(target_os = "macos") {
+      select.recv(&self.receiver)
+    } else {
+      999999
+    }
   }
 
   fn receive(&self, op: SelectedOperation) -> Event {
-    let si_event = op
-      .recv(&self.receiver)
-      .expect("unable to select data from SecureInputSource receiver");
+    if cfg!(target_os = "macos") {
+      let si_event = op
+        .recv(&self.receiver)
+        .expect("unable to select data from SecureInputSource receiver");
 
-    Event {
-      source_id: self.sequencer.next_id(),
-      etype: match si_event {
-        SecureInputEvent::Disabled => EventType::SecureInputDisabled,
-        SecureInputEvent::Enabled { app_name, app_path } => {
-          EventType::SecureInputEnabled(SecureInputEnabledEvent { app_name, app_path })
-        }
-      },
+      Event {
+        source_id: self.sequencer.next_id(),
+        etype: match si_event {
+          SecureInputEvent::Disabled => EventType::SecureInputDisabled,
+          SecureInputEvent::Enabled { app_name, app_path } => {
+            EventType::SecureInputEnabled(SecureInputEnabledEvent { app_name, app_path })
+          }
+        },
+      }
+    } else {
+      println!("noop");
+      Event {
+        source_id: self.sequencer.next_id(),
+        etype: EventType::NOOP,
+      }
     }
   }
 }
