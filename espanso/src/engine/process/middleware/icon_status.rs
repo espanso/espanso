@@ -51,7 +51,7 @@ impl Middleware for IconStatusMiddleware {
     match &event.etype {
       EventType::Enabled => *enabled = true,
       EventType::Disabled => *enabled = false,
-      EventType::SecureInputEnabled => *secure_input_enabled = true,
+      EventType::SecureInputEnabled(_) => *secure_input_enabled = true,
       EventType::SecureInputDisabled => *secure_input_enabled = false,
       _ => did_update = false,
     }

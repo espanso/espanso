@@ -38,6 +38,7 @@ mod daemon_monitor;
 mod engine;
 mod ipc;
 mod match_cache;
+mod secure_input;
 mod ui;
 
 pub fn new() -> CliModule {
@@ -100,6 +101,7 @@ fn worker_main(args: CliModuleArgs) -> i32 {
 
   let (engine_exit_notify, engine_exit_receiver) = unbounded();
   let (engine_ui_event_sender, engine_ui_event_receiver) = unbounded();
+  let (engine_secure_input_sender, engine_secure_input_receiver) = unbounded();
 
   // Initialize the engine on another thread and start it
   let engine_handle = engine::initialize_and_spawn(
@@ -109,6 +111,7 @@ fn worker_main(args: CliModuleArgs) -> i32 {
     remote,
     engine_exit_receiver,
     engine_ui_event_receiver,
+    engine_secure_input_receiver,
   )
   .expect("unable to initialize engine");
 
@@ -124,6 +127,9 @@ fn worker_main(args: CliModuleArgs) -> i32 {
     daemon_monitor::initialize_and_spawn(&paths.runtime, engine_exit_notify.clone())
       .expect("unable to initialize daemon monitor thread");
   }
+
+  secure_input::initialize_and_spawn(engine_secure_input_sender)
+    .expect("unable to initialize secure input watcher");
 
   eventloop
     .run(Box::new(move |event| {

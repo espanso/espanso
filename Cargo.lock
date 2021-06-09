@@ -427,6 +427,7 @@ dependencies = [
  "espanso-info",
  "espanso-inject",
  "espanso-ipc",
+ "espanso-mac-utils",
  "espanso-match",
  "espanso-migrate",
  "espanso-modulo",
@@ -545,6 +546,19 @@ dependencies = [
  "named_pipe",
  "serde",
  "serde_json",
+ "thiserror",
+]
+
+[[package]]
+name = "espanso-mac-utils"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "cc",
+ "lazy_static",
+ "lazycell",
+ "log",
+ "regex",
  "thiserror",
 ]
 
