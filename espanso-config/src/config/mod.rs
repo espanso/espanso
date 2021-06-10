@@ -95,6 +95,11 @@ pub trait Config: Send {
   // Examples of this are . or ,
   fn word_separators(&self) -> Vec<String>;
 
+  // Maximum number of backspace presses espanso keeps track of.
+  // For example, this is needed to correctly expand even if typos
+  // are typed.
+  fn backspace_limit(&self) -> usize;
+
   fn is_match<'a>(&self, app: &AppProperties<'a>) -> bool;
 }
 

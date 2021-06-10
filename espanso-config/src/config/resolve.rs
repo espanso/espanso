@@ -243,6 +243,10 @@ impl Config for ResolvedConfig {
       (22u8 as char).to_string(),
     ])
   }
+
+  fn backspace_limit(&self) -> usize {
+    self.parsed.backspace_limit.unwrap_or(5)
+  }
 }
 
 impl ResolvedConfig {
@@ -312,6 +316,7 @@ impl ResolvedConfig {
       inject_delay,
       key_delay,
       word_separators,
+      backspace_limit,
       includes,
       excludes,
       extra_includes,
