@@ -17,7 +17,16 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use super::{AppProperties, Backend, Config, ToggleKey, default::{DEFAULT_CLIPBOARD_THRESHOLD, DEFAULT_PRE_PASTE_DELAY, DEFAULT_RESTORE_CLIPBOARD_DELAY, DEFAULT_SHORTCUT_EVENT_DELAY}, parse::ParsedConfig, path::calculate_paths, util::os_matches};
+use super::{
+  default::{
+    DEFAULT_CLIPBOARD_THRESHOLD, DEFAULT_PRE_PASTE_DELAY, DEFAULT_RESTORE_CLIPBOARD_DELAY,
+    DEFAULT_SHORTCUT_EVENT_DELAY,
+  },
+  parse::ParsedConfig,
+  path::calculate_paths,
+  util::os_matches,
+  AppProperties, Backend, Config, ToggleKey,
+};
 use crate::{counter::next_id, merge};
 use anyhow::Result;
 use log::error;
@@ -193,11 +202,17 @@ impl Config for ResolvedConfig {
   }
 
   fn restore_clipboard_delay(&self) -> usize {
-    self.parsed.restore_clipboard_delay.unwrap_or(DEFAULT_RESTORE_CLIPBOARD_DELAY)
+    self
+      .parsed
+      .restore_clipboard_delay
+      .unwrap_or(DEFAULT_RESTORE_CLIPBOARD_DELAY)
   }
 
   fn paste_shortcut_event_delay(&self) -> usize {
-    self.parsed.paste_shortcut_event_delay.unwrap_or(DEFAULT_SHORTCUT_EVENT_DELAY)
+    self
+      .parsed
+      .paste_shortcut_event_delay
+      .unwrap_or(DEFAULT_SHORTCUT_EVENT_DELAY)
   }
 
   fn paste_shortcut(&self) -> Option<String> {
@@ -214,6 +229,19 @@ impl Config for ResolvedConfig {
 
   fn key_delay(&self) -> Option<usize> {
     self.parsed.key_delay
+  }
+
+  fn word_separators(&self) -> Vec<String> {
+    self.parsed.word_separators.clone().unwrap_or(vec![
+      " ".to_string(),
+      ",".to_string(),
+      ".".to_string(),
+      "?".to_string(),
+      "!".to_string(),
+      "\r".to_string(),
+      "\n".to_string(),
+      (22u8 as char).to_string(),
+    ])
   }
 }
 
@@ -283,6 +311,7 @@ impl ResolvedConfig {
       toggle_key,
       inject_delay,
       key_delay,
+      word_separators,
       includes,
       excludes,
       extra_includes,
