@@ -96,6 +96,7 @@ pub use middleware::action::{MatchInfoProvider, EventSequenceProvider};
 pub use middleware::delay_modifiers::ModifierStatusProvider;
 pub use middleware::image_resolve::PathProvider;
 pub use middleware::disable::DisableOptions;
+pub use middleware::matcher::MatcherMiddlewareConfigProvider;
 
 pub fn default<'a, MatcherState>(
   matchers: &'a [&'a dyn Matcher<'a, MatcherState>],
@@ -108,6 +109,7 @@ pub fn default<'a, MatcherState>(
   event_sequence_provider: &'a dyn EventSequenceProvider,
   path_provider: &'a dyn PathProvider,
   disable_options: DisableOptions,
+  matcher_options_provider: &'a dyn MatcherMiddlewareConfigProvider,
 ) -> impl Processor + 'a {
   default::DefaultProcessor::new(
     matchers,
@@ -120,5 +122,6 @@ pub fn default<'a, MatcherState>(
     event_sequence_provider,
     path_provider,
     disable_options,
+    matcher_options_provider,
   )
 }

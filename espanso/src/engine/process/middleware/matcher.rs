@@ -30,19 +30,26 @@ use crate::engine::{
   process::{Matcher, MatcherEvent},
 };
 
-const MAX_HISTORY: usize = 3; // TODO: get as parameter
+pub trait MatcherMiddlewareConfigProvider {
+  fn max_history_size(&self) -> usize;
+}
 
 pub struct MatcherMiddleware<'a, State> {
   matchers: &'a [&'a dyn Matcher<'a, State>],
 
   matcher_states: RefCell<VecDeque<Vec<State>>>,
+
+  max_history_size: usize,
 }
 
 impl<'a, State> MatcherMiddleware<'a, State> {
-  pub fn new(matchers: &'a [&'a dyn Matcher<'a, State>]) -> Self {
+  pub fn new(matchers: &'a [&'a dyn Matcher<'a, State>], options_provider: &'a dyn MatcherMiddlewareConfigProvider) -> Self {
+    let max_history_size = options_provider.max_history_size();
+
     Self {
       matchers,
       matcher_states: RefCell::new(VecDeque::new()),
+      max_history_size,
     }
   }
 }
@@ -92,7 +99,7 @@ impl<'a, State> Middleware for MatcherMiddleware<'a, State> {
         }
 
         matcher_states.push_back(new_states);
-        if matcher_states.len() > MAX_HISTORY {
+        if matcher_states.len() > self.max_history_size {
           matcher_states.pop_front();
         }
 
