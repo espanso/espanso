@@ -28,28 +28,21 @@ use crate::engine::{
 
 use super::MatcherState;
 
+pub struct RollingMatcherAdapterOptions {
+  pub char_word_separators: Vec<String>,
+}
+
 pub struct RollingMatcherAdapter {
   matcher: RollingMatcher<i32>,
 }
 
 impl RollingMatcherAdapter {
-  pub fn new(matches: &[RollingMatch<i32>]) -> Self {
-    // TODO: load them from config
-
+  pub fn new(matches: &[RollingMatch<i32>], options: RollingMatcherAdapterOptions) -> Self {
     let matcher = RollingMatcher::new(
       matches,
       RollingMatcherOptions {
-        char_word_separators: vec![
-          " ".to_string(),
-          ",".to_string(),
-          ".".to_string(),
-          "?".to_string(),
-          "!".to_string(),
-          "\r".to_string(),
-          "\n".to_string(),
-          (22u8 as char).to_string(),
-        ],
-        key_word_separators: vec![],
+        char_word_separators: options.char_word_separators,
+        key_word_separators: vec![], // TODO?
       },
     );
 
