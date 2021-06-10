@@ -19,7 +19,7 @@
 
 use log::trace;
 
-use super::{DisableOptions, MatchFilter, MatchInfoProvider, MatchSelector, Matcher, Middleware, Multiplexer, PathProvider, Processor, Renderer, middleware::{
+use super::{DisableOptions, MatchFilter, MatchInfoProvider, MatchSelector, Matcher, MatcherMiddlewareConfigProvider, Middleware, Multiplexer, PathProvider, Processor, Renderer, middleware::{
     match_select::MatchSelectMiddleware, matcher::MatcherMiddleware, multiplex::MultiplexMiddleware,
     render::RenderMiddleware, action::{ActionMiddleware, EventSequenceProvider}, cursor_hint::CursorHintMiddleware, cause::CauseCompensateMiddleware,
     delay_modifiers::{DelayForModifierReleaseMiddleware, ModifierStatusProvider}, markdown::MarkdownMiddleware,
@@ -45,6 +45,7 @@ impl<'a> DefaultProcessor<'a> {
     event_sequence_provider: &'a dyn EventSequenceProvider,
     path_provider: &'a dyn PathProvider,
     disable_options: DisableOptions,
+    matcher_options_provider: &'a dyn MatcherMiddlewareConfigProvider,
   ) -> DefaultProcessor<'a> {
     Self {
       event_queue: VecDeque::new(),
@@ -52,7 +53,7 @@ impl<'a> DefaultProcessor<'a> {
         Box::new(PastEventsDiscardMiddleware::new()),
         Box::new(DisableMiddleware::new(disable_options)),
         Box::new(IconStatusMiddleware::new()),
-        Box::new(MatcherMiddleware::new(matchers)),
+        Box::new(MatcherMiddleware::new(matchers, matcher_options_provider)),
         Box::new(ContextMenuMiddleware::new()),
         Box::new(MatchSelectMiddleware::new(match_filter, match_selector)),
         Box::new(CauseCompensateMiddleware::new()),

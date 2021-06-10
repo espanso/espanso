@@ -129,9 +129,7 @@ impl<'a> super::engine::dispatch::executor::clipboard_injector::ClipboardParamsP
   }
 }
 
-impl<'a> super::engine::dispatch::executor::InjectParamsProvider
-  for ConfigManager<'a>
-{
+impl<'a> super::engine::dispatch::executor::InjectParamsProvider for ConfigManager<'a> {
   fn get(&self) -> super::engine::dispatch::executor::InjectParams {
     let active = self.active();
     super::engine::dispatch::executor::InjectParams {
@@ -139,5 +137,11 @@ impl<'a> super::engine::dispatch::executor::InjectParamsProvider
       inject_delay: active.inject_delay(),
       key_delay: active.key_delay(),
     }
+  }
+}
+
+impl<'a> crate::engine::process::MatcherMiddlewareConfigProvider for ConfigManager<'a> {
+  fn max_history_size(&self) -> usize {
+    self.default().backspace_limit()
   }
 }
