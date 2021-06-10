@@ -91,6 +91,10 @@ pub trait Config: Send {
   // application is missing some key events.
   fn key_delay(&self) -> Option<usize>;
 
+  // Chars that when pressed mark the start and end of a word.
+  // Examples of this are . or ,
+  fn word_separators(&self) -> Vec<String>;
+
   fn is_match<'a>(&self, app: &AppProperties<'a>) -> bool;
 }
 

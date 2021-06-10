@@ -69,6 +69,9 @@ pub(crate) struct YAMLConfig {
   #[serde(default)]
   pub backspace_delay: Option<usize>,
 
+  #[serde(default)]
+  pub word_separators: Option<Vec<String>>,
+
   // Include/Exclude
   #[serde(default)]
   pub includes: Option<Vec<String>>,
@@ -127,6 +130,7 @@ impl TryFrom<YAMLConfig> for ParsedConfig {
       disable_x11_fast_inject: yaml_config.disable_x11_fast_inject,
       inject_delay: yaml_config.inject_delay,
       key_delay: yaml_config.key_delay.or(yaml_config.backspace_delay),
+      word_separators: yaml_config.word_separators,
 
       pre_paste_delay: yaml_config.pre_paste_delay,
       restore_clipboard_delay: yaml_config.restore_clipboard_delay,
@@ -169,6 +173,7 @@ mod tests {
     inject_delay: 10
     key_delay: 20
     backspace_delay: 30
+    word_separators: ["'", "."]
       
     use_standard_includes: true
     includes: ["test1"]
@@ -204,6 +209,7 @@ mod tests {
         pre_paste_delay: Some(300),
         
         toggle_key: Some("CTRL".to_string()),
+        word_separators: Some(vec!["'".to_owned(), ".".to_owned()]),
 
         use_standard_includes: Some(true),
         includes: Some(vec!["test1".to_string()]),

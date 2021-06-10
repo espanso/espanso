@@ -327,6 +327,10 @@ impl Config for LegacyInteropConfig {
       Some(self.config.backspace_delay.try_into().unwrap())
     }
   }
+
+  fn word_separators(&self) -> Vec<String> {
+    self.config.word_separators.iter().map(|c| String::from(*c)).collect()
+  }
 }
 
 struct LegacyMatchGroup {

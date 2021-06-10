@@ -34,6 +34,7 @@ pub(crate) struct ParsedConfig {
   pub toggle_key: Option<String>,
   pub paste_shortcut: Option<String>,
   pub disable_x11_fast_inject: Option<bool>,
+  pub word_separators: Option<Vec<String>>,
 
   pub pre_paste_delay: Option<usize>,
   pub restore_clipboard_delay: Option<usize>,
