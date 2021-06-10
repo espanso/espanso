@@ -26,33 +26,14 @@ use espanso_path::Paths;
 use espanso_ui::{event::UIEvent, UIRemote};
 use log::info;
 
-use crate::{
-  cli::worker::{
-    engine::{
-      dispatch::executor::{
+use crate::{cli::worker::{engine::{dispatch::executor::{
         clipboard_injector::ClipboardInjectorAdapter, context_menu::ContextMenuHandlerAdapter,
         event_injector::EventInjectorAdapter, icon::IconHandlerAdapter,
         key_injector::KeyInjectorAdapter,
-      },
-      process::middleware::{
-        image_resolve::PathProviderAdapter,
-        match_select::MatchSelectorAdapter,
-        matcher::{
-          convert::MatchConverter,
-          regex::{RegexMatcherAdapter, RegexMatcherAdapterOptions},
-          rolling::RollingMatcherAdapter,
-        },
-        multiplex::MultiplexAdapter,
-        render::{
+      }, process::middleware::{image_resolve::PathProviderAdapter, match_select::MatchSelectorAdapter, matcher::{convert::MatchConverter, regex::{RegexMatcherAdapter, RegexMatcherAdapterOptions}, rolling::{RollingMatcherAdapter, RollingMatcherAdapterOptions}}, multiplex::MultiplexAdapter, render::{
           extension::{clipboard::ClipboardAdapter, form::FormProviderAdapter},
           RendererAdapter,
-        },
-      },
-    },
-    match_cache::MatchCache,
-  },
-  engine::event::ExitMode,
-};
+        }}}, match_cache::MatchCache}, engine::event::ExitMode};
 
 use super::secure_input::SecureInputEvent;
 
@@ -94,7 +75,9 @@ pub fn initialize_and_spawn(
         vec![&detect_source, &exit_source, &ui_source, &secure_input_source];
       let funnel = crate::engine::funnel::default(&sources);
 
-      let rolling_matcher = RollingMatcherAdapter::new(&match_converter.get_rolling_matches());
+      let rolling_matcher = RollingMatcherAdapter::new(&match_converter.get_rolling_matches(), RollingMatcherAdapterOptions {
+        char_word_separators: config_manager.default().word_separators(),
+      });
       let regex_matcher = RegexMatcherAdapter::new(
         &match_converter.get_regex_matches(),
         &RegexMatcherAdapterOptions {
