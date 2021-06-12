@@ -17,11 +17,4 @@
  * along with modulo.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub mod form;
-pub mod search;
-pub mod wizard;
-
-#[allow(non_upper_case_globals)]
-#[allow(dead_code)]
-#[allow(non_snake_case)]
-pub mod interop;
+pub use crate::sys::wizard::show;

@@ -113,6 +113,8 @@ fn build_native() {
     .file("src/sys/form/form.cpp")
     .file("src/sys/search/search.cpp")
     .file("src/sys/common/common.cpp")
+    .file("src/sys/wizard/wizard.cpp")
+    .file("src/sys/wizard/wizard_gui.cpp")
     .flag("/EHsc")
     .include(wx_include_dir)
     .include(wx_include_msvc_dir)
