@@ -45,8 +45,8 @@
             <property name="minimum_size"></property>
             <property name="name">WizardFrame</property>
             <property name="pos"></property>
-            <property name="size">546,572</property>
-            <property name="style">wxCAPTION|wxDEFAULT_FRAME_STYLE|wxRESIZE_BORDER</property>
+            <property name="size">550,523</property>
+            <property name="style">wxCAPTION|wxDEFAULT_FRAME_STYLE</property>
             <property name="subclass">; ; forward_declare</property>
             <property name="title">Espanso</property>
             <property name="tooltip"></property>
@@ -327,7 +327,7 @@
                                             <property name="gripper">0</property>
                                             <property name="hidden">0</property>
                                             <property name="id">wxID_ANY</property>
-                                            <property name="label">This wizard will help you to quickly get started with the tool</property>
+                                            <property name="label">This wizard will help you to quickly get started with espanso. &#x0A;&#x0A;Click &quot;Start&quot; when you are ready</property>
                                             <property name="markup">0</property>
                                             <property name="max_size"></property>
                                             <property name="maximize_button">0</property>
@@ -620,7 +620,7 @@
                                             <property name="window_extra_style"></property>
                                             <property name="window_name"></property>
                                             <property name="window_style"></property>
-                                            <property name="wrap">-1</property>
+                                            <property name="wrap">500</property>
                                         </object>
                                     </object>
                                     <object class="sizeritem" expanded="1">
@@ -894,7 +894,7 @@
                                     <object class="sizeritem" expanded="1">
                                         <property name="border">20</property>
                                         <property name="flag">wxLEFT|wxRIGHT|wxTOP</property>
-                                        <property name="proportion">0</property>
+                                        <property name="proportion">1</property>
                                         <object class="wxStaticText" expanded="1">
                                             <property name="BottomDockable">1</property>
                                             <property name="LeftDockable">1</property>
@@ -923,7 +923,7 @@
                                             <property name="gripper">0</property>
                                             <property name="hidden">0</property>
                                             <property name="id">wxID_ANY</property>
-                                            <property name="label">The new version uses a slightly different configuration format that powers some exciting new features.&#x0A;&#x0A;To ease the transition, espanso offers two possible choices:&#x0A;&#x0A;  - Automatically backup the old configuration in the Documents folder and migrate to the new format (recommended).&#x0A;  - Use compatibility mode without changing the configs.&#x0A;&#x0A;Keep in mind that:&#x0A;&#x0A;  - Compatibility mode does not support all new espanso features&#x0A;  - You can always migrate the configs later&#x0A;&#x0A;For more information, see:&#x0A;&#x0A;</property>
+                                            <property name="label">The new version uses a slightly different configuration format that powers some exciting features.&#x0A;&#x0A;To ease the transition, espanso offers two possible choices: &#x0A;&#x0A;  - Automatically backup the old configuration in the Documents folder and migrate to the new format (recommended). &#x0A;  - Use compatibility mode without changing the configs. &#x0A;&#x0A;Keep in mind that: &#x0A;&#x0A;  - Compatibility mode does not support all new espanso features &#x0A;  - You can always migrate the configs later &#x0A;&#x0A;For more information, see: &#x0A;</property>
                                             <property name="markup">0</property>
                                             <property name="max_size"></property>
                                             <property name="maximize_button">0</property>
@@ -949,7 +949,7 @@
                                             <property name="window_extra_style"></property>
                                             <property name="window_name"></property>
                                             <property name="window_style"></property>
-                                            <property name="wrap">-1</property>
+                                            <property name="wrap">500</property>
                                         </object>
                                     </object>
                                     <object class="sizeritem" expanded="1">

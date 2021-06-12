@@ -36,7 +36,7 @@ WizardFrame::WizardFrame( wxWindow* parent, wxWindowID id, const wxString& title
 	welcome_version_text->Wrap( -1 );
 	bSizer2->Add( welcome_version_text, 0, wxALIGN_CENTER_HORIZONTAL|wxALL, 5 );
 
-	welcome_description_text = new wxStaticText( welcome_panel, wxID_ANY, wxT("This wizard will help you to quickly get started with the tool"), wxDefaultPosition, wxDefaultSize, 0 );
+	welcome_description_text = new wxStaticText( welcome_panel, wxID_ANY, wxT("This wizard will help you to quickly get started with espanso. \n\nClick \"Start\" when you are ready"), wxDefaultPosition, wxDefaultSize, 0 );
 	welcome_description_text->Wrap( -1 );
 	bSizer2->Add( welcome_description_text, 0, wxALL, 20 );
 
@@ -66,7 +66,7 @@ WizardFrame::WizardFrame( wxWindow* parent, wxWindowID id, const wxString& title
 	bSizer21->Add( legacy_version_title, 0, wxALIGN_CENTER_HORIZONTAL|wxALIGN_LEFT|wxTOP, 20 );
 
 	legacy_version_description = new wxStaticText( legacy_version_panel, wxID_ANY, wxT("A legacy espanso process has been detected and prevents the new version from working correctly.\n\nPlease terminate and uninstall the old espanso version to proceed.\n\nFor more information, see: \n"), wxDefaultPosition, wxDefaultSize, 0 );
-	legacy_version_description->Wrap( -1 );
+	legacy_version_description->Wrap( 500 );
 	bSizer21->Add( legacy_version_description, 0, wxLEFT|wxRIGHT|wxTOP, 20 );
 
 	legacy_version_docs_link = new wxHyperlinkCtrl( legacy_version_panel, wxID_ANY, wxT("https://espanso.org/migration#uninstall"), wxT("https://espanso.org/migration#uninstall"), wxDefaultPosition, wxDefaultSize, wxHL_DEFAULT_STYLE );
@@ -99,9 +99,9 @@ WizardFrame::WizardFrame( wxWindow* parent, wxWindowID id, const wxString& title
 
 	bSizer211->Add( migrate_title, 0, wxALIGN_CENTER_HORIZONTAL|wxALIGN_LEFT|wxTOP, 20 );
 
-	migrate_description = new wxStaticText( migrate_panel, wxID_ANY, wxT("The new version uses a slightly different configuration format that powers some exciting new features.\n\nTo ease the transition, espanso offers two possible choices:\n\n  - Automatically backup the old configuration in the Documents folder and migrate to the new format (recommended).\n  - Use compatibility mode without changing the configs.\n\nKeep in mind that:\n\n  - Compatibility mode does not support all new espanso features\n  - You can always migrate the configs later\n\nFor more information, see:\n\n"), wxDefaultPosition, wxDefaultSize, 0 );
-	migrate_description->Wrap( -1 );
-	bSizer211->Add( migrate_description, 0, wxLEFT|wxRIGHT|wxTOP, 20 );
+	migrate_description = new wxStaticText( migrate_panel, wxID_ANY, wxT("The new version uses a slightly different configuration format that powers some exciting features.\n\nTo ease the transition, espanso offers two possible choices: \n\n  - Automatically backup the old configuration in the Documents folder and migrate to the new format (recommended). \n  - Use compatibility mode without changing the configs. \n\nKeep in mind that: \n\n  - Compatibility mode does not support all new espanso features \n  - You can always migrate the configs later \n\nFor more information, see: \n"), wxDefaultPosition, wxDefaultSize, 0 );
+	migrate_description->Wrap( 500 );
+	bSizer211->Add( migrate_description, 1, wxLEFT|wxRIGHT|wxTOP, 20 );
 
 	migrate_link = new wxHyperlinkCtrl( migrate_panel, wxID_ANY, wxT("https://espanso.org/migration"), wxT("https://espanso.org/migration"), wxDefaultPosition, wxDefaultSize, wxHL_DEFAULT_STYLE );
 	bSizer211->Add( migrate_link, 0, wxLEFT|wxRIGHT, 20 );
