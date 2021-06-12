@@ -51,6 +51,7 @@ const LOG_FILE_NAME: &str = "espanso.log";
 lazy_static! {
   static ref CLI_HANDLERS: Vec<CliModule> = vec![
     cli::path::new(),
+    cli::launcher::new(),
     cli::log::new(),
     cli::worker::new(),
     cli::daemon::new(),
@@ -152,6 +153,7 @@ fn main() {
     //     .about("MacOS and Linux only. Register espanso in the system daemon manager."))
     // .subcommand(SubCommand::with_name("unregister")
     //     .about("MacOS and Linux only. Unregister espanso from the system daemon manager."))
+    .subcommand(SubCommand::with_name("launcher").setting(AppSettings::Hidden))
     .subcommand(SubCommand::with_name("log").about("Print the daemon logs."))
     .subcommand(
       SubCommand::with_name("modulo")
@@ -221,7 +223,7 @@ fn main() {
     )
     .subcommand(
       SubCommand::with_name("migrate")
-        .about("Automatically migrate legacy config files to the new v2 format.")
+        .about("Automatically migrate legacy config files to the new v2 format."),
     )
     // .subcommand(SubCommand::with_name("match")
     //     .about("List and execute matches from the CLI")
