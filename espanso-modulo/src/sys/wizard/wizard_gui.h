@@ -60,7 +60,7 @@ class WizardFrame : public wxFrame
 
 	public:
 
-		WizardFrame( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Espanso"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 546,572 ), long style = wxCAPTION|wxDEFAULT_FRAME_STYLE|wxRESIZE_BORDER|wxTAB_TRAVERSAL );
+		WizardFrame( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Espanso"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 550,523 ), long style = wxCAPTION|wxDEFAULT_FRAME_STYLE|wxTAB_TRAVERSAL );
 
 		~WizardFrame();
 
