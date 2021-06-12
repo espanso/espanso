@@ -209,6 +209,8 @@ fn build_native() {
     .file("src/sys/form/form.cpp")
     .file("src/sys/common/common.cpp")
     .file("src/sys/search/search.cpp")
+    .file("src/sys/wizard/wizard.cpp")
+    .file("src/sys/wizard/wizard_gui.cpp")
     .file("src/sys/common/mac.mm");
   build.flag("-std=c++17");
 
