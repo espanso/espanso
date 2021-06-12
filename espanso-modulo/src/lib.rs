@@ -22,4 +22,5 @@ extern crate lazy_static;
 
 pub mod form;
 pub mod search;
+pub mod wizard;
 mod sys;
