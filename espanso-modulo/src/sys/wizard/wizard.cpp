@@ -27,6 +27,16 @@
 #include <memory>
 #include <unordered_map>
 
+const int WELCOME_PAGE_INDEX = 0;
+const int MOVE_BUNDLE_PAGE_INDEX = WELCOME_PAGE_INDEX + 1;
+const int LEGACY_VERSION_PAGE_INDEX = MOVE_BUNDLE_PAGE_INDEX + 1;
+const int MIGRATE_PAGE_INDEX = LEGACY_VERSION_PAGE_INDEX + 1;
+const int ADD_PATH_PAGE_INDEX = MIGRATE_PAGE_INDEX + 1;
+const int ACCESSIBILITY_PAGE_INDEX = ADD_PATH_PAGE_INDEX + 1;
+const int MAX_PAGE_INDEX = ACCESSIBILITY_PAGE_INDEX + 1; // Update if a new page is added at the end
+
+WizardMetadata *metadata= nullptr;
+
 // App Code
 
 class WizardApp : public wxApp
@@ -35,11 +45,49 @@ public:
   virtual bool OnInit();
 };
 
+int find_next_page(int current_index) {
+  int next_index = current_index + 1;
+  if (next_index >= MAX_PAGE_INDEX) {
+    return -1;
+  }
+
+  switch (next_index) {
+    case WELCOME_PAGE_INDEX:
+      if (metadata->is_welcome_page_enabled) {
+        return WELCOME_PAGE_INDEX;
+      }
+    case MOVE_BUNDLE_PAGE_INDEX:
+      if (metadata->is_move_bundle_page_enabled) {
+        return MOVE_BUNDLE_PAGE_INDEX; 
+      }
+    case LEGACY_VERSION_PAGE_INDEX:
+      if (metadata->is_legacy_version_page_enabled) {
+        return LEGACY_VERSION_PAGE_INDEX; 
+      }
+    case MIGRATE_PAGE_INDEX:
+      if (metadata->is_migrate_page_enabled) {
+        return MIGRATE_PAGE_INDEX; 
+      }
+    case ADD_PATH_PAGE_INDEX:
+      if (metadata->is_add_path_page_enabled) {
+        return ADD_PATH_PAGE_INDEX; 
+      }
+    case ACCESSIBILITY_PAGE_INDEX:
+      if (metadata->is_accessibility_page_enabled) {
+        return ACCESSIBILITY_PAGE_INDEX; 
+      }
+  }
+
+  return find_next_page(next_index);
+}
+
 class DerivedFrame : public WizardFrame
 {
 protected:
+  void check_timer_tick( wxTimerEvent& event );
   void welcome_start_clicked(wxCommandEvent &event);
 
+  void navigate_to_next_page_or_close();
 public:
   DerivedFrame(wxWindow *parent);
 };
@@ -47,17 +95,54 @@ public:
 DerivedFrame::DerivedFrame(wxWindow *parent)
     : WizardFrame(parent)
 {
+  // TODO: load images for accessibility page if on macOS
+
+  this->welcome_version_text->SetLabel(wxString::Format("( version %s )", metadata->version));
+
+  // Load the first page
+  int page = find_next_page(-1);
+  if (page >= 0) {
+    this->m_simplebook->ChangeSelection(page);
+  } else {
+    Close(true);
+  }
+}
+
+void DerivedFrame::navigate_to_next_page_or_close() {
+  int current_page = this->m_simplebook->GetSelection();
+  int page = find_next_page(current_page);
+  if (page >= 0) {
+    this->m_simplebook->ChangeSelection(page);
+  } else {
+    Close(true);
+  }
 }
 
 void DerivedFrame::welcome_start_clicked(wxCommandEvent &event)
 {
-  this->m_simplebook->ChangeSelection(2);
+  this->navigate_to_next_page_or_close();
 }
+
+void DerivedFrame::check_timer_tick( wxTimerEvent& event ) {
+  if (this->m_simplebook->GetSelection() == LEGACY_VERSION_PAGE_INDEX) {
+    if (metadata->is_legacy_version_running) {
+      if (metadata->is_legacy_version_running() == 0) {
+        this->navigate_to_next_page_or_close();
+      }
+    } 
+  }
+}
+
 
 bool WizardApp::OnInit()
 {
+  wxInitAllImageHandlers();
   DerivedFrame *frame = new DerivedFrame(NULL);
-  //setFrameIcon(formMetadata->iconPath, frame);
+  
+  if (metadata->window_icon_path) {
+    setFrameIcon(metadata->window_icon_path, frame);
+  }
+
   frame->Show(true);
 
   Activate(frame);
@@ -65,12 +150,14 @@ bool WizardApp::OnInit()
   return true;
 }
 
-extern "C" void interop_show_wizard()
+extern "C" void interop_show_wizard(WizardMetadata * _metadata)
 {
 // Setup high DPI support on Windows
 #ifdef __WXMSW__
   SetProcessDPIAware();
 #endif
+
+  metadata = _metadata;
 
   wxApp::SetInstance(new WizardApp());
   int argc = 0;

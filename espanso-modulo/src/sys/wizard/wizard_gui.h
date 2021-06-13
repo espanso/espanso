@@ -9,6 +9,7 @@
 
 #include <wx/artprov.h>
 #include <wx/xrc/xmlres.h>
+#include <wx/timer.h>
 #include <wx/string.h>
 #include <wx/stattext.h>
 #include <wx/gdicmn.h>
@@ -22,6 +23,9 @@
 #include <wx/sizer.h>
 #include <wx/panel.h>
 #include <wx/hyperlink.h>
+#include <wx/checkbox.h>
+#include <wx/statbmp.h>
+#include <wx/scrolwin.h>
 #include <wx/simplebook.h>
 #include <wx/frame.h>
 
@@ -36,12 +40,17 @@ class WizardFrame : public wxFrame
 	private:
 
 	protected:
+		wxTimer check_timer;
 		wxSimplebook* m_simplebook;
 		wxPanel* welcome_panel;
 		wxStaticText* welcome_title_text;
 		wxStaticText* welcome_version_text;
 		wxStaticText* welcome_description_text;
 		wxButton* welcome_start_button;
+		wxPanel* move_bundle_panel;
+		wxStaticText* move_bundle_title;
+		wxStaticText* move_bundle_description;
+		wxButton* move_bundle_quit_button;
 		wxPanel* legacy_version_panel;
 		wxStaticText* legacy_version_title;
 		wxStaticText* legacy_version_description;
@@ -53,14 +62,34 @@ class WizardFrame : public wxFrame
 		wxHyperlinkCtrl* migrate_link;
 		wxButton* migrate_compatibility_mode_button;
 		wxButton* migrate_backup_and_migrate_button;
+		wxPanel* add_path_panel;
+		wxStaticText* add_path_title;
+		wxStaticText* add_path_description;
+		wxCheckBox* add_path_checkbox;
+		wxStaticText* add_path_note;
+		wxButton* add_path_continue_button;
+		wxPanel* accessibility_panel;
+		wxStaticText* accessibility_title;
+		wxScrolledWindow* m_scrolledWindow1;
+		wxStaticText* accessibility_description;
+		wxStaticBitmap* accessibility_image1;
+		wxStaticText* accessibility_description2;
+		wxStaticBitmap* accessibility_image2;
+		wxButton* accessibility_enable_button;
 
 		// Virtual event handlers, overide them in your derived class
+		virtual void check_timer_tick( wxTimerEvent& event ) { event.Skip(); }
 		virtual void welcome_start_clicked( wxCommandEvent& event ) { event.Skip(); }
+		virtual void move_bundle_quit_clicked( wxCommandEvent& event ) { event.Skip(); }
+		virtual void migrate_compatibility_mode_clicked( wxCommandEvent& event ) { event.Skip(); }
+		virtual void migrate_button_clicked( wxCommandEvent& event ) { event.Skip(); }
+		virtual void add_path_continue_clicked( wxCommandEvent& event ) { event.Skip(); }
+		virtual void accessibility_enable_clicked( wxCommandEvent& event ) { event.Skip(); }
 
 
 	public:
 
-		WizardFrame( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Espanso"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 550,523 ), long style = wxCAPTION|wxDEFAULT_FRAME_STYLE|wxTAB_TRAVERSAL );
+		WizardFrame( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Espanso"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 550,577 ), long style = wxCAPTION|wxCLOSE_BOX|wxSYSTEM_MENU|wxTAB_TRAVERSAL );
 
 		~WizardFrame();
 

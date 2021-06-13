@@ -18,6 +18,7 @@
  */
 
 use std::ffi::c_void;
+use std::os::raw::{c_char, c_int};
 
 pub(crate) trait Interoperable {
   fn as_ptr(&self) -> *const c_void;
@@ -106,7 +107,28 @@ pub struct SearchMetadata {
   pub iconPath: *const ::std::os::raw::c_char,
 }
 
-use std::os::raw::{c_char, c_int};
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct WizardMetadata {
+  pub version: *const c_char,
+
+  pub is_welcome_page_enabled: c_int,
+  pub is_move_bundle_page_enabled: c_int,
+  pub is_legacy_version_page_enabled: c_int,
+  pub is_migrate_page_enabled: c_int,
+  pub is_add_path_page_enabled: c_int,
+  pub is_accessibility_page_enabled: c_int,
+
+  pub window_icon_path: *const c_char,
+  pub accessibility_image_1_path: *const c_char,
+  pub accessibility_image_2_path: *const c_char,
+
+  pub is_legacy_version_running: extern fn() -> c_int,
+  pub backup_and_migrate: extern fn() -> c_int,
+  pub add_to_path: extern fn() -> c_int,
+  pub enable_accessibility: extern fn() -> c_int,
+  pub is_accessibility_enabled: extern fn() -> c_int,
+}
 
 // Native bindings
 
@@ -132,5 +154,5 @@ extern "C" {
   pub(crate) fn update_items(app: *const c_void, items: *const SearchItem, itemCount: c_int);
 
   // WIZARD
-  pub(crate) fn interop_show_wizard();
+  pub(crate) fn interop_show_wizard(metadata: *const WizardMetadata);
 }
