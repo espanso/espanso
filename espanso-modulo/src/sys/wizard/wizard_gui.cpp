@@ -276,6 +276,7 @@ WizardFrame::WizardFrame( wxWindow* parent, wxWindowID id, const wxString& title
 
 	// Connect Events
 	this->Connect( wxID_ANY, wxEVT_TIMER, wxTimerEventHandler( WizardFrame::check_timer_tick ) );
+	m_simplebook->Connect( wxEVT_COMMAND_BOOKCTRL_PAGE_CHANGED, wxBookCtrlEventHandler( WizardFrame::on_page_changed ), NULL, this );
 	welcome_start_button->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( WizardFrame::welcome_start_clicked ), NULL, this );
 	move_bundle_quit_button->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( WizardFrame::move_bundle_quit_clicked ), NULL, this );
 	migrate_compatibility_mode_button->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( WizardFrame::migrate_compatibility_mode_clicked ), NULL, this );
@@ -288,6 +289,7 @@ WizardFrame::~WizardFrame()
 {
 	// Disconnect Events
 	this->Disconnect( wxID_ANY, wxEVT_TIMER, wxTimerEventHandler( WizardFrame::check_timer_tick ) );
+	m_simplebook->Disconnect( wxEVT_COMMAND_BOOKCTRL_PAGE_CHANGED, wxBookCtrlEventHandler( WizardFrame::on_page_changed ), NULL, this );
 	welcome_start_button->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( WizardFrame::welcome_start_clicked ), NULL, this );
 	move_bundle_quit_button->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( WizardFrame::move_bundle_quit_clicked ), NULL, this );
 	migrate_compatibility_mode_button->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( WizardFrame::migrate_compatibility_mode_clicked ), NULL, this );
