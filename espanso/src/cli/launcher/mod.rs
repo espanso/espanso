@@ -61,6 +61,9 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
     window_icon_path: icon_paths
       .wizard_icon
       .map(|path| path.to_string_lossy().to_string()),
+    welcome_image_path: icon_paths
+      .logo_no_background
+      .map(|path| path.to_string_lossy().to_string()),
     accessibility_image_1_path: None,
     accessibility_image_2_path: None,
     handlers: WizardHandlers {
