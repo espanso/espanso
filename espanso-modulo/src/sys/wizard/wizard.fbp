@@ -123,6 +123,7 @@
                         <property name="window_extra_style"></property>
                         <property name="window_name"></property>
                         <property name="window_style"></property>
+                        <event name="OnSimplebookPageChanged">on_page_changed</event>
                         <object class="simplebookpage" expanded="1">
                             <property name="label">a page</property>
                             <property name="select">0</property>

@@ -85,6 +85,7 @@ class DerivedFrame : public WizardFrame
 {
 protected:
   void check_timer_tick( wxTimerEvent& event );
+  void on_page_changed( wxBookCtrlEvent& event );
   void welcome_start_clicked(wxCommandEvent &event);
 
   void navigate_to_next_page_or_close();
@@ -102,7 +103,7 @@ DerivedFrame::DerivedFrame(wxWindow *parent)
   // Load the first page
   int page = find_next_page(-1);
   if (page >= 0) {
-    this->m_simplebook->ChangeSelection(page);
+    this->m_simplebook->SetSelection(page);
   } else {
     Close(true);
   }
@@ -112,7 +113,7 @@ void DerivedFrame::navigate_to_next_page_or_close() {
   int current_page = this->m_simplebook->GetSelection();
   int page = find_next_page(current_page);
   if (page >= 0) {
-    this->m_simplebook->ChangeSelection(page);
+    this->m_simplebook->SetSelection(page);
   } else {
     Close(true);
   }
@@ -130,6 +131,37 @@ void DerivedFrame::check_timer_tick( wxTimerEvent& event ) {
         this->navigate_to_next_page_or_close();
       }
     } 
+  }
+}
+
+void DerivedFrame::on_page_changed( wxBookCtrlEvent& event ) {
+  int current_page = this->m_simplebook->GetSelection();
+  switch (current_page) {
+    case WELCOME_PAGE_INDEX:
+    {
+      this->welcome_start_button->SetDefault();
+      break;
+    }
+    case MOVE_BUNDLE_PAGE_INDEX:
+    {
+      this->move_bundle_quit_button->SetDefault();
+      break;
+    }
+    case MIGRATE_PAGE_INDEX:
+    {
+      this->migrate_backup_and_migrate_button->SetDefault();
+      break;
+    }
+    case ADD_PATH_PAGE_INDEX:
+    {
+      this->add_path_continue_button->SetDefault();
+      break;
+    }
+    case ACCESSIBILITY_PAGE_INDEX:
+    {
+      this->accessibility_enable_button->SetDefault();
+      break;
+    }
   }
 }
 

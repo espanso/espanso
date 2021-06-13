@@ -79,6 +79,7 @@ class WizardFrame : public wxFrame
 
 		// Virtual event handlers, overide them in your derived class
 		virtual void check_timer_tick( wxTimerEvent& event ) { event.Skip(); }
+		virtual void on_page_changed( wxBookCtrlEvent& event ) { event.Skip(); }
 		virtual void welcome_start_clicked( wxCommandEvent& event ) { event.Skip(); }
 		virtual void move_bundle_quit_clicked( wxCommandEvent& event ) { event.Skip(); }
 		virtual void migrate_compatibility_mode_clicked( wxCommandEvent& event ) { event.Skip(); }
