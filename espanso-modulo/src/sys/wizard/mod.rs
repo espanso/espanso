@@ -17,156 +17,175 @@
  * along with modulo.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::ffi::CStr;
-use std::os::raw::{c_char, c_int, c_void};
+use std::os::raw::{c_char, c_int};
+use std::{ffi::CString, sync::Mutex};
 
-pub mod types {
-  // #[derive(Debug)]
-  // pub struct Search {
-  //   pub title: String,
-  //   pub icon: Option<String>,
-  //   pub items: Vec<SearchItem>,
-  // }
+use crate::{
+  sys::interop::WizardMetadata,
+  wizard::{WizardHandlers, WizardOptions},
+};
+
+lazy_static! {
+  static ref HANDLERS: Mutex<Option<WizardHandlers>> = Mutex::new(None);
 }
 
-#[allow(dead_code)]
-mod interop {
-  use super::types;
-  use super::super::interop::*;
-  use std::ffi::{c_void, CString};
+pub fn show(options: WizardOptions) {
+  let c_version = CString::new(options.version).expect("unable to convert version to CString");
 
-  // pub(crate) struct OwnedSearch {
-  //   title: CString,
-  //   icon_path: CString,
-  //   items: Vec<OwnedSearchItem>,
-  //   pub(crate) interop_items: Vec<SearchItem>,
-  //   _interop: Box<SearchMetadata>,
-  // }
+  let (_c_window_icon_path, c_window_icon_path_ptr) =
+    convert_to_cstring_or_null(options.window_icon_path);
+  let (_c_accessibility_image_1_path, c_accessibility_image_1_path_ptr) =
+    convert_to_cstring_or_null(options.accessibility_image_1_path);
+  let (_c_accessibility_image_2_path, c_accessibility_image_2_path_ptr) =
+    convert_to_cstring_or_null(options.accessibility_image_2_path);
 
-  // impl Interoperable for OwnedSearch {
-  //   fn as_ptr(&self) -> *const c_void {
-  //     &(*self._interop) as *const SearchMetadata as *const c_void
-  //   }
-  // }
-
-  // impl From<&types::Search> for OwnedSearch {
-  //   fn from(search: &types::Search) -> Self {
-  //     let title =
-  //       CString::new(search.title.clone()).expect("unable to convert search title to CString");
-
-  //     let items: Vec<OwnedSearchItem> = search.items.iter().map(|item| item.into()).collect();
-
-  //     let interop_items: Vec<SearchItem> = items.iter().map(|item| item.to_search_item()).collect();
-
-  //     let icon_path = if let Some(icon_path) = search.icon.as_ref() {
-  //       icon_path.clone()
-  //     } else {
-  //       "".to_owned()
-  //     };
-
-  //     let icon_path = CString::new(icon_path).expect("unable to convert search icon to CString");
-
-  //     let icon_path_ptr = if search.icon.is_some() {
-  //       icon_path.as_ptr()
-  //     } else {
-  //       std::ptr::null()
-  //     };
-
-  //     let _interop = Box::new(SearchMetadata {
-  //       iconPath: icon_path_ptr,
-  //       windowTitle: title.as_ptr(),
-  //     });
-
-  //     Self {
-  //       title,
-  //       items,
-  //       icon_path,
-  //       interop_items,
-  //       _interop,
-  //     }
-  //   }
-  // }
-
-  // pub(crate) struct OwnedSearchItem {
-  //   id: CString,
-  //   label: CString,
-  //   trigger: CString,
-  // }
-
-  // impl OwnedSearchItem {
-  //   fn to_search_item(&self) -> SearchItem {
-  //     SearchItem {
-  //       id: self.id.as_ptr(),
-  //       label: self.label.as_ptr(),
-  //       trigger: self.trigger.as_ptr(),
-  //     }
-  //   }
-  // }
-
-  // impl From<&types::SearchItem> for OwnedSearchItem {
-  //   fn from(item: &types::SearchItem) -> Self {
-  //     let id = CString::new(item.id.clone()).expect("unable to convert item id to CString");
-  //     let label =
-  //       CString::new(item.label.clone()).expect("unable to convert item label to CString");
-
-  //     let trigger = if let Some(trigger) = item.trigger.as_deref() {
-  //       CString::new(trigger.to_string()).expect("unable to convert item trigger to CString")
-  //     } else {
-  //       CString::new("".to_string()).expect("unable to convert item trigger to CString")
-  //     };
-
-  //     Self { id, label, trigger }
-  //   }
-  // }
-}
-
-// struct SearchData {
-//   owned_search: interop::OwnedSearch,
-//   items: Vec<types::SearchItem>,
-//   algorithm: Box<dyn Fn(&str, &[types::SearchItem]) -> Vec<usize>>,
-// }
-
-pub fn show() {
-  use super::interop::*;
-
-  // extern "C" fn search_callback(query: *const c_char, app: *const c_void, data: *const c_void) {
-  //   let query = unsafe { CStr::from_ptr(query) };
-  //   let query = query.to_string_lossy().to_string();
-
-  //   let search_data = data as *const SearchData;
-  //   let search_data = unsafe { &*search_data };
-
-  //   let indexes = (*search_data.algorithm)(&query, &search_data.items);
-  //   let items: Vec<SearchItem> = indexes
-  //     .into_iter()
-  //     .map(|index| search_data.owned_search.interop_items[index])
-  //     .collect();
-
-  //   unsafe {
-  //     update_items(app, items.as_ptr(), items.len() as c_int);
-  //   }
-  // }
-
-  // let mut result: Option<String> = None;
-
-  // extern "C" fn result_callback(id: *const c_char, result: *mut c_void) {
-  //   let id = unsafe { CStr::from_ptr(id) };
-  //   let id = id.to_string_lossy().to_string();
-  //   let result: *mut Option<String> = result as *mut Option<String>;
-  //   unsafe {
-  //     *result = Some(id);
-  //   }
-  // }
-
-  unsafe {
-    interop_show_wizard(
-      // metadata,
-      // search_callback,
-      // &search_data as *const SearchData as *const c_void,
-      // result_callback,
-      // &mut result as *mut Option<String> as *mut c_void,
-    );
+  extern "C" fn is_legacy_version_running() -> c_int {
+    let lock = HANDLERS
+      .lock()
+      .expect("unable to acquire lock in is_legacy_version_running method");
+    let handlers_ref = (*lock).as_ref().expect("unable to unwrap handlers");
+    if let Some(handler_ref) = handlers_ref.is_legacy_version_running.as_ref() {
+      if (*handler_ref)() {
+        1
+      } else {
+        0
+      }
+    } else {
+      -1
+    }
   }
 
-  //result
+  extern "C" fn backup_and_migrate() -> c_int {
+    let lock = HANDLERS
+      .lock()
+      .expect("unable to acquire lock in backup_and_migrate method");
+    let handlers_ref = (*lock).as_ref().expect("unable to unwrap handlers");
+    // TODO:
+    // if let Some(handler_ref) = handlers_ref.backup_and_migrate.as_ref() {
+    //   if (*handler_ref)() {
+    //     1
+    //   } else {
+    //     0
+    //   }
+    // } else {
+    //   -1
+    // }
+    0
+  }
+
+  extern "C" fn add_to_path() -> c_int {
+    let lock = HANDLERS
+      .lock()
+      .expect("unable to acquire lock in add_to_path method");
+    let handlers_ref = (*lock).as_ref().expect("unable to unwrap handlers");
+    // TODO:
+    // if let Some(handler_ref) = handlers_ref.add_to_path.as_ref() {
+    //   if (*handler_ref)() {
+    //     1
+    //   } else {
+    //     0
+    //   }
+    // } else {
+    //   -1
+    // }
+    0
+  }
+
+  extern "C" fn enable_accessibility() -> c_int {
+    let lock = HANDLERS
+      .lock()
+      .expect("unable to acquire lock in enable_accessibility method");
+    let handlers_ref = (*lock).as_ref().expect("unable to unwrap handlers");
+    // TODO:
+    // if let Some(handler_ref) = handlers_ref.add_to_path.as_ref() {
+    //   if (*handler_ref)() {
+    //     1
+    //   } else {
+    //     0
+    //   }
+    // } else {
+    //   -1
+    // }
+    0
+  }
+
+  extern "C" fn is_accessibility_enabled() -> c_int {
+    let lock = HANDLERS
+      .lock()
+      .expect("unable to acquire lock in is_accessibility_enabled method");
+    let handlers_ref = (*lock).as_ref().expect("unable to unwrap handlers");
+    // TODO:
+    // if let Some(handler_ref) = handlers_ref.add_to_path.as_ref() {
+    //   if (*handler_ref)() {
+    //     1
+    //   } else {
+    //     0
+    //   }
+    // } else {
+    //   -1
+    // }
+    0
+  }
+
+  {
+    let mut lock = HANDLERS.lock().expect("unable to acquire handlers lock");
+    *lock = Some(options.handlers)
+  }
+
+  let wizard_metadata = WizardMetadata {
+    version: c_version.as_ptr(),
+
+    is_welcome_page_enabled: if options.is_welcome_page_enabled {
+      1
+    } else {
+      0
+    },
+    is_move_bundle_page_enabled: if options.is_move_bundle_page_enabled {
+      1
+    } else {
+      0
+    },
+    is_legacy_version_page_enabled: if options.is_legacy_version_page_enabled {
+      1
+    } else {
+      0
+    },
+    is_migrate_page_enabled: if options.is_migrate_page_enabled {
+      1
+    } else {
+      0
+    },
+    is_add_path_page_enabled: if options.is_add_path_page_enabled {
+      1
+    } else {
+      0
+    },
+    is_accessibility_page_enabled: if options.is_accessibility_page_enabled {
+      1
+    } else {
+      0
+    },
+
+    window_icon_path: c_window_icon_path_ptr,
+    accessibility_image_1_path: c_accessibility_image_1_path_ptr,
+    accessibility_image_2_path: c_accessibility_image_2_path_ptr,
+
+    is_legacy_version_running,
+    backup_and_migrate,
+    add_to_path,
+    enable_accessibility,
+    is_accessibility_enabled,
+  };
+
+  unsafe {
+    super::interop::interop_show_wizard(&wizard_metadata);
+  }
+}
+
+fn convert_to_cstring_or_null(str: Option<String>) -> (Option<CString>, *const c_char) {
+  let c_string =
+    str.map(|str| CString::new(str).expect("unable to convert Option<String> to CString"));
+  let c_ptr = c_string.as_ref().map_or(std::ptr::null(), |path| path.as_ptr());
+
+  (c_string, c_ptr)
 }

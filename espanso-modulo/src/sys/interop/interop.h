@@ -88,3 +88,27 @@ typedef struct SearchMetadata {
   const char *windowTitle;
   const char *iconPath;
 } SearchMetadata;
+
+// WIZARD
+
+typedef struct WizardMetadata {
+  const char *version;
+
+  const int is_welcome_page_enabled; 
+  const int is_move_bundle_page_enabled; 
+  const int is_legacy_version_page_enabled; 
+  const int is_migrate_page_enabled; 
+  const int is_add_path_page_enabled; 
+  const int is_accessibility_page_enabled; 
+
+  const char *window_icon_path;
+  const char *accessibility_image_1_path;
+  const char *accessibility_image_2_path;
+
+  // METHODS
+  int (*is_legacy_version_running)();
+  int (*backup_and_migrate)();
+  int (*add_to_path)();
+  int (*enable_accessibility)();
+  int (*is_accessibility_enabled)();
+} WizardMetadata;
