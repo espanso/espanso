@@ -89,6 +89,7 @@ protected:
   void welcome_start_clicked(wxCommandEvent &event);
 
   void navigate_to_next_page_or_close();
+  void change_default_button(int target_page);
 public:
   DerivedFrame(wxWindow *parent);
 };
@@ -104,6 +105,7 @@ DerivedFrame::DerivedFrame(wxWindow *parent)
   int page = find_next_page(-1);
   if (page >= 0) {
     this->m_simplebook->SetSelection(page);
+    this->change_default_button(page);
   } else {
     Close(true);
   }
@@ -136,7 +138,11 @@ void DerivedFrame::check_timer_tick( wxTimerEvent& event ) {
 
 void DerivedFrame::on_page_changed( wxBookCtrlEvent& event ) {
   int current_page = this->m_simplebook->GetSelection();
-  switch (current_page) {
+  this->change_default_button(current_page);
+}
+
+void DerivedFrame::change_default_button(int target_page) {
+  switch (target_page) {
     case WELCOME_PAGE_INDEX:
     {
       this->welcome_start_button->SetDefault();
