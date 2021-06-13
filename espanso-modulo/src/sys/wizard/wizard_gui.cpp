@@ -30,6 +30,8 @@ WizardFrame::WizardFrame( wxWindow* parent, wxWindowID id, const wxString& title
 	bSizer2 = new wxBoxSizer( wxVERTICAL );
 
 	welcome_image = new wxStaticBitmap( welcome_panel, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxSize( 256,256 ), 0 );
+	welcome_image->SetMinSize( wxSize( 256,256 ) );
+
 	bSizer2->Add( welcome_image, 0, wxALIGN_CENTER|wxALL, 0 );
 
 	welcome_title_text = new wxStaticText( welcome_panel, wxID_ANY, wxT("Welcome to Espanso!"), wxDefaultPosition, wxDefaultSize, 0 );
