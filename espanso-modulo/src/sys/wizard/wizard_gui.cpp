@@ -29,6 +29,9 @@ WizardFrame::WizardFrame( wxWindow* parent, wxWindowID id, const wxString& title
 	wxBoxSizer* bSizer2;
 	bSizer2 = new wxBoxSizer( wxVERTICAL );
 
+	welcome_image = new wxStaticBitmap( welcome_panel, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxSize( 256,256 ), 0 );
+	bSizer2->Add( welcome_image, 0, wxALIGN_CENTER|wxALL, 0 );
+
 	welcome_title_text = new wxStaticText( welcome_panel, wxID_ANY, wxT("Welcome to Espanso!"), wxDefaultPosition, wxDefaultSize, 0 );
 	welcome_title_text->Wrap( -1 );
 	welcome_title_text->SetFont( wxFont( 18, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD, false, wxEmptyString ) );

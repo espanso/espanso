@@ -30,6 +30,7 @@ pub struct WizardOptions {
   pub is_accessibility_page_enabled: bool,
 
   pub window_icon_path: Option<String>,
+  pub welcome_image_path: Option<String>,
   pub accessibility_image_1_path: Option<String>,
   pub accessibility_image_2_path: Option<String>,
 

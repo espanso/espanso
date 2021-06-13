@@ -120,6 +120,7 @@ pub struct WizardMetadata {
   pub is_accessibility_page_enabled: c_int,
 
   pub window_icon_path: *const c_char,
+  pub welcome_image_path: *const c_char,
   pub accessibility_image_1_path: *const c_char,
   pub accessibility_image_2_path: *const c_char,
 

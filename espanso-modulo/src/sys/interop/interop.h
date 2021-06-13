@@ -102,6 +102,7 @@ typedef struct WizardMetadata {
   const int is_accessibility_page_enabled; 
 
   const char *window_icon_path;
+  const char *welcome_image_path;
   const char *accessibility_image_1_path;
   const char *accessibility_image_2_path;
 
