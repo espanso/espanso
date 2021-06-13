@@ -87,6 +87,7 @@ protected:
   void check_timer_tick( wxTimerEvent& event );
   void on_page_changed( wxBookCtrlEvent& event );
   void welcome_start_clicked(wxCommandEvent &event);
+  void migrate_compatibility_mode_clicked( wxCommandEvent& event );
 
   void navigate_to_next_page_or_close();
   void change_default_button(int target_page);
@@ -98,6 +99,11 @@ DerivedFrame::DerivedFrame(wxWindow *parent)
     : WizardFrame(parent)
 {
   // TODO: load images for accessibility page if on macOS
+
+  if (metadata->welcome_image_path) {
+    wxBitmap welcomeBitmap = wxBitmap(metadata->welcome_image_path, wxBITMAP_TYPE_PNG);
+    this->welcome_image->SetBitmap(welcomeBitmap);
+  }
 
   this->welcome_version_text->SetLabel(wxString::Format("( version %s )", metadata->version));
 
@@ -123,6 +129,10 @@ void DerivedFrame::navigate_to_next_page_or_close() {
 
 void DerivedFrame::welcome_start_clicked(wxCommandEvent &event)
 {
+  this->navigate_to_next_page_or_close();
+}
+
+void DerivedFrame::migrate_compatibility_mode_clicked( wxCommandEvent& event ) {
   this->navigate_to_next_page_or_close();
 }
 

@@ -34,6 +34,8 @@ pub fn show(options: WizardOptions) {
 
   let (_c_window_icon_path, c_window_icon_path_ptr) =
     convert_to_cstring_or_null(options.window_icon_path);
+  let (_c_welcome_image, c_welcome_image_path_ptr) =
+    convert_to_cstring_or_null(options.welcome_image_path);
   let (_c_accessibility_image_1_path, c_accessibility_image_1_path_ptr) =
     convert_to_cstring_or_null(options.accessibility_image_1_path);
   let (_c_accessibility_image_2_path, c_accessibility_image_2_path_ptr) =
@@ -167,6 +169,7 @@ pub fn show(options: WizardOptions) {
     },
 
     window_icon_path: c_window_icon_path_ptr,
+    welcome_image_path: c_welcome_image_path_ptr,
     accessibility_image_1_path: c_accessibility_image_1_path_ptr,
     accessibility_image_2_path: c_accessibility_image_2_path_ptr,
 
