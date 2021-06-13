@@ -27,14 +27,10 @@ use espanso_ipc::IPCClient;
 use espanso_path::Paths;
 use log::{error, info, warn};
 
-use crate::{
-  exit_code::{
+use crate::{VERSION, exit_code::{
     DAEMON_ALREADY_RUNNING, DAEMON_GENERAL_ERROR, DAEMON_LEGACY_ALREADY_RUNNING, DAEMON_SUCCESS,
     WORKER_EXIT_ALL_PROCESSES, WORKER_RESTART, WORKER_SUCCESS,
-  },
-  ipc::{create_ipc_client_to_worker, IPCEvent},
-  lock::{acquire_daemon_lock, acquire_legacy_lock, acquire_worker_lock},
-};
+  }, ipc::{create_ipc_client_to_worker, IPCEvent}, lock::{acquire_daemon_lock, acquire_legacy_lock, acquire_worker_lock}};
 
 use super::{CliModule, CliModuleArgs};
 
@@ -53,8 +49,6 @@ pub fn new() -> CliModule {
     ..Default::default()
   }
 }
-
-const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 fn daemon_main(args: CliModuleArgs) -> i32 {
   let paths = args.paths.expect("missing paths in daemon main");

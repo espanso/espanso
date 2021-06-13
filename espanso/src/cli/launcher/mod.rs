@@ -17,7 +17,11 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use espanso_modulo::wizard::{WizardHandlers, WizardOptions};
+
 use super::{CliModule, CliModuleArgs};
+
+mod util;
 
 // TODO: test also with modulo feature disabled
 
@@ -38,7 +42,37 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
   let cli_args = args.cli_args.expect("missing cli_args in launcher main");
   let icon_paths = crate::icon::load_icon_paths(&paths.runtime).expect("unable to load icon paths");
 
-  espanso_modulo::wizard::show();
+  // TODO: should move wizard to "init" subcommand?
+
+  let is_legacy_version_page_enabled = util::is_legacy_version_running(&paths.runtime);
+  let runtime_dir_clone = paths.runtime.clone();
+  let is_legacy_version_running_handler = Box::new(move || {
+    util::is_legacy_version_running(&runtime_dir_clone)
+  });
+
+  espanso_modulo::wizard::show(WizardOptions {
+    version: crate::VERSION.to_string(),
+    is_welcome_page_enabled: true,        // TODO
+    is_move_bundle_page_enabled: false,   // TODO
+    is_legacy_version_page_enabled,
+    is_migrate_page_enabled: true,        // TODO,
+    is_add_path_page_enabled: true,       // TODO
+    is_accessibility_page_enabled: true,  // TODO
+    window_icon_path: icon_paths
+      .wizard_icon
+      .map(|path| path.to_string_lossy().to_string()),
+    accessibility_image_1_path: None,
+    accessibility_image_2_path: None,
+    handlers: WizardHandlers {
+      is_legacy_version_running: Some(is_legacy_version_running_handler),
+      backup_and_migrate: None,
+      add_to_path: None,
+      enable_accessibility: None,
+      is_accessibility_enabled: None,
+    },
+  });
+
+  // TODO: enable "Add to PATH" page only when NOT in portable mode
 
   0
 }

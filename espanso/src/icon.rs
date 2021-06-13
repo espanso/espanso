@@ -42,6 +42,7 @@ const MAC_SYSTEM_DISABLED_BINARY: &[u8] = include_bytes!("res/macos/iconsystemdi
 pub struct IconPaths {
   pub form_icon: Option<PathBuf>,
   pub search_icon: Option<PathBuf>,
+  pub wizard_icon: Option<PathBuf>,
 
   pub tray_icon_normal: Option<PathBuf>,
   pub tray_icon_disabled: Option<PathBuf>,
@@ -55,6 +56,7 @@ pub fn load_icon_paths(runtime_dir: &Path) -> Result<IconPaths> {
   Ok(IconPaths {
     form_icon: Some(extract_icon(WINDOWS_LOGO_ICO_BINARY, &runtime_dir.join("form.ico"))?),
     search_icon: Some(extract_icon(ICON_BINARY, &runtime_dir.join("search.png"))?),
+    wizard_icon: Some(extract_icon(WINDOWS_LOGO_ICO_BINARY, &runtime_dir.join("wizard.ico"))?),
     tray_icon_normal: Some(extract_icon(WINDOWS_NORMAL_DARK_ICO_BINARY, &runtime_dir.join("normal.ico"))?),
     tray_icon_disabled: Some(extract_icon(WINDOWS_DISABLED_DARK_ICO_BINARY, &runtime_dir.join("disabled.ico"))?),
     logo: Some(extract_icon(ICON_BINARY, &runtime_dir.join("icon.png"))?),
