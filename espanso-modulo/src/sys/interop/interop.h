@@ -91,6 +91,11 @@ typedef struct SearchMetadata {
 
 // WIZARD
 
+const int MIGRATE_RESULT_SUCCESS = 0;
+const int MIGRATE_RESULT_CLEAN_FAILURE = 1;
+const int MIGRATE_RESULT_DIRTY_FAILURE = 2;
+const int MIGRATE_RESULT_UNKNOWN_FAILURE = 3;
+
 typedef struct WizardMetadata {
   const char *version;
 

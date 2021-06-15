@@ -107,6 +107,11 @@ pub struct SearchMetadata {
   pub iconPath: *const ::std::os::raw::c_char,
 }
 
+pub const WIZARD_MIGRATE_RESULT_SUCCESS: i32 = 0;
+pub const WIZARD_MIGRATE_RESULT_CLEAN_FAILURE: i32 = 1;
+pub const WIZARD_MIGRATE_RESULT_DIRTY_FAILURE: i32 = 2;
+pub const WIZARD_MIGRATE_RESULT_UNKNOWN_FAILURE: i32 = 3;
+
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct WizardMetadata {
