@@ -31,6 +31,7 @@ pub mod worker;
 
 pub struct CliModule {
   pub enable_logs: bool,
+  pub disable_logs_terminal_output: bool,
   pub log_mode: LogMode,
   pub requires_paths: bool,
   pub requires_config: bool,
@@ -43,6 +44,7 @@ impl Default for CliModule {
     Self {
       enable_logs: false,
       log_mode: LogMode::Read,
+      disable_logs_terminal_output: false,
       requires_paths: false, 
       requires_config: false, 
       subcommand: "".to_string(), 

@@ -19,12 +19,20 @@
 
 use std::{path::PathBuf, sync::Mutex};
 
-use crate::{exit_code::{MIGRATE_ALREADY_NEW_FORMAT, MIGRATE_CLEAN_FAILURE, MIGRATE_DIRTY_FAILURE, MIGRATE_LEGACY_INSTANCE_RUNNING, MIGRATE_SUCCESS, MIGRATE_UNEXPECTED_FAILURE, MIGRATE_USER_ABORTED}, lock::acquire_legacy_lock};
+use crate::{
+  exit_code::{
+    MIGRATE_ALREADY_NEW_FORMAT, MIGRATE_CLEAN_FAILURE, MIGRATE_DIRTY_FAILURE,
+    MIGRATE_LEGACY_INSTANCE_RUNNING, MIGRATE_SUCCESS, MIGRATE_UNEXPECTED_FAILURE,
+    MIGRATE_USER_ABORTED,
+  },
+  lock::acquire_legacy_lock,
+};
 
 use super::{CliModule, CliModuleArgs};
 use colored::*;
 use dialoguer::Confirm;
 use fs_extra::dir::CopyOptions;
+use log::{error, info};
 use tempdir::TempDir;
 
 lazy_static! {
@@ -33,8 +41,11 @@ lazy_static! {
 
 pub fn new() -> CliModule {
   CliModule {
+    enable_logs: true,
+    disable_logs_terminal_output: true,
     requires_paths: true,
     requires_config: true,
+    log_mode: super::LogMode::AppendOnly,
     subcommand: "migrate".to_string(),
     entry: migrate_main,
     ..Default::default()
@@ -45,19 +56,21 @@ fn migrate_main(args: CliModuleArgs) -> i32 {
   let paths = args.paths.expect("missing paths argument");
   let cli_args = args.cli_args.expect("missing cli_args");
 
+  info!("--- MIGRATION STARTED ---");
+
   configure_custom_panic_hook();
 
   if !args.is_legacy_config {
-    eprintln!("Can't migrate configurations, as the default directory [1] is already encoded with the new format");
-    eprintln!("[1]: {:?}", paths.config);
-    eprintln!("The migration tool is only meant to convert the espanso's legacy configuration format (prior to");
-    eprintln!("version 0.7.3) to the new one (since version 2.0)");
+    error_print_and_log("Can't migrate configurations, as the default directory [1] is already encoded with the new format");
+    error_print_and_log(&format!("[1]: {:?}", paths.config));
+    error_print_and_log("The migration tool is only meant to convert the espanso's legacy configuration format (prior to");
+    error_print_and_log("version 0.7.3) to the new one (since version 2.0)");
     return MIGRATE_ALREADY_NEW_FORMAT;
   }
 
   let legacy_lock_file = acquire_legacy_lock(&paths.runtime);
   if legacy_lock_file.is_none() {
-    eprintln!("An instance of legacy espanso is running, please terminate it, otherwise the migration can't be performed");
+    error_print_and_log("An instance of legacy espanso is running, please terminate it, otherwise the migration can't be performed");
     return MIGRATE_LEGACY_INSTANCE_RUNNING;
   }
 
@@ -79,6 +92,15 @@ fn migrate_main(args: CliModuleArgs) -> i32 {
   );
   println!("   the current content of the config directory.");
   println!("");
+
+  info!(
+    "backing up the configuration directory: '{}'",
+    paths.config.to_string_lossy()
+  );
+  info!(
+    " -> into this folder: '{}'",
+    target_backup_dir.to_string_lossy()
+  );
 
   if !cli_args.is_present("noconfirm") {
     if !Confirm::new()
@@ -104,15 +126,19 @@ fn migrate_main(args: CliModuleArgs) -> i32 {
   )
   .expect("unable to backup the current config");
   println!("{}", "Backup completed!".green());
+  info!("backup completed!");
 
   println!("Converting the configuration...");
+  info!("converting the configuration...");
   let temp_dir = TempDir::new("espanso-migrate-out").expect("unable to create temporary directory");
   let temp_out_dir = temp_dir.path().join("out");
   espanso_migrate::migrate(&paths.config, &paths.packages, &temp_out_dir)
     .expect("an error occurred while converting the configuration");
   println!("{}", "Conversion completed!".green());
+  info!("conversion completed!");
 
   println!("Replacing old configuration with the new one...");
+  info!("replacing old configuration with the new one...");
   update_panic_exit_code(MIGRATE_DIRTY_FAILURE);
 
   let mut to_be_removed = Vec::new();
@@ -137,6 +163,7 @@ fn migrate_main(args: CliModuleArgs) -> i32 {
   }
 
   println!("{}", "Configuration successfully migrated!".green());
+  info!("configuration migrated!");
 
   MIGRATE_SUCCESS
 }
@@ -166,12 +193,44 @@ fn configure_custom_panic_hook() {
   std::panic::set_hook(Box::new(move |info| {
     (*previous_hook)(info);
 
+    // Part of this code is taken from the "rust-log-panics" crate
+    let thread = std::thread::current();
+    let thread = thread.name().unwrap_or("<unnamed>");
+
+    let msg = match info.payload().downcast_ref::<&'static str>() {
+      Some(s) => *s,
+      None => match info.payload().downcast_ref::<String>() {
+        Some(s) => &**s,
+        None => "Box<Any>",
+      },
+    };
+
+    match info.location() {
+      Some(location) => {
+        eprintln!(
+          "ERROR: '{}' panicked at '{}': {}:{}",
+          thread,
+          msg,
+          location.file(),
+          location.line(),
+        );
+      }
+      None => eprintln!("ERROR: '{}' panicked at '{}'", thread, msg,),
+    }
+
     let exit_code = CURRENT_PANIC_EXIT_CODE.lock().unwrap();
     std::process::exit(*exit_code);
   }));
 }
 
 fn update_panic_exit_code(exit_code: i32) {
-  let mut lock = CURRENT_PANIC_EXIT_CODE.lock().expect("unable to update panic exit code");
+  let mut lock = CURRENT_PANIC_EXIT_CODE
+    .lock()
+    .expect("unable to update panic exit code");
   *lock = exit_code;
+}
+
+fn error_print_and_log(msg: &str) {
+  error!("{}", msg);
+  eprintln!("{}", msg);
 }
