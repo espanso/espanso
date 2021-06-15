@@ -30,7 +30,7 @@ use cli::{CliModule, CliModuleArgs};
 use log::{error, info, warn};
 use logging::FileProxy;
 use simplelog::{
-  CombinedLogger, ConfigBuilder, LevelFilter, TermLogger, TerminalMode, WriteLogger,
+  CombinedLogger, ConfigBuilder, LevelFilter, SharedLogger, TermLogger, TerminalMode, WriteLogger,
 };
 
 use crate::cli::LogMode;
@@ -224,9 +224,8 @@ fn main() {
     .subcommand(
       SubCommand::with_name("migrate")
         .about("Automatically migrate legacy config files to the new v2 format.")
-        .arg(Arg::with_name("noconfirm")
-          .long("noconfirm"))
-          .help("Migrate the configuration without asking for confirmation"),
+        .arg(Arg::with_name("noconfirm").long("noconfirm"))
+        .help("Migrate the configuration without asking for confirmation"),
     )
     // .subcommand(SubCommand::with_name("match")
     //     .about("List and execute matches from the CLI")
@@ -319,11 +318,20 @@ fn main() {
         .add_filter_ignore_str("html5ever")
         .build();
 
-      CombinedLogger::init(vec![
-        TermLogger::new(log_level, config.clone(), TerminalMode::Mixed),
-        WriteLogger::new(LevelFilter::Info, config, log_proxy.clone()),
-      ])
-      .expect("unable to initialize logs");
+      let mut outputs: Vec<Box<dyn SharedLogger>> = vec![WriteLogger::new(
+        LevelFilter::Info,
+        config.clone(),
+        log_proxy.clone(),
+      )];
+
+      if !handler.disable_logs_terminal_output {
+        outputs.insert(
+          0,
+          TermLogger::new(log_level, config.clone(), TerminalMode::Mixed),
+        );
+      }
+
+      CombinedLogger::init(outputs).expect("unable to initialize logs");
 
       // Activate logging for panics
       log_panics::init();
