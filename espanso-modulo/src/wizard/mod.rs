@@ -50,4 +50,5 @@ pub enum MigrationResult {
   Success,
   CleanFailure,
   DirtyFailure,
+  UnknownFailure,
 }

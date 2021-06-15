@@ -20,10 +20,7 @@
 use std::os::raw::{c_char, c_int};
 use std::{ffi::CString, sync::Mutex};
 
-use crate::{
-  sys::interop::WizardMetadata,
-  wizard::{WizardHandlers, WizardOptions},
-};
+use crate::{sys::interop::{WIZARD_MIGRATE_RESULT_CLEAN_FAILURE, WIZARD_MIGRATE_RESULT_DIRTY_FAILURE, WIZARD_MIGRATE_RESULT_SUCCESS, WIZARD_MIGRATE_RESULT_UNKNOWN_FAILURE, WizardMetadata}, wizard::{WizardHandlers, WizardOptions}};
 
 lazy_static! {
   static ref HANDLERS: Mutex<Option<WizardHandlers>> = Mutex::new(None);
@@ -62,17 +59,16 @@ pub fn show(options: WizardOptions) {
       .lock()
       .expect("unable to acquire lock in backup_and_migrate method");
     let handlers_ref = (*lock).as_ref().expect("unable to unwrap handlers");
-    // TODO:
-    // if let Some(handler_ref) = handlers_ref.backup_and_migrate.as_ref() {
-    //   if (*handler_ref)() {
-    //     1
-    //   } else {
-    //     0
-    //   }
-    // } else {
-    //   -1
-    // }
-    0
+    if let Some(handler_ref) = handlers_ref.backup_and_migrate.as_ref() {
+      match (*handler_ref)() {
+        crate::wizard::MigrationResult::Success => WIZARD_MIGRATE_RESULT_SUCCESS,
+        crate::wizard::MigrationResult::CleanFailure => WIZARD_MIGRATE_RESULT_CLEAN_FAILURE,
+        crate::wizard::MigrationResult::DirtyFailure => WIZARD_MIGRATE_RESULT_DIRTY_FAILURE,
+        crate::wizard::MigrationResult::UnknownFailure => WIZARD_MIGRATE_RESULT_UNKNOWN_FAILURE,
+      }
+    } else {
+      WIZARD_MIGRATE_RESULT_UNKNOWN_FAILURE
+    }
   }
 
   extern "C" fn add_to_path() -> c_int {
@@ -188,7 +184,9 @@ pub fn show(options: WizardOptions) {
 fn convert_to_cstring_or_null(str: Option<String>) -> (Option<CString>, *const c_char) {
   let c_string =
     str.map(|str| CString::new(str).expect("unable to convert Option<String> to CString"));
-  let c_ptr = c_string.as_ref().map_or(std::ptr::null(), |path| path.as_ptr());
+  let c_ptr = c_string
+    .as_ref()
+    .map_or(std::ptr::null(), |path| path.as_ptr());
 
   (c_string, c_ptr)
 }
