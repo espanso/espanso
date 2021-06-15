@@ -223,7 +223,10 @@ fn main() {
     )
     .subcommand(
       SubCommand::with_name("migrate")
-        .about("Automatically migrate legacy config files to the new v2 format."),
+        .about("Automatically migrate legacy config files to the new v2 format.")
+        .arg(Arg::with_name("noconfirm")
+          .long("noconfirm"))
+          .help("Migrate the configuration without asking for confirmation"),
     )
     // .subcommand(SubCommand::with_name("match")
     //     .about("List and execute matches from the CLI")
