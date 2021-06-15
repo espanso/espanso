@@ -17,15 +17,19 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::path::PathBuf;
+use std::{path::PathBuf, sync::Mutex};
 
-use crate::lock::acquire_legacy_lock;
+use crate::{exit_code::{MIGRATE_ALREADY_NEW_FORMAT, MIGRATE_CLEAN_FAILURE, MIGRATE_DIRTY_FAILURE, MIGRATE_LEGACY_INSTANCE_RUNNING, MIGRATE_SUCCESS, MIGRATE_UNEXPECTED_FAILURE, MIGRATE_USER_ABORTED}, lock::acquire_legacy_lock};
 
 use super::{CliModule, CliModuleArgs};
 use colored::*;
 use dialoguer::Confirm;
 use fs_extra::dir::CopyOptions;
 use tempdir::TempDir;
+
+lazy_static! {
+  static ref CURRENT_PANIC_EXIT_CODE: Mutex<i32> = Mutex::new(MIGRATE_UNEXPECTED_FAILURE);
+}
 
 pub fn new() -> CliModule {
   CliModule {
@@ -39,19 +43,22 @@ pub fn new() -> CliModule {
 
 fn migrate_main(args: CliModuleArgs) -> i32 {
   let paths = args.paths.expect("missing paths argument");
+  let cli_args = args.cli_args.expect("missing cli_args");
+
+  configure_custom_panic_hook();
 
   if !args.is_legacy_config {
     eprintln!("Can't migrate configurations, as the default directory [1] is already encoded with the new format");
     eprintln!("[1]: {:?}", paths.config);
     eprintln!("The migration tool is only meant to convert the espanso's legacy configuration format (prior to");
     eprintln!("version 0.7.3) to the new one (since version 2.0)");
-    return 1;
+    return MIGRATE_ALREADY_NEW_FORMAT;
   }
 
   let legacy_lock_file = acquire_legacy_lock(&paths.runtime);
   if legacy_lock_file.is_none() {
     eprintln!("An instance of legacy espanso is running, please terminate it, otherwise the migration can't be performed");
-    return 2;
+    return MIGRATE_LEGACY_INSTANCE_RUNNING;
   }
 
   let target_backup_dir = find_available_backup_dir();
@@ -73,16 +80,19 @@ fn migrate_main(args: CliModuleArgs) -> i32 {
   println!("   the current content of the config directory.");
   println!("");
 
-  if !Confirm::new()
-    .with_prompt("Do you want to proceed?")
-    .default(true)
-    .interact()
-    .expect("unable to read choice")
-  {
-    return 2;
+  if !cli_args.is_present("noconfirm") {
+    if !Confirm::new()
+      .with_prompt("Do you want to proceed?")
+      .default(true)
+      .interact()
+      .expect("unable to read choice")
+    {
+      return MIGRATE_USER_ABORTED;
+    }
   }
 
   println!("Backing up your configuration...");
+  update_panic_exit_code(MIGRATE_CLEAN_FAILURE);
 
   fs_extra::dir::copy(
     &paths.config,
@@ -103,9 +113,11 @@ fn migrate_main(args: CliModuleArgs) -> i32 {
   println!("{}", "Conversion completed!".green());
 
   println!("Replacing old configuration with the new one...");
+  update_panic_exit_code(MIGRATE_DIRTY_FAILURE);
 
   let mut to_be_removed = Vec::new();
-  let legacy_dir_content = fs_extra::dir::get_dir_content(&paths.config).expect("unable to list legacy dir files");
+  let legacy_dir_content =
+    fs_extra::dir::get_dir_content(&paths.config).expect("unable to list legacy dir files");
   to_be_removed.extend(legacy_dir_content.files);
   to_be_removed.extend(legacy_dir_content.directories);
   fs_extra::remove_items(&to_be_removed).expect("unable to remove previous configuration");
@@ -126,7 +138,7 @@ fn migrate_main(args: CliModuleArgs) -> i32 {
 
   println!("{}", "Configuration successfully migrated!".green());
 
-  0
+  MIGRATE_SUCCESS
 }
 
 fn find_available_backup_dir() -> PathBuf {
@@ -147,4 +159,19 @@ fn find_available_backup_dir() -> PathBuf {
   }
 
   panic!("could not generate valid backup directory");
+}
+
+fn configure_custom_panic_hook() {
+  let previous_hook = std::panic::take_hook();
+  std::panic::set_hook(Box::new(move |info| {
+    (*previous_hook)(info);
+
+    let exit_code = CURRENT_PANIC_EXIT_CODE.lock().unwrap();
+    std::process::exit(*exit_code);
+  }));
+}
+
+fn update_panic_exit_code(exit_code: i32) {
+  let mut lock = CURRENT_PANIC_EXIT_CODE.lock().expect("unable to update panic exit code");
+  *lock = exit_code;
 }
