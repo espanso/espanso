@@ -17,7 +17,9 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use espanso_modulo::wizard::{WizardHandlers, WizardOptions};
+use espanso_modulo::wizard::{MigrationResult, WizardHandlers, WizardOptions};
+
+use self::util::MigrationError;
 
 use super::{CliModule, CliModuleArgs};
 
@@ -29,6 +31,7 @@ pub fn new() -> CliModule {
   #[allow(clippy::needless_update)]
   CliModule {
     requires_paths: true,
+    requires_config: true,
     enable_logs: false,
     subcommand: "launcher".to_string(),
     entry: launcher_main,
@@ -39,25 +42,45 @@ pub fn new() -> CliModule {
 #[cfg(feature = "modulo")]
 fn launcher_main(args: CliModuleArgs) -> i32 {
   let paths = args.paths.expect("missing paths in launcher main");
-  let cli_args = args.cli_args.expect("missing cli_args in launcher main");
   let icon_paths = crate::icon::load_icon_paths(&paths.runtime).expect("unable to load icon paths");
 
   // TODO: should move wizard to "init" subcommand?
 
   let is_legacy_version_page_enabled = util::is_legacy_version_running(&paths.runtime);
   let runtime_dir_clone = paths.runtime.clone();
-  let is_legacy_version_running_handler = Box::new(move || {
-    util::is_legacy_version_running(&runtime_dir_clone)
-  });
+  let is_legacy_version_running_handler =
+    Box::new(move || util::is_legacy_version_running(&runtime_dir_clone));
+
+  let is_migrate_page_enabled = args.is_legacy_config;
+  let paths_clone = paths.clone();
+  let backup_and_migrate_handler =
+    Box::new(move || match util::migrate_configuration(&paths_clone) {
+      Ok(_) => {
+        MigrationResult::Success
+      }
+      Err(error) => {
+        match error.downcast_ref::<MigrationError>() {
+          Some(MigrationError::DirtyError) => {
+            MigrationResult::DirtyFailure
+          }
+          Some(MigrationError::CleanError) => {
+            MigrationResult::CleanFailure
+          }
+          _ => {
+            MigrationResult::UnknownFailure
+          }
+        }
+      }
+    });
 
   espanso_modulo::wizard::show(WizardOptions {
     version: crate::VERSION.to_string(),
-    is_welcome_page_enabled: true,        // TODO
-    is_move_bundle_page_enabled: false,   // TODO
+    is_welcome_page_enabled: true,      // TODO
+    is_move_bundle_page_enabled: false, // TODO
     is_legacy_version_page_enabled,
-    is_migrate_page_enabled: true,        // TODO,
-    is_add_path_page_enabled: true,       // TODO
-    is_accessibility_page_enabled: true,  // TODO
+    is_migrate_page_enabled,
+    is_add_path_page_enabled: true,      // TODO
+    is_accessibility_page_enabled: true, // TODO
     window_icon_path: icon_paths
       .wizard_icon
       .map(|path| path.to_string_lossy().to_string()),
@@ -68,7 +91,7 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
     accessibility_image_2_path: None,
     handlers: WizardHandlers {
       is_legacy_version_running: Some(is_legacy_version_running_handler),
-      backup_and_migrate: None,
+      backup_and_migrate: Some(backup_and_migrate_handler),
       add_to_path: None,
       enable_accessibility: None,
       is_accessibility_enabled: None,
