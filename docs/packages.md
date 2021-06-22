@@ -109,6 +109,26 @@ allowed)
       replace: "hello world"
     ```
 
+### Scripts in packages
+
+[Script Extension](matches#script-extension) can also be added to packages.
+Use a combination of the [CLI](cli#paths)'s `espanso path packages` output
+and your package's name to automatically construct the correct path:
+
+{% raw %}
+```yaml
+- trigger: ":pyscript"
+  replace: "{{output}}"
+  vars:
+    - name: output
+      type: script
+      params:
+        args:
+          - python
+          - "$(espanso path packages)/simple-package/scripts/script.py"
+```
+{% endraw %}
+
 #### Publishing on espanso hub
 
 After following all these steps, you can request to publish your package to [espanso hub](http://hub.espanso.org)

@@ -42,3 +42,14 @@ espanso match exec <trigger>
 where `<trigger>` is the match trigger.
 
 This is useful if, for example, you want to trigger an expansion from a script.
+
+### Paths
+
+Besides the [overview command](configuration#structure) `espanso path`,
+you can also output the exact paths to specific components:
+
+```
+espanso path packages # or config, data or default
+```
+
+This is useful for including [scripts in packages](packages#scripts-in-packages).
