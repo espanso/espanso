@@ -112,7 +112,8 @@ allowed)
 ### Scripts in packages
 
 [Script Extension](matches#script-extension) can also be added to packages.
-Use a combination of the [CLI](cli#paths)'s `espanso path packages` output
+Use a combination of the [Shell Extension](matches#shell-extension),
+the [CLI](cli#paths)'s `espanso path packages` output,
 and your package's name to automatically construct the correct path:
 
 {% raw %}
@@ -121,11 +122,9 @@ and your package's name to automatically construct the correct path:
   replace: "{{output}}"
   vars:
     - name: output
-      type: script
+      type: shell
       params:
-        args:
-          - python
-          - "$(espanso path packages)/simple-package/scripts/script.py"
+        cmd: "python "$(espanso path packages)"/simple-package/scripts/script.py'
 ```
 {% endraw %}
 
