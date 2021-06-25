@@ -43,6 +43,7 @@ mod icon;
 mod ipc;
 mod lock;
 mod logging;
+mod preferences;
 mod util;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -288,6 +289,10 @@ fn main() {
 
   // TODO: explain that the register and unregister commands are only meaningful
   // when using the system daemon manager on macOS and Linux
+
+  // TODO: set the LSEnvironment variable as described here: https://stackoverflow.com/questions/12203377/combined-gui-and-command-line-os-x-app?rq=1
+  // to detect if the executable was launched inside an AppBundle, and if so, launch the "launcher" handler
+  // This should only apply when on macOS.
 
   let matches = clap_instance.clone().get_matches();
   let log_level = match matches.occurrences_of("v") {

@@ -17,9 +17,8 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use espanso_modulo::wizard::{MigrationResult, WizardHandlers, WizardOptions};
-
 use self::util::MigrationError;
+use crate::preferences::Preferences;
 
 use super::{CliModule, CliModuleArgs};
 
@@ -41,10 +40,19 @@ pub fn new() -> CliModule {
 
 #[cfg(feature = "modulo")]
 fn launcher_main(args: CliModuleArgs) -> i32 {
+  use espanso_modulo::wizard::{MigrationResult, WizardHandlers, WizardOptions};
+
+  // TODO: should we create a non-gui wizard? We can also use it for the non-modulo versions of espanso
+
   let paths = args.paths.expect("missing paths in launcher main");
   let icon_paths = crate::icon::load_icon_paths(&paths.runtime).expect("unable to load icon paths");
 
-  // TODO: should move wizard to "init" subcommand?
+  let preferences =
+    crate::preferences::get_default(&paths.runtime).expect("unable to initialize preferences");
+
+  let is_welcome_page_enabled = !preferences.has_completed_wizard();
+
+  let is_move_bundle_page_enabled = false; // TODO
 
   let is_legacy_version_page_enabled = util::is_legacy_version_running(&paths.runtime);
   let runtime_dir_clone = paths.runtime.clone();
@@ -55,26 +63,20 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
   let paths_clone = paths.clone();
   let backup_and_migrate_handler =
     Box::new(move || match util::migrate_configuration(&paths_clone) {
-      Ok(_) => {
-        MigrationResult::Success
-      }
-      Err(error) => {
-        match error.downcast_ref::<MigrationError>() {
-          Some(MigrationError::DirtyError) => {
-            MigrationResult::DirtyFailure
-          }
-          Some(MigrationError::CleanError) => {
-            MigrationResult::CleanFailure
-          }
-          _ => {
-            MigrationResult::UnknownFailure
-          }
-        }
-      }
+      Ok(_) => MigrationResult::Success,
+      Err(error) => match error.downcast_ref::<MigrationError>() {
+        Some(MigrationError::DirtyError) => MigrationResult::DirtyFailure,
+        Some(MigrationError::CleanError) => MigrationResult::CleanFailure,
+        _ => MigrationResult::UnknownFailure,
+      },
     });
 
+  // TODO: enable "Add to PATH" page only when NOT in portable mode
+  // TODO: if the user clicks on "Continue" after unchecking the "ADD to PATH"
+  // checkbox, we should remember (with the kvs) the choice and avoid asking again.
   let is_add_path_page_enabled = if cfg!(target_os = "macos") {
     // TODO: add actual check
+    // TODO: consider also Windows case
     true
   } else {
     false
@@ -87,39 +89,46 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
     false
   };
 
-  // TODO: show welcome page only the first time (we need a persistent key-value store)
   // TODO: show a "espanso is now running page at the end" (it should be triggered everytime
   // espanso is started, unless the user unchecks "show this message at startup")
   // This page could also be used when the user starts espanso, but an instance is already running.
 
-  espanso_modulo::wizard::show(WizardOptions {
-    version: crate::VERSION.to_string(),
-    is_welcome_page_enabled: true,      // TODO
-    is_move_bundle_page_enabled: false, // TODO
-    is_legacy_version_page_enabled,
-    is_migrate_page_enabled,
-    is_add_path_page_enabled,
-    is_accessibility_page_enabled,
-    window_icon_path: icon_paths
-      .wizard_icon
-      .map(|path| path.to_string_lossy().to_string()),
-    welcome_image_path: icon_paths
-      .logo_no_background
-      .map(|path| path.to_string_lossy().to_string()),
-    accessibility_image_1_path: None, // TODO
-    accessibility_image_2_path: None, // TODO
-    handlers: WizardHandlers {
-      is_legacy_version_running: Some(is_legacy_version_running_handler),
-      backup_and_migrate: Some(backup_and_migrate_handler),
-      add_to_path: None,  // TODO
-      enable_accessibility: None, // TODO
-      is_accessibility_enabled: None, // TODO
-    },
-  });
+  // Only show the wizard if a panel should be displayed
+  if is_welcome_page_enabled
+    || is_move_bundle_page_enabled
+    || is_legacy_version_page_enabled
+    || is_migrate_page_enabled
+    || is_add_path_page_enabled
+    || is_accessibility_page_enabled
+  {
+    espanso_modulo::wizard::show(WizardOptions {
+      version: crate::VERSION.to_string(),
+      is_welcome_page_enabled,
+      is_move_bundle_page_enabled,
+      is_legacy_version_page_enabled,
+      is_migrate_page_enabled,
+      is_add_path_page_enabled,
+      is_accessibility_page_enabled,
+      window_icon_path: icon_paths
+        .wizard_icon
+        .map(|path| path.to_string_lossy().to_string()),
+      welcome_image_path: icon_paths
+        .logo_no_background
+        .map(|path| path.to_string_lossy().to_string()),
+      accessibility_image_1_path: None, // TODO
+      accessibility_image_2_path: None, // TODO
+      handlers: WizardHandlers {
+        is_legacy_version_running: Some(is_legacy_version_running_handler),
+        backup_and_migrate: Some(backup_and_migrate_handler),
+        add_to_path: None,              // TODO
+        enable_accessibility: None,     // TODO
+        is_accessibility_enabled: None, // TODO
+      },
+    });
 
-  // TODO: enable "Add to PATH" page only when NOT in portable mode
-  // TODO: if the user clicks on "Continue" after unchecking the "ADD to PATH"
-  // checkbox, we should remember (with the kvs) the choice and avoid asking again.
+    // TODO: check the wizard return status?
+    preferences.set_completed_wizard(true);
+  }
 
   0
 }
@@ -127,4 +136,6 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
 #[cfg(not(feature = "modulo"))]
 fn launcher_main(_: CliModuleArgs) -> i32 {
   // TODO: handle what happens here
+
+  0
 }
