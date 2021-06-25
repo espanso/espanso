@@ -111,7 +111,7 @@ WizardFrame::WizardFrame( wxWindow* parent, wxWindowID id, const wxString& title
 
 	bSizer21->Add( 0, 20, 0, 0, 5 );
 
-	legacy_version_description = new wxStaticText( legacy_version_panel, wxID_ANY, wxT("A legacy espanso process has been detected and prevents the new version from working correctly.\n\nPlease terminate and uninstall the old espanso version to proceed.\n\nFor more information, see: "), wxDefaultPosition, wxDefaultSize, 0 );
+	legacy_version_description = new wxStaticText( legacy_version_panel, wxID_ANY, wxT("A legacy espanso process has been detected and prevents the new version from working correctly.\n\nPlease terminate and uninstall the old espanso version to proceed.\n\nIf you already uninstalled the previous version, you might need to restart your computer for changes to be detected.\n\nFor more information, see: "), wxDefaultPosition, wxDefaultSize, 0 );
 	legacy_version_description->Wrap( 500 );
 	bSizer21->Add( legacy_version_description, 0, wxLEFT|wxRIGHT|wxTOP, 10 );
 
