@@ -73,32 +73,53 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
       }
     });
 
+  let is_add_path_page_enabled = if cfg!(target_os = "macos") {
+    // TODO: add actual check
+    true
+  } else {
+    false
+  };
+
+  let is_accessibility_page_enabled = if cfg!(target_os = "macos") {
+    // TODO: add actual check
+    true
+  } else {
+    false
+  };
+
+  // TODO: show welcome page only the first time (we need a persistent key-value store)
+  // TODO: show a "espanso is now running page at the end" (it should be triggered everytime
+  // espanso is started, unless the user unchecks "show this message at startup")
+  // This page could also be used when the user starts espanso, but an instance is already running.
+
   espanso_modulo::wizard::show(WizardOptions {
     version: crate::VERSION.to_string(),
     is_welcome_page_enabled: true,      // TODO
     is_move_bundle_page_enabled: false, // TODO
     is_legacy_version_page_enabled,
     is_migrate_page_enabled,
-    is_add_path_page_enabled: true,      // TODO
-    is_accessibility_page_enabled: true, // TODO
+    is_add_path_page_enabled,
+    is_accessibility_page_enabled,
     window_icon_path: icon_paths
       .wizard_icon
       .map(|path| path.to_string_lossy().to_string()),
     welcome_image_path: icon_paths
       .logo_no_background
       .map(|path| path.to_string_lossy().to_string()),
-    accessibility_image_1_path: None,
-    accessibility_image_2_path: None,
+    accessibility_image_1_path: None, // TODO
+    accessibility_image_2_path: None, // TODO
     handlers: WizardHandlers {
       is_legacy_version_running: Some(is_legacy_version_running_handler),
       backup_and_migrate: Some(backup_and_migrate_handler),
-      add_to_path: None,
-      enable_accessibility: None,
-      is_accessibility_enabled: None,
+      add_to_path: None,  // TODO
+      enable_accessibility: None, // TODO
+      is_accessibility_enabled: None, // TODO
     },
   });
 
   // TODO: enable "Add to PATH" page only when NOT in portable mode
+  // TODO: if the user clicks on "Continue" after unchecking the "ADD to PATH"
+  // checkbox, we should remember (with the kvs) the choice and avoid asking again.
 
   0
 }
