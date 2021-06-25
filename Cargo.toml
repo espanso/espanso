@@ -15,4 +15,5 @@ members = [
   "espanso-modulo",
   "espanso-migrate",
   "espanso-mac-utils",
+  "espanso-kvs",
 ]

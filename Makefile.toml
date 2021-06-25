@@ -34,8 +34,8 @@ dependencies=["create-bundle"]
 
 [tasks.test]
 command = "cargo"
-args = ["test", "--workspace", "--exclude", "espanso-modulo", "--no-default-features"]
+args = ["test", "--workspace", "--exclude", "espanso-modulo", "--exclude", "espanso-ipc", "--no-default-features"]
 
 [tasks.test-output]
 command = "cargo"
-args = ["test", "--workspace", "--exclude", "espanso-modulo", "--no-default-features", "--", "--nocapture"]
+args = ["test", "--workspace", "--exclude", "espanso-modulo", "--exclude", "espanso-ipc", "--no-default-features", "--", "--nocapture"]

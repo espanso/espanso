@@ -32,6 +32,7 @@ espanso-path = { path = "../espanso-path" }
 espanso-ipc = { path = "../espanso-ipc" } 
 espanso-modulo = { path = "../espanso-modulo", optional = true }
 espanso-migrate = { path = "../espanso-migrate" } 
+espanso-kvs = { path = "../espanso-kvs" } 
 maplit = "1.0.2"
 simplelog = "0.9.0"
 log = "0.4.14"
