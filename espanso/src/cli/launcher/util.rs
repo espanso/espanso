@@ -76,3 +76,24 @@ pub enum MigrationError {
   #[error("unexpected error")]
   UnexpectedError,
 }
+
+pub fn add_espanso_to_path() -> Result<()> {
+  let espanso_exe_path = std::env::current_exe()?;
+  let mut command = Command::new(&espanso_exe_path.to_string_lossy().to_string());
+  command.args(&["env-path", "--prompt", "register"]);
+
+  let mut child = command.spawn()?;
+  let result = child.wait()?;
+
+  if result.success() {
+    Ok(())
+  } else {
+    Err(AddToPathError::NonZeroExitCode.into())
+  }
+}
+
+#[derive(Error, Debug)]
+pub enum AddToPathError {
+  #[error("unexpected error, 'espanso env-path register' returned a non-zero exit code.")]
+  NonZeroExitCode,
+}

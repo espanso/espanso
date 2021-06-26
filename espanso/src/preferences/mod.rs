@@ -22,7 +22,7 @@ use anyhow::Result;
 
 mod default;
 
-pub trait Preferences: Send + Sync {
+pub trait Preferences: Send + Sync + Clone {
   fn has_completed_wizard(&self) -> bool;
   fn set_completed_wizard(&self, value: bool);
 }
