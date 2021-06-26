@@ -31,7 +31,6 @@ pub fn new() -> CliModule {
   #[allow(clippy::needless_update)]
   CliModule {
     requires_paths: true,
-    requires_config: true,
     enable_logs: false,
     subcommand: "launcher".to_string(),
     entry: launcher_main,
@@ -60,7 +59,7 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
   let is_legacy_version_running_handler =
     Box::new(move || util::is_legacy_version_running(&runtime_dir_clone));
 
-  let is_migrate_page_enabled = args.is_legacy_config;
+  let is_migrate_page_enabled = espanso_config::is_legacy_config(&paths.config);
   let paths_clone = paths.clone();
   let backup_and_migrate_handler =
     Box::new(move || match util::migrate_configuration(&paths_clone) {

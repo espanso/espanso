@@ -2,6 +2,11 @@
 <!DOCTYPE plist SYSTEM "file://localhost/System/Library/DTDs/PropertyList.dtd">
 <plist version="0.9">
 <dict>
+	<key>LSEnvironment</key>
+	<dict>
+    <key>MAC_LAUNCH_CONTEXT</key>
+    <string>bundle</string>
+	</dict>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 	<key>CFBundleInfoDictionaryVersion</key>
