@@ -17,16 +17,9 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::{path::PathBuf, sync::Mutex};
+use std::{path::PathBuf};
 
-use crate::{
-  exit_code::{
-    MIGRATE_ALREADY_NEW_FORMAT, MIGRATE_CLEAN_FAILURE, MIGRATE_DIRTY_FAILURE,
-    MIGRATE_LEGACY_INSTANCE_RUNNING, MIGRATE_SUCCESS, MIGRATE_UNEXPECTED_FAILURE,
-    MIGRATE_USER_ABORTED,
-  },
-  lock::acquire_legacy_lock,
-};
+use crate::{exit_code::{MIGRATE_ALREADY_NEW_FORMAT, MIGRATE_CLEAN_FAILURE, MIGRATE_DIRTY_FAILURE, MIGRATE_LEGACY_INSTANCE_RUNNING, MIGRATE_SUCCESS, MIGRATE_USER_ABORTED, configure_custom_panic_hook, update_panic_exit_code}, lock::acquire_legacy_lock};
 
 use super::{CliModule, CliModuleArgs};
 use colored::*;
@@ -34,10 +27,6 @@ use dialoguer::Confirm;
 use fs_extra::dir::CopyOptions;
 use log::{error, info};
 use tempdir::TempDir;
-
-lazy_static! {
-  static ref CURRENT_PANIC_EXIT_CODE: Mutex<i32> = Mutex::new(MIGRATE_UNEXPECTED_FAILURE);
-}
 
 pub fn new() -> CliModule {
   CliModule {
@@ -186,48 +175,6 @@ fn find_available_backup_dir() -> PathBuf {
   }
 
   panic!("could not generate valid backup directory");
-}
-
-fn configure_custom_panic_hook() {
-  let previous_hook = std::panic::take_hook();
-  std::panic::set_hook(Box::new(move |info| {
-    (*previous_hook)(info);
-
-    // Part of this code is taken from the "rust-log-panics" crate
-    let thread = std::thread::current();
-    let thread = thread.name().unwrap_or("<unnamed>");
-
-    let msg = match info.payload().downcast_ref::<&'static str>() {
-      Some(s) => *s,
-      None => match info.payload().downcast_ref::<String>() {
-        Some(s) => &**s,
-        None => "Box<Any>",
-      },
-    };
-
-    match info.location() {
-      Some(location) => {
-        eprintln!(
-          "ERROR: '{}' panicked at '{}': {}:{}",
-          thread,
-          msg,
-          location.file(),
-          location.line(),
-        );
-      }
-      None => eprintln!("ERROR: '{}' panicked at '{}'", thread, msg,),
-    }
-
-    let exit_code = CURRENT_PANIC_EXIT_CODE.lock().unwrap();
-    std::process::exit(*exit_code);
-  }));
-}
-
-fn update_panic_exit_code(exit_code: i32) {
-  let mut lock = CURRENT_PANIC_EXIT_CODE
-    .lock()
-    .expect("unable to update panic exit code");
-  *lock = exit_code;
 }
 
 fn error_print_and_log(msg: &str) {

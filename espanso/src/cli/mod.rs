@@ -22,6 +22,7 @@ use espanso_config::{config::ConfigStore, matches::store::MatchStore};
 use espanso_path::Paths;
 
 pub mod daemon;
+pub mod env_path;
 pub mod launcher;
 pub mod log;
 pub mod migrate;

@@ -36,3 +36,55 @@ pub const MIGRATE_USER_ABORTED: i32 = 3;
 pub const MIGRATE_CLEAN_FAILURE: i32 = 50;
 pub const MIGRATE_DIRTY_FAILURE: i32 = 51;
 pub const MIGRATE_UNEXPECTED_FAILURE: i32 = 101;
+
+pub const ADD_TO_PATH_SUCCESS: i32 = 0;
+pub const ADD_TO_PATH_FAILURE: i32 = 1;
+
+use std::sync::Mutex;
+
+lazy_static! {
+  static ref CURRENT_PANIC_EXIT_CODE: Mutex<i32> = Mutex::new(MIGRATE_UNEXPECTED_FAILURE);
+}
+
+pub fn configure_custom_panic_hook() {
+  let previous_hook = std::panic::take_hook();
+  std::panic::set_hook(Box::new(move |info| {
+    (*previous_hook)(info);
+
+    // Part of this code is taken from the "rust-log-panics" crate
+    let thread = std::thread::current();
+    let thread = thread.name().unwrap_or("<unnamed>");
+
+    let msg = match info.payload().downcast_ref::<&'static str>() {
+      Some(s) => *s,
+      None => match info.payload().downcast_ref::<String>() {
+        Some(s) => &**s,
+        None => "Box<Any>",
+      },
+    };
+
+    match info.location() {
+      Some(location) => {
+        eprintln!(
+          "ERROR: '{}' panicked at '{}': {}:{}",
+          thread,
+          msg,
+          location.file(),
+          location.line(),
+        );
+      }
+      None => eprintln!("ERROR: '{}' panicked at '{}'", thread, msg,),
+    }
+
+    let exit_code = CURRENT_PANIC_EXIT_CODE.lock().unwrap();
+    std::process::exit(*exit_code);
+  }));
+}
+
+pub fn update_panic_exit_code(exit_code: i32) {
+  let mut lock = CURRENT_PANIC_EXIT_CODE
+    .lock()
+    .expect("unable to update panic exit code");
+  *lock = exit_code;
+}
+

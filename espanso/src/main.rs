@@ -43,6 +43,7 @@ mod icon;
 mod ipc;
 mod lock;
 mod logging;
+mod path;
 mod preferences;
 mod util;
 
@@ -58,6 +59,7 @@ lazy_static! {
     cli::daemon::new(),
     cli::modulo::new(),
     cli::migrate::new(),
+    cli::env_path::new(),
   ];
 }
 
@@ -120,6 +122,25 @@ fn main() {
         .long("runtime_dir")
         .takes_value(true)
         .help("Specify a custom path for the espanso runtime directory"),
+    )
+    .subcommand(
+      SubCommand::with_name("env-path")
+        .arg(
+          Arg::with_name("prompt")
+            .long("prompt")
+            .required(false)
+            .takes_value(false)
+            .help("Prompt for permissions if the operation requires elevated privileges."),
+        )
+        .subcommand(
+          SubCommand::with_name("register")
+            .about("Add 'espanso' command to PATH"),
+        )
+        .subcommand(
+          SubCommand::with_name("unregister")
+            .about("Remove 'espanso' command from PATH"),
+        )
+        .about("Add or remove the 'espanso' command from the PATH (macOS and Windows only)"),
     )
     // .subcommand(SubCommand::with_name("cmd")
     //     .about("Send a command to the espanso daemon.")
