@@ -325,12 +325,12 @@ fn main() {
     .find(|cli| matches.subcommand_matches(&cli.subcommand).is_some());
 
   // When started from the macOS App Bundle, override the default
-  // handler with "launcher", otherwise the GUI could not be started.
-  if let Some(context) = std::env::var_os("MAC_LAUNCH_CONTEXT") {
-    if context == "bundle" {
-      handler = CLI_HANDLERS
-        .iter()
-        .find(|cli| cli.subcommand == "launcher");
+  // handler with "launcher" if not present, otherwise the GUI could not be started.
+  if handler.is_none() {
+    if let Some(context) = std::env::var_os("MAC_LAUNCH_CONTEXT") {
+      if context == "bundle" {
+        handler = CLI_HANDLERS.iter().find(|cli| cli.subcommand == "launcher");
+      }
     }
   }
 
