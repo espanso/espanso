@@ -132,14 +132,8 @@ fn main() {
             .takes_value(false)
             .help("Prompt for permissions if the operation requires elevated privileges."),
         )
-        .subcommand(
-          SubCommand::with_name("register")
-            .about("Add 'espanso' command to PATH"),
-        )
-        .subcommand(
-          SubCommand::with_name("unregister")
-            .about("Remove 'espanso' command from PATH"),
-        )
+        .subcommand(SubCommand::with_name("register").about("Add 'espanso' command to PATH"))
+        .subcommand(SubCommand::with_name("unregister").about("Remove 'espanso' command from PATH"))
         .about("Add or remove the 'espanso' command from the PATH (macOS and Windows only)"),
     )
     // .subcommand(SubCommand::with_name("cmd")
@@ -326,9 +320,19 @@ fn main() {
     _ => LevelFilter::Debug,
   };
 
-  let handler = CLI_HANDLERS
+  let mut handler = CLI_HANDLERS
     .iter()
     .find(|cli| matches.subcommand_matches(&cli.subcommand).is_some());
+
+  // When started from the macOS App Bundle, override the default
+  // handler with "launcher", otherwise the GUI could not be started.
+  if let Some(context) = std::env::var_os("MAC_LAUNCH_CONTEXT") {
+    if context == "bundle" {
+      handler = CLI_HANDLERS
+        .iter()
+        .find(|cli| cli.subcommand == "launcher");
+    }
+  }
 
   if let Some(handler) = handler {
     let log_proxy = FileProxy::new();
