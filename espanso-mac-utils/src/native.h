@@ -28,4 +28,10 @@ extern "C" int32_t mac_utils_get_secure_input_process(int64_t *pid);
 // Find the executable path corresponding to the given PID, return 0 if no process was found.
 extern "C" int32_t mac_utils_get_path_from_pid(int64_t pid, char *buff, int buff_size);
 
+// Return 1 if the accessibility permissions have been granted, 0 otherwise
+extern "C" int32_t mac_utils_check_accessibility();
+
+// Return 1 if the accessibility permissions have been granted, 0 otherwise
+extern "C" int32_t mac_utils_prompt_accessibility();
+
 #endif //ESPANSO_MAC_UTILS_H
