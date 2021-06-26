@@ -76,17 +76,15 @@ pub fn show(options: WizardOptions) {
       .lock()
       .expect("unable to acquire lock in add_to_path method");
     let handlers_ref = (*lock).as_ref().expect("unable to unwrap handlers");
-    // TODO:
-    // if let Some(handler_ref) = handlers_ref.add_to_path.as_ref() {
-    //   if (*handler_ref)() {
-    //     1
-    //   } else {
-    //     0
-    //   }
-    // } else {
-    //   -1
-    // }
-    0
+    if let Some(handler_ref) = handlers_ref.add_to_path.as_ref() {
+      if (*handler_ref)() {
+        1
+      } else {
+        0
+      }
+    } else {
+      -1
+    }
   }
 
   extern "C" fn enable_accessibility() -> c_int {
@@ -125,6 +123,16 @@ pub fn show(options: WizardOptions) {
     0
   }
 
+  extern "C" fn on_completed() {
+    let lock = HANDLERS
+      .lock()
+      .expect("unable to acquire lock in on_completed method");
+    let handlers_ref = (*lock).as_ref().expect("unable to unwrap handlers");
+    if let Some(handler_ref) = handlers_ref.on_completed.as_ref() {
+      (*handler_ref)()
+    }
+  }
+  
   {
     let mut lock = HANDLERS.lock().expect("unable to acquire handlers lock");
     *lock = Some(options.handlers)
@@ -174,6 +182,7 @@ pub fn show(options: WizardOptions) {
     add_to_path,
     enable_accessibility,
     is_accessibility_enabled,
+    on_completed,
   };
 
   unsafe {

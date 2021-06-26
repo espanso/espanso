@@ -98,6 +98,7 @@ protected:
   void welcome_start_clicked(wxCommandEvent &event);
   void migrate_button_clicked(wxCommandEvent &event);
   void migrate_compatibility_mode_clicked(wxCommandEvent &event);
+	void add_path_continue_clicked( wxCommandEvent& event );
 
   void navigate_to_next_page_or_close();
   void change_default_button(int target_page);
@@ -176,6 +177,41 @@ void DerivedFrame::migrate_button_clicked(wxCommandEvent &event)
     else if (result == MIGRATE_RESULT_UNKNOWN_FAILURE)
     {
       wxMessageBox(wxT("An error occurred during the migration.\n\nPlease run 'espanso log' in a terminal for more information."), wxT("Migration error"), wxICON_ERROR);
+    }
+  }
+}
+
+void DerivedFrame::add_path_continue_clicked( wxCommandEvent& event ) {
+  if (!add_path_checkbox->IsChecked()) {
+    this->navigate_to_next_page_or_close();
+    return;
+  } 
+
+  if (metadata->add_to_path)
+  {
+    while (true) {
+      int result = metadata->add_to_path();
+      if (result == 1)
+      {
+        this->navigate_to_next_page_or_close();
+        return;
+      }
+      else 
+      {
+        wxMessageDialog* dialog = new wxMessageDialog(this,
+          "An error occurred while registering the 'espanso' command to the PATH, please check the logs for more information.\nDo you want to retry? You can always add espanso to the PATH later",
+          "Operation failed",
+          wxCENTER | wxOK_DEFAULT | wxOK | wxCANCEL |
+          wxICON_EXCLAMATION);
+
+        dialog->SetOKLabel("Retry");
+
+        int prompt_result = dialog->ShowModal(); 
+        if (prompt_result == wxID_CANCEL) {
+          this->navigate_to_next_page_or_close();
+          break;
+        }
+      }
     }
   }
 }

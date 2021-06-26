@@ -117,4 +117,5 @@ typedef struct WizardMetadata {
   int (*add_to_path)();
   int (*enable_accessibility)();
   int (*is_accessibility_enabled)();
+  void (*on_completed)();
 } WizardMetadata;

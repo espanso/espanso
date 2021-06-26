@@ -134,6 +134,7 @@ pub struct WizardMetadata {
   pub add_to_path: extern fn() -> c_int,
   pub enable_accessibility: extern fn() -> c_int,
   pub is_accessibility_enabled: extern fn() -> c_int,
+  pub on_completed: extern fn(),
 }
 
 // Native bindings

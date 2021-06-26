@@ -43,6 +43,7 @@ pub struct WizardHandlers {
   pub add_to_path: Option<Box<dyn Fn() -> bool + Send>>,
   pub enable_accessibility: Option<Box<dyn Fn() + Send>>,
   pub is_accessibility_enabled: Option<Box<dyn Fn() -> bool + Send>>,
+  pub on_completed: Option<Box<dyn Fn() + Send>>,
 }
 
 #[derive(Debug)]
