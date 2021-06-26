@@ -92,17 +92,12 @@ pub fn show(options: WizardOptions) {
       .lock()
       .expect("unable to acquire lock in enable_accessibility method");
     let handlers_ref = (*lock).as_ref().expect("unable to unwrap handlers");
-    // TODO:
-    // if let Some(handler_ref) = handlers_ref.add_to_path.as_ref() {
-    //   if (*handler_ref)() {
-    //     1
-    //   } else {
-    //     0
-    //   }
-    // } else {
-    //   -1
-    // }
-    0
+    if let Some(handler_ref) = handlers_ref.enable_accessibility.as_ref() {
+      (*handler_ref)();
+      1
+    } else {
+      -1
+    }
   }
 
   extern "C" fn is_accessibility_enabled() -> c_int {
@@ -110,17 +105,15 @@ pub fn show(options: WizardOptions) {
       .lock()
       .expect("unable to acquire lock in is_accessibility_enabled method");
     let handlers_ref = (*lock).as_ref().expect("unable to unwrap handlers");
-    // TODO:
-    // if let Some(handler_ref) = handlers_ref.add_to_path.as_ref() {
-    //   if (*handler_ref)() {
-    //     1
-    //   } else {
-    //     0
-    //   }
-    // } else {
-    //   -1
-    // }
-    0
+    if let Some(handler_ref) = handlers_ref.is_accessibility_enabled.as_ref() {
+      if (*handler_ref)() {
+        1
+      } else {
+        0
+      }
+    } else {
+      -1
+    }
   }
 
   extern "C" fn on_completed() {
