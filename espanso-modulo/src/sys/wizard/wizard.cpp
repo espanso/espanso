@@ -99,6 +99,7 @@ protected:
   void migrate_button_clicked(wxCommandEvent &event);
   void migrate_compatibility_mode_clicked(wxCommandEvent &event);
 	void add_path_continue_clicked( wxCommandEvent& event );
+	void accessibility_enable_clicked( wxCommandEvent& event );
 
   void navigate_to_next_page_or_close();
   void change_default_button(int target_page);
@@ -110,7 +111,7 @@ public:
 DerivedFrame::DerivedFrame(wxWindow *parent)
     : WizardFrame(parent)
 {
-  // TODO: load images for accessibility page if on macOS
+  // Welcome images
 
   if (metadata->welcome_image_path)
   {
@@ -119,6 +120,19 @@ DerivedFrame::DerivedFrame(wxWindow *parent)
   }
 
   this->welcome_version_text->SetLabel(wxString::Format("( version %s )", metadata->version));
+
+  // Accessiblity images
+
+  if (metadata->accessibility_image_1_path)
+  {
+    wxBitmap accessiblityImage1 = wxBitmap(metadata->accessibility_image_1_path, wxBITMAP_TYPE_PNG);
+    this->accessibility_image1->SetBitmap(accessiblityImage1);
+  }
+  if (metadata->accessibility_image_2_path)
+  {
+    wxBitmap accessiblityImage2 = wxBitmap(metadata->accessibility_image_2_path, wxBITMAP_TYPE_PNG);
+    this->accessibility_image2->SetBitmap(accessiblityImage2);
+  }
 
   // Load the first page
   int page = find_next_page(-1);
@@ -143,6 +157,10 @@ void DerivedFrame::navigate_to_next_page_or_close()
   }
   else
   {
+    if (metadata->on_completed) {
+      metadata->on_completed();
+    }
+
     Close(true);
   }
 }
@@ -216,6 +234,14 @@ void DerivedFrame::add_path_continue_clicked( wxCommandEvent& event ) {
   }
 }
 
+void DerivedFrame::accessibility_enable_clicked( wxCommandEvent& event )
+{
+  if (metadata->enable_accessibility)
+  {
+    metadata->enable_accessibility();
+  }
+}
+
 void DerivedFrame::check_timer_tick(wxTimerEvent &event)
 {
   if (this->m_simplebook->GetSelection() == LEGACY_VERSION_PAGE_INDEX)
@@ -223,6 +249,14 @@ void DerivedFrame::check_timer_tick(wxTimerEvent &event)
     if (metadata->is_legacy_version_running)
     {
       if (metadata->is_legacy_version_running() == 0)
+      {
+        this->navigate_to_next_page_or_close();
+      }
+    }
+  } else if (this->m_simplebook->GetSelection() == ACCESSIBILITY_PAGE_INDEX) {
+    if (metadata->is_accessibility_enabled)
+    {
+      if (metadata->is_accessibility_enabled() == 1)
       {
         this->navigate_to_next_page_or_close();
       }
