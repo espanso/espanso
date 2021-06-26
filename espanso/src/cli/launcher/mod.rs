@@ -130,6 +130,8 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
     preferences.set_completed_wizard(true);
   }
 
+  // TODO: initialize config directory if not present
+
   0
 }
 
