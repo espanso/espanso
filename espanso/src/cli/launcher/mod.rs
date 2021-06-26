@@ -22,6 +22,7 @@ use crate::preferences::Preferences;
 
 use super::{CliModule, CliModuleArgs};
 
+mod accessibility;
 mod util;
 
 // TODO: test also with modulo feature disabled
@@ -84,7 +85,7 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
     };
   // TODO: consider also Windows case?
   let add_to_path_handler = Box::new(move || match util::add_espanso_to_path() {
-    Ok(_) => true, 
+    Ok(_) => true,
     Err(error) => {
       eprintln!("Add to path returned error: {}", error);
       false
@@ -92,11 +93,16 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
   });
 
   let is_accessibility_page_enabled = if cfg!(target_os = "macos") {
-    // TODO: add actual check
-    true
+    !accessibility::is_accessibility_enabled()
   } else {
     false
   };
+  let is_accessibility_enabled_handler = Box::new(move || {
+    accessibility::is_accessibility_enabled()
+  });
+  let enable_accessibility_handler = Box::new(move || {
+    accessibility::prompt_enable_accessibility();
+  });
 
   let preferences_clone = preferences.clone();
   let on_completed_handler = Box::new(move || {
@@ -129,18 +135,21 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
       welcome_image_path: icon_paths
         .logo_no_background
         .map(|path| path.to_string_lossy().to_string()),
-      accessibility_image_1_path: None, // TODO
-      accessibility_image_2_path: None, // TODO
+      accessibility_image_1_path: icon_paths
+        .accessibility_image_1
+        .map(|path| path.to_string_lossy().to_string()),
+      accessibility_image_2_path: icon_paths
+        .accessibility_image_2
+        .map(|path| path.to_string_lossy().to_string()),
       handlers: WizardHandlers {
         is_legacy_version_running: Some(is_legacy_version_running_handler),
         backup_and_migrate: Some(backup_and_migrate_handler),
         add_to_path: Some(add_to_path_handler),
-        enable_accessibility: None,     // TODO
-        is_accessibility_enabled: None, // TODO
+        enable_accessibility: Some(enable_accessibility_handler),
+        is_accessibility_enabled: Some(is_accessibility_enabled_handler),
         on_completed: Some(on_completed_handler),
       },
     });
-
   }
 
   // TODO: initialize config directory if not present

@@ -38,6 +38,10 @@ const MAC_BINARY: &[u8] = include_bytes!("res/macos/icon.png");
 const MAC_DISABLED_BINARY: &[u8] = include_bytes!("res/macos/icondisabled.png");
 #[cfg(target_os = "macos")]
 const MAC_SYSTEM_DISABLED_BINARY: &[u8] = include_bytes!("res/macos/iconsystemdisabled.png");
+#[cfg(target_os = "macos")]
+const MAC_ACCESSIBILITY_1_BINARY: &[u8] = include_bytes!("res/accessibility_1.png");
+#[cfg(target_os = "macos")]
+const MAC_ACCESSIBILITY_2_BINARY: &[u8] = include_bytes!("res/accessibility_2.png");
 
 #[derive(Debug, Default)]
 pub struct IconPaths {
@@ -47,7 +51,10 @@ pub struct IconPaths {
 
   pub tray_icon_normal: Option<PathBuf>,
   pub tray_icon_disabled: Option<PathBuf>,
-  pub tray_icon_system_disabled: Option<PathBuf>, // TODO: secure input
+  pub tray_icon_system_disabled: Option<PathBuf>,
+
+  pub accessibility_image_1: Option<PathBuf>,
+  pub accessibility_image_2: Option<PathBuf>,
 
   pub logo: Option<PathBuf>, 
   pub logo_no_background: Option<PathBuf>,
@@ -76,6 +83,8 @@ pub fn load_icon_paths(runtime_dir: &Path) -> Result<IconPaths> {
     tray_icon_system_disabled: Some(extract_icon(MAC_SYSTEM_DISABLED_BINARY, &runtime_dir.join("systemdisabled.png"))?),
     logo: Some(extract_icon(ICON_BINARY, &runtime_dir.join("icon.png"))?),
     logo_no_background: Some(extract_icon(LOGO_NO_BACKGROUND_BINARY, &runtime_dir.join("icon_no_background.png"))?),
+    accessibility_image_1: Some(extract_icon(MAC_ACCESSIBILITY_1_BINARY, &runtime_dir.join("accessibility_1.png"))?),
+    accessibility_image_2: Some(extract_icon(MAC_ACCESSIBILITY_2_BINARY, &runtime_dir.join("accessibility_2.png"))?),
     ..Default::default()
   })
 }
