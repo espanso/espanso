@@ -24,7 +24,7 @@ use serde::{de::DeserializeOwned, Serialize};
 
 mod persistent;
 
-pub trait KVS: Send + Sync {
+pub trait KVS: Send + Sync + Clone {
   fn get<T: DeserializeOwned>(&self, key: &str) -> Result<Option<T>>;
   fn set<T: Serialize>(&self, key: &str, value: T) -> Result<()>;
   fn delete(&self, key: &str) -> Result<()>;
