@@ -71,16 +71,25 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
       },
     });
 
-  // TODO: enable "Add to PATH" page only when NOT in portable mode
-  // TODO: if the user clicks on "Continue" after unchecking the "ADD to PATH"
-  // checkbox, we should remember (with the kvs) the choice and avoid asking again.
-  let is_add_path_page_enabled = if cfg!(target_os = "macos") {
-    // TODO: add actual check
-    // TODO: consider also Windows case
-    true
-  } else {
-    false
-  };
+  let is_add_path_page_enabled =
+    if cfg!(not(target_os = "linux")) && !preferences.has_completed_wizard() {
+      if cfg!(target_os = "macos") {
+        !crate::path::is_espanso_in_path()
+      } else {
+        // TODO: enable "Add to PATH" page only when NOT in portable mode
+        !crate::path::is_espanso_in_path()
+      }
+    } else {
+      false
+    };
+  // TODO: consider also Windows case?
+  let add_to_path_handler = Box::new(move || match util::add_espanso_to_path() {
+    Ok(_) => true, 
+    Err(error) => {
+      eprintln!("Add to path returned error: {}", error);
+      false
+    }
+  });
 
   let is_accessibility_page_enabled = if cfg!(target_os = "macos") {
     // TODO: add actual check
@@ -88,6 +97,11 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
   } else {
     false
   };
+
+  let preferences_clone = preferences.clone();
+  let on_completed_handler = Box::new(move || {
+    preferences_clone.set_completed_wizard(true);
+  });
 
   // TODO: show a "espanso is now running page at the end" (it should be triggered everytime
   // espanso is started, unless the user unchecks "show this message at startup")
@@ -120,14 +134,13 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
       handlers: WizardHandlers {
         is_legacy_version_running: Some(is_legacy_version_running_handler),
         backup_and_migrate: Some(backup_and_migrate_handler),
-        add_to_path: None,              // TODO
+        add_to_path: Some(add_to_path_handler),
         enable_accessibility: None,     // TODO
         is_accessibility_enabled: None, // TODO
+        on_completed: Some(on_completed_handler),
       },
     });
 
-    // TODO: check the wizard return status?
-    preferences.set_completed_wizard(true);
   }
 
   // TODO: initialize config directory if not present
