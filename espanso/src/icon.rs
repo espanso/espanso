@@ -30,6 +30,8 @@ const WINDOWS_NORMAL_DARK_ICO_BINARY: &[u8] = include_bytes!("res/windows/normal
 const WINDOWS_DISABLED_DARK_ICO_BINARY: &[u8] = include_bytes!("res/windows/disabled_dark.ico");
 #[cfg(target_os = "windows")]
 const WINDOWS_LOGO_ICO_BINARY: &[u8] = include_bytes!("res/windows/logo.ico");
+#[cfg(target_os = "windows")]
+const WINDOWS_TRAY_EXPLAIN_IMAGE: &[u8] = include_bytes!("res/windows/tray_explain_image.png");
 
 
 #[cfg(target_os = "macos")]
@@ -55,6 +57,7 @@ pub struct IconPaths {
 
   pub accessibility_image_1: Option<PathBuf>,
   pub accessibility_image_2: Option<PathBuf>,
+  pub tray_explain_image: Option<PathBuf>,
 
   pub logo: Option<PathBuf>, 
   pub logo_no_background: Option<PathBuf>,
@@ -70,6 +73,7 @@ pub fn load_icon_paths(runtime_dir: &Path) -> Result<IconPaths> {
     tray_icon_disabled: Some(extract_icon(WINDOWS_DISABLED_DARK_ICO_BINARY, &runtime_dir.join("disabled.ico"))?),
     logo: Some(extract_icon(ICON_BINARY, &runtime_dir.join("icon.png"))?),
     logo_no_background: Some(extract_icon(LOGO_NO_BACKGROUND_BINARY, &runtime_dir.join("icon_no_background.png"))?),
+    tray_explain_image: Some(extract_icon(WINDOWS_TRAY_EXPLAIN_IMAGE, &runtime_dir.join("tray_explain_image.png"))?),
     ..Default::default()
   })
 }

@@ -163,6 +163,12 @@ fn main() {
     .subcommand(
       SubCommand::with_name("daemon")
         .setting(AppSettings::Hidden)
+        .arg(
+          Arg::with_name("show-welcome")
+            .long("show-welcome")
+            .required(false)
+            .takes_value(false)
+        )
         .about("Start the daemon without spawning a new process."),
     )
     // .subcommand(SubCommand::with_name("register")
@@ -207,6 +213,10 @@ fn main() {
                 .takes_value(false)
                 .help("Interpret the input data as JSON"),
             ),
+        )
+        .subcommand(
+          SubCommand::with_name("welcome")
+            .about("Display the welcome screen")
         ),
     )
     // .subcommand(SubCommand::with_name("start")
