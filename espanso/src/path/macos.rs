@@ -75,7 +75,7 @@ pub fn add_espanso_to_path(prompt_when_necessary: bool) -> Result<()> {
 pub fn remove_espanso_from_path(prompt_when_necessary: bool) -> Result<()> {
   let target_link_path = PathBuf::from("/usr/local/bin/espanso");
 
-  if !target_link_path.is_file() {
+  if std::fs::symlink_metadata(&target_link_path).is_err() {
     return Err(PathError::SymlinkNotFound.into());
   }
 
