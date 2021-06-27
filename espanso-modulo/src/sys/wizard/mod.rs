@@ -27,7 +27,7 @@ lazy_static! {
   static ref HANDLERS: Mutex<Option<WizardHandlers>> = Mutex::new(None);
 }
 
-pub fn show(options: WizardOptions) {
+pub fn show(options: WizardOptions) -> bool {
   let c_version = CString::new(options.version).expect("unable to convert version to CString");
 
   let (_c_window_icon_path, c_window_icon_path_ptr) =
@@ -179,7 +179,9 @@ pub fn show(options: WizardOptions) {
     on_completed,
   };
 
-  unsafe {
-    super::interop::interop_show_wizard(&wizard_metadata);
-  }
+  let successful = unsafe {
+    super::interop::interop_show_wizard(&wizard_metadata)
+  };
+
+  if successful == 1 { true } else { false }
 }
