@@ -33,7 +33,7 @@ use simplelog::{
   CombinedLogger, ConfigBuilder, LevelFilter, SharedLogger, TermLogger, TerminalMode, WriteLogger,
 };
 
-use crate::cli::LogMode;
+use crate::cli::{LogMode, PathsOverrides};
 
 mod cli;
 mod engine;
@@ -389,6 +389,12 @@ fn main() {
         force_package_path.as_deref(),
         force_runtime_path.as_deref(),
       );
+
+      cli_args.paths_overrides = Some(PathsOverrides {
+        config: force_config_path,
+        packages: force_package_path,
+        runtime: force_runtime_path,
+      });
 
       info!("reading configs from: {:?}", paths.config);
       info!("reading packages from: {:?}", paths.packages);

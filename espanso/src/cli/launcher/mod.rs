@@ -23,6 +23,7 @@ use crate::preferences::Preferences;
 use super::{CliModule, CliModuleArgs};
 
 mod accessibility;
+mod daemon;
 mod util;
 
 // TODO: test also with modulo feature disabled
@@ -45,6 +46,7 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
   // TODO: should we create a non-gui wizard? We can also use it for the non-modulo versions of espanso
 
   let paths = args.paths.expect("missing paths in launcher main");
+  let paths_overrides  = args.paths_overrides.expect("missing paths overrides in launcher main");
   let icon_paths = crate::icon::load_icon_paths(&paths.runtime).expect("unable to load icon paths");
 
   let preferences =
@@ -116,14 +118,14 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
   // This page could also be used when the user starts espanso, but an instance is already running.
 
   // Only show the wizard if a panel should be displayed
-  if is_welcome_page_enabled
+  let should_launch_daemon = if is_welcome_page_enabled
     || is_move_bundle_page_enabled
     || is_legacy_version_page_enabled
     || is_migrate_page_enabled
     || is_add_path_page_enabled
     || is_accessibility_page_enabled
   {
-    espanso_modulo::wizard::show(WizardOptions {
+    let successful = espanso_modulo::wizard::show(WizardOptions {
       version: crate::VERSION.to_string(),
       is_welcome_page_enabled,
       is_move_bundle_page_enabled,
@@ -152,9 +154,17 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
         on_completed: Some(on_completed_handler),
       },
     });
-  }
+
+    successful
+  } else {
+    true
+  };
 
   // TODO: initialize config directory if not present
+
+  if should_launch_daemon {
+    daemon::launch_daemon(&paths_overrides).expect("failed to launch daemon");
+  }
 
   0
 }
