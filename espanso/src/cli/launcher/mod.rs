@@ -76,8 +76,11 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
       if cfg!(target_os = "macos") {
         !crate::path::is_espanso_in_path()
       } else {
-        // TODO: enable "Add to PATH" page only when NOT in portable mode
-        !crate::path::is_espanso_in_path()
+        if paths.is_portable_mode {
+          false
+        } else {
+          !crate::path::is_espanso_in_path()
+        }
       }
     } else {
       false
