@@ -44,7 +44,10 @@ pub fn add_espanso_to_path(_: bool) -> Result<()> {
 
 pub fn remove_espanso_from_path(_: bool) -> Result<()> {
   let paths = read_paths();
-  let paths_without_espanso: Vec<String> = paths.into_iter().filter(|path| !path.contains("espanso")).collect();
+  let paths_without_espanso: Vec<String> = paths
+    .into_iter()
+    .filter(|path| !path.contains("espanso"))
+    .collect();
   let path = paths_without_espanso.join(";");
   write_user_path_value(path)
 }
@@ -76,6 +79,14 @@ fn send_change_broadcast() {
 
   unsafe {
     let mut res: usize = 0;
-    SendMessageTimeoutW(HWND_BROADCAST, WM_SETTINGCHANGE, 0, wide_string.as_ptr() as isize, 2, 1000, &mut res);
+    SendMessageTimeoutW(
+      HWND_BROADCAST,
+      WM_SETTINGCHANGE,
+      0,
+      wide_string.as_ptr() as isize,
+      2,
+      50,
+      &mut res,
+    );
   }
 }
