@@ -17,6 +17,8 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use std::path::PathBuf;
+
 use clap::ArgMatches;
 use espanso_config::{config::ConfigStore, matches::store::MatchStore};
 use espanso_path::Paths;
@@ -66,6 +68,7 @@ pub struct CliModuleArgs {
   pub match_store: Option<Box<dyn MatchStore>>,
   pub is_legacy_config: bool,
   pub paths: Option<Paths>,
+  pub paths_overrides: Option<PathsOverrides>,
   pub cli_args: Option<ArgMatches<'static>>,
 }
 
@@ -76,7 +79,14 @@ impl Default for CliModuleArgs {
       match_store: None,
       is_legacy_config: false,
       paths: None,
+      paths_overrides: None,
       cli_args: None,
     }
   }
+}
+
+pub struct PathsOverrides {
+  pub config: Option<PathBuf>,
+  pub runtime: Option<PathBuf>,
+  pub packages: Option<PathBuf>,
 }
