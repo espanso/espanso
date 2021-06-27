@@ -17,11 +17,15 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#[macro_use]
-extern crate lazy_static;
+use std::os::raw::{c_char};
+use std::ffi::CString;
 
-pub mod form;
-pub mod search;
-pub mod welcome;
-pub mod wizard;
-mod sys;
+pub fn convert_to_cstring_or_null(str: Option<String>) -> (Option<CString>, *const c_char) {
+  let c_string =
+    str.map(|str| CString::new(str).expect("unable to convert Option<String> to CString"));
+  let c_ptr = c_string
+    .as_ref()
+    .map_or(std::ptr::null(), |path| path.as_ptr());
+
+  (c_string, c_ptr)
+}

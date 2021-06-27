@@ -17,14 +17,15 @@
  * along with modulo.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub mod form;
-pub mod search;
-pub mod wizard;
-pub mod welcome;
+pub use crate::sys::welcome::show;
 
-#[allow(non_upper_case_globals)]
-#[allow(dead_code)]
-#[allow(non_snake_case)]
-pub mod interop;
+pub struct WelcomeOptions {
+  pub window_icon_path: Option<String>,
+  pub tray_image_path: Option<String>,
 
-mod util;
+  pub handlers: WelcomeHandlers,
+}
+
+pub struct WelcomeHandlers {
+  pub dont_show_again_changed: Option<Box<dyn Fn(bool) + Send>>,
+}
