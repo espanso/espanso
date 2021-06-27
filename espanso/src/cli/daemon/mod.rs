@@ -35,6 +35,7 @@ use crate::{VERSION, exit_code::{
 use super::{CliModule, CliModuleArgs};
 
 mod ipc;
+mod ui;
 mod watcher;
 
 pub fn new() -> CliModule {
@@ -55,6 +56,8 @@ fn daemon_main(args: CliModuleArgs) -> i32 {
   let config_store = args
     .config_store
     .expect("missing config store in worker main");
+  let preferences = crate::preferences::get_default(&paths.runtime).expect("unable to obtain preferences");
+  let cli_args = args.cli_args.expect("missing cli_args in daemon main");
 
   // Make sure only one instance of the daemon is running
   let lock_file = acquire_daemon_lock(&paths.runtime);
@@ -93,6 +96,10 @@ fn daemon_main(args: CliModuleArgs) -> i32 {
   if config_store.default().auto_restart() {
     watcher::initialize_and_spawn(&paths.config, watcher_notify)
       .expect("unable to initialize config watcher thread");
+  }
+
+  if cli_args.is_present("show-welcome") {
+    ui::show_welcome_screen(&preferences);
   }
 
   loop {

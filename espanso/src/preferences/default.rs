@@ -19,13 +19,13 @@
 
 use espanso_kvs::KVS;
 use serde::{de::DeserializeOwned, Serialize};
-use std::path::Path;
 
 use anyhow::Result;
 
 use super::Preferences;
 
 const HAS_COMPLETED_WIZARD_KEY: &str = "has_completed_wizard";
+const SHOULD_DISPLAY_WELCOME_KEY: &str = "should_display_welcome";
 
 #[derive(Clone)]
 pub struct DefaultPreferences<KVSType: KVS> {
@@ -33,7 +33,7 @@ pub struct DefaultPreferences<KVSType: KVS> {
 }
 
 impl<KVSType: KVS> DefaultPreferences<KVSType> {
-  pub fn new(runtime_dir: &Path, kvs: KVSType) -> Result<Self> {
+  pub fn new(kvs: KVSType) -> Result<Self> {
     Ok(Self { kvs })
   }
 
@@ -60,5 +60,13 @@ impl<KVSType: KVS> Preferences for DefaultPreferences<KVSType> {
 
   fn set_completed_wizard(&self, value: bool) {
     self.set(HAS_COMPLETED_WIZARD_KEY, value);
+  }
+
+  fn should_display_welcome(&self) -> bool {
+    self.get(SHOULD_DISPLAY_WELCOME_KEY).unwrap_or(true)
+  }
+
+  fn set_should_display_welcome(&self, value: bool) {
+    self.set(SHOULD_DISPLAY_WELCOME_KEY, value);
   }
 }

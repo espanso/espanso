@@ -17,20 +17,20 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::path::Path;
-use anyhow::Result;
+use crate::preferences::Preferences;
 
-mod default;
+#[cfg(feature = "modulo")]
+pub fn show_welcome_screen(preferences: &impl Preferences) {
+  if preferences.should_display_welcome() {
+    let espanso_exe_path = std::env::current_exe().expect("unable to determine executable path");
+    let mut command = std::process::Command::new(&espanso_exe_path.to_string_lossy().to_string());
+    command.args(&["modulo", "welcome"]);
 
-pub trait Preferences: Send + Sync + Clone {
-  fn has_completed_wizard(&self) -> bool;
-  fn set_completed_wizard(&self, value: bool);
-
-  fn should_display_welcome(&self) -> bool;
-  fn set_should_display_welcome(&self, value: bool);
+    command.spawn().expect("unable to show welcome screen");
+  }
 }
 
-pub fn get_default(runtime_dir: &Path) -> Result<impl Preferences> {
-  let kvs = espanso_kvs::get_persistent(runtime_dir)?;
-  default::DefaultPreferences::new(kvs)
+#[cfg(not(feature = "modulo"))]
+pub fn show_welcome_screen(_: &impl Preferences) {
+  // NOOP  
 }
