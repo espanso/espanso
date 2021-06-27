@@ -20,6 +20,7 @@
 use std::os::raw::{c_char, c_int};
 use std::{ffi::CString, sync::Mutex};
 
+use crate::sys::util::convert_to_cstring_or_null;
 use crate::{sys::interop::{WIZARD_MIGRATE_RESULT_CLEAN_FAILURE, WIZARD_MIGRATE_RESULT_DIRTY_FAILURE, WIZARD_MIGRATE_RESULT_SUCCESS, WIZARD_MIGRATE_RESULT_UNKNOWN_FAILURE, WizardMetadata}, wizard::{WizardHandlers, WizardOptions}};
 
 lazy_static! {
@@ -181,14 +182,4 @@ pub fn show(options: WizardOptions) {
   unsafe {
     super::interop::interop_show_wizard(&wizard_metadata);
   }
-}
-
-fn convert_to_cstring_or_null(str: Option<String>) -> (Option<CString>, *const c_char) {
-  let c_string =
-    str.map(|str| CString::new(str).expect("unable to convert Option<String> to CString"));
-  let c_ptr = c_string
-    .as_ref()
-    .map_or(std::ptr::null(), |path| path.as_ptr());
-
-  (c_string, c_ptr)
 }

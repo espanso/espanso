@@ -119,3 +119,12 @@ typedef struct WizardMetadata {
   int (*is_accessibility_enabled)();
   void (*on_completed)();
 } WizardMetadata;
+
+typedef struct WelcomeMetadata {
+  const char *window_icon_path;
+  const char *tray_image_path;
+
+  // METHODS
+  int (*dont_show_again_changed)(int);
+} WelcomeMetadata;
+

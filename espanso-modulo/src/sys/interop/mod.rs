@@ -137,6 +137,15 @@ pub struct WizardMetadata {
   pub on_completed: extern fn(),
 }
 
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct WelcomeMetadata {
+  pub window_icon_path: *const c_char,
+  pub tray_image_path: *const c_char,
+
+  pub dont_show_again_changed: extern fn(c_int),
+}
+
 // Native bindings
 
 #[allow(improper_ctypes)]
@@ -162,4 +171,7 @@ extern "C" {
 
   // WIZARD
   pub(crate) fn interop_show_wizard(metadata: *const WizardMetadata);
+
+  // WELCOME
+  pub(crate) fn interop_show_welcome(metadata: *const WelcomeMetadata);
 }
