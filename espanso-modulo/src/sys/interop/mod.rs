@@ -170,7 +170,7 @@ extern "C" {
   pub(crate) fn update_items(app: *const c_void, items: *const SearchItem, itemCount: c_int);
 
   // WIZARD
-  pub(crate) fn interop_show_wizard(metadata: *const WizardMetadata);
+  pub(crate) fn interop_show_wizard(metadata: *const WizardMetadata) -> c_int;
 
   // WELCOME
   pub(crate) fn interop_show_welcome(metadata: *const WelcomeMetadata);

@@ -36,6 +36,7 @@ const int ACCESSIBILITY_PAGE_INDEX = ADD_PATH_PAGE_INDEX + 1;
 const int MAX_PAGE_INDEX = ACCESSIBILITY_PAGE_INDEX + 1; // Update if a new page is added at the end
 
 WizardMetadata *metadata = nullptr;
+int completed_successfully = 0;
 
 // App Code
 
@@ -159,6 +160,7 @@ void DerivedFrame::navigate_to_next_page_or_close()
   {
     if (metadata->on_completed) {
       metadata->on_completed();
+      completed_successfully = 1;
     }
 
     Close(true);
@@ -319,7 +321,7 @@ bool WizardApp::OnInit()
   return true;
 }
 
-extern "C" void interop_show_wizard(WizardMetadata *_metadata)
+extern "C" int interop_show_wizard(WizardMetadata *_metadata)
 {
 // Setup high DPI support on Windows
 #ifdef __WXMSW__
@@ -331,4 +333,6 @@ extern "C" void interop_show_wizard(WizardMetadata *_metadata)
   wxApp::SetInstance(new WizardApp());
   int argc = 0;
   wxEntry(argc, (char **)nullptr);
+
+  return completed_successfully;
 }
