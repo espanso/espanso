@@ -34,4 +34,10 @@ extern "C" int32_t mac_utils_check_accessibility();
 // Return 1 if the accessibility permissions have been granted, 0 otherwise
 extern "C" int32_t mac_utils_prompt_accessibility();
 
+// When called, convert the current process to a foreground app (showing the dock icon).
+extern "C" void mac_utils_transition_to_foreground_app();
+
+// When called, convert the current process to a background app (hide the dock icon).
+extern "C" void mac_utils_transition_to_background_app();
+
 #endif //ESPANSO_MAC_UTILS_H

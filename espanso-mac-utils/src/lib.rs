@@ -115,6 +115,20 @@ pub fn prompt_accessibility() -> bool {
   }
 }
 
+#[cfg(target_os = "macos")]
+pub fn convert_to_foreground_app() {
+  unsafe {
+    ffi::mac_utils_transition_to_foreground_app();
+  }
+}
+
+#[cfg(target_os = "macos")]
+pub fn convert_to_background_app() {
+  unsafe {
+    ffi::mac_utils_transition_to_background_app();
+  }
+}
+
 #[cfg(test)]
 #[cfg(target_os = "macos")]
 mod tests {
