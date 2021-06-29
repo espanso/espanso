@@ -34,6 +34,7 @@ fn cc_config() {
   println!("cargo:rustc-link-lib=dylib=c++");
   println!("cargo:rustc-link-lib=static=espansomacutils");
   println!("cargo:rustc-link-lib=framework=Cocoa");
+  println!("cargo:rustc-link-lib=framework=Carbon");
 }
 
 fn main() {

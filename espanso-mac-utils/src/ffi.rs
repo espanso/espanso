@@ -27,4 +27,6 @@ extern "C" {
   pub fn mac_utils_get_path_from_pid(pid: i64, buffer: *mut c_char, size: i32) -> i32;
   pub fn mac_utils_check_accessibility() -> i32;
   pub fn mac_utils_prompt_accessibility() -> i32;
+  pub fn mac_utils_transition_to_foreground_app();
+  pub fn mac_utils_transition_to_background_app();
 }
