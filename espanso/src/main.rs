@@ -377,6 +377,14 @@ fn main() {
       log_panics::init();
     }
 
+    // If explicitly requested, we show the Dock icon on macOS
+    // We need to enable this selectively, otherwise we would end up with multiple
+    // dock icons due to the multi-process nature of espanso.
+    #[cfg(target_os = "macos")]
+    if handler.show_in_dock {
+      espanso_mac_utils::convert_to_foreground_app();
+    }
+
     let mut cli_args: CliModuleArgs = CliModuleArgs::default();
 
     if handler.requires_paths || handler.requires_config {

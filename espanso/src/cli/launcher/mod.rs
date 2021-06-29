@@ -34,6 +34,7 @@ pub fn new() -> CliModule {
     requires_paths: true,
     enable_logs: false,
     subcommand: "launcher".to_string(),
+    show_in_dock: true,
     entry: launcher_main,
     ..Default::default()
   }
@@ -163,6 +164,12 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
   // TODO: initialize config directory if not present
 
   if should_launch_daemon {
+    // We hide the dock icon on macOS to avoid having it around when the daemon is running
+    #[cfg(target_os = "macos")]
+    {
+      espanso_mac_utils::convert_to_background_app();
+    }
+
     daemon::launch_daemon(&paths_overrides).expect("failed to launch daemon");
   }
 
