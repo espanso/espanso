@@ -81,6 +81,8 @@ int32_t mac_utils_prompt_accessibility() {
 void mac_utils_transition_to_foreground_app() {
   ProcessSerialNumber psn = { 0, kCurrentProcess };
   TransformProcessType(&psn, kProcessTransformToForegroundApplication);
+
+  [[NSApplication sharedApplication] activateIgnoringOtherApps : YES];
 }
 
 void mac_utils_transition_to_background_app() {
