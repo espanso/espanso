@@ -37,5 +37,7 @@
 	<string>Copyright 2019-2021 Federico Terzi</string>
 	<key>LSRequiresCarbon</key>
 	<true/>
+	<key>LSUIElement</key>
+	<string>1</string>
 </dict>
 </plist>

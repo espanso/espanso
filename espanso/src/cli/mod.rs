@@ -39,6 +39,7 @@ pub struct CliModule {
   pub requires_paths: bool,
   pub requires_config: bool,
   pub subcommand: String,
+  pub show_in_dock: bool,
   pub entry: fn(CliModuleArgs)->i32,
 }
 
@@ -51,6 +52,7 @@ impl Default for CliModule {
       requires_paths: false, 
       requires_config: false, 
       subcommand: "".to_string(), 
+      show_in_dock: false,
       entry: |_| {0},
     }
   }
