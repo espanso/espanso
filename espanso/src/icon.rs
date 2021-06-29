@@ -44,6 +44,8 @@ const MAC_SYSTEM_DISABLED_BINARY: &[u8] = include_bytes!("res/macos/iconsystemdi
 const MAC_ACCESSIBILITY_1_BINARY: &[u8] = include_bytes!("res/accessibility_1.png");
 #[cfg(target_os = "macos")]
 const MAC_ACCESSIBILITY_2_BINARY: &[u8] = include_bytes!("res/accessibility_2.png");
+#[cfg(target_os = "macos")]
+const MAC_STATUS_ICON_EXPLAIN_IMAGE: &[u8] = include_bytes!("res/macos/icon_explain_image.png");
 
 #[derive(Debug, Default)]
 pub struct IconPaths {
@@ -89,6 +91,7 @@ pub fn load_icon_paths(runtime_dir: &Path) -> Result<IconPaths> {
     logo_no_background: Some(extract_icon(LOGO_NO_BACKGROUND_BINARY, &runtime_dir.join("icon_no_background.png"))?),
     accessibility_image_1: Some(extract_icon(MAC_ACCESSIBILITY_1_BINARY, &runtime_dir.join("accessibility_1.png"))?),
     accessibility_image_2: Some(extract_icon(MAC_ACCESSIBILITY_2_BINARY, &runtime_dir.join("accessibility_2.png"))?),
+    tray_explain_image: Some(extract_icon(MAC_STATUS_ICON_EXPLAIN_IMAGE, &runtime_dir.join("icon_explain_image.png"))?),
     ..Default::default()
   })
 }
