@@ -213,6 +213,8 @@ fn build_native() {
     .file("src/sys/search/search.cpp")
     .file("src/sys/wizard/wizard.cpp")
     .file("src/sys/wizard/wizard_gui.cpp")
+    .file("src/sys/welcome/welcome.cpp")
+    .file("src/sys/welcome/welcome_gui.cpp")
     .file("src/sys/common/mac.mm");
   build.flag("-std=c++17");
 
