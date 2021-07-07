@@ -40,6 +40,9 @@ pub const MIGRATE_UNEXPECTED_FAILURE: i32 = 101;
 pub const ADD_TO_PATH_SUCCESS: i32 = 0;
 pub const ADD_TO_PATH_FAILURE: i32 = 1;
 
+pub const LAUNCHER_SUCCESS: i32 = 0;
+pub const LAUNCHER_CONFIG_DIR_POPULATION_FAILURE: i32 = 1;
+
 use std::sync::Mutex;
 
 lazy_static! {

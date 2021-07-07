@@ -36,6 +36,7 @@ use simplelog::{
 use crate::cli::{LogMode, PathsOverrides};
 
 mod cli;
+mod config;
 mod engine;
 mod exit_code;
 mod gui;

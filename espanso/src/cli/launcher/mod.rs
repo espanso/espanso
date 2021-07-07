@@ -17,8 +17,10 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use log::{error};
 use self::util::MigrationError;
 use crate::preferences::Preferences;
+use crate::exit_code::{LAUNCHER_CONFIG_DIR_POPULATION_FAILURE, LAUNCHER_SUCCESS};
 
 use super::{CliModule, CliModuleArgs};
 
@@ -161,7 +163,14 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
     true
   };
 
-  // TODO: initialize config directory if not present
+  if !espanso_config::is_legacy_config(&paths.config) {
+    if let Err(err) = crate::config::populate_default_config(&paths.config) {
+      error!("Error populating the config directory: {:?}", err);
+
+      // TODO: show an error message with GUI
+      return LAUNCHER_CONFIG_DIR_POPULATION_FAILURE;
+    }
+  }
 
   if should_launch_daemon {
     // We hide the dock icon on macOS to avoid having it around when the daemon is running
@@ -173,7 +182,7 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
     daemon::launch_daemon(&paths_overrides).expect("failed to launch daemon");
   }
 
-  0
+  LAUNCHER_SUCCESS
 }
 
 #[cfg(not(feature = "modulo"))]
