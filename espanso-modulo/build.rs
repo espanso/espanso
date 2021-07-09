@@ -327,8 +327,6 @@ fn macos_link_search_path() -> Option<String> {
 }
 
 // TODO: add documentation for linux
-// Install LLVM:
-// sudo apt install clang
 // Install wxWidgets:
 // sudo apt install libwxgtk3.0-0v5 libwxgtk3.0-dev
 //
@@ -351,7 +349,11 @@ fn build_native() {
     .cpp(true)
     .file("src/sys/form/form.cpp")
     .file("src/sys/search/search.cpp")
-    .file("src/sys/common/common.cpp");
+    .file("src/sys/common/common.cpp")
+    .file("src/sys/wizard/wizard.cpp")
+    .file("src/sys/wizard/wizard_gui.cpp")
+    .file("src/sys/welcome/welcome.cpp")
+    .file("src/sys/welcome/welcome_gui.cpp");
   build.flag("-std=c++17");
 
   for flag in cpp_flags {
