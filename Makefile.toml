@@ -1,11 +1,99 @@
 [config]
 default_to_workspace = false
 
-[tasks.build-debug]
-command = "cargo"
-args = ["build"]
+[env]
+DEBUG = true 
+RELEASE = false
+NO_X11 = false
+NO_MODULO = false
+EXEC_PATH = "target/debug/espanso"
+# TODO: flag to enable/disable modulo support
 
-# TODO: we need to pass the version (debug/release) to the create-bundle task
+[env.release]
+DEBUG = false
+RELEASE = true
+EXEC_PATH = "target/release/espanso"
+
+# Build variants
+
+# This one was written in Rust instead of bash because it has to run on Windows as well
+[tasks.build-binary]
+script_runner = "@rust"
+script = '''
+//! ```cargo
+//! [dependencies]
+//! envmnt = "*"
+//! ```
+
+use std::process::Command;
+
+#[derive(Debug, PartialEq)]
+enum Profile {
+  Debug,
+  Release,
+}
+
+fn main() {
+  let profile = if envmnt::get_or_panic("RELEASE") == "true" {
+    Profile::Release
+  } else {
+    Profile::Debug
+  };
+
+  println!("Using profile: {:?}", profile);
+
+  let wayland = envmnt::get_or("NO_X11", "false") == "true";
+  if wayland {
+    println!("Using Wayland feature");
+  }
+
+  let avoid_modulo = envmnt::get_or("NO_MODULO", "false") == "true";
+  if avoid_modulo {
+    println!("Skipping modulo feature");
+  }
+
+  let mut args = Vec::new();
+  args.push("build");
+
+  if profile == Profile::Release { 
+    args.push("--release");
+  }
+
+  let mut features = Vec::new();
+  if wayland {
+    features.push("wayland");
+  }
+  if !avoid_modulo {
+    features.push("modulo");
+  }
+  
+  let features_flag = features.join(" ");
+
+  args.push("-p");
+  args.push("espanso");
+  args.push("--features");
+  args.push(&features_flag);
+
+  println!("Calling with args: {:?}", args);
+
+  let mut cmd = Command::new("cargo");
+  cmd.args(&args);
+
+  // Remove cargo/rust-specific env variables, as otherwise they mess up the 
+  // nested cargo build call.
+  let all_vars = envmnt::vars();
+  for (key, _) in all_vars {
+    if key.starts_with("CARGO") || key.starts_with("RUST") {
+      //println!("Removing {}", key);
+      cmd.env_remove(key);
+    }
+  }
+  
+let mut handle = cmd.spawn().expect("cargo build failed");
+  handle.wait();
+}
+'''
+
 [tasks.create-bundle]
 script = '''
 TARGET_DIR=target/mac/Espanso.app
@@ -23,14 +111,58 @@ sed	-e "s/VERSION/$VERSION/" espanso/src/res/macos/Info.plist > $TARGET_DIR/Cont
 /bin/echo "APPL????" > $TARGET_DIR/Contents/PkgInfo
 
 cp -f espanso/src/res/macos/icon.icns $TARGET_DIR/Contents/Resources/icon.icns
-cp -f target/debug/espanso $TARGET_DIR/Contents/MacOS/espanso
+cp -f $EXEC_PATH $TARGET_DIR/Contents/MacOS/espanso
 '''
-dependencies=["build-debug"]
+dependencies=["build-binary"]
 
 [tasks.run-debug-bundle]
 command="target/mac/Espanso.app/Contents/MacOS/espanso"
 args=["${@}"]
 dependencies=["create-bundle"]
+
+[tasks.create-app-image]
+script = '''
+#!/usr/bin/env bash
+set -e
+TOOL_DIR=$(pwd)/target/linux/linuxdeploy
+TARGET_DIR=$(pwd)/target/linux/AppImage
+BUILD_DIR=$TARGET_DIR/build
+OUTPUT_DIR=$TARGET_DIR/out
+BASE_DIR=$(pwd)
+
+mkdir -p $TOOL_DIR
+
+if ls $TOOL_DIR/*.AppImage 1> /dev/null 2>&1; then
+  echo "Skipping download of linuxdeploy"
+else
+  echo "Downloading linuxdeploy tool"
+  wget https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage -P "$TOOL_DIR"
+  chmod +x $TOOL_DIR/linuxdeploy*.AppImage
+fi
+
+rm -Rf "$TARGET_DIR"
+mkdir -p $OUTPUT_DIR
+mkdir -p $BUILD_DIR
+
+echo Building AppImage into $OUTPUT_DIR
+pushd $OUTPUT_DIR
+$TOOL_DIR/linuxdeploy*.AppImage --appimage-extract-and-run -e "$BASE_DIR/$EXEC_PATH" -d "$BASE_DIR/espanso/src/res/linux/espanso.desktop" -i "$BASE_DIR/espanso/src/res/linux/icon.png" --appdir $BUILD_DIR --output appimage
+chmod +x ./Espanso*.AppImage
+popd
+'''
+dependencies=["build-binary"]
+
+[tasks.run-app-image]
+args=["${@}"]
+script='''
+#!/usr/bin/env bash
+set -e
+echo Launching AppImage with args: "$@"
+./target/linux/AppImage/out/Espanso-*.AppImage "$@"
+'''
+dependencies=["create-app-image"]
+
+# Test runs
 
 [tasks.test]
 command = "cargo"
