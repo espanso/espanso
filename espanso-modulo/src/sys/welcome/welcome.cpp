@@ -27,7 +27,7 @@
 #include <memory>
 #include <unordered_map>
 
-WelcomeMetadata *metadata = nullptr;
+WelcomeMetadata *welcome_metadata = nullptr;
 
 // App Code
 
@@ -52,9 +52,9 @@ DerivedWelcomeFrame::DerivedWelcomeFrame(wxWindow *parent)
 {
   // Welcome images
 
-  if (metadata->tray_image_path)
+  if (welcome_metadata->tray_image_path)
   {
-    wxBitmap trayBitmap = wxBitmap(metadata->tray_image_path, wxBITMAP_TYPE_PNG);
+    wxBitmap trayBitmap = wxBitmap(welcome_metadata->tray_image_path, wxBITMAP_TYPE_PNG);
     this->tray_bitmap->SetBitmap(trayBitmap);
     #ifdef __WXOSX__
       this->tray_info_label->SetLabel("You should see the espanso icon on the status bar:");
@@ -67,9 +67,9 @@ DerivedWelcomeFrame::DerivedWelcomeFrame(wxWindow *parent)
 }
 
 void DerivedWelcomeFrame::on_dont_show_change( wxCommandEvent& event ) {
-  if (metadata->dont_show_again_changed) {
+  if (welcome_metadata->dont_show_again_changed) {
     int value = this->dont_show_checkbox->IsChecked() ? 1 : 0;
-    metadata->dont_show_again_changed(value);
+    welcome_metadata->dont_show_again_changed(value);
   }
 }
 
@@ -83,9 +83,9 @@ bool WelcomeApp::OnInit()
   wxInitAllImageHandlers();
   DerivedWelcomeFrame *frame = new DerivedWelcomeFrame(NULL);
 
-  if (metadata->window_icon_path)
+  if (welcome_metadata->window_icon_path)
   {
-    setFrameIcon(metadata->window_icon_path, frame);
+    setFrameIcon(welcome_metadata->window_icon_path, frame);
   }
 
   frame->Show(true);
@@ -102,7 +102,7 @@ extern "C" void interop_show_welcome(WelcomeMetadata *_metadata)
   SetProcessDPIAware();
 #endif
 
-  metadata = _metadata;
+  welcome_metadata = _metadata;
 
   wxApp::SetInstance(new WelcomeApp());
   int argc = 0;
