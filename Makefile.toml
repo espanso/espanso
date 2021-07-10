@@ -95,6 +95,11 @@ let mut handle = cmd.spawn().expect("cargo build failed");
 }
 '''
 
+[tasks.run-binary]
+command = "${EXEC_PATH}"
+args = ["${@}"]
+dependencies = ["build-binary"]
+
 [tasks.create-bundle]
 script = '''
 TARGET_DIR=target/mac/Espanso.app
