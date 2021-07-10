@@ -148,7 +148,7 @@ impl Device {
     let keycode: xkb_keycode_t = EVDEV_OFFSET as u32 + code as u32;
     let keymap = unsafe { xkb_state_get_keymap(self.get_state()) };
 
-    if value == KEY_STATE_REPEAT && unsafe { xkb_keymap_key_repeats(keymap, keycode) } != 0 {
+    if value == KEY_STATE_REPEAT && unsafe { xkb_keymap_key_repeats(keymap, keycode) } == 0 {
       return None;
     }
 
