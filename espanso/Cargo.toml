@@ -9,7 +9,7 @@ homepage = "https://github.com/federico-terzi/espanso"
 edition = "2018"
 
 [features]
-#default = ["modulo"]
+default = ["modulo"]
 
 # If the wayland feature is enabled, all X11 dependencies will be dropped
 # and only methods suitable for Wayland will be used
