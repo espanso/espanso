@@ -90,7 +90,6 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
     } else {
       false
     };
-  // TODO: consider also Windows case?
   let add_to_path_handler = Box::new(move || match util::add_espanso_to_path() {
     Ok(_) => true,
     Err(error) => {
@@ -115,10 +114,6 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
   let on_completed_handler = Box::new(move || {
     preferences_clone.set_completed_wizard(true);
   });
-
-  // TODO: show a "espanso is now running page at the end" (it should be triggered everytime
-  // espanso is started, unless the user unchecks "show this message at startup")
-  // This page could also be used when the user starts espanso, but an instance is already running.
 
   // Only show the wizard if a panel should be displayed
   let should_launch_daemon = if is_welcome_page_enabled
@@ -188,6 +183,5 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
 #[cfg(not(feature = "modulo"))]
 fn launcher_main(_: CliModuleArgs) -> i32 {
   // TODO: handle what happens here
-
-  0
+  unimplemented!();
 }
