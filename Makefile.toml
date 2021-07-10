@@ -71,6 +71,7 @@ fn main() {
 
   args.push("-p");
   args.push("espanso");
+  args.push("--no-default-features");
   args.push("--features");
   args.push(&features_flag);
 
