@@ -121,7 +121,7 @@ cp -f $EXEC_PATH $TARGET_DIR/Contents/MacOS/espanso
 '''
 dependencies=["build-binary"]
 
-[tasks.run-debug-bundle]
+[tasks.run-bundle]
 command="target/mac/Espanso.app/Contents/MacOS/espanso"
 args=["${@}"]
 dependencies=["create-bundle"]

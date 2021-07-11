@@ -62,5 +62,8 @@ winapi = { version = "0.3.9", features = ["wincon"] }
 winreg = "0.9.0"
 widestring = "0.4.3"
 
+[target.'cfg(unix)'.dependencies]
+libc = "0.2.98"
+
 [target.'cfg(target_os="macos")'.dependencies]
 espanso-mac-utils = { path = "../espanso-mac-utils" } 

@@ -24,9 +24,9 @@ use crossbeam::channel::Sender;
 use espanso_ipc::{EventHandlerResponse, IPCServer};
 use log::{error, warn};
 
-use crate::ipc::IPCEvent;
+use crate::{engine::event::ExitMode, ipc::IPCEvent};
 
-pub fn initialize_and_spawn(runtime_dir: &Path, exit_notify: Sender<()>) -> Result<()> {
+pub fn initialize_and_spawn(runtime_dir: &Path, exit_notify: Sender<ExitMode>) -> Result<()> {
   let server = crate::ipc::create_worker_ipc_server(runtime_dir)?;
 
   std::thread::Builder::new()
@@ -35,7 +35,17 @@ pub fn initialize_and_spawn(runtime_dir: &Path, exit_notify: Sender<()>) -> Resu
       server.run(Box::new(move |event| {
         match event {
             IPCEvent::Exit => {
-              if let Err(err) = exit_notify.send(()) {
+              if let Err(err) = exit_notify.send(ExitMode::Exit) {
+                error!(
+                  "experienced error while sending exit signal from worker ipc handler: {}",
+                  err
+                );
+              }
+
+              EventHandlerResponse::NoResponse
+            }
+            IPCEvent::ExitAllProcesses => {
+              if let Err(err) = exit_notify.send(ExitMode::ExitAllProcesses) {
                 error!(
                   "experienced error while sending exit signal from worker ipc handler: {}",
                   err

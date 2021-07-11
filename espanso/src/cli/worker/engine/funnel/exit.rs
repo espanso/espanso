@@ -24,12 +24,12 @@ use crate::engine::{event::{Event, EventType, ExitMode}, funnel};
 use super::sequencer::Sequencer;
 
 pub struct ExitSource<'a> {
-  pub exit_signal: Receiver<()>,
+  pub exit_signal: Receiver<ExitMode>,
   pub sequencer: &'a Sequencer,
 }
 
 impl <'a> ExitSource<'a> {
-  pub fn new(exit_signal: Receiver<()>, sequencer: &'a Sequencer) -> Self {
+  pub fn new(exit_signal: Receiver<ExitMode>, sequencer: &'a Sequencer) -> Self {
     ExitSource {
       exit_signal,
       sequencer,
@@ -43,12 +43,12 @@ impl<'a> funnel::Source<'a> for ExitSource<'a> {
   }
 
   fn receive(&self, op: SelectedOperation) -> Event {
-    op
+    let mode = op
       .recv(&self.exit_signal)
       .expect("unable to select data from ExitSource receiver");
     Event {
       source_id: self.sequencer.next_id(),
-      etype: EventType::ExitRequested(ExitMode::Exit),
+      etype: EventType::ExitRequested(mode),
     }
   }
 }

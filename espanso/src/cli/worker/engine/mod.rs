@@ -46,7 +46,7 @@ pub fn initialize_and_spawn(
   config_store: Box<dyn ConfigStore>,
   match_store: Box<dyn MatchStore>,
   ui_remote: Box<dyn UIRemote>,
-  exit_signal: Receiver<()>,
+  exit_signal: Receiver<ExitMode>,
   ui_event_receiver: Receiver<UIEvent>,
   secure_input_receiver: Receiver<SecureInputEvent>,
 ) -> Result<JoinHandle<ExitMode>> {
