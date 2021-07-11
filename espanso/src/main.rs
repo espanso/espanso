@@ -43,6 +43,7 @@ mod gui;
 mod icon;
 mod ipc;
 mod lock;
+#[macro_use]
 mod logging;
 mod path;
 mod preferences;
@@ -61,6 +62,7 @@ lazy_static! {
     cli::modulo::new(),
     cli::migrate::new(),
     cli::env_path::new(),
+    cli::service::new(),
   ];
 }
 
@@ -168,7 +170,7 @@ fn main() {
           Arg::with_name("show-welcome")
             .long("show-welcome")
             .required(false)
-            .takes_value(false)
+            .takes_value(false),
         )
         .about("Start the daemon without spawning a new process."),
     )
@@ -215,10 +217,7 @@ fn main() {
                 .help("Interpret the input data as JSON"),
             ),
         )
-        .subcommand(
-          SubCommand::with_name("welcome")
-            .about("Display the welcome screen")
-        ),
+        .subcommand(SubCommand::with_name("welcome").about("Display the welcome screen")),
     )
     // .subcommand(SubCommand::with_name("start")
     //     .about("Start the daemon spawning a new process in the background."))
@@ -253,6 +252,30 @@ fn main() {
         .about("Automatically migrate legacy config files to the new v2 format.")
         .arg(Arg::with_name("noconfirm").long("noconfirm"))
         .help("Migrate the configuration without asking for confirmation"),
+    )
+    .subcommand(
+      SubCommand::with_name("service")
+        .subcommand(SubCommand::with_name("register").about("Register espanso as a system service"))
+        .subcommand(
+          SubCommand::with_name("unregister").about("Unregister espanso from system services"),
+        )
+        .subcommand(
+          SubCommand::with_name("check")
+            .about("Check if espanso is registered as a system service"),
+        )
+        .subcommand(
+          SubCommand::with_name("start")
+            .about("Start espanso as a service")
+            .arg(
+              Arg::with_name("unmanaged")
+                .long("unmanaged")
+                .required(false)
+                .takes_value(false)
+                .help("Run espanso as an unmanaged service (avoid system manager)"),
+            ),
+        )
+        .subcommand(SubCommand::with_name("stop").about("Stop espanso service"))
+        .about("Register and manage 'espanso' as a system service."),
     )
     // .subcommand(SubCommand::with_name("match")
     //     .about("List and execute matches from the CLI")

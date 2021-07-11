@@ -30,6 +30,8 @@ pub mod log;
 pub mod migrate;
 pub mod modulo;
 pub mod path;
+pub mod service;
+pub mod util;
 pub mod worker;
 
 pub struct CliModule {

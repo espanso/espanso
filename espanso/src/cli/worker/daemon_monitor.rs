@@ -23,11 +23,11 @@ use anyhow::Result;
 use crossbeam::channel::Sender;
 use log::{error, info, warn};
 
-use crate::lock::acquire_daemon_lock;
+use crate::{engine::event::ExitMode, lock::acquire_daemon_lock};
 
 const DAEMON_STATUS_CHECK_INTERVAL: u64 = 1000;
 
-pub fn initialize_and_spawn(runtime_dir: &Path, exit_notify: Sender<()>) -> Result<()> {
+pub fn initialize_and_spawn(runtime_dir: &Path, exit_notify: Sender<ExitMode>) -> Result<()> {
   let runtime_dir_clone = runtime_dir.to_path_buf();
   std::thread::Builder::new()
     .name("daemon-monitor".to_string())
@@ -38,7 +38,7 @@ pub fn initialize_and_spawn(runtime_dir: &Path, exit_notify: Sender<()>) -> Resu
   Ok(())
 }
 
-fn daemon_monitor_main(runtime_dir: &Path, exit_notify: Sender<()>) {
+fn daemon_monitor_main(runtime_dir: &Path, exit_notify: Sender<ExitMode>) {
   info!("monitoring the status of the daemon process");
   
   loop {
@@ -49,7 +49,7 @@ fn daemon_monitor_main(runtime_dir: &Path, exit_notify: Sender<()>) {
 
     if is_daemon_lock_free {
       warn!("detected unexpected daemon termination, sending exit signal to the engine");
-      if let Err(error) = exit_notify.send(()) {
+      if let Err(error) = exit_notify.send(ExitMode::Exit) {
         error!("unable to send daemon exit signal: {}", error);
       }
       break;

@@ -25,6 +25,7 @@ use serde::{Serialize, Deserialize};
 #[derive(Debug, Serialize, Deserialize)]
 pub enum IPCEvent {
   Exit,
+  ExitAllProcesses,
 }
 
 pub fn create_daemon_ipc_server(runtime_dir: &Path) -> Result<impl IPCServer<IPCEvent>> {
