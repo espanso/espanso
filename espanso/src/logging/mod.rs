@@ -122,6 +122,14 @@ macro_rules! info_println {
 }
 
 #[macro_export]
+macro_rules! warn_eprintln {
+  ($($tts:tt)*) => {
+    eprintln!($($tts)*);
+    log::warn!($($tts)*);
+  }
+}
+
+#[macro_export]
 macro_rules! error_eprintln {
   ($($tts:tt)*) => {
     eprintln!($($tts)*);
