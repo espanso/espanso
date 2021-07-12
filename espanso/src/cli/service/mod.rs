@@ -30,6 +30,11 @@ mod unix;
 #[cfg(not(target_os = "windows"))]
 use unix::*;
 
+#[cfg(target_os = "windows")]
+mod win;
+#[cfg(target_os = "windows")]
+use win::*;
+
 mod stop;
 
 pub fn new() -> CliModule {
@@ -47,6 +52,7 @@ pub fn new() -> CliModule {
 fn service_main(args: CliModuleArgs) -> i32 {
   let paths = args.paths.expect("missing paths argument");
   let cli_args = args.cli_args.expect("missing cli_args");
+  #[allow(unused_variables)]
   let paths_overrides = args.paths_overrides.expect("missing paths_overrides");
 
   if cli_args.subcommand_matches("register").is_some() {
