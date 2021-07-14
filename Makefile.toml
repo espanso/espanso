@@ -59,6 +59,9 @@ fn main() {
     args.push("--release");
   }
 
+  args.push("--manifest-path");
+  args.push("espanso/Cargo.toml"); 
+
   let mut features = Vec::new();
   if wayland {
     features.push("wayland");
