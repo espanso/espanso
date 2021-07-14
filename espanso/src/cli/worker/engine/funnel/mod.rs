@@ -18,7 +18,7 @@
  */
 
 use anyhow::Result;
-use espanso_detect::event::{InputEvent, KeyboardEvent, Status};
+use espanso_detect::{SourceCreationOptions, event::{InputEvent, KeyboardEvent, Status}};
 use log::{error};
 use thiserror::Error;
 
@@ -33,8 +33,7 @@ pub mod secure_input;
 pub mod sequencer;
 pub mod ui;
 
-// TODO: pass options
-pub fn init_and_spawn() -> Result<(DetectSource, ModifierStateStore, Sequencer)> {
+pub fn init_and_spawn(source_options: SourceCreationOptions) -> Result<(DetectSource, ModifierStateStore, Sequencer)> {
   let (sender, receiver) = crossbeam::channel::unbounded();
   let (init_tx, init_rx) = crossbeam::channel::unbounded();
 
@@ -46,7 +45,7 @@ pub fn init_and_spawn() -> Result<(DetectSource, ModifierStateStore, Sequencer)>
   if let Err(error) = std::thread::Builder::new()
     .name("detect thread".to_string())
     .spawn(
-      move || match espanso_detect::get_source(Default::default()) {
+      move || match espanso_detect::get_source(source_options) {
         Ok(mut source) => {
           if source.initialize().is_err() {
             init_tx

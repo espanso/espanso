@@ -22,18 +22,39 @@ use std::thread::JoinHandle;
 use anyhow::Result;
 use crossbeam::channel::Receiver;
 use espanso_config::{config::ConfigStore, matches::store::MatchStore};
+use espanso_detect::SourceCreationOptions;
+use espanso_inject::InjectorCreationOptions;
 use espanso_path::Paths;
 use espanso_ui::{event::UIEvent, UIRemote};
-use log::info;
+use log::{debug, error, info, warn};
 
-use crate::{cli::worker::{engine::{dispatch::executor::{
+use crate::{
+  cli::worker::{
+    engine::{
+      dispatch::executor::{
         clipboard_injector::ClipboardInjectorAdapter, context_menu::ContextMenuHandlerAdapter,
         event_injector::EventInjectorAdapter, icon::IconHandlerAdapter,
         key_injector::KeyInjectorAdapter,
-      }, process::middleware::{image_resolve::PathProviderAdapter, match_select::MatchSelectorAdapter, matcher::{convert::MatchConverter, regex::{RegexMatcherAdapter, RegexMatcherAdapterOptions}, rolling::{RollingMatcherAdapter, RollingMatcherAdapterOptions}}, multiplex::MultiplexAdapter, render::{
+      },
+      process::middleware::{
+        image_resolve::PathProviderAdapter,
+        match_select::MatchSelectorAdapter,
+        matcher::{
+          convert::MatchConverter,
+          regex::{RegexMatcherAdapter, RegexMatcherAdapterOptions},
+          rolling::{RollingMatcherAdapter, RollingMatcherAdapterOptions},
+        },
+        multiplex::MultiplexAdapter,
+        render::{
           extension::{clipboard::ClipboardAdapter, form::FormProviderAdapter},
           RendererAdapter,
-        }}}, match_cache::MatchCache}, engine::event::ExitMode};
+        },
+      },
+    },
+    match_cache::MatchCache,
+  },
+  engine::event::ExitMode,
+};
 
 use super::secure_input::SecureInputEvent;
 
@@ -41,6 +62,7 @@ pub mod dispatch;
 pub mod funnel;
 pub mod process;
 
+#[allow(clippy::too_many_arguments)]
 pub fn initialize_and_spawn(
   paths: Paths,
   config_store: Box<dyn ConfigStore>,
@@ -49,6 +71,7 @@ pub fn initialize_and_spawn(
   exit_signal: Receiver<ExitMode>,
   ui_event_receiver: Receiver<UIEvent>,
   secure_input_receiver: Receiver<SecureInputEvent>,
+  use_evdev_backend: bool,
 ) -> Result<JoinHandle<ExitMode>> {
   let handle = std::thread::Builder::new()
     .name("engine thread".to_string())
@@ -66,18 +89,35 @@ pub fn initialize_and_spawn(
       let modulo_form_ui = crate::gui::modulo::form::ModuloFormUI::new(&modulo_manager);
       let modulo_search_ui = crate::gui::modulo::search::ModuloSearchUI::new(&modulo_manager);
 
+      let has_granted_capabilities = grant_linux_capabilities(use_evdev_backend);
+
+      // TODO: pass all the options
       let (detect_source, modifier_state_store, sequencer) =
-        super::engine::funnel::init_and_spawn().expect("failed to initialize detector module");
+        super::engine::funnel::init_and_spawn(SourceCreationOptions {
+          use_evdev: use_evdev_backend,
+          ..Default::default()
+        })
+        .expect("failed to initialize detector module");
       let exit_source = super::engine::funnel::exit::ExitSource::new(exit_signal, &sequencer);
       let ui_source = super::engine::funnel::ui::UISource::new(ui_event_receiver, &sequencer);
-      let secure_input_source = super::engine::funnel::secure_input::SecureInputSource::new(secure_input_receiver, &sequencer);
-      let sources: Vec<&dyn crate::engine::funnel::Source> =
-        vec![&detect_source, &exit_source, &ui_source, &secure_input_source];
+      let secure_input_source = super::engine::funnel::secure_input::SecureInputSource::new(
+        secure_input_receiver,
+        &sequencer,
+      );
+      let sources: Vec<&dyn crate::engine::funnel::Source> = vec![
+        &detect_source,
+        &exit_source,
+        &ui_source,
+        &secure_input_source,
+      ];
       let funnel = crate::engine::funnel::default(&sources);
 
-      let rolling_matcher = RollingMatcherAdapter::new(&match_converter.get_rolling_matches(), RollingMatcherAdapterOptions {
-        char_word_separators: config_manager.default().word_separators(),
-      });
+      let rolling_matcher = RollingMatcherAdapter::new(
+        &match_converter.get_rolling_matches(),
+        RollingMatcherAdapterOptions {
+          char_word_separators: config_manager.default().word_separators(),
+        },
+      );
       let regex_matcher = RegexMatcherAdapter::new(
         &match_converter.get_regex_matches(),
         &RegexMatcherAdapterOptions {
@@ -92,8 +132,11 @@ pub fn initialize_and_spawn(
       let selector = MatchSelectorAdapter::new(&modulo_search_ui, &match_cache);
       let multiplexer = MultiplexAdapter::new(&match_cache);
 
-      let injector = espanso_inject::get_injector(Default::default())
-        .expect("failed to initialize injector module"); // TODO: handle the options
+      let injector = espanso_inject::get_injector(InjectorCreationOptions {
+        use_evdev: use_evdev_backend,
+        ..Default::default()
+      })
+      .expect("failed to initialize injector module"); // TODO: handle the options
       let clipboard = espanso_clipboard::get_clipboard(Default::default())
         .expect("failed to initialize clipboard module"); // TODO: handle options
 
@@ -161,6 +204,13 @@ pub fn initialize_and_spawn(
         &icon_adapter,
       );
 
+      // Disable previously granted linux capabilities if not needed anymore
+      if has_granted_capabilities {
+        if let Err(err) = crate::capabilities::clear_capabilities() {
+          error!("unable to revoke linux capabilities: {}", err);
+        }
+      }
+
       let mut engine = crate::engine::Engine::new(&funnel, &mut processor, &dispatcher);
       let exit_mode = engine.run();
 
@@ -171,4 +221,31 @@ pub fn initialize_and_spawn(
     })?;
 
   Ok(handle)
+}
+
+fn grant_linux_capabilities(use_evdev_backend: bool) -> bool {
+  if use_evdev_backend {
+    if crate::capabilities::can_use_capabilities() {
+      debug!("using linux capabilities to grant permissions needed by EVDEV backend");
+      if let Err(err) = crate::capabilities::grant_capabilities() {
+        error!("unable to grant CAP_DAC_OVERRIDE capability: {}", err);
+        false
+      } else {
+        debug!("successfully granted permissions using capabilities");
+        true
+      }
+    } else {
+      warn!("EVDEV backend is being used, but without enabling linux capabilities.");
+      warn!("  Although you CAN run espanso EVDEV backend as root, it's not recommended due");
+      warn!(
+        "  to security reasons. Espanso supports linux capabilities to limit the attack surface"
+      );
+      warn!("  area by only leveraging on the CAP_DAC_OVERRIDE capability (needed to work with");
+      warn!("  /dev/input/* devices to detect and inject text) and disabling it as soon as the");
+      warn!("  initial setup is completed.");
+      false
+    }
+  } else {
+    false
+  }
 }

@@ -46,6 +46,7 @@ pub fn new() -> CliModule {
   CliModule {
     requires_paths: true,
     requires_config: true,
+    requires_linux_capabilities: true,
     enable_logs: true,
     log_mode: super::LogMode::AppendOnly,
     subcommand: "worker".to_string(),
@@ -81,6 +82,12 @@ fn worker_main(args: CliModuleArgs) -> i32 {
 
   // TODO: show config loading errors in a GUI, if any
 
+  let use_evdev_backend = if cfg!(feature = "wayland") {
+    true
+  } else {
+    std::env::var("USE_EVDEV").unwrap_or_else(|_| "false".to_string()) == "true"
+  };
+
   let icon_paths =
     crate::icon::load_icon_paths(&paths.runtime).expect("unable to initialize icons");
 
@@ -112,6 +119,7 @@ fn worker_main(args: CliModuleArgs) -> i32 {
     engine_exit_receiver,
     engine_ui_event_receiver,
     engine_secure_input_receiver,
+    use_evdev_backend,
   )
   .expect("unable to initialize engine");
 
