@@ -67,3 +67,6 @@ libc = "0.2.98"
 
 [target.'cfg(target_os="macos")'.dependencies]
 espanso-mac-utils = { path = "../espanso-mac-utils" } 
+
+[target.'cfg(target_os="linux")'.dependencies]
+caps = "0.5.2"

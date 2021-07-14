@@ -35,6 +35,7 @@ use simplelog::{
 
 use crate::cli::{LogMode, PathsOverrides};
 
+mod capabilities;
 mod cli;
 mod config;
 mod engine;
@@ -399,6 +400,13 @@ fn main() {
 
       // Activate logging for panics
       log_panics::init();
+    }
+
+    // If the process doesn't require linux capabilities, disable them
+    if !handler.requires_linux_capabilities {
+      if let Err(err) = crate::capabilities::clear_capabilities() {
+        error!("unable to clear linux capabilities: {}", err);
+      } 
     }
 
     // If explicitly requested, we show the Dock icon on macOS
