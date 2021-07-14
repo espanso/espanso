@@ -35,6 +35,11 @@ mod win;
 #[cfg(target_os = "windows")]
 use win::*;
 
+#[cfg(target_os = "linux")]
+mod linux;
+#[cfg(target_os = "linux")]
+use linux::*;
+
 mod stop;
 
 pub fn new() -> CliModule {
