@@ -70,3 +70,5 @@ espanso-mac-utils = { path = "../espanso-mac-utils" }
 
 [target.'cfg(target_os="linux")'.dependencies]
 caps = "0.5.2"
+const_format = "0.2.14"
+regex = "1.4.3"
