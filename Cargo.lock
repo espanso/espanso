@@ -222,6 +222,26 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "28b9d6de7f49e22cf97ad17fc4036ece69300032f45f78f30b4a4482cdc3f4a6"
 
 [[package]]
+name = "const_format"
+version = "0.2.14"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c75ea7d6aeb2ebd1ee24f7b7e1b23242ef5a56b3a693733b99bfbe5ef31d0306"
+dependencies = [
+ "const_format_proc_macros",
+]
+
+[[package]]
+name = "const_format_proc_macros"
+version = "0.2.14"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "29c36c619c422113552db4eb28cddba8faa757e33f758cc3415bd2885977b591"
+dependencies = [
+ "proc-macro2",
+ "quote 1.0.9",
+ "unicode-xid 0.2.1",
+]
+
+[[package]]
 name = "constant_time_eq"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -452,6 +472,7 @@ dependencies = [
  "caps",
  "clap",
  "colored",
+ "const_format",
  "crossbeam",
  "dialoguer",
  "dirs 3.0.1",
@@ -481,6 +502,7 @@ dependencies = [
  "markdown",
  "named_pipe",
  "notify",
+ "regex",
  "serde",
  "serde_json",
  "serde_yaml",
