@@ -28,10 +28,15 @@ dependencies = ["build-binary"]
 
 # Windows
 
+[tasks.build-windows-resources]
+script_runner = "@rust"
+script = { file = "scripts/build_windows_resources.rs" }
+dependencies = ["build-binary"]
+
 [tasks.build-windows-portable]
 script_runner = "@rust"
 script = { file = "scripts/build_windows_portable.rs" }
-dependencies = ["build-binary"]
+dependencies = ["build-windows-resources"]
 
 # macOS
 
