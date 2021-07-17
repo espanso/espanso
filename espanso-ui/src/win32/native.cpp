@@ -43,16 +43,12 @@
 
 #include <Windows.h>
 
-#include "WinToast/wintoastlib.h"
-using namespace WinToastLib;
-
 #include "json/json.hpp"
 using json = nlohmann::json;
 
 #define APPWM_ICON_CLICK (WM_APP + 1)
 #define APPWM_SHOW_CONTEXT_MENU (WM_APP + 2)
 #define APPWM_UPDATE_TRAY_ICON (WM_APP + 3)
-#define APPWM_SHOW_NOTIFICATION (WM_APP + 4)
 
 const wchar_t *const ui_winclass = L"EspansoUI";
 
@@ -61,7 +57,6 @@ typedef struct
   UIOptions options;
   NOTIFYICONDATA nid;
   HICON g_icons[MAX_ICON_COUNT];
-  wchar_t notification_icon_path[MAX_FILE_PATH];
 
   // Rust interop
   void *rust_instance;
@@ -70,16 +65,6 @@ typedef struct
 
 // Needed to detect when Explorer crashes
 UINT WM_TASKBARCREATED = RegisterWindowMessage(L"TaskbarCreated");
-
-// Notification handler using: https://mohabouje.github.io/WinToast/
-class EspansoNotificationHandler : public IWinToastHandler
-{
-public:
-  void toastActivated() const {}
-  void toastActivated(int actionIndex) const {}
-  void toastDismissed(WinToastDismissalReason state) const {}
-  void toastFailed() const {}
-};
 
 /*
  * Message handler procedure for the window
@@ -152,19 +137,6 @@ LRESULT CALLBACK ui_window_procedure(HWND window, unsigned int msg, WPARAM wp, L
       Shell_NotifyIcon(NIM_MODIFY, &variables->nid);
     }
 
-    break;
-  }
-  case APPWM_SHOW_NOTIFICATION:
-  {
-    std::unique_ptr<wchar_t> message(reinterpret_cast<wchar_t *>(lp));
-
-    std::cout << "hello" << variables->notification_icon_path << std::endl;
-
-    WinToastTemplate templ = WinToastTemplate(WinToastTemplate::ImageAndText02);
-    templ.setImagePath(variables->notification_icon_path);
-    templ.setTextField(L"Espanso", WinToastTemplate::FirstLine);
-    templ.setTextField(message.get(), WinToastTemplate::SecondLine);
-    WinToast::instance()->showToast(templ, new EspansoNotificationHandler());
     break;
   }
   case APPWM_ICON_CLICK: // Click on the tray icon
@@ -240,7 +212,6 @@ void *ui_initialize(void *_self, UIOptions _options, int32_t *error_code)
       UIVariables *variables = new UIVariables();
       variables->options = _options;
       variables->rust_instance = _self;
-      wcscpy(variables->notification_icon_path, _options.notification_icon_path);
       SetWindowLongPtrW(window, GWLP_USERDATA, reinterpret_cast<::LONG_PTR>(variables));
 
       // Load the tray icons
@@ -252,11 +223,11 @@ void *ui_initialize(void *_self, UIOptions _options, int32_t *error_code)
       // Hide the window
       ShowWindow(window, SW_HIDE);
 
-      // Setup the icon in the notification space
+      // Setup the icon in the tray space
       SendMessage(window, WM_SETICON, ICON_BIG, (LPARAM)variables->g_icons[0]);
       SendMessage(window, WM_SETICON, ICON_SMALL, (LPARAM)variables->g_icons[0]);
 
-      // Notification
+      // Tray icon 
       variables->nid.cbSize = sizeof(variables->nid);
       variables->nid.hWnd = window;
       variables->nid.uID = 1;
@@ -280,16 +251,6 @@ void *ui_initialize(void *_self, UIOptions _options, int32_t *error_code)
   else
   {
     *error_code = -1;
-    return nullptr;
-  }
-
-  // Initialize the notification handler
-  WinToast::instance()->setAppName(L"Espanso");
-  const auto aumi = WinToast::configureAUMI(L"federico.terzi", L"Espanso", L"Core", L"1.0.0");
-  WinToast::instance()->setAppUserModelId(aumi);
-  if (!WinToast::instance()->initialize())
-  {
-    *error_code = -3;
     return nullptr;
   }
 
@@ -335,17 +296,6 @@ void ui_update_tray_icon(void *window, int32_t index)
   {
     PostMessage((HWND)window, APPWM_UPDATE_TRAY_ICON, 0, index);
   }
-}
-
-int32_t ui_show_notification(void *window, wchar_t *message)
-{
-  if (window)
-  {
-    wchar_t *message_copy = _wcsdup(message);
-    PostMessage((HWND)window, APPWM_SHOW_NOTIFICATION, 0, (LPARAM)message_copy);
-    return 0;
-  }
-  return -1;
 }
 
 // Menu related methods
