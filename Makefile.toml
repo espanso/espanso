@@ -7,7 +7,7 @@ RELEASE = false
 NO_X11 = false
 NO_MODULO = false
 EXEC_PATH = "target/debug/espanso"
-# TODO: flag to enable/disable modulo support
+BUILD_ARCH = "x86_64" # TODO: do something with this
 
 [env.release]
 DEBUG = false
@@ -37,6 +37,14 @@ dependencies = ["build-binary"]
 script_runner = "@rust"
 script = { file = "scripts/build_windows_portable.rs" }
 dependencies = ["build-windows-resources"]
+
+[tasks.build-windows-installer]
+script_runner = "@rust"
+script = { file = "scripts/build_windows_installer.rs" }
+dependencies = ["build-windows-resources"]
+
+[tasks.build-windows-all]
+dependencies = ["build-windows-portable", "build-windows-installer"]
 
 # macOS
 
