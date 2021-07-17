@@ -22,12 +22,15 @@ use std::{
   collections::HashMap,
   ffi::{c_void, CString},
   os::raw::c_char,
+  path::PathBuf,
   sync::{
     atomic::{AtomicPtr, Ordering},
     Arc,
   },
   thread::ThreadId,
 };
+
+mod notification;
 
 use anyhow::Result;
 use lazycell::LazyCell;
@@ -51,8 +54,6 @@ pub struct RawUIOptions {
 
   pub icon_paths: [[u16; MAX_FILE_PATH]; MAX_ICON_COUNT],
   pub icon_paths_count: i32,
-
-  pub notification_icon_path: [u16; MAX_FILE_PATH],
 }
 // Take a look at the native.h header file for an explanation of the fields
 #[repr(C)]
@@ -76,7 +77,6 @@ extern "C" {
   pub fn ui_destroy(window_handle: *const c_void) -> i32;
   pub fn ui_exit(window_handle: *const c_void) -> i32;
   pub fn ui_update_tray_icon(window_handle: *const c_void, index: i32);
-  pub fn ui_show_notification(window_handle: *const c_void, message: *const u16);
   pub fn ui_show_context_menu(window_handle: *const c_void, payload: *const c_char);
 }
 
@@ -102,13 +102,12 @@ pub fn create(options: Win32UIOptions) -> Result<(Win32Remote, Win32EventLoop)> 
     icons.push(path.clone());
   }
 
-  let eventloop = Win32EventLoop::new(
-    handle.clone(),
-    icons,
-    options.show_icon,
-    options.notification_icon_path,
+  let eventloop = Win32EventLoop::new(handle.clone(), icons, options.show_icon);
+  let remote = Win32Remote::new(
+    handle,
+    icon_indexes,
+    PathBuf::from(options.notification_icon_path),
   );
-  let remote = Win32Remote::new(handle, icon_indexes);
 
   Ok((remote, eventloop))
 }
@@ -118,7 +117,6 @@ pub struct Win32EventLoop {
 
   show_icon: bool,
   icons: Vec<String>,
-  notification_icon_path: String,
 
   // Internal
   _event_callback: LazyCell<UIEventCallback>,
@@ -126,17 +124,11 @@ pub struct Win32EventLoop {
 }
 
 impl Win32EventLoop {
-  pub(crate) fn new(
-    handle: Arc<AtomicPtr<c_void>>,
-    icons: Vec<String>,
-    show_icon: bool,
-    notification_icon_path: String,
-  ) -> Self {
+  pub(crate) fn new(handle: Arc<AtomicPtr<c_void>>, icons: Vec<String>, show_icon: bool) -> Self {
     Self {
       handle,
       icons,
       show_icon,
-      notification_icon_path,
       _event_callback: LazyCell::new(),
       _init_thread_id: LazyCell::new(),
     }
@@ -160,17 +152,10 @@ impl UIEventLoop for Win32EventLoop {
       icon_path[0..len].clone_from_slice(&wide_path.as_slice()[..len]);
     }
 
-    let wide_notification_icon_path =
-      widestring::WideCString::from_str(&self.notification_icon_path)?;
-    let mut wide_notification_icon_path_buffer: [u16; MAX_FILE_PATH] = [0; MAX_FILE_PATH];
-    wide_notification_icon_path_buffer[..wide_notification_icon_path.as_slice().len()]
-      .clone_from_slice(wide_notification_icon_path.as_slice());
-
     let options = RawUIOptions {
       show_icon: if self.show_icon { 1 } else { 0 },
       icon_paths,
       icon_paths_count: self.icons.len() as i32,
-      notification_icon_path: wide_notification_icon_path_buffer,
     };
 
     let mut error_code = 0;
@@ -187,12 +172,6 @@ impl UIEventLoop for Win32EventLoop {
         -2 => Err(
           Win32UIError::EventLoopInitError(
             "Unable to initialize Win32EventLoop, error creating window".to_string(),
-          )
-          .into(),
-        ),
-        -3 => Err(
-          Win32UIError::EventLoopInitError(
-            "Unable to initialize Win32EventLoop, initializing notifications".to_string(),
           )
           .into(),
         ),
@@ -284,7 +263,12 @@ impl Win32Remote {
   pub(crate) fn new(
     handle: Arc<AtomicPtr<c_void>>,
     icon_indexes: HashMap<TrayIcon, usize>,
+    notification_icon_path: PathBuf,
   ) -> Self {
+    if let Err(err) = notification::initialize_notification_thread(notification_icon_path) {
+      error!("unable to initialize notification thread: {}", err);
+    }
+
     Self {
       handle,
       icon_indexes,
@@ -308,21 +292,8 @@ impl UIRemote for Win32Remote {
   }
 
   fn show_notification(&self, message: &str) {
-    let handle = self.handle.load(Ordering::Acquire);
-    if handle.is_null() {
-      error!("Unable to show notification, pointer is null");
-      return;
-    }
-
-    let wide_message = widestring::WideCString::from_str(message);
-    match wide_message {
-      Ok(wide_message) => unsafe { ui_show_notification(handle, wide_message.as_ptr()) },
-      Err(error) => {
-        error!(
-          "Unable to show notification, invalid message encoding {}",
-          error
-        );
-      }
+    if let Err(err) = notification::show_notification(message) {
+      error!("Unable to show notification: {}", err);
     }
   }
 
