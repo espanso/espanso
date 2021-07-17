@@ -211,6 +211,9 @@ pub fn initialize_and_spawn(
         }
       }
 
+      // TODO: check config
+      ui_remote.show_notification("Espanso is running!");
+
       let mut engine = crate::engine::Engine::new(&funnel, &mut processor, &dispatcher);
       let exit_mode = engine.run();
 
