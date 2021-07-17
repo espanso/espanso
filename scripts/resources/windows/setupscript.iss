@@ -6,6 +6,7 @@
 #define MyAppPublisher "Federico Terzi"
 #define MyAppURL "{{{app_url}}}"
 #define MyAppExeName "espansod.exe"
+#define MyAppUserModelID "{{5E3B6C0F-1A4D-45C4-8872-D8174702101A}"
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
@@ -43,7 +44,7 @@ Source: "{{{cli_helper}}}"; DestDir: "{app}"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
-Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Parameters: "launcher"; IconFilename: "{app}\icon.ico";
+Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Parameters: "launcher"; AppUserModelID: "{#MyAppUserModelID}"; IconFilename: "{app}\icon.ico";
 ;Name: "{userstartup}\espanso"; Filename: "{app}\espansod.exe"; Parameters: "launcher"; Tasks:StartMenuEntry;
 
 ;[Tasks]
