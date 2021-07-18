@@ -17,12 +17,16 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use anyhow::Result;
-use log::error;
+use anyhow::{anyhow, Context, Result};
 use std::path::{Path, PathBuf};
 use thiserror::Error;
 
-pub fn resolve_imports(group_path: &Path, imports: &[String]) -> Result<Vec<String>> {
+use crate::error::ErrorRecord;
+
+pub fn resolve_imports(
+  group_path: &Path,
+  imports: &[String],
+) -> Result<(Vec<String>, Vec<ErrorRecord>)> {
   let mut paths = Vec::new();
 
   // Get the containing directory
@@ -42,6 +46,8 @@ pub fn resolve_imports(group_path: &Path, imports: &[String]) -> Result<Vec<Stri
     group_path
   };
 
+  let mut non_fatal_errors = Vec::new();
+
   for import in imports.iter() {
     let import_path = PathBuf::from(import);
 
@@ -52,21 +58,21 @@ pub fn resolve_imports(group_path: &Path, imports: &[String]) -> Result<Vec<Stri
       import_path
     };
 
-    match dunce::canonicalize(&full_path) {
+    match dunce::canonicalize(&full_path)
+      .with_context(|| format!("unable to canonicalize import path: {:?}", full_path))
+    {
       Ok(canonical_path) => {
         if canonical_path.exists() && canonical_path.is_file() {
           paths.push(canonical_path)
         } else {
           // Best effort imports
-          error!("unable to resolve import at path: {:?}", canonical_path);
+          non_fatal_errors.push(ErrorRecord::error(anyhow!(
+            "unable to resolve import at path: {:?}",
+            canonical_path
+          )))
         }
       }
-      Err(error) => {
-        error!(
-          "unable to canonicalize import path: {:?}, with error: {}",
-          full_path, error
-        );
-      }
+      Err(error) => non_fatal_errors.push(ErrorRecord::error(error)),
     }
   }
 
@@ -75,7 +81,7 @@ pub fn resolve_imports(group_path: &Path, imports: &[String]) -> Result<Vec<Stri
     .map(|path| path.to_string_lossy().to_string())
     .collect();
 
-  Ok(string_paths)
+  Ok((string_paths, non_fatal_errors))
 }
 
 #[derive(Error, Debug)]
@@ -115,14 +121,19 @@ pub mod tests {
         "sub/invalid.yml".to_string(), // Should be skipped
       ];
 
+      let (resolved_imports, errors) = resolve_imports(&base_file, &imports).unwrap();
+
       assert_eq!(
-        resolve_imports(&base_file, &imports).unwrap(),
+        resolved_imports,
         vec![
           another_file.to_string_lossy().to_string(),
           sub_file.to_string_lossy().to_string(),
           absolute_file.to_string_lossy().to_string(),
         ]
       );
+
+      // The "sub/invalid.yml" should generate an error
+      assert_eq!(errors.len(), 1);
     });
   }
 
@@ -140,10 +151,14 @@ pub mod tests {
 
       let imports = vec!["../base.yml".to_string()];
 
+      let (resolved_imports, errors) = resolve_imports(&sub_file, &imports).unwrap();
+
       assert_eq!(
-        resolve_imports(&sub_file, &imports).unwrap(),
+        resolved_imports,
         vec![base_file.to_string_lossy().to_string(),]
       );
+
+      assert_eq!(errors.len(), 0);
     });
   }
 }

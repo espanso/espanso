@@ -18,14 +18,12 @@
  */
 
 use anyhow::Result;
+use log::warn;
 use regex::Regex;
 use std::{collections::HashMap, path::Path};
 
 use self::config::LegacyConfig;
-use crate::matches::{
-  group::loader::yaml::parse::{YAMLMatch, YAMLVariable},
-  MatchEffect,
-};
+use crate::matches::{MatchEffect, group::loader::yaml::{parse::{YAMLMatch, YAMLVariable}, try_convert_into_match, try_convert_into_variable}};
 use crate::{config::store::DefaultConfigStore, counter::StructId};
 use crate::{
   config::Config,
@@ -85,7 +83,10 @@ fn split_config(config: LegacyConfig) -> (LegacyInteropConfig, LegacyMatchGroup)
     .iter()
     .filter_map(|var| {
       let var: YAMLVariable = serde_yaml::from_value(var.clone()).ok()?;
-      let var: Variable = var.try_into().ok()?;
+      let (var, warnings) = try_convert_into_variable(var).ok()?;
+      warnings.into_iter().for_each(|warning| {
+        warn!("{}", warning);
+      });
       Some(var)
     })
     .collect();
@@ -95,7 +96,10 @@ fn split_config(config: LegacyConfig) -> (LegacyInteropConfig, LegacyMatchGroup)
     .iter()
     .filter_map(|var| {
       let m: YAMLMatch = serde_yaml::from_value(var.clone()).ok()?;
-      let m: Match = m.try_into().ok()?;
+      let (m, warnings) = try_convert_into_match(m).ok()?;
+      warnings.into_iter().for_each(|warning| {
+        warn!("{}", warning);
+      });
       Some(m)
     })
     .collect();
@@ -375,6 +379,10 @@ impl MatchStore for LegacyMatchStore {
         global_vars: Vec::new(),
       }
     }
+  }
+
+  fn loaded_paths(&self) -> Vec<String> {
+    self.groups.keys().map(|key| key.clone()).collect()
   }
 }
 

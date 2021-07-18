@@ -21,6 +21,8 @@ use anyhow::Result;
 use std::path::Path;
 use thiserror::Error;
 
+use crate::error::NonFatalErrorSet;
+
 use self::yaml::YAMLImporter;
 
 use super::MatchGroup;
@@ -29,14 +31,14 @@ pub(crate) mod yaml;
 
 trait Importer {
   fn is_supported(&self, extension: &str) -> bool;
-  fn load_group(&self, path: &Path) -> Result<MatchGroup>;
+  fn load_group(&self, path: &Path) -> Result<(MatchGroup, Option<NonFatalErrorSet>)>;
 }
 
 lazy_static! {
   static ref IMPORTERS: Vec<Box<dyn Importer + Sync + Send>> = vec![Box::new(YAMLImporter::new()),];
 }
 
-pub(crate) fn load_match_group(path: &Path) -> Result<MatchGroup> {
+pub(crate) fn load_match_group(path: &Path) -> Result<(MatchGroup, Option<NonFatalErrorSet>)> {
   if let Some(extension) = path.extension() {
     let extension = extension.to_string_lossy().to_lowercase();
 
@@ -46,25 +48,25 @@ pub(crate) fn load_match_group(path: &Path) -> Result<MatchGroup> {
 
     match importer {
       Some(importer) => match importer.load_group(path) {
-        Ok(group) => Ok(group),
+        Ok((group, non_fatal_error_set)) => Ok((group, non_fatal_error_set)),
         Err(err) => Err(LoadError::ParsingError(err).into()),
       },
-      None => Err(LoadError::InvalidFormat().into()),
+      None => Err(LoadError::InvalidFormat.into()),
     }
   } else {
-    Err(LoadError::MissingExtension().into())
+    Err(LoadError::MissingExtension.into())
   }
 }
 
 #[derive(Error, Debug)]
 pub enum LoadError {
   #[error("missing extension in match group file")]
-  MissingExtension(),
+  MissingExtension,
 
   #[error("invalid match group format")]
-  InvalidFormat(),
+  InvalidFormat,
 
-  #[error("parser reported an error: `{0}`")]
+  #[error(transparent)]
   ParsingError(anyhow::Error),
 }
 
@@ -84,7 +86,7 @@ mod tests {
           .unwrap_err()
           .downcast::<LoadError>()
           .unwrap(),
-        LoadError::InvalidFormat()
+        LoadError::InvalidFormat
       ));
     });
   }
@@ -100,7 +102,7 @@ mod tests {
           .unwrap_err()
           .downcast::<LoadError>()
           .unwrap(),
-        LoadError::MissingExtension()
+        LoadError::MissingExtension
       ));
     });
   }
@@ -135,7 +137,7 @@ mod tests {
       )
       .unwrap();
 
-      assert_eq!(load_match_group(&file).unwrap().matches.len(), 1);
+      assert_eq!(load_match_group(&file).unwrap().0.matches.len(), 1);
     });
   }
 
@@ -153,7 +155,7 @@ mod tests {
       )
       .unwrap();
 
-      assert_eq!(load_match_group(&file).unwrap().matches.len(), 1);
+      assert_eq!(load_match_group(&file).unwrap().0.matches.len(), 1);
     });
   }
 
@@ -171,7 +173,7 @@ mod tests {
       )
       .unwrap();
 
-      assert_eq!(load_match_group(&file).unwrap().matches.len(), 1);
+      assert_eq!(load_match_group(&file).unwrap().0.matches.len(), 1);
     });
   }
 }

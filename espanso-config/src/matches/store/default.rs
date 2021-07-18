@@ -17,16 +17,16 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use log::error;
-use std::{
-  collections::{HashMap, HashSet},
-  path::PathBuf,
-};
-
 use super::{MatchSet, MatchStore};
 use crate::{
   counter::StructId,
+  error::NonFatalErrorSet,
   matches::{group::MatchGroup, Match, Variable},
+};
+use anyhow::Context;
+use std::{
+  collections::{HashMap, HashSet},
+  path::PathBuf,
 };
 
 pub(crate) struct DefaultMatchStore {
@@ -34,15 +34,16 @@ pub(crate) struct DefaultMatchStore {
 }
 
 impl DefaultMatchStore {
-  pub fn new(paths: &[String]) -> Self {
+  pub fn load(paths: &[String]) -> (Self, Vec<NonFatalErrorSet>) {
     let mut groups = HashMap::new();
+    let mut non_fatal_error_sets = Vec::new();
 
     // Because match groups can imports other match groups,
     // we have to load them recursively starting from the
     // top-level ones.
-    load_match_groups_recursively(&mut groups, paths);
+    load_match_groups_recursively(&mut groups, paths, &mut non_fatal_error_sets);
 
-    Self { groups }
+    (Self { groups }, non_fatal_error_sets)
   }
 }
 
@@ -69,21 +70,35 @@ impl MatchStore for DefaultMatchStore {
       global_vars,
     }
   }
+
+  fn loaded_paths(&self) -> Vec<String> {
+    self.groups.keys().map(|key| key.clone()).collect()
+  }
 }
 
-fn load_match_groups_recursively(groups: &mut HashMap<String, MatchGroup>, paths: &[String]) {
+fn load_match_groups_recursively(
+  groups: &mut HashMap<String, MatchGroup>,
+  paths: &[String],
+  non_fatal_error_sets: &mut Vec<NonFatalErrorSet>,
+) {
   for path in paths.iter() {
     if !groups.contains_key(path) {
       let group_path = PathBuf::from(path);
-      match MatchGroup::load(&group_path) {
-        Ok(group) => {
+      match MatchGroup::load(&group_path)
+        .with_context(|| format!("unable to load match group {:?}", group_path))
+      {
+        Ok((group, non_fatal_error_set)) => {
           let imports = group.imports.clone();
           groups.insert(path.clone(), group);
 
-          load_match_groups_recursively(groups, &imports);
+          if let Some(non_fatal_error_set) = non_fatal_error_set {
+            non_fatal_error_sets.push(non_fatal_error_set);
+          }
+
+          load_match_groups_recursively(groups, &imports, non_fatal_error_sets);
         }
-        Err(error) => {
-          error!("unable to load match group: {:?}", error);
+        Err(err) => {
+          non_fatal_error_sets.push(NonFatalErrorSet::single_error(&group_path, err));
         }
       }
     }
@@ -221,8 +236,9 @@ mod tests {
       )
       .unwrap();
 
-      let match_store = DefaultMatchStore::new(&[base_file.to_string_lossy().to_string()]);
-
+      let (match_store, non_fatal_error_sets) =
+        DefaultMatchStore::load(&[base_file.to_string_lossy().to_string()]);
+      assert_eq!(non_fatal_error_sets.len(), 0);
       assert_eq!(match_store.groups.len(), 3);
 
       let base_group = &match_store
@@ -230,11 +246,14 @@ mod tests {
         .get(&base_file.to_string_lossy().to_string())
         .unwrap()
         .matches;
-      let base_group: Vec<Match> = base_group.iter().map(|m| {
-        let mut copy = m.clone();
-        copy.id = 0;
-        copy
-      }).collect();
+      let base_group: Vec<Match> = base_group
+        .iter()
+        .map(|m| {
+          let mut copy = m.clone();
+          copy.id = 0;
+          copy
+        })
+        .collect();
 
       assert_eq!(base_group, create_matches(&[("hello", "world")]));
 
@@ -243,11 +262,14 @@ mod tests {
         .get(&another_file.to_string_lossy().to_string())
         .unwrap()
         .matches;
-      let another_group: Vec<Match> = another_group.iter().map(|m| {
-        let mut copy = m.clone();
-        copy.id = 0;
-        copy
-      }).collect();
+      let another_group: Vec<Match> = another_group
+        .iter()
+        .map(|m| {
+          let mut copy = m.clone();
+          copy.id = 0;
+          copy
+        })
+        .collect();
       assert_eq!(
         another_group,
         create_matches(&[("hello", "world2"), ("foo", "bar")])
@@ -258,11 +280,14 @@ mod tests {
         .get(&sub_file.to_string_lossy().to_string())
         .unwrap()
         .matches;
-      let sub_group: Vec<Match> = sub_group.iter().map(|m| {
-        let mut copy = m.clone();
-        copy.id = 0;
-        copy
-      }).collect();
+      let sub_group: Vec<Match> = sub_group
+        .iter()
+        .map(|m| {
+          let mut copy = m.clone();
+          copy.id = 0;
+          copy
+        })
+        .collect();
       assert_eq!(sub_group, create_matches(&[("hello", "world3")]));
     });
   }
@@ -317,9 +342,11 @@ mod tests {
       )
       .unwrap();
 
-      let match_store = DefaultMatchStore::new(&[base_file.to_string_lossy().to_string()]);
+      let (match_store, non_fatal_error_sets) =
+        DefaultMatchStore::load(&[base_file.to_string_lossy().to_string()]);
 
       assert_eq!(match_store.groups.len(), 3);
+      assert_eq!(non_fatal_error_sets.len(), 0);
     });
   }
 
@@ -378,7 +405,9 @@ mod tests {
       )
       .unwrap();
 
-      let match_store = DefaultMatchStore::new(&[base_file.to_string_lossy().to_string()]);
+      let (match_store, non_fatal_error_sets) =
+        DefaultMatchStore::load(&[base_file.to_string_lossy().to_string()]);
+      assert_eq!(non_fatal_error_sets.len(), 0);
 
       let match_set = match_store.query(&[base_file.to_string_lossy().to_string()]);
 
@@ -387,7 +416,10 @@ mod tests {
           .matches
           .into_iter()
           .cloned()
-          .map(|mut m| { m.id = 0; m })
+          .map(|mut m| {
+            m.id = 0;
+            m
+          })
           .collect::<Vec<Match>>(),
         create_matches(&[
           ("hello", "world3"),
@@ -402,7 +434,10 @@ mod tests {
           .global_vars
           .into_iter()
           .cloned()
-          .map(|mut v| { v.id = 0; v })
+          .map(|mut v| {
+            v.id = 0;
+            v
+          })
           .collect::<Vec<Variable>>(),
         create_vars(&["var2", "var1"])
       );
@@ -467,7 +502,9 @@ mod tests {
       )
       .unwrap();
 
-      let match_store = DefaultMatchStore::new(&[base_file.to_string_lossy().to_string()]);
+      let (match_store, non_fatal_error_sets) =
+        DefaultMatchStore::load(&[base_file.to_string_lossy().to_string()]);
+      assert_eq!(non_fatal_error_sets.len(), 0);
 
       let match_set = match_store.query(&[base_file.to_string_lossy().to_string()]);
 
@@ -476,7 +513,10 @@ mod tests {
           .matches
           .into_iter()
           .cloned()
-          .map(|mut m| { m.id = 0; m })
+          .map(|mut m| {
+            m.id = 0;
+            m
+          })
           .collect::<Vec<Match>>(),
         create_matches(&[
           ("hello", "world3"),
@@ -491,7 +531,10 @@ mod tests {
           .global_vars
           .into_iter()
           .cloned()
-          .map(|mut v| { v.id = 0; v})
+          .map(|mut v| {
+            v.id = 0;
+            v
+          })
           .collect::<Vec<Variable>>(),
         create_vars(&["var2", "var1"])
       );
@@ -550,10 +593,11 @@ mod tests {
       )
       .unwrap();
 
-      let match_store = DefaultMatchStore::new(&[
+      let (match_store, non_fatal_error_sets) = DefaultMatchStore::load(&[
         base_file.to_string_lossy().to_string(),
         sub_file.to_string_lossy().to_string(),
       ]);
+      assert_eq!(non_fatal_error_sets.len(), 0);
 
       let match_set = match_store.query(&[
         base_file.to_string_lossy().to_string(),
@@ -565,7 +609,10 @@ mod tests {
           .matches
           .into_iter()
           .cloned()
-          .map(|mut m| { m.id = 0; m })
+          .map(|mut m| {
+            m.id = 0;
+            m
+          })
           .collect::<Vec<Match>>(),
         create_matches(&[
           ("hello", "world2"),
@@ -580,7 +627,10 @@ mod tests {
           .global_vars
           .into_iter()
           .cloned()
-          .map(|mut v| { v.id = 0; v })
+          .map(|mut v| {
+            v.id = 0;
+            v
+          })
           .collect::<Vec<Variable>>(),
         create_vars(&["var1", "var2"])
       );
@@ -642,7 +692,9 @@ mod tests {
       )
       .unwrap();
 
-      let match_store = DefaultMatchStore::new(&[base_file.to_string_lossy().to_string()]);
+      let (match_store, non_fatal_error_sets) =
+        DefaultMatchStore::load(&[base_file.to_string_lossy().to_string()]);
+      assert_eq!(non_fatal_error_sets.len(), 0);
 
       let match_set = match_store.query(&[
         base_file.to_string_lossy().to_string(),
@@ -654,7 +706,10 @@ mod tests {
           .matches
           .into_iter()
           .cloned()
-          .map(|mut m| { m.id = 0; m })
+          .map(|mut m| {
+            m.id = 0;
+            m
+          })
           .collect::<Vec<Match>>(),
         create_matches(&[
           ("hello", "world3"), // This appears only once, though it appears 2 times
@@ -669,10 +724,15 @@ mod tests {
           .global_vars
           .into_iter()
           .cloned()
-          .map(|mut v| { v.id = 0; v })
+          .map(|mut v| {
+            v.id = 0;
+            v
+          })
           .collect::<Vec<Variable>>(),
         create_vars(&["var2", "var1"])
       );
     });
   }
+
+  // TODO: add fatal and non-fatal error cases
 }

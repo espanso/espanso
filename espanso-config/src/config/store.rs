@@ -17,8 +17,10 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::error::NonFatalErrorSet;
+
 use super::{resolve::ResolvedConfig, Config, ConfigStore, ConfigStoreError};
-use anyhow::Result;
+use anyhow::{Context, Result};
 use log::{debug, error};
 use std::{collections::HashSet, path::Path};
 
@@ -67,8 +69,7 @@ impl ConfigStore for DefaultConfigStore {
 }
 
 impl DefaultConfigStore {
-  // TODO: test
-  pub fn load(config_dir: &Path) -> Result<Self> {
+  pub fn load(config_dir: &Path) -> Result<(Self, Vec<NonFatalErrorSet>)> {
     if !config_dir.is_dir() {
       return Err(ConfigStoreError::InvalidConfigDir().into());
     }
@@ -78,7 +79,11 @@ impl DefaultConfigStore {
     if !default_file.exists() || !default_file.is_file() {
       return Err(ConfigStoreError::MissingDefault().into());
     }
-    let default = ResolvedConfig::load(&default_file, None)?;
+
+    let mut non_fatal_errors = Vec::new();
+
+    let default =
+      ResolvedConfig::load(&default_file, None).context("failed to load default configuration")?;
     debug!("loaded default config at path: {:?}", default_file);
 
     // Then the others
@@ -107,15 +112,19 @@ impl DefaultConfigStore {
               "unable to load config at path: {:?}, with error: {}",
               config_file, err
             );
+            non_fatal_errors.push(NonFatalErrorSet::single_error(&config_file, err));
           }
         }
       }
     }
 
-    Ok(Self {
-      default: Box::new(default),
-      customs,
-    })
+    Ok((
+      Self {
+        default: Box::new(default),
+        customs,
+      },
+      non_fatal_errors,
+    ))
   }
 
   pub fn from_configs(default: Box<dyn Config>, customs: Vec<Box<dyn Config>>) -> Result<Self> {
