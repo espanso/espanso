@@ -64,13 +64,7 @@ impl Match {
 
   // TODO: test
   pub fn cause_description<'a>(&'a self) -> Option<&'a str> {
-    if let MatchCause::Trigger(trigger_cause) = &self.cause {
-      trigger_cause.triggers.first().map(|s| s.as_str())
-    } else {
-      None
-    }
-    // TODO: insert rendering for hotkey/shortcut
-    // TODO: insert rendering for regex? I'm worried it might be too long
+    self.cause.description()
   }
 }
 
@@ -82,6 +76,30 @@ pub enum MatchCause {
   Trigger(TriggerCause),
   Regex(RegexCause),
   // TODO: shortcut
+}
+
+impl MatchCause {
+  // TODO: test
+  pub fn description<'a>(&'a self) -> Option<&'a str> {
+    if let MatchCause::Trigger(trigger_cause) = &self {
+      trigger_cause.triggers.first().map(|s| s.as_str())
+    } else {
+      None
+    }
+    // TODO: insert rendering for hotkey/shortcut
+    // TODO: insert rendering for regex? I'm worried it might be too long
+  }
+
+  // TODO: test
+  pub fn long_description<'a>(&'a self) -> String {
+    if let MatchCause::Trigger(trigger_cause) = &self {
+      format!("triggers: {:?}", trigger_cause.triggers)
+    } else {
+      "No description available".to_owned()
+    }
+    // TODO: insert rendering for hotkey/shortcut
+    // TODO: insert rendering for regex? I'm worried it might be too long
+  }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

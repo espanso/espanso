@@ -28,22 +28,27 @@ extern crate lazy_static;
 
 pub mod config;
 mod counter;
+pub mod error;
 mod legacy;
 pub mod matches;
 mod util;
 
-pub fn load(base_path: &Path) -> Result<(Box<dyn ConfigStore>, Box<dyn MatchStore>)> {
+pub fn load(base_path: &Path) -> Result<(Box<dyn ConfigStore>, Box<dyn MatchStore>, Vec<error::NonFatalErrorSet>)> {
   let config_dir = base_path.join("config");
   if !config_dir.exists() || !config_dir.is_dir() {
     return Err(ConfigError::MissingConfigDir().into());
   }
 
-  let config_store = config::load_store(&config_dir)?;
+  let (config_store, non_fatal_config_errors) = config::load_store(&config_dir)?;
   let root_paths = config_store.get_all_match_paths();
 
-  let match_store = matches::store::new(&root_paths.into_iter().collect::<Vec<String>>());
+  let (match_store, non_fatal_match_errors) = matches::store::load(&root_paths.into_iter().collect::<Vec<String>>());
 
-  Ok((Box::new(config_store), Box::new(match_store)))
+  let mut non_fatal_errors = Vec::new();
+  non_fatal_errors.extend(non_fatal_config_errors.into_iter());
+  non_fatal_errors.extend(non_fatal_match_errors.into_iter());
+
+  Ok((Box::new(config_store), Box::new(match_store), non_fatal_errors))
 }
 
 pub fn load_legacy(config_dir: &Path, package_dir: &Path) -> Result<(Box<dyn ConfigStore>, Box<dyn MatchStore>)> {
@@ -120,8 +125,9 @@ mod tests {
       )
       .unwrap();
 
-      let (config_store, match_store) = load(&base).unwrap();
+      let (config_store, match_store, errors) = load(&base).unwrap();
 
+      assert_eq!(errors.len(), 0);
       assert_eq!(config_store.default().match_paths().len(), 2);
       assert_eq!(
         config_store
@@ -157,6 +163,130 @@ mod tests {
           .len(),
         2
       );
+    });
+  }
+
+  #[test]
+  fn load_non_fatal_errors() {
+    use_test_directory(|base, match_dir, config_dir| {
+      let base_file = match_dir.join("base.yml");
+      std::fs::write(
+        &base_file,
+        r#"
+      matches:
+        - "invalid"invalid
+      "#,
+      )
+      .unwrap();
+
+      let another_file = match_dir.join("another.yml");
+      std::fs::write(
+        &another_file,
+        r#"
+      imports:
+        - "_sub.yml"
+
+      matches:
+        - trigger: "hello2"
+          replace: "world2"
+      "#,
+      )
+      .unwrap();
+
+      let under_file = match_dir.join("_sub.yml");
+      std::fs::write(
+        &under_file,
+        r#"
+      matches:
+        - trigger: "hello3"
+          replace: "world3"invalid
+      "#,
+      )
+      .unwrap();
+
+      let config_file = config_dir.join("default.yml");
+      std::fs::write(&config_file, r#""#).unwrap();
+
+      let custom_config_file = config_dir.join("custom.yml");
+      std::fs::write(
+        &custom_config_file,
+        r#"
+      filter_title: "Chrome"
+      "
+
+      use_standard_includes: false
+      includes: ["../match/another.yml"]
+      "#,
+      )
+      .unwrap();
+
+      let (config_store, match_store, errors) = load(&base).unwrap();
+      
+      assert_eq!(errors.len(), 3);
+      // It shouldn't have loaded the "config.yml" one because of the YAML error
+      assert_eq!(config_store.configs().len(), 1);
+      // It shouldn't load "base.yml" and "_sub.yml" due to YAML errors
+      assert_eq!(match_store.loaded_paths().len(), 1); 
+    });
+  }
+
+  #[test]
+  fn load_non_fatal_match_errors() {
+    use_test_directory(|base, match_dir, config_dir| {
+      let base_file = match_dir.join("base.yml");
+      std::fs::write(
+        &base_file,
+        r#"
+      matches:
+        - trigger: "hello"
+          replace: "world"
+        - trigger: "invalid because there is no action field"
+      "#,
+      )
+      .unwrap();
+
+      let config_file = config_dir.join("default.yml");
+      std::fs::write(&config_file, r#""#).unwrap();
+
+      let (config_store, match_store, errors) = load(&base).unwrap();
+      
+      assert_eq!(errors.len(), 1);
+      assert_eq!(errors[0].file, base_file);
+      assert_eq!(errors[0].errors.len(), 1);
+
+      assert_eq!(
+        match_store
+          .query(config_store.default().match_paths())
+          .matches
+          .len(),
+        1
+      );
+    });
+  }
+
+  #[test]
+  fn load_fatal_errors() {
+    use_test_directory(|base, match_dir, config_dir| {
+      let base_file = match_dir.join("base.yml");
+      std::fs::write(
+        &base_file,
+        r#"
+      matches:
+        - trigger: hello
+          replace: world
+      "#,
+      )
+      .unwrap();
+
+      let config_file = config_dir.join("default.yml");
+      std::fs::write(&config_file, r#"
+      invalid
+
+      "
+      "#).unwrap();
+
+      // A syntax error in the default.yml file cannot be handled gracefully 
+      assert!(load(&base).is_err());
     });
   }
 

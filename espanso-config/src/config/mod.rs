@@ -30,6 +30,8 @@ pub(crate) mod store;
 
 #[cfg(test)]
 use mockall::{automock, predicate::*};
+
+use crate::error::NonFatalErrorSet;
 #[cfg_attr(test, automock)]
 pub trait Config: Send {
   fn id(&self) -> i32;
@@ -141,7 +143,7 @@ pub enum ToggleKey {
   LeftMeta,
 }
 
-pub fn load_store(config_dir: &Path) -> Result<impl ConfigStore> {
+pub fn load_store(config_dir: &Path) -> Result<(impl ConfigStore, Vec<NonFatalErrorSet>)> {
   store::DefaultConfigStore::load(config_dir)
 }
 

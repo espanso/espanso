@@ -17,12 +17,15 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::error::NonFatalErrorSet;
+
 use super::{Match, Variable};
 
 mod default;
 
 pub trait MatchStore: Send {
   fn query(&self, paths: &[String]) -> MatchSet;
+  fn loaded_paths(&self) -> Vec<String>;
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -31,8 +34,8 @@ pub struct MatchSet<'a> {
   pub global_vars: Vec<&'a Variable>,
 }
 
-pub fn new(paths: &[String]) -> impl MatchStore {
+pub fn load(paths: &[String]) -> (impl MatchStore, Vec<NonFatalErrorSet>) {
   // TODO: here we can replace the DefaultMatchStore with a caching wrapper
   // that returns the same response for the given "paths" query
-  default::DefaultMatchStore::new(paths)
+  default::DefaultMatchStore::load(paths)
 }
