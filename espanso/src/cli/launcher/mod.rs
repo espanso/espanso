@@ -17,10 +17,10 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use log::{error};
 use self::util::MigrationError;
-use crate::preferences::Preferences;
 use crate::exit_code::{LAUNCHER_CONFIG_DIR_POPULATION_FAILURE, LAUNCHER_SUCCESS};
+use crate::preferences::Preferences;
+use log::error;
 
 use super::{CliModule, CliModuleArgs};
 
@@ -49,7 +49,9 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
   // TODO: should we create a non-gui wizard? We can also use it for the non-modulo versions of espanso
 
   let paths = args.paths.expect("missing paths in launcher main");
-  let paths_overrides  = args.paths_overrides.expect("missing paths overrides in launcher main");
+  let paths_overrides = args
+    .paths_overrides
+    .expect("missing paths overrides in launcher main");
   let icon_paths = crate::icon::load_icon_paths(&paths.runtime).expect("unable to load icon paths");
 
   let preferences =
@@ -103,9 +105,8 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
   } else {
     false
   };
-  let is_accessibility_enabled_handler = Box::new(move || {
-    accessibility::is_accessibility_enabled()
-  });
+  let is_accessibility_enabled_handler =
+    Box::new(move || accessibility::is_accessibility_enabled());
   let enable_accessibility_handler = Box::new(move || {
     accessibility::prompt_enable_accessibility();
   });

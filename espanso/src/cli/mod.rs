@@ -20,7 +20,7 @@
 use std::path::PathBuf;
 
 use clap::ArgMatches;
-use espanso_config::{config::ConfigStore, matches::store::MatchStore};
+use espanso_config::{config::ConfigStore, error::NonFatalErrorSet, matches::store::MatchStore};
 use espanso_path::Paths;
 
 pub mod daemon;
@@ -73,6 +73,7 @@ pub struct CliModuleArgs {
   pub config_store: Option<Box<dyn ConfigStore>>,
   pub match_store: Option<Box<dyn MatchStore>>,
   pub is_legacy_config: bool,
+  pub non_fatal_errors: Vec<NonFatalErrorSet>,
   pub paths: Option<Paths>,
   pub paths_overrides: Option<PathsOverrides>,
   pub cli_args: Option<ArgMatches<'static>>,
@@ -84,6 +85,7 @@ impl Default for CliModuleArgs {
       config_store: None,
       match_store: None,
       is_legacy_config: false,
+      non_fatal_errors: Vec::new(),
       paths: None,
       paths_overrides: None,
       cli_args: None,
