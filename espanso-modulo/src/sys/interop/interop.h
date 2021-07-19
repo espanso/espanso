@@ -120,6 +120,8 @@ typedef struct WizardMetadata {
   void (*on_completed)();
 } WizardMetadata;
 
+// WELCOME
+
 typedef struct WelcomeMetadata {
   const char *window_icon_path;
   const char *tray_image_path;
@@ -128,3 +130,30 @@ typedef struct WelcomeMetadata {
   int (*dont_show_again_changed)(int);
 } WelcomeMetadata;
 
+// TROUBLESHOOTING
+
+const int ERROR_METADATA_LEVEL_ERROR = 1;
+const int ERROR_METADATA_LEVEL_WARNING = 2;
+typedef struct ErrorMetadata {
+  const int level;
+  const char *message;
+} ErrorMetadata;
+
+typedef struct ErrorSetMetadata {
+  const char *file_path;
+  const ErrorMetadata * errors;
+  const int errors_count;
+} ErrorSetMetadata;
+
+typedef struct TroubleshootingMetadata {
+  const char *window_icon_path;
+
+  const int is_fatal_error;
+
+  const ErrorSetMetadata * error_sets;
+  const int error_sets_count;
+
+  // METHODS
+  int (*dont_show_again_changed)(int);
+  int (*open_file)(const char * file_name);
+} TroubleshootingMetadata;

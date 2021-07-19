@@ -146,6 +146,38 @@ pub struct WelcomeMetadata {
   pub dont_show_again_changed: extern fn(c_int),
 }
 
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct TroubleshootingMetadata {
+  pub window_icon_path: *const c_char,
+  pub is_fatal_error: c_int,
+
+  pub error_sets: *const ErrorSetMetadata,
+  pub error_sets_count: c_int,
+
+  pub dont_show_again_changed: extern fn(c_int),
+  pub open_file: extern fn(*const c_char),
+}
+
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ErrorSetMetadata {
+  pub file_path: *const c_char,
+
+  pub errors: *const ErrorMetadata,
+  pub errors_count: c_int,
+}
+
+pub const ERROR_METADATA_LEVEL_ERROR: c_int = 1;
+pub const ERROR_METADATA_LEVEL_WARNING: c_int = 2;
+
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ErrorMetadata {
+  pub level: c_int,
+  pub message: *const c_char,
+}
+
 // Native bindings
 
 #[allow(improper_ctypes)]
@@ -174,4 +206,7 @@ extern "C" {
 
   // WELCOME
   pub(crate) fn interop_show_welcome(metadata: *const WelcomeMetadata);
+
+  // TROUBLESHOOTING 
+  pub(crate) fn interop_show_troubleshooting(metadata: *const TroubleshootingMetadata);
 }
