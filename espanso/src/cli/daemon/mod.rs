@@ -27,14 +27,22 @@ use espanso_ipc::IPCClient;
 use espanso_path::Paths;
 use log::{error, info, warn};
 
-use crate::{VERSION, exit_code::{
-    DAEMON_ALREADY_RUNNING, DAEMON_GENERAL_ERROR, DAEMON_LEGACY_ALREADY_RUNNING, DAEMON_SUCCESS,
-    WORKER_EXIT_ALL_PROCESSES, WORKER_RESTART, WORKER_SUCCESS,
-  }, ipc::{create_ipc_client_to_worker, IPCEvent}, lock::{acquire_daemon_lock, acquire_legacy_lock, acquire_worker_lock}};
+use crate::{
+  cli::util::CommandExt,
+  exit_code::{
+    DAEMON_ALREADY_RUNNING, DAEMON_FATAL_CONFIG_ERROR, DAEMON_GENERAL_ERROR,
+    DAEMON_LEGACY_ALREADY_RUNNING, DAEMON_SUCCESS, WORKER_EXIT_ALL_PROCESSES, WORKER_RESTART,
+    WORKER_SUCCESS,
+  },
+  ipc::{create_ipc_client_to_worker, IPCEvent},
+  lock::{acquire_daemon_lock, acquire_legacy_lock, acquire_worker_lock},
+  VERSION,
+};
 
-use super::{CliModule, CliModuleArgs};
+use super::{CliModule, CliModuleArgs, PathsOverrides};
 
 mod ipc;
+mod troubleshoot;
 mod ui;
 mod watcher;
 
@@ -42,8 +50,6 @@ pub fn new() -> CliModule {
   #[allow(clippy::needless_update)]
   CliModule {
     requires_paths: true,
-    requires_config: true,
-    enable_logs: true,
     log_mode: super::LogMode::CleanAndAppend,
     subcommand: "daemon".to_string(),
     entry: daemon_main,
@@ -53,10 +59,11 @@ pub fn new() -> CliModule {
 
 fn daemon_main(args: CliModuleArgs) -> i32 {
   let paths = args.paths.expect("missing paths in daemon main");
-  let config_store = args
-    .config_store
-    .expect("missing config store in worker main");
-  let preferences = crate::preferences::get_default(&paths.runtime).expect("unable to obtain preferences");
+  let paths_overrides = args
+    .paths_overrides
+    .expect("missing paths_overrides in daemon main");
+  let preferences =
+    crate::preferences::get_default(&paths.runtime).expect("unable to obtain preferences");
   let cli_args = args.cli_args.expect("missing cli_args in daemon main");
 
   // Make sure only one instance of the daemon is running
@@ -77,6 +84,15 @@ fn daemon_main(args: CliModuleArgs) -> i32 {
 
   // TODO: we might need to check preconditions: accessibility on macOS, presence of binaries on Linux, etc
 
+  let config_store =
+    match troubleshoot::load_config_or_troubleshoot(&paths, &paths_overrides, false) {
+      Ok((load_result, _)) => load_result.config_store,
+      Err(fatal_err) => {
+        error!("critical error while loading config: {}", fatal_err);
+        return DAEMON_FATAL_CONFIG_ERROR;
+      }
+    };
+
   info!("espanso version: {}", VERSION);
   // TODO: print os system and version? (with os_info crate)
 
@@ -86,7 +102,7 @@ fn daemon_main(args: CliModuleArgs) -> i32 {
 
   // TODO: register signals to terminate the worker if the daemon terminates
 
-  spawn_worker(&paths, exit_notify.clone());
+  spawn_worker(&paths, &paths_overrides, exit_notify.clone());
 
   ipc::initialize_and_spawn(&paths.runtime, exit_notify.clone())
     .expect("unable to initialize ipc server for daemon");
@@ -135,7 +151,7 @@ fn daemon_main(args: CliModuleArgs) -> i32 {
         }
 
         if !has_timed_out {
-          spawn_worker(&paths, exit_notify.clone());
+          spawn_worker(&paths, &paths_overrides, exit_notify.clone());
         } else {
           error!("could not restart worker, as the exit process has timed out");
         }
@@ -150,7 +166,7 @@ fn daemon_main(args: CliModuleArgs) -> i32 {
               }
               WORKER_RESTART => {
                 info!("worker requested a restart, spawning a new one...");
-                spawn_worker(&paths, exit_notify.clone());
+                spawn_worker(&paths, &paths_overrides, exit_notify.clone());
               }
               _ => {
                 error!("received unexpected exit code from worker {}, exiting", code);
@@ -207,34 +223,33 @@ fn terminate_worker_if_already_running(runtime_dir: &Path) {
   )
 }
 
-fn spawn_worker(paths: &Paths, exit_notify: Sender<i32>) {
+fn spawn_worker(paths: &Paths, paths_overrides: &PathsOverrides, exit_notify: Sender<i32>) {
   info!("spawning the worker process...");
 
   let espanso_exe_path =
     std::env::current_exe().expect("unable to obtain espanso executable location");
 
+  // Before starting the worker, check if the configuration has any error, and if so, show the troubleshooting GUI
+  let troubleshoot_guard = match troubleshoot::load_config_or_troubleshoot(paths, paths_overrides, true) {
+    Ok((_, troubleshoot_guard)) => troubleshoot_guard,
+    Err(fatal_err) => {
+      error!("critical configuration error detected, unable to restart worker: {:?}", fatal_err);
+
+      // TODO: we should show a "Reload & Retry" button in the troubleshooter to retry
+      // loading the configuration and:
+      //   - if the configuration is good -> start the worker
+      //   - if the configuration is bad -> show the window again
+      // Until we have this logic, we choose the safest option and kill the daemon
+      // (otherwise, we would have a dangling daemon running after closing the troubleshooting).
+
+      unimplemented!();
+      return;
+    },
+  };
+
   let mut command = Command::new(&espanso_exe_path.to_string_lossy().to_string());
   command.args(&["worker", "--monitor-daemon"]);
-  command.env(
-    "ESPANSO_CONFIG_DIR",
-    paths.config.to_string_lossy().to_string(),
-  );
-  command.env(
-    "ESPANSO_PACKAGE_DIR",
-    paths.packages.to_string_lossy().to_string(),
-  );
-  command.env(
-    "ESPANSO_RUNTIME_DIR",
-    paths.runtime.to_string_lossy().to_string(),
-  );
-
-  // TODO: investigate if this is needed here, especially when invoking a form
-  // // On windows, we need to spawn the process as "Detached"
-  // #[cfg(target_os = "windows")]
-  // {
-  //   use std::os::windows::process::CommandExt;
-  //   //command.creation_flags(0x08000008); // CREATE_NO_WINDOW + DETACHED_PROCESS
-  // }
+  command.with_paths_overrides(paths_overrides);
 
   let mut child = command.spawn().expect("unable to spawn worker process");
 
@@ -243,6 +258,8 @@ fn spawn_worker(paths: &Paths, exit_notify: Sender<i32>) {
   std::thread::Builder::new()
     .name("worker-status-monitor".to_string())
     .spawn(move || {
+      let _guard = troubleshoot_guard;
+
       let result = child.wait();
       if let Ok(status) = result {
         if let Some(code) = status.code() {

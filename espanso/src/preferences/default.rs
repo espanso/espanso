@@ -26,6 +26,8 @@ use super::Preferences;
 
 const HAS_COMPLETED_WIZARD_KEY: &str = "has_completed_wizard";
 const SHOULD_DISPLAY_WELCOME_KEY: &str = "should_display_welcome";
+const SHOULD_DISPLAY_TROUBLESHOOT_FOR_NON_FATAL_ERRORS: &str =
+  "should_display_troubleshoot_for_non_fatal_errors";
 
 #[derive(Clone)]
 pub struct DefaultPreferences<KVSType: KVS> {
@@ -68,5 +70,13 @@ impl<KVSType: KVS> Preferences for DefaultPreferences<KVSType> {
 
   fn set_should_display_welcome(&self, value: bool) {
     self.set(SHOULD_DISPLAY_WELCOME_KEY, value);
+  }
+
+  fn should_display_troubleshoot_for_non_fatal_errors(&self) -> bool {
+    self.get(SHOULD_DISPLAY_TROUBLESHOOT_FOR_NON_FATAL_ERRORS).unwrap_or(true)
+  }
+
+  fn set_should_display_troubleshoot_for_non_fatal_errors(&self, value: bool) {
+    self.set(SHOULD_DISPLAY_TROUBLESHOOT_FOR_NON_FATAL_ERRORS, value);
   }
 }

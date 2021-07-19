@@ -33,7 +33,10 @@ use simplelog::{
   CombinedLogger, ConfigBuilder, LevelFilter, SharedLogger, TermLogger, TerminalMode, WriteLogger,
 };
 
-use crate::cli::{LogMode, PathsOverrides};
+use crate::{
+  cli::{LogMode, PathsOverrides},
+  config::load_config,
+};
 
 mod capabilities;
 mod cli;
@@ -218,6 +221,7 @@ fn main() {
                 .help("Interpret the input data as JSON"),
             ),
         )
+        .subcommand(SubCommand::with_name("troubleshoot").about("Display the troubleshooting GUI"))
         .subcommand(SubCommand::with_name("welcome").about("Display the welcome screen")),
     )
     // .subcommand(SubCommand::with_name("start")
@@ -406,7 +410,7 @@ fn main() {
     if !handler.requires_linux_capabilities {
       if let Err(err) = crate::capabilities::clear_capabilities() {
         error!("unable to clear linux capabilities: {}", err);
-      } 
+      }
     }
 
     // If explicitly requested, we show the Dock icon on macOS
@@ -441,23 +445,15 @@ fn main() {
       info!("using runtime dir: {:?}", paths.runtime);
 
       if handler.requires_config {
-        let (config_store, match_store, is_legacy_config) =
-          if espanso_config::is_legacy_config(&paths.config) {
-            let (config_store, match_store) =
-              espanso_config::load_legacy(&paths.config, &paths.packages)
-                .expect("unable to load legacy config");
-            (config_store, match_store, true)
-          } else {
-            let (config_store, match_store) =
-              espanso_config::load(&paths.config).expect("unable to load config");
-            (config_store, match_store, false)
-          };
+        let config_result =
+          load_config(&paths.config, &paths.packages).expect("unable to load config");
 
-        cli_args.is_legacy_config = is_legacy_config;
-        cli_args.config_store = Some(config_store);
-        cli_args.match_store = Some(match_store);
+        cli_args.is_legacy_config = config_result.is_legacy_config;
+        cli_args.config_store = Some(config_result.config_store);
+        cli_args.match_store = Some(config_result.match_store);
+        cli_args.non_fatal_errors = config_result.non_fatal_errors;
 
-        if is_legacy_config {
+        if config_result.is_legacy_config {
           warn!("espanso is reading the configuration using compatibility mode, thus some features might not be available");
           warn!("you can migrate to the new configuration format by running 'espanso migrate' in a terminal");
         }
@@ -497,7 +493,7 @@ fn get_path_override(matches: &ArgMatches, argument: &str, env_var: &str) -> Opt
     if path.is_dir() {
       return Some(path);
     } else {
-      error!("{} argument was specified, but it doesn't point to a valid directory. Make sure to create it first.", argument);
+      error_eprintln!("{} argument was specified, but it doesn't point to a valid directory. Make sure to create it first.", argument);
       std::process::exit(1);
     }
   } else if let Ok(path) = std::env::var(env_var) {
@@ -505,7 +501,7 @@ fn get_path_override(matches: &ArgMatches, argument: &str, env_var: &str) -> Opt
     if path.is_dir() {
       return Some(path);
     } else {
-      error!("{} env variable was specified, but it doesn't point to a valid directory. Make sure to create it first.", env_var);
+      error_eprintln!("{} env variable was specified, but it doesn't point to a valid directory. Make sure to create it first.", env_var);
       std::process::exit(1);
     }
   } else {

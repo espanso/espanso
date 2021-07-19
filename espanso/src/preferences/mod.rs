@@ -28,6 +28,9 @@ pub trait Preferences: Send + Sync + Clone {
 
   fn should_display_welcome(&self) -> bool;
   fn set_should_display_welcome(&self, value: bool);
+
+  fn should_display_troubleshoot_for_non_fatal_errors(&self) -> bool;
+  fn set_should_display_troubleshoot_for_non_fatal_errors(&self, value: bool);
 }
 
 pub fn get_default(runtime_dir: &Path) -> Result<impl Preferences> {
