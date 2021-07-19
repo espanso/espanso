@@ -83,7 +83,7 @@ impl DefaultConfigStore {
     let mut non_fatal_errors = Vec::new();
 
     let default =
-      ResolvedConfig::load(&default_file, None).context("failed to load default configuration")?;
+      ResolvedConfig::load(&default_file, None).context("failed to load default.yml configuration")?;
     debug!("loaded default config at path: {:?}", default_file);
 
     // Then the others
