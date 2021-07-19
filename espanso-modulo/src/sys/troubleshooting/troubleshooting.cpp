@@ -101,7 +101,7 @@ public:
     open_file_btn->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(ErrorSetPanel::on_open_file), NULL, this);
   }
 
-  void ErrorSetPanel::on_open_file(wxCommandEvent &event)
+  void on_open_file(wxCommandEvent &event)
   {
     if (troubleshooting_metadata->open_file && this->error_set_metadata->file_path) {
       troubleshooting_metadata->open_file(this->error_set_metadata->file_path);
