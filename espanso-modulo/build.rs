@@ -117,6 +117,8 @@ fn build_native() {
     .file("src/sys/wizard/wizard_gui.cpp")
     .file("src/sys/welcome/welcome.cpp")
     .file("src/sys/welcome/welcome_gui.cpp")
+    .file("src/sys/troubleshooting/troubleshooting.cpp")
+    .file("src/sys/troubleshooting/troubleshooting_gui.cpp")
     .flag("/EHsc")
     .include(wx_include_dir)
     .include(wx_include_msvc_dir)
@@ -215,6 +217,8 @@ fn build_native() {
     .file("src/sys/wizard/wizard_gui.cpp")
     .file("src/sys/welcome/welcome.cpp")
     .file("src/sys/welcome/welcome_gui.cpp")
+    .file("src/sys/troubleshooting/troubleshooting.cpp")
+    .file("src/sys/troubleshooting/troubleshooting_gui.cpp")
     .file("src/sys/common/mac.mm");
   build.flag("-std=c++17");
 
@@ -353,7 +357,9 @@ fn build_native() {
     .file("src/sys/wizard/wizard.cpp")
     .file("src/sys/wizard/wizard_gui.cpp")
     .file("src/sys/welcome/welcome.cpp")
-    .file("src/sys/welcome/welcome_gui.cpp");
+    .file("src/sys/welcome/welcome_gui.cpp")
+    .file("src/sys/troubleshooting/troubleshooting.cpp")
+    .file("src/sys/troubleshooting/troubleshooting_gui.cpp");
   build.flag("-std=c++17");
 
   for flag in cpp_flags {
