@@ -213,7 +213,7 @@ fn get_portable_runtime_path() -> Option<PathBuf> {
 fn get_legacy_runtime_dir() -> Option<PathBuf> {
   let data_dir = dirs::data_local_dir().expect("unable to obtain dirs::data_local_dir()");
   let espanso_dir = data_dir.join("espanso");
-  if espanso_dir.is_dir() {
+  if is_legacy_runtime_dir(&espanso_dir) {
     Some(espanso_dir)
   } else {
     None
@@ -293,5 +293,32 @@ fn is_portable_mode() -> bool {
       return true;
     }
   }
+  false
+}
+
+const LEGACY_RUNTIME_DIR_CANDIDATES_FILE: &[&'static str] = &[
+  "espanso.log",
+  "espanso.lock",
+  "espanso-worker.lock",
+  "espanso-daemon.lock",
+];
+
+// Run an heuristic to determine if the given directory
+// is a legacy runtime dir or not.
+// Unfortunately, due to the way the legacy path works
+// we really have to analyse the content to determine this
+// information
+fn is_legacy_runtime_dir(path: &Path) -> bool {
+  if !path.is_dir() {
+    return false;
+  }
+
+  for candidate in LEGACY_RUNTIME_DIR_CANDIDATES_FILE {
+    let candidate_path = path.join(candidate);
+    if candidate_path.is_file() {
+      return true
+    }
+  }
+
   false
 }
