@@ -332,6 +332,12 @@ fn main() {
       SubCommand::with_name("worker")
         .setting(AppSettings::Hidden)
         .arg(
+          Arg::with_name("run-count")
+            .long("run-count")
+            .required(false)
+            .takes_value(true),
+        )
+        .arg(
           Arg::with_name("monitor-daemon")
             .long("monitor-daemon")
             .required(false)

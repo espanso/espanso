@@ -50,6 +50,7 @@ pub fn new() -> CliModule {
   #[allow(clippy::needless_update)]
   CliModule {
     requires_paths: true,
+    enable_logs: true,
     log_mode: super::LogMode::CleanAndAppend,
     subcommand: "daemon".to_string(),
     entry: daemon_main,
@@ -102,7 +103,14 @@ fn daemon_main(args: CliModuleArgs) -> i32 {
 
   // TODO: register signals to terminate the worker if the daemon terminates
 
-  spawn_worker(&paths, &paths_overrides, exit_notify.clone());
+  let mut worker_run_count = 0;
+
+  spawn_worker(
+    &paths,
+    &paths_overrides,
+    exit_notify.clone(),
+    &mut worker_run_count,
+  );
 
   ipc::initialize_and_spawn(&paths.runtime, exit_notify.clone())
     .expect("unable to initialize ipc server for daemon");
@@ -151,7 +159,7 @@ fn daemon_main(args: CliModuleArgs) -> i32 {
         }
 
         if !has_timed_out {
-          spawn_worker(&paths, &paths_overrides, exit_notify.clone());
+          spawn_worker(&paths, &paths_overrides, exit_notify.clone(), &mut worker_run_count);
         } else {
           error!("could not restart worker, as the exit process has timed out");
         }
@@ -166,7 +174,7 @@ fn daemon_main(args: CliModuleArgs) -> i32 {
               }
               WORKER_RESTART => {
                 info!("worker requested a restart, spawning a new one...");
-                spawn_worker(&paths, &paths_overrides, exit_notify.clone());
+                spawn_worker(&paths, &paths_overrides, exit_notify.clone(), &mut worker_run_count);
               }
               _ => {
                 error!("received unexpected exit code from worker {}, exiting", code);
@@ -223,35 +231,51 @@ fn terminate_worker_if_already_running(runtime_dir: &Path) {
   )
 }
 
-fn spawn_worker(paths: &Paths, paths_overrides: &PathsOverrides, exit_notify: Sender<i32>) {
+fn spawn_worker(
+  paths: &Paths,
+  paths_overrides: &PathsOverrides,
+  exit_notify: Sender<i32>,
+  worker_run_count: &mut i32,
+) {
   info!("spawning the worker process...");
 
   let espanso_exe_path =
     std::env::current_exe().expect("unable to obtain espanso executable location");
 
   // Before starting the worker, check if the configuration has any error, and if so, show the troubleshooting GUI
-  let troubleshoot_guard = match troubleshoot::load_config_or_troubleshoot(paths, paths_overrides, true) {
-    Ok((_, troubleshoot_guard)) => troubleshoot_guard,
-    Err(fatal_err) => {
-      error!("critical configuration error detected, unable to restart worker: {:?}", fatal_err);
+  let troubleshoot_guard =
+    match troubleshoot::load_config_or_troubleshoot(paths, paths_overrides, true) {
+      Ok((_, troubleshoot_guard)) => troubleshoot_guard,
+      Err(fatal_err) => {
+        error!(
+          "critical configuration error detected, unable to restart worker: {:?}",
+          fatal_err
+        );
 
-      // TODO: we should show a "Reload & Retry" button in the troubleshooter to retry
-      // loading the configuration and:
-      //   - if the configuration is good -> start the worker
-      //   - if the configuration is bad -> show the window again
-      // Until we have this logic, we choose the safest option and kill the daemon
-      // (otherwise, we would have a dangling daemon running after closing the troubleshooting).
+        // TODO: we should show a "Reload & Retry" button in the troubleshooter to retry
+        // loading the configuration and:
+        //   - if the configuration is good -> start the worker
+        //   - if the configuration is bad -> show the window again
+        // Until we have this logic, we choose the safest option and kill the daemon
+        // (otherwise, we would have a dangling daemon running after closing the troubleshooting).
 
-      unimplemented!();
-      return;
-    },
-  };
+        unimplemented!();
+        return;
+      }
+    };
 
   let mut command = Command::new(&espanso_exe_path.to_string_lossy().to_string());
-  command.args(&["worker", "--monitor-daemon"]);
+  command.args(&[
+    "worker",
+    "--monitor-daemon",
+    "--run-count",
+    &format!("{}", worker_run_count),
+  ]);
   command.with_paths_overrides(paths_overrides);
 
   let mut child = command.spawn().expect("unable to spawn worker process");
+
+  *worker_run_count += 1;
 
   // Create a monitor thread that will exit with the same non-zero code if
   // the worker thread exits
