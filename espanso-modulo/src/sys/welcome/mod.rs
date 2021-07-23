@@ -52,6 +52,7 @@ pub fn show(options: WelcomeOptions) {
   let welcome_metadata = WelcomeMetadata {
     window_icon_path: c_window_icon_path_ptr,
     tray_image_path: c_tray_image_path_ptr,
+    already_running: if options.is_already_running { 1 } else { 0 },
     dont_show_again_changed,
   };
 

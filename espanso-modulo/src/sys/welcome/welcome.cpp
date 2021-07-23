@@ -64,6 +64,12 @@ DerivedWelcomeFrame::DerivedWelcomeFrame(wxWindow *parent)
   {
     this->tray_info_label->Hide();
   }
+
+  this->dont_show_checkbox->Hide();
+
+  if (welcome_metadata->already_running) {  
+    this->title_label->SetLabel("Espanso is already running!");
+  }
 }
 
 void DerivedWelcomeFrame::on_dont_show_change( wxCommandEvent& event ) {

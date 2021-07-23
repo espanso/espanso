@@ -143,6 +143,8 @@ pub struct WelcomeMetadata {
   pub window_icon_path: *const c_char,
   pub tray_image_path: *const c_char,
 
+  pub already_running: c_int,
+
   pub dont_show_again_changed: extern fn(c_int),
 }
 
