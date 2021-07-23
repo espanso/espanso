@@ -222,7 +222,15 @@ fn main() {
             ),
         )
         .subcommand(SubCommand::with_name("troubleshoot").about("Display the troubleshooting GUI"))
-        .subcommand(SubCommand::with_name("welcome").about("Display the welcome screen")),
+        .subcommand(
+          SubCommand::with_name("welcome")
+            .about("Display the welcome screen")
+            .arg(
+              Arg::with_name("already-running")
+                .long("already-running")
+                .takes_value(false),
+            ),
+        ),
     )
     // .subcommand(SubCommand::with_name("start")
     //     .about("Start the daemon spawning a new process in the background."))

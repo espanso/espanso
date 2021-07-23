@@ -25,10 +25,14 @@ use thiserror::Error;
 use crate::cli::PathsOverrides;
 use crate::cli::util::CommandExt;
 
-pub fn launch_daemon(paths_overrides: &PathsOverrides) -> Result<()> {
+pub fn launch_daemon(paths_overrides: &PathsOverrides, show_welcome: bool) -> Result<()> {
   let espanso_exe_path = std::env::current_exe()?;
   let mut command = Command::new(&espanso_exe_path.to_string_lossy().to_string());
-  command.args(&["daemon", "--show-welcome"]);
+  let mut args = vec!["daemon"];
+  if show_welcome {
+    args.push("--show-welcome");
+  }
+  command.args(&args);
   command.with_paths_overrides(paths_overrides);
 
   let mut child = command.spawn()?;

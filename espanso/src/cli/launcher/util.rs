@@ -97,3 +97,13 @@ pub enum AddToPathError {
   #[error("unexpected error, 'espanso env-path register' returned a non-zero exit code.")]
   NonZeroExitCode,
 }
+
+pub fn show_already_running_warning() -> Result<()> {
+  let espanso_exe_path = std::env::current_exe()?;
+  let mut command = Command::new(&espanso_exe_path.to_string_lossy().to_string());
+  command.args(&["modulo", "welcome", "--already-running"]);
+
+  let mut child = command.spawn()?;
+  child.wait()?;
+  Ok(())
+}

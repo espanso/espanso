@@ -18,7 +18,7 @@
  */
 
 use self::util::MigrationError;
-use crate::exit_code::{LAUNCHER_CONFIG_DIR_POPULATION_FAILURE, LAUNCHER_SUCCESS};
+use crate::{exit_code::{LAUNCHER_ALREADY_RUNNING, LAUNCHER_CONFIG_DIR_POPULATION_FAILURE, LAUNCHER_SUCCESS}, lock::acquire_daemon_lock};
 use crate::preferences::Preferences;
 use log::error;
 
@@ -45,10 +45,18 @@ pub fn new() -> CliModule {
 #[cfg(feature = "modulo")]
 fn launcher_main(args: CliModuleArgs) -> i32 {
   use espanso_modulo::wizard::{MigrationResult, WizardHandlers, WizardOptions};
+  let paths = args.paths.expect("missing paths in launcher main");
 
   // TODO: should we create a non-gui wizard? We can also use it for the non-modulo versions of espanso
 
-  let paths = args.paths.expect("missing paths in launcher main");
+  // If espanso is already running, show a warning
+  let lock_file = acquire_daemon_lock(&paths.runtime);
+  if lock_file.is_none() {
+    util::show_already_running_warning().expect("unable to show already running warning");
+    return LAUNCHER_ALREADY_RUNNING;
+  }
+  drop(lock_file);
+
   let paths_overrides = args
     .paths_overrides
     .expect("missing paths overrides in launcher main");
@@ -56,6 +64,7 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
 
   let preferences =
     crate::preferences::get_default(&paths.runtime).expect("unable to initialize preferences");
+  let is_first_start = !preferences.has_completed_wizard();
 
   let is_welcome_page_enabled = !preferences.has_completed_wizard();
 
@@ -175,7 +184,7 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
       espanso_mac_utils::convert_to_background_app();
     }
 
-    daemon::launch_daemon(&paths_overrides).expect("failed to launch daemon");
+    daemon::launch_daemon(&paths_overrides, is_first_start).expect("failed to launch daemon");
   }
 
   LAUNCHER_SUCCESS

@@ -53,8 +53,8 @@ fn modulo_main(args: CliModuleArgs) -> i32 {
     return search::search_main(matches, &icon_paths);
   }
 
-  if let Some(_) = cli_args.subcommand_matches("welcome") {
-    return welcome::welcome_main(&paths, &icon_paths);
+  if let Some(matches) = cli_args.subcommand_matches("welcome") {
+    return welcome::welcome_main(matches, &paths, &icon_paths);
   }
   
   if let Some(_) = cli_args.subcommand_matches("troubleshoot") {

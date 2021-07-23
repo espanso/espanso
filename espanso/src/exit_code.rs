@@ -43,6 +43,7 @@ pub const ADD_TO_PATH_FAILURE: i32 = 1;
 
 pub const LAUNCHER_SUCCESS: i32 = 0;
 pub const LAUNCHER_CONFIG_DIR_POPULATION_FAILURE: i32 = 1;
+pub const LAUNCHER_ALREADY_RUNNING: i32 = 2;
 
 pub const SERVICE_SUCCESS: i32 = 0;
 pub const SERVICE_FAILURE: i32 = 1;
