@@ -22,6 +22,7 @@ pub use crate::sys::welcome::show;
 pub struct WelcomeOptions {
   pub window_icon_path: Option<String>,
   pub tray_image_path: Option<String>,
+  pub is_already_running: bool,
 
   pub handlers: WelcomeHandlers,
 }

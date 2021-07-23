@@ -126,6 +126,8 @@ typedef struct WelcomeMetadata {
   const char *window_icon_path;
   const char *tray_image_path;
 
+  const int already_running;
+
   // METHODS
   int (*dont_show_again_changed)(int);
 } WelcomeMetadata;
