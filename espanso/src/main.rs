@@ -346,6 +346,12 @@ fn main() {
             .takes_value(true),
         )
         .arg(
+          Arg::with_name("manual")
+            .long("manual")
+            .required(false)
+            .takes_value(false),
+        )
+        .arg(
           Arg::with_name("monitor-daemon")
             .long("monitor-daemon")
             .required(false)

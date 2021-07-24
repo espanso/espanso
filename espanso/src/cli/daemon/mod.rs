@@ -110,6 +110,7 @@ fn daemon_main(args: CliModuleArgs) -> i32 {
     &paths_overrides,
     exit_notify.clone(),
     &mut worker_run_count,
+    false,
   );
 
   ipc::initialize_and_spawn(&paths.runtime, exit_notify.clone())
@@ -159,7 +160,7 @@ fn daemon_main(args: CliModuleArgs) -> i32 {
         }
 
         if !has_timed_out {
-          spawn_worker(&paths, &paths_overrides, exit_notify.clone(), &mut worker_run_count);
+          spawn_worker(&paths, &paths_overrides, exit_notify.clone(), &mut worker_run_count, false);
         } else {
           error!("could not restart worker, as the exit process has timed out");
         }
@@ -174,7 +175,7 @@ fn daemon_main(args: CliModuleArgs) -> i32 {
               }
               WORKER_RESTART => {
                 info!("worker requested a restart, spawning a new one...");
-                spawn_worker(&paths, &paths_overrides, exit_notify.clone(), &mut worker_run_count);
+                spawn_worker(&paths, &paths_overrides, exit_notify.clone(), &mut worker_run_count, true);
               }
               _ => {
                 error!("received unexpected exit code from worker {}, exiting", code);
@@ -236,6 +237,7 @@ fn spawn_worker(
   paths_overrides: &PathsOverrides,
   exit_notify: Sender<i32>,
   worker_run_count: &mut i32,
+  manual_start: bool,
 ) {
   info!("spawning the worker process...");
 
@@ -265,12 +267,18 @@ fn spawn_worker(
     };
 
   let mut command = Command::new(&espanso_exe_path.to_string_lossy().to_string());
-  command.args(&[
+
+  let string_worker_run_count = format!("{}", worker_run_count);
+  let mut args = vec![
     "worker",
     "--monitor-daemon",
     "--run-count",
-    &format!("{}", worker_run_count),
-  ]);
+    &string_worker_run_count
+  ];
+  if manual_start {
+    args.push("--manual");
+  }
+  command.args(&args);
   command.with_paths_overrides(paths_overrides);
 
   let mut child = command.spawn().expect("unable to spawn worker process");

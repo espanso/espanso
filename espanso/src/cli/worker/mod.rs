@@ -67,6 +67,8 @@ fn worker_main(args: CliModuleArgs) -> i32 {
     .unwrap_or(0);
   debug!("starting with run-count = {:?}", cli_args);
 
+  let has_been_started_manually = cli_args.is_present("manual");
+
   // Avoid running multiple worker instances
   let lock_file = acquire_worker_lock(&paths.runtime);
   if lock_file.is_none() {
@@ -129,6 +131,7 @@ fn worker_main(args: CliModuleArgs) -> i32 {
     engine_secure_input_receiver,
     use_evdev_backend,
     run_count,
+    has_been_started_manually,
   )
   .expect("unable to initialize engine");
 

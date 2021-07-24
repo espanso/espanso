@@ -73,6 +73,7 @@ pub fn initialize_and_spawn(
   secure_input_receiver: Receiver<SecureInputEvent>,
   use_evdev_backend: bool,
   run_count: i32,
+  has_been_started_manually: bool,
 ) -> Result<JoinHandle<ExitMode>> {
   let handle = std::thread::Builder::new()
     .name("engine thread".to_string())
@@ -215,8 +216,13 @@ pub fn initialize_and_spawn(
       // TODO: check config
       match run_count {
         0 => ui_remote.show_notification("Espanso is running!"),
-        1 => ui_remote.show_notification("Configuration reloaded! Espanso automatically loads new changes as soon as you save them."),
-        _ => {},
+        n => {
+          if has_been_started_manually {
+            ui_remote.show_notification("Configuration reloaded!");
+          } else if n == 1 {
+            ui_remote.show_notification("Configuration reloaded! Espanso automatically loads new changes as soon as you save them.");
+          }
+        },
       }
 
       let mut engine = crate::engine::Engine::new(&funnel, &mut processor, &dispatcher);
