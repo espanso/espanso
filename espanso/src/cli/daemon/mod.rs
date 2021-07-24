@@ -24,7 +24,6 @@ use crossbeam::{
   select,
 };
 use espanso_ipc::IPCClient;
-use espanso_path::Paths;
 use log::{error, info, warn};
 
 use crate::{
@@ -85,14 +84,26 @@ fn daemon_main(args: CliModuleArgs) -> i32 {
 
   // TODO: we might need to check preconditions: accessibility on macOS, presence of binaries on Linux, etc
 
-  let config_store =
-    match troubleshoot::load_config_or_troubleshoot(&paths, &paths_overrides, false) {
-      Ok((load_result, _)) => load_result.config_store,
-      Err(fatal_err) => {
-        error!("critical error while loading config: {}", fatal_err);
-        return DAEMON_FATAL_CONFIG_ERROR;
-      }
-    };
+  // This variable holds the current troubleshooter guard.
+  // When a guard is dropped, the troubleshooting GUI is killed
+  // so this ensures that there is only one troubleshooter running
+  // at a given time.
+  let mut _current_troubleshoot_guard = None;
+
+  let config_store = match troubleshoot::load_config_or_troubleshoot(&paths, &paths_overrides) {
+    troubleshoot::LoadResult::Correct(load_result) => load_result.config_store,
+    troubleshoot::LoadResult::Warning(load_result, guard) => {
+      _current_troubleshoot_guard = guard;
+      load_result.config_store
+    }
+    troubleshoot::LoadResult::Fatal(mut guard) => {
+      guard
+        .wait()
+        .expect("unable to wait for troubleshooting guard");
+      error!("critical error while loading config");
+      return DAEMON_FATAL_CONFIG_ERROR;
+    }
+  };
 
   info!("espanso version: {}", VERSION);
   // TODO: print os system and version? (with os_info crate)
@@ -106,7 +117,6 @@ fn daemon_main(args: CliModuleArgs) -> i32 {
   let mut worker_run_count = 0;
 
   spawn_worker(
-    &paths,
     &paths_overrides,
     exit_notify.clone(),
     &mut worker_run_count,
@@ -132,37 +142,57 @@ fn daemon_main(args: CliModuleArgs) -> i32 {
       recv(watcher_signal) -> _ => {
         info!("configuration change detected, restarting worker process...");
 
-        match create_ipc_client_to_worker(&paths.runtime) {
-          Ok(mut worker_ipc) => {
-            if let Err(err) = worker_ipc.send_async(IPCEvent::Exit) {
-              error!(
-                "unable to send termination signal to worker process: {}",
-                err
-              );
+        // Before killing the previous worker, we make sure there is no fatal error
+        // in the configs.
+        let should_restart_worker = match troubleshoot::load_config_or_troubleshoot(&paths, &paths_overrides) {
+          troubleshoot::LoadResult::Correct(_) => {
+            _current_troubleshoot_guard = None;
+            true
+          },
+          troubleshoot::LoadResult::Warning(_, guard) => {
+            _current_troubleshoot_guard = guard;
+            true
+          }
+          troubleshoot::LoadResult::Fatal(guard) => {
+            _current_troubleshoot_guard = Some(guard);
+            error!("critical error while loading config, could not restart worker");
+            false
+          }
+        };
+
+        if should_restart_worker {
+          match create_ipc_client_to_worker(&paths.runtime) {
+            Ok(mut worker_ipc) => {
+              if let Err(err) = worker_ipc.send_async(IPCEvent::Exit) {
+                error!(
+                  "unable to send termination signal to worker process: {}",
+                  err
+                );
+              }
+            }
+            Err(err) => {
+              error!("could not establish IPC connection with worker: {}", err);
             }
           }
-          Err(err) => {
-            error!("could not establish IPC connection with worker: {}", err);
+
+          // Wait until the worker process has terminated
+          let start = Instant::now();
+          let mut has_timed_out = true;
+          while start.elapsed() < std::time::Duration::from_secs(30) {
+            let lock_file = acquire_worker_lock(&paths.runtime);
+            if lock_file.is_some() {
+              has_timed_out = false;
+              break;
+            }
+
+            std::thread::sleep(std::time::Duration::from_millis(100));
           }
-        }
 
-        // Wait until the worker process has terminated
-        let start = Instant::now();
-        let mut has_timed_out = true;
-        while start.elapsed() < std::time::Duration::from_secs(30) {
-          let lock_file = acquire_worker_lock(&paths.runtime);
-          if lock_file.is_some() {
-            has_timed_out = false;
-            break;
+          if !has_timed_out {
+            spawn_worker(&paths_overrides, exit_notify.clone(), &mut worker_run_count, false);
+          } else {
+            error!("could not restart worker, as the exit process has timed out");
           }
-
-          std::thread::sleep(std::time::Duration::from_millis(100));
-        }
-
-        if !has_timed_out {
-          spawn_worker(&paths, &paths_overrides, exit_notify.clone(), &mut worker_run_count, false);
-        } else {
-          error!("could not restart worker, as the exit process has timed out");
         }
       }
       recv(exit_signal) -> code => {
@@ -175,7 +205,7 @@ fn daemon_main(args: CliModuleArgs) -> i32 {
               }
               WORKER_RESTART => {
                 info!("worker requested a restart, spawning a new one...");
-                spawn_worker(&paths, &paths_overrides, exit_notify.clone(), &mut worker_run_count, true);
+                spawn_worker(&paths_overrides, exit_notify.clone(), &mut worker_run_count, true);
               }
               _ => {
                 error!("received unexpected exit code from worker {}, exiting", code);
@@ -233,7 +263,6 @@ fn terminate_worker_if_already_running(runtime_dir: &Path) {
 }
 
 fn spawn_worker(
-  paths: &Paths,
   paths_overrides: &PathsOverrides,
   exit_notify: Sender<i32>,
   worker_run_count: &mut i32,
@@ -244,28 +273,6 @@ fn spawn_worker(
   let espanso_exe_path =
     std::env::current_exe().expect("unable to obtain espanso executable location");
 
-  // Before starting the worker, check if the configuration has any error, and if so, show the troubleshooting GUI
-  let troubleshoot_guard =
-    match troubleshoot::load_config_or_troubleshoot(paths, paths_overrides, true) {
-      Ok((_, troubleshoot_guard)) => troubleshoot_guard,
-      Err(fatal_err) => {
-        error!(
-          "critical configuration error detected, unable to restart worker: {:?}",
-          fatal_err
-        );
-
-        // TODO: we should show a "Reload & Retry" button in the troubleshooter to retry
-        // loading the configuration and:
-        //   - if the configuration is good -> start the worker
-        //   - if the configuration is bad -> show the window again
-        // Until we have this logic, we choose the safest option and kill the daemon
-        // (otherwise, we would have a dangling daemon running after closing the troubleshooting).
-
-        unimplemented!();
-        return;
-      }
-    };
-
   let mut command = Command::new(&espanso_exe_path.to_string_lossy().to_string());
 
   let string_worker_run_count = format!("{}", worker_run_count);
@@ -273,7 +280,7 @@ fn spawn_worker(
     "worker",
     "--monitor-daemon",
     "--run-count",
-    &string_worker_run_count
+    &string_worker_run_count,
   ];
   if manual_start {
     args.push("--manual");
@@ -290,8 +297,6 @@ fn spawn_worker(
   std::thread::Builder::new()
     .name("worker-status-monitor".to_string())
     .spawn(move || {
-      let _guard = troubleshoot_guard;
-
       let result = child.wait();
       if let Ok(status) = result {
         if let Some(code) = status.code() {

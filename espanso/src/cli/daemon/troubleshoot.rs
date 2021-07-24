@@ -19,7 +19,7 @@
 
 use std::process::{Child, Command};
 
-use anyhow::{Result, bail};
+use anyhow::{Result};
 use espanso_path::Paths;
 
 use crate::cli::util::CommandExt;
@@ -28,9 +28,7 @@ use crate::config::ConfigLoadResult;
 use crate::error_eprintln;
 use crate::preferences::Preferences;
 
-pub fn launch_troubleshoot(
-  paths_overrides: &PathsOverrides,
-) -> Result<TroubleshootGuard> {
+pub fn launch_troubleshoot(paths_overrides: &PathsOverrides) -> Result<TroubleshootGuard> {
   let espanso_exe_path = std::env::current_exe()?;
   let mut command = Command::new(&espanso_exe_path.to_string_lossy().to_string());
   command.args(&["modulo", "troubleshoot"]);
@@ -39,12 +37,6 @@ pub fn launch_troubleshoot(
   let child = command.spawn()?;
 
   Ok(TroubleshootGuard::new(child))
-}
-
-pub fn launch_troubleshoot_blocking(paths_overrides: &PathsOverrides) -> Result<()> {
-  let mut guard = launch_troubleshoot(paths_overrides)?;
-  guard.wait()?;
-  Ok(())
 }
 
 pub struct TroubleshootGuard {
@@ -67,16 +59,20 @@ impl Drop for TroubleshootGuard {
   }
 }
 
-pub fn load_config_or_troubleshoot(
-  paths: &Paths,
-  paths_overrides: &PathsOverrides,
-  troubleshoot_non_fatal: bool,
-) -> Result<(ConfigLoadResult, Option<TroubleshootGuard>)> {
+pub enum LoadResult {
+  Correct(ConfigLoadResult),
+  Warning(ConfigLoadResult, Option<TroubleshootGuard>),
+  Fatal(TroubleshootGuard),
+}
+
+pub fn load_config_or_troubleshoot(paths: &Paths, paths_overrides: &PathsOverrides) -> LoadResult {
   match crate::load_config(&paths.config, &paths.packages) {
     Ok(load_result) => {
-      let mut troubleshoot_handle = None;
-      
-      if troubleshoot_non_fatal && !load_result.non_fatal_errors.is_empty() {
+      if load_result.non_fatal_errors.is_empty() {
+        return LoadResult::Correct(load_result);
+      } else {
+        let mut troubleshoot_handle = None;
+
         let preferences =
           crate::preferences::get_default(&paths.runtime).expect("unable to get preferences");
 
@@ -84,19 +80,20 @@ pub fn load_config_or_troubleshoot(
           match launch_troubleshoot(paths_overrides) {
             Ok(handle) => {
               troubleshoot_handle = Some(handle);
-            },
+            }
             Err(err) => {
               error_eprintln!("unable to launch troubleshoot GUI: {}", err);
             }
           }
         }
-      }
-      Ok((load_result, troubleshoot_handle))
-    }
-    Err(fatal_err) => {
-      launch_troubleshoot_blocking(paths_overrides)?;
 
-      bail!("fatal error while loading config: {}", fatal_err);
+        return LoadResult::Warning(load_result, troubleshoot_handle);
+      }
+    }
+    Err(_) => {
+      return LoadResult::Fatal(
+        launch_troubleshoot(paths_overrides).expect("unable to launch troubleshoot GUI"),
+      );
     }
   }
 }
