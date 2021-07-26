@@ -98,3 +98,8 @@ pub struct PathsOverrides {
   pub runtime: Option<PathBuf>,
   pub packages: Option<PathBuf>,
 }
+
+pub struct CliAlias {
+  pub subcommand: String,
+  pub forward_into: String,
+}
