@@ -26,7 +26,7 @@ extern crate lazy_static;
 use std::path::PathBuf;
 
 use clap::{App, AppSettings, Arg, ArgMatches, SubCommand};
-use cli::{CliModule, CliModuleArgs};
+use cli::{CliAlias, CliModule, CliModuleArgs};
 use log::{error, info, warn};
 use logging::FileProxy;
 use simplelog::{
@@ -68,6 +68,17 @@ lazy_static! {
     cli::env_path::new(),
     cli::service::new(),
   ];
+
+  static ref ALIASES: Vec<CliAlias> = vec![
+    CliAlias {
+      subcommand: "start".to_owned(),
+      forward_into: "service".to_owned(),
+    },
+    CliAlias {
+      subcommand: "stop".to_owned(),
+      forward_into: "service".to_owned(),
+    },
+  ];
 }
 
 fn main() {
@@ -101,6 +112,17 @@ fn main() {
   let uninstall_subcommand = SubCommand::with_name("uninstall")
     .about("Remove an installed package. Equivalent to 'espanso package uninstall'")
     .arg(Arg::with_name("package_name").help("Package name"));
+
+  let start_subcommand = SubCommand::with_name("start")
+    .about("Start espanso as a service")
+    .arg(
+      Arg::with_name("unmanaged")
+        .long("unmanaged")
+        .required(false)
+        .takes_value(false)
+        .help("Run espanso as an unmanaged service (avoid system manager)"),
+    );
+  let stop_subcommand = SubCommand::with_name("stop").about("Stop espanso service");
 
   let mut clap_instance = App::new("espanso")
     .version(VERSION)
@@ -276,20 +298,12 @@ fn main() {
           SubCommand::with_name("check")
             .about("Check if espanso is registered as a system service"),
         )
-        .subcommand(
-          SubCommand::with_name("start")
-            .about("Start espanso as a service")
-            .arg(
-              Arg::with_name("unmanaged")
-                .long("unmanaged")
-                .required(false)
-                .takes_value(false)
-                .help("Run espanso as an unmanaged service (avoid system manager)"),
-            ),
-        )
-        .subcommand(SubCommand::with_name("stop").about("Stop espanso service"))
+        .subcommand(start_subcommand.clone())
+        .subcommand(stop_subcommand.clone())
         .about("Register and manage 'espanso' as a system service."),
     )
+    .subcommand(start_subcommand)
+    .subcommand(stop_subcommand)
     // .subcommand(SubCommand::with_name("match")
     //     .about("List and execute matches from the CLI")
     //     .subcommand(SubCommand::with_name("list")
@@ -379,9 +393,20 @@ fn main() {
     _ => LevelFilter::Debug,
   };
 
-  let mut handler = CLI_HANDLERS
+  let alias = ALIASES 
     .iter()
     .find(|cli| matches.subcommand_matches(&cli.subcommand).is_some());
+  
+  let mut handler = if let Some(alias) = alias {
+    CLI_HANDLERS
+      .iter()
+      .find(|cli| &cli.subcommand == &alias.forward_into)
+  } else {
+    CLI_HANDLERS
+      .iter()
+      .find(|cli| matches.subcommand_matches(&cli.subcommand).is_some())
+  };
+
 
   // When started from the macOS App Bundle, override the default
   // handler with "launcher" if not present, otherwise the GUI could not be started.
@@ -492,7 +517,12 @@ fn main() {
       cli_args.paths = Some(paths);
     }
 
-    if let Some(args) = matches.subcommand_matches(&handler.subcommand) {
+    // If the current handler is an alias, rather than sending the sub-arguments
+    // we simply forward the current ones
+    // For example, the args for "espanso start" are forwarded to "espanso service start"
+    if alias.is_some() {
+      cli_args.cli_args = Some(matches);
+    } else if let Some(args) = matches.subcommand_matches(&handler.subcommand) {
       cli_args.cli_args = Some(args.clone());
     }
 
