@@ -90,20 +90,26 @@ fn daemon_main(args: CliModuleArgs) -> i32 {
   // at a given time.
   let mut _current_troubleshoot_guard = None;
 
-  let config_store = match troubleshoot::load_config_or_troubleshoot(&paths, &paths_overrides) {
-    troubleshoot::LoadResult::Correct(load_result) => load_result.config_store,
-    troubleshoot::LoadResult::Warning(load_result, guard) => {
-      _current_troubleshoot_guard = guard;
-      load_result.config_store
-    }
-    troubleshoot::LoadResult::Fatal(mut guard) => {
-      guard
-        .wait()
-        .expect("unable to wait for troubleshooting guard");
-      error!("critical error while loading config");
-      return DAEMON_FATAL_CONFIG_ERROR;
-    }
-  };
+  let (watcher_notify, watcher_signal) = unbounded::<()>();
+
+  watcher::initialize_and_spawn(&paths.config, watcher_notify)
+    .expect("unable to initialize config watcher thread");
+
+  let config_store =
+    match troubleshoot::load_config_or_troubleshoot_until_config_is_correct_or_abort(
+      &paths,
+      &paths_overrides,
+      watcher_signal.clone(),
+    ) {
+      Ok((result, guard)) => {
+        _current_troubleshoot_guard = guard;
+        result.config_store
+      }
+      Err(err) => {
+        error!("critical error while loading config: {}", err);
+        return DAEMON_FATAL_CONFIG_ERROR;
+      }
+    };
 
   info!("espanso version: {}", VERSION);
   // TODO: print os system and version? (with os_info crate)
@@ -126,13 +132,6 @@ fn daemon_main(args: CliModuleArgs) -> i32 {
   ipc::initialize_and_spawn(&paths.runtime, exit_notify.clone())
     .expect("unable to initialize ipc server for daemon");
 
-  let (watcher_notify, watcher_signal) = unbounded::<()>();
-
-  if config_store.default().auto_restart() {
-    watcher::initialize_and_spawn(&paths.config, watcher_notify)
-      .expect("unable to initialize config watcher thread");
-  }
-
   if cli_args.is_present("show-welcome") {
     ui::show_welcome_screen(&preferences);
   }
@@ -140,6 +139,10 @@ fn daemon_main(args: CliModuleArgs) -> i32 {
   loop {
     select! {
       recv(watcher_signal) -> _ => {
+        if !config_store.default().auto_restart() {
+          continue;
+        }
+
         info!("configuration change detected, restarting worker process...");
 
         // Before killing the previous worker, we make sure there is no fatal error

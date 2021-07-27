@@ -18,9 +18,13 @@
  */
 
 use std::process::{Child, Command};
+use std::time::Duration;
 
-use anyhow::{Result};
+use anyhow::{bail, Result};
+use crossbeam::channel::Receiver;
+use crossbeam::select;
 use espanso_path::Paths;
+use log::info;
 
 use crate::cli::util::CommandExt;
 use crate::cli::PathsOverrides;
@@ -47,9 +51,14 @@ impl TroubleshootGuard {
   pub fn new(child: Child) -> Self {
     Self { child }
   }
+  #[allow(dead_code)]
   pub fn wait(&mut self) -> Result<()> {
     self.child.wait()?;
     Ok(())
+  }
+  pub fn try_wait(&mut self) -> Result<bool> {
+    let result = self.child.try_wait()?;
+    Ok(result.is_some())
   }
 }
 
@@ -94,6 +103,47 @@ pub fn load_config_or_troubleshoot(paths: &Paths, paths_overrides: &PathsOverrid
       return LoadResult::Fatal(
         launch_troubleshoot(paths_overrides).expect("unable to launch troubleshoot GUI"),
       );
+    }
+  }
+}
+
+pub fn load_config_or_troubleshoot_until_config_is_correct_or_abort(
+  paths: &Paths,
+  paths_overrides: &PathsOverrides,
+  watcher_receiver: Receiver<()>,
+) -> Result<(ConfigLoadResult, Option<TroubleshootGuard>)> {
+  let mut _troubleshoot_guard = None;
+
+  loop {
+    // If the loading process is fatal, we keep showing the troubleshooter until
+    // either the config is correct or the user aborts by closing the troubleshooter
+    _troubleshoot_guard = match load_config_or_troubleshoot(paths, paths_overrides) {
+      LoadResult::Correct(result) => return Ok((result, None)),
+      LoadResult::Warning(result, guard) => return Ok((result, guard)),
+      LoadResult::Fatal(guard) => Some(guard),
+    };
+
+    loop {
+      select! {
+        recv(watcher_receiver) -> _ => {
+          info!("config change detected, reloading configs...");
+
+          break
+        },
+        default(Duration::from_millis(500)) => {
+          if let Some(guard) = &mut _troubleshoot_guard {
+            if let Ok(ended) = guard.try_wait() {
+              if ended {
+                bail!("user aborted troubleshooter");
+              }
+            } else {
+              bail!("unable to wait for troubleshooter");
+            }
+          } else {
+            bail!("no troubleshoot guard found");
+          }
+        }
+      }
     }
   }
 }
