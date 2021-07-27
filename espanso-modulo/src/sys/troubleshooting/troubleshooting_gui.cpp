@@ -32,6 +32,9 @@ TroubleshootingFrame::TroubleshootingFrame( wxWindow* parent, wxWindowID id, con
 	info_label->Wrap( -1 );
 	bSizer1->Add( info_label, 0, wxALL, 10 );
 
+	m_staticline1 = new wxStaticLine( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_HORIZONTAL );
+	bSizer1->Add( m_staticline1, 0, wxEXPAND | wxALL, 5 );
+
 	scrollview = new wxScrolledWindow( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
 	scrollview->SetScrollRate( 5, 5 );
 	scrollview_sizer = new wxBoxSizer( wxVERTICAL );

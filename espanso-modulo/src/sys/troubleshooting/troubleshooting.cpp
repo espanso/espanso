@@ -61,7 +61,7 @@ public:
     header_sizer = new wxBoxSizer(wxHORIZONTAL);
 
     wxString path = wxString::FromUTF8(error_set_metadata->file_path);
-    wxString filename = wxString::Format(wxT("%s (%i errors)"), path, error_set_metadata->errors_count);
+    wxString filename = wxString::Format(wxT("\u2022 %s (%i errors)"), path, error_set_metadata->errors_count);
     filename_label = new wxStaticText(this, wxID_ANY, filename, wxDefaultPosition, wxDefaultSize, 0);
     filename_label->Wrap(-1);
     filename_label->SetFont(wxFont(wxNORMAL_FONT->GetPointSize(), wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD, false, wxEmptyString));
@@ -129,17 +129,25 @@ public:
 DerivedTroubleshootingFrame::DerivedTroubleshootingFrame(wxWindow *parent)
     : TroubleshootingFrame(parent)
 {
-  if (troubleshooting_metadata->is_fatal_error) {
+  if (troubleshooting_metadata->error_sets_count == 0) {
+    dont_show_checkbox->Hide();
+    ignore_button->Hide();
+    info_label->SetLabel(wxT("Looks like your configuration is correct!"));
+    title_label->SetLabel(wxT("No errors detected"));
+  } else if (troubleshooting_metadata->is_fatal_error) {
     dont_show_checkbox->Hide();
     ignore_button->Hide();
     info_label->SetLabel(wxT("Espanso couldn't load some files due to configuration errors and won't be able to start until you fix them."));
     title_label->SetLabel(wxT("Errors detected, action needed"));
   }
 
+  // If there is just one error, expand the error panel to fit the container
+  int error_set_proportion = troubleshooting_metadata->error_sets_count == 1 ? 1 : 0;
+
   for (int i = 0; i<troubleshooting_metadata->error_sets_count; i++) {
     const ErrorSetMetadata * metadata = &troubleshooting_metadata->error_sets[i];
     ErrorSetPanel *panel = new ErrorSetPanel(scrollview, metadata);
-    this->scrollview_sizer->Add(panel, 0, wxEXPAND | wxALL, 5);
+    this->scrollview_sizer->Add(panel, error_set_proportion, wxEXPAND | wxALL, 5);
   }
 }
 

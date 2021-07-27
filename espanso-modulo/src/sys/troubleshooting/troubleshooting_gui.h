@@ -15,6 +15,7 @@
 #include <wx/font.h>
 #include <wx/colour.h>
 #include <wx/settings.h>
+#include <wx/statline.h>
 #include <wx/sizer.h>
 #include <wx/scrolwin.h>
 #include <wx/checkbox.h>
@@ -37,6 +38,7 @@ class TroubleshootingFrame : public wxFrame
 	protected:
 		wxStaticText* title_label;
 		wxStaticText* info_label;
+		wxStaticLine* m_staticline1;
 		wxScrolledWindow* scrollview;
 		wxBoxSizer* scrollview_sizer;
 		wxCheckBox* dont_show_checkbox;
