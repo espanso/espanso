@@ -64,7 +64,6 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
 
   let preferences =
     crate::preferences::get_default(&paths.runtime).expect("unable to initialize preferences");
-  let is_first_start = !preferences.has_completed_wizard();
 
   let is_welcome_page_enabled = !preferences.has_completed_wizard();
 
@@ -184,7 +183,7 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
       espanso_mac_utils::convert_to_background_app();
     }
 
-    daemon::launch_daemon(&paths_overrides, is_first_start).expect("failed to launch daemon");
+    daemon::launch_daemon(&paths_overrides).expect("failed to launch daemon");
   }
 
   LAUNCHER_SUCCESS

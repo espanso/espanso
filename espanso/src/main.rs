@@ -192,12 +192,6 @@ fn main() {
     .subcommand(
       SubCommand::with_name("daemon")
         .setting(AppSettings::Hidden)
-        .arg(
-          Arg::with_name("show-welcome")
-            .long("show-welcome")
-            .required(false)
-            .takes_value(false),
-        )
         .about("Start the daemon without spawning a new process."),
     )
     // .subcommand(SubCommand::with_name("register")

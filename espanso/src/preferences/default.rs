@@ -25,7 +25,7 @@ use anyhow::Result;
 use super::Preferences;
 
 const HAS_COMPLETED_WIZARD_KEY: &str = "has_completed_wizard";
-const SHOULD_DISPLAY_WELCOME_KEY: &str = "should_display_welcome";
+const HAS_DISPLAYED_WELCOME_KEY: &str = "has_displayed_welcome";
 const SHOULD_DISPLAY_TROUBLESHOOT_FOR_NON_FATAL_ERRORS: &str =
   "should_display_troubleshoot_for_non_fatal_errors";
 
@@ -64,12 +64,12 @@ impl<KVSType: KVS> Preferences for DefaultPreferences<KVSType> {
     self.set(HAS_COMPLETED_WIZARD_KEY, value);
   }
 
-  fn should_display_welcome(&self) -> bool {
-    self.get(SHOULD_DISPLAY_WELCOME_KEY).unwrap_or(true)
+  fn has_displayed_welcome(&self) -> bool {
+    self.get(HAS_DISPLAYED_WELCOME_KEY).unwrap_or(false)
   }
 
-  fn set_should_display_welcome(&self, value: bool) {
-    self.set(SHOULD_DISPLAY_WELCOME_KEY, value);
+  fn set_has_displayed_welcome(&self, value: bool) {
+    self.set(HAS_DISPLAYED_WELCOME_KEY, value);
   }
 
   fn should_display_troubleshoot_for_non_fatal_errors(&self) -> bool {

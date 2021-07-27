@@ -19,16 +19,13 @@
 
 use clap::{ArgMatches};
 use crate::icon::IconPaths;
-use crate::preferences::Preferences;
 use espanso_modulo::welcome::*;
 use espanso_path::Paths;
 
 pub fn welcome_main(matches: &ArgMatches, paths: &Paths, icon_paths: &IconPaths) -> i32 {
-  let preferences =
-    crate::preferences::get_default(&paths.runtime).expect("unable to initialize preferences");
-
   let dont_show_again_handler = Box::new(move |dont_show: bool| {
-    preferences.set_should_display_welcome(!dont_show);
+    //preferences.set_should_display_welcome(!dont_show);
+    // TODO: this should probably be deleted if not used?
   });
 
   let is_already_running = matches.is_present("already-running");

@@ -28,8 +28,7 @@ use espanso_path::Paths;
 use espanso_ui::{event::UIEvent, UIRemote};
 use log::{debug, error, info, warn};
 
-use crate::{
-  cli::worker::{
+use crate::{cli::worker::{
     engine::{
       dispatch::executor::{
         clipboard_injector::ClipboardInjectorAdapter, context_menu::ContextMenuHandlerAdapter,
@@ -52,9 +51,7 @@ use crate::{
       },
     },
     match_cache::MatchCache,
-  },
-  engine::event::ExitMode,
-};
+  }, engine::event::ExitMode, preferences::Preferences};
 
 use super::secure_input::SecureInputEvent;
 
@@ -79,6 +76,7 @@ pub fn initialize_and_spawn(
     .name("engine thread".to_string())
     .spawn(move || {
       // TODO: properly order the initializations if necessary
+      let preferences = crate::preferences::get_default(&paths.runtime).expect("unable to load preferences");
 
       let app_info_provider =
         espanso_info::get_provider().expect("unable to initialize app info provider");
@@ -215,7 +213,14 @@ pub fn initialize_and_spawn(
 
       // TODO: check config
       match run_count {
-        0 => ui_remote.show_notification("Espanso is running!"),
+        0 => {
+          ui_remote.show_notification("Espanso is running!");
+          
+          if !preferences.has_displayed_welcome() {
+            super::ui::welcome::show_welcome_screen();
+            preferences.set_has_displayed_welcome(true);
+          }
+        },
         n => {
           if has_been_started_manually {
             ui_remote.show_notification("Configuration reloaded!");

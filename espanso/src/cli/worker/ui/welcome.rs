@@ -17,20 +17,16 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::preferences::Preferences;
-
 #[cfg(feature = "modulo")]
-pub fn show_welcome_screen(preferences: &impl Preferences) {
-  if preferences.should_display_welcome() {
-    let espanso_exe_path = std::env::current_exe().expect("unable to determine executable path");
-    let mut command = std::process::Command::new(&espanso_exe_path.to_string_lossy().to_string());
-    command.args(&["modulo", "welcome"]);
+pub fn show_welcome_screen() {
+  let espanso_exe_path = std::env::current_exe().expect("unable to determine executable path");
+  let mut command = std::process::Command::new(&espanso_exe_path.to_string_lossy().to_string());
+  command.args(&["modulo", "welcome"]);
 
-    command.spawn().expect("unable to show welcome screen");
-  }
+  command.spawn().expect("unable to show welcome screen");
 }
 
 #[cfg(not(feature = "modulo"))]
-pub fn show_welcome_screen(_: &impl Preferences) {
-  // NOOP  
+pub fn show_welcome_screen() {
+  // NOOP
 }
