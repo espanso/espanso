@@ -26,8 +26,8 @@ pub trait Preferences: Send + Sync + Clone {
   fn has_completed_wizard(&self) -> bool;
   fn set_completed_wizard(&self, value: bool);
 
-  fn should_display_welcome(&self) -> bool;
-  fn set_should_display_welcome(&self, value: bool);
+  fn has_displayed_welcome(&self) -> bool;
+  fn set_has_displayed_welcome(&self, value: bool);
 
   fn should_display_troubleshoot_for_non_fatal_errors(&self) -> bool;
   fn set_should_display_troubleshoot_for_non_fatal_errors(&self, value: bool);

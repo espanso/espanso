@@ -42,7 +42,6 @@ use super::{CliModule, CliModuleArgs, PathsOverrides};
 
 mod ipc;
 mod troubleshoot;
-mod ui;
 mod watcher;
 
 pub fn new() -> CliModule {
@@ -62,9 +61,6 @@ fn daemon_main(args: CliModuleArgs) -> i32 {
   let paths_overrides = args
     .paths_overrides
     .expect("missing paths_overrides in daemon main");
-  let preferences =
-    crate::preferences::get_default(&paths.runtime).expect("unable to obtain preferences");
-  let cli_args = args.cli_args.expect("missing cli_args in daemon main");
 
   // Make sure only one instance of the daemon is running
   let lock_file = acquire_daemon_lock(&paths.runtime);
@@ -131,10 +127,6 @@ fn daemon_main(args: CliModuleArgs) -> i32 {
 
   ipc::initialize_and_spawn(&paths.runtime, exit_notify.clone())
     .expect("unable to initialize ipc server for daemon");
-
-  if cli_args.is_present("show-welcome") {
-    ui::show_welcome_screen(&preferences);
-  }
 
   loop {
     select! {
