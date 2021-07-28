@@ -23,7 +23,7 @@ use anyhow::Result;
 use crossbeam::channel::Receiver;
 use espanso_config::{config::ConfigStore, matches::store::MatchStore};
 use espanso_detect::SourceCreationOptions;
-use espanso_inject::InjectorCreationOptions;
+use espanso_inject::{InjectorCreationOptions, KeyboardStateProvider};
 use espanso_path::Paths;
 use espanso_ui::{event::UIEvent, UIRemote};
 use log::{debug, error, info, warn};
@@ -92,7 +92,7 @@ pub fn initialize_and_spawn(
       let has_granted_capabilities = grant_linux_capabilities(use_evdev_backend);
 
       // TODO: pass all the options
-      let (detect_source, modifier_state_store, sequencer) =
+      let (detect_source, modifier_state_store, sequencer, key_state_store) =
         super::engine::funnel::init_and_spawn(SourceCreationOptions {
           use_evdev: use_evdev_backend,
           ..Default::default()
@@ -134,6 +134,7 @@ pub fn initialize_and_spawn(
 
       let injector = espanso_inject::get_injector(InjectorCreationOptions {
         use_evdev: use_evdev_backend,
+        keyboard_state_provider: key_state_store.map(|store| Box::new(store) as Box<dyn KeyboardStateProvider>),
         ..Default::default()
       })
       .expect("failed to initialize injector module"); // TODO: handle the options
