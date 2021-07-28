@@ -78,7 +78,6 @@ pub fn init_and_spawn(
 
           source
             .eventloop(Box::new(move |event| {
-              println!("key -> {:?}", event);
               // Update the modifiers state
               if let Some((modifier, is_pressed)) = get_modifier_status(&event) {
                 modifier_state_store_clone.update_state(modifier, is_pressed);
