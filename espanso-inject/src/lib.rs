@@ -98,6 +98,13 @@ pub struct InjectorCreationOptions {
   // Can be used to overwrite the keymap configuration
   // used by espanso to inject key presses.
   pub evdev_keyboard_rmlvo: Option<KeyboardConfig>,
+
+  // An optional provider that can be used by the injector
+  // to determine which keys are pressed at the time of injection.
+  // This is needed on Wayland to "wait" for key releases when
+  // the injected string contains a key that it's currently pressed.
+  // Otherwise, a key that is already pressed cannot be injected.
+  pub keyboard_state_provider: Option<Box<dyn KeyboardStateProvider>>,
 }
 
 // This struct identifies the keyboard layout that
@@ -111,6 +118,10 @@ pub struct KeyboardConfig {
   pub options: Option<String>,
 }
 
+pub trait KeyboardStateProvider {
+  fn is_key_pressed(&self, code: u32) -> bool;
+}
+
 impl Default for InjectorCreationOptions {
   fn default() -> Self {
     Self {
@@ -118,6 +129,7 @@ impl Default for InjectorCreationOptions {
       evdev_modifiers: None,
       evdev_max_modifier_combination_len: None,
       evdev_keyboard_rmlvo: None,
+      keyboard_state_provider: None,
     }
   }
 }

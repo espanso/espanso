@@ -26,16 +26,18 @@ mod uinput;
 use std::{
   collections::{HashMap, HashSet},
   ffi::CString,
+  time::Instant,
 };
 
 use context::Context;
 use keymap::Keymap;
-use log::error;
-use std::iter::FromIterator;
+use log::{error, warn};
 use uinput::UInputDevice;
 
-use crate::{linux::raw_keys::convert_to_sym_array, InjectorCreationOptions};
-use anyhow::Result;
+use crate::{
+  linux::raw_keys::convert_to_sym_array, InjectorCreationOptions, KeyboardStateProvider,
+};
+use anyhow::{Result, bail};
 use itertools::Itertools;
 use thiserror::Error;
 
@@ -75,6 +77,9 @@ const DEFAULT_MODIFIERS: [u32; 10] = [
 
 const DEFAULT_MAX_MODIFIER_COMBINATION_LEN: i32 = 3;
 
+// TODO: make the timeout a configurable option
+const DEFAULT_WAIT_KEY_RELEASE_TIMEOUT_MS: u64 = 4000;
+
 pub type KeySym = u32;
 
 #[derive(Clone, Debug)]
@@ -98,6 +103,9 @@ pub struct EVDEVInjector {
   // Ownership
   _context: Context,
   _keymap: Keymap,
+
+  // Keyboard state provider
+  keyboard_state_provider: Option<Box<dyn KeyboardStateProvider>>,
 }
 
 #[allow(clippy::new_without_default)]
@@ -126,12 +134,17 @@ impl EVDEVInjector {
     // Create the uinput virtual device
     let device = UInputDevice::new()?;
 
+    if options.keyboard_state_provider.is_none() {
+      warn!("EVDEVInjection has been initialized without a KeyboardStateProvider, which might result in partial injections.");
+    }
+
     Ok(Self {
       device,
       char_map,
       sym_map,
       _context: context,
       _keymap: keymap,
+      keyboard_state_provider: options.keyboard_state_provider,
     })
   }
 
@@ -211,6 +224,31 @@ impl EVDEVInjector {
       }
     }
   }
+
+  fn wait_until_key_is_released(&self, code: u32) -> Result<()> {
+    if let Some(key_provider) = &self.keyboard_state_provider {
+      let key_provider_code = code + EVDEV_OFFSET;
+
+      if !key_provider.is_key_pressed(key_provider_code) {
+        return Ok(());
+      }
+
+      // Key is pressed, wait until timeout
+      let now = Instant::now();
+      while now.elapsed() < std::time::Duration::from_millis(DEFAULT_WAIT_KEY_RELEASE_TIMEOUT_MS) {
+        if !key_provider.is_key_pressed(key_provider_code) {
+          return Ok(());
+        }
+
+        std::thread::sleep(std::time::Duration::from_millis(50));
+      }
+
+      bail!("timed-out while waiting for key release: {}", code);
+    } else {
+      // Keyboard provider not available,
+      Ok(())
+    }
+  }
 }
 
 impl Injector for EVDEVInjector {
@@ -235,7 +273,7 @@ impl Injector for EVDEVInjector {
     let mut current_modifiers: HashSet<u32> = HashSet::new();
 
     for record in records? {
-      let record_modifiers = HashSet::from_iter(record.modifiers.iter().cloned());
+      let record_modifiers = record.modifiers.iter().cloned().collect::<HashSet<_>>();
 
       // Release all the modifiers that are not needed anymore
       for expired_modifier in current_modifiers.difference(&record_modifiers) {
@@ -244,10 +282,12 @@ impl Injector for EVDEVInjector {
 
       // Press all the new modifiers that are now needed
       for new_modifier in record_modifiers.difference(&current_modifiers) {
+        self.wait_until_key_is_released(record.code)?;
         self.send_key(*new_modifier, true, delay_us);
       }
 
       // Send the char
+      self.wait_until_key_is_released(record.code)?;
       self.send_key(record.code, true, delay_us);
       self.send_key(record.code, false, delay_us);
 
