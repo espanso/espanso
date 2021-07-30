@@ -230,11 +230,7 @@ fn get_default_runtime_dir() -> Option<PathBuf> {
 }
 
 fn get_default_runtime_path() -> PathBuf {
-  let runtime_dir = if cfg!(target_os = "linux") {
-    dirs::runtime_dir().expect("unable to obtain dirs::runtime_dir()")
-  } else {
-    dirs::cache_dir().expect("unable to obtain dirs::cache_dir()")
-  };
+  let runtime_dir = dirs::cache_dir().expect("unable to obtain dirs::cache_dir()");
   runtime_dir.join("espanso")
 }
 
