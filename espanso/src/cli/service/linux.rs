@@ -39,7 +39,7 @@ pub fn register() -> Result<()> {
   }
 
   info_println!("creating service file in {:?}", service_file);
-  let espanso_path = std::env::current_exe().expect("unable to get espanso executable path");
+  let espanso_path = get_binary_path().expect("unable to get espanso executable path");
 
   let service_content = String::from(LINUX_SERVICE_CONTENT).replace(
     "{{{espanso_path}}}",
@@ -144,7 +144,7 @@ pub fn is_registered() -> bool {
           let caps = EXEC_PATH_REGEX.captures(output).unwrap();
           let path = caps.get(1).map_or("", |m| m.as_str());
           let espanso_path =
-            std::env::current_exe().expect("unable to get espanso executable path");
+            get_binary_path().expect("unable to get espanso executable path");
 
           if espanso_path.to_string_lossy() != path {
             error_eprintln!("Espanso is registered as a systemd service, but it points to another binary location:");
@@ -264,4 +264,14 @@ fn get_service_file_dir() -> Result<PathBuf> {
 
 fn get_service_file_path() -> Result<PathBuf> {
   Ok(get_service_file_dir()?.join(LINUX_SERVICE_FILENAME))
+}
+
+fn get_binary_path() -> Result<PathBuf> {
+  // If executed as part of an AppImage, get the app image path instead of
+  // the binary itself (which was extracted in a temp directory).
+  if let Some(app_image_path) = std::env::var_os("APPIMAGE") {
+    return Ok(PathBuf::from(app_image_path));
+  }
+
+  Ok(std::env::current_exe()?)
 }
