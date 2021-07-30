@@ -6,8 +6,6 @@ edition = "2018"
 build="build.rs"
 
 [features]
-# TODO: REMOVE!!!
-default = ["wayland"]
 # If the wayland feature is enabled, all X11 dependencies will be dropped
 # and only EVDEV-based methods will be supported.
 wayland = ["sctk"]
