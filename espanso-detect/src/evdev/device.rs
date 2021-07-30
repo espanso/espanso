@@ -211,12 +211,14 @@ impl Device {
     }
     if modifiers_state.num_lock {
       self.update_key(*modifiers_map.get("num_lock").expect("unable to find modifiers key in map"), true);
+      self.update_key(*modifiers_map.get("num_lock").expect("unable to find modifiers key in map"), false);
     }
     if modifiers_state.shift {
       self.update_key(*modifiers_map.get("shift").expect("unable to find modifiers key in map"), true);
     }
     if modifiers_state.caps_lock {
       self.update_key(*modifiers_map.get("caps_lock").expect("unable to find modifiers key in map"), true);
+      self.update_key(*modifiers_map.get("caps_lock").expect("unable to find modifiers key in map"), false);
     }
   }
 }
