@@ -31,7 +31,7 @@ mod sync;
 use std::cell::RefCell;
 use std::collections::HashMap;
 
-use anyhow::Result;
+use anyhow::{Context as AnyhowContext, Result};
 use context::Context;
 use device::{get_devices, Device};
 use keymap::Keymap;
@@ -131,7 +131,9 @@ impl Source for EVDEVSource {
     let state = State::new(&keymap)?;
 
     info!("Querying modifier status...");
-    if let Some(modifiers_state) = sync::get_modifiers_state()? {
+    if let Some(modifiers_state) =
+      sync::get_modifiers_state().context("EVDEV modifier context state synchronization")?
+    {
       debug!("Updating device modifier state: {:?}", modifiers_state);
 
       for device in &mut self.devices {
