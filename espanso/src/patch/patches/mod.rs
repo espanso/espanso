@@ -40,5 +40,6 @@ generate_patchable_config!(
   inject_delay -> Option<usize>,
   key_delay -> Option<usize>,
   word_separators -> Vec<String>,
-  backspace_limit -> usize
+  backspace_limit -> usize,
+  apply_patch -> bool
 );
