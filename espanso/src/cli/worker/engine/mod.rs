@@ -172,7 +172,7 @@ pub fn initialize_and_spawn(
       let path_provider = PathProviderAdapter::new(&paths);
 
       let disable_options =
-        process::middleware::disable::extract_disable_options(config_manager.default());
+        process::middleware::disable::extract_disable_options(&*config_manager.default());
 
       let mut processor = crate::engine::process::default(
         &matchers,
