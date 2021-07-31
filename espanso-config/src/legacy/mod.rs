@@ -20,7 +20,7 @@
 use anyhow::Result;
 use log::warn;
 use regex::Regex;
-use std::{collections::HashMap, path::Path};
+use std::{collections::HashMap, path::Path, sync::Arc};
 
 use self::config::LegacyConfig;
 use crate::matches::{MatchEffect, group::loader::yaml::{parse::{YAMLMatch, YAMLVariable}, try_convert_into_match, try_convert_into_variable}};
@@ -58,7 +58,7 @@ pub fn load(
   let mut match_groups = HashMap::new();
   match_groups.insert("default".to_string(), default_match_group);
 
-  let mut custom_configs: Vec<Box<dyn Config>> = Vec::new();
+  let mut custom_configs: Vec<Arc<dyn Config>> = Vec::new();
   for custom in config_set.specific {
     let (custom_config, mut custom_match_group) = split_config(custom);
     deduplicate_ids(
@@ -68,10 +68,10 @@ pub fn load(
     );
 
     match_groups.insert(custom_config.name.clone(), custom_match_group);
-    custom_configs.push(Box::new(custom_config));
+    custom_configs.push(Arc::new(custom_config));
   }
 
-  let config_store = DefaultConfigStore::from_configs(Box::new(default_config), custom_configs)?;
+  let config_store = DefaultConfigStore::from_configs(Arc::new(default_config), custom_configs)?;
   let match_store = LegacyMatchStore::new(match_groups);
 
   Ok((Box::new(config_store), Box::new(match_store)))
