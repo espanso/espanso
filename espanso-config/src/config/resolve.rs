@@ -31,7 +31,7 @@ use crate::{counter::next_id, merge};
 use anyhow::Result;
 use log::error;
 use regex::Regex;
-use std::iter::FromIterator;
+use std::{iter::FromIterator, path::PathBuf};
 use std::{collections::HashSet, path::Path};
 use thiserror::Error;
 
@@ -41,6 +41,8 @@ const STANDARD_EXCLUDES: &[&str] = &["../match/**/_*.yml"];
 #[derive(Debug, Clone)]
 pub(crate) struct ResolvedConfig {
   parsed: ParsedConfig,
+
+  source_path: Option<PathBuf>,
 
   // Generated properties
   id: i32,
@@ -55,6 +57,7 @@ impl Default for ResolvedConfig {
   fn default() -> Self {
     Self {
       parsed: Default::default(),
+      source_path: None,
       id: 0,
       match_paths: Vec::new(),
       filter_title: None,
@@ -70,7 +73,17 @@ impl Config for ResolvedConfig {
   }
 
   fn label(&self) -> &str {
-    self.parsed.label.as_deref().unwrap_or("none")
+    if let Some(label) = self.parsed.label.as_deref() {
+      return label;
+    }
+
+    if let Some(source_path) = self.source_path.as_ref() {
+      if let Some(source_path) = source_path.to_str() {
+        return source_path
+      }
+    }
+
+    "none"
   }
 
   fn match_paths(&self) -> &[String] {
@@ -291,6 +304,7 @@ impl ResolvedConfig {
 
     Ok(Self {
       parsed: config,
+      source_path: Some(path.to_owned()),
       id: next_id(),
       match_paths,
       filter_title,
