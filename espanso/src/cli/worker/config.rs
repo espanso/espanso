@@ -17,7 +17,7 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::collections::HashSet;
+use std::{collections::HashSet, sync::Arc};
 
 use espanso_config::{
   config::{AppProperties, Config, ConfigStore},
@@ -45,19 +45,19 @@ impl<'a> ConfigManager<'a> {
     }
   }
 
-  pub fn active(&self) -> &'a dyn Config {
+  pub fn active(&self) -> Arc<dyn Config> {
     let current_app = self.app_info_provider.get_info();
     let info = to_app_properties(&current_app);
     self.config_store.active(&info)
   }
 
-  pub fn active_context(&self) -> (&'a dyn Config, MatchSet) {
+  pub fn active_context(&self) -> (Arc<dyn Config>, MatchSet) {
     let config = self.active();
     let match_paths = config.match_paths();
-    (config, self.match_store.query(&match_paths))
+    (config.clone(), self.match_store.query(&match_paths))
   }
 
-  pub fn default(&self) -> &'a dyn Config {
+  pub fn default(&self) -> Arc<dyn Config>{
     self.config_store.default()
   }
 }
@@ -86,16 +86,19 @@ impl<'a> crate::engine::process::MatchFilter for ConfigManager<'a> {
 }
 
 impl<'a> super::engine::process::middleware::render::ConfigProvider<'a> for ConfigManager<'a> {
-  fn configs(&self) -> Vec<(&'a dyn Config, MatchSet)> {
+  fn configs(&self) -> Vec<(Arc<dyn Config>, MatchSet)> {
     self
       .config_store
       .configs()
       .into_iter()
-      .map(|config| (config, self.match_store.query(config.match_paths())))
+      .map(|config| {
+        let match_set = self.match_store.query(config.match_paths());
+        (config, match_set)
+      })
       .collect()
   }
 
-  fn active(&self) -> (&'a dyn Config, MatchSet) {
+  fn active(&self) -> (Arc<dyn Config>, MatchSet) {
     self.active_context()
   }
 }

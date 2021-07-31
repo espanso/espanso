@@ -17,7 +17,7 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::{cell::RefCell, collections::HashMap};
+use std::{cell::RefCell, collections::HashMap, sync::Arc};
 
 pub mod extension;
 
@@ -37,8 +37,8 @@ pub trait MatchProvider<'a> {
 }
 
 pub trait ConfigProvider<'a> {
-  fn configs(&self) -> Vec<(&'a dyn Config, MatchSet)>;
-  fn active(&self) -> (&'a dyn Config, MatchSet);
+  fn configs(&self) -> Vec<(Arc<dyn Config>, MatchSet)>;
+  fn active(&self) -> (Arc<dyn Config>, MatchSet);
 }
 
 pub struct RendererAdapter<'a> {

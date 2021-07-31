@@ -49,6 +49,7 @@ mod ipc;
 mod lock;
 #[macro_use]
 mod logging;
+mod patch;
 mod path;
 mod preferences;
 mod util;
