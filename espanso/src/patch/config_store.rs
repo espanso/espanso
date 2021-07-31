@@ -75,7 +75,7 @@ impl ConfigStore for PatchedConfigStore {
 
     // Check if a patch should be applied
     if let Some(patch) = self.patches.iter().find(|patch| (patch.should_patch)(app)) {
-      (patch.apply)(active_config)
+      (patch.apply)(active_config, patch.name)
     } else {
       active_config
     }
