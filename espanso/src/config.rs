@@ -18,7 +18,11 @@
  */
 
 use anyhow::{Context, Result};
-use espanso_config::{config::ConfigStore, error::{ErrorLevel, NonFatalErrorSet}, matches::store::MatchStore};
+use espanso_config::{
+  config::ConfigStore,
+  error::{ErrorLevel, NonFatalErrorSet},
+  matches::store::MatchStore,
+};
 use log::{error, info, warn};
 use std::path::Path;
 
@@ -80,7 +84,8 @@ pub fn load_config(config_path: &Path, packages_path: &Path) -> Result<ConfigLoa
       .context("unable to load legacy config")?;
 
     Ok(ConfigLoadResult {
-      config_store,
+      // Apply the built-in patches
+      config_store: crate::patch::patch_store(config_store),
       match_store,
       is_legacy_config: true,
       non_fatal_errors: Vec::new(),
@@ -93,7 +98,10 @@ pub fn load_config(config_path: &Path, packages_path: &Path) -> Result<ConfigLoa
     if !non_fatal_errors.is_empty() {
       warn!("------- detected some errors in the configuration: -------");
       for non_fatal_error_set in &non_fatal_errors {
-        warn!(">>> {}", non_fatal_error_set.file.to_string_lossy().to_string());
+        warn!(
+          ">>> {}",
+          non_fatal_error_set.file.to_string_lossy().to_string()
+        );
         for record in &non_fatal_error_set.errors {
           if record.level == ErrorLevel::Error {
             error!("{:?}", record.error);
@@ -106,7 +114,8 @@ pub fn load_config(config_path: &Path, packages_path: &Path) -> Result<ConfigLoa
     }
 
     Ok(ConfigLoadResult {
-      config_store,
+      // Apply the built-in patches
+      config_store: crate::patch::patch_store(config_store),
       match_store,
       is_legacy_config: false,
       non_fatal_errors,

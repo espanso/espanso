@@ -16,81 +16,29 @@
  * You should have received a copy of the GNU General Public License
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
+ 
+use espanso_config::config::{Backend, ToggleKey};
 
+#[cfg(target_os = "windows")]
 pub mod win;
 
+#[macro_use]
+mod macros;
 
-
-// #[macro_export]
-// macro_rules! create_patch {
-//   // TODO: add function body
-//   ( $should_be_activated:expr, $( $config_field:ident ->$config_type:ty ),* ) => {
-//     {
-//       $(
-//         if $child.$x.is_none() {
-//           $child.$x = $parent.$x.clone();
-//         }
-//       )*
-
-//       // Build a temporary object to verify that all fields
-//       // are being used at compile time
-//       $t {
-//         $(
-//           $x: None,
-//         )*
-//       };
-//     }
-//     {
-//       use crate::patch::{ConfigProxy, Patch};
-
-//       pub struct PatchImpl<'a> {
-//         patched_config: PatchedConfig<'a>,
-//       }
-
-//       impl<'a> PatchImpl<'a> {
-//         pub fn new(default: &'a dyn Config) -> Self {
-//           Self {
-//             patched_config: PatchedConfig::new(default),
-//           }
-//         }
-//       }
-
-//       impl<'a> Patch<'a> for PatchImpl<'a> {
-//         fn should_be_activated(&self) -> bool {
-//           $should_be_activated
-//         }
-
-//         fn patch_name(&self) -> &'static str {
-//           todo!()
-//         }
-
-//         fn config(&self) -> &'a dyn Config {
-//           &self.patched_config
-//         }
-//       }
-
-//       pub struct PatchedConfig<'a> {
-//         default: &'a dyn Config,
-//       }
-
-//       impl<'a> PatchedConfig<'a> {
-//         pub fn new(default: &'a dyn Config) -> Self {
-//           Self { default }
-//         }
-//       }
-
-//       impl<'a> ConfigProxy<'a> for PatchedConfig<'a> {
-//         fn get_default(&self) -> &'a dyn espanso_config::config::Config {
-//           self.default
-//         }
-
-//         $(
-//           fn $config_field(&self) -> $config_type {
-//             todo!()
-//           }
-//         )*
-//       }
-
-//     }
-//   };
-// }
+generate_patchable_config!(
+  PatchedConfig,
+  backend -> Backend,
+  clipboard_threshold -> usize,
+  pre_paste_delay -> usize,
+  paste_shortcut_event_delay -> usize,
+  paste_shortcut -> Option<String>,
+  disable_x11_fast_inject -> bool,
+  toggle_key -> Option<ToggleKey>,
+  auto_restart -> bool,
+  preserve_clipboard -> bool,
+  restore_clipboard_delay -> usize,
+  inject_delay -> Option<usize>,
+  key_delay -> Option<usize>,
+  word_separators -> Vec<String>,
+  backspace_limit -> usize
+);

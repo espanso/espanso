@@ -17,14 +17,24 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use std::sync::Arc;
+
+use crate::patch::patches::{PatchedConfig, Patches};
 use crate::patch::PatchDefinition;
 
 pub fn patch() -> PatchDefinition {
   PatchDefinition {
-    name: file!(),
-    should_be_activated: || cfg!(target_os = "windows"),
-    patch_config: |base| {
-      todo!()
+    name: module_path!().split(":").last().unwrap_or("unknown"),
+    is_enabled: || cfg!(target_os = "windows"),
+    should_patch: |app| app.title.unwrap_or_default().contains("OneNote"),
+    apply: |base| {
+      Arc::new(PatchedConfig::patch(
+        base,
+        Patches {
+          key_delay: Some(Some(10)),
+          ..Default::default()
+        },
+      ))
     },
   }
 }

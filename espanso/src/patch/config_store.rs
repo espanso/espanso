@@ -19,7 +19,7 @@
 
 use std::sync::Arc;
 
-use espanso_config::config::{ConfigStore, Config};
+use espanso_config::config::{Config, ConfigStore};
 use log::debug;
 
 use super::PatchDefinition;
@@ -34,20 +34,26 @@ impl PatchedConfigStore {
     Self::from_store_with_patches(config_store, super::get_builtin_patches())
   }
 
-  pub fn from_store_with_patches(config_store: Box<dyn ConfigStore>, patches: Vec<PatchDefinition>) -> Self {
+  pub fn from_store_with_patches(
+    config_store: Box<dyn ConfigStore>,
+    patches: Vec<PatchDefinition>,
+  ) -> Self {
     // Only keep the patches that should be active in the current system
-    let active_patches = patches.into_iter().filter(|patch| {
-      let should_be_activated = (patch.should_be_activated)();
+    let active_patches = patches
+      .into_iter()
+      .filter(|patch| {
+        let is_enabled = (patch.is_enabled)();
 
-      if should_be_activated {
-        debug!("activating '{}' patch", patch.name);
-      } else {
-        debug!("skipping '{}' patch", patch.name);
-      }
+        if is_enabled {
+          debug!("enabled '{}' patch", patch.name);
+        } else {
+          debug!("skipping '{}' patch", patch.name);
+        }
 
-      should_be_activated
-    }).collect();
-    
+        is_enabled
+      })
+      .collect();
+
     Self {
       config_store,
       patches: active_patches,
@@ -60,15 +66,19 @@ impl ConfigStore for PatchedConfigStore {
     self.config_store.default()
   }
 
-  fn active<'f>(
-    &'f self,
-    app: &espanso_config::config::AppProperties,
-  ) -> Arc<dyn Config>{
-    todo!()
+  fn active<'f>(&'f self, app: &espanso_config::config::AppProperties) -> Arc<dyn Config> {
+    let active_config = self.config_store.active(app);
+
+    // Check if a patch should be applied
+    if let Some(patch) = self.patches.iter().find(|patch| (patch.should_patch)(app)) {
+      (patch.apply)(active_config)
+    } else {
+      active_config
+    }
   }
 
   fn configs(&self) -> Vec<Arc<dyn Config>> {
-    todo!()
+    self.config_store.configs()
   }
 
   fn get_all_match_paths(&self) -> std::collections::HashSet<String> {
