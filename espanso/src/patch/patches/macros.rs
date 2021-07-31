@@ -26,14 +26,17 @@ macro_rules! generate_patchable_config {
       pub struct $struct_name {
         base: Arc<dyn Config>,
         patch: Patches,
+        patched_label: String,
       }
 
       impl $struct_name {
         #[allow(dead_code)]
-        pub fn patch(base: Arc<dyn Config>, patch: Patches) -> Self {
+        pub fn patch(base: Arc<dyn Config>, name: &str, patch: Patches) -> Self {
+          let patched_label = format!("{} (PATCHED: {})", base.label(), name);
           Self {
             base,
             patch,
+            patched_label,
           }
         }
       }
@@ -61,7 +64,7 @@ macro_rules! generate_patchable_config {
         }
 
         fn label(&self) -> &str {
-          self.base.label()
+          &self.patched_label
         }
 
         fn match_paths(&self) -> &[String] {

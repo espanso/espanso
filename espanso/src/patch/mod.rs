@@ -48,5 +48,5 @@ pub struct PatchDefinition {
   pub name: &'static str,
   pub is_enabled: fn() -> bool,
   pub should_patch: fn(app: &AppProperties) -> bool,
-  pub apply: fn(config: Arc<dyn Config>) -> Arc<dyn Config>,
+  pub apply: fn(config: Arc<dyn Config>, name: &str) -> Arc<dyn Config>,
 }
