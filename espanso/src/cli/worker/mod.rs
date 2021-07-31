@@ -33,7 +33,9 @@ use self::ui::util::convert_icon_paths_to_tray_vec;
 
 use super::{CliModule, CliModuleArgs};
 
+mod builtin;
 mod config;
+mod context;
 mod daemon_monitor;
 mod engine;
 mod ipc;

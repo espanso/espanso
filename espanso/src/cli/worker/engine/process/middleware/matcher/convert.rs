@@ -30,16 +30,24 @@ use espanso_match::{
 };
 use std::iter::FromIterator;
 
+use crate::cli::worker::builtin::BuiltInMatch;
+
 pub struct MatchConverter<'a> {
   config_store: &'a dyn ConfigStore,
   match_store: &'a dyn MatchStore,
+  builtin_matches: &'a [BuiltInMatch],
 }
 
 impl<'a> MatchConverter<'a> {
-  pub fn new(config_store: &'a dyn ConfigStore, match_store: &'a dyn MatchStore) -> Self {
+  pub fn new(
+    config_store: &'a dyn ConfigStore,
+    match_store: &'a dyn MatchStore,
+    builtin_matches: &'a [BuiltInMatch],
+  ) -> Self {
     Self {
       config_store,
       match_store,
+      builtin_matches,
     }
   }
 
@@ -48,6 +56,7 @@ impl<'a> MatchConverter<'a> {
     let match_set = self.global_match_set();
     let mut matches = Vec::new();
 
+    // First convert configuration (user-defined) matches
     for m in match_set.matches {
       if let MatchCause::Trigger(cause) = &m.cause {
         for trigger in cause.triggers.iter() {
@@ -64,6 +73,17 @@ impl<'a> MatchConverter<'a> {
       }
     }
 
+    // Then convert built-in ones
+    for m in self.builtin_matches {
+      for trigger in m.triggers.iter() {
+        matches.push(RollingMatch::from_string(
+          m.id,
+          &trigger,
+          &StringMatchOptions::default()
+        ))
+      }
+    }
+
     matches
   }
 
@@ -74,10 +94,7 @@ impl<'a> MatchConverter<'a> {
 
     for m in match_set.matches {
       if let MatchCause::Regex(cause) = &m.cause {
-        matches.push(RegexMatch::new(
-          m.id,
-          &cause.regex,
-        ))
+        matches.push(RegexMatch::new(m.id, &cause.regex))
       }
     }
 

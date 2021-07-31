@@ -26,6 +26,8 @@ use espanso_config::{
 use espanso_info::{AppInfo, AppInfoProvider};
 use std::iter::FromIterator;
 
+use super::builtin::is_builtin_match;
+
 pub struct ConfigManager<'a> {
   config_store: &'a dyn ConfigStore,
   match_store: &'a dyn MatchStore,
@@ -57,7 +59,7 @@ impl<'a> ConfigManager<'a> {
     (config.clone(), self.match_store.query(&match_paths))
   }
 
-  pub fn default(&self) -> Arc<dyn Config>{
+  pub fn default(&self) -> Arc<dyn Config> {
     self.config_store.default()
   }
 }
@@ -76,12 +78,22 @@ impl<'a> crate::engine::process::MatchFilter for ConfigManager<'a> {
     let ids_set: HashSet<i32> = HashSet::from_iter(matches_ids.iter().copied());
     let (_, match_set) = self.active_context();
 
-    match_set
+    let active_user_defined_matches: Vec<i32> = match_set
       .matches
       .iter()
       .filter(|m| ids_set.contains(&m.id))
       .map(|m| m.id)
-      .collect()
+      .collect();
+
+    let builtin_matches: Vec<i32> = matches_ids
+      .into_iter()
+      .filter(|id| is_builtin_match(**id))
+      .map(|id| *id)
+      .collect();
+    
+    let mut output = active_user_defined_matches;
+    output.extend(builtin_matches);
+    output
   }
 }
 
