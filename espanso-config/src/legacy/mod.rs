@@ -339,6 +339,10 @@ impl Config for LegacyInteropConfig {
   fn backspace_limit(&self) -> usize {
     self.config.backspace_limit.try_into().unwrap()
   }
+  
+  fn apply_patch(&self) -> bool {
+    true
+  }
 }
 
 struct LegacyMatchGroup {
