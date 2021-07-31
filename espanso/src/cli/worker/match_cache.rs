@@ -24,6 +24,8 @@ use espanso_config::{
   matches::{store::MatchStore, Match, MatchEffect},
 };
 
+use super::{builtin::BuiltInMatch, engine::process::middleware::match_select::MatchSummary};
+
 pub struct MatchCache<'a> {
   cache: HashMap<i32, &'a Match>,
 }
@@ -43,12 +45,6 @@ impl<'a> MatchCache<'a> {
   }
 }
 
-impl<'a> super::engine::process::middleware::multiplex::MatchProvider<'a> for MatchCache<'a> {
-  fn get(&self, match_id: i32) -> Option<&'a Match> {
-    self.cache.get(&match_id).map(|m| *m)
-  }
-}
-
 impl<'a> super::engine::process::middleware::render::MatchProvider<'a> for MatchCache<'a> {
   fn matches(&self) -> Vec<&'a Match> {
     self.cache.iter().map(|(_, m)| *m).collect()
@@ -56,15 +52,6 @@ impl<'a> super::engine::process::middleware::render::MatchProvider<'a> for Match
 
   fn get(&self, id: i32) -> Option<&'a Match> {
     self.cache.get(&id).map(|m| *m)
-  }
-}
-
-impl<'a> super::engine::process::middleware::match_select::MatchProvider<'a> for MatchCache<'a> {
-  fn get_matches(&self, ids: &[i32]) -> Vec<&'a Match> {
-    ids
-      .iter()
-      .flat_map(|id| self.cache.get(&id).map(|m| *m))
-      .collect()
   }
 }
 
@@ -85,5 +72,81 @@ impl<'a> crate::engine::process::MatchInfoProvider for MatchCache<'a> {
     }
 
     None
+  }
+}
+
+pub struct CombinedMatchCache<'a> {
+  user_match_cache: &'a MatchCache<'a>,
+  builtin_match_cache: HashMap<i32, &'a BuiltInMatch>,
+}
+
+pub enum MatchVariant<'a> {
+  User(&'a Match),
+  Builtin(&'a BuiltInMatch),
+}
+
+impl<'a> CombinedMatchCache<'a> {
+  pub fn load(user_match_cache: &'a MatchCache<'a>, builtin_matches: &'a [BuiltInMatch]) -> Self {
+    let mut builtin_match_cache = HashMap::new();
+
+    for m in builtin_matches {
+      builtin_match_cache.insert(m.id, m);
+    }
+
+    Self {
+      builtin_match_cache,
+      user_match_cache,
+    }
+  }
+
+  pub fn get(&self, match_id: i32) -> Option<MatchVariant<'a>> {
+    if let Some(user_match) = self.user_match_cache.cache.get(&match_id).map(|m| *m) {
+      return Some(MatchVariant::User(user_match));
+    }
+
+    if let Some(builtin_match) = self.builtin_match_cache.get(&match_id).map(|m| *m) {
+      return Some(MatchVariant::Builtin(builtin_match));
+    }
+
+    None
+  }
+}
+
+impl<'a> super::engine::process::middleware::match_select::MatchProvider<'a>
+  for CombinedMatchCache<'a>
+{
+  fn get_matches(&self, ids: &[i32]) -> Vec<MatchSummary<'a>> {
+    ids
+      .iter()
+      .filter_map(|id| self.get(*id))
+      .map(|m| match m {
+        MatchVariant::User(m) => MatchSummary {
+          id: m.id,
+          label: m.description(),
+          tag: m.cause_description(),
+        },
+        MatchVariant::Builtin(m) => MatchSummary {
+          id: m.id,
+          label: m.label,
+          tag: m.triggers.first().map(String::as_ref),
+        },
+      })
+      .collect()
+  }
+}
+
+impl<'a> super::engine::process::middleware::multiplex::MatchProvider<'a>
+  for CombinedMatchCache<'a>
+{
+  fn get(
+    &self,
+    match_id: i32,
+  ) -> Option<super::engine::process::middleware::multiplex::MatchResult<'a>> {
+    Some(match self.get(match_id)? {
+      MatchVariant::User(m) => super::engine::process::middleware::multiplex::MatchResult::User(m),
+      MatchVariant::Builtin(m) => {
+        super::engine::process::middleware::multiplex::MatchResult::Builtin(m)
+      }
+    })
   }
 }

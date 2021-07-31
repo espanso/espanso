@@ -28,8 +28,7 @@ use espanso_path::Paths;
 use espanso_ui::{event::UIEvent, UIRemote};
 use log::{debug, error, info, warn};
 
-use crate::{cli::worker::{
-    engine::{
+use crate::{cli::worker::{context::Context, engine::{
       dispatch::executor::{
         clipboard_injector::ClipboardInjectorAdapter, context_menu::ContextMenuHandlerAdapter,
         event_injector::EventInjectorAdapter, icon::IconHandlerAdapter,
@@ -49,9 +48,7 @@ use crate::{cli::worker::{
           RendererAdapter,
         },
       },
-    },
-    match_cache::MatchCache,
-  }, engine::event::ExitMode, preferences::Preferences};
+    }, match_cache::{CombinedMatchCache, MatchCache}}, engine::event::ExitMode, preferences::Preferences};
 
 use super::secure_input::SecureInputEvent;
 
@@ -82,12 +79,17 @@ pub fn initialize_and_spawn(
         espanso_info::get_provider().expect("unable to initialize app info provider");
       let config_manager =
         super::config::ConfigManager::new(&*config_store, &*match_store, &*app_info_provider);
-      let match_converter = MatchConverter::new(&*config_store, &*match_store);
       let match_cache = MatchCache::load(&*config_store, &*match_store);
 
       let modulo_manager = crate::gui::modulo::manager::ModuloManager::new();
       let modulo_form_ui = crate::gui::modulo::form::ModuloFormUI::new(&modulo_manager);
       let modulo_search_ui = crate::gui::modulo::search::ModuloSearchUI::new(&modulo_manager);
+
+      let context: Box<dyn Context> = Box::new(super::context::DefaultContext::new(&config_manager));
+      let builtin_matches = super::builtin::get_builtin_matches();
+      let combined_match_cache = CombinedMatchCache::load(&match_cache, &builtin_matches);
+
+      let match_converter = MatchConverter::new(&*config_store, &*match_store, &builtin_matches);
 
       let has_granted_capabilities = grant_linux_capabilities(use_evdev_backend);
 
@@ -129,8 +131,8 @@ pub fn initialize_and_spawn(
           super::engine::process::middleware::matcher::MatcherState,
         >,
       > = vec![&rolling_matcher, &regex_matcher];
-      let selector = MatchSelectorAdapter::new(&modulo_search_ui, &match_cache);
-      let multiplexer = MultiplexAdapter::new(&match_cache);
+      let selector = MatchSelectorAdapter::new(&modulo_search_ui, &combined_match_cache);
+      let multiplexer = MultiplexAdapter::new(&combined_match_cache, &*context);
 
       let injector = espanso_inject::get_injector(InjectorCreationOptions {
         use_evdev: use_evdev_backend,

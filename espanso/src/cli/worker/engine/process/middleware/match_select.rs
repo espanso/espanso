@@ -17,7 +17,6 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use espanso_config::matches::{Match};
 use log::error;
 
 use crate::{
@@ -28,7 +27,13 @@ use crate::{
 const MAX_LABEL_LEN: usize = 100;
 
 pub trait MatchProvider<'a> {
-  fn get_matches(&self, ids: &[i32]) -> Vec<&'a Match>;
+  fn get_matches(&self, ids: &[i32]) -> Vec<MatchSummary<'a>>;
+}
+
+pub struct MatchSummary<'a> {
+  pub id: i32,
+  pub label: &'a str,
+  pub tag: Option<&'a str>,
 }
 
 pub struct MatchSelectorAdapter<'a> {
@@ -49,15 +54,14 @@ impl<'a> MatchSelector for MatchSelectorAdapter<'a> {
   fn select(&self, matches_ids: &[i32]) -> Option<i32> {
     let matches = self.match_provider.get_matches(&matches_ids);
     let search_items: Vec<SearchItem> = matches
-      .iter()
+      .into_iter()
       .map(|m| {
-        let label = m.description();
-        let clipped_label = &label[..std::cmp::min(label.len(), MAX_LABEL_LEN)];
+        let clipped_label = &m.label[..std::cmp::min(m.label.len(), MAX_LABEL_LEN)];
 
         SearchItem {
           id: m.id.to_string(),
           label: clipped_label.to_string(),
-          tag: m.cause_description().map(String::from),
+          tag: m.tag.map(String::from),
         }
       })
       .collect();
