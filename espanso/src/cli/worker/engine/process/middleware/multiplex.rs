@@ -46,7 +46,7 @@ pub struct MultiplexAdapter<'a> {
 }
 
 impl<'a> MultiplexAdapter<'a> {
-  pub fn new(provider: &'a dyn MatchProvider<'a>, context: &'a dyn Context) -> Self {
+  pub fn new(provider: &'a dyn MatchProvider<'a>, context: &'a Context) -> Self {
     Self { provider, context }
   }
 }
@@ -69,9 +69,7 @@ impl<'a> Multiplexer for MultiplexAdapter<'a> {
         })),
         MatchEffect::None => None,
       },
-      MatchResult::Builtin(m) => {
-        Some((m.action)(self.context))
-      }
+      MatchResult::Builtin(m) => Some((m.action)(self.context)),
     }
   }
 }

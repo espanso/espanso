@@ -37,6 +37,7 @@ pub struct BuiltInMatch {
 pub fn get_builtin_matches() -> Vec<BuiltInMatch> {
   vec![
     debug::create_match_paste_active_config_info(),
+    debug::create_match_paste_active_app_info(),
   ]
 }
 

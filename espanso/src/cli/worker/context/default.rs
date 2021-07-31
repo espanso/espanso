@@ -17,16 +17,25 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use espanso_info::AppInfoProvider;
+
 use super::*;
 use crate::cli::worker::config::ConfigManager;
 
 pub struct DefaultContext<'a> {
   config_manager: &'a ConfigManager<'a>,
+  app_info_provider: &'a dyn AppInfoProvider,
 }
 
 impl<'a> DefaultContext<'a> {
-  pub fn new(config_manager: &'a ConfigManager<'a>) -> Self {
-    Self { config_manager }
+  pub fn new(
+    config_manager: &'a ConfigManager<'a>,
+    app_info_provider: &'a dyn AppInfoProvider,
+  ) -> Self {
+    Self {
+      config_manager,
+      app_info_provider,
+    }
   }
 }
 
@@ -39,5 +48,11 @@ impl<'a> ConfigContext for DefaultContext<'a> {
 
   fn get_active_config(&self) -> Arc<dyn Config> {
     self.config_manager.active()
+  }
+}
+
+impl<'a> AppInfoContext for DefaultContext<'a> {
+  fn get_active_app_info(&self) -> AppInfo {
+    self.app_info_provider.get_info()
   }
 }
