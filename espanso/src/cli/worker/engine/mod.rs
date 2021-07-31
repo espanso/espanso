@@ -85,7 +85,7 @@ pub fn initialize_and_spawn(
       let modulo_form_ui = crate::gui::modulo::form::ModuloFormUI::new(&modulo_manager);
       let modulo_search_ui = crate::gui::modulo::search::ModuloSearchUI::new(&modulo_manager);
 
-      let context: Box<dyn Context> = Box::new(super::context::DefaultContext::new(&config_manager));
+      let context: Box<dyn Context> = Box::new(super::context::DefaultContext::new(&config_manager, &*app_info_provider));
       let builtin_matches = super::builtin::get_builtin_matches();
       let combined_match_cache = CombinedMatchCache::load(&match_cache, &builtin_matches);
 

@@ -23,10 +23,15 @@ use espanso_config::config::Config;
 
 mod default;
 pub use default::DefaultContext;
+use espanso_info::{AppInfo};
 
-pub trait Context: ConfigContext {}
+pub trait Context: ConfigContext + AppInfoContext {}
 
 pub trait ConfigContext {
   fn get_default_config(&self) -> Arc<dyn Config>;
   fn get_active_config(&self) -> Arc<dyn Config>;
+}
+
+pub trait AppInfoContext {
+  fn get_active_app_info(&self) -> AppInfo;
 }
