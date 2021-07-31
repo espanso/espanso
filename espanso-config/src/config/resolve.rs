@@ -247,6 +247,10 @@ impl Config for ResolvedConfig {
   fn backspace_limit(&self) -> usize {
     self.parsed.backspace_limit.unwrap_or(5)
   }
+
+  fn apply_patch(&self) -> bool {
+    self.parsed.apply_patch.unwrap_or(true)
+  }
 }
 
 impl ResolvedConfig {
@@ -310,6 +314,7 @@ impl ResolvedConfig {
       preserve_clipboard,
       restore_clipboard_delay,
       paste_shortcut,
+      apply_patch,
       paste_shortcut_event_delay,
       disable_x11_fast_inject,
       toggle_key,

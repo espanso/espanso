@@ -75,6 +75,9 @@ pub(crate) struct YAMLConfig {
   #[serde(default)]
   pub backspace_limit: Option<usize>,
 
+  #[serde(default)]
+  pub apply_patch: Option<bool>,
+
   // Include/Exclude
   #[serde(default)]
   pub includes: Option<Vec<String>>,
@@ -135,6 +138,7 @@ impl TryFrom<YAMLConfig> for ParsedConfig {
       key_delay: yaml_config.key_delay.or(yaml_config.backspace_delay),
       word_separators: yaml_config.word_separators,
       backspace_limit: yaml_config.backspace_limit,
+      apply_patch: yaml_config.apply_patch,
 
       pre_paste_delay: yaml_config.pre_paste_delay,
       restore_clipboard_delay: yaml_config.restore_clipboard_delay,
@@ -211,6 +215,7 @@ mod tests {
         inject_delay: Some(10),
         key_delay: Some(20),
         backspace_limit: Some(10),
+        apply_patch: Some(false),
 
         pre_paste_delay: Some(300),
         

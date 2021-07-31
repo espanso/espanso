@@ -103,6 +103,9 @@ pub trait Config: Send + Sync {
   // are typed.
   fn backspace_limit(&self) -> usize;
 
+  // If false, avoid applying the built-in patches to the current config.
+  fn apply_patch(&self) -> bool;
+
   fn is_match<'a>(&self, app: &AppProperties<'a>) -> bool;
 }
 
