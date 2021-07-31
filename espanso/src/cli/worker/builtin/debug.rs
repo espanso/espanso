@@ -17,20 +17,22 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::{cli::worker::builtin::generate_next_builtin_id, engine::event::{EventType, effect::TextInjectRequest}};
+use crate::{cli::worker::builtin::generate_next_builtin_id, engine::event::{EventType, effect::{TextInjectRequest}}};
 
 use super::BuiltInMatch;
 
-pub fn create_match_show_active_config_info() -> BuiltInMatch {
+// TODO: create task that opens up a GUI with this content
+
+pub fn create_match_paste_active_config_info() -> BuiltInMatch {
   BuiltInMatch {
     id: generate_next_builtin_id(),
-    label: "Display active config information",
+    label: "Paste active config information",
     triggers: vec!["#acfg#".to_string()],
     action: |context| {
-      println!("active config: {:?}", context.get_active_config().label());
+      let dump = context.get_active_config().pretty_dump();
 
       EventType::TextInject(TextInjectRequest {
-        text: "test".to_string(),
+        text: dump,
         force_mode: None,
       })
     },
