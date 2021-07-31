@@ -19,6 +19,7 @@
 
 use anyhow::Result;
 use std::{collections::HashSet, path::Path};
+use std::sync::Arc;
 use thiserror::Error;
 
 mod parse;
@@ -33,7 +34,7 @@ use mockall::{automock, predicate::*};
 
 use crate::error::NonFatalErrorSet;
 #[cfg_attr(test, automock)]
-pub trait Config: Send {
+pub trait Config: Send + Sync {
   fn id(&self) -> i32;
   fn label(&self) -> &str;
   fn match_paths(&self) -> &[String];
@@ -106,9 +107,9 @@ pub trait Config: Send {
 }
 
 pub trait ConfigStore: Send {
-  fn default(&self) -> &dyn Config;
-  fn active<'a>(&'a self, app: &AppProperties) -> &'a dyn Config;
-  fn configs(&self) -> Vec<&dyn Config>;
+  fn default(&self) -> Arc<dyn Config>;
+  fn active<'a>(&'a self, app: &AppProperties) -> Arc<dyn Config>;
+  fn configs(&self) -> Vec<Arc<dyn Config>>;
 
   fn get_all_match_paths(&self) -> HashSet<String>;
 }
