@@ -18,16 +18,17 @@
  */
 
 use anyhow::Result;
-use std::{collections::HashSet, path::Path};
+use indoc::formatdoc;
 use std::sync::Arc;
+use std::{collections::HashSet, path::Path};
 use thiserror::Error;
 
+pub(crate) mod default;
 mod parse;
 mod path;
 mod resolve;
-mod util;
-pub(crate) mod default;
 pub(crate) mod store;
+mod util;
 
 #[cfg(test)]
 use mockall::{automock, predicate::*};
@@ -42,10 +43,10 @@ pub trait Config: Send + Sync {
 
   // Number of chars after which a match is injected with the clipboard
   // backend instead of the default one. This is done for efficiency
-  // reasons, as injecting a long match through separate events becomes 
+  // reasons, as injecting a long match through separate events becomes
   // slow for long strings.
   fn clipboard_threshold(&self) -> usize;
-  
+
   // Delay (in ms) that espanso should wait to trigger the paste shortcut
   // after copying the content in the clipboard. This is needed because
   // if we trigger a "paste" shortcut before the content is actually
@@ -107,6 +108,51 @@ pub trait Config: Send + Sync {
   fn apply_patch(&self) -> bool;
 
   fn is_match<'a>(&self, app: &AppProperties<'a>) -> bool;
+
+  fn pretty_dump(&self) -> String {
+    formatdoc! {"
+        [espanso config: {:?}]
+
+        backend: {:?}
+        paste_shortcut: {:?}
+        inject_delay: {:?}
+        key_delay: {:?}
+        apply_patch: {:?}
+        word_separators: {:?}
+        
+        preserve_clipboard: {:?}
+        clipboard_threshold: {:?}
+        disable_x11_fast_inject: {}
+        pre_paste_delay: {}
+        paste_shortcut_event_delay: {}
+        toggle_key: {:?}
+        auto_restart: {:?}
+        restore_clipboard_delay: {:?} 
+        backspace_limit: {}
+
+        match_paths: {:#?}
+      ", 
+      self.label(),
+      self.backend(),
+      self.paste_shortcut(),
+      self.inject_delay(),
+      self.key_delay(),
+      self.apply_patch(),
+      self.word_separators(),
+
+      self.preserve_clipboard(),
+      self.clipboard_threshold(),
+      self.disable_x11_fast_inject(),
+      self.pre_paste_delay(),
+      self.paste_shortcut_event_delay(),
+      self.toggle_key(),
+      self.auto_restart(),
+      self.restore_clipboard_delay(),
+      self.backspace_limit(),
+
+      self.match_paths(),
+    }
+  }
 }
 
 pub trait ConfigStore: Send {
@@ -129,7 +175,6 @@ pub enum Backend {
   Clipboard,
   Auto,
 }
-
 
 #[derive(Debug, Copy, Clone)]
 pub enum ToggleKey {
