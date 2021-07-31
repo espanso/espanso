@@ -17,6 +17,7 @@ dunce = "1.0.1"
 walkdir = "2.3.1"
 enum-as-inner = "0.3.3"
 ordered-float = "2.0"
+indoc = "1.0.3"
 
 [dev-dependencies]
 tempdir = "0.3.7"
