@@ -32,10 +32,12 @@ use crate::engine::process::ModifierStatusProvider;
 /// after a while.
 const MAXIMUM_MODIFIERS_PRESS_TIME_RECORD: Duration = Duration::from_secs(30);
 
-// TODO: should we add also Shift on Linux to avoid any conflict in the expansion process? Investigate
-/// These are the modifiers that might conflict with the expansion process. For example,
-/// if espanso injects some texts while Alt or Ctrl are pressed, strange things might happen.
-const CONFLICTING_MODIFIERS: &[Modifier] = &[Modifier::Ctrl, Modifier::Alt, Modifier::Meta];
+const CONFLICTING_MODIFIERS: &[Modifier] = &[
+  Modifier::Ctrl,
+  Modifier::Alt,
+  Modifier::Meta,
+  Modifier::Shift,
+];
 
 #[derive(Debug, Hash, PartialEq, Eq)]
 pub enum Modifier {
