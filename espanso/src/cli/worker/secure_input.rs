@@ -82,7 +82,7 @@ fn secure_input_main(
         let secure_input_app = espanso_mac_utils::get_secure_input_application();
 
         if let Some((app_name, app_path)) = secure_input_app {
-          info!("secure input has been acquired by {}, preventing espanso from working correctly. Full path: {}", app_name, app_path);
+          info!("secure input has been acquired, preventing espanso from working correctly. Our guess is that this is caused by '{}', but there are cases in which the detection is unreliable. Full path: {}", app_name, app_path);
 
           if let Err(error) =
             secure_input_sender.send(SecureInputEvent::Enabled { app_name, app_path })

@@ -32,6 +32,7 @@ pub mod modulo;
 pub mod path;
 pub mod service;
 pub mod util;
+pub mod workaround;
 pub mod worker;
 
 pub struct CliModule {
