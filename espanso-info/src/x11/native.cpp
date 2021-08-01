@@ -88,6 +88,22 @@ char *xwm_get_win_title(Display *disp, Window win)
   return nwname ? nwname : (wname ? wname : NULL);
 }
 
+// Function taken from the wmctrl tool source code
+Window get_active_window(Display *disp) {
+  char *prop;
+  unsigned long size;
+  Window ret = (Window)0;
+  
+  prop = get_property(disp, DefaultRootWindow(disp), XA_WINDOW, 
+                      "_NET_ACTIVE_WINDOW", &size);
+  if (prop) {
+    ret = *((Window*)prop);
+    XFree(prop);
+  }
+
+  return(ret);
+}
+
 int32_t info_get_title(char *buffer, int32_t buffer_size)
 {
   Display *display = XOpenDisplay(0);
@@ -97,14 +113,12 @@ int32_t info_get_title(char *buffer, int32_t buffer_size)
     return -1;
   }
 
-  Window focused;
-  int revert_to;
-  int ret = XGetInputFocus(display, &focused, &revert_to);
+  Window focused = get_active_window(display);
 
   int result = 1;
-  if (!ret)
+  if (!focused)
   {
-    fprintf(stderr, "xdo_get_active_window reported an error\n");
+    fprintf(stderr, "get_active_window reported an error\n");
     result = -2;
   }
   else
@@ -130,14 +144,12 @@ int32_t info_get_exec(char *buffer, int32_t buffer_size)
     return -1;
   }
 
-  Window focused;
-  int revert_to;
-  int ret = XGetInputFocus(display, &focused, &revert_to);
+  Window focused = get_active_window(display);
 
   int result = 1;
-  if (!ret)
+  if (!focused)
   {
-    fprintf(stderr, "xdo_get_active_window reported an error\n");
+    fprintf(stderr, "get_active_window reported an error\n");
     result = -2;
   }
   else
@@ -176,14 +188,12 @@ int32_t info_get_class(char *buffer, int32_t buffer_size)
     return -1;
   }
 
-  Window focused;
-  int revert_to;
-  int ret = XGetInputFocus(display, &focused, &revert_to);
+  Window focused = get_active_window(display);
 
   int result = 1;
-  if (!ret)
+  if (!focused)
   {
-    fprintf(stderr, "xdo_get_active_window reported an error\n");
+    fprintf(stderr, "get_active_window reported an error\n");
     result = -2;
   }
   else
