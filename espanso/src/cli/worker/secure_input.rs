@@ -40,14 +40,22 @@ pub fn initialize_and_spawn(secure_input_sender: Sender<SecureInputEvent>) -> Re
     .name("secure-input-monitor".to_string())
     .spawn(move || {
       // TODO: pass interval from config parameter
-      secure_input_main(secure_input_sender, std::time::Duration::from_secs(5));
+      secure_input_main(
+        secure_input_sender,
+        std::time::Duration::from_secs(3),
+        std::time::Duration::from_secs(1),
+      );
     })?;
 
   Ok(())
 }
 
 #[cfg(target_os = "macos")]
-fn secure_input_main(secure_input_sender: Sender<SecureInputEvent>, watch_interval: Duration) {
+fn secure_input_main(
+  secure_input_sender: Sender<SecureInputEvent>,
+  min_watch_interval: Duration,
+  max_watch_interval: Duration,
+) {
   info!("monitoring the status of secure input");
 
   let mut last_secure_input_pid: Option<i64> = None;
@@ -91,7 +99,7 @@ fn secure_input_main(secure_input_sender: Sender<SecureInputEvent>, watch_interv
       // No app is currently keeping SecureInput
 
       // If there was an app with SecureInput, notify that is now free
-      if let Some(old_pid) = last_secure_input_pid {
+      if let Some(_) = last_secure_input_pid {
         info!("secure input has been disabled");
 
         if let Err(error) = secure_input_sender.send(SecureInputEvent::Disabled) {
@@ -102,6 +110,11 @@ fn secure_input_main(secure_input_sender: Sender<SecureInputEvent>, watch_interv
       last_secure_input_pid = None
     }
 
-    std::thread::sleep(watch_interval);
+    // If an application is currently keeping secure input, refresh the status more often
+    if pid.is_some() {
+      std::thread::sleep(max_watch_interval);
+    } else {
+      std::thread::sleep(min_watch_interval);
+    }
   }
 }
