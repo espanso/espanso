@@ -68,8 +68,8 @@ lazy_static! {
     cli::migrate::new(),
     cli::env_path::new(),
     cli::service::new(),
+    cli::workaround::new(),
   ];
-
   static ref ALIASES: Vec<CliAlias> = vec![
     CliAlias {
       subcommand: "start".to_owned(),
@@ -346,6 +346,14 @@ fn main() {
     //         .about("Update espanso package index"))
     // )
     .subcommand(
+      SubCommand::with_name("workaround")
+        .subcommand(
+          SubCommand::with_name("secure-input")
+            .about("Attempt to disable secure input by automating the common steps."),
+        )
+        .about("A collection of workarounds to solve some common problems."),
+    )
+    .subcommand(
       SubCommand::with_name("worker")
         .setting(AppSettings::Hidden)
         .arg(
@@ -388,10 +396,10 @@ fn main() {
     _ => LevelFilter::Debug,
   };
 
-  let alias = ALIASES 
+  let alias = ALIASES
     .iter()
     .find(|cli| matches.subcommand_matches(&cli.subcommand).is_some());
-  
+
   let mut handler = if let Some(alias) = alias {
     CLI_HANDLERS
       .iter()
@@ -401,7 +409,6 @@ fn main() {
       .iter()
       .find(|cli| matches.subcommand_matches(&cli.subcommand).is_some())
   };
-
 
   // When started from the macOS App Bundle, override the default
   // handler with "launcher" if not present, otherwise the GUI could not be started.
