@@ -29,15 +29,19 @@ const CONTEXT_ITEM_EXIT: u32 = 0;
 const CONTEXT_ITEM_RELOAD: u32 = 1;
 const CONTEXT_ITEM_ENABLE: u32 = 2;
 const CONTEXT_ITEM_DISABLE: u32 = 3;
+const CONTEXT_ITEM_SECURE_INPUT_EXPLAIN: u32 = 4;
+const CONTEXT_ITEM_SECURE_INPUT_TRIGGER_WORKAROUND: u32 = 5;
 
 pub struct ContextMenuMiddleware {
   is_enabled: RefCell<bool>,
+  is_secure_input_enabled: RefCell<bool>,
 }
 
 impl ContextMenuMiddleware {
   pub fn new() -> Self {
     Self {
       is_enabled: RefCell::new(true),
+      is_secure_input_enabled: RefCell::new(false),
     }
   }
 }
@@ -49,10 +53,47 @@ impl Middleware for ContextMenuMiddleware {
 
   fn next(&self, event: Event, dispatch: &mut dyn FnMut(Event)) -> Event {
     let mut is_enabled = self.is_enabled.borrow_mut();
+    let mut is_secure_input_enabled = self.is_secure_input_enabled.borrow_mut();
 
     match &event.etype {
       EventType::TrayIconClicked => {
         // TODO: fetch top matches for the active config to be added
+
+        let mut items = vec![
+          MenuItem::Simple(if *is_enabled {
+            SimpleMenuItem {
+              id: CONTEXT_ITEM_DISABLE,
+              label: "Disable".to_string(),
+            }
+          } else {
+            SimpleMenuItem {
+              id: CONTEXT_ITEM_ENABLE,
+              label: "Enable".to_string(),
+            }
+          }),
+          MenuItem::Separator,
+          MenuItem::Simple(SimpleMenuItem {
+            id: CONTEXT_ITEM_RELOAD,
+            label: "Reload config".to_string(),
+          }),
+          MenuItem::Separator,
+          MenuItem::Simple(SimpleMenuItem {
+            id: CONTEXT_ITEM_EXIT,
+            label: "Exit espanso".to_string(),
+          }),
+        ];
+
+        if *is_secure_input_enabled {
+          items.insert(0, MenuItem::Simple(SimpleMenuItem {
+            id: CONTEXT_ITEM_SECURE_INPUT_EXPLAIN,
+            label: "Why is espanso not working?".to_string(),
+          }));
+          items.insert(1, MenuItem::Simple(SimpleMenuItem {
+            id: CONTEXT_ITEM_SECURE_INPUT_TRIGGER_WORKAROUND,
+            label: "Launch SecureInput auto-fix".to_string(),
+          }));
+          items.insert(2, MenuItem::Separator);
+        }
 
         // TODO: my idea is to use a set of reserved u32 ids for built-in
         // actions such as Exit, Open Editor etc
@@ -62,29 +103,7 @@ impl Middleware for ContextMenuMiddleware {
           event.source_id,
           EventType::ShowContextMenu(ShowContextMenuEvent {
             // TODO: add actual entries
-            items: vec![
-              MenuItem::Simple(if *is_enabled {
-                SimpleMenuItem {
-                  id: CONTEXT_ITEM_DISABLE,
-                  label: "Disable".to_string(),
-                }
-              } else {
-                SimpleMenuItem {
-                  id: CONTEXT_ITEM_ENABLE,
-                  label: "Enable".to_string(),
-                }
-              }),
-              MenuItem::Separator,
-              MenuItem::Simple(SimpleMenuItem {
-                id: CONTEXT_ITEM_RELOAD,
-                label: "Reload config".to_string(),
-              }),
-              MenuItem::Separator,
-              MenuItem::Simple(SimpleMenuItem {
-                id: CONTEXT_ITEM_EXIT,
-                label: "Exit espanso".to_string(),
-              }),
-            ],
+            items,
           }),
         );
       }
@@ -106,6 +125,14 @@ impl Middleware for ContextMenuMiddleware {
             dispatch(Event::caused_by(event.source_id, EventType::DisableRequest));
             Event::caused_by(event.source_id, EventType::NOOP)
           }
+          CONTEXT_ITEM_SECURE_INPUT_EXPLAIN => {
+            dispatch(Event::caused_by(event.source_id, EventType::DisplaySecureInputTroubleshoot));
+            Event::caused_by(event.source_id, EventType::NOOP)
+          }
+          CONTEXT_ITEM_SECURE_INPUT_TRIGGER_WORKAROUND => {
+            dispatch(Event::caused_by(event.source_id, EventType::LaunchSecureInputAutoFix));
+            Event::caused_by(event.source_id, EventType::NOOP)
+          }
           custom => {
             // TODO: handle dynamic items
             todo!()
@@ -118,6 +145,14 @@ impl Middleware for ContextMenuMiddleware {
       }
       EventType::Enabled => {
         *is_enabled = true;
+        event
+      }
+      EventType::SecureInputEnabled(_) => {
+        *is_secure_input_enabled = true;
+        event
+      }
+      EventType::SecureInputDisabled => {
+        *is_secure_input_enabled = false;
         event
       }
       _ => event,

@@ -22,4 +22,5 @@ pub mod icon_update;
 pub mod image_inject;
 pub mod html_inject;
 pub mod key_inject;
+pub mod secure_input;
 pub mod text_inject;

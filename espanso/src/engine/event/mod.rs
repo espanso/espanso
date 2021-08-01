@@ -90,6 +90,10 @@ pub enum EventType {
   // UI
   ShowContextMenu(ui::ShowContextMenuEvent),
   IconStatusChange(ui::IconStatusChangeEvent),
+  DisplaySecureInputTroubleshoot,
+
+  // Other
+  LaunchSecureInputAutoFix,
 }
 
 #[derive(Debug, Clone)]
