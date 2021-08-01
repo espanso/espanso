@@ -39,6 +39,7 @@ fn get_builtin_patches() -> Vec<PatchDefinition> {
 
   #[cfg(target_os = "linux")]
   return vec![
+    patches::linux::libreoffice_writer_x11::patch(),
     // TODO: all the terminals registered in the legacy version + libre office
     // + firefox
   ];

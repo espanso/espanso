@@ -16,33 +16,26 @@
  * You should have received a copy of the GNU General Public License
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
- 
-use espanso_config::config::{Backend, ToggleKey};
 
-#[cfg(target_os = "windows")]
-pub mod win;
+use std::sync::Arc;
 
-#[cfg(target_os = "linux")]
-pub mod linux;
+use crate::patch::patches::{PatchedConfig, Patches};
+use crate::patch::PatchDefinition;
 
-#[macro_use]
-mod macros;
-
-generate_patchable_config!(
-  PatchedConfig,
-  backend -> Backend,
-  clipboard_threshold -> usize,
-  pre_paste_delay -> usize,
-  paste_shortcut_event_delay -> usize,
-  paste_shortcut -> Option<String>,
-  disable_x11_fast_inject -> bool,
-  toggle_key -> Option<ToggleKey>,
-  auto_restart -> bool,
-  preserve_clipboard -> bool,
-  restore_clipboard_delay -> usize,
-  inject_delay -> Option<usize>,
-  key_delay -> Option<usize>,
-  word_separators -> Vec<String>,
-  backspace_limit -> usize,
-  apply_patch -> bool
-);
+pub fn patch() -> PatchDefinition {
+  PatchDefinition {
+    name: module_path!().split(':').last().unwrap_or("unknown"),
+    is_enabled: || cfg!(target_os = "linux") && !super::util::is_wayland(),
+    should_patch: |app| app.class.unwrap_or_default().contains("libreoffice-writer"),
+    apply: |base, name| {
+      Arc::new(PatchedConfig::patch(
+        base,
+        name,
+        Patches {
+          key_delay: Some(Some(2)),
+          ..Default::default()
+        },
+      ))
+    },
+  }
+}
