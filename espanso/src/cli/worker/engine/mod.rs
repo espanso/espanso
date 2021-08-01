@@ -28,13 +28,7 @@ use espanso_path::Paths;
 use espanso_ui::{event::UIEvent, UIRemote};
 use log::{debug, error, info, warn};
 
-use crate::{cli::worker::{context::Context, engine::{
-      dispatch::executor::{
-        clipboard_injector::ClipboardInjectorAdapter, context_menu::ContextMenuHandlerAdapter,
-        event_injector::EventInjectorAdapter, icon::IconHandlerAdapter,
-        key_injector::KeyInjectorAdapter,
-      },
-      process::middleware::{
+use crate::{cli::worker::{context::Context, engine::{dispatch::executor::{clipboard_injector::ClipboardInjectorAdapter, context_menu::ContextMenuHandlerAdapter, event_injector::EventInjectorAdapter, icon::IconHandlerAdapter, key_injector::KeyInjectorAdapter, secure_input::SecureInputManagerAdapter}, process::middleware::{
         image_resolve::PathProviderAdapter,
         match_select::MatchSelectorAdapter,
         matcher::{
@@ -47,8 +41,7 @@ use crate::{cli::worker::{context::Context, engine::{
           extension::{clipboard::ClipboardAdapter, form::FormProviderAdapter},
           RendererAdapter,
         },
-      },
-    }, match_cache::{CombinedMatchCache, MatchCache}}, engine::event::ExitMode, preferences::Preferences};
+      }}, match_cache::{CombinedMatchCache, MatchCache}}, engine::event::ExitMode, preferences::Preferences};
 
 use super::secure_input::SecureInputEvent;
 
@@ -196,6 +189,7 @@ pub fn initialize_and_spawn(
       let key_injector = KeyInjectorAdapter::new(&*injector, &config_manager);
       let context_menu_adapter = ContextMenuHandlerAdapter::new(&*ui_remote);
       let icon_adapter = IconHandlerAdapter::new(&*ui_remote);
+      let secure_input_adapter = SecureInputManagerAdapter::new();
       let dispatcher = crate::engine::dispatch::default(
         &event_injector,
         &clipboard_injector,
@@ -205,6 +199,7 @@ pub fn initialize_and_spawn(
         &clipboard_injector,
         &context_menu_adapter,
         &icon_adapter,
+        &secure_input_adapter,
       );
 
       // Disable previously granted linux capabilities if not needed anymore
