@@ -24,6 +24,11 @@ cargo install --force cargo-make
 Espanso on Linux comes in two different flavors: one for X11 and one for Wayland. 
 If you don't know which one to choose, follow these steps to determine which one you are running: https://unix.stackexchange.com/a/325972
 
+### Necessary packages
+
+If compiling on Ubuntu X11:
+* `sudo apt install libx11-dev libxtst-dev libxkbcommon-dev libdbus-1-dev libwxgtk3.0-gtk3-dev`
+
 ### AppImage
 
 The AppImage is a convenient format to distribute Linux applications, as besides the binary, 
