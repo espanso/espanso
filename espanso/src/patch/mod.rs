@@ -39,9 +39,20 @@ fn get_builtin_patches() -> Vec<PatchDefinition> {
 
   #[cfg(target_os = "linux")]
   return vec![
+    patches::linux::alacritty_terminal_x11::patch(),
+    patches::linux::emacs_x11::patch(),
+    patches::linux::generic_terminal_x11::patch(),
+    patches::linux::kitty_terminal_x11::patch(),
+    patches::linux::konsole_terminal_x11::patch(),
     patches::linux::libreoffice_writer_x11::patch(),
-    // TODO: all the terminals registered in the legacy version + libre office
-    // + firefox
+    patches::linux::simple_terminal_x11::patch(),
+    patches::linux::simple_terminal_2_x11::patch(),
+    patches::linux::terminator_terminal_x11::patch(),
+    patches::linux::termite_terminal_x11::patch(),
+    patches::linux::tilix_terminal_x11::patch(),
+    patches::linux::urxvt_terminal_x11::patch(),
+    patches::linux::xterm_terminal_x11::patch(),
+    patches::linux::yakuake_terminal_x11::patch(),
   ];
 }
 
