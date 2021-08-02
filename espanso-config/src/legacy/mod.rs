@@ -313,7 +313,7 @@ impl Config for LegacyInteropConfig {
   }
 
   fn disable_x11_fast_inject(&self) -> bool {
-    self.config.fast_inject
+    !self.config.fast_inject
   }
 
   fn inject_delay(&self) -> Option<usize> {
