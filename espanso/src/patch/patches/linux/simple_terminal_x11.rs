@@ -17,19 +17,25 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub mod alacritty_terminal_x11;
-pub mod emacs_x11;
-pub mod generic_terminal_x11;
-pub mod kitty_terminal_x11;
-pub mod konsole_terminal_x11;
-pub mod libreoffice_writer_x11;
-pub mod simple_terminal_x11;
-pub mod simple_terminal_2_x11;
-pub mod terminator_terminal_x11;
-pub mod termite_terminal_x11;
-pub mod tilix_terminal_x11;
-pub mod urxvt_terminal_x11;
-pub mod xterm_terminal_x11;
-pub mod yakuake_terminal_x11;
+use std::sync::Arc;
 
-mod util;
+use crate::patch::patches::{PatchedConfig, Patches};
+use crate::patch::PatchDefinition;
+
+pub fn patch() -> PatchDefinition {
+  PatchDefinition {
+    name: module_path!().split(':').last().unwrap_or("unknown"),
+    is_enabled: || cfg!(target_os = "linux") && !super::util::is_wayland(),
+    should_patch: |app| app.class.unwrap_or_default().contains("stterm"),
+    apply: |base, name| {
+      Arc::new(PatchedConfig::patch(
+        base,
+        name,
+        Patches {
+          paste_shortcut: Some(Some("SHIFT+ALT+INSERT".to_string())),
+          ..Default::default()
+        },
+      ))
+    },
+  }
+}
