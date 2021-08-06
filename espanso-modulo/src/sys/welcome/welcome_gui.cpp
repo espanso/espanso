@@ -22,7 +22,7 @@ WelcomeFrame::WelcomeFrame( wxWindow* parent, wxWindowID id, const wxString& tit
 
 	bSizer1->Add( 0, 10, 0, wxEXPAND, 5 );
 
-	title_label = new wxStaticText( this, wxID_ANY, wxT("Yey, Espanso is running!"), wxDefaultPosition, wxDefaultSize, 0 );
+	title_label = new wxStaticText( this, wxID_ANY, wxT("Espanso is running!"), wxDefaultPosition, wxDefaultSize, 0 );
 	title_label->Wrap( -1 );
 	title_label->SetFont( wxFont( 20, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD, false, wxEmptyString ) );
 
