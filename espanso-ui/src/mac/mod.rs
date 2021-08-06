@@ -32,6 +32,7 @@ const MAX_ICON_COUNT: usize = 3;
 
 const UI_EVENT_TYPE_ICON_CLICK: i32 = 1;
 const UI_EVENT_TYPE_CONTEXT_MENU_CLICK: i32 = 2;
+const UI_EVENT_TYPE_HEARTBEAT: i32 = 3;
 
 // Take a look at the native.h header file for an explanation of the fields
 #[repr(C)]
@@ -233,6 +234,9 @@ impl From<RawUIEvent> for Option<UIEvent> {
       }
       UI_EVENT_TYPE_CONTEXT_MENU_CLICK => {
         return Some(UIEvent::ContextMenuClick(raw.context_menu_id));
+      }
+      UI_EVENT_TYPE_HEARTBEAT  => {
+        return Some(UIEvent::Heartbeat);
       }
       _ => {}
     }

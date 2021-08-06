@@ -33,6 +33,13 @@ void addSubMenu(NSMenu * parent, NSArray * items);
   }
 
   [[NSUserNotificationCenter defaultUserNotificationCenter] setDelegate:self];
+
+  // Heartbeat timer setup
+  [NSTimer scheduledTimerWithTimeInterval:1.0
+                                  target:self 
+                                selector:@selector(heartbeatHandler:)
+                                userInfo:nil
+                                 repeats:YES];
 }
 
 - (void) setIcon: (int32_t)iconIndex {
@@ -86,6 +93,14 @@ void addSubMenu(NSMenu * parent, NSArray * items);
   
   [[NSUserNotificationCenter defaultUserNotificationCenter] deliverNotification:notification];
   [[NSUserNotificationCenter defaultUserNotificationCenter] performSelector:@selector(removeDeliveredNotification:) withObject:notification afterDelay:delay];
+}
+
+- (void) heartbeatHandler: (NSTimer *)timer {
+  UIEvent event = {};
+  event.event_type = UI_EVENT_TYPE_HEARTBEAT;
+  if (event_callback && rust_instance) {
+    event_callback(rust_instance, event);
+  }
 }
 
 @end
