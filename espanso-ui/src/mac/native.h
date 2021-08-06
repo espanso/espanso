@@ -28,6 +28,7 @@
 
 #define UI_EVENT_TYPE_ICON_CLICK 1
 #define UI_EVENT_TYPE_CONTEXT_MENU_CLICK 2
+#define UI_EVENT_TYPE_HEARTBEAT 3
 
 typedef struct {
   int32_t show_icon;

@@ -35,5 +35,6 @@
 - (void) showNotification: (NSString *) message withDelay:(double) delay;
 - (IBAction) statusIconClick: (id) sender;
 - (IBAction) contextMenuClick: (id) sender;
+- (void) heartbeatHandler: (NSTimer *)timer;
 
 @end
