@@ -157,6 +157,7 @@ fn worker_main(args: CliModuleArgs) -> i32 {
     .run(Box::new(move |event| {
       if let Err(error) = engine_ui_event_sender.send(event) {
         error!("unable to send UIEvent to engine: {}", error);
+        panic!("broken UI->Engine channel");
       }
     }))
     .expect("unable to run main eventloop");

@@ -58,6 +58,7 @@ impl<'a> funnel::Source<'a> for UISource<'a> {
         UIEvent::ContextMenuClick(context_item_id) => {
           EventType::ContextMenuClicked(ContextMenuClickedEvent { context_item_id })
         }
+        UIEvent::Heartbeat => EventType::Heartbeat,
       },
     }
   }
