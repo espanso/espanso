@@ -17,20 +17,24 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use std::time::Duration;
+
 use anyhow::Result;
+use crossbeam::{
+  channel::{unbounded, Receiver, Sender},
+  select,
+};
 use log::error;
 use notify_rust::Notification;
-use std::sync::mpsc;
-use std::sync::mpsc::{Receiver, Sender};
 
-use crate::{UIEventLoop, UIRemote};
+use crate::{event::UIEvent, UIEventLoop, UIRemote};
 
 pub struct LinuxUIOptions {
   pub notification_icon_path: String,
 }
 
 pub fn create(options: LinuxUIOptions) -> (LinuxRemote, LinuxEventLoop) {
-  let (tx, rx) = mpsc::channel();
+  let (tx, rx) = unbounded();
   let remote = LinuxRemote::new(tx, options.notification_icon_path);
   let eventloop = LinuxEventLoop::new(rx);
   (remote, eventloop)
@@ -75,7 +79,9 @@ impl UIRemote for LinuxRemote {
   }
 
   fn exit(&self) {
-    self.stop().expect("unable to send termination signal to ui eventloop");
+    self
+      .stop()
+      .expect("unable to send termination signal to ui eventloop");
   }
 }
 
@@ -95,14 +101,27 @@ impl UIEventLoop for LinuxEventLoop {
     Ok(())
   }
 
-  fn run(&self, _: crate::UIEventCallback) -> Result<()> {
-    // We don't run an event loop on Linux as there is no tray icon or application window needed.
-    // Thad said, we still need a way to block this method, and thus we use a channel
-    if let Err(error) = self.rx.recv() {
-      error!("Unable to block the LinuxEventLoop: {}", error);
-      return Err(error.into());
+  fn run(&self, callback: crate::UIEventCallback) -> Result<()> {
+    loop {
+      select! {
+        recv(self.rx) -> result => {
+          // We don't run an event loop on Linux as there is no tray icon or application window needed.
+          // Thad said, we still need a way to block this method, and thus we use a channel
+          match result {
+            Ok(_) => {
+              // remote.exit() called
+              return Ok(());
+            }
+            Err(error) => {
+              error!("Unable to block the LinuxEventLoop: {}", error);
+              return Err(error.into());
+            }
+          }
+        },
+        default(Duration::from_millis(1000)) => {
+          (*callback)(UIEvent::Heartbeat);
+        }
+      }
     }
-
-    Ok(())
   }
 }
