@@ -759,6 +759,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "cc",
+ "crossbeam",
  "lazy_static",
  "lazycell",
  "log",
