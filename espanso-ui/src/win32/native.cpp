@@ -50,6 +50,8 @@ using json = nlohmann::json;
 #define APPWM_SHOW_CONTEXT_MENU (WM_APP + 2)
 #define APPWM_UPDATE_TRAY_ICON (WM_APP + 3)
 
+#define HEARTBEAT_TIMER_ID 10001
+
 const wchar_t *const ui_winclass = L"EspansoUI";
 
 typedef struct
@@ -78,7 +80,7 @@ LRESULT CALLBACK ui_window_procedure(HWND window, unsigned int msg, WPARAM wp, L
   {
   case WM_DESTROY:
     PostQuitMessage(0);
-    
+
     // Remove tray icon
     if (variables->options.show_icon)
     {
@@ -104,7 +106,7 @@ LRESULT CALLBACK ui_window_procedure(HWND window, unsigned int msg, WPARAM wp, L
     if (flags == 0)
     {
       event.event_type = UI_EVENT_TYPE_CONTEXT_MENU_CLICK;
-      event.context_menu_id = (uint32_t) idItem;
+      event.context_menu_id = (uint32_t)idItem;
       if (variables->event_callback && variables->rust_instance)
       {
         variables->event_callback(variables->rust_instance, event);
@@ -146,6 +148,18 @@ LRESULT CALLBACK ui_window_procedure(HWND window, unsigned int msg, WPARAM wp, L
     case WM_LBUTTONUP:
     case WM_RBUTTONUP:
       event.event_type = UI_EVENT_TYPE_ICON_CLICK;
+      if (variables->event_callback && variables->rust_instance)
+      {
+        variables->event_callback(variables->rust_instance, event);
+      }
+      break;
+    }
+  }
+  case WM_TIMER: // Regular timer check event
+  {
+    if (wp == HEARTBEAT_TIMER_ID)
+    {
+      event.event_type = UI_EVENT_TYPE_HEARTBEAT;
       if (variables->event_callback && variables->rust_instance)
       {
         variables->event_callback(variables->rust_instance, event);
@@ -227,7 +241,7 @@ void *ui_initialize(void *_self, UIOptions _options, int32_t *error_code)
       SendMessage(window, WM_SETICON, ICON_BIG, (LPARAM)variables->g_icons[0]);
       SendMessage(window, WM_SETICON, ICON_SMALL, (LPARAM)variables->g_icons[0]);
 
-      // Tray icon 
+      // Tray icon
       variables->nid.cbSize = sizeof(variables->nid);
       variables->nid.hWnd = window;
       variables->nid.uID = 1;
@@ -241,6 +255,9 @@ void *ui_initialize(void *_self, UIOptions _options, int32_t *error_code)
       {
         Shell_NotifyIcon(NIM_ADD, &variables->nid);
       }
+
+      // Setup heartbeat timer
+      SetTimer(window, HEARTBEAT_TIMER_ID, 1000, (TIMERPROC)NULL);
     }
     else
     {

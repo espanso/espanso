@@ -21,4 +21,5 @@
 pub enum UIEvent {
   TrayIconClick,
   ContextMenuClick(u32),
+  Heartbeat,
 }
