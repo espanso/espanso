@@ -50,6 +50,7 @@ pub enum EventType {
   ProcessingError(String),
   ExitRequested(ExitMode),
   Exit(ExitMode),
+  Heartbeat,
   
   // Inputs
   Keyboard(input::KeyboardEvent),
