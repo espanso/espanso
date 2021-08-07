@@ -23,6 +23,7 @@ use log::info;
 
 pub mod event;
 pub mod hotkey;
+pub mod layout;
 
 #[cfg(target_os = "windows")]
 pub mod win32;
@@ -113,3 +114,5 @@ pub fn get_source(options: SourceCreationOptions) -> Result<Box<dyn Source>> {
   info!("using EVDEVSource");
   Ok(Box::new(evdev::EVDEVSource::new(options)))
 }
+
+pub use layout::get_active_layout;
