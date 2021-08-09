@@ -25,14 +25,14 @@ use super::{
   parse::ParsedConfig,
   path::calculate_paths,
   util::os_matches,
-  AppProperties, Backend, Config, ToggleKey,
+  AppProperties, Backend, Config, RMLVOConfig, ToggleKey,
 };
 use crate::{counter::next_id, merge};
 use anyhow::Result;
 use log::error;
 use regex::Regex;
-use std::{iter::FromIterator, path::PathBuf};
 use std::{collections::HashSet, path::Path};
+use std::{iter::FromIterator, path::PathBuf};
 use thiserror::Error;
 
 const STANDARD_INCLUDES: &[&str] = &["../match/**/*.yml"];
@@ -79,7 +79,7 @@ impl Config for ResolvedConfig {
 
     if let Some(source_path) = self.source_path.as_ref() {
       if let Some(source_path) = source_path.to_str() {
-        return source_path
+        return source_path;
       }
     }
 
@@ -264,6 +264,16 @@ impl Config for ResolvedConfig {
   fn apply_patch(&self) -> bool {
     self.parsed.apply_patch.unwrap_or(true)
   }
+
+  fn keyboard_layout(&self) -> Option<RMLVOConfig> {
+    self.parsed.keyboard_layout.as_ref().map(|layout| RMLVOConfig {
+      rules: layout.get("rules").map(String::from),
+      model: layout.get("model").map(String::from),
+      layout: layout.get("layout").map(String::from),
+      variant: layout.get("variant").map(String::from),
+      options: layout.get("options").map(String::from),
+    })
+  }
 }
 
 impl ResolvedConfig {
@@ -336,6 +346,7 @@ impl ResolvedConfig {
       key_delay,
       word_separators,
       backspace_limit,
+      keyboard_layout,
       includes,
       excludes,
       extra_includes,

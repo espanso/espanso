@@ -107,6 +107,10 @@ pub trait Config: Send + Sync {
   // If false, avoid applying the built-in patches to the current config.
   fn apply_patch(&self) -> bool;
 
+  // On Wayland, overrides the auto-detected keyboard configuration (RMLVO)
+  // which is used both for the detection and injection process.
+  fn keyboard_layout(&self) -> Option<RMLVOConfig>;
+
   fn is_match<'a>(&self, app: &AppProperties<'a>) -> bool;
 
   fn pretty_dump(&self) -> String {
@@ -190,6 +194,15 @@ pub enum ToggleKey {
   LeftAlt,
   LeftShift,
   LeftMeta,
+}
+
+#[derive(Debug, Clone)]
+pub struct RMLVOConfig {
+  pub rules: Option<String>,
+  pub model: Option<String>,
+  pub layout: Option<String>,
+  pub variant: Option<String>,
+  pub options: Option<String>,
 }
 
 pub fn load_store(config_dir: &Path) -> Result<(impl ConfigStore, Vec<NonFatalErrorSet>)> {

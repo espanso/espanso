@@ -23,7 +23,13 @@ use regex::Regex;
 use std::{collections::HashMap, path::Path, sync::Arc};
 
 use self::config::LegacyConfig;
-use crate::matches::{MatchEffect, group::loader::yaml::{parse::{YAMLMatch, YAMLVariable}, try_convert_into_match, try_convert_into_variable}};
+use crate::matches::{
+  group::loader::yaml::{
+    parse::{YAMLMatch, YAMLVariable},
+    try_convert_into_match, try_convert_into_variable,
+  },
+  MatchEffect,
+};
 use crate::{config::store::DefaultConfigStore, counter::StructId};
 use crate::{
   config::Config,
@@ -333,15 +339,24 @@ impl Config for LegacyInteropConfig {
   }
 
   fn word_separators(&self) -> Vec<String> {
-    self.config.word_separators.iter().map(|c| String::from(*c)).collect()
+    self
+      .config
+      .word_separators
+      .iter()
+      .map(|c| String::from(*c))
+      .collect()
   }
 
   fn backspace_limit(&self) -> usize {
     self.config.backspace_limit.try_into().unwrap()
   }
-  
+
   fn apply_patch(&self) -> bool {
     true
+  }
+
+  fn keyboard_layout(&self) -> Option<crate::config::RMLVOConfig> {
+    None
   }
 }
 
