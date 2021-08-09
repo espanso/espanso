@@ -22,6 +22,10 @@
 mod x11;
 
 #[cfg(target_os = "linux")]
+#[cfg(feature = "wayland")]
+mod gnome;
+
+#[cfg(target_os = "linux")]
 #[cfg(not(feature = "wayland"))]
 pub fn get_active_layout() -> Option<String> {
   x11::get_active_layout()
@@ -30,7 +34,12 @@ pub fn get_active_layout() -> Option<String> {
 #[cfg(target_os = "linux")]
 #[cfg(feature = "wayland")]
 pub fn get_active_layout() -> Option<String> {
-  todo!()
+  if gnome::is_gnome() {
+    gnome::get_active_layout()
+  } else {
+    log::warn!("unable to determine the currently active layout, you might need to explicitly specify the layout in the config for espanso to work correctly.");
+    None
+  }
 }
 
 #[cfg(not(target_os = "linux"))]
