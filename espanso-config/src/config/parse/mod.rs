@@ -18,7 +18,7 @@
  */
 
 use anyhow::Result;
-use std::{convert::TryInto, path::Path};
+use std::{collections::BTreeMap, convert::TryInto, path::Path};
 use thiserror::Error;
 
 mod yaml;
@@ -43,6 +43,7 @@ pub(crate) struct ParsedConfig {
   pub paste_shortcut_event_delay: Option<usize>,
   pub inject_delay: Option<usize>,
   pub key_delay: Option<usize>,
+  pub keyboard_layout: Option<BTreeMap<String, String>>,
 
 
   // Includes

@@ -19,6 +19,7 @@
 
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
+use serde_yaml::Mapping;
 use std::convert::TryFrom;
 
 use crate::util::is_yaml_empty;
@@ -53,7 +54,7 @@ pub(crate) struct YAMLConfig {
 
   #[serde(default)]
   pub paste_shortcut_event_delay: Option<usize>,
-  
+
   #[serde(default)]
   pub paste_shortcut: Option<String>,
 
@@ -77,6 +78,9 @@ pub(crate) struct YAMLConfig {
 
   #[serde(default)]
   pub apply_patch: Option<bool>,
+
+  #[serde(default)]
+  pub keyboard_layout: Option<Mapping>,
 
   // Include/Exclude
   #[serde(default)]
@@ -139,6 +143,18 @@ impl TryFrom<YAMLConfig> for ParsedConfig {
       word_separators: yaml_config.word_separators,
       backspace_limit: yaml_config.backspace_limit,
       apply_patch: yaml_config.apply_patch,
+      keyboard_layout: yaml_config.keyboard_layout.map(|mapping| {
+        mapping
+          .into_iter()
+          .filter_map(|(key, value)| {
+            if let (Some(key), Some(value)) = (key.as_str(), value.as_str()) {
+              Some((key.to_string(), value.to_string()))
+            } else {
+              None
+            }
+          })
+          .collect()
+      }),
 
       pre_paste_delay: yaml_config.pre_paste_delay,
       restore_clipboard_delay: yaml_config.restore_clipboard_delay,
@@ -161,7 +177,7 @@ impl TryFrom<YAMLConfig> for ParsedConfig {
 #[cfg(test)]
 mod tests {
   use super::*;
-  use std::convert::TryInto;
+  use std::{collections::BTreeMap, convert::TryInto};
 
   #[test]
   fn conversion_to_parsed_config_works_correctly() {
@@ -183,6 +199,13 @@ mod tests {
     backspace_delay: 30
     word_separators: ["'", "."]
     backspace_limit: 10
+    apply_patch: false
+    keyboard_layout:
+      rules: test_rule
+      model: test_model
+      layout: test_layout
+      variant: test_variant
+      options: test_options
       
     use_standard_includes: true
     includes: ["test1"]
@@ -198,6 +221,15 @@ mod tests {
     )
     .unwrap();
     let parsed_config: ParsedConfig = config.try_into().unwrap();
+
+    let keyboard_layout: BTreeMap<String, String> =
+      vec![
+        ("rules".to_string(), "test_rule".to_string()),
+        ("model".to_string(), "test_model".to_string()),
+        ("layout".to_string(), "test_layout".to_string()),
+        ("variant".to_string(), "test_variant".to_string()),
+        ("options".to_string(), "test_options".to_string()),
+      ].into_iter().collect();
 
     assert_eq!(
       parsed_config,
@@ -216,9 +248,10 @@ mod tests {
         key_delay: Some(20),
         backspace_limit: Some(10),
         apply_patch: Some(false),
+        keyboard_layout: Some(keyboard_layout),
 
         pre_paste_delay: Some(300),
-        
+
         toggle_key: Some("CTRL".to_string()),
         word_separators: Some(vec!["'".to_owned(), ".".to_owned()]),
 
