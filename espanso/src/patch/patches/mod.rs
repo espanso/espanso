@@ -17,7 +17,7 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
  
-use espanso_config::config::{Backend, ToggleKey};
+use espanso_config::config::{Backend, RMLVOConfig, ToggleKey};
 
 #[cfg(target_os = "windows")]
 pub mod win;
@@ -44,5 +44,6 @@ generate_patchable_config!(
   key_delay -> Option<usize>,
   word_separators -> Vec<String>,
   backspace_limit -> usize,
-  apply_patch -> bool
+  apply_patch -> bool,
+  keyboard_layout -> Option<RMLVOConfig>
 );
