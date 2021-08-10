@@ -24,9 +24,10 @@ pub struct Keymap {
 
 impl Keymap {
   pub fn new(context: &Context, rmlvo: Option<KeyboardConfig>) -> Result<Keymap> {
-    let names = rmlvo.map(Self::generate_names);
+    let owned_rmlvo = rmlvo.map(Self::generate_owned_rmlvo);
+    let names = owned_rmlvo.as_ref().map(Self::generate_names);
 
-    let names_ptr = names.map_or(std::ptr::null(), |(names, _owned)| &names);
+    let names_ptr = names.map_or(std::ptr::null(), |names| &names);
     let raw_keymap = unsafe {
       xkb_keymap_new_from_names(context.get_handle(), names_ptr, XKB_KEYMAP_COMPILE_NO_FLAGS)
     };
@@ -47,7 +48,7 @@ impl Keymap {
     self.keymap
   }
 
-  fn generate_names(rmlvo: KeyboardConfig) -> (xkb_rule_names, OwnedRawKeyboardConfig) {
+  fn generate_owned_rmlvo(rmlvo: KeyboardConfig) -> OwnedRawKeyboardConfig {
     let rules = rmlvo
       .rules
       .map(|s| CString::new(s).expect("unable to create CString for keymap"));
@@ -64,23 +65,38 @@ impl Keymap {
       .options
       .map(|s| CString::new(s).expect("unable to create CString for keymap"));
 
-    let owned_config = OwnedRawKeyboardConfig {
+    OwnedRawKeyboardConfig {
       rules,
       model,
       layout,
       variant,
       options,
-    };
+    }
+  }
 
-    let xkb_config = xkb_rule_names {
-      rules: owned_config.rules.as_ref().map_or(std::ptr::null(), |s| s.as_ptr()),
-      model: owned_config.model.as_ref().map_or(std::ptr::null(), |s| s.as_ptr()),
-      layout: owned_config.layout.as_ref().map_or(std::ptr::null(), |s| s.as_ptr()),
-      variant: owned_config.variant.as_ref().map_or(std::ptr::null(), |s| s.as_ptr()),
-      options: owned_config.options.as_ref().map_or(std::ptr::null(), |s| s.as_ptr()),
-    };
-
-    (xkb_config, owned_config)
+  fn generate_names(owned_config: &OwnedRawKeyboardConfig) -> xkb_rule_names {
+    xkb_rule_names {
+      rules: owned_config
+        .rules
+        .as_ref()
+        .map_or(std::ptr::null(), |s| s.as_ptr()),
+      model: owned_config
+        .model
+        .as_ref()
+        .map_or(std::ptr::null(), |s| s.as_ptr()),
+      layout: owned_config
+        .layout
+        .as_ref()
+        .map_or(std::ptr::null(), |s| s.as_ptr()),
+      variant: owned_config
+        .variant
+        .as_ref()
+        .map_or(std::ptr::null(), |s| s.as_ptr()),
+      options: owned_config
+        .options
+        .as_ref()
+        .map_or(std::ptr::null(), |s| s.as_ptr()),
+    }
   }
 }
 
@@ -101,7 +117,7 @@ pub enum KeymapError {
 struct OwnedRawKeyboardConfig {
   rules: Option<CString>,
   model: Option<CString>,
-  layout: Option<CString>, 
+  layout: Option<CString>,
   variant: Option<CString>,
   options: Option<CString>,
 }
