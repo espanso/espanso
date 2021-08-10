@@ -196,13 +196,27 @@ pub enum ToggleKey {
   LeftMeta,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct RMLVOConfig {
   pub rules: Option<String>,
   pub model: Option<String>,
   pub layout: Option<String>,
   pub variant: Option<String>,
   pub options: Option<String>,
+}
+
+impl std::fmt::Display for RMLVOConfig {
+  fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    write!(
+      f,
+      "[R={}, M={}, L={}, V={}, O={}]",
+      self.rules.as_deref().unwrap_or_default(),
+      self.model.as_deref().unwrap_or_default(),
+      self.layout.as_deref().unwrap_or_default(),
+      self.variant.as_deref().unwrap_or_default(),
+      self.options.as_deref().unwrap_or_default(),
+    )
+  }
 }
 
 pub fn load_store(config_dir: &Path) -> Result<(impl ConfigStore, Vec<NonFatalErrorSet>)> {
