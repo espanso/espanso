@@ -48,6 +48,7 @@ use super::secure_input::SecureInputEvent;
 pub mod dispatch;
 pub mod funnel;
 pub mod process;
+mod keyboard_layout_util;
 
 #[allow(clippy::too_many_arguments)]
 pub fn initialize_and_spawn(
@@ -90,6 +91,7 @@ pub fn initialize_and_spawn(
       let (detect_source, modifier_state_store, sequencer, key_state_store) =
         super::engine::funnel::init_and_spawn(SourceCreationOptions {
           use_evdev: use_evdev_backend,
+          evdev_keyboard_rmlvo: keyboard_layout_util::generate_detect_rmlvo(&*config_manager.default()),
           ..Default::default()
         })
         .expect("failed to initialize detector module");
@@ -130,6 +132,7 @@ pub fn initialize_and_spawn(
       let injector = espanso_inject::get_injector(InjectorCreationOptions {
         use_evdev: use_evdev_backend,
         keyboard_state_provider: key_state_store.map(|store| Box::new(store) as Box<dyn KeyboardStateProvider>),
+        evdev_keyboard_rmlvo: keyboard_layout_util::generate_inject_rmlvo(&*config_manager.default()),
         ..Default::default()
       })
       .expect("failed to initialize injector module"); // TODO: handle the options
