@@ -61,15 +61,11 @@ fn worker_main(args: CliModuleArgs) -> i32 {
   let paths = args.paths.expect("missing paths in worker main");
   let cli_args = args.cli_args.expect("missing cli_args in worker main");
 
-  // This number is passed by the daemon and incremented at each worker
-  // restart.
-  let run_count = cli_args
-    .value_of("run-count")
-    .map(|val| val.parse::<i32>().unwrap_or(0))
-    .unwrap_or(0);
-  debug!("starting with run-count = {:?}", cli_args);
-
-  let has_been_started_manually = cli_args.is_present("manual");
+  // When restarted, the daemon passes the reason why the worker was restarted (config_change, etc)
+  let start_reason = cli_args
+    .value_of("start-reason")
+    .map(String::from);
+  debug!("starting with start-reason = {:?}", start_reason);
 
   // Avoid running multiple worker instances
   let lock_file = acquire_worker_lock(&paths.runtime);
@@ -132,8 +128,7 @@ fn worker_main(args: CliModuleArgs) -> i32 {
     engine_ui_event_receiver,
     engine_secure_input_receiver,
     use_evdev_backend,
-    run_count,
-    has_been_started_manually,
+    start_reason,
   )
   .expect("unable to initialize engine");
 

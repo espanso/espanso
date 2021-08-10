@@ -40,6 +40,7 @@ use crate::{
 
 mod capabilities;
 mod cli;
+mod common_flags;
 mod config;
 mod engine;
 mod exit_code;
@@ -357,16 +358,10 @@ fn main() {
       SubCommand::with_name("worker")
         .setting(AppSettings::Hidden)
         .arg(
-          Arg::with_name("run-count")
-            .long("run-count")
+          Arg::with_name("start-reason")
+            .long("start-reason")
             .required(false)
             .takes_value(true),
-        )
-        .arg(
-          Arg::with_name("manual")
-            .long("manual")
-            .required(false)
-            .takes_value(false),
         )
         .arg(
           Arg::with_name("monitor-daemon")
