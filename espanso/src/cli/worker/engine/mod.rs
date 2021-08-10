@@ -41,7 +41,7 @@ use crate::{cli::worker::{context::Context, engine::{dispatch::executor::{clipbo
           extension::{clipboard::ClipboardAdapter, form::FormProviderAdapter},
           RendererAdapter,
         },
-      }}, match_cache::{CombinedMatchCache, MatchCache}}, common_flags::WORKER_START_REASON_CONFIG_CHANGED, engine::event::ExitMode, preferences::Preferences};
+      }}, match_cache::{CombinedMatchCache, MatchCache}}, common_flags::{WORKER_START_REASON_CONFIG_CHANGED, WORKER_START_REASON_KEYBOARD_LAYOUT_CHANGED, WORKER_START_REASON_MANUAL}, engine::event::ExitMode, preferences::Preferences};
 
 use super::secure_input::SecureInputEvent;
 
@@ -216,10 +216,10 @@ pub fn initialize_and_spawn(
         Some(flag) if flag == WORKER_START_REASON_CONFIG_CHANGED => {
           ui_remote.show_notification("Configuration reloaded! Espanso automatically loads new changes as soon as you save them.");
         }
-        Some("manual_restart") => {
+        Some(flag) if flag == WORKER_START_REASON_MANUAL => {
           ui_remote.show_notification("Configuration reloaded!");
         }
-        Some("keyboard_layout_changed") => {
+        Some(flag) if flag == WORKER_START_REASON_KEYBOARD_LAYOUT_CHANGED => {
           ui_remote.show_notification("Updated keyboard layout!");
         }
         _ => {
