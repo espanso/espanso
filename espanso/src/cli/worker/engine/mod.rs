@@ -41,7 +41,7 @@ use crate::{cli::worker::{context::Context, engine::{dispatch::executor::{clipbo
           extension::{clipboard::ClipboardAdapter, form::FormProviderAdapter},
           RendererAdapter,
         },
-      }}, match_cache::{CombinedMatchCache, MatchCache}}, engine::event::ExitMode, preferences::Preferences};
+      }}, match_cache::{CombinedMatchCache, MatchCache}}, common_flags::WORKER_START_REASON_CONFIG_CHANGED, engine::event::ExitMode, preferences::Preferences};
 
 use super::secure_input::SecureInputEvent;
 
@@ -60,8 +60,7 @@ pub fn initialize_and_spawn(
   ui_event_receiver: Receiver<UIEvent>,
   secure_input_receiver: Receiver<SecureInputEvent>,
   use_evdev_backend: bool,
-  run_count: i32,
-  has_been_started_manually: bool,
+  start_reason: Option<String>,
 ) -> Result<JoinHandle<ExitMode>> {
   let handle = std::thread::Builder::new()
     .name("engine thread".to_string())
@@ -213,22 +212,24 @@ pub fn initialize_and_spawn(
       }
 
       // TODO: check config
-      match run_count {
-        0 => {
+      match start_reason.as_deref() {
+        Some(flag) if flag == WORKER_START_REASON_CONFIG_CHANGED => {
+          ui_remote.show_notification("Configuration reloaded! Espanso automatically loads new changes as soon as you save them.");
+        }
+        Some("manual_restart") => {
+          ui_remote.show_notification("Configuration reloaded!");
+        }
+        Some("keyboard_layout_changed") => {
+          ui_remote.show_notification("Updated keyboard layout!");
+        }
+        _ => {
           ui_remote.show_notification("Espanso is running!");
           
           if !preferences.has_displayed_welcome() {
             super::ui::welcome::show_welcome_screen();
             preferences.set_has_displayed_welcome(true);
           }
-        },
-        n => {
-          if has_been_started_manually {
-            ui_remote.show_notification("Configuration reloaded!");
-          } else if n == 1 {
-            ui_remote.show_notification("Configuration reloaded! Espanso automatically loads new changes as soon as you save them.");
-          }
-        },
+        }
       }
 
       let mut engine = crate::engine::Engine::new(&funnel, &mut processor, &dispatcher);

@@ -24,10 +24,12 @@ use crossbeam::{
   select,
 };
 use espanso_ipc::IPCClient;
+use espanso_path::Paths;
 use log::{error, info, warn};
 
 use crate::{
   cli::util::CommandExt,
+  common_flags::{*},
   exit_code::{
     DAEMON_ALREADY_RUNNING, DAEMON_FATAL_CONFIG_ERROR, DAEMON_GENERAL_ERROR,
     DAEMON_LEGACY_ALREADY_RUNNING, DAEMON_SUCCESS, WORKER_EXIT_ALL_PROCESSES, WORKER_RESTART,
@@ -41,6 +43,7 @@ use crate::{
 use super::{CliModule, CliModuleArgs, PathsOverrides};
 
 mod ipc;
+mod keyboard_layout_watcher;
 mod troubleshoot;
 mod watcher;
 
@@ -91,6 +94,10 @@ fn daemon_main(args: CliModuleArgs) -> i32 {
   watcher::initialize_and_spawn(&paths.config, watcher_notify)
     .expect("unable to initialize config watcher thread");
 
+  let (keyboard_layout_watcher_notify, keyboard_layout_watcher_signal) = unbounded::<()>();
+  keyboard_layout_watcher::initialize_and_spawn(keyboard_layout_watcher_notify)
+    .expect("unable to initialize keyboard layout watcher thread");
+
   let config_store =
     match troubleshoot::load_config_or_troubleshoot_until_config_is_correct_or_abort(
       &paths,
@@ -116,13 +123,10 @@ fn daemon_main(args: CliModuleArgs) -> i32 {
 
   // TODO: register signals to terminate the worker if the daemon terminates
 
-  let mut worker_run_count = 0;
-
   spawn_worker(
     &paths_overrides,
     exit_notify.clone(),
-    &mut worker_run_count,
-    false,
+    None
   );
 
   ipc::initialize_and_spawn(&paths.runtime, exit_notify.clone())
@@ -156,39 +160,12 @@ fn daemon_main(args: CliModuleArgs) -> i32 {
         };
 
         if should_restart_worker {
-          match create_ipc_client_to_worker(&paths.runtime) {
-            Ok(mut worker_ipc) => {
-              if let Err(err) = worker_ipc.send_async(IPCEvent::Exit) {
-                error!(
-                  "unable to send termination signal to worker process: {}",
-                  err
-                );
-              }
-            }
-            Err(err) => {
-              error!("could not establish IPC connection with worker: {}", err);
-            }
-          }
-
-          // Wait until the worker process has terminated
-          let start = Instant::now();
-          let mut has_timed_out = true;
-          while start.elapsed() < std::time::Duration::from_secs(30) {
-            let lock_file = acquire_worker_lock(&paths.runtime);
-            if lock_file.is_some() {
-              has_timed_out = false;
-              break;
-            }
-
-            std::thread::sleep(std::time::Duration::from_millis(100));
-          }
-
-          if !has_timed_out {
-            spawn_worker(&paths_overrides, exit_notify.clone(), &mut worker_run_count, false);
-          } else {
-            error!("could not restart worker, as the exit process has timed out");
-          }
+          restart_worker(&paths, &paths_overrides, exit_notify.clone(), Some(WORKER_START_REASON_CONFIG_CHANGED.to_string()));
         }
+      }
+      recv(keyboard_layout_watcher_signal) -> _ => {
+        info!("keyboard layout change detected, restarting worker...");
+        restart_worker(&paths, &paths_overrides, exit_notify.clone(), Some(WORKER_START_REASON_KEYBOARD_LAYOUT_CHANGED.to_string()));
       }
       recv(exit_signal) -> code => {
         match code {
@@ -200,7 +177,7 @@ fn daemon_main(args: CliModuleArgs) -> i32 {
               }
               WORKER_RESTART => {
                 info!("worker requested a restart, spawning a new one...");
-                spawn_worker(&paths_overrides, exit_notify.clone(), &mut worker_run_count, true);
+                spawn_worker(&paths_overrides, exit_notify.clone(), Some(WORKER_START_REASON_MANUAL.to_string()));
               }
               _ => {
                 error!("received unexpected exit code from worker {}, exiting", code);
@@ -260,8 +237,7 @@ fn terminate_worker_if_already_running(runtime_dir: &Path) {
 fn spawn_worker(
   paths_overrides: &PathsOverrides,
   exit_notify: Sender<i32>,
-  worker_run_count: &mut i32,
-  manual_start: bool,
+  start_reason: Option<String>,
 ) {
   info!("spawning the worker process...");
 
@@ -270,22 +246,18 @@ fn spawn_worker(
 
   let mut command = Command::new(&espanso_exe_path.to_string_lossy().to_string());
 
-  let string_worker_run_count = format!("{}", worker_run_count);
   let mut args = vec![
     "worker",
     "--monitor-daemon",
-    "--run-count",
-    &string_worker_run_count,
   ];
-  if manual_start {
-    args.push("--manual");
+  if let Some(start_reason) = &start_reason {
+    args.push("--start-reason");
+    args.push(&start_reason);
   }
   command.args(&args);
   command.with_paths_overrides(paths_overrides);
 
   let mut child = command.spawn().expect("unable to spawn worker process");
-
-  *worker_run_count += 1;
 
   // Create a monitor thread that will exit with the same non-zero code if
   // the worker thread exits
@@ -304,4 +276,48 @@ fn spawn_worker(
       }
     })
     .expect("Unable to spawn worker monitor thread");
+}
+
+fn restart_worker(
+  paths: &Paths,
+  paths_overrides: &PathsOverrides,
+  exit_notify: Sender<i32>,
+  start_reason: Option<String>,
+) {
+  match create_ipc_client_to_worker(&paths.runtime) {
+    Ok(mut worker_ipc) => {
+      if let Err(err) = worker_ipc.send_async(IPCEvent::Exit) {
+        error!(
+          "unable to send termination signal to worker process: {}",
+          err
+        );
+      }
+    }
+    Err(err) => {
+      error!("could not establish IPC connection with worker: {}", err);
+    }
+  }
+
+  // Wait until the worker process has terminated
+  let start = Instant::now();
+  let mut has_timed_out = true;
+  while start.elapsed() < std::time::Duration::from_secs(30) {
+    let lock_file = acquire_worker_lock(&paths.runtime);
+    if lock_file.is_some() {
+      has_timed_out = false;
+      break;
+    }
+
+    std::thread::sleep(std::time::Duration::from_millis(100));
+  }
+
+  if !has_timed_out {
+    spawn_worker(
+      &paths_overrides,
+      exit_notify,
+      start_reason,
+    );
+  } else {
+    error!("could not restart worker, as the exit process has timed out");
+  }
 }
