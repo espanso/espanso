@@ -23,6 +23,7 @@
 #include <stdint.h>
 
 extern "C" int32_t info_get_title(char * buffer, int32_t buffer_size);
+extern "C" int32_t info_get_title_fallback(char * buffer, int32_t buffer_size);
 extern "C" int32_t info_get_exec(char * buffer, int32_t buffer_size);
 extern "C" int32_t info_get_class(char * buffer, int32_t buffer_size);
 

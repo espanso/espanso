@@ -21,7 +21,7 @@ use std::{ffi::CStr, os::raw::c_char};
 
 use crate::{AppInfo, AppInfoProvider};
 
-use self::ffi::{info_get_class, info_get_exec, info_get_title};
+use self::ffi::{info_get_class, info_get_exec, info_get_title, info_get_title_fallback};
 
 mod ffi;
 
@@ -36,7 +36,7 @@ impl CocoaAppInfoProvider {
 impl AppInfoProvider for CocoaAppInfoProvider {
   fn get_info(&self) -> AppInfo {
     AppInfo {
-      title: self.get_title(),
+      title: self.get_title().or_else(|| self.get_title_fallback()),
       class: self.get_class(),
       exec: self.get_exec(),
     }
@@ -77,6 +77,22 @@ impl CocoaAppInfoProvider {
   fn get_title(&self) -> Option<String> {
     let mut buffer: [c_char; 2048] = [0; 2048];
     if unsafe { info_get_title(buffer.as_mut_ptr(), (buffer.len() - 1) as i32) } > 0 {
+      let string = unsafe { CStr::from_ptr(buffer.as_ptr()) };
+      let string = string.to_string_lossy();
+      if !string.is_empty() {
+        Some(string.to_string())
+      } else {
+        None
+      }
+    } else {
+      None
+    }
+  }
+
+  // Fallback using Accessibility API instead of Carbon
+  fn get_title_fallback(&self) -> Option<String> {
+    let mut buffer: [c_char; 2048] = [0; 2048];
+    if unsafe { info_get_title_fallback(buffer.as_mut_ptr(), (buffer.len() - 1) as i32) } > 0 {
       let string = unsafe { CStr::from_ptr(buffer.as_ptr()) };
       let string = string.to_string_lossy();
       if !string.is_empty() {
