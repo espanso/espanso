@@ -94,8 +94,8 @@ fn daemon_main(args: CliModuleArgs) -> i32 {
   watcher::initialize_and_spawn(&paths.config, watcher_notify)
     .expect("unable to initialize config watcher thread");
 
-  let (keyboard_layout_watcher_notify, keyboard_layout_watcher_signal) = unbounded::<()>();
-  keyboard_layout_watcher::initialize_and_spawn(keyboard_layout_watcher_notify)
+  let (_keyboard_layout_watcher_notify, keyboard_layout_watcher_signal) = unbounded::<()>();
+  keyboard_layout_watcher::initialize_and_spawn(_keyboard_layout_watcher_notify.clone())
     .expect("unable to initialize keyboard layout watcher thread");
 
   let config_store =
