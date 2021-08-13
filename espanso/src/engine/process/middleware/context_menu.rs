@@ -31,6 +31,7 @@ const CONTEXT_ITEM_ENABLE: u32 = 2;
 const CONTEXT_ITEM_DISABLE: u32 = 3;
 const CONTEXT_ITEM_SECURE_INPUT_EXPLAIN: u32 = 4;
 const CONTEXT_ITEM_SECURE_INPUT_TRIGGER_WORKAROUND: u32 = 5;
+const CONTEXT_ITEM_OPEN_SEARCH: u32 = 6;
 
 pub struct ContextMenuMiddleware {
   is_enabled: RefCell<bool>,
@@ -70,6 +71,10 @@ impl Middleware for ContextMenuMiddleware {
               id: CONTEXT_ITEM_ENABLE,
               label: "Enable".to_string(),
             }
+          }),
+          MenuItem::Simple(SimpleMenuItem {
+            id: CONTEXT_ITEM_OPEN_SEARCH,
+            label: "Open search bar".to_string(),
           }),
           MenuItem::Separator,
           MenuItem::Simple(SimpleMenuItem {
@@ -131,6 +136,10 @@ impl Middleware for ContextMenuMiddleware {
           }
           CONTEXT_ITEM_SECURE_INPUT_TRIGGER_WORKAROUND => {
             dispatch(Event::caused_by(event.source_id, EventType::LaunchSecureInputAutoFix));
+            Event::caused_by(event.source_id, EventType::NOOP)
+          }
+          CONTEXT_ITEM_OPEN_SEARCH => {
+            dispatch(Event::caused_by(event.source_id, EventType::ShowSearchBar));
             Event::caused_by(event.source_id, EventType::NOOP)
           }
           custom => {
