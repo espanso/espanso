@@ -282,6 +282,14 @@ impl Config for ResolvedConfig {
       None => Some("jkj".to_string()),
     }
   }
+
+  fn search_shortcut(&self) -> Option<String> {
+    match self.parsed.search_shortcut.as_deref() {
+      Some("OFF") | Some("off") => None,
+      Some(x) => Some(x.to_string()),
+      None => Some("ALT+SPACE".to_string()),
+    }
+  }
 }
 
 impl ResolvedConfig {
@@ -356,6 +364,7 @@ impl ResolvedConfig {
       backspace_limit,
       keyboard_layout,
       search_trigger,
+      search_shortcut,
       includes,
       excludes,
       extra_includes,
