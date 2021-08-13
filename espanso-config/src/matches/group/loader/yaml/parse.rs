@@ -59,6 +59,9 @@ impl YAMLMatchGroup {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct YAMLMatch {
   #[serde(default)]
+  pub label: Option<String>,
+
+  #[serde(default)]
   pub trigger: Option<String>,
 
   #[serde(default)]
