@@ -274,6 +274,14 @@ impl Config for ResolvedConfig {
       options: layout.get("options").map(String::from),
     })
   }
+
+  fn search_trigger(&self) -> Option<String> {
+    match self.parsed.search_trigger.as_deref() {
+      Some("OFF") | Some("off") => None,
+      Some(x) => Some(x.to_string()),
+      None => Some("jkj".to_string()),
+    }
+  }
 }
 
 impl ResolvedConfig {
@@ -347,6 +355,7 @@ impl ResolvedConfig {
       word_separators,
       backspace_limit,
       keyboard_layout,
+      search_trigger,
       includes,
       excludes,
       extra_includes,

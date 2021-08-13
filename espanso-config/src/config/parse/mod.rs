@@ -37,6 +37,7 @@ pub(crate) struct ParsedConfig {
   pub word_separators: Option<Vec<String>>,
   pub backspace_limit: Option<usize>,
   pub apply_patch: Option<bool>,
+  pub search_trigger: Option<String>,
 
   pub pre_paste_delay: Option<usize>,
   pub restore_clipboard_delay: Option<usize>,

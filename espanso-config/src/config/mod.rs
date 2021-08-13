@@ -111,6 +111,9 @@ pub trait Config: Send + Sync {
   // which is used both for the detection and injection process.
   fn keyboard_layout(&self) -> Option<RMLVOConfig>;
 
+  // Trigger used to show the Search UI
+  fn search_trigger(&self) -> Option<String>;
+
   fn is_match<'a>(&self, app: &AppProperties<'a>) -> bool;
 
   fn pretty_dump(&self) -> String {

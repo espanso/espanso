@@ -358,6 +358,10 @@ impl Config for LegacyInteropConfig {
   fn keyboard_layout(&self) -> Option<crate::config::RMLVOConfig> {
     None
   }
+
+  fn search_trigger(&self) -> Option<String> {
+    None
+  }
 }
 
 struct LegacyMatchGroup {
