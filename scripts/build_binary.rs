@@ -72,5 +72,8 @@ fn main() {
   }
 
   let mut handle = cmd.spawn().expect("cargo build failed");
-  handle.wait();
+  let result = handle.wait().expect("unable to read cargo exit status");
+  if !result.success() {
+    panic!("cargo build failed");
+  }
 }
