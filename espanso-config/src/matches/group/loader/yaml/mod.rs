@@ -269,7 +269,7 @@ pub fn try_convert_into_match(yaml_match: YAMLMatch) -> Result<(Match, Vec<Warni
     Match {
       cause,
       effect,
-      label: None,
+      label: yaml_match.label,
       id: next_id(),
     },
     warnings,
