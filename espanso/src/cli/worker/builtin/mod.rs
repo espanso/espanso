@@ -34,7 +34,20 @@ pub struct BuiltInMatch {
   pub id: i32,
   pub label: &'static str,
   pub triggers: Vec<String>,
+  pub hotkey: Option<String>,
   pub action: fn(context: &dyn Context) -> EventType,
+}
+
+impl Default for BuiltInMatch {
+  fn default() -> Self {
+    Self {
+      id: 0,
+      label: "",
+      triggers: Vec::new(),
+      hotkey: None,
+      action: |_| EventType::NOOP,
+    }
+  }
 }
 
 pub fn get_builtin_matches(config: &dyn Config) -> Vec<BuiltInMatch> {
@@ -43,8 +56,11 @@ pub fn get_builtin_matches(config: &dyn Config) -> Vec<BuiltInMatch> {
     debug::create_match_paste_active_app_info(),
   ];
 
-  if let Some(search_trigger) = config.search_trigger() {
-    matches.push(search::create_match_trigger_search_bar(&search_trigger));
+  if config.search_trigger().is_some() || config.search_shortcut().is_some() {
+    matches.push(search::create_match_trigger_search_bar(
+      config.search_trigger(),
+      config.search_shortcut(),
+    ));
   }
 
   matches

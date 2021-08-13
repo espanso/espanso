@@ -21,13 +21,15 @@ use crate::{cli::worker::builtin::generate_next_builtin_id, engine::event::{Even
 
 use super::BuiltInMatch;
 
-pub fn create_match_trigger_search_bar(shortcut: &str) -> BuiltInMatch {
+pub fn create_match_trigger_search_bar(trigger: Option<String>, hotkey: Option<String>) -> BuiltInMatch {
   BuiltInMatch {
     id: generate_next_builtin_id(),
     label: "Open search bar",
-    triggers: vec![shortcut.to_string()],
+    triggers: trigger.map(|trigger| vec![trigger]).unwrap_or_default(),
+    hotkey,
     action: |_| {
       EventType::ShowSearchBar
     },
+    ..Default::default()
   }
 }

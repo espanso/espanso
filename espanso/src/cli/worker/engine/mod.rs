@@ -91,7 +91,7 @@ pub fn initialize_and_spawn(
         super::engine::funnel::init_and_spawn(SourceCreationOptions {
           use_evdev: use_evdev_backend,
           evdev_keyboard_rmlvo: keyboard_layout_util::generate_detect_rmlvo(&*config_manager.default()),
-          ..Default::default()
+          hotkeys: match_converter.get_hotkeys(),
         })
         .expect("failed to initialize detector module");
       let exit_source = super::engine::funnel::exit::ExitSource::new(exit_signal, &sequencer);

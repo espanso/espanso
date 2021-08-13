@@ -39,6 +39,7 @@ pub fn create_match_paste_active_config_info() -> BuiltInMatch {
         force_mode: None,
       })
     },
+    ..Default::default()
   }
 }
 
@@ -62,5 +63,6 @@ pub fn create_match_paste_active_app_info() -> BuiltInMatch {
         force_mode: None,
       })
     },
+    ..Default::default()
   }
 }

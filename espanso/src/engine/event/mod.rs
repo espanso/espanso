@@ -55,7 +55,7 @@ pub enum EventType {
   // Inputs
   Keyboard(input::KeyboardEvent),
   Mouse(input::MouseEvent),
-  // TODO: hotkeys
+  HotKey(input::HotKeyEvent),
   TrayIconClicked,
   ContextMenuClicked(input::ContextMenuClickedEvent),
 

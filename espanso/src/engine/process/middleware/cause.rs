@@ -30,7 +30,7 @@ impl CauseCompensateMiddleware {
 
 impl Middleware for CauseCompensateMiddleware {
   fn name(&self) -> &'static str {
-    "discard"
+    "cause_compensate"
   }
 
   fn next(&self, event: Event, dispatch: &mut dyn FnMut(Event)) -> Event {

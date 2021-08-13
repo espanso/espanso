@@ -116,3 +116,8 @@ pub enum Key {
 pub struct ContextMenuClickedEvent {
   pub context_item_id: u32,
 }
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct HotKeyEvent {
+  pub hotkey_id: i32,
+}

@@ -78,6 +78,10 @@ macro_rules! generate_patchable_config {
         fn search_trigger(&self) -> Option<String> {
           self.base.search_trigger()
         }
+
+        fn search_shortcut(&self) -> Option<String> {
+          self.base.search_shortcut()
+        }
       }
   };
 }
