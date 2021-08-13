@@ -17,19 +17,17 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub mod action;
-pub mod cause;
-pub mod context_menu;
-pub mod cursor_hint;
-pub mod delay_modifiers;
-pub mod disable;
-pub mod exit;
-pub mod icon_status;
-pub mod image_resolve;
-pub mod match_select;
-pub mod matcher;
-pub mod markdown;
-pub mod multiplex;
-pub mod past_discard;
-pub mod render;
-pub mod search;
+use crate::{cli::worker::builtin::generate_next_builtin_id, engine::event::{EventType}};
+
+use super::BuiltInMatch;
+
+pub fn create_match_trigger_search_bar(shortcut: &str) -> BuiltInMatch {
+  BuiltInMatch {
+    id: generate_next_builtin_id(),
+    label: "Open search bar",
+    triggers: vec![shortcut.to_string()],
+    action: |_| {
+      EventType::ShowSearchBar
+    },
+  }
+}

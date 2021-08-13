@@ -19,13 +19,13 @@
 
 use log::trace;
 
-use super::{DisableOptions, MatchFilter, MatchInfoProvider, MatchSelector, Matcher, MatcherMiddlewareConfigProvider, Middleware, Multiplexer, PathProvider, Processor, Renderer, middleware::{
+use super::{DisableOptions, MatchFilter, MatchInfoProvider, MatchProvider, MatchSelector, Matcher, MatcherMiddlewareConfigProvider, Middleware, Multiplexer, PathProvider, Processor, Renderer, middleware::{
     match_select::MatchSelectMiddleware, matcher::MatcherMiddleware, multiplex::MultiplexMiddleware,
     render::RenderMiddleware, action::{ActionMiddleware, EventSequenceProvider}, cursor_hint::CursorHintMiddleware, cause::CauseCompensateMiddleware,
     delay_modifiers::{DelayForModifierReleaseMiddleware, ModifierStatusProvider}, markdown::MarkdownMiddleware,
     past_discard::PastEventsDiscardMiddleware,
   }};
-use crate::engine::{event::{Event, EventType}, process::middleware::{context_menu::ContextMenuMiddleware, disable::DisableMiddleware, exit::ExitMiddleware, icon_status::IconStatusMiddleware, image_resolve::ImageResolverMiddleware}};
+use crate::engine::{event::{Event, EventType}, process::middleware::{context_menu::ContextMenuMiddleware, disable::DisableMiddleware, exit::ExitMiddleware, icon_status::IconStatusMiddleware, image_resolve::ImageResolverMiddleware, search::SearchMiddleware}};
 use std::collections::VecDeque;
 
 pub struct DefaultProcessor<'a> {
@@ -46,6 +46,7 @@ impl<'a> DefaultProcessor<'a> {
     path_provider: &'a dyn PathProvider,
     disable_options: DisableOptions,
     matcher_options_provider: &'a dyn MatcherMiddlewareConfigProvider,
+    match_provider: &'a dyn MatchProvider,
   ) -> DefaultProcessor<'a> {
     Self {
       event_queue: VecDeque::new(),
@@ -63,6 +64,7 @@ impl<'a> DefaultProcessor<'a> {
         Box::new(CursorHintMiddleware::new()),
         Box::new(ExitMiddleware::new()),
         Box::new(ActionMiddleware::new(match_info_provider, event_sequence_provider)),
+        Box::new(SearchMiddleware::new(match_provider)),
         Box::new(MarkdownMiddleware::new()),
         Box::new(DelayForModifierReleaseMiddleware::new(modifier_status_provider)),
       ],
