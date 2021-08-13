@@ -92,6 +92,7 @@ pub enum EventType {
   ShowContextMenu(ui::ShowContextMenuEvent),
   IconStatusChange(ui::IconStatusChangeEvent),
   DisplaySecureInputTroubleshoot,
+  ShowSearchBar,
 
   // Other
   LaunchSecureInputAutoFix,

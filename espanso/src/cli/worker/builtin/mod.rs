@@ -19,11 +19,14 @@
 
 use std::cell::Cell;
 
+use espanso_config::config::Config;
+
 use crate::engine::event::EventType;
 
 use super::context::Context;
 
 mod debug;
+mod search;
 
 const MIN_BUILTIN_MATCH_ID: i32 = 1_000_000_000;
 
@@ -34,11 +37,17 @@ pub struct BuiltInMatch {
   pub action: fn(context: &dyn Context) -> EventType,
 }
 
-pub fn get_builtin_matches() -> Vec<BuiltInMatch> {
-  vec![
+pub fn get_builtin_matches(config: &dyn Config) -> Vec<BuiltInMatch> {
+  let mut matches = vec![
     debug::create_match_paste_active_config_info(),
     debug::create_match_paste_active_app_info(),
-  ]
+  ];
+
+  if let Some(search_trigger) = config.search_trigger() {
+    matches.push(search::create_match_trigger_search_bar(&search_trigger));
+  }
+
+  matches
 }
 
 pub fn is_builtin_match(id: i32) -> bool {

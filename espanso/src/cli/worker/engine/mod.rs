@@ -79,7 +79,7 @@ pub fn initialize_and_spawn(
       let modulo_search_ui = crate::gui::modulo::search::ModuloSearchUI::new(&modulo_manager);
 
       let context: Box<dyn Context> = Box::new(super::context::DefaultContext::new(&config_manager, &*app_info_provider));
-      let builtin_matches = super::builtin::get_builtin_matches();
+      let builtin_matches = super::builtin::get_builtin_matches(&*config_manager.default());
       let combined_match_cache = CombinedMatchCache::load(&match_cache, &builtin_matches);
 
       let match_converter = MatchConverter::new(&*config_store, &*match_store, &builtin_matches);
@@ -183,6 +183,7 @@ pub fn initialize_and_spawn(
         &path_provider,
         disable_options,
         &config_manager,
+        &combined_match_cache,
       );
 
       let event_injector = EventInjectorAdapter::new(&*injector, &config_manager);

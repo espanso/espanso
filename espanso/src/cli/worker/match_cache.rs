@@ -43,6 +43,10 @@ impl<'a> MatchCache<'a> {
 
     Self { cache }
   }
+
+  fn ids(&self) -> Vec<i32> {
+    self.cache.keys().copied().collect()
+  }
 }
 
 impl<'a> super::engine::process::middleware::render::MatchProvider<'a> for MatchCache<'a> {
@@ -148,5 +152,13 @@ impl<'a> super::engine::process::middleware::multiplex::MatchProvider<'a>
         super::engine::process::middleware::multiplex::MatchResult::Builtin(m)
       }
     })
+  }
+}
+
+impl<'a> crate::engine::process::MatchProvider for CombinedMatchCache<'a> {
+  fn get_all_matches_ids(&self) -> Vec<i32> {
+    let mut ids: Vec<i32> = self.builtin_match_cache.keys().copied().collect();
+    ids.extend(self.user_match_cache.ids());
+    ids
   }
 }

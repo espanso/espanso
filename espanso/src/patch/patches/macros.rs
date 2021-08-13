@@ -74,6 +74,10 @@ macro_rules! generate_patchable_config {
         fn is_match<'b>(&self, app: &AppProperties<'b>) -> bool {
           self.base.is_match(app)
         }
+
+        fn search_trigger(&self) -> Option<String> {
+          self.base.search_trigger()
+        }
       }
   };
 }
