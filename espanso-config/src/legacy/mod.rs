@@ -362,6 +362,10 @@ impl Config for LegacyInteropConfig {
   fn search_trigger(&self) -> Option<String> {
     None
   }
+
+  fn search_shortcut(&self) -> Option<String> {
+    None
+  }
 }
 
 struct LegacyMatchGroup {

@@ -38,6 +38,7 @@ pub(crate) struct ParsedConfig {
   pub backspace_limit: Option<usize>,
   pub apply_patch: Option<bool>,
   pub search_trigger: Option<String>,
+  pub search_shortcut: Option<String>,
 
   pub pre_paste_delay: Option<usize>,
   pub restore_clipboard_delay: Option<usize>,
@@ -45,7 +46,6 @@ pub(crate) struct ParsedConfig {
   pub inject_delay: Option<usize>,
   pub key_delay: Option<usize>,
   pub keyboard_layout: Option<BTreeMap<String, String>>,
-
 
   // Includes
   pub includes: Option<Vec<String>>,

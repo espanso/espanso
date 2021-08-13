@@ -114,6 +114,9 @@ pub trait Config: Send + Sync {
   // Trigger used to show the Search UI
   fn search_trigger(&self) -> Option<String>;
 
+  // Hotkey used to trigger the Search UI
+  fn search_shortcut(&self) -> Option<String>;
+
   fn is_match<'a>(&self, app: &AppProperties<'a>) -> bool;
 
   fn pretty_dump(&self) -> String {
