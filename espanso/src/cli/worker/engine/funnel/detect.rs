@@ -18,9 +18,9 @@
  */
 
 use crossbeam::channel::{Receiver, Select, SelectedOperation};
-use espanso_detect::event::InputEvent;
+use espanso_detect::event::{InputEvent};
 
-use crate::engine::{event::{Event, EventType, SourceId, input::{Key, KeyboardEvent, MouseButton, MouseEvent, Status, Variant}}, funnel};
+use crate::engine::{event::{Event, EventType, SourceId, input::{HotKeyEvent, Key, KeyboardEvent, MouseButton, MouseEvent, Status, Variant}}, funnel};
 
 pub struct DetectSource {
   pub receiver: Receiver<(InputEvent, SourceId)>,
@@ -52,7 +52,12 @@ impl<'a> funnel::Source<'a> for DetectSource {
           button: mouse_event.button.into(),
         }),
       },
-      InputEvent::HotKey(_) => todo!(), // TODO
+      InputEvent::HotKey(hotkey_event) => Event {
+        source_id,
+        etype: EventType::HotKey(HotKeyEvent {
+          hotkey_id: hotkey_event.hotkey_id,
+        })
+      }
     }
   }
 }

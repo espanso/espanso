@@ -24,6 +24,7 @@ pub mod cursor_hint;
 pub mod delay_modifiers;
 pub mod disable;
 pub mod exit;
+pub mod hotkey;
 pub mod icon_status;
 pub mod image_resolve;
 pub mod match_select;

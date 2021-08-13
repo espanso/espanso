@@ -24,7 +24,7 @@ pub struct MatchesDetectedEvent {
   pub matches: Vec<DetectedMatch>,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Default)]
 pub struct DetectedMatch {
   pub id: i32,
   pub trigger: Option<String>,

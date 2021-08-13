@@ -24,10 +24,12 @@ use espanso_config::{
     MatchCause,
   },
 };
+use espanso_detect::hotkey::HotKey;
 use espanso_match::{
   regex::RegexMatch,
   rolling::{RollingMatch, StringMatchOptions},
 };
+use log::error;
 use std::iter::FromIterator;
 
 use crate::cli::worker::builtin::BuiltInMatch;
@@ -79,7 +81,7 @@ impl<'a> MatchConverter<'a> {
         matches.push(RollingMatch::from_string(
           m.id,
           &trigger,
-          &StringMatchOptions::default()
+          &StringMatchOptions::default(),
         ))
       }
     }
@@ -99,6 +101,26 @@ impl<'a> MatchConverter<'a> {
     }
 
     matches
+  }
+
+  pub fn get_hotkeys(&self) -> Vec<HotKey> {
+    let mut hotkeys = Vec::new();
+
+    // TODO: read user-defined matches
+
+    // Then convert built-in ones
+    for m in self.builtin_matches {
+      if let Some(hotkey) = &m.hotkey {
+        match HotKey::new(m.id, hotkey) {
+          Ok(hotkey) => hotkeys.push(hotkey),
+          Err(err) => {
+            error!("unable to register hotkey: {}, with error: {}", hotkey, err);
+          }
+        }
+      }
+    }
+
+    hotkeys
   }
 
   fn global_match_set(&self) -> MatchSet {
