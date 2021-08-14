@@ -49,6 +49,7 @@ use super::secure_input::SecureInputEvent;
 pub mod dispatch;
 pub mod funnel;
 pub mod process;
+mod caches;
 mod keyboard_layout_util;
 
 #[allow(clippy::too_many_arguments)]
@@ -71,15 +72,17 @@ pub fn initialize_and_spawn(
 
       let app_info_provider =
         espanso_info::get_provider().expect("unable to initialize app info provider");
+      // TODO: read interval from configs?
+      let cached_app_info_provider = caches::app_info_provider::CachedAppInfoProvider::from(&*app_info_provider, std::time::Duration::from_millis(400));
       let config_manager =
-        super::config::ConfigManager::new(&*config_store, &*match_store, &*app_info_provider);
+        super::config::ConfigManager::new(&*config_store, &*match_store, &cached_app_info_provider);
       let match_cache = MatchCache::load(&*config_store, &*match_store);
 
       let modulo_manager = crate::gui::modulo::manager::ModuloManager::new();
       let modulo_form_ui = crate::gui::modulo::form::ModuloFormUI::new(&modulo_manager);
       let modulo_search_ui = crate::gui::modulo::search::ModuloSearchUI::new(&modulo_manager);
 
-      let context: Box<dyn Context> = Box::new(super::context::DefaultContext::new(&config_manager, &*app_info_provider));
+      let context: Box<dyn Context> = Box::new(super::context::DefaultContext::new(&config_manager, &cached_app_info_provider));
       let builtin_matches = super::builtin::get_builtin_matches(&*config_manager.default());
       let combined_match_cache = CombinedMatchCache::load(&match_cache, &builtin_matches);
 
