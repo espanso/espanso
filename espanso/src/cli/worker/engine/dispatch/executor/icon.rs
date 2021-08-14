@@ -19,7 +19,7 @@
 
 use espanso_ui::{UIRemote, icons::TrayIcon};
 
-use crate::engine::{dispatch::IconHandler, event::ui::IconStatus};
+use espanso_engine::{dispatch::IconHandler, event::ui::IconStatus};
 
 pub struct IconHandlerAdapter<'a> {
   remote: &'a dyn UIRemote,

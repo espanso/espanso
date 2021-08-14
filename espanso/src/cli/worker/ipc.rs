@@ -21,10 +21,11 @@ use std::path::Path;
 
 use anyhow::Result;
 use crossbeam::channel::Sender;
+use espanso_engine::event::ExitMode;
 use espanso_ipc::{EventHandlerResponse, IPCServer};
 use log::{error, warn};
 
-use crate::{engine::event::ExitMode, ipc::IPCEvent};
+use crate::ipc::IPCEvent;
 
 pub fn initialize_and_spawn(runtime_dir: &Path, exit_notify: Sender<ExitMode>) -> Result<()> {
   let server = crate::ipc::create_worker_ipc_server(runtime_dir)?;
@@ -32,38 +33,38 @@ pub fn initialize_and_spawn(runtime_dir: &Path, exit_notify: Sender<ExitMode>) -
   std::thread::Builder::new()
     .name("worker-ipc-handler".to_string())
     .spawn(move || {
-      server.run(Box::new(move |event| {
-        match event {
-            IPCEvent::Exit => {
-              if let Err(err) = exit_notify.send(ExitMode::Exit) {
-                error!(
-                  "experienced error while sending exit signal from worker ipc handler: {}",
-                  err
-                );
-              }
-
-              EventHandlerResponse::NoResponse
-            }
-            IPCEvent::ExitAllProcesses => {
-              if let Err(err) = exit_notify.send(ExitMode::ExitAllProcesses) {
-                error!(
-                  "experienced error while sending exit signal from worker ipc handler: {}",
-                  err
-                );
-              }
-
-              EventHandlerResponse::NoResponse
-            }
-            unexpected_event => {
-              warn!(
-                "received unexpected event in worker ipc handler: {:?}",
-                unexpected_event
+      server
+        .run(Box::new(move |event| match event {
+          IPCEvent::Exit => {
+            if let Err(err) = exit_notify.send(ExitMode::Exit) {
+              error!(
+                "experienced error while sending exit signal from worker ipc handler: {}",
+                err
               );
-
-              EventHandlerResponse::NoResponse
             }
+
+            EventHandlerResponse::NoResponse
           }
-      })).expect("unable to spawn IPC server");
+          IPCEvent::ExitAllProcesses => {
+            if let Err(err) = exit_notify.send(ExitMode::ExitAllProcesses) {
+              error!(
+                "experienced error while sending exit signal from worker ipc handler: {}",
+                err
+              );
+            }
+
+            EventHandlerResponse::NoResponse
+          }
+          unexpected_event => {
+            warn!(
+              "received unexpected event in worker ipc handler: {:?}",
+              unexpected_event
+            );
+
+            EventHandlerResponse::NoResponse
+          }
+        }))
+        .expect("unable to spawn IPC server");
     })?;
 
   Ok(())

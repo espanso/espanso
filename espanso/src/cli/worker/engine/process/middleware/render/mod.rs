@@ -27,9 +27,7 @@ use espanso_config::{
 };
 use espanso_render::{CasingStyle, Context, RenderOptions, Template, Value, Variable};
 
-use crate::{
-  engine::process::{Renderer, RendererError},
-};
+use espanso_engine::process::{Renderer, RendererError};
 
 pub trait MatchProvider<'a> {
   fn matches(&self) -> Vec<&'a Match>;
@@ -200,7 +198,7 @@ impl<'a> Renderer<'a> for RendererAdapter<'a> {
       let context = context_cache
         .entry(config.id())
         .or_insert_with(|| generate_context(&match_set, &self.template_map, &self.global_vars_map));
-      
+
       let raw_match = self.match_provider.get(match_id);
       let propagate_case = raw_match.map(is_propagate_case).unwrap_or(false);
       let preferred_uppercasing_style = raw_match.and_then(extract_uppercasing_style);
@@ -221,11 +219,14 @@ impl<'a> Renderer<'a> for RendererAdapter<'a> {
         for (name, value) in trigger_vars {
           let mut params = espanso_render::Params::new();
           params.insert("echo".to_string(), Value::String(value));
-          augmented.vars.insert(0, Variable {
-            name,
-            var_type: "echo".to_string(),
-            params,
-          })
+          augmented.vars.insert(
+            0,
+            Variable {
+              name,
+              var_type: "echo".to_string(),
+              params,
+            },
+          )
         }
         Some(augmented)
       } else {

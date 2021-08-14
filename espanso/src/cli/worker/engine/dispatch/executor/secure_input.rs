@@ -21,7 +21,7 @@ use std::process::Stdio;
 use anyhow::{bail, Context};
 use log::{error, info};
 
-use crate::engine::dispatch::SecureInputManager;
+use espanso_engine::dispatch::SecureInputManager;
 
 pub struct SecureInputManagerAdapter {}
 

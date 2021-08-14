@@ -19,7 +19,7 @@
 
 use espanso_ui::UIRemote;
 
-use crate::engine::dispatch::ContextMenuHandler;
+use espanso_engine::dispatch::ContextMenuHandler;
 
 pub struct ContextMenuHandlerAdapter<'a> {
   remote: &'a dyn UIRemote,
@@ -32,7 +32,7 @@ impl<'a> ContextMenuHandlerAdapter<'a> {
 }
 
 impl<'a> ContextMenuHandler for ContextMenuHandlerAdapter<'a> {
-  fn show_context_menu(&self, items: &[crate::engine::event::ui::MenuItem]) -> anyhow::Result<()> {
+  fn show_context_menu(&self, items: &[espanso_engine::event::ui::MenuItem]) -> anyhow::Result<()> {
     let ui_menu_items: Vec<espanso_ui::menu::MenuItem> =
       items.iter().map(convert_to_ui_menu_item).collect();
     let ui_menu = espanso_ui::menu::Menu {
@@ -46,16 +46,16 @@ impl<'a> ContextMenuHandler for ContextMenuHandlerAdapter<'a> {
 }
 
 fn convert_to_ui_menu_item(
-  item: &crate::engine::event::ui::MenuItem,
+  item: &espanso_engine::event::ui::MenuItem,
 ) -> espanso_ui::menu::MenuItem {
   match item {
-    crate::engine::event::ui::MenuItem::Simple(simple) => {
+    espanso_engine::event::ui::MenuItem::Simple(simple) => {
       espanso_ui::menu::MenuItem::Simple(espanso_ui::menu::SimpleMenuItem {
         id: simple.id,
         label: simple.label.clone(),
       })
     }
-    crate::engine::event::ui::MenuItem::Sub(sub) => {
+    espanso_engine::event::ui::MenuItem::Sub(sub) => {
       espanso_ui::menu::MenuItem::Sub(espanso_ui::menu::SubMenuItem {
         label: sub.label.clone(),
         items: sub
@@ -65,6 +65,6 @@ fn convert_to_ui_menu_item(
           .collect(),
       })
     }
-    crate::engine::event::ui::MenuItem::Separator => espanso_ui::menu::MenuItem::Separator,
+    espanso_engine::event::ui::MenuItem::Separator => espanso_ui::menu::MenuItem::Separator,
   }
 }

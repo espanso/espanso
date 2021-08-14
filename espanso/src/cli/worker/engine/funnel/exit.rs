@@ -19,7 +19,7 @@
 
 use crossbeam::channel::{Receiver, Select, SelectedOperation};
 
-use crate::engine::{event::{Event, EventType, ExitMode}, funnel};
+use espanso_engine::{event::{Event, EventType, ExitMode}, funnel};
 
 use super::sequencer::Sequencer;
 

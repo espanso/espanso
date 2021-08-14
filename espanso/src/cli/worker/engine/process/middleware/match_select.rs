@@ -17,12 +17,10 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use espanso_engine::process::MatchSelector;
 use log::error;
 
-use crate::{
-  engine::process::MatchSelector,
-  gui::{SearchItem, SearchUI},
-};
+use crate::gui::{SearchItem, SearchUI};
 
 const MAX_LABEL_LEN: usize = 100;
 

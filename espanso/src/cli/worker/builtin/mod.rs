@@ -21,7 +21,7 @@ use std::cell::Cell;
 
 use espanso_config::config::Config;
 
-use crate::engine::event::EventType;
+use espanso_engine::event::EventType;
 
 use super::context::Context;
 

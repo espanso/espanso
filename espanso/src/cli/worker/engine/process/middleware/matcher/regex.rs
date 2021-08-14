@@ -17,10 +17,10 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::engine::process::{MatchResult, Matcher, MatcherEvent};
+use espanso_engine::process::{MatchResult, Matcher, MatcherEvent};
 use espanso_match::regex::{RegexMatch, RegexMatcher, RegexMatcherOptions};
 
-use super::MatcherState;
+use super::{convert_to_engine_result, convert_to_match_event, MatcherState};
 
 pub struct RegexMatcherAdapterOptions {
   pub max_buffer_size: usize,
@@ -32,9 +32,12 @@ pub struct RegexMatcherAdapter {
 
 impl RegexMatcherAdapter {
   pub fn new(matches: &[RegexMatch<i32>], options: &RegexMatcherAdapterOptions) -> Self {
-    let matcher = RegexMatcher::new(matches, RegexMatcherOptions {
-      max_buffer_size: options.max_buffer_size,
-    });
+    let matcher = RegexMatcher::new(
+      matches,
+      RegexMatcherOptions {
+        max_buffer_size: options.max_buffer_size,
+      },
+    );
 
     Self { matcher }
   }
@@ -55,12 +58,12 @@ impl<'a> Matcher<'a, MatcherState<'a>> for RegexMatcherAdapter {
         panic!("invalid state type received in RegexMatcherAdapter")
       }
     });
-    let event = event.into();
+    let event = convert_to_match_event(event);
 
     let (state, results) = self.matcher.process(prev_state, event);
 
     let enum_state = MatcherState::Regex(state);
-    let results: Vec<MatchResult> = results.into_iter().map(|result| result.into()).collect();
+    let results: Vec<MatchResult> = results.into_iter().map(convert_to_engine_result).collect();
 
     (enum_state, results)
   }

@@ -42,7 +42,6 @@ mod capabilities;
 mod cli;
 mod common_flags;
 mod config;
-mod engine;
 mod exit_code;
 mod gui;
 mod icon;

@@ -23,6 +23,7 @@ use anyhow::Result;
 use crossbeam::channel::Receiver;
 use espanso_config::{config::ConfigStore, matches::store::MatchStore};
 use espanso_detect::SourceCreationOptions;
+use espanso_engine::event::ExitMode;
 use espanso_inject::{InjectorCreationOptions, KeyboardStateProvider};
 use espanso_path::Paths;
 use espanso_ui::{event::UIEvent, UIRemote};
@@ -41,7 +42,7 @@ use crate::{cli::worker::{context::Context, engine::{dispatch::executor::{clipbo
           extension::{clipboard::ClipboardAdapter, form::FormProviderAdapter},
           RendererAdapter,
         },
-      }}, match_cache::{CombinedMatchCache, MatchCache}}, common_flags::{WORKER_START_REASON_CONFIG_CHANGED, WORKER_START_REASON_KEYBOARD_LAYOUT_CHANGED, WORKER_START_REASON_MANUAL}, engine::event::ExitMode, preferences::Preferences};
+      }}, match_cache::{CombinedMatchCache, MatchCache}}, common_flags::{WORKER_START_REASON_CONFIG_CHANGED, WORKER_START_REASON_KEYBOARD_LAYOUT_CHANGED, WORKER_START_REASON_MANUAL}, preferences::Preferences};
 
 use super::secure_input::SecureInputEvent;
 
@@ -100,13 +101,13 @@ pub fn initialize_and_spawn(
         secure_input_receiver,
         &sequencer,
       );
-      let sources: Vec<&dyn crate::engine::funnel::Source> = vec![
+      let sources: Vec<&dyn espanso_engine::funnel::Source> = vec![
         &detect_source,
         &exit_source,
         &ui_source,
         &secure_input_source,
       ];
-      let funnel = crate::engine::funnel::default(&sources);
+      let funnel = espanso_engine::funnel::default(&sources);
 
       let rolling_matcher = RollingMatcherAdapter::new(
         &match_converter.get_rolling_matches(),
@@ -121,7 +122,7 @@ pub fn initialize_and_spawn(
         },
       );
       let matchers: Vec<
-        &dyn crate::engine::process::Matcher<
+        &dyn espanso_engine::process::Matcher<
           super::engine::process::middleware::matcher::MatcherState,
         >,
       > = vec![&rolling_matcher, &regex_matcher];
@@ -171,7 +172,7 @@ pub fn initialize_and_spawn(
       let disable_options =
         process::middleware::disable::extract_disable_options(&*config_manager.default());
 
-      let mut processor = crate::engine::process::default(
+      let mut processor = espanso_engine::process::default(
         &matchers,
         &config_manager,
         &selector,
@@ -193,7 +194,7 @@ pub fn initialize_and_spawn(
       let context_menu_adapter = ContextMenuHandlerAdapter::new(&*ui_remote);
       let icon_adapter = IconHandlerAdapter::new(&*ui_remote);
       let secure_input_adapter = SecureInputManagerAdapter::new();
-      let dispatcher = crate::engine::dispatch::default(
+      let dispatcher = espanso_engine::dispatch::default(
         &event_injector,
         &clipboard_injector,
         &config_manager,
@@ -233,7 +234,7 @@ pub fn initialize_and_spawn(
         }
       }
 
-      let mut engine = crate::engine::Engine::new(&funnel, &mut processor, &dispatcher);
+      let mut engine = espanso_engine::Engine::new(&funnel, &mut processor, &dispatcher);
       let exit_mode = engine.run();
 
       info!("engine eventloop has terminated, propagating exit event...");

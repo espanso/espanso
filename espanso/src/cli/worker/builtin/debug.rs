@@ -17,10 +17,9 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::{
-  cli::worker::builtin::generate_next_builtin_id,
-  engine::event::{effect::TextInjectRequest, EventType},
-};
+use espanso_engine::event::{effect::TextInjectRequest, EventType};
+
+use crate::cli::worker::builtin::generate_next_builtin_id;
 
 use super::BuiltInMatch;
 

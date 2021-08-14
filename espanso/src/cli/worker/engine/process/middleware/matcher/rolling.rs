@@ -22,11 +22,9 @@ use espanso_match::rolling::{
   RollingMatch,
 };
 
-use crate::engine::{
-  process::{MatchResult, Matcher, MatcherEvent},
-};
+use espanso_engine::process::{MatchResult, Matcher, MatcherEvent};
 
-use super::MatcherState;
+use super::{convert_to_engine_result, convert_to_match_event, MatcherState};
 
 pub struct RollingMatcherAdapterOptions {
   pub char_word_separators: Vec<String>,
@@ -65,12 +63,12 @@ impl<'a> Matcher<'a, MatcherState<'a>> for RollingMatcherAdapter {
         panic!("invalid state type received in RollingMatcherAdapter")
       }
     });
-    let event = event.into();
+    let event = convert_to_match_event(event);
 
     let (state, results) = self.matcher.process(prev_state, event);
 
     let enum_state = MatcherState::Rolling(state);
-    let results: Vec<MatchResult> = results.into_iter().map(|result| result.into()).collect();
+    let results: Vec<MatchResult> = results.into_iter().map(convert_to_engine_result).collect();
 
     (enum_state, results)
   }
