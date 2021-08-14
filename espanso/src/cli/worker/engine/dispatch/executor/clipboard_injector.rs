@@ -23,7 +23,7 @@ use espanso_clipboard::Clipboard;
 use espanso_inject::{keys::Key, InjectionOptions, Injector};
 use log::error;
 
-use crate::engine::{
+use espanso_engine::{
   dispatch::HtmlInjector,
   dispatch::{ImageInjector, TextInjector},
 };

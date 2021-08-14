@@ -17,13 +17,14 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::{path::Path};
+use std::path::Path;
 
 use anyhow::Result;
 use crossbeam::channel::Sender;
+use espanso_engine::event::ExitMode;
 use log::{error, info, warn};
 
-use crate::{engine::event::ExitMode, lock::acquire_daemon_lock};
+use crate::lock::acquire_daemon_lock;
 
 const DAEMON_STATUS_CHECK_INTERVAL: u64 = 1000;
 
@@ -40,7 +41,7 @@ pub fn initialize_and_spawn(runtime_dir: &Path, exit_notify: Sender<ExitMode>) -
 
 fn daemon_monitor_main(runtime_dir: &Path, exit_notify: Sender<ExitMode>) {
   info!("monitoring the status of the daemon process");
-  
+
   loop {
     let is_daemon_lock_free = {
       let lock = acquire_daemon_lock(runtime_dir);
@@ -55,6 +56,8 @@ fn daemon_monitor_main(runtime_dir: &Path, exit_notify: Sender<ExitMode>) {
       break;
     }
 
-    std::thread::sleep(std::time::Duration::from_millis(DAEMON_STATUS_CHECK_INTERVAL));
+    std::thread::sleep(std::time::Duration::from_millis(
+      DAEMON_STATUS_CHECK_INTERVAL,
+    ));
   }
 }

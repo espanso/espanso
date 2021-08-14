@@ -522,6 +522,7 @@ dependencies = [
  "espanso-clipboard",
  "espanso-config",
  "espanso-detect",
+ "espanso-engine",
  "espanso-info",
  "espanso-inject",
  "espanso-ipc",
@@ -535,13 +536,11 @@ dependencies = [
  "espanso-ui",
  "fs2",
  "fs_extra",
- "html2text",
  "lazy_static",
  "libc",
  "log",
  "log-panics",
  "maplit",
- "markdown",
  "named_pipe",
  "notify",
  "opener",
@@ -609,6 +608,19 @@ dependencies = [
  "smithay-client-toolkit",
  "thiserror",
  "widestring",
+]
+
+[[package]]
+name = "espanso-engine"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "crossbeam",
+ "html2text",
+ "log",
+ "markdown",
+ "tempdir",
+ "thiserror",
 ]
 
 [[package]]
@@ -1873,9 +1885,9 @@ dependencies = [
 
 [[package]]
 name = "siphasher"
-version = "0.3.5"
+version = "0.3.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cbce6d4507c7e4a3962091436e56e95290cb71fa302d0d270e32130b75fbff27"
+checksum = "729a25c17d72b06c68cb47955d44fda88ad2d3e7d77e025663fdd69b93dd71a1"
 
 [[package]]
 name = "slab"

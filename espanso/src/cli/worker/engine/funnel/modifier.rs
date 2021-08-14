@@ -24,7 +24,7 @@ use std::{
 
 use log::warn;
 
-use crate::engine::process::ModifierStatusProvider;
+use espanso_engine::process::ModifierStatusProvider;
 
 /// This duration represents the maximum length for which a pressed modifier
 /// event is considered valid. This is useful when the "release" event is

@@ -19,16 +19,14 @@
 
 use espanso_config::matches::{Match, MatchEffect};
 
-use crate::{
-  cli::worker::{builtin::BuiltInMatch, context::Context},
-  engine::{
-    event::{
-      internal::DetectedMatch,
-      internal::{ImageRequestedEvent, RenderingRequestedEvent, TextFormat},
-      EventType,
-    },
-    process::Multiplexer,
+use crate::cli::worker::{builtin::BuiltInMatch, context::Context};
+use espanso_engine::{
+  event::{
+    internal::DetectedMatch,
+    internal::{ImageRequestedEvent, RenderingRequestedEvent, TextFormat},
+    EventType,
   },
+  process::Multiplexer,
 };
 
 pub trait MatchProvider<'a> {
@@ -46,7 +44,7 @@ pub struct MultiplexAdapter<'a> {
 }
 
 impl<'a> MultiplexAdapter<'a> {
-  pub fn new(provider: &'a dyn MatchProvider<'a>, context: &'a Context) -> Self {
+  pub fn new(provider: &'a dyn MatchProvider<'a>, context: &'a dyn Context) -> Self {
     Self { provider, context }
   }
 }

@@ -18,10 +18,10 @@
  */
 
 use crossbeam::channel::unbounded;
+use espanso_engine::event::ExitMode;
 use log::{debug, error, info};
 
 use crate::{
-  engine::event::ExitMode,
   exit_code::{
     WORKER_ALREADY_RUNNING, WORKER_EXIT_ALL_PROCESSES, WORKER_GENERAL_ERROR,
     WORKER_LEGACY_ALREADY_RUNNING, WORKER_RESTART, WORKER_SUCCESS,
@@ -62,9 +62,7 @@ fn worker_main(args: CliModuleArgs) -> i32 {
   let cli_args = args.cli_args.expect("missing cli_args in worker main");
 
   // When restarted, the daemon passes the reason why the worker was restarted (config_change, etc)
-  let start_reason = cli_args
-    .value_of("start-reason")
-    .map(String::from);
+  let start_reason = cli_args.value_of("start-reason").map(String::from);
   debug!("starting with start-reason = {:?}", start_reason);
 
   // Avoid running multiple worker instances

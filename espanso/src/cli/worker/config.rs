@@ -73,7 +73,7 @@ fn to_app_properties(info: &AppInfo) -> AppProperties {
   }
 }
 
-impl<'a> crate::engine::process::MatchFilter for ConfigManager<'a> {
+impl<'a> espanso_engine::process::MatchFilter for ConfigManager<'a> {
   fn filter_active(&self, matches_ids: &[i32]) -> Vec<i32> {
     let ids_set: HashSet<i32> = HashSet::from_iter(matches_ids.iter().copied());
     let (_, match_set) = self.active_context();
@@ -115,13 +115,13 @@ impl<'a> super::engine::process::middleware::render::ConfigProvider<'a> for Conf
   }
 }
 
-impl<'a> crate::engine::dispatch::ModeProvider for ConfigManager<'a> {
-  fn active_mode(&self) -> crate::engine::dispatch::Mode {
+impl<'a> espanso_engine::dispatch::ModeProvider for ConfigManager<'a> {
+  fn active_mode(&self) -> espanso_engine::dispatch::Mode {
     let config = self.active();
     match config.backend() {
-      espanso_config::config::Backend::Inject => crate::engine::dispatch::Mode::Event,
-      espanso_config::config::Backend::Clipboard => crate::engine::dispatch::Mode::Clipboard,
-      espanso_config::config::Backend::Auto => crate::engine::dispatch::Mode::Auto {
+      espanso_config::config::Backend::Inject => espanso_engine::dispatch::Mode::Event,
+      espanso_config::config::Backend::Clipboard => espanso_engine::dispatch::Mode::Clipboard,
+      espanso_config::config::Backend::Auto => espanso_engine::dispatch::Mode::Auto {
         clipboard_threshold: config.clipboard_threshold(),
       },
     }
@@ -155,7 +155,7 @@ impl<'a> super::engine::dispatch::executor::InjectParamsProvider for ConfigManag
   }
 }
 
-impl<'a> crate::engine::process::MatcherMiddlewareConfigProvider for ConfigManager<'a> {
+impl<'a> espanso_engine::process::MatcherMiddlewareConfigProvider for ConfigManager<'a> {
   fn max_history_size(&self) -> usize {
     self.default().backspace_limit()
   }

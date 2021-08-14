@@ -20,7 +20,7 @@
 use crossbeam::channel::{Receiver, Select, SelectedOperation};
 use espanso_ui::event::UIEvent;
 
-use crate::engine::{
+use espanso_engine::{
   event::{input::ContextMenuClickedEvent, Event, EventType},
   funnel,
 };

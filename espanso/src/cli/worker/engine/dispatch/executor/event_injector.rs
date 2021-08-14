@@ -21,7 +21,7 @@ use std::convert::TryInto;
 
 use espanso_inject::{InjectionOptions, Injector};
 
-use crate::engine::dispatch::TextInjector;
+use espanso_engine::dispatch::TextInjector;
 
 use super::InjectParamsProvider;
 

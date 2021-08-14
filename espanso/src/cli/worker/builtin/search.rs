@@ -17,19 +17,22 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::{cli::worker::builtin::generate_next_builtin_id, engine::event::{EventType}};
+use espanso_engine::event::EventType;
+
+use crate::cli::worker::builtin::generate_next_builtin_id;
 
 use super::BuiltInMatch;
 
-pub fn create_match_trigger_search_bar(trigger: Option<String>, hotkey: Option<String>) -> BuiltInMatch {
+pub fn create_match_trigger_search_bar(
+  trigger: Option<String>,
+  hotkey: Option<String>,
+) -> BuiltInMatch {
   BuiltInMatch {
     id: generate_next_builtin_id(),
     label: "Open search bar",
     triggers: trigger.map(|trigger| vec![trigger]).unwrap_or_default(),
     hotkey,
-    action: |_| {
-      EventType::ShowSearchBar
-    },
+    action: |_| EventType::ShowSearchBar,
     ..Default::default()
   }
 }

@@ -19,12 +19,10 @@
 
 use crossbeam::channel::{Receiver, Select, SelectedOperation};
 
-use crate::{
-  cli::worker::secure_input::SecureInputEvent,
-  engine::{
-    event::{internal::SecureInputEnabledEvent, Event, EventType},
-    funnel,
-  },
+use crate::cli::worker::secure_input::SecureInputEvent;
+use espanso_engine::{
+  event::{internal::SecureInputEnabledEvent, Event, EventType},
+  funnel,
 };
 
 use super::sequencer::Sequencer;

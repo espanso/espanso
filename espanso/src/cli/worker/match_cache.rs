@@ -59,17 +59,17 @@ impl<'a> super::engine::process::middleware::render::MatchProvider<'a> for Match
   }
 }
 
-impl<'a> crate::engine::process::MatchInfoProvider for MatchCache<'a> {
-  fn get_force_mode(&self, match_id: i32) -> Option<crate::engine::event::effect::TextInjectMode> {
+impl<'a> espanso_engine::process::MatchInfoProvider for MatchCache<'a> {
+  fn get_force_mode(&self, match_id: i32) -> Option<espanso_engine::event::effect::TextInjectMode> {
     let m = self.cache.get(&match_id)?;
     if let MatchEffect::Text(text_effect) = &m.effect {
       if let Some(force_mode) = &text_effect.force_mode {
         match force_mode {
           espanso_config::matches::TextInjectMode::Keys => {
-            return Some(crate::engine::event::effect::TextInjectMode::Keys)
+            return Some(espanso_engine::event::effect::TextInjectMode::Keys)
           }
           espanso_config::matches::TextInjectMode::Clipboard => {
-            return Some(crate::engine::event::effect::TextInjectMode::Clipboard)
+            return Some(espanso_engine::event::effect::TextInjectMode::Clipboard)
           }
         }
       }
@@ -155,7 +155,7 @@ impl<'a> super::engine::process::middleware::multiplex::MatchProvider<'a>
   }
 }
 
-impl<'a> crate::engine::process::MatchProvider for CombinedMatchCache<'a> {
+impl<'a> espanso_engine::process::MatchProvider for CombinedMatchCache<'a> {
   fn get_all_matches_ids(&self) -> Vec<i32> {
     let mut ids: Vec<i32> = self.builtin_match_cache.keys().copied().collect();
     ids.extend(self.user_match_cache.ids());

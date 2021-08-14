@@ -22,7 +22,7 @@ use std::sync::{
   Arc,
 };
 
-use crate::engine::{event::SourceId, process::EventSequenceProvider};
+use espanso_engine::{event::SourceId, process::EventSequenceProvider};
 
 #[derive(Clone)]
 pub struct Sequencer {

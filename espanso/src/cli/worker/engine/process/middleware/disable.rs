@@ -19,8 +19,11 @@
 
 use std::time::Duration;
 
-use crate::engine::{event::input::{Key, Variant}, process::DisableOptions};
 use espanso_config::config::Config;
+use espanso_engine::{
+  event::input::{Key, Variant},
+  process::DisableOptions,
+};
 
 pub fn extract_disable_options(config: &dyn Config) -> DisableOptions {
   let (toggle_key, variant) = match config.toggle_key() {
@@ -29,7 +32,7 @@ pub fn extract_disable_options(config: &dyn Config) -> DisableOptions {
       espanso_config::config::ToggleKey::Meta => (Some(Key::Meta), None),
       espanso_config::config::ToggleKey::Alt => (Some(Key::Alt), None),
       espanso_config::config::ToggleKey::Shift => (Some(Key::Shift), None),
-      espanso_config::config::ToggleKey::RightCtrl => (Some(Key::Control), Some(Variant::Right)), 
+      espanso_config::config::ToggleKey::RightCtrl => (Some(Key::Control), Some(Variant::Right)),
       espanso_config::config::ToggleKey::RightAlt => (Some(Key::Alt), Some(Variant::Right)),
       espanso_config::config::ToggleKey::RightShift => (Some(Key::Shift), Some(Variant::Right)),
       espanso_config::config::ToggleKey::RightMeta => (Some(Key::Meta), Some(Variant::Right)),
