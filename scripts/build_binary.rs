@@ -37,6 +37,12 @@ fn main() {
     args.push("--release");
   }
 
+  let override_target_arch = envmnt::get_or("BUILD_ARCH", "current");
+  if override_target_arch != "current" {
+    args.push("--target");
+    args.push(&override_target_arch);
+  }
+
   args.push("--manifest-path");
   args.push("espanso/Cargo.toml");
 

@@ -7,7 +7,7 @@ RELEASE = false
 NO_X11 = false
 NO_MODULO = false
 EXEC_PATH = "target/debug/espanso"
-BUILD_ARCH = "x86_64" # TODO: do something with this
+BUILD_ARCH = "current"
 
 [env.release]
 DEBUG = false
@@ -48,9 +48,30 @@ dependencies = ["build-windows-portable", "build-windows-installer"]
 
 # macOS
 
+[tasks.build-macos-arm-binary]
+env = { "BUILD_ARCH" = "aarch64-apple-darwin" }
+run_task = [
+  { name = "build-binary" }
+]
+
+[tasks.build-macos-x86-binary]
+env = { "BUILD_ARCH" = "x86_64-apple-darwin" }
+run_task = [
+  { name = "build-binary" }
+]
+
+[tasks.build-universal-binary]
+script = { file = "scripts/join_universal_binary.sh"}
+dependencies=["build-macos-arm-binary", "build-macos-x86-binary"]
+
 [tasks.create-bundle]
 script = { file = "scripts/create_bundle.sh" }
 dependencies=["build-binary"]
+
+[tasks.create-universal-bundle]
+env = { "EXEC_PATH" = "target/universal/espanso" }
+script = { file = "scripts/create_bundle.sh" }
+dependencies=["build-universal-binary"]
 
 [tasks.run-bundle]
 command="target/mac/Espanso.app/Contents/MacOS/espanso"
