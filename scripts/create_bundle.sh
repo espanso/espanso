@@ -1,3 +1,5 @@
+set -e
+
 TARGET_DIR=target/mac/Espanso.app
 
 rm -Rf $TARGET_DIR
