@@ -22,6 +22,10 @@
 #import <Foundation/Foundation.h>
 #include <vector>
 
+// Events dispatched by espanso are "marked" with a custom location
+// so that we can later skip them in the detect module.
+CGPoint ESPANSO_POINT_MARKER = CGPointMake(-27469, 0);
+
 void inject_string(char *string)
 {
   char * stringCopy = strdup(string);
@@ -40,6 +44,7 @@ void inject_string(char *string)
     // To see why: https://github.com/federico-terzi/espanso/issues/279
     if (CGEventSourceKeyState(kCGEventSourceStateHIDSystemState, 0x38)) {
       CGEventRef e2 = CGEventCreateKeyboardEvent(NULL, 0x38, false);
+      CGEventSetLocation(e2, ESPANSO_POINT_MARKER);
       CGEventPost(kCGHIDEventTap, e2);
       CFRelease(e2);
 
@@ -58,6 +63,7 @@ void inject_string(char *string)
 
       UniChar * offset_buffer = buffer.data() + i;
       CGEventRef e = CGEventCreateKeyboardEvent(NULL, 0x31, true);
+      CGEventSetLocation(e, ESPANSO_POINT_MARKER);
       CGEventKeyboardSetUnicodeString(e, chunk_size, offset_buffer);
       CGEventPost(kCGHIDEventTap, e);
       CFRelease(e);
@@ -67,6 +73,7 @@ void inject_string(char *string)
       // Some applications require an explicit release of the space key
       // For more information: https://github.com/federico-terzi/espanso/issues/159
       CGEventRef e2 = CGEventCreateKeyboardEvent(NULL, 0x31, false);
+      CGEventSetLocation(e2, ESPANSO_POINT_MARKER);
       CGEventPost(kCGHIDEventTap, e2);
       CFRelease(e2);
 
@@ -89,6 +96,7 @@ void inject_separate_vkeys(int32_t *_vkey_array, int32_t vkey_count, int32_t del
     for (int i = 0; i<vkey_count; i++) {
       CGEventRef keydown;
       keydown = CGEventCreateKeyboardEvent(NULL, vkey_array[i], true);
+      CGEventSetLocation(keydown, ESPANSO_POINT_MARKER);
       CGEventPost(kCGHIDEventTap, keydown);
       CFRelease(keydown);
 
@@ -96,6 +104,7 @@ void inject_separate_vkeys(int32_t *_vkey_array, int32_t vkey_count, int32_t del
 
       CGEventRef keyup;
       keyup = CGEventCreateKeyboardEvent(NULL, vkey_array[i], false);
+      CGEventSetLocation(keyup, ESPANSO_POINT_MARKER);
       CGEventPost(kCGHIDEventTap, keyup);
       CFRelease(keyup);
 
@@ -120,6 +129,7 @@ void inject_vkeys_combination(int32_t *_vkey_array, int32_t vkey_count, int32_t 
     {
       CGEventRef keydown;
       keydown = CGEventCreateKeyboardEvent(NULL, vkey_array[i], true);
+      CGEventSetLocation(keydown, ESPANSO_POINT_MARKER);
       CGEventPost(kCGHIDEventTap, keydown);
       CFRelease(keydown);
 
@@ -131,6 +141,7 @@ void inject_vkeys_combination(int32_t *_vkey_array, int32_t vkey_count, int32_t 
     {
       CGEventRef keyup;
       keyup = CGEventCreateKeyboardEvent(NULL, vkey_array[i], false);
+      CGEventSetLocation(keyup, ESPANSO_POINT_MARKER);
       CGEventPost(kCGHIDEventTap, keyup);
       CFRelease(keyup);
 
