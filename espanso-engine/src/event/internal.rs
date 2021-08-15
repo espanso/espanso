@@ -89,3 +89,10 @@ pub struct SecureInputEnabledEvent {
   pub app_name: String,
   pub app_path: String,
 }
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct UndoEvent {
+  pub match_id: i32,
+  pub trigger: String,
+  pub replace: String,
+}

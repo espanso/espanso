@@ -19,8 +19,7 @@
 
 use log::trace;
 
-use super::{
-  middleware::{
+use super::{DisableOptions, MatchFilter, MatchInfoProvider, MatchProvider, MatchSelector, Matcher, MatcherMiddlewareConfigProvider, Middleware, Multiplexer, PathProvider, Processor, Renderer, UndoEnabledProvider, middleware::{
     action::{ActionMiddleware, EventSequenceProvider},
     cause::CauseCompensateMiddleware,
     cursor_hint::CursorHintMiddleware,
@@ -31,18 +30,8 @@ use super::{
     multiplex::MultiplexMiddleware,
     past_discard::PastEventsDiscardMiddleware,
     render::RenderMiddleware,
-  },
-  DisableOptions, MatchFilter, MatchInfoProvider, MatchProvider, MatchSelector, Matcher,
-  MatcherMiddlewareConfigProvider, Middleware, Multiplexer, PathProvider, Processor, Renderer,
-};
-use crate::{
-  event::{Event, EventType},
-  process::middleware::{
-    context_menu::ContextMenuMiddleware, disable::DisableMiddleware, exit::ExitMiddleware,
-    hotkey::HotKeyMiddleware, icon_status::IconStatusMiddleware,
-    image_resolve::ImageResolverMiddleware, search::SearchMiddleware,
-  },
-};
+  }};
+use crate::{event::{Event, EventType}, process::middleware::{context_menu::ContextMenuMiddleware, disable::DisableMiddleware, exit::ExitMiddleware, hotkey::HotKeyMiddleware, icon_status::IconStatusMiddleware, image_resolve::ImageResolverMiddleware, search::SearchMiddleware, undo::UndoMiddleware}};
 use std::collections::VecDeque;
 
 pub struct DefaultProcessor<'a> {
@@ -65,6 +54,7 @@ impl<'a> DefaultProcessor<'a> {
     disable_options: DisableOptions,
     matcher_options_provider: &'a dyn MatcherMiddlewareConfigProvider,
     match_provider: &'a dyn MatchProvider,
+    undo_enabled_provider: &'a dyn UndoEnabledProvider,
   ) -> DefaultProcessor<'a> {
     Self {
       event_queue: VecDeque::new(),
@@ -82,6 +72,7 @@ impl<'a> DefaultProcessor<'a> {
         Box::new(ImageResolverMiddleware::new(path_provider)),
         Box::new(CursorHintMiddleware::new()),
         Box::new(ExitMiddleware::new()),
+        Box::new(UndoMiddleware::new(undo_enabled_provider)),
         Box::new(ActionMiddleware::new(
           match_info_provider,
           event_sequence_provider,

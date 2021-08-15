@@ -126,10 +126,28 @@ impl<'a> Middleware for ActionMiddleware<'a> {
           }),
         )
       }
+      EventType::Undo(m_event) => {
+        // We subtract one, because the backspace that triggered the undo feature
+        // already removed the last char
+        let backspace_count = m_event.replace.chars().count() - 1;
+
+        dispatch(Event::caused_by(
+          event.source_id,
+          EventType::TextInject(TextInjectRequest {
+            text: m_event.trigger.clone(),
+            force_mode: self.match_info_provider.get_force_mode(m_event.match_id),
+          }),
+        ));
+
+        Event::caused_by(
+          event.source_id,
+          EventType::KeySequenceInject(KeySequenceInjectRequest {
+            keys: (0..backspace_count).map(|_| Key::Backspace).collect(),
+          }),
+        )
+      }
       _ => event,
     }
-
-    // TODO: handle images
   }
 }
 
