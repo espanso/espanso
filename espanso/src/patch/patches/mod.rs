@@ -45,5 +45,6 @@ generate_patchable_config!(
   word_separators -> Vec<String>,
   backspace_limit -> usize,
   apply_patch -> bool,
+  undo_backspace -> bool,
   keyboard_layout -> Option<RMLVOConfig>
 );
