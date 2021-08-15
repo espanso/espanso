@@ -90,7 +90,7 @@ impl<'a> espanso_engine::process::MatchFilter for ConfigManager<'a> {
       .filter(|id| is_builtin_match(**id))
       .map(|id| *id)
       .collect();
-    
+
     let mut output = active_user_defined_matches;
     output.extend(builtin_matches);
     output
@@ -158,5 +158,11 @@ impl<'a> super::engine::dispatch::executor::InjectParamsProvider for ConfigManag
 impl<'a> espanso_engine::process::MatcherMiddlewareConfigProvider for ConfigManager<'a> {
   fn max_history_size(&self) -> usize {
     self.default().backspace_limit()
+  }
+}
+
+impl<'a> espanso_engine::process::UndoEnabledProvider for ConfigManager<'a> {
+  fn is_undo_enabled(&self) -> bool {
+    self.active().undo_backspace()
   }
 }
