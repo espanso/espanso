@@ -39,6 +39,7 @@ pub(crate) struct ParsedConfig {
   pub apply_patch: Option<bool>,
   pub search_trigger: Option<String>,
   pub search_shortcut: Option<String>,
+  pub undo_backspace: Option<bool>,
 
   pub pre_paste_delay: Option<usize>,
   pub restore_clipboard_delay: Option<usize>,

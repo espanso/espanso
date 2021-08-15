@@ -88,6 +88,9 @@ pub(crate) struct YAMLConfig {
   #[serde(default)]
   pub search_shortcut: Option<String>,
 
+  #[serde(default)]
+  pub undo_backspace: Option<bool>,
+
   // Include/Exclude
   #[serde(default)]
   pub includes: Option<Vec<String>>,
@@ -163,6 +166,7 @@ impl TryFrom<YAMLConfig> for ParsedConfig {
       }),
       search_trigger: yaml_config.search_trigger,
       search_shortcut: yaml_config.search_shortcut,
+      undo_backspace: yaml_config.undo_backspace,
 
       pre_paste_delay: yaml_config.pre_paste_delay,
       restore_clipboard_delay: yaml_config.restore_clipboard_delay,
@@ -216,6 +220,7 @@ mod tests {
       options: test_options
     search_trigger: "search"
     search_shortcut: "CTRL+SPACE"
+    undo_backspace: false
       
     use_standard_includes: true
     includes: ["test1"]
@@ -261,6 +266,7 @@ mod tests {
         keyboard_layout: Some(keyboard_layout),
         search_trigger: Some("search".to_owned()),
         search_shortcut: Some("CTRL+SPACE".to_owned()),
+        undo_backspace: Some(false),
 
         pre_paste_delay: Some(300),
 

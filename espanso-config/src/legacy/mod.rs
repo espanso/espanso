@@ -366,6 +366,10 @@ impl Config for LegacyInteropConfig {
   fn search_shortcut(&self) -> Option<String> {
     None
   }
+
+  fn undo_backspace(&self) -> bool {
+    self.config.undo_backspace
+  }
 }
 
 struct LegacyMatchGroup {

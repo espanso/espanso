@@ -117,6 +117,10 @@ pub trait Config: Send + Sync {
   // Hotkey used to trigger the Search UI
   fn search_shortcut(&self) -> Option<String>;
 
+  // When enabled, espanso automatically "reverts" an expansion if the user
+  // presses the Backspace key afterwards.
+  fn undo_backspace(&self) -> bool;
+
   fn is_match<'a>(&self, app: &AppProperties<'a>) -> bool;
 
   fn pretty_dump(&self) -> String {
