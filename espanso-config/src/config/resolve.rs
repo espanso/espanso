@@ -290,6 +290,10 @@ impl Config for ResolvedConfig {
       None => Some("ALT+SPACE".to_string()),
     }
   }
+
+  fn undo_backspace(&self) -> bool {
+    self.parsed.undo_backspace.unwrap_or(true)
+  }
 }
 
 impl ResolvedConfig {
@@ -365,6 +369,7 @@ impl ResolvedConfig {
       keyboard_layout,
       search_trigger,
       search_shortcut,
+      undo_backspace,
       includes,
       excludes,
       extra_includes,
