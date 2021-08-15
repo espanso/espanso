@@ -44,6 +44,7 @@ pub use middleware::matcher::{
 pub use middleware::multiplex::Multiplexer;
 pub use middleware::render::{Renderer, RendererError};
 pub use middleware::search::MatchProvider;
+pub use middleware::undo::UndoEnabledProvider;
 
 #[allow(clippy::too_many_arguments)]
 pub fn default<'a, MatcherState>(
@@ -59,6 +60,7 @@ pub fn default<'a, MatcherState>(
   disable_options: DisableOptions,
   matcher_options_provider: &'a dyn MatcherMiddlewareConfigProvider,
   match_provider: &'a dyn MatchProvider,
+  undo_enabled_provider: &'a dyn UndoEnabledProvider,
 ) -> impl Processor + 'a {
   default::DefaultProcessor::new(
     matchers,
@@ -73,5 +75,6 @@ pub fn default<'a, MatcherState>(
     disable_options,
     matcher_options_provider,
     match_provider,
+    undo_enabled_provider,
   )
 }

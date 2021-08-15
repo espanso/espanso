@@ -71,6 +71,7 @@ pub enum EventType {
   ImageResolved(internal::ImageResolvedEvent),
   MatchInjected,
   DiscardPrevious(internal::DiscardPreviousEvent),
+  Undo(internal::UndoEvent),
 
   Disabled,
   Enabled,
