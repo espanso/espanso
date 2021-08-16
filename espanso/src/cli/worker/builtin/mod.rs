@@ -26,6 +26,7 @@ use espanso_engine::event::EventType;
 use super::context::Context;
 
 mod debug;
+mod process;
 mod search;
 
 const MIN_BUILTIN_MATCH_ID: i32 = 1_000_000_000;
@@ -54,6 +55,8 @@ pub fn get_builtin_matches(config: &dyn Config) -> Vec<BuiltInMatch> {
   let mut matches = vec![
     debug::create_match_paste_active_config_info(),
     debug::create_match_paste_active_app_info(),
+    process::create_match_exit(),
+    process::create_match_restart(),
   ];
 
   if config.search_trigger().is_some() || config.search_shortcut().is_some() {
