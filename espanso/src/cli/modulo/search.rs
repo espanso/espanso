@@ -48,7 +48,7 @@ pub fn search_main(matches: &ArgMatches, icon_paths: &IconPaths) -> i32 {
   // Overwrite the icon
   config.icon = icon_paths.logo.as_deref().map(|path| path.to_string_lossy().to_string());
 
-  let algorithm = algorithm::get_algorithm(&config.algorithm);
+  let algorithm = algorithm::get_algorithm(&config.algorithm, true);
 
   let search = generator::generate(config);
   let result = show(search, algorithm);

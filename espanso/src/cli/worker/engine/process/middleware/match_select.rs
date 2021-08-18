@@ -32,6 +32,7 @@ pub struct MatchSummary<'a> {
   pub id: i32,
   pub label: &'a str,
   pub tag: Option<&'a str>,
+  pub is_builtin: bool,
 }
 
 pub struct MatchSelectorAdapter<'a> {
@@ -60,6 +61,7 @@ impl<'a> MatchSelector for MatchSelectorAdapter<'a> {
           id: m.id.to_string(),
           label: clipped_label.to_string(),
           tag: m.tag.map(String::from),
+          is_builtin: m.is_builtin,
         }
       })
       .collect();
