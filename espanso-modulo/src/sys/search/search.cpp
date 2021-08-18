@@ -44,6 +44,8 @@ const int SEARCH_BAR_FONT_SIZE = 20;
 const long DEFAULT_STYLE = wxSTAY_ON_TOP | wxFRAME_TOOL_WINDOW | wxBORDER_NONE;
 #endif
 
+const int HELP_TEXT_FONT_SIZE = 10;
+
 const wxColour SELECTION_LIGHT_BG = wxColour(164, 210, 253);
 const wxColour SELECTION_DARK_BG = wxColour(49, 88, 126);
 
@@ -138,6 +140,7 @@ public:
     wxPanel *panel;
     wxTextCtrl *searchBar;
     wxStaticBitmap *iconPanel;
+    wxStaticText *helpText;
     ResultListBox *resultBox;
     void SetItems(SearchItem *items, int itemSize);
 
@@ -219,6 +222,12 @@ SearchFrame::SearchFrame(const wxString &title, const wxPoint &pos, const wxSize
 
     vbox->Add(topBox, 1, wxEXPAND);
 
+    helpText = new wxStaticText(panel, wxID_ANY, "Search matches by content or trigger (or type > to see commands)");
+    vbox->Add(helpText, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 10);
+    wxFont helpFont = helpText->GetFont();
+    helpFont.SetPointSize(HELP_TEXT_FONT_SIZE);
+    helpText->SetFont(helpFont);
+
     wxArrayString choices;
     int resultId = NewControlId();
     resultBox = new ResultListBox(panel, isDark, resultId, wxDefaultPosition, wxSize(MIN_WIDTH, MIN_HEIGHT));
@@ -299,6 +308,12 @@ void SearchFrame::OnCharEvent(wxKeyEvent &event)
 
 void SearchFrame::OnQueryChange(wxCommandEvent &event)
 {
+    if (helpText != nullptr) {
+        helpText->Destroy();
+        panel->Layout();
+        helpText = nullptr;
+    }
+    
     wxString queryString = searchBar->GetValue();
     const char *query = queryString.ToUTF8();
     queryCallback(query, (void *)this, data);

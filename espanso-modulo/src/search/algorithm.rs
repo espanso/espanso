@@ -17,14 +17,25 @@
  * along with modulo.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use std::collections::HashSet;
+
 use crate::sys::search::types::SearchItem;
 
-pub fn get_algorithm(name: &str) -> Box<dyn Fn(&str, &[SearchItem]) -> Vec<usize>> {
-  match name {
+pub fn get_algorithm(
+  name: &str,
+  use_command_filter: bool,
+) -> Box<dyn Fn(&str, &[SearchItem]) -> Vec<usize>> {
+  let search_algorithm: Box<dyn Fn(&str, &[SearchItem]) -> Vec<usize>> = match name {
     "exact" => Box::new(exact_match),
     "iexact" => Box::new(case_insensitive_exact_match),
     "ikey" => Box::new(case_insensitive_keyword),
     _ => panic!("unknown search algorithm: {}", name),
+  };
+
+  if use_command_filter {
+    command_filter(search_algorithm)
+  } else {
+    search_algorithm
   }
 }
 
@@ -77,4 +88,37 @@ fn case_insensitive_keyword(query: &str, items: &[SearchItem]) -> Vec<usize> {
     })
     .map(|(i, _)| i)
     .collect()
+}
+
+fn command_filter(
+  search_algorithm: Box<dyn Fn(&str, &[SearchItem]) -> Vec<usize>>,
+) -> Box<dyn Fn(&str, &[SearchItem]) -> Vec<usize>> {
+  Box::new(move |query, items| {
+    let (valid_ids, trimmed_query) = if query.starts_with('>') {
+      (
+        items
+            .iter()
+            .enumerate()
+            .filter(|(_, item)| item.is_builtin)
+            .map(|(i, _)| i).collect::<HashSet<usize>>(),
+        query.trim_start_matches('>'),
+      )
+    } else {
+      (
+        items
+            .iter()
+            .enumerate()
+            .filter(|(_, item)| !item.is_builtin)
+            .map(|(i, _)| i).collect::<HashSet<usize>>(),
+        query,
+      )
+    };
+
+    let results = search_algorithm(trimmed_query, &items);
+
+    results
+      .into_iter()
+      .filter(|id| valid_ids.contains(id))
+      .collect()
+  })
 }

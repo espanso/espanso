@@ -28,6 +28,7 @@ pub fn generate(config: SearchConfig) -> types::Search {
       id: item.id,
       label: item.label,
       trigger: item.trigger,
+      is_builtin: item.is_builtin,
     })
     .collect();
 
