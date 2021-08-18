@@ -32,6 +32,7 @@ pub struct SearchItem {
   pub id: String,
   pub label: String,
   pub tag: Option<String>,
+  pub is_builtin: bool,
 }
 
 pub trait FormUI {

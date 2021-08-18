@@ -75,6 +75,7 @@ struct ModuloSearchItemConfig<'a> {
   id: &'a str,
   label: &'a str,
   trigger: Option<&'a str>,
+  is_builtin: bool,
 }
 
 // TODO: test
@@ -83,5 +84,6 @@ fn convert_items<'a>(items: &'a [SearchItem]) -> Vec<ModuloSearchItemConfig<'a>>
     id: &item.id,
     label: &item.label, 
     trigger: item.tag.as_deref(), 
+    is_builtin: item.is_builtin,
   }).collect()
 }
