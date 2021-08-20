@@ -42,7 +42,7 @@ use crate::{cli::worker::{context::Context, engine::{dispatch::executor::{clipbo
           extension::{clipboard::ClipboardAdapter, form::FormProviderAdapter},
           RendererAdapter,
         },
-      }}, match_cache::{CombinedMatchCache, MatchCache}}, common_flags::{WORKER_START_REASON_CONFIG_CHANGED, WORKER_START_REASON_KEYBOARD_LAYOUT_CHANGED, WORKER_START_REASON_MANUAL}, preferences::Preferences};
+      }}, match_cache::{CombinedMatchCache, MatchCache}, ui::notification::NotificationManager}, common_flags::{WORKER_START_REASON_CONFIG_CHANGED, WORKER_START_REASON_KEYBOARD_LAYOUT_CHANGED, WORKER_START_REASON_MANUAL}, preferences::Preferences};
 
 use super::secure_input::SecureInputEvent;
 
@@ -217,19 +217,21 @@ pub fn initialize_and_spawn(
         }
       }
 
-      // TODO: check config
+      let default_config = &*config_manager.default();
+      let notification_manager = NotificationManager::new(&*ui_remote, default_config);
+
       match start_reason.as_deref() {
         Some(flag) if flag == WORKER_START_REASON_CONFIG_CHANGED => {
-          ui_remote.show_notification("Configuration reloaded! Espanso automatically loads new changes as soon as you save them.");
+          notification_manager.notify_config_reloaded(false);
         }
         Some(flag) if flag == WORKER_START_REASON_MANUAL => {
-          ui_remote.show_notification("Configuration reloaded!");
+          notification_manager.notify_config_reloaded(true);
         }
         Some(flag) if flag == WORKER_START_REASON_KEYBOARD_LAYOUT_CHANGED => {
-          ui_remote.show_notification("Updated keyboard layout!");
+          notification_manager.notify_keyboard_layout_reloaded()
         }
         _ => {
-          ui_remote.show_notification("Espanso is running!");
+          notification_manager.notify_start();
           
           if !preferences.has_displayed_welcome() {
             super::ui::welcome::show_welcome_screen();

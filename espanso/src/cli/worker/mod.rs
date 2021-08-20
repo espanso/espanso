@@ -98,13 +98,12 @@ fn worker_main(args: CliModuleArgs) -> i32 {
     crate::icon::load_icon_paths(&paths.runtime).expect("unable to initialize icons");
 
   let (remote, mut eventloop) = espanso_ui::create_ui(espanso_ui::UIOptions {
-    // TODO: handle show icon
+    show_icon: config_store.default().show_icon(),
     icon_paths: convert_icon_paths_to_tray_vec(&icon_paths),
     notification_icon_path: icon_paths
       .logo
       .as_ref()
       .map(|path| path.to_string_lossy().to_string()),
-    ..Default::default()
   })
   .expect("unable to create tray icon UI module");
 
