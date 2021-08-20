@@ -121,6 +121,16 @@ pub trait Config: Send + Sync {
   // presses the Backspace key afterwards.
   fn undo_backspace(&self) -> bool;
 
+  // If false, disable all notifications
+  fn show_notifications(&self) -> bool;
+
+  // If false, avoid showing the espanso icon on the system's tray bar
+  // Note: currently not working on Linux
+  fn show_icon(&self) -> bool;
+
+  // If false, avoid showing the SecureInput notification on macOS
+  fn secure_input_notification(&self) -> bool;
+
   fn is_match<'a>(&self, app: &AppProperties<'a>) -> bool;
 
   fn pretty_dump(&self) -> String {
