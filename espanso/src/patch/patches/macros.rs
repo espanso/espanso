@@ -82,6 +82,18 @@ macro_rules! generate_patchable_config {
         fn search_shortcut(&self) -> Option<String> {
           self.base.search_shortcut()
         }
+
+        fn show_icon(&self) -> bool {
+          self.base.show_icon()
+        }
+
+        fn show_notifications(&self) -> bool {
+          self.base.show_notifications()
+        }
+
+        fn secure_input_notification(&self) -> bool {
+          self.base.secure_input_notification()
+        }
       }
   };
 }
