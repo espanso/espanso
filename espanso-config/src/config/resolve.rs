@@ -294,6 +294,18 @@ impl Config for ResolvedConfig {
   fn undo_backspace(&self) -> bool {
     self.parsed.undo_backspace.unwrap_or(true)
   }
+
+  fn show_icon(&self) -> bool {
+    self.parsed.show_icon.unwrap_or(true)
+  }
+
+  fn show_notifications(&self) -> bool {
+    self.parsed.show_notifications.unwrap_or(true)
+  }
+
+  fn secure_input_notification(&self) -> bool {
+    self.parsed.secure_input_notification.unwrap_or(true)
+  }
 }
 
 impl ResolvedConfig {
@@ -370,6 +382,9 @@ impl ResolvedConfig {
       search_trigger,
       search_shortcut,
       undo_backspace,
+      show_icon,
+      show_notifications,
+      secure_input_notification,
       includes,
       excludes,
       extra_includes,

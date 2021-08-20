@@ -370,6 +370,18 @@ impl Config for LegacyInteropConfig {
   fn undo_backspace(&self) -> bool {
     self.config.undo_backspace
   }
+
+  fn show_icon(&self) -> bool {
+    self.config.show_icon
+  }
+
+  fn show_notifications(&self) -> bool {
+    self.config.show_notifications
+  }
+
+  fn secure_input_notification(&self) -> bool {
+    self.config.secure_input_notification
+  }
 }
 
 struct LegacyMatchGroup {
