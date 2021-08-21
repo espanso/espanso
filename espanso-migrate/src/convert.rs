@@ -131,22 +131,35 @@ pub fn convert(input_files: HashMap<String, Hash>) -> HashMap<String, ConvertedF
           _ => None,
         },
       );
-      copy_field_if_present(yaml, "secure_input_watcher_enabled", &mut output_yaml, "secure_input_watcher_enabled");
-      copy_field_if_present(yaml, "secure_input_watcher_interval", &mut output_yaml, "secure_input_watcher_interval");
+      //copy_field_if_present(yaml, "secure_input_watcher_enabled", &mut output_yaml, "secure_input_watcher_enabled");
+      //copy_field_if_present(yaml, "secure_input_watcher_interval", &mut output_yaml, "secure_input_watcher_interval");
+      //copy_field_if_present(yaml, "config_caching_interval", &mut output_yaml, "config_caching_interval");
+      //copy_field_if_present(yaml, "use_system_agent", &mut output_yaml, "use_system_agent");
+
       copy_field_if_present(yaml, "secure_input_notification", &mut output_yaml, "secure_input_notification");
-      copy_field_if_present(yaml, "config_caching_interval", &mut output_yaml, "config_caching_interval");
       copy_field_if_present(yaml, "toggle_interval", &mut output_yaml, "toggle_interval");
       copy_field_if_present(yaml, "toggle_key", &mut output_yaml, "toggle_key");
       copy_field_if_present(yaml, "preserve_clipboard", &mut output_yaml, "preserve_clipboard");
       copy_field_if_present(yaml, "backspace_limit", &mut output_yaml, "backspace_limit");
-      copy_field_if_present(yaml, "fast_inject", &mut output_yaml, "x11_fast_inject");
+      map_field_if_present(
+        yaml,
+        "fast_inject",
+        &mut output_yaml,
+        "disable_x11_fast_inject",
+        |val| match val {
+          Yaml::Boolean(false) => Some(Yaml::Boolean(true)),
+          Yaml::Boolean(true) => Some(Yaml::Boolean(false)),
+          _ => None,
+        },
+      );
+
       copy_field_if_present(yaml, "auto_restart", &mut output_yaml, "auto_restart");
       copy_field_if_present(yaml, "undo_backspace", &mut output_yaml, "undo_backspace");
       copy_field_if_present(yaml, "show_icon", &mut output_yaml, "show_icon");
       copy_field_if_present(yaml, "show_notifications", &mut output_yaml, "show_notifications");
       copy_field_if_present(yaml, "inject_delay", &mut output_yaml, "inject_delay");
       copy_field_if_present(yaml, "restore_clipboard_delay", &mut output_yaml, "restore_clipboard_delay");
-      copy_field_if_present(yaml, "use_system_agent", &mut output_yaml, "use_system_agent");
+      copy_field_if_present(yaml, "backspace_delay", &mut output_yaml, "key_delay");
       copy_field_if_present(yaml, "word_separators", &mut output_yaml, "word_separators");
 
       if yaml.get(&Yaml::String("enable_passive".to_string())).is_some() {

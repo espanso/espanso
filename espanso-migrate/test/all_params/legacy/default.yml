@@ -9,6 +9,7 @@ backspace_limit: 5
 
 inject_delay: 10
 restore_clipboard_delay: 400
+backspace_delay: 300
 
 secure_input_watcher_enabled: false
 secure_input_notification: false
