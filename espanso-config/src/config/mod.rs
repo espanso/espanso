@@ -39,7 +39,20 @@ pub trait Config: Send + Sync {
   fn id(&self) -> i32;
   fn label(&self) -> &str;
   fn match_paths(&self) -> &[String];
+
+  // The mechanism used to perform the injection. Espanso can either
+  // inject text by simulating keypresses (Inject backend) or
+  // by using the clipboard (Clipboard backend). Both of them have pros
+  // and cons, so the "Auto" backend is used by default to automatically
+  // choose the most appropriate one based on the situation.
+  // If for whatever reason the Auto backend is not appropriate, you
+  // can change this option to override it.
   fn backend(&self) -> Backend;
+
+  // If false, espanso will be disabled for the current configuration.
+  // This option can be used to selectively disable espanso when
+  // using a specific application (by creating an app-specific config).
+  fn enable(&self) -> bool;
 
   // Number of chars after which a match is injected with the clipboard
   // backend instead of the default one. This is done for efficiency

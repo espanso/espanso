@@ -28,6 +28,7 @@ pub(crate) struct ParsedConfig {
   pub label: Option<String>,
 
   pub backend: Option<String>,
+  pub enable: Option<bool>,
   pub clipboard_threshold: Option<usize>,
   pub auto_restart: Option<bool>,
   pub preserve_clipboard: Option<bool>,

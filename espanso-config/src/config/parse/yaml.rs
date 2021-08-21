@@ -35,6 +35,9 @@ pub(crate) struct YAMLConfig {
   pub backend: Option<String>,
 
   #[serde(default)]
+  pub enable: Option<bool>,
+
+  #[serde(default)]
   pub clipboard_threshold: Option<usize>,
 
   #[serde(default)]
@@ -150,6 +153,7 @@ impl TryFrom<YAMLConfig> for ParsedConfig {
     Ok(Self {
       label: yaml_config.label,
       backend: yaml_config.backend,
+      enable: yaml_config.enable,
       clipboard_threshold: yaml_config.clipboard_threshold,
       auto_restart: yaml_config.auto_restart,
       toggle_key: yaml_config.toggle_key,
@@ -210,6 +214,7 @@ mod tests {
       r#"
     label: "test"
     backend: clipboard
+    enable: false
     clipboard_threshold: 200
     pre_paste_delay: 300
     toggle_key: CTRL
@@ -268,6 +273,7 @@ mod tests {
         label: Some("test".to_string()),
 
         backend: Some("clipboard".to_string()),
+        enable: Some(false),
         clipboard_threshold: Some(200),
         auto_restart: Some(false),
         preserve_clipboard: Some(false),
