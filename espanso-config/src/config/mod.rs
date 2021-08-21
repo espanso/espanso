@@ -151,6 +151,7 @@ pub trait Config: Send + Sync {
         [espanso config: {:?}]
 
         backend: {:?}
+        enable: {:?}
         paste_shortcut: {:?}
         inject_delay: {:?}
         key_delay: {:?}
@@ -166,11 +167,19 @@ pub trait Config: Send + Sync {
         auto_restart: {:?}
         restore_clipboard_delay: {:?} 
         backspace_limit: {}
+        search_trigger: {:?}
+        search_shortcut: {:?}
+        keyboard_layout: {:?}
+
+        show_icon: {:?}
+        show_notifications: {:?}
+        secure_input_notification: {:?}
 
         match_paths: {:#?}
       ", 
       self.label(),
       self.backend(),
+      self.enable(),
       self.paste_shortcut(),
       self.inject_delay(),
       self.key_delay(),
@@ -186,6 +195,13 @@ pub trait Config: Send + Sync {
       self.auto_restart(),
       self.restore_clipboard_delay(),
       self.backspace_limit(),
+      self.search_trigger(),
+      self.search_shortcut(),
+      self.keyboard_layout(),
+
+      self.show_icon(),
+      self.show_notifications(),
+      self.secure_input_notification(),
 
       self.match_paths(),
     }
