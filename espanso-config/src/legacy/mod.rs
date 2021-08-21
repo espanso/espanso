@@ -382,6 +382,10 @@ impl Config for LegacyInteropConfig {
   fn secure_input_notification(&self) -> bool {
     self.config.secure_input_notification
   }
+
+  fn enable(&self) -> bool {
+    self.config.enable_active
+  }
 }
 
 struct LegacyMatchGroup {

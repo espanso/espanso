@@ -158,6 +158,10 @@ impl Config for ResolvedConfig {
       }
     }
   }
+  
+  fn enable(&self) -> bool {
+    self.parsed.enable.unwrap_or(true)
+  }
 
   fn clipboard_threshold(&self) -> usize {
     self
@@ -364,6 +368,7 @@ impl ResolvedConfig {
       // Fields
       label,
       backend,
+      enable,
       clipboard_threshold,
       auto_restart,
       pre_paste_delay,
