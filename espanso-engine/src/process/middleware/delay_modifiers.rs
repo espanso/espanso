@@ -78,6 +78,9 @@ fn is_injection_event(event_type: &EventType) -> bool {
       | EventType::CursorHintCompensation(_)
       | EventType::KeySequenceInject(_)
       | EventType::TextInject(_)
+      | EventType::ImageInject(_)
+      | EventType::HtmlInject(_)
+      | EventType::MarkdownInject(_)
   )
 }
 
