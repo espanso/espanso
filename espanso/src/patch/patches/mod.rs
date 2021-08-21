@@ -31,6 +31,7 @@ mod macros;
 generate_patchable_config!(
   PatchedConfig,
   backend -> Backend,
+  enable -> bool,
   clipboard_threshold -> usize,
   pre_paste_delay -> usize,
   paste_shortcut_event_delay -> usize,
