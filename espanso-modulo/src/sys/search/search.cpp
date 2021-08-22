@@ -398,13 +398,13 @@ void SearchFrame::SetItems(SearchItem *items, int itemSize)
 
     for (int i = 0; i < itemSize; i++)
     {
-        wxString item = items[i].label;
+        wxString item = wxString::FromUTF8(items[i].label);
         wxItems.Add(item);
 
-        wxString id = items[i].id;
+        wxString id = wxString::FromUTF8(items[i].id);
         wxIds.Add(id);
 
-        wxString trigger = items[i].trigger;
+        wxString trigger = wxString::FromUTF8(items[i].trigger);
         wxTriggers.Add(trigger);
     }
 
