@@ -386,6 +386,10 @@ impl Config for LegacyInteropConfig {
   fn enable(&self) -> bool {
     self.config.enable_active
   }
+
+  fn win32_exclude_orphan_events(&self) -> bool {
+    true
+  }
 }
 
 struct LegacyMatchGroup {

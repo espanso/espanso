@@ -103,6 +103,9 @@ pub(crate) struct YAMLConfig {
   #[serde(default)]
   pub secure_input_notification: Option<bool>,
 
+  #[serde(default)]
+  pub win32_exclude_orphan_events: Option<bool>,
+
   // Include/Exclude
   #[serde(default)]
   pub includes: Option<Vec<String>>,
@@ -189,6 +192,8 @@ impl TryFrom<YAMLConfig> for ParsedConfig {
       restore_clipboard_delay: yaml_config.restore_clipboard_delay,
       paste_shortcut_event_delay: yaml_config.paste_shortcut_event_delay,
 
+      win32_exclude_orphan_events: yaml_config.win32_exclude_orphan_events,
+
       use_standard_includes: yaml_config.use_standard_includes,
       includes: yaml_config.includes,
       extra_includes: yaml_config.extra_includes,
@@ -242,6 +247,7 @@ mod tests {
     show_icon: false
     show_notifications: false
     secure_input_notification: false
+    win32_exclude_orphan_events: false
       
     use_standard_includes: true
     includes: ["test1"]
@@ -292,6 +298,7 @@ mod tests {
         show_icon: Some(false),
         show_notifications: Some(false),
         secure_input_notification: Some(false),
+        win32_exclude_orphan_events: Some(false),
 
         pre_paste_delay: Some(300),
 

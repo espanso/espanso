@@ -310,6 +310,10 @@ impl Config for ResolvedConfig {
   fn secure_input_notification(&self) -> bool {
     self.parsed.secure_input_notification.unwrap_or(true)
   }
+
+  fn win32_exclude_orphan_events(&self) -> bool {
+    self.parsed.win32_exclude_orphan_events.unwrap_or(true)
+  }
 }
 
 impl ResolvedConfig {
@@ -390,6 +394,7 @@ impl ResolvedConfig {
       show_icon,
       show_notifications,
       secure_input_notification,
+      win32_exclude_orphan_events,
       includes,
       excludes,
       extra_includes,
