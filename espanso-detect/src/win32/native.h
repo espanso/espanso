@@ -60,6 +60,12 @@ typedef struct {
 
   // Pressed or Released status
   int32_t status;
+
+  // Only relevant for keyboard events, this is set to 1
+  // if a keyboard event has an explicit source, 0 otherwise.
+  // This is needed to filter out software generated events,
+  // including those from espanso.
+  int32_t has_known_source;
 } InputEvent;
 
 typedef struct {
