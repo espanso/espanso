@@ -166,3 +166,9 @@ impl<'a> espanso_engine::process::UndoEnabledProvider for ConfigManager<'a> {
     self.active().undo_backspace()
   }
 }
+
+impl<'a> espanso_engine::process::EnabledStatusProvider for ConfigManager<'a> {
+  fn is_config_enabled(&self) -> bool {
+    self.active().enable()
+  }
+}
