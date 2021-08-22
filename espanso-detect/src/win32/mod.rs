@@ -64,6 +64,12 @@ pub struct RawInputEvent {
   pub key_code: i32,
   pub variant: i32,
   pub status: i32,
+
+  // Only relevant for keyboard events, this is set to 1
+  // if a keyboard event has an explicit source, 0 otherwise.
+  // This is needed to filter out software generated events,
+  // including those from espanso.
+  pub has_known_source: i32,
 }
 
 #[repr(C)]
@@ -91,15 +97,18 @@ pub struct Win32Source {
   handle: *mut c_void,
   callback: LazyCell<SourceCallback>,
   hotkeys: Vec<HotKey>,
+
+  exclude_orphan_events: bool,
 }
 
 #[allow(clippy::new_without_default)]
 impl Win32Source {
-  pub fn new(hotkeys: &[HotKey]) -> Win32Source {
+  pub fn new(hotkeys: &[HotKey], exclude_orphan_events: bool) -> Win32Source {
     Self {
       handle: std::ptr::null_mut(),
       callback: LazyCell::new(),
       hotkeys: hotkeys.to_vec(),
+      exclude_orphan_events,
     }
   }
 }
@@ -148,6 +157,16 @@ impl Source for Win32Source {
     }
 
     extern "C" fn callback(_self: *mut Win32Source, event: RawInputEvent) {
+      // Filter out keyboard events without an explicit HID device source.
+      // This is needed to filter out the software-generated events, including 
+      // those from espanso.
+      if event.event_type == INPUT_EVENT_TYPE_KEYBOARD && event.has_known_source == 0 {
+        if unsafe { (*_self).exclude_orphan_events } {
+          trace!("skipping keyboard event with unknown HID source (probably software generated).");
+          return;
+        }
+      }
+
       let event: Option<InputEvent> = event.into();
       if let Some(callback) = unsafe { (*_self).callback.borrow() } {
         if let Some(event) = event {
@@ -391,6 +410,7 @@ mod tests {
       key_code: 0,
       variant: INPUT_LEFT_VARIANT,
       status: INPUT_STATUS_PRESSED,
+      has_known_source: 1,
     }
   }
 
@@ -459,6 +479,7 @@ mod tests {
       key_code: 123,
       variant: INPUT_LEFT_VARIANT,
       status: INPUT_STATUS_PRESSED,
+      has_known_source: 1,
     }
     .into();
     assert!(result.is_none());

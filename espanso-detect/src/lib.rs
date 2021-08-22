@@ -60,6 +60,12 @@ pub struct SourceCreationOptions {
   // List of global hotkeys the detection module has to register
   // NOTE: Hotkeys don't work under the EVDEV backend yet (Wayland)
   pub hotkeys: Vec<HotKey>,
+
+  // If true, filter out keyboard events without an explicit HID device source on Windows.
+  // This is needed to filter out the software-generated events, including
+  // those from espanso, but might need to be disabled when using some software-level keyboards.
+  // Disabling this option might conflict with the undo feature.
+  pub win32_exclude_orphan_events: bool,
 }
 
 // This struct identifies the keyboard layout that
@@ -80,6 +86,7 @@ impl Default for SourceCreationOptions {
       use_evdev: false,
       evdev_keyboard_rmlvo: None,
       hotkeys: Vec::new(),
+      win32_exclude_orphan_events: true,
     }
   }
 }
@@ -87,7 +94,7 @@ impl Default for SourceCreationOptions {
 #[cfg(target_os = "windows")]
 pub fn get_source(options: SourceCreationOptions) -> Result<Box<dyn Source>> {
   info!("using Win32Source");
-  Ok(Box::new(win32::Win32Source::new(&options.hotkeys)))
+  Ok(Box::new(win32::Win32Source::new(&options.hotkeys, options.win32_exclude_orphan_events)))
 }
 
 #[cfg(target_os = "macos")]

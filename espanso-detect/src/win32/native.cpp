@@ -121,6 +121,8 @@ LRESULT CALLBACK detect_window_procedure(HWND window, unsigned int msg, WPARAM w
         return 0;
       }
 
+      event.has_known_source = (raw->header.hDevice == 0) ? 0 : 1;
+
       // The alt key sends a SYSKEYDOWN instead of KEYDOWN event
       int is_key_down = raw->data.keyboard.Message == WM_KEYDOWN ||
                         raw->data.keyboard.Message == WM_SYSKEYDOWN;
