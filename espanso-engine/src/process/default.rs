@@ -19,7 +19,7 @@
 
 use log::trace;
 
-use super::{DisableOptions, MatchFilter, MatchInfoProvider, MatchProvider, MatchSelector, Matcher, MatcherMiddlewareConfigProvider, Middleware, Multiplexer, PathProvider, Processor, Renderer, UndoEnabledProvider, middleware::{
+use super::{DisableOptions, EnabledStatusProvider, MatchFilter, MatchInfoProvider, MatchProvider, MatchSelector, Matcher, MatcherMiddlewareConfigProvider, Middleware, Multiplexer, PathProvider, Processor, Renderer, UndoEnabledProvider, middleware::{
     action::{ActionMiddleware, EventSequenceProvider},
     cause::CauseCompensateMiddleware,
     cursor_hint::CursorHintMiddleware,
@@ -31,7 +31,7 @@ use super::{DisableOptions, MatchFilter, MatchInfoProvider, MatchProvider, Match
     past_discard::PastEventsDiscardMiddleware,
     render::RenderMiddleware,
   }};
-use crate::{event::{Event, EventType}, process::middleware::{context_menu::ContextMenuMiddleware, disable::DisableMiddleware, exit::ExitMiddleware, hotkey::HotKeyMiddleware, icon_status::IconStatusMiddleware, image_resolve::ImageResolverMiddleware, search::SearchMiddleware, undo::UndoMiddleware}};
+use crate::{event::{Event, EventType}, process::middleware::{context_menu::ContextMenuMiddleware, disable::DisableMiddleware, exit::ExitMiddleware, hotkey::HotKeyMiddleware, icon_status::IconStatusMiddleware, image_resolve::ImageResolverMiddleware, search::SearchMiddleware, suppress::SuppressMiddleware, undo::UndoMiddleware}};
 use std::collections::VecDeque;
 
 pub struct DefaultProcessor<'a> {
@@ -55,6 +55,7 @@ impl<'a> DefaultProcessor<'a> {
     matcher_options_provider: &'a dyn MatcherMiddlewareConfigProvider,
     match_provider: &'a dyn MatchProvider,
     undo_enabled_provider: &'a dyn UndoEnabledProvider,
+    enabled_status_provider: &'a dyn EnabledStatusProvider,
   ) -> DefaultProcessor<'a> {
     Self {
       event_queue: VecDeque::new(),
@@ -63,6 +64,7 @@ impl<'a> DefaultProcessor<'a> {
         Box::new(DisableMiddleware::new(disable_options)),
         Box::new(IconStatusMiddleware::new()),
         Box::new(MatcherMiddleware::new(matchers, matcher_options_provider)),
+        Box::new(SuppressMiddleware::new(enabled_status_provider)),
         Box::new(ContextMenuMiddleware::new()),
         Box::new(HotKeyMiddleware::new()),
         Box::new(MatchSelectMiddleware::new(match_filter, match_selector)),

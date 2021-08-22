@@ -34,4 +34,5 @@ pub mod multiplex;
 pub mod past_discard;
 pub mod render;
 pub mod search;
+pub mod suppress;
 pub mod undo;
