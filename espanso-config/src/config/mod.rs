@@ -144,6 +144,12 @@ pub trait Config: Send + Sync {
   // If false, avoid showing the SecureInput notification on macOS
   fn secure_input_notification(&self) -> bool;
 
+  // If true, filter out keyboard events without an explicit HID device source on Windows.
+  // This is needed to filter out the software-generated events, including
+  // those from espanso, but might need to be disabled when using some software-level keyboards.
+  // Disabling this option might conflict with the undo feature.
+  fn win32_exclude_orphan_events(&self) -> bool;
+
   fn is_match<'a>(&self, app: &AppProperties<'a>) -> bool;
 
   fn pretty_dump(&self) -> String {

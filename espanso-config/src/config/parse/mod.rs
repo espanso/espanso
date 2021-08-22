@@ -44,6 +44,7 @@ pub(crate) struct ParsedConfig {
   pub show_notifications: Option<bool>,
   pub show_icon: Option<bool>,
   pub secure_input_notification: Option<bool>,
+  pub win32_exclude_orphan_events: Option<bool>,
 
   pub pre_paste_delay: Option<usize>,
   pub restore_clipboard_delay: Option<usize>,
