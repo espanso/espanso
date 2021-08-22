@@ -77,6 +77,7 @@ pub fn initialize_and_spawn(
       let config_manager =
         super::config::ConfigManager::new(&*config_store, &*match_store, &cached_app_info_provider);
       let match_cache = MatchCache::load(&*config_store, &*match_store);
+      let default_config = &*config_manager.default();
 
       let modulo_manager = crate::gui::modulo::manager::ModuloManager::new();
       let modulo_form_ui = crate::gui::modulo::form::ModuloFormUI::new(&modulo_manager);
@@ -96,6 +97,7 @@ pub fn initialize_and_spawn(
           use_evdev: use_evdev_backend,
           evdev_keyboard_rmlvo: keyboard_layout_util::generate_detect_rmlvo(&*config_manager.default()),
           hotkeys: match_converter.get_hotkeys(),
+          win32_exclude_orphan_events: default_config.win32_exclude_orphan_events(),
         })
         .expect("failed to initialize detector module");
       let exit_source = super::engine::funnel::exit::ExitSource::new(exit_signal, &sequencer);
@@ -218,7 +220,6 @@ pub fn initialize_and_spawn(
         }
       }
 
-      let default_config = &*config_manager.default();
       let notification_manager = NotificationManager::new(&*ui_remote, default_config);
 
       match start_reason.as_deref() {

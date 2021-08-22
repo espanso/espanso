@@ -47,5 +47,6 @@ generate_patchable_config!(
   backspace_limit -> usize,
   apply_patch -> bool,
   undo_backspace -> bool,
+  win32_exclude_orphan_events -> bool,
   keyboard_layout -> Option<RMLVOConfig>
 );
