@@ -1268,7 +1268,7 @@
                                     </object>
                                     <object class="sizeritem" expanded="1">
                                         <property name="border">10</property>
-                                        <property name="flag">wxLEFT|wxRIGHT|wxTOP</property>
+                                        <property name="flag">wxEXPAND|wxLEFT|wxRIGHT|wxTOP</property>
                                         <property name="proportion">0</property>
                                         <object class="wxStaticText" expanded="1">
                                             <property name="BottomDockable">1</property>
@@ -1298,7 +1298,7 @@
                                             <property name="gripper">0</property>
                                             <property name="hidden">0</property>
                                             <property name="id">wxID_ANY</property>
-                                            <property name="label">This version of espanso was compiled to support X11-based systems, but it seems you are on a Wayland-based desktop environment.&#x0A;&#x0A;Unfortunately, the two versions are incompatible. To use espanso, please download the Wayland version from the website.&#x0A;&#x0A;For more information:</property>
+                                            <property name="label">This version of espanso was compiled to support X11-based systems, but it seems you are on a Wayland-based desktop environment.&#x0A;&#x0A;Unfortunately, the two versions are incompatible. To use espanso, either switch to an X11-based environment or download the Wayland version from the website.&#x0A;&#x0A;For more information:</property>
                                             <property name="markup">0</property>
                                             <property name="max_size"></property>
                                             <property name="maximize_button">0</property>
@@ -1329,7 +1329,7 @@
                                     </object>
                                     <object class="sizeritem" expanded="1">
                                         <property name="border">10</property>
-                                        <property name="flag">wxLEFT|wxRIGHT|wxTOP</property>
+                                        <property name="flag">wxEXPAND|wxLEFT|wxTOP</property>
                                         <property name="proportion">0</property>
                                         <object class="wxStaticText" expanded="1">
                                             <property name="BottomDockable">1</property>
@@ -1359,7 +1359,7 @@
                                             <property name="gripper">0</property>
                                             <property name="hidden">0</property>
                                             <property name="id">wxID_ANY</property>
-                                            <property name="label">This version of espanso was compiled to support Wayland-based systems, but it seems you are on a X11-based desktop environment.&#x0A;&#x0A;Unfortunately, the two versions are incompatible. To use espanso, please download the X11 version from the website.&#x0A;&#x0A;For more information:</property>
+                                            <property name="label">This version of espanso was compiled to support Wayland-based systems, but it seems you are on a X11-based desktop environment.&#x0A;&#x0A;Unfortunately, the two versions are incompatible. To use espanso, either switch to a Wayland-based environment or download the X11 version from the website.&#x0A;&#x0A;For more information:</property>
                                             <property name="markup">0</property>
                                             <property name="max_size"></property>
                                             <property name="maximize_button">0</property>
