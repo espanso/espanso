@@ -27,7 +27,7 @@ pub trait MatchFilter {
 }
 
 pub trait MatchSelector {
-  fn select(&self, matches_ids: &[i32]) -> Option<i32>;
+  fn select(&self, matches_ids: &[i32], is_search: bool) -> Option<i32>;
 }
 
 pub struct MatchSelectMiddleware<'a> {
@@ -76,7 +76,7 @@ impl<'a> Middleware for MatchSelectMiddleware<'a> {
         }
         _ => {
           // Multiple matches, we need to ask the user which one to use
-          if let Some(selected_id) = self.match_selector.select(&valid_ids) {
+          if let Some(selected_id) = self.match_selector.select(&valid_ids, m_event.is_search) {
             let m = m_event.matches.into_iter().find(|m| m.id == selected_id);
             if let Some(m) = m {
               Event::caused_by(

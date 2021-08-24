@@ -143,6 +143,7 @@ impl<'a, State> Middleware for MatcherMiddleware<'a, State> {
                   args: result.args,
                 })
                 .collect(),
+              is_search: false,
             }),
           );
         }

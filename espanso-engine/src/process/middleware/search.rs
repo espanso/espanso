@@ -61,6 +61,7 @@ impl<'a> Middleware for SearchMiddleware<'a> {
               args: HashMap::new(),
             })
             .collect(),
+          is_search: true,
         }),
       );
       dispatch(detected_matches);

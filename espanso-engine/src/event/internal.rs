@@ -22,6 +22,7 @@ use std::collections::HashMap;
 #[derive(Debug, Clone, PartialEq)]
 pub struct MatchesDetectedEvent {
   pub matches: Vec<DetectedMatch>,
+  pub is_search: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Default)]
