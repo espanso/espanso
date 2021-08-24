@@ -97,12 +97,17 @@ const int MIGRATE_RESULT_CLEAN_FAILURE = 1;
 const int MIGRATE_RESULT_DIRTY_FAILURE = 2;
 const int MIGRATE_RESULT_UNKNOWN_FAILURE = 3;
 
+const int DETECTED_OS_UNKNOWN = 0;
+const int DETECTED_OS_X11 = 1;
+const int DETECTED_OS_WAYLAND = 2;
+
 typedef struct WizardMetadata {
   const char *version;
 
   const int is_welcome_page_enabled; 
   const int is_move_bundle_page_enabled; 
   const int is_legacy_version_page_enabled; 
+  const int is_wrong_edition_page_enabled; 
   const int is_migrate_page_enabled; 
   const int is_add_path_page_enabled; 
   const int is_accessibility_page_enabled; 
@@ -111,6 +116,7 @@ typedef struct WizardMetadata {
   const char *welcome_image_path;
   const char *accessibility_image_1_path;
   const char *accessibility_image_2_path;
+  const int detected_os;
 
   // METHODS
   int (*is_legacy_version_running)();

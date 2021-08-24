@@ -20,8 +20,17 @@
 use std::os::raw::{c_char, c_int};
 use std::{ffi::CString, sync::Mutex};
 
+use crate::sys::interop::{
+  WIZARD_DETECTED_OS_UNKNOWN, WIZARD_DETECTED_OS_WAYLAND, WIZARD_DETECTED_OS_X11,
+};
 use crate::sys::util::convert_to_cstring_or_null;
-use crate::{sys::interop::{WIZARD_MIGRATE_RESULT_CLEAN_FAILURE, WIZARD_MIGRATE_RESULT_DIRTY_FAILURE, WIZARD_MIGRATE_RESULT_SUCCESS, WIZARD_MIGRATE_RESULT_UNKNOWN_FAILURE, WizardMetadata}, wizard::{WizardHandlers, WizardOptions}};
+use crate::{
+  sys::interop::{
+    WizardMetadata, WIZARD_MIGRATE_RESULT_CLEAN_FAILURE, WIZARD_MIGRATE_RESULT_DIRTY_FAILURE,
+    WIZARD_MIGRATE_RESULT_SUCCESS, WIZARD_MIGRATE_RESULT_UNKNOWN_FAILURE,
+  },
+  wizard::{WizardHandlers, WizardOptions},
+};
 
 lazy_static! {
   static ref HANDLERS: Mutex<Option<WizardHandlers>> = Mutex::new(None);
@@ -126,7 +135,7 @@ pub fn show(options: WizardOptions) -> bool {
       (*handler_ref)()
     }
   }
-  
+
   {
     let mut lock = HANDLERS.lock().expect("unable to acquire handlers lock");
     *lock = Some(options.handlers)
@@ -146,6 +155,11 @@ pub fn show(options: WizardOptions) -> bool {
       0
     },
     is_legacy_version_page_enabled: if options.is_legacy_version_page_enabled {
+      1
+    } else {
+      0
+    },
+    is_wrong_edition_page_enabled: if options.is_wrong_edition_page_enabled {
       1
     } else {
       0
@@ -170,6 +184,11 @@ pub fn show(options: WizardOptions) -> bool {
     welcome_image_path: c_welcome_image_path_ptr,
     accessibility_image_1_path: c_accessibility_image_1_path_ptr,
     accessibility_image_2_path: c_accessibility_image_2_path_ptr,
+    detected_os: match options.detected_os {
+      crate::wizard::DetectedOS::Unknown => WIZARD_DETECTED_OS_UNKNOWN,
+      crate::wizard::DetectedOS::X11 => WIZARD_DETECTED_OS_X11,
+      crate::wizard::DetectedOS::Wayland => WIZARD_DETECTED_OS_WAYLAND,
+    },
 
     is_legacy_version_running,
     backup_and_migrate,
@@ -179,9 +198,11 @@ pub fn show(options: WizardOptions) -> bool {
     on_completed,
   };
 
-  let successful = unsafe {
-    super::interop::interop_show_wizard(&wizard_metadata)
-  };
+  let successful = unsafe { super::interop::interop_show_wizard(&wizard_metadata) };
 
-  if successful == 1 { true } else { false }
+  if successful == 1 {
+    true
+  } else {
+    false
+  }
 }

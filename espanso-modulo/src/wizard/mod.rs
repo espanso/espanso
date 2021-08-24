@@ -25,6 +25,7 @@ pub struct WizardOptions {
   pub is_welcome_page_enabled: bool,
   pub is_move_bundle_page_enabled: bool,
   pub is_legacy_version_page_enabled: bool,
+  pub is_wrong_edition_page_enabled: bool,
   pub is_migrate_page_enabled: bool,
   pub is_add_path_page_enabled: bool,
   pub is_accessibility_page_enabled: bool,
@@ -33,6 +34,7 @@ pub struct WizardOptions {
   pub welcome_image_path: Option<String>,
   pub accessibility_image_1_path: Option<String>,
   pub accessibility_image_2_path: Option<String>,
+  pub detected_os: DetectedOS,
 
   pub handlers: WizardHandlers,
 }
@@ -52,4 +54,11 @@ pub enum MigrationResult {
   CleanFailure,
   DirtyFailure,
   UnknownFailure,
+}
+
+#[derive(Debug)]
+pub enum DetectedOS {
+  Unknown,
+  X11,
+  Wayland,
 }

@@ -30,7 +30,8 @@
 const int WELCOME_PAGE_INDEX = 0;
 const int MOVE_BUNDLE_PAGE_INDEX = WELCOME_PAGE_INDEX + 1;
 const int LEGACY_VERSION_PAGE_INDEX = MOVE_BUNDLE_PAGE_INDEX + 1;
-const int MIGRATE_PAGE_INDEX = LEGACY_VERSION_PAGE_INDEX + 1;
+const int WRONG_EDITION_PAGE_INDEX = LEGACY_VERSION_PAGE_INDEX + 1;
+const int MIGRATE_PAGE_INDEX = WRONG_EDITION_PAGE_INDEX + 1;
 const int ADD_PATH_PAGE_INDEX = MIGRATE_PAGE_INDEX + 1;
 const int ACCESSIBILITY_PAGE_INDEX = ADD_PATH_PAGE_INDEX + 1;
 const int MAX_PAGE_INDEX = ACCESSIBILITY_PAGE_INDEX + 1; // Update if a new page is added at the end
@@ -71,6 +72,11 @@ int find_next_page(int current_index)
     {
       return LEGACY_VERSION_PAGE_INDEX;
     }
+  case WRONG_EDITION_PAGE_INDEX:
+    if (wizard_metadata->is_wrong_edition_page_enabled)
+    {
+      return WRONG_EDITION_PAGE_INDEX;
+    }
   case MIGRATE_PAGE_INDEX:
     if (wizard_metadata->is_migrate_page_enabled)
     {
@@ -101,6 +107,7 @@ protected:
   void migrate_compatibility_mode_clicked(wxCommandEvent &event);
 	void add_path_continue_clicked( wxCommandEvent& event );
 	void accessibility_enable_clicked( wxCommandEvent& event );
+	void quit_espanso_clicked( wxCommandEvent& event );
 
   void navigate_to_next_page_or_close();
   void change_default_button(int target_page);
@@ -133,6 +140,16 @@ DerivedFrame::DerivedFrame(wxWindow *parent)
   {
     wxBitmap accessiblityImage2 = wxBitmap(wizard_metadata->accessibility_image_2_path, wxBITMAP_TYPE_PNG);
     this->accessibility_image2->SetBitmap(accessiblityImage2);
+  }
+
+  // Wrong edition
+  if (wizard_metadata->is_wrong_edition_page_enabled) {
+    if (wizard_metadata->detected_os == DETECTED_OS_X11) {
+      this->wrong_edition_description_x11->Hide();
+    }
+    if (wizard_metadata->detected_os == DETECTED_OS_WAYLAND) {
+      this->wrong_edition_description_wayland->Hide();
+    }
   }
 
   // Load the first page
@@ -242,6 +259,11 @@ void DerivedFrame::accessibility_enable_clicked( wxCommandEvent& event )
   {
     wizard_metadata->enable_accessibility();
   }
+}
+
+void DerivedFrame::quit_espanso_clicked( wxCommandEvent& event )
+{
+  Close(true);
 }
 
 void DerivedFrame::check_timer_tick(wxTimerEvent &event)
