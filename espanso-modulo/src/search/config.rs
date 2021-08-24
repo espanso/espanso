@@ -48,6 +48,9 @@ pub struct SearchConfig {
 
   #[serde(default = "default_algorithm")]
   pub algorithm: String,
+
+  #[serde(default)]
+  pub hint: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
