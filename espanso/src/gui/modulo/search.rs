@@ -38,9 +38,10 @@ impl<'a> ModuloSearchUI<'a> {
 }
 
 impl<'a> SearchUI for ModuloSearchUI<'a> {
-  fn show(&self, items: &[SearchItem]) -> anyhow::Result<Option<String>> {
+  fn show(&self, items: &[SearchItem], hint: Option<&str>) -> anyhow::Result<Option<String>> {
     let modulo_config = ModuloSearchConfig {
       title: "espanso",
+      hint,
       items: convert_items(&items),
     };
 
@@ -67,6 +68,7 @@ impl<'a> SearchUI for ModuloSearchUI<'a> {
 #[derive(Debug, Serialize)]
 struct ModuloSearchConfig<'a> {
   title: &'a str,
+  hint: Option<&'a str>,
   items: Vec<ModuloSearchItemConfig<'a>>,
 }
 
