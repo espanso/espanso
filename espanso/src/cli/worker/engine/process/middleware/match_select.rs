@@ -50,7 +50,7 @@ impl<'a> MatchSelectorAdapter<'a> {
 }
 
 impl<'a> MatchSelector for MatchSelectorAdapter<'a> {
-  fn select(&self, matches_ids: &[i32]) -> Option<i32> {
+  fn select(&self, matches_ids: &[i32], is_search: bool) -> Option<i32> {
     let matches = self.match_provider.get_matches(&matches_ids);
     let search_items: Vec<SearchItem> = matches
       .into_iter()
@@ -65,8 +65,14 @@ impl<'a> MatchSelector for MatchSelectorAdapter<'a> {
         }
       })
       .collect();
+    
+    let hint = if is_search {
+      Some("Search matches by content or trigger (or type > to see commands)")
+    } else {
+      None
+    };
 
-    match self.search_ui.show(&search_items) {
+    match self.search_ui.show(&search_items, hint) {
       Ok(Some(selected_id)) => match selected_id.parse::<i32>() {
         Ok(id) => Some(id),
         Err(err) => {
