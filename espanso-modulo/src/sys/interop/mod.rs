@@ -105,6 +105,7 @@ pub struct SearchResults {
 pub struct SearchMetadata {
   pub windowTitle: *const ::std::os::raw::c_char,
   pub iconPath: *const ::std::os::raw::c_char,
+  pub hintText: *const ::std::os::raw::c_char,
 }
 
 pub const WIZARD_MIGRATE_RESULT_SUCCESS: i32 = 0;

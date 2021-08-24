@@ -36,5 +36,6 @@ pub fn generate(config: SearchConfig) -> types::Search {
     title: config.title,
     items,
     icon: config.icon,
+    hint: config.hint,
   }
 }

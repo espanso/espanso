@@ -222,11 +222,13 @@ SearchFrame::SearchFrame(const wxString &title, const wxPoint &pos, const wxSize
 
     vbox->Add(topBox, 1, wxEXPAND);
 
-    helpText = new wxStaticText(panel, wxID_ANY, "Search matches by content or trigger (or type > to see commands)");
-    vbox->Add(helpText, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 10);
-    wxFont helpFont = helpText->GetFont();
-    helpFont.SetPointSize(HELP_TEXT_FONT_SIZE);
-    helpText->SetFont(helpFont);
+    if (searchMetadata->hintText) {
+        helpText = new wxStaticText(panel, wxID_ANY, wxString::FromUTF8(searchMetadata->hintText));
+        vbox->Add(helpText, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 10);
+        wxFont helpFont = helpText->GetFont();
+        helpFont.SetPointSize(HELP_TEXT_FONT_SIZE);
+        helpText->SetFont(helpFont);
+    }
 
     wxArrayString choices;
     int resultId = NewControlId();
