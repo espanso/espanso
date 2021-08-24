@@ -57,6 +57,12 @@ class WizardFrame : public wxFrame
 		wxStaticText* legacy_version_description;
 		wxHyperlinkCtrl* legacy_version_docs_link;
 		wxButton* legacy_version_continue_button;
+		wxPanel* wrong_edition_panel;
+		wxStaticText* wrong_edition_title;
+		wxStaticText* wrong_edition_description_x11;
+		wxStaticText* wrong_edition_description_wayland;
+		wxHyperlinkCtrl* wrong_edition_link;
+		wxButton* wrong_edition_button;
 		wxPanel* migrate_panel;
 		wxStaticText* migrate_title;
 		wxStaticText* migrate_description;
@@ -83,6 +89,7 @@ class WizardFrame : public wxFrame
 		virtual void on_page_changed( wxBookCtrlEvent& event ) { event.Skip(); }
 		virtual void welcome_start_clicked( wxCommandEvent& event ) { event.Skip(); }
 		virtual void move_bundle_quit_clicked( wxCommandEvent& event ) { event.Skip(); }
+		virtual void quit_espanso_clicked( wxCommandEvent& event ) { event.Skip(); }
 		virtual void migrate_compatibility_mode_clicked( wxCommandEvent& event ) { event.Skip(); }
 		virtual void migrate_button_clicked( wxCommandEvent& event ) { event.Skip(); }
 		virtual void add_path_continue_clicked( wxCommandEvent& event ) { event.Skip(); }

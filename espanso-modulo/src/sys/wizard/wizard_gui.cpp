@@ -133,6 +133,45 @@ WizardFrame::WizardFrame( wxWindow* parent, wxWindowID id, const wxString& title
 	legacy_version_panel->Layout();
 	bSizer21->Fit( legacy_version_panel );
 	m_simplebook->AddPage( legacy_version_panel, wxT("a page"), false );
+	wrong_edition_panel = new wxPanel( m_simplebook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	wrong_edition_panel->SetBackgroundColour( wxSystemSettings::GetColour( wxSYS_COLOUR_WINDOW ) );
+
+	wxBoxSizer* bSizer213;
+	bSizer213 = new wxBoxSizer( wxVERTICAL );
+
+	wrong_edition_title = new wxStaticText( wrong_edition_panel, wxID_ANY, wxT("Incompatibility detected"), wxDefaultPosition, wxDefaultSize, 0 );
+	wrong_edition_title->Wrap( -1 );
+	wrong_edition_title->SetFont( wxFont( 18, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD, false, wxEmptyString ) );
+
+	bSizer213->Add( wrong_edition_title, 0, wxALIGN_CENTER_HORIZONTAL|wxALIGN_LEFT|wxTOP, 20 );
+
+
+	bSizer213->Add( 0, 20, 0, 0, 5 );
+
+	wrong_edition_description_x11 = new wxStaticText( wrong_edition_panel, wxID_ANY, wxT("This version of espanso was compiled to support X11-based systems, but it seems you are on a Wayland-based desktop environment.\n\nUnfortunately, the two versions are incompatible. To use espanso, please download the Wayland version from the website.\n\nFor more information:"), wxDefaultPosition, wxDefaultSize, 0 );
+	wrong_edition_description_x11->Wrap( 500 );
+	bSizer213->Add( wrong_edition_description_x11, 0, wxLEFT|wxRIGHT|wxTOP, 10 );
+
+	wrong_edition_description_wayland = new wxStaticText( wrong_edition_panel, wxID_ANY, wxT("This version of espanso was compiled to support Wayland-based systems, but it seems you are on a X11-based desktop environment.\n\nUnfortunately, the two versions are incompatible. To use espanso, please download the X11 version from the website.\n\nFor more information:"), wxDefaultPosition, wxDefaultSize, 0 );
+	wrong_edition_description_wayland->Wrap( 500 );
+	bSizer213->Add( wrong_edition_description_wayland, 0, wxLEFT|wxRIGHT|wxTOP, 10 );
+
+	wrong_edition_link = new wxHyperlinkCtrl( wrong_edition_panel, wxID_ANY, wxT("https://espanso.org/install"), wxT("https://espanso.org/install"), wxDefaultPosition, wxDefaultSize, wxHL_DEFAULT_STYLE );
+	bSizer213->Add( wrong_edition_link, 0, wxLEFT|wxRIGHT, 10 );
+
+
+	bSizer213->Add( 0, 0, 1, wxEXPAND, 5 );
+
+	wrong_edition_button = new wxButton( wrong_edition_panel, wxID_ANY, wxT("Quit Espanso"), wxDefaultPosition, wxDefaultSize, 0 );
+
+	wrong_edition_button->SetDefault();
+	bSizer213->Add( wrong_edition_button, 0, wxALIGN_RIGHT|wxALL, 10 );
+
+
+	wrong_edition_panel->SetSizer( bSizer213 );
+	wrong_edition_panel->Layout();
+	bSizer213->Fit( wrong_edition_panel );
+	m_simplebook->AddPage( wrong_edition_panel, wxT("a page"), false );
 	migrate_panel = new wxPanel( m_simplebook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
 	migrate_panel->SetBackgroundColour( wxSystemSettings::GetColour( wxSYS_COLOUR_WINDOW ) );
 
@@ -284,6 +323,7 @@ WizardFrame::WizardFrame( wxWindow* parent, wxWindowID id, const wxString& title
 	m_simplebook->Connect( wxEVT_COMMAND_BOOKCTRL_PAGE_CHANGED, wxBookCtrlEventHandler( WizardFrame::on_page_changed ), NULL, this );
 	welcome_start_button->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( WizardFrame::welcome_start_clicked ), NULL, this );
 	move_bundle_quit_button->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( WizardFrame::move_bundle_quit_clicked ), NULL, this );
+	wrong_edition_button->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( WizardFrame::quit_espanso_clicked ), NULL, this );
 	migrate_compatibility_mode_button->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( WizardFrame::migrate_compatibility_mode_clicked ), NULL, this );
 	migrate_backup_and_migrate_button->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( WizardFrame::migrate_button_clicked ), NULL, this );
 	add_path_continue_button->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( WizardFrame::add_path_continue_clicked ), NULL, this );
@@ -297,6 +337,7 @@ WizardFrame::~WizardFrame()
 	m_simplebook->Disconnect( wxEVT_COMMAND_BOOKCTRL_PAGE_CHANGED, wxBookCtrlEventHandler( WizardFrame::on_page_changed ), NULL, this );
 	welcome_start_button->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( WizardFrame::welcome_start_clicked ), NULL, this );
 	move_bundle_quit_button->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( WizardFrame::move_bundle_quit_clicked ), NULL, this );
+	wrong_edition_button->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( WizardFrame::quit_espanso_clicked ), NULL, this );
 	migrate_compatibility_mode_button->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( WizardFrame::migrate_compatibility_mode_clicked ), NULL, this );
 	migrate_backup_and_migrate_button->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( WizardFrame::migrate_button_clicked ), NULL, this );
 	add_path_continue_button->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( WizardFrame::add_path_continue_clicked ), NULL, this );

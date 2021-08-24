@@ -113,6 +113,10 @@ pub const WIZARD_MIGRATE_RESULT_CLEAN_FAILURE: i32 = 1;
 pub const WIZARD_MIGRATE_RESULT_DIRTY_FAILURE: i32 = 2;
 pub const WIZARD_MIGRATE_RESULT_UNKNOWN_FAILURE: i32 = 3;
 
+pub const WIZARD_DETECTED_OS_UNKNOWN: i32 = 0;
+pub const WIZARD_DETECTED_OS_X11: i32 = 1;
+pub const WIZARD_DETECTED_OS_WAYLAND: i32 = 2;
+
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct WizardMetadata {
@@ -121,6 +125,7 @@ pub struct WizardMetadata {
   pub is_welcome_page_enabled: c_int,
   pub is_move_bundle_page_enabled: c_int,
   pub is_legacy_version_page_enabled: c_int,
+  pub is_wrong_edition_page_enabled: c_int,
   pub is_migrate_page_enabled: c_int,
   pub is_add_path_page_enabled: c_int,
   pub is_accessibility_page_enabled: c_int,
@@ -129,6 +134,7 @@ pub struct WizardMetadata {
   pub welcome_image_path: *const c_char,
   pub accessibility_image_1_path: *const c_char,
   pub accessibility_image_2_path: *const c_char,
+  pub detected_os: c_int,
 
   pub is_legacy_version_running: extern fn() -> c_int,
   pub backup_and_migrate: extern fn() -> c_int,
