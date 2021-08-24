@@ -45,6 +45,7 @@ impl Middleware for HotKeyMiddleware {
             id: m_event.hotkey_id,
             ..Default::default()
           }],
+          is_search: false,
         }),
       );
     }
