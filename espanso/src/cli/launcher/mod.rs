@@ -134,6 +134,7 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
     || is_migrate_page_enabled
     || is_add_path_page_enabled
     || is_accessibility_page_enabled
+    || is_wrong_edition_page_enabled
   {
     espanso_modulo::wizard::show(WizardOptions {
       version: crate::VERSION.to_string(),
