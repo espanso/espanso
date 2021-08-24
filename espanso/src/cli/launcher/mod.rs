@@ -26,6 +26,7 @@ use super::{CliModule, CliModuleArgs};
 
 mod accessibility;
 mod daemon;
+mod edition_check;
 mod util;
 
 // TODO: test also with modulo feature disabled
@@ -44,7 +45,7 @@ pub fn new() -> CliModule {
 
 #[cfg(feature = "modulo")]
 fn launcher_main(args: CliModuleArgs) -> i32 {
-  use espanso_modulo::wizard::{MigrationResult, WizardHandlers, WizardOptions};
+  use espanso_modulo::wizard::{DetectedOS, MigrationResult, WizardHandlers, WizardOptions};
   let paths = args.paths.expect("missing paths in launcher main");
 
   // TODO: should we create a non-gui wizard? We can also use it for the non-modulo versions of espanso
@@ -73,6 +74,8 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
   let runtime_dir_clone = paths.runtime.clone();
   let is_legacy_version_running_handler =
     Box::new(move || util::is_legacy_version_running(&runtime_dir_clone));
+  
+  let (is_wrong_edition_page_enabled, wrong_edition_detected_os) = edition_check::is_wrong_edition();
 
   let is_migrate_page_enabled = espanso_config::is_legacy_config(&paths.config);
   let paths_clone = paths.clone();
@@ -132,11 +135,12 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
     || is_add_path_page_enabled
     || is_accessibility_page_enabled
   {
-    let successful = espanso_modulo::wizard::show(WizardOptions {
+    espanso_modulo::wizard::show(WizardOptions {
       version: crate::VERSION.to_string(),
       is_welcome_page_enabled,
       is_move_bundle_page_enabled,
       is_legacy_version_page_enabled,
+      is_wrong_edition_page_enabled,
       is_migrate_page_enabled,
       is_add_path_page_enabled,
       is_accessibility_page_enabled,
@@ -152,6 +156,7 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
       accessibility_image_2_path: icon_paths
         .accessibility_image_2
         .map(|path| path.to_string_lossy().to_string()),
+      detected_os: wrong_edition_detected_os,
       handlers: WizardHandlers {
         is_legacy_version_running: Some(is_legacy_version_running_handler),
         backup_and_migrate: Some(backup_and_migrate_handler),
@@ -160,9 +165,7 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
         is_accessibility_enabled: Some(is_accessibility_enabled_handler),
         on_completed: Some(on_completed_handler),
       },
-    });
-
-    successful
+    })
   } else {
     true
   };
