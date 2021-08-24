@@ -360,11 +360,11 @@ impl Config for LegacyInteropConfig {
   }
 
   fn search_trigger(&self) -> Option<String> {
-    None
+    self.config.search_trigger.clone()   
   }
 
   fn search_shortcut(&self) -> Option<String> {
-    None
+    self.config.search_shortcut.clone()   
   }
 
   fn undo_backspace(&self) -> bool {

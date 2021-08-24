@@ -156,6 +156,12 @@ fn default_post_inject_delay() -> u64 {
 fn default_wait_for_modifiers_release() -> bool {
   false
 }
+fn default_search_trigger() -> Option<String> {
+  Some("jkj".to_string())
+}
+fn default_search_shortcut() -> Option<String> {
+  Some("ALT+SPACE".to_string())
+}
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct LegacyConfig {
@@ -281,6 +287,12 @@ pub struct LegacyConfig {
 
   #[serde(default = "default_modulo_path")]
   pub modulo_path: Option<String>,
+
+  #[serde(default = "default_search_trigger")]
+  pub search_trigger: Option<String>,
+
+  #[serde(default = "default_search_shortcut")]
+  pub search_shortcut: Option<String>,
 
   #[serde(default = "default_wait_for_modifiers_release")]
   pub wait_for_modifiers_release: bool,
