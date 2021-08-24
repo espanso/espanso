@@ -148,13 +148,13 @@ WizardFrame::WizardFrame( wxWindow* parent, wxWindowID id, const wxString& title
 
 	bSizer213->Add( 0, 20, 0, 0, 5 );
 
-	wrong_edition_description_x11 = new wxStaticText( wrong_edition_panel, wxID_ANY, wxT("This version of espanso was compiled to support X11-based systems, but it seems you are on a Wayland-based desktop environment.\n\nUnfortunately, the two versions are incompatible. To use espanso, please download the Wayland version from the website.\n\nFor more information:"), wxDefaultPosition, wxDefaultSize, 0 );
+	wrong_edition_description_x11 = new wxStaticText( wrong_edition_panel, wxID_ANY, wxT("This version of espanso was compiled to support X11-based systems, but it seems you are on a Wayland-based desktop environment.\n\nUnfortunately, the two versions are incompatible. To use espanso, either switch to an X11-based environment or download the Wayland version from the website.\n\nFor more information:"), wxDefaultPosition, wxDefaultSize, 0 );
 	wrong_edition_description_x11->Wrap( 500 );
-	bSizer213->Add( wrong_edition_description_x11, 0, wxLEFT|wxRIGHT|wxTOP, 10 );
+	bSizer213->Add( wrong_edition_description_x11, 0, wxEXPAND|wxLEFT|wxRIGHT|wxTOP, 10 );
 
-	wrong_edition_description_wayland = new wxStaticText( wrong_edition_panel, wxID_ANY, wxT("This version of espanso was compiled to support Wayland-based systems, but it seems you are on a X11-based desktop environment.\n\nUnfortunately, the two versions are incompatible. To use espanso, please download the X11 version from the website.\n\nFor more information:"), wxDefaultPosition, wxDefaultSize, 0 );
+	wrong_edition_description_wayland = new wxStaticText( wrong_edition_panel, wxID_ANY, wxT("This version of espanso was compiled to support Wayland-based systems, but it seems you are on a X11-based desktop environment.\n\nUnfortunately, the two versions are incompatible. To use espanso, either switch to a Wayland-based environment or download the X11 version from the website.\n\nFor more information:"), wxDefaultPosition, wxDefaultSize, 0 );
 	wrong_edition_description_wayland->Wrap( 500 );
-	bSizer213->Add( wrong_edition_description_wayland, 0, wxLEFT|wxRIGHT|wxTOP, 10 );
+	bSizer213->Add( wrong_edition_description_wayland, 0, wxEXPAND|wxLEFT|wxTOP, 10 );
 
 	wrong_edition_link = new wxHyperlinkCtrl( wrong_edition_panel, wxID_ANY, wxT("https://espanso.org/install"), wxT("https://espanso.org/install"), wxDefaultPosition, wxDefaultSize, wxHL_DEFAULT_STYLE );
 	bSizer213->Add( wrong_edition_link, 0, wxLEFT|wxRIGHT, 10 );
