@@ -273,12 +273,23 @@ int32_t detect_eventloop(void *_context, EventCallback _callback)
     timeval timeout;
     timeout.tv_sec = 2;
     timeout.tv_usec = 0;
-    select(max(ctrl_fd, data_fd) + 1,
+    int ret = select(max(ctrl_fd, data_fd) + 1,
                         &fds, NULL, NULL, &timeout);
+    if (ret < 0) {
+      return -2;
+    }
 
     if (FD_ISSET(data_fd, &fds))
     {
       XRecordProcessReplies(context->data_disp);
+
+      // On certain occasions (such as when a pointer remap occurs), some
+      // events might get stuck in the queue. If we don't handle them,
+      // this loop could get out of control, consuming 100% CPU.
+      while (XEventsQueued(context->data_disp, QueuedAlready) > 0) {
+        XEvent event;
+        XNextEvent(context->data_disp, &event);
+      }
     }
     if (FD_ISSET(ctrl_fd, &fds))
     {
