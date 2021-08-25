@@ -61,6 +61,13 @@ fn main() {
   let espanso_toml = espanso_toml_str
     .parse::<Value>()
     .expect("unable to parse Cargo.toml");
+  
+  let arch = envmnt::get_or_panic("BUILD_ARCH");
+  let arch = if arch == "current" {
+    std::env::consts::ARCH
+  } else {
+    &arch
+  };
 
   // Populating template variables
   let mut iss_setup = template;
@@ -106,7 +113,7 @@ fn main() {
   );
   iss_setup = iss_setup.replace(
     "{{{output_name}}}",
-    &format!("{}-{}", INSTALLER_NAME, envmnt::get_or_panic("BUILD_ARCH")),
+    &format!("{}-{}", INSTALLER_NAME, arch),
   );
   iss_setup = iss_setup.replace(
     "{{{executable_path}}}",
