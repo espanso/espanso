@@ -43,24 +43,25 @@ Source: "{{{cli_helper}}}"; DestDir: "{app}"; Flags: ignoreversion
 
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
+; Delete files from previous versions, if present
+[InstallDelete]
+Type: files; Name: {app}\concrt140.dll
+Type: files; Name: {app}\espanso.exe
+Type: files; Name: {app}\icon.ico
+Type: files; Name: {app}\modulo.exe
+Type: files; Name: {app}\msvcp140.dll
+Type: files; Name: {app}\msvcp140_1.dll
+Type: files; Name: {app}\msvcp140_2.dll
+Type: files; Name: {app}\msvcp140_codecvt_ids.dll
+Type: files; Name: {app}\unins000.dat
+Type: files; Name: {app}\unins000.exe
+Type: files; Name: {app}\vccorlib140.dll
+Type: files; Name: {app}\vcruntime140.dll
+Type: files; Name: {app}\vsruntime140_1.dll
+
 [Icons]
 Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Parameters: "launcher"; AppUserModelID: "{#MyAppUserModelID}"; IconFilename: "{app}\icon.ico";
-;Name: "{userstartup}\espanso"; Filename: "{app}\espansod.exe"; Parameters: "launcher"; Tasks:StartMenuEntry;
 
-;[Tasks]
-;Name: modifypath; Description: Add espanso to PATH ( recommended );
-;Name: "StartMenuEntry" ; Description: "Start espanso at Windows startup" ;
-
-; [Code]
-; const
-;     ModPathName = 'modifypath';
-;     ModPathType = 'user';
-; function ModPathDir(): TArrayOfString;
-; begin
-;     setArrayLength(Result, 1)
-;     Result[0] := ExpandConstant('{app}');
-; end;
-; #include "modpath.iss"
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Parameters: "launcher"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
 
