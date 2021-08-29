@@ -17,4 +17,5 @@ members = [
   "espanso-mac-utils",
   "espanso-kvs",
   "espanso-engine",
+  "espanso-package",
 ]
