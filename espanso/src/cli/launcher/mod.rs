@@ -26,6 +26,7 @@ use super::{CliModule, CliModuleArgs};
 
 mod accessibility;
 mod daemon;
+#[cfg(feature = "modulo")]
 mod edition_check;
 mod util;
 
