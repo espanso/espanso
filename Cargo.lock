@@ -531,6 +531,7 @@ dependencies = [
  "espanso-match",
  "espanso-migrate",
  "espanso-modulo",
+ "espanso-package",
  "espanso-path",
  "espanso-render",
  "espanso-ui",
@@ -739,6 +740,19 @@ dependencies = [
  "thiserror",
  "winres",
  "zip",
+]
+
+[[package]]
+name = "espanso-package"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "log",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "tempdir",
+ "thiserror",
 ]
 
 [[package]]
