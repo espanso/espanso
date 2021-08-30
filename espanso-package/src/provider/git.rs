@@ -17,13 +17,17 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::{Package, PackageResolver, PackageSpecifier};
-use anyhow::{bail, Result, Context};
+use crate::{
+  package::DefaultPackage,
+  resolver::{resolve_package},
+  Package, PackageProvider, PackageSpecifier,
+};
+use anyhow::{anyhow, bail, Context, Result};
 use std::{path::Path, process::Command};
 
-pub struct GitPackageResolver {}
+pub struct GitPackageProvider {}
 
-impl GitPackageResolver {
+impl GitPackageProvider {
   pub fn new() -> Self {
     Self {}
   }
@@ -53,7 +57,10 @@ impl GitPackageResolver {
     let dest_dir_str = dest_dir.to_string_lossy().to_string();
     args.push(&dest_dir_str);
 
-    let output = Command::new("git").args(&args).output().context("git command reported error")?;
+    let output = Command::new("git")
+      .args(&args)
+      .output()
+      .context("git command reported error")?;
 
     if !output.status.success() {
       let stderr = String::from_utf8_lossy(&output.stderr);
@@ -64,15 +71,31 @@ impl GitPackageResolver {
   }
 }
 
-impl PackageResolver for GitPackageResolver {
+impl PackageProvider for GitPackageProvider {
   fn download(&self, package: &PackageSpecifier) -> Result<Box<dyn Package>> {
     if !Self::is_git_installed() {
       bail!("unable to invoke 'git' command, please make sure it is installed and visible in PATH");
     }
 
-    // TODO: download repository in temp directory
-    // TODO: read metadata
+    let repo_url = package
+      .git_repo_url
+      .as_deref()
+      .ok_or_else(|| anyhow!("missing git repository url"))?;
+    let repo_branch = package.git_branch.as_deref();
 
-    todo!()
+    let temp_dir = tempdir::TempDir::new("espanso-package-download")?;
+
+    Self::clone_repo(temp_dir.path(), repo_url, repo_branch)?;
+
+    let resolved_package =
+      resolve_package(temp_dir.path(), &package.name, package.version.as_deref())?;
+
+    let package = DefaultPackage::new(
+      resolved_package.manifest,
+      temp_dir,
+      resolved_package.base_dir,
+    );
+
+    Ok(Box::new(package))
   }
 }

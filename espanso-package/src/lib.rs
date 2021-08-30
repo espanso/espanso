@@ -22,6 +22,9 @@ use std::path::Path;
 use anyhow::Result;
 use thiserror::Error;
 
+mod manifest;
+mod package;
+mod provider;
 mod resolver;
 
 #[derive(Debug, Default)]
@@ -35,7 +38,7 @@ pub struct PackageSpecifier {
 }
 
 pub trait Package {
-  // Metadata
+  // Manifest
   fn name(&self) -> &str;
   fn title(&self) -> &str;
   fn description(&self) -> &str;
@@ -46,13 +49,13 @@ pub trait Package {
   fn location(&self) -> &Path;
 }
 
-pub trait PackageResolver {
+pub trait PackageProvider {
   fn download(&self, package: &PackageSpecifier) -> Result<Box<dyn Package>>;
   // TODO: fn check update available?
   // TODO: fn update
 }
 
-// TODO: the git resolver should delete the .git directory
+// TODO: once the download is completed, avoid copying files beginning with "."
 
 #[derive(Error, Debug)]
 pub enum PackageResolutionError {
