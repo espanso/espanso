@@ -17,5 +17,14 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub(crate) mod git;
-pub(crate) mod github;
+use std::process::Command;
+
+pub fn is_private_repo(url: &str) -> bool {
+  if let Ok(output) = Command::new("git").arg("ls-remote").arg(url).output() {
+    if output.status.success() {
+      return true;
+    }
+  }
+
+  false
+}
