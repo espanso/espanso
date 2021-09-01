@@ -55,7 +55,13 @@ pub const WORKAROUND_SUCCESS: i32 = 0;
 pub const WORKAROUND_FAILURE: i32 = 1;
 pub const WORKAROUND_NOT_AVAILABLE: i32 = 2;
 
+pub const PACKAGE_SUCCESS: i32 = 0;
+pub const PACKAGE_UNEXPECTED_FAILURE: i32 = 1;
+pub const PACKAGE_INSTALL_FAILED: i32 = 2;
+
 use std::sync::Mutex;
+
+use crate::error_eprintln;
 
 lazy_static! {
   static ref CURRENT_PANIC_EXIT_CODE: Mutex<i32> = Mutex::new(MIGRATE_UNEXPECTED_FAILURE);
@@ -80,7 +86,7 @@ pub fn configure_custom_panic_hook() {
 
     match info.location() {
       Some(location) => {
-        eprintln!(
+        error_eprintln!(
           "ERROR: '{}' panicked at '{}': {}:{}",
           thread,
           msg,
@@ -88,7 +94,9 @@ pub fn configure_custom_panic_hook() {
           location.line(),
         );
       }
-      None => eprintln!("ERROR: '{}' panicked at '{}'", thread, msg,),
+      None => {
+        error_eprintln!("ERROR: '{}' panicked at '{}'", thread, msg);
+      }
     }
 
     let exit_code = CURRENT_PANIC_EXIT_CODE.lock().unwrap();
@@ -102,4 +110,3 @@ pub fn update_panic_exit_code(exit_code: i32) {
     .expect("unable to update panic exit code");
   *lock = exit_code;
 }
-

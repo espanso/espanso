@@ -69,6 +69,7 @@ lazy_static! {
     cli::env_path::new(),
     cli::service::new(),
     cli::workaround::new(),
+    cli::package::new(),
   ];
   static ref ALIASES: Vec<CliAlias> = vec![
     CliAlias {
@@ -79,6 +80,14 @@ lazy_static! {
       subcommand: "stop".to_owned(),
       forward_into: "service".to_owned(),
     },
+    CliAlias {
+      subcommand: "install".to_owned(),
+      forward_into: "package".to_owned(),
+    },
+    CliAlias {
+      subcommand: "uninstall".to_owned(),
+      forward_into: "package".to_owned(),
+    },
   ];
 }
 
@@ -86,7 +95,7 @@ fn main() {
   util::attach_console();
 
   let install_subcommand = SubCommand::with_name("install")
-    .about("Install a package. Equivalent to 'espanso package install'")
+    .about("Install a package")
     .arg(
       Arg::with_name("external")
         .short("e")
@@ -97,21 +106,43 @@ fn main() {
     )
     .arg(Arg::with_name("package_name").help("Package name"))
     .arg(
-      Arg::with_name("repository_url")
-        .help("(Optional) Link to GitHub repository")
+      Arg::with_name("version")
+        .long("version")
         .required(false)
-        .default_value("hub"),
+        .takes_value(true)
+        .help("Force a particular version to be installed instead of the latest available."),
     )
     .arg(
-      Arg::with_name("proxy")
-        .help("Use a proxy, should be used as --proxy=https://proxy:1234")
+      Arg::with_name("git")
+        .long("git")
         .required(false)
-        .long("proxy")
-        .takes_value(true),
+        .takes_value(true)
+        .help("Git repository from which espanso should install the package."),
+    )
+    .arg(
+      Arg::with_name("git-branch")
+        .long("git-branch")
+        .required(false)
+        .takes_value(true)
+        .help("Force espanso to search for the package on a specific git branch"),
+    )
+    .arg(
+      Arg::with_name("force")
+        .long("force")
+        .required(false)
+        .takes_value(false)
+        .help("Overwrite the package if already installed"),
+    )
+    .arg(
+      Arg::with_name("use-native-git")
+        .long("use-native-git")
+        .required(false)
+        .takes_value(false)
+        .help("If specified, espanso will use the 'git' command instead of trying direct methods."),
     );
 
   let uninstall_subcommand = SubCommand::with_name("uninstall")
-    .about("Remove an installed package. Equivalent to 'espanso package uninstall'")
+    .about("Remove a package")
     .arg(Arg::with_name("package_name").help("Package name"));
 
   let start_subcommand = SubCommand::with_name("start")
@@ -332,26 +363,22 @@ fn main() {
     //         )
     //     )
     // )
-    // Package manager
-    // .subcommand(SubCommand::with_name("package")
-    //     .about("Espanso package manager commands")
-    //     .subcommand(install_subcommand.clone())
-    //     .subcommand(uninstall_subcommand.clone())
-    //     .subcommand(SubCommand::with_name("list")
-    //         .about("List all installed packages")
-    //         .arg(Arg::with_name("full")
-    //             .help("Print all package info")
-    //             .long("full")))
-    //     .subcommand(SubCommand::with_name("refresh")
-    //         .about("Update espanso package index"))
-    // )
     .subcommand(
-      SubCommand::with_name("workaround")
+      SubCommand::with_name("package")
+        .about("package-management commands")
+        .subcommand(install_subcommand.clone())
+        .subcommand(uninstall_subcommand.clone())
         .subcommand(
-          SubCommand::with_name("secure-input")
-            .about("Attempt to disable secure input by automating the common steps."),
+          SubCommand::with_name("list").about("List all installed packages"), // TODO: update <Package> and update all
         )
-        .about("A collection of workarounds to solve some common problems."),
+        .subcommand(
+          SubCommand::with_name("workaround")
+            .subcommand(
+              SubCommand::with_name("secure-input")
+                .about("Attempt to disable secure input by automating the common steps."),
+            )
+            .about("A collection of workarounds to solve some common problems."),
+        ),
     )
     .subcommand(
       SubCommand::with_name("worker")
@@ -368,9 +395,9 @@ fn main() {
             .required(false)
             .takes_value(false),
         ),
-    );
-  // .subcommand(install_subcommand)
-  // .subcommand(uninstall_subcommand);
+    )
+    .subcommand(install_subcommand)
+    .subcommand(uninstall_subcommand);
 
   // TODO: explain that the register and unregister commands are only meaningful
   // when using the system daemon manager on macOS and Linux
