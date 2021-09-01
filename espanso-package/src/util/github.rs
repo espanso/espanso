@@ -85,7 +85,7 @@ pub fn check_repo_with_branch(parts: &GitHubParts, branch: &str) -> Result<bool>
   let url = generate_github_download_url(parts, branch);
   let response = client.head(url).send()?;
 
-  Ok(response.status() == StatusCode::FOUND)
+  Ok(response.status() == StatusCode::FOUND || response.status() == StatusCode::OK)
 }
 
 fn generate_github_download_url(parts: &GitHubParts, branch: &str) -> String {

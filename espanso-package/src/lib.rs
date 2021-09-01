@@ -19,79 +19,53 @@
 
 use std::path::Path;
 
-use anyhow::{Result, bail};
-use thiserror::Error;
+use anyhow::{bail, Result};
 
+mod archive;
 mod manifest;
 mod package;
 mod provider;
 mod resolver;
 mod util;
 
-#[derive(Debug, Default)]
-pub struct PackageSpecifier {
-  pub name: String,
-  pub version: Option<String>,
-
-  // Source information
-  pub git_repo_url: Option<String>,
-  pub git_branch: Option<String>,
-}
-
-pub trait Package {
-  // Manifest
-  fn name(&self) -> &str;
-  fn title(&self) -> &str;
-  fn description(&self) -> &str;
-  fn version(&self) -> &str;
-  fn author(&self) -> &str;
-
-  // Directory containing the package files
-  fn location(&self) -> &Path;
-}
-
-pub trait PackageProvider {
-  fn download(&self, package: &PackageSpecifier) -> Result<Box<dyn Package>>;
-  // TODO: fn check update available? (probably should be only available in the hub)
-}
+pub use archive::{ArchivedPackage, Archiver, SaveOptions};
+pub use provider::{PackageSpecifier, PackageProvider};
+pub use package::Package;
 
 // TODO: once the download is completed, avoid copying files beginning with "."
 
-#[derive(Error, Debug)]
-pub enum PackageResolutionError {
-  #[error("package not found")]
-  PackageNotFound,
-}
-
 pub fn get_provider(package: &PackageSpecifier) -> Result<Box<dyn PackageProvider>> {
   if let Some(git_repo_url) = package.git_repo_url.as_deref() {
-    let matches_known_hosts = if let Some(github_parts) = util::github::extract_github_url_parts(git_repo_url) {
-      if let Some(repo_scheme) =
-        util::github::resolve_repo_scheme(github_parts, package.git_branch.as_deref())?
-      {
-        return Ok(Box::new(provider::github::GitHubPackageProvider::new(
-          repo_scheme.author,
-          repo_scheme.name,
-          repo_scheme.branch,
-        )));
+    if !package.use_native_git {
+      let matches_known_hosts =
+        if let Some(github_parts) = util::github::extract_github_url_parts(git_repo_url) {
+          if let Some(repo_scheme) =
+            util::github::resolve_repo_scheme(github_parts, package.git_branch.as_deref())?
+          {
+            return Ok(Box::new(provider::github::GitHubPackageProvider::new(
+              repo_scheme.author,
+              repo_scheme.name,
+              repo_scheme.branch,
+            )));
+          }
+
+          true
+        } else if let Some(gitlab_parts) = util::gitlab::extract_gitlab_url_parts(git_repo_url) {
+          panic!("GitLab is not supported yet!");
+          todo!();
+
+          true
+        } else {
+          false
+        };
+
+      // Git repository seems to be in one of the known hosts, but the direct methods
+      // couldn't retrieve its content. This might happen with private repos (as they are not
+      // available to non-authenticated requests), so we check if a "git ls-remote" command
+      // is able to access it.
+      if matches_known_hosts && !util::git::is_private_repo(git_repo_url) {
+        bail!("could not access repository: {}, make sure it exists and that you have the necessary access rights.");
       }
-
-      true
-    } else if let Some(gitlab_parts) = util::gitlab::extract_gitlab_url_parts(git_repo_url) {
-      panic!("GitLab is not supported yet!");
-      todo!();
-
-      true
-    } else {
-      false
-    };
-
-    // Git repository seems to be in one of the known hosts, but the direct methods
-    // couldn't retrieve its content. This might happen with private repos (as they are not
-    // available to non-authenticated requests), so we check if a "git ls-remote" command 
-    // is able to access it.
-    if matches_known_hosts && !util::git::is_private_repo(git_repo_url) {
-      bail!("could not access repository: {}, make sure it exists and that you have the necessary access rights.");
     }
 
     // Git repository is neither on Github or Gitlab
@@ -102,4 +76,9 @@ pub fn get_provider(package: &PackageSpecifier) -> Result<Box<dyn PackageProvide
     // TODO: use espanso-hub method
     todo!();
   }
+}
+
+
+pub fn get_archiver(package_dir: &Path) -> Result<Box<dyn Archiver>> {
+  Ok(Box::new(archive::default::DefaultArchiver::new(package_dir)))
 }
