@@ -18,9 +18,10 @@
  */
 
 use crate::{
-  package::DefaultPackage, resolver::resolve_package, Package, PackageProvider, PackageSpecifier,
+  package::DefaultPackage, resolver::resolve_package, Package, PackageSpecifier,
 };
 use anyhow::{Result};
+use super::PackageProvider;
 
 pub struct GitHubPackageProvider {
   repo_author: String,
@@ -39,6 +40,10 @@ impl GitHubPackageProvider {
 }
 
 impl PackageProvider for GitHubPackageProvider {
+  fn name(&self) -> String {
+    "github".to_string()
+  }
+
   fn download(&self, package: &PackageSpecifier) -> Result<Box<dyn Package>> {
     let download_url = format!(
       "https://github.com/{}/{}/archive/refs/heads/{}.zip",
@@ -80,6 +85,7 @@ mod tests {
         version: None,
         git_repo_url: Some("https://github.com/espanso/dummy-package".to_string()),
         git_branch: None,
+        ..Default::default()
       })
       .unwrap();
 

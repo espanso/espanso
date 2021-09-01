@@ -20,10 +20,11 @@
 use crate::{
   package::DefaultPackage,
   resolver::{resolve_package},
-  Package, PackageProvider, PackageSpecifier,
+  Package, PackageSpecifier,
 };
 use anyhow::{anyhow, bail, Context, Result};
 use std::{path::Path, process::Command};
+use super::PackageProvider;
 
 pub struct GitPackageProvider {}
 
@@ -72,6 +73,10 @@ impl GitPackageProvider {
 }
 
 impl PackageProvider for GitPackageProvider {
+  fn name(&self) -> String {
+    "git".to_string()
+  }
+
   fn download(&self, package: &PackageSpecifier) -> Result<Box<dyn Package>> {
     if !Self::is_git_installed() {
       bail!("unable to invoke 'git' command, please make sure it is installed and visible in PATH");

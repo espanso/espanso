@@ -59,8 +59,8 @@ pub fn resolve_package(
     Ok(matching_package)
   } else {
     bail!(
-      "unable to find version: {:?} for package: {}",
-      version,
+      "unable to find version: {} for package: {}",
+      version.unwrap_or_default(),
       name
     );
   }
