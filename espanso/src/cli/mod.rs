@@ -29,6 +29,7 @@ pub mod launcher;
 pub mod log;
 pub mod migrate;
 pub mod modulo;
+pub mod package;
 pub mod path;
 pub mod service;
 pub mod util;
