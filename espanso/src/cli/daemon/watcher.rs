@@ -17,7 +17,10 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::{path::Path, time::Duration};
+use std::{
+  path::Path,
+  time::{Duration, Instant},
+};
 
 use notify::{DebouncedEvent, RecommendedWatcher, RecursiveMode, Watcher};
 
@@ -52,6 +55,8 @@ fn watcher_main(config_dir: &Path, watcher_notify: &Sender<()>) {
 
   info!("watching for changes in path: {:?}", config_dir);
 
+  let mut last_event_arrival = Instant::now();
+
   loop {
     let should_reload = match rx.recv() {
       Ok(event) => {
@@ -69,10 +74,13 @@ fn watcher_main(config_dir: &Path, watcher_notify: &Sender<()>) {
             .unwrap_or_default()
             .to_string_lossy()
             .to_ascii_lowercase();
-          
+
           if ["yml", "yaml"].iter().any(|ext| ext == &extension) {
             // Only load non-hidden yml files
             !is_file_hidden(&path)
+          } else if extension == "" {
+            // No extension, probably a folder
+            true
           } else {
             false
           }
@@ -86,11 +94,16 @@ fn watcher_main(config_dir: &Path, watcher_notify: &Sender<()>) {
       }
     };
 
-    if should_reload {
+    // Send only one event, otherwise we could run the risk of useless reloads or even race conditions.
+    if should_reload
+      && last_event_arrival.elapsed() > std::time::Duration::from_secs(WATCHER_DEBOUNCE_DURATION)
+    {
       if let Err(error) = watcher_notify.send(()) {
         error!("unable to send watcher file changed event: {}", error);
       }
     }
+
+    last_event_arrival = Instant::now();
   }
 }
 
