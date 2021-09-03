@@ -28,7 +28,7 @@ mod provider;
 mod resolver;
 mod util;
 
-pub use archive::{ArchivedPackage, Archiver, SaveOptions};
+pub use archive::{ArchivedPackage, Archiver, SaveOptions, StoredPackage};
 pub use provider::{PackageSpecifier, PackageProvider};
 pub use package::Package;
 
@@ -74,7 +74,7 @@ pub fn get_provider(package: &PackageSpecifier) -> Result<Box<dyn PackageProvide
     Ok(Box::new(provider::git::GitPackageProvider::new()))
   } else {
     // TODO: use espanso-hub method
-    todo!();
+    bail!("espanso hub method not yet implemented")
   }
 }
 

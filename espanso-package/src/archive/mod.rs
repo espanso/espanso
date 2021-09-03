@@ -17,10 +17,12 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use std::path::Path;
+
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
-use crate::{Package, PackageSpecifier, manifest::Manifest};
+use crate::{manifest::Manifest, Package, PackageSpecifier};
 
 pub mod default;
 mod read;
@@ -28,7 +30,7 @@ mod util;
 
 pub const PACKAGE_SOURCE_FILE: &str = "_pkgsource.yml";
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct ArchivedPackage {
   // Metadata
   pub manifest: Manifest,
@@ -37,20 +39,25 @@ pub struct ArchivedPackage {
   pub source: PackageSource,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct LegacyPackage {
   pub name: String,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum StoredPackage {
   Legacy(LegacyPackage),
   Modern(ArchivedPackage),
 }
 
 pub trait Archiver {
-  fn get(&self, name: &str) -> Result<ArchivedPackage>;
-  fn save(&self, package: &dyn Package, specifier: &PackageSpecifier, save_options: &SaveOptions) -> Result<ArchivedPackage>;
+  fn get(&self, name: &str) -> Result<StoredPackage>;
+  fn save(
+    &self,
+    package: &dyn Package,
+    specifier: &PackageSpecifier,
+    save_options: &SaveOptions,
+  ) -> Result<ArchivedPackage>;
   fn list(&self) -> Result<Vec<StoredPackage>>;
   fn delete(&self, name: &str) -> Result<()>;
 }
@@ -60,7 +67,7 @@ pub struct SaveOptions {
   pub overwrite_existing: bool,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "snake_case")]
 pub enum PackageSource {
   Hub,
@@ -69,6 +76,26 @@ pub enum PackageSource {
     repo_branch: Option<String>,
     use_native_git: bool,
   },
+}
+
+impl PackageSource {
+  pub fn parse(source_path: &Path) -> Result<Self> {
+    let source_str = std::fs::read_to_string(source_path)?;
+    Ok(serde_yaml::from_str(&source_str)?)
+  }
+}
+
+impl std::fmt::Display for PackageSource {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    match self {
+      PackageSource::Hub => write!(f, "espanso-hub"),
+      PackageSource::Git {
+        repo_url,
+        repo_branch: _,
+        use_native_git: _,
+      } => write!(f, "git: {}", repo_url),
+    }
+  }
 }
 
 impl From<&PackageSpecifier> for PackageSource {
