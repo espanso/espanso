@@ -104,15 +104,9 @@ fn find_all_manifests(base_dir: &Path) -> Result<Vec<PathBuf>> {
 mod tests {
   use std::fs::create_dir_all;
 
+  use crate::tests::run_with_temp_dir;
+
   use super::*;
-  use tempdir::TempDir;
-
-  fn run_with_temp_dir(action: impl FnOnce(&Path)) {
-    let tmp_dir = TempDir::new("espanso-package").unwrap();
-    let tmp_path = tmp_dir.path();
-
-    action(&tmp_path);
-  }
 
   #[test]
   fn test_read_manifest_base_dir() {
