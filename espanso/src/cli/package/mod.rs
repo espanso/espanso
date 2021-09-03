@@ -19,12 +19,18 @@
 
 use crate::{
   error_eprintln,
-  exit_code::{configure_custom_panic_hook, PACKAGE_INSTALL_FAILED, PACKAGE_SUCCESS},
+  exit_code::{
+    configure_custom_panic_hook, PACKAGE_INSTALL_FAILED, PACKAGE_LIST_FAILED, PACKAGE_SUCCESS,
+    PACKAGE_UNINSTALL_FAILED, PACKAGE_UPDATE_FAILED, PACKAGE_UPDATE_PARTIAL_FAILURE,
+  },
 };
 
 use super::{CliModule, CliModuleArgs};
 
 mod install;
+mod list;
+mod uninstall;
+mod update;
 
 pub fn new() -> CliModule {
   CliModule {
@@ -49,9 +55,29 @@ fn package_main(args: CliModuleArgs) -> i32 {
       error_eprintln!("unable to install package: {:?}", err);
       return PACKAGE_INSTALL_FAILED;
     }
+  } else if let Some(sub_matches) = cli_args.subcommand_matches("uninstall") {
+    if let Err(err) = uninstall::uninstall_package(&paths, sub_matches) {
+      error_eprintln!("unable to uninstall package: {:?}", err);
+      return PACKAGE_UNINSTALL_FAILED;
+    }
+  } else if let Some(sub_matches) = cli_args.subcommand_matches("list") {
+    if let Err(err) = list::list_packages(&paths, sub_matches) {
+      error_eprintln!("unable to list packages: {:?}", err);
+      return PACKAGE_LIST_FAILED;
+    }
+  } else if let Some(sub_matches) = cli_args.subcommand_matches("update") {
+    match update::update_package(&paths, sub_matches) {
+      Ok(update::UpdateResults::PartialFailure) => {
+        error_eprintln!("some packages were updated, but not all of them. Check the previous log for more information");
+        return PACKAGE_UPDATE_PARTIAL_FAILURE;
+      }
+      Err(err) => {
+        error_eprintln!("unable to update package: {:?}", err);
+        return PACKAGE_UPDATE_FAILED;
+      }
+      _ => {}
+    }
   }
-
-  // TODO: uninstall, list, update
 
   PACKAGE_SUCCESS
 }

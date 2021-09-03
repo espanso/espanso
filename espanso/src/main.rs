@@ -368,17 +368,20 @@ fn main() {
         .about("package-management commands")
         .subcommand(install_subcommand.clone())
         .subcommand(uninstall_subcommand.clone())
+        .subcommand(SubCommand::with_name("update").about(
+          "Update a package. If 'all' is passed as package name, attempts to update all packages.",
+        ).arg(Arg::with_name("package_name").help("Package name")))
         .subcommand(
           SubCommand::with_name("list").about("List all installed packages"), // TODO: update <Package> and update all
-        )
-        .subcommand(
-          SubCommand::with_name("workaround")
-            .subcommand(
-              SubCommand::with_name("secure-input")
-                .about("Attempt to disable secure input by automating the common steps."),
-            )
-            .about("A collection of workarounds to solve some common problems."),
         ),
+    )
+    .subcommand(
+      SubCommand::with_name("workaround")
+        .subcommand(
+          SubCommand::with_name("secure-input")
+            .about("Attempt to disable secure input by automating the common steps."),
+        )
+        .about("A collection of workarounds to solve some common problems."),
     )
     .subcommand(
       SubCommand::with_name("worker")

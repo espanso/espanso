@@ -27,7 +27,7 @@ use crate::info_println;
 pub fn install_package(paths: &Paths, matches: &ArgMatches) -> Result<()> {
   let package_name = matches
     .value_of("package_name")
-    .ok_or(anyhow!("missing package name"))?;
+    .ok_or_else(|| anyhow!("missing package name"))?;
   let version = matches.value_of("version");
   let force = matches.is_present("force");
 
