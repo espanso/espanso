@@ -105,5 +105,131 @@ impl Archiver for DefaultArchiver {
   }
 }
 
-// TODO: test
-// TODO: test what happens with "legacy" packages
+#[cfg(test)]
+mod tests {
+  use std::fs::{create_dir_all, write};
+  use tempdir::TempDir;
+
+  use crate::{manifest::Manifest, package::DefaultPackage, tests::run_with_temp_dir};
+
+  use super::*;
+
+  fn create_fake_package(dest_dir: &Path) -> Box<dyn Package> {
+    let package_dir = dest_dir.join("package1");
+    create_dir_all(&package_dir).unwrap();
+
+    write(
+      package_dir.join("_manifest.yml"),
+      r#"
+name: "package1"
+title: "Dummy package"
+description: A dummy package for testing
+version: 0.1.0
+author: Federico Terzi
+    "#,
+    )
+    .unwrap();
+
+    write(
+      package_dir.join("package.yml"),
+      r#"
+matches:
+  - trigger: ":hello"
+    replace: "github"name: "package1"
+    "#,
+    )
+    .unwrap();
+
+    write(
+      package_dir.join("README.md"),
+      r#"
+    A very dummy package
+    "#,
+    )
+    .unwrap();
+
+    let package = DefaultPackage::new(
+      Manifest::parse(&package_dir.join("_manifest.yml")).unwrap(),
+      TempDir::new("fake-package").unwrap(),
+      package_dir,
+    );
+
+    Box::new(package)
+  }
+
+  fn run_with_two_temp_dirs(action: impl FnOnce(&Path, &Path)) {
+    run_with_temp_dir(|base| {
+      let dir1 = base.join("dir1");
+      let dir2 = base.join("dir2");
+      create_dir_all(&dir1).unwrap();
+      create_dir_all(&dir2).unwrap();
+      action(&dir1, &dir2);
+    });
+  }
+
+  #[test]
+  fn test_package_saved_correctly() {
+    run_with_two_temp_dirs(|package_dir, dest_dir| {
+      let package = create_fake_package(package_dir);
+
+      let archiver = DefaultArchiver::new(dest_dir);
+      let result = archiver.save(
+        &*package,
+        &PackageSpecifier {
+          name: "package1".to_string(),
+          git_repo_url: Some("https://github.com/espanso/dummy-package".to_string()),
+          git_branch: Some("main".to_string()),
+          ..Default::default()
+        },
+        &SaveOptions::default(),
+      );
+
+      assert!(result.is_ok());
+
+      let package_out_dir = dest_dir.join("package1");
+      assert!(package_out_dir.is_dir());
+      assert!(package_out_dir.join("_manifest.yml").is_file());
+      assert!(package_out_dir.join("README.md").is_file());
+      assert!(package_out_dir.join("package.yml").is_file());
+      assert!(package_out_dir.join("_pkgsource.yml").is_file());
+    });
+  }
+
+  #[test]
+  fn test_package_already_present() {
+    run_with_two_temp_dirs(|package_dir, dest_dir| {
+      let package = create_fake_package(package_dir);
+
+      create_dir_all(dest_dir.join("package1")).unwrap();
+
+      let archiver = DefaultArchiver::new(dest_dir);
+      let result = archiver.save(
+        &*package,
+        &PackageSpecifier {
+          name: "package1".to_string(),
+          git_repo_url: Some("https://github.com/espanso/dummy-package".to_string()),
+          git_branch: Some("main".to_string()),
+          ..Default::default()
+        },
+        &SaveOptions::default(),
+      );
+
+      assert!(result.is_err());
+
+      let result = archiver.save(
+        &*package,
+        &PackageSpecifier {
+          name: "package1".to_string(),
+          git_repo_url: Some("https://github.com/espanso/dummy-package".to_string()),
+          git_branch: Some("main".to_string()),
+          ..Default::default()
+        },
+        &SaveOptions {
+          overwrite_existing: true,
+        },
+      );
+
+      assert!(result.is_ok());
+    });
+  }
+}

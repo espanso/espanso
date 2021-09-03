@@ -82,3 +82,16 @@ pub fn get_provider(package: &PackageSpecifier) -> Result<Box<dyn PackageProvide
 pub fn get_archiver(package_dir: &Path) -> Result<Box<dyn Archiver>> {
   Ok(Box::new(archive::default::DefaultArchiver::new(package_dir)))
 }
+
+#[cfg(test)]
+pub(crate) mod tests {
+  use super::*;
+  use tempdir::TempDir;
+
+  pub(crate) fn run_with_temp_dir(action: impl FnOnce(&Path)) {
+    let tmp_dir = TempDir::new("espanso-package").unwrap();
+    let tmp_path = tmp_dir.path();
+
+    action(&tmp_path);
+  }
+}
