@@ -58,6 +58,10 @@ pub const WORKAROUND_NOT_AVAILABLE: i32 = 2;
 pub const PACKAGE_SUCCESS: i32 = 0;
 pub const PACKAGE_UNEXPECTED_FAILURE: i32 = 1;
 pub const PACKAGE_INSTALL_FAILED: i32 = 2;
+pub const PACKAGE_UNINSTALL_FAILED: i32 = 3;
+pub const PACKAGE_LIST_FAILED: i32 = 4;
+pub const PACKAGE_UPDATE_FAILED: i32 = 5;
+pub const PACKAGE_UPDATE_PARTIAL_FAILURE: i32 = 6;
 
 use std::sync::Mutex;
 
