@@ -20,9 +20,11 @@
 use anyhow::{bail, Context, Result};
 use std::path::{Path, PathBuf};
 
-use crate::{ArchivedPackage, Archiver, Package, PackageSpecifier, SaveOptions};
+use crate::{
+  manifest::Manifest, ArchivedPackage, Archiver, Package, PackageSpecifier, SaveOptions,
+};
 
-use super::StoredPackage;
+use super::{LegacyPackage, PackageSource, StoredPackage, PACKAGE_SOURCE_FILE};
 
 pub struct DefaultArchiver {
   package_dir: PathBuf,
@@ -92,16 +94,58 @@ impl Archiver for DefaultArchiver {
     Ok(archived_package)
   }
 
-  fn get(&self, name: &str) -> Result<ArchivedPackage> {
-    todo!()
+  fn get(&self, name: &str) -> Result<StoredPackage> {
+    let target_dir = self.package_dir.join(name);
+
+    if !target_dir.is_dir() {
+      bail!("package '{}' not found", name);
+    }
+
+    let manifest_path = target_dir.join("_manifest.yml");
+    if !manifest_path.is_file() {
+      return Ok(StoredPackage::Legacy(LegacyPackage {
+        name: name.to_string(),
+      }));
+    }
+
+    let manifest = Manifest::parse(&manifest_path).context("unable to parse package manifest")?;
+
+    let source_path = target_dir.join(PACKAGE_SOURCE_FILE);
+    let source =
+      PackageSource::parse(&source_path).context("unable to parse package source file")?;
+
+    Ok(StoredPackage::Modern(ArchivedPackage { manifest, source }))
   }
 
   fn list(&self) -> Result<Vec<StoredPackage>> {
-    todo!()
+    let mut output = Vec::new();
+
+    for path in std::fs::read_dir(&self.package_dir)? {
+      let path = path?.path();
+      if !path.is_dir() {
+        continue;
+      }
+
+      if let Some(package_name) = path.file_name() {
+        let package_name = package_name.to_string_lossy().to_string();
+
+        output.push(self.get(&package_name)?);
+      }
+    }
+
+    Ok(output)
   }
 
   fn delete(&self, name: &str) -> Result<()> {
-    todo!()
+    let target_dir = self.package_dir.join(name);
+
+    if !target_dir.is_dir() {
+      bail!("package {} not found", name);
+    }
+
+    std::fs::remove_dir_all(&target_dir).context("unable to remove package directory")?;
+
+    Ok(())
   }
 }
 
@@ -230,6 +274,73 @@ matches:
       );
 
       assert!(result.is_ok());
+    });
+  }
+
+  #[test]
+  fn test_delete_package() {
+    run_with_two_temp_dirs(|package_dir, dest_dir| {
+      let package = create_fake_package(package_dir);
+
+      let archiver = DefaultArchiver::new(dest_dir);
+      let result = archiver.save(
+        &*package,
+        &PackageSpecifier {
+          name: "package1".to_string(),
+          git_repo_url: Some("https://github.com/espanso/dummy-package".to_string()),
+          git_branch: Some("main".to_string()),
+          ..Default::default()
+        },
+        &SaveOptions::default(),
+      );
+
+      assert!(result.is_ok());
+
+      let package_out_dir = dest_dir.join("package1");
+      assert!(package_out_dir.is_dir());
+
+      archiver.delete("package1").unwrap();
+
+      assert!(!package_out_dir.is_dir());
+    });
+  }
+
+  #[test]
+  fn test_list_packages() {
+    run_with_two_temp_dirs(|package_dir, dest_dir| {
+      let package = create_fake_package(package_dir);
+
+      let archiver = DefaultArchiver::new(dest_dir);
+      let result = archiver.save(
+        &*package,
+        &PackageSpecifier {
+          name: "package1".to_string(),
+          git_repo_url: Some("https://github.com/espanso/dummy-package".to_string()),
+          git_branch: Some("main".to_string()),
+          ..Default::default()
+        },
+        &SaveOptions::default(),
+      );
+
+      assert!(result.is_ok());
+
+      let package_out_dir = dest_dir.join("package1");
+      assert!(package_out_dir.is_dir());
+
+      let legacy_package = dest_dir.join("z_legacypackage1");
+      create_dir_all(&legacy_package).unwrap();
+
+      let package_list = archiver.list().unwrap();
+
+      assert!(package_list.iter().any(|package| *package
+        == StoredPackage::Modern(ArchivedPackage {
+          manifest: Manifest::parse(&package_out_dir.join("_manifest.yml")).unwrap(),
+          source: PackageSource::parse(&package_out_dir.join(PACKAGE_SOURCE_FILE)).unwrap(),
+        })));
+      assert!(package_list.iter().any(|package| *package
+        == StoredPackage::Legacy(LegacyPackage {
+          name: "z_legacypackage1".to_string()
+        })));
     });
   }
 }
