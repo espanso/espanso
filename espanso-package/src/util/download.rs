@@ -17,13 +17,33 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use anyhow::{Context, Result};
+use anyhow::{Context, Result, bail};
 use std::io::{copy, Cursor};
 use std::path::Path;
+use sha2::{Sha256, Digest};
 
 pub fn download_and_extract_zip(url: &str, dest_dir: &Path) -> Result<()> {
+  download_and_extract_zip_verify_sha256(url, dest_dir, None)
+}
+
+pub fn download_and_extract_zip_verify_sha256(url: &str, dest_dir: &Path, sha256: Option<&str>) -> Result<()> {
   let data = download(url).context("error downloading archive")?;
+  if let Some(sha256) = sha256 {
+    info_println!("validating sha256 signature...");
+    if !verify_sha256(&data, sha256) {
+      bail!("signature mismatch");
+    }
+  }
   extract_zip(data, dest_dir).context("error extracting archive")
+}
+
+pub fn read_string_from_url(url: &str) -> Result<String> {
+  let client = reqwest::blocking::Client::builder();
+  let client = client.build()?;
+
+  let response = client.get(url).send()?;
+
+  Ok(response.text()?)
 }
 
 fn download(url: &str) -> Result<Vec<u8>> {
@@ -35,6 +55,14 @@ fn download(url: &str) -> Result<Vec<u8>> {
   let mut buffer = Vec::new();
   copy(&mut response, &mut buffer)?;
   Ok(buffer)
+}
+
+fn verify_sha256(data: &[u8], sha256: &str) -> bool {
+  let mut hasher = Sha256::new();
+  hasher.update(data);
+  let result = hasher.finalize();
+  let hash = hex::encode(result);
+  hash == sha256
 }
 
 // Adapted from zip-rs extract.rs example
