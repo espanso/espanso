@@ -21,6 +21,7 @@ use anyhow::Result;
 
 use crate::Package;
 
+pub(crate) mod hub;
 pub(crate) mod git;
 pub(crate) mod github;
 

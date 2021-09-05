@@ -22,6 +22,8 @@ use std::path::Path;
 use anyhow::{bail, Result};
 
 mod archive;
+#[macro_use]
+mod logging;
 mod manifest;
 mod package;
 mod provider;
@@ -29,12 +31,12 @@ mod resolver;
 mod util;
 
 pub use archive::{ArchivedPackage, Archiver, SaveOptions, StoredPackage};
-pub use provider::{PackageSpecifier, PackageProvider};
 pub use package::Package;
+pub use provider::{PackageProvider, PackageSpecifier};
 
 // TODO: once the download is completed, avoid copying files beginning with "."
 
-pub fn get_provider(package: &PackageSpecifier) -> Result<Box<dyn PackageProvider>> {
+pub fn get_provider(package: &PackageSpecifier,) -> Result<Box<dyn PackageProvider>> {
   if let Some(git_repo_url) = package.git_repo_url.as_deref() {
     if !package.use_native_git {
       let matches_known_hosts =
@@ -73,14 +75,15 @@ pub fn get_provider(package: &PackageSpecifier) -> Result<Box<dyn PackageProvide
     // (because it's not authenticated)
     Ok(Box::new(provider::git::GitPackageProvider::new()))
   } else {
-    // TODO: use espanso-hub method
-    bail!("espanso hub method not yet implemented")
+    // Download from the official espanso hub
+    Ok(Box::new(provider::hub::EspansoHubPackageProvider::new()))
   }
 }
 
-
 pub fn get_archiver(package_dir: &Path) -> Result<Box<dyn Archiver>> {
-  Ok(Box::new(archive::default::DefaultArchiver::new(package_dir)))
+  Ok(Box::new(archive::default::DefaultArchiver::new(
+    package_dir,
+  )))
 }
 
 #[cfg(test)]
