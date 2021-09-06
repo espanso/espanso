@@ -17,6 +17,11 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use std::{
+  path::{Path, PathBuf},
+  time::UNIX_EPOCH,
+};
+
 use super::PackageProvider;
 use crate::{
   package::DefaultPackage, resolver::resolve_package, util::download::read_string_from_url,
@@ -28,11 +33,20 @@ use serde::{Deserialize, Serialize};
 pub const ESPANSO_HUB_PACKAGE_INDEX_URL: &str =
   "https://github.com/espanso/hub/releases/latest/download/package_index.json";
 
-pub struct EspansoHubPackageProvider {}
+const PACKAGE_INDEX_CACHE_FILE: &str = "package_index_cache.json";
+const PACKAGE_INDEX_CACHE_INVALIDATION_SECONDS: u64 = 60 * 60;
+
+pub struct EspansoHubPackageProvider {
+  runtime_dir: PathBuf,
+  force_index_update: bool,
+}
 
 impl EspansoHubPackageProvider {
-  pub fn new() -> Self {
-    Self {}
+  pub fn new(runtime_dir: &Path, force_index_update: bool) -> Self {
+    Self {
+      runtime_dir: runtime_dir.to_path_buf(),
+      force_index_update,
+    }
   }
 }
 
@@ -42,9 +56,8 @@ impl PackageProvider for EspansoHubPackageProvider {
   }
 
   fn download(&self, package: &PackageSpecifier) -> Result<Box<dyn Package>> {
-    // TODO: pass index update flag
     let index = self
-      .get_index(true)
+      .get_index(self.force_index_update)
       .context("unable to get package index from espanso hub")?;
 
     let package_info = index
@@ -82,9 +95,23 @@ impl PackageProvider for EspansoHubPackageProvider {
 }
 
 impl EspansoHubPackageProvider {
-  fn get_index(&self, _force_update: bool) -> Result<PackageIndex> {
-    // TODO: if force_update is false, we should try to use a locally-cached version of the package index
-    self.download_index()
+  fn get_index(&self, force_update: bool) -> Result<PackageIndex> {
+    let old_index = self.get_index_from_cache()?;
+
+    if let Some(old_index) = old_index {
+      if !force_update {
+        let current_time = std::time::SystemTime::now().duration_since(UNIX_EPOCH)?;
+        let current_unix = current_time.as_secs();
+        if old_index.cached_at >= (current_unix - PACKAGE_INDEX_CACHE_INVALIDATION_SECONDS) {
+          info_println!("using cached package index");
+          return Ok(old_index.index);
+        }
+      }
+    }
+
+    let new_index = self.download_index()?;
+    self.save_index_to_cache(new_index.clone())?;
+    Ok(new_index)
   }
 
   fn download_index(&self) -> Result<PackageIndex> {
@@ -95,9 +122,40 @@ impl EspansoHubPackageProvider {
 
     Ok(index)
   }
+
+  fn get_index_from_cache(&self) -> Result<Option<CachedPackageIndex>> {
+    let target_file = self.runtime_dir.join(PACKAGE_INDEX_CACHE_FILE);
+    if !target_file.is_file() {
+      return Ok(None);
+    }
+
+    let content =
+      std::fs::read_to_string(&target_file).context("unable to read package index cache")?;
+    let index: CachedPackageIndex = serde_json::from_str(&content)?;
+    Ok(Some(index))
+  }
+
+  fn save_index_to_cache(&self, index: PackageIndex) -> Result<()> {
+    let target_file = self.runtime_dir.join(PACKAGE_INDEX_CACHE_FILE);
+    let current_time = std::time::SystemTime::now().duration_since(UNIX_EPOCH)?;
+    let current_unix = current_time.as_secs();
+    let cached_index = CachedPackageIndex {
+      cached_at: current_unix,
+      index,
+    };
+    let serialized = serde_json::to_string(&cached_index)?;
+    std::fs::write(&target_file, serialized)?;
+    Ok(())
+  }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+struct CachedPackageIndex {
+  cached_at: u64,
+  index: PackageIndex,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 struct PackageIndex {
   last_update: u64,
   packages: Vec<PackageInfo>,
