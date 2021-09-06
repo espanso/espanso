@@ -17,8 +17,8 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::convert::TryInto;
 use espanso_inject::{InjectionOptions, Injector};
+use std::convert::TryInto;
 
 use espanso_engine::dispatch::KeyInjector;
 
@@ -31,7 +31,10 @@ pub struct KeyInjectorAdapter<'a> {
 
 impl<'a> KeyInjectorAdapter<'a> {
   pub fn new(injector: &'a dyn Injector, params_provider: &'a dyn InjectParamsProvider) -> Self {
-    Self { injector, params_provider }
+    Self {
+      injector,
+      params_provider,
+    }
   }
 }
 
@@ -42,10 +45,20 @@ impl<'a> KeyInjector for KeyInjectorAdapter<'a> {
     let injection_options = InjectionOptions {
       delay: params
         .key_delay
-        .unwrap_or(InjectionOptions::default().delay.try_into().unwrap())
+        .unwrap_or_else(|| InjectionOptions::default().delay.try_into().unwrap())
         .try_into()
         .unwrap(),
       disable_fast_inject: params.disable_x11_fast_inject,
+      evdev_modifier_delay: params
+        .evdev_modifier_delay
+        .unwrap_or_else(|| {
+          InjectionOptions::default()
+            .evdev_modifier_delay
+            .try_into()
+            .unwrap()
+        })
+        .try_into()
+        .unwrap(),
     };
 
     let converted_keys: Vec<_> = keys.iter().map(convert_to_inject_key).collect();

@@ -151,6 +151,7 @@ impl<'a> super::engine::dispatch::executor::InjectParamsProvider for ConfigManag
       disable_x11_fast_inject: active.disable_x11_fast_inject(),
       inject_delay: active.inject_delay(),
       key_delay: active.key_delay(),
+      evdev_modifier_delay: active.evdev_modifier_delay(),
     }
   }
 }
