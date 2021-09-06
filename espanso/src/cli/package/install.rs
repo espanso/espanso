@@ -19,7 +19,7 @@
 
 use anyhow::{anyhow, Context, Result};
 use clap::ArgMatches;
-use espanso_package::{PackageSpecifier, SaveOptions};
+use espanso_package::{PackageSpecifier, ProviderOptions, SaveOptions};
 use espanso_path::Paths;
 
 use crate::info_println;
@@ -30,6 +30,7 @@ pub fn install_package(paths: &Paths, matches: &ArgMatches) -> Result<()> {
     .ok_or_else(|| anyhow!("missing package name"))?;
   let version = matches.value_of("version");
   let force = matches.is_present("force");
+  let refresh_index = matches.is_present("refresh-index");
 
   info_println!(
     "installing package: {} - version: {}",
@@ -60,8 +61,14 @@ pub fn install_package(paths: &Paths, matches: &ArgMatches) -> Result<()> {
 
   // TODO: if git is specified, make sure external is as well (or warn otherwise)
 
-  let package_provider = espanso_package::get_provider(&package_specifier)
-    .context("unable to obtain compatible package provider")?;
+  let package_provider = espanso_package::get_provider(
+    &package_specifier,
+    &paths.runtime,
+    &ProviderOptions {
+      force_index_update: refresh_index,
+    },
+  )
+  .context("unable to obtain compatible package provider")?;
 
   info_println!("using package provider: {}", package_provider.name());
 
@@ -76,9 +83,15 @@ pub fn install_package(paths: &Paths, matches: &ArgMatches) -> Result<()> {
   let archiver =
     espanso_package::get_archiver(&paths.packages).context("unable to get package archiver")?;
 
-  archiver.save(&*package, &package_specifier, &SaveOptions {
-    overwrite_existing: force,
-  }).context("unable to save package")?;
+  archiver
+    .save(
+      &*package,
+      &package_specifier,
+      &SaveOptions {
+        overwrite_existing: force,
+      },
+    )
+    .context("unable to save package")?;
 
   info_println!("package installed!");
 
