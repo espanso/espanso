@@ -19,7 +19,7 @@
 
 use anyhow::{anyhow, Context, Result};
 use clap::ArgMatches;
-use espanso_package::{Archiver, PackageSpecifier, SaveOptions, StoredPackage};
+use espanso_package::{Archiver, PackageSpecifier, ProviderOptions, SaveOptions, StoredPackage};
 use espanso_path::Paths;
 
 use crate::{error_eprintln, info_println, warn_eprintln};
@@ -55,7 +55,7 @@ pub fn update_package(paths: &Paths, matches: &ArgMatches) -> Result<UpdateResul
   let mut update_errors = Vec::new();
 
   for package_name in &packages_to_update {
-    if let Err(err) = perform_package_update(&*archiver, &package_name) {
+    if let Err(err) = perform_package_update(paths, &*archiver, &package_name) {
       error_eprintln!("error updating package '{}': {:?}", package_name, err);
       update_errors.push(err);
     }
@@ -70,7 +70,11 @@ pub fn update_package(paths: &Paths, matches: &ArgMatches) -> Result<UpdateResul
   }
 }
 
-fn perform_package_update(archiver: &dyn Archiver, package_name: &str) -> Result<()> {
+fn perform_package_update(
+  paths: &Paths,
+  archiver: &dyn Archiver,
+  package_name: &str,
+) -> Result<()> {
   info_println!("updating package: {}", package_name);
 
   let package = archiver.get(package_name)?;
@@ -92,8 +96,12 @@ fn perform_package_update(archiver: &dyn Archiver, package_name: &str) -> Result
     StoredPackage::Modern(modern) => ((&modern).into(), Some(modern.manifest.version)),
   };
 
-  let package_provider = espanso_package::get_provider(&package_specifier)
-    .context("unable to obtain compatible package provider")?;
+  let package_provider = espanso_package::get_provider(
+    &package_specifier,
+    &paths.runtime,
+    &ProviderOptions::default(),
+  )
+  .context("unable to obtain compatible package provider")?;
 
   info_println!("using package provider: {}", package_provider.name());
 

@@ -134,6 +134,13 @@ fn main() {
         .help("Overwrite the package if already installed"),
     )
     .arg(
+      Arg::with_name("refresh-index")
+        .long("refresh-index")
+        .required(false)
+        .takes_value(false)
+        .help("Request a fresh copy of the Espanso Hub package index instead of using the cached version.")
+    )
+    .arg(
       Arg::with_name("use-native-git")
         .long("use-native-git")
         .required(false)
