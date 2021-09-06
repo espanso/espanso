@@ -17,12 +17,12 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use anyhow::{anyhow, Context, Result};
+use anyhow::{anyhow, bail, Context, Result};
 use clap::ArgMatches;
 use espanso_package::{PackageSpecifier, ProviderOptions, SaveOptions};
 use espanso_path::Paths;
 
-use crate::info_println;
+use crate::{error_eprintln, info_println};
 
 pub fn install_package(paths: &Paths, matches: &ArgMatches) -> Result<()> {
   let package_name = matches
@@ -31,6 +31,7 @@ pub fn install_package(paths: &Paths, matches: &ArgMatches) -> Result<()> {
   let version = matches.value_of("version");
   let force = matches.is_present("force");
   let refresh_index = matches.is_present("refresh-index");
+  let external = matches.is_present("external");
 
   info_println!(
     "installing package: {} - version: {}",
@@ -38,28 +39,45 @@ pub fn install_package(paths: &Paths, matches: &ArgMatches) -> Result<()> {
     version.unwrap_or("latest")
   );
 
-  let package_specifier = if let Some(git_repo) = matches.value_of("git") {
+  let (package_specifier, requires_external) = if let Some(git_repo) = matches.value_of("git") {
     let git_branch = matches.value_of("git-branch");
     let use_native_git = matches.is_present("use-native-git");
 
-    PackageSpecifier {
-      name: package_name.to_string(),
-      version: version.map(String::from),
-      git_repo_url: Some(git_repo.to_string()),
-      git_branch: git_branch.map(String::from),
-      use_native_git,
-    }
+    (
+      PackageSpecifier {
+        name: package_name.to_string(),
+        version: version.map(String::from),
+        git_repo_url: Some(git_repo.to_string()),
+        git_branch: git_branch.map(String::from),
+        use_native_git,
+      },
+      true,
+    )
   } else {
     // Install from the hub
 
-    PackageSpecifier {
-      name: package_name.to_string(),
-      version: version.map(String::from),
-      ..Default::default()
-    }
+    (
+      PackageSpecifier {
+        name: package_name.to_string(),
+        version: version.map(String::from),
+        ..Default::default()
+      },
+      false,
+    )
   };
 
-  // TODO: if git is specified, make sure external is as well (or warn otherwise)
+  if requires_external && !external {
+    error_eprintln!("Error: the requested package is hosted on an external repository");
+    error_eprintln!("and its contents may not have been verified by the espanso team.");
+    error_eprintln!("");
+    error_eprintln!("For security reasons, espanso blocks packages that are not verified by default.");
+    error_eprintln!("If you want to install the package anyway, you can proceed with the installation");
+    error_eprintln!("by passing the '--external' flag, but please do it only if you trust the");
+    error_eprintln!("source or you verified the contents of the package yourself.");
+    error_eprintln!("");
+
+    bail!("installing from external repository without --external flag");
+  }
 
   let package_provider = espanso_package::get_provider(
     &package_specifier,
