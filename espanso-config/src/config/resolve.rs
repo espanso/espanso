@@ -17,16 +17,7 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use super::{
-  default::{
-    DEFAULT_CLIPBOARD_THRESHOLD, DEFAULT_PRE_PASTE_DELAY, DEFAULT_RESTORE_CLIPBOARD_DELAY,
-    DEFAULT_SHORTCUT_EVENT_DELAY,
-  },
-  parse::ParsedConfig,
-  path::calculate_paths,
-  util::os_matches,
-  AppProperties, Backend, Config, RMLVOConfig, ToggleKey,
-};
+use super::{AppProperties, Backend, Config, RMLVOConfig, ToggleKey, default::{DEFAULT_CLIPBOARD_THRESHOLD, DEFAULT_PRE_PASTE_DELAY, DEFAULT_RESTORE_CLIPBOARD_DELAY, DEFAULT_SHORTCUT_EVENT_DELAY}, parse::ParsedConfig, path::calculate_paths, util::os_matches};
 use crate::{counter::next_id, merge};
 use anyhow::Result;
 use log::error;
@@ -314,6 +305,10 @@ impl Config for ResolvedConfig {
   fn win32_exclude_orphan_events(&self) -> bool {
     self.parsed.win32_exclude_orphan_events.unwrap_or(true)
   }
+
+  fn evdev_modifier_delay(&self) -> Option<usize> {
+    self.parsed.evdev_modifier_delay
+  }
 }
 
 impl ResolvedConfig {
@@ -385,6 +380,7 @@ impl ResolvedConfig {
       toggle_key,
       inject_delay,
       key_delay,
+      evdev_modifier_delay,
       word_separators,
       backspace_limit,
       keyboard_layout,

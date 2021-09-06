@@ -390,6 +390,10 @@ impl Config for LegacyInteropConfig {
   fn win32_exclude_orphan_events(&self) -> bool {
     true
   }
+  
+  fn evdev_modifier_delay(&self) -> Option<usize> {
+    Some(10)
+  }
 }
 
 struct LegacyMatchGroup {
