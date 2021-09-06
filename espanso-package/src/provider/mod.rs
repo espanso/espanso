@@ -44,3 +44,7 @@ pub trait PackageProvider {
   // TODO: fn check update available? (probably should be only available in the hub)
 }
 
+#[derive(Debug, Default)]
+pub struct ProviderOptions {
+  pub force_index_update: bool,
+}
