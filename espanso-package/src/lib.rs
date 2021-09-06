@@ -51,8 +51,15 @@ pub fn get_provider(package: &PackageSpecifier, runtime_dir: &Path, options: &Pr
 
           true
         } else if let Some(gitlab_parts) = util::gitlab::extract_gitlab_url_parts(git_repo_url) {
-          panic!("GitLab is not supported yet!");
-          todo!();
+          if let Some(repo_scheme) =
+            util::gitlab::resolve_repo_scheme(gitlab_parts, package.git_branch.as_deref())?
+          {
+            return Ok(Box::new(provider::gitlab::GitLabPackageProvider::new(
+              repo_scheme.author,
+              repo_scheme.name,
+              repo_scheme.branch,
+            )));
+          }
 
           true
         } else {
@@ -64,7 +71,7 @@ pub fn get_provider(package: &PackageSpecifier, runtime_dir: &Path, options: &Pr
       // available to non-authenticated requests), so we check if a "git ls-remote" command
       // is able to access it.
       if matches_known_hosts && !util::git::is_private_repo(git_repo_url) {
-        bail!("could not access repository: {}, make sure it exists and that you have the necessary access rights.");
+        bail!("could not access repository: {}, make sure it exists and that you have the necessary access rights.", git_repo_url);
       }
     }
 
