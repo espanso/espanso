@@ -59,6 +59,14 @@ pub fn resolve_repo_scheme(parts: GitHubParts, force_branch: Option<&str>) -> Re
       }))
     }
   } else {
+    if check_repo_with_branch(&parts, "main")? {
+      return Ok(Some(ResolvedRepoScheme {
+        author: parts.author,
+        name: parts.name,
+        branch: "main".to_string(),
+      }));
+    }
+
     if check_repo_with_branch(&parts, "master")? {
       return Ok(Some(ResolvedRepoScheme {
         author: parts.author,
@@ -67,13 +75,6 @@ pub fn resolve_repo_scheme(parts: GitHubParts, force_branch: Option<&str>) -> Re
       }));
     }
 
-    if check_repo_with_branch(&parts, "main")? {
-      return Ok(Some(ResolvedRepoScheme {
-        author: parts.author,
-        name: parts.name,
-        branch: "main".to_string(),
-      }));
-    }
   }
 
   Ok(None)
