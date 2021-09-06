@@ -52,6 +52,7 @@ pub(crate) struct ParsedConfig {
   pub inject_delay: Option<usize>,
   pub key_delay: Option<usize>,
   pub keyboard_layout: Option<BTreeMap<String, String>>,
+  pub evdev_modifier_delay: Option<usize>,
 
   // Includes
   pub includes: Option<Vec<String>>,

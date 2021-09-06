@@ -108,6 +108,12 @@ pub trait Config: Send + Sync {
   // application is missing some key events.
   fn key_delay(&self) -> Option<usize>;
 
+  // Extra delay to apply when injecting modifiers under the EVDEV backend.
+  // This is useful on Wayland if espanso is injecting seemingly random
+  // cased letters, for example "Hi theRE1" instead of "Hi there!".
+  // Increase if necessary, decrease to speed up the injection.
+  fn evdev_modifier_delay(&self) -> Option<usize>;
+
   // Chars that when pressed mark the start and end of a word.
   // Examples of this are . or ,
   fn word_separators(&self) -> Vec<String>;

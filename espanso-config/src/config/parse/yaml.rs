@@ -74,6 +74,9 @@ pub(crate) struct YAMLConfig {
   pub backspace_delay: Option<usize>,
 
   #[serde(default)]
+  pub evdev_modifier_delay: Option<usize>,
+
+  #[serde(default)]
   pub word_separators: Option<Vec<String>>,
 
   #[serde(default)]
@@ -165,6 +168,7 @@ impl TryFrom<YAMLConfig> for ParsedConfig {
       disable_x11_fast_inject: yaml_config.disable_x11_fast_inject,
       inject_delay: yaml_config.inject_delay,
       key_delay: yaml_config.key_delay.or(yaml_config.backspace_delay),
+      evdev_modifier_delay: yaml_config.evdev_modifier_delay,
       word_separators: yaml_config.word_separators,
       backspace_limit: yaml_config.backspace_limit,
       apply_patch: yaml_config.apply_patch,
@@ -232,6 +236,7 @@ mod tests {
     inject_delay: 10
     key_delay: 20
     backspace_delay: 30
+    evdev_modifier_delay: 40
     word_separators: ["'", "."]
     backspace_limit: 10
     apply_patch: false
@@ -301,6 +306,7 @@ mod tests {
         win32_exclude_orphan_events: Some(false),
 
         pre_paste_delay: Some(300),
+        evdev_modifier_delay: Some(40),
 
         toggle_key: Some("CTRL".to_string()),
         word_separators: Some(vec!["'".to_owned(), ".".to_owned()]),
