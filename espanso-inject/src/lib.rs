@@ -57,6 +57,10 @@ pub struct InjectionOptions {
   // using XSendEvent rather than XTestFakeKeyEvent
   // NOTE: Only relevant on X11 linux systems.
   pub disable_fast_inject: bool,
+
+  // Used to set a modifier-specific delay.
+  // NOTE: Only relevant on Wayland systems.
+  pub evdev_modifier_delay: u32,
 }
 
 impl Default for InjectionOptions {
@@ -78,6 +82,7 @@ impl Default for InjectionOptions {
     Self {
       delay: default_delay,
       disable_fast_inject: false,
+      evdev_modifier_delay: 10,
     }
   }
 }

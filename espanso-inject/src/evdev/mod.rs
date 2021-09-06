@@ -249,6 +249,12 @@ impl EVDEVInjector {
       Ok(())
     }
   }
+
+  fn wait_delay(&self, delay_ms: u32) {
+    if delay_ms > 0 {
+      std::thread::sleep(std::time::Duration::from_millis(delay_ms as u64));
+    }
+  }
 }
 
 impl Injector for EVDEVInjector {
@@ -267,6 +273,7 @@ impl Injector for EVDEVInjector {
       .collect();
 
     let delay_us = options.delay as u32 * 1000; // Convert to micro seconds
+    let modifier_delay_ms = options.evdev_modifier_delay;
 
     // We need to keep track of the modifiers currently pressed to
     // press or release them accordingly
@@ -277,13 +284,21 @@ impl Injector for EVDEVInjector {
 
       // Release all the modifiers that are not needed anymore
       for expired_modifier in current_modifiers.difference(&record_modifiers) {
+        self.wait_delay(modifier_delay_ms);
+
         self.send_key(*expired_modifier, false, delay_us);
+
+        self.wait_delay(modifier_delay_ms);
       }
 
       // Press all the new modifiers that are now needed
       for new_modifier in record_modifiers.difference(&current_modifiers) {
+        self.wait_delay(modifier_delay_ms);
+
         self.wait_until_key_is_released(record.code)?;
         self.send_key(*new_modifier, true, delay_us);
+
+        self.wait_delay(modifier_delay_ms);
       }
 
       // Send the char
