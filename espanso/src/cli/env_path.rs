@@ -26,7 +26,6 @@ pub fn new() -> CliModule {
   CliModule {
     enable_logs: true,
     disable_logs_terminal_output: true,
-    requires_paths: true,
     log_mode: super::LogMode::AppendOnly,
     subcommand: "env-path".to_string(),
     entry: env_path_main,
@@ -35,7 +34,6 @@ pub fn new() -> CliModule {
 }
 
 fn env_path_main(args: CliModuleArgs) -> i32 {
-  let paths = args.paths.expect("missing paths argument");
   let cli_args = args.cli_args.expect("missing cli_args");
 
   let elevated_priviledge_prompt = cli_args.is_present("prompt");
@@ -43,7 +41,7 @@ fn env_path_main(args: CliModuleArgs) -> i32 {
   if cli_args.subcommand_matches("register").is_some() {
     if let Err(error) = crate::path::add_espanso_to_path(elevated_priviledge_prompt) {
       error_print_and_log(&format!(
-        "Unable to add 'espanso' command to PATH: {}",
+        "Unable to add 'espanso' command to PATH: {:?}",
         error
       ));
       return ADD_TO_PATH_FAILURE;
@@ -51,7 +49,7 @@ fn env_path_main(args: CliModuleArgs) -> i32 {
   } else if cli_args.subcommand_matches("unregister").is_some() {
     if let Err(error) = crate::path::remove_espanso_from_path(elevated_priviledge_prompt) {
       error_print_and_log(&format!(
-        "Unable to remove 'espanso' command from PATH: {}",
+        "Unable to remove 'espanso' command from PATH: {:?}",
         error
       ));
       return ADD_TO_PATH_FAILURE;

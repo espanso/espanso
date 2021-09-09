@@ -198,11 +198,11 @@ fn main() {
             .long("prompt")
             .required(false)
             .takes_value(false)
-            .help("Prompt for permissions if the operation requires elevated privileges."),
+            .help("macOS only:Prompt for permissions if the operation requires elevated privileges."),
         )
         .subcommand(SubCommand::with_name("register").about("Add 'espanso' command to PATH"))
         .subcommand(SubCommand::with_name("unregister").about("Remove 'espanso' command from PATH"))
-        .about("Add or remove the 'espanso' command from the PATH (macOS and Windows only)"),
+        .about("Add or remove the 'espanso' command from the PATH"),
     )
     // .subcommand(SubCommand::with_name("cmd")
     //     .about("Send a command to the espanso daemon.")
@@ -451,7 +451,7 @@ fn main() {
     }
 
     // When started from a Linux app image, override the default handler with the launcher
-    // to start espanso when double clicked
+    // to start espanso when launching it directly
     if std::env::var_os("APPIMAGE").is_some() {
       handler = CLI_HANDLERS.iter().find(|cli| cli.subcommand == "launcher");
     }
