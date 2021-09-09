@@ -99,7 +99,7 @@ pub fn load_icon_paths(runtime_dir: &Path) -> Result<IconPaths> {
 #[cfg(target_os = "linux")]
 pub fn load_icon_paths(runtime_dir: &Path) -> Result<IconPaths> {
   Ok(IconPaths {
-    logo: Some(extract_icon(ICON_BINARY, &runtime_dir.join("icon.png"))?),
+    logo: Some(extract_icon(ICON_BINARY, &runtime_dir.join("iconv2.png"))?),
     search_icon: Some(extract_icon(ICON_BINARY, &runtime_dir.join("search.png"))?),
     logo_no_background: Some(extract_icon(LOGO_NO_BACKGROUND_BINARY, &runtime_dir.join("icon_no_background.png"))?),
     ..Default::default()
