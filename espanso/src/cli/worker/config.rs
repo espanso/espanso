@@ -164,6 +164,11 @@ impl<'a> espanso_engine::process::MatcherMiddlewareConfigProvider for ConfigMana
 
 impl<'a> espanso_engine::process::UndoEnabledProvider for ConfigManager<'a> {
   fn is_undo_enabled(&self) -> bool {
+    // Disable undo_backspace on Wayland for now as it's not stable
+    if cfg!(feature = "wayland") {
+      return false
+    }
+    
     self.active().undo_backspace()
   }
 }
