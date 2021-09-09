@@ -135,12 +135,18 @@ fn migrate_main(args: CliModuleArgs) -> i32 {
     fs_extra::dir::get_dir_content(&paths.config).expect("unable to list legacy dir files");
   to_be_removed.extend(legacy_dir_content.files);
   to_be_removed.extend(legacy_dir_content.directories);
+  
+  // Skip the config directory itself to preserve the symbolic link (if present)
+  let config_dir_as_str = paths.config.to_string_lossy().to_string();
+  to_be_removed.retain(|path| path != &config_dir_as_str);
+
   fs_extra::remove_items(&to_be_removed).expect("unable to remove previous configuration");
   fs_extra::dir::copy(
     &temp_out_dir,
     &paths.config,
     &CopyOptions {
       copy_inside: true,
+      content_only: true,
       ..Default::default()
     },
   )
