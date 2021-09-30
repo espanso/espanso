@@ -222,7 +222,7 @@ pub(crate) fn render_variables(body: &str, scope: &Scope) -> Result<String> {
         },
         None => {
           replacing_error = Some(RendererError::MissingVariable(format!(
-            "variable {} is missing",
+            "variable '{}' is missing",
             var_name
           )));
           ""
