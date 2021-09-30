@@ -90,7 +90,7 @@ impl<'a> Middleware for RenderMiddleware<'a> {
             return Event::caused_by(event.source_id, EventType::NOOP)
           }
           _ => {
-            error!("error during rendering: {}", err);
+            error!("error during rendering: {:?}", err);
             return Event::caused_by(event.source_id, EventType::ProcessingError("An error has occurred during rendering, please examine the logs or contact support.".to_string()));
           }
         },
