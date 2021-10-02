@@ -796,6 +796,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "cc",
+ "glob",
  "lazy_static",
  "log",
  "regex",
