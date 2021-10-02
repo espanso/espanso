@@ -21,6 +21,10 @@ jobs:
       - name: Install cargo-make
         run: |
           cargo install --force cargo-make
+      - name: Install Linux dependencies
+        if: ${{ runner.os == 'Linux' }}
+        run: |
+          sudo apt install libx11-dev libxtst-dev libxkbcommon-dev libdbus-1-dev libwxgtk3.0-gtk3-dev
       - name: Run test suite
         run: cargo make test
       - name: Build
@@ -31,11 +35,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - name: Install dependencies
+        run: |
+          sudo apt install libxkbcommon-dev libwxgtk3.0-gtk3-dev
       - name: Install cargo-make
         run: |
           cargo install --force cargo-make
-      - name: Run test suite
-        run: cargo make test --env NO_X11=true
+      - name: Check build 
+        run: cargo make build-binary --env NO_X11=true
   
   check-macos-arm:
     runs-on: macos-11
