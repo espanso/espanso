@@ -17,10 +17,10 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::path::{PathBuf};
+use std::path::PathBuf;
 
 #[cfg(not(target_os = "windows"))]
-use std::path::{Path};
+use std::path::Path;
 
 #[cfg(not(target_os = "linux"))]
 const WX_WIDGETS_ARCHIVE_NAME: &str = "wxWidgets-3.1.5.zip";
@@ -89,17 +89,21 @@ fn build_native() {
       ])
       .spawn()
       .expect("failed to execute nmake");
-    if !handle.wait().expect("unable to wait for nmake command").success() {
+    if !handle
+      .wait()
+      .expect("unable to wait for nmake command")
+      .success()
+    {
       panic!("nmake returned non-zero exit code!");
     }
   }
 
   // Make sure wxWidgets is compiled
   if !out_wx_dir
-      .join("build")
-      .join("msw")
-      .join("vc_mswu_x64")
-      .is_dir()
+    .join("build")
+    .join("msw")
+    .join("vc_mswu_x64")
+    .is_dir()
   {
     panic!("wxWidgets is not compiled correctly, missing 'build/msw/vc_mswu_x64' directory")
   }
@@ -164,52 +168,72 @@ fn build_native() {
     let build_dir = out_wx_dir.join("build-cocoa");
     std::fs::create_dir_all(&build_dir).expect("unable to create build-cocoa directory");
 
-    let target_arch = match std::env::var("CARGO_CFG_TARGET_ARCH").expect("unable to read target arch").as_str() {
+    let target_arch = match std::env::var("CARGO_CFG_TARGET_ARCH")
+      .expect("unable to read target arch")
+      .as_str()
+    {
       "x86_64" => "x86_64",
       "aarch64" => "arm64",
       arch => panic!("unsupported arch {}", arch),
     };
 
-    // Because of a configuration problem on the GitHub CI pipeline, we need
-    // to set the target architecture manually.
-    // See: https://github.com/actions/virtual-environments/issues/3288#issuecomment-830207746
-    let xcode_sdk_path = Command::new("xcrun").args(&["--sdk", "macosx", "--show-sdk-path"]).output().expect("unable to obtain XCode sdk path");
-    let xcode_sdk_path = String::from_utf8_lossy(&xcode_sdk_path.stdout);
-    let xcode_sdk_path = xcode_sdk_path.trim();
+    let mut handle = if std::env::var("CI").unwrap_or_default() == "true" {
+      // Because of a configuration problem on the GitHub CI pipeline, we need
+      // to compile for both architectures manually, as well as setting some flags.
+      // See: https://github.com/actions/virtual-environments/issues/3288#issuecomment-830207746
+      let xcode_sdk_path = Command::new("xcrun")
+        .args(&["--sdk", "macosx", "--show-sdk-path"])
+        .output()
+        .expect("unable to obtain XCode sdk path");
+      let xcode_sdk_path = String::from_utf8_lossy(&xcode_sdk_path.stdout);
+      let xcode_sdk_path = xcode_sdk_path.trim();
 
-    if xcode_sdk_path.is_empty() {
-      panic!("could not query XCode sdk path");
-    }
+      if xcode_sdk_path.is_empty() {
+        panic!("could not query XCode sdk path");
+      }
+      println!("Using SDK path: {}", xcode_sdk_path);
 
-    println!("Using SDK path: {}", xcode_sdk_path);
+      let configure_cxx_flags = format!(
+        "-isysroot {} -isystem {} -DSTDC_HEADERS=1 -DHAVE_FCNTL_H -arch arm64 -arch x86_64",
+        xcode_sdk_path, xcode_sdk_path
+      );
 
-    let configure_cxx_flags = format!("-isysroot {} -isystem {} -DSTDC_HEADERS=1 -DHAVE_FCNTL_H -arch {}", xcode_sdk_path, xcode_sdk_path, target_arch);
+      Command::new(out_wx_dir.join("configure"))
+        .current_dir(build_dir.to_string_lossy().to_string())
+        .args(&["--disable-shared", "--without-libtiff"])
+        .env("CXXFLAGS", &configure_cxx_flags)
+        .spawn()
+        .expect("failed to execute configure")
+    } else {
+      Command::new(out_wx_dir.join("configure"))
+        .current_dir(build_dir.to_string_lossy().to_string())
+        .args(&[
+          "--disable-shared",
+          "--without-libtiff",
+          &format!("--enable-macosx_arch={}", target_arch),
+        ])
+        .spawn()
+        .expect("failed to execute configure")
+    };
 
-    let mut handle = Command::new(out_wx_dir.join("configure"))
-      .current_dir(
-        build_dir.to_string_lossy().to_string()
-      )
-      .args(&[
-        "--disable-shared",
-        "--without-libtiff",
-      ])
-      .env("CXXFLAGS", &configure_cxx_flags)
-      .spawn()
-      .expect("failed to execute configure");
-    if !handle.wait().expect("unable to wait for configure command").success() {
+    if !handle
+      .wait()
+      .expect("unable to wait for configure command")
+      .success()
+    {
       panic!("configure returned non-zero exit code!");
     }
 
     let mut handle = Command::new("make")
-      .current_dir(
-        build_dir.to_string_lossy().to_string()
-      )
-      .args(&[
-        "-j8",
-      ])
+      .current_dir(build_dir.to_string_lossy().to_string())
+      .args(&["-j8"])
       .spawn()
       .expect("failed to execute make");
-    if !handle.wait().expect("unable to wait for make command").success() {
+    if !handle
+      .wait()
+      .expect("unable to wait for make command")
+      .success()
+    {
       panic!("make returned non-zero exit code!");
     }
   }
@@ -355,7 +379,8 @@ fn build_native() {
   // Make sure wxWidgets is installed
   if std::process::Command::new("wx-config")
     .arg("--version")
-    .output().is_err()
+    .output()
+    .is_err()
   {
     panic!("wxWidgets is not installed, as `wx-config` cannot be exectued")
   }
