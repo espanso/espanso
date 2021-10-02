@@ -1,0 +1,49 @@
+# Huge thanks to Alacritty, as their configuration served as a starting point for this one!
+# See: https://github.com/alacritty/alacritty
+
+name: CI
+
+on: [push, pull_request]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install cargo-make
+        run: |
+          cargo install --force cargo-make
+      - name: Run test suite
+        run: cargo make test
+      - name: Build
+        run: |
+          cargo make build-binary
+  
+  check-wayland:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install cargo-make
+        run: |
+          cargo install --force cargo-make
+      - name: Run test suite
+        run: cargo make test --env NO_X11=true
+  
+  check-macos-arm:
+    runs-on: macos-11
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install target
+        run: rustup update && rustup target add aarch64-apple-darwin
+      - name: Check build
+        run: cargo make build-macos-arm-binary
+
+# TODO: add clippy check
