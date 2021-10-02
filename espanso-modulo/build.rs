@@ -170,21 +170,6 @@ fn build_native() {
       arch => panic!("unsupported arch {}", arch),
     };
 
-    // Because of a configuration problem on the GitHub CI pipeline, we need
-    // to set the target architecture manually.
-    // See: https://github.com/actions/virtual-environments/issues/3288#issuecomment-830207746
-    let xcode_sdk_path = Command::new("xcrun").args(&["--sdk", "macosx", "--show-sdk-path"]).output().expect("unable to obtain XCode sdk path");
-    let xcode_sdk_path = String::from_utf8_lossy(&xcode_sdk_path.stdout);
-    let xcode_sdk_path = xcode_sdk_path.trim();
-
-    if xcode_sdk_path.is_empty() {
-      panic!("could not query XCode sdk path");
-    }
-
-    println!("Using SDK path: {}", xcode_sdk_path);
-
-    let configure_cxx_flags = format!("-isysroot {} -isystem {} -DSTDC_HEADERS=1 -DHAVE_FCNTL_H -arch {}", xcode_sdk_path, xcode_sdk_path, target_arch);
-
     let mut handle = Command::new(out_wx_dir.join("configure"))
       .current_dir(
         build_dir.to_string_lossy().to_string()
@@ -192,8 +177,8 @@ fn build_native() {
       .args(&[
         "--disable-shared",
         "--without-libtiff",
+        &format!("--enable-macosx_arch={}", target_arch),
       ])
-      .env("CXXFLAGS", &configure_cxx_flags)
       .spawn()
       .expect("failed to execute configure");
     if !handle.wait().expect("unable to wait for configure command").success() {
