@@ -43,6 +43,9 @@ jobs:
       - uses: actions/checkout@v2
       - name: Install target
         run: rustup update && rustup target add aarch64-apple-darwin
+      - name: Install cargo-make
+        run: |
+          cargo install --force cargo-make
       - name: Check build
         run: cargo make build-macos-arm-binary
 
