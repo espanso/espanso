@@ -203,7 +203,7 @@ fn build_native() {
 
       Command::new(out_wx_dir.join("configure"))
         .current_dir(build_dir.to_string_lossy().to_string())
-        .args(&["--disable-shared", "--without-libtiff"])
+        .args(&["--disable-shared", "--without-libtiff", "--without-liblzma"])
         .env("CXXFLAGS", &configure_cxx_flags)
         .spawn()
         .expect("failed to execute configure")
@@ -302,25 +302,38 @@ fn convert_fat_libraries_to_arm(lib_dir: &Path) {
       continue;
     }
 
+    // Make sure it's a fat library
+    let lipo_output = std::process::Command::new("lipo")
+      .args(&["-detailed_info", &path.to_string_lossy().to_string()])
+      .output()
+      .expect("unable to check if library is fat");
+    let lipo_output = String::from_utf8_lossy(&lipo_output.stdout);
+    let lipo_output = lipo_output.trim();
+    if !lipo_output.contains("Fat header") {
+      println!("skipping {} as it's not a fat library", path.to_string_lossy());
+      continue;
+    }
+
     let parent = path.parent().expect("unable to extract parent");
-    let target_file = parent.join(format!(
-      "{}-arm.a",
+    let renamed_file = parent.join(format!(
+      "{}.old",
       &path.file_name().unwrap_or_default().to_string_lossy()
     ));
 
+    std::fs::rename(&path, &renamed_file).expect("unable to rename fat library");
+
     println!(
-      "converting {} to {}",
+      "converting {} to arm",
       path.to_string_lossy(),
-      target_file.to_string_lossy()
     );
 
     let result = std::process::Command::new("lipo")
       .args(&[
         "-thin",
         "arm64",
-        &path.to_string_lossy().to_string(),
+        &renamed_file.to_string_lossy().to_string(),
         "-output",
-        &target_file.to_string_lossy().to_string(),
+        &path.to_string_lossy().to_string(),
       ])
       .output()
       .expect("unable to extract arm64 slice from library");
@@ -329,12 +342,6 @@ fn convert_fat_libraries_to_arm(lib_dir: &Path) {
       panic!("unable to convert fat library to arm64 version");
     }
 
-    let renamed_file = parent.join(format!(
-      "{}.old",
-      &path.file_name().unwrap_or_default().to_string_lossy()
-    ));
-
-    std::fs::rename(&path, &renamed_file).expect("unable to rename fat library");
   }
 }
 
