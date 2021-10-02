@@ -155,6 +155,18 @@ fn build_native() {
   let out_dir = PathBuf::from(std::env::var("OUT_DIR").expect("missing OUT_DIR"));
   let out_wx_dir = out_dir.join("wx");
 
+  let target_arch = match std::env::var("CARGO_CFG_TARGET_ARCH")
+    .expect("unable to read target arch")
+    .as_str()
+  {
+    "x86_64" => "x86_64",
+    "aarch64" => "arm64",
+    arch => panic!("unsupported arch {}", arch),
+  };
+
+  let should_use_ci_m1_workaround =
+    std::env::var("CI").unwrap_or_default() == "true" && target_arch == "arm64";
+
   if !out_wx_dir.is_dir() {
     // Extract the wxWidgets archive
     let wx_archive =
@@ -168,18 +180,9 @@ fn build_native() {
     let build_dir = out_wx_dir.join("build-cocoa");
     std::fs::create_dir_all(&build_dir).expect("unable to create build-cocoa directory");
 
-    let target_arch = match std::env::var("CARGO_CFG_TARGET_ARCH")
-      .expect("unable to read target arch")
-      .as_str()
-    {
-      "x86_64" => "x86_64",
-      "aarch64" => "arm64",
-      arch => panic!("unsupported arch {}", arch),
-    };
-
-    let mut handle = if std::env::var("CI").unwrap_or_default() == "true" {
-      // Because of a configuration problem on the GitHub CI pipeline, we need
-      // to compile for both architectures manually, as well as setting some flags.
+    let mut handle = if should_use_ci_m1_workaround {
+      // Because of a configuration problem on the GitHub CI pipeline,
+      // we need to use a series of workarounds to build for M1 machines.
       // See: https://github.com/actions/virtual-environments/issues/3288#issuecomment-830207746
       let xcode_sdk_path = Command::new("xcrun")
         .args(&["--sdk", "macosx", "--show-sdk-path"])
@@ -243,6 +246,12 @@ fn build_native() {
     panic!("wxWidgets is not compiled correctly, missing 'build-cocoa/' directory")
   }
 
+  // If using the M1 CI workaround, convert all the universal libraries to arm64 ones
+  // This is needed until https://github.com/rust-lang/rust/issues/55235 is fixed
+  if should_use_ci_m1_workaround {
+    convert_fat_libraries_to_arm(&out_wx_dir.join("build-cocoa").join("lib"));
+  }
+
   let config_path = out_wx_dir.join("build-cocoa").join("wx-config");
   let cpp_flags = get_cpp_flags(&config_path);
 
@@ -278,6 +287,54 @@ fn build_native() {
   if let Some(path) = macos_link_search_path() {
     println!("cargo:rustc-link-lib=clang_rt.osx");
     println!("cargo:rustc-link-search={}", path);
+  }
+}
+
+#[cfg(target_os = "macos")]
+fn convert_fat_libraries_to_arm(lib_dir: &Path) {
+  for entry in
+    glob::glob(&format!("{}/*.a", lib_dir.to_string_lossy())).expect("failed to glob lib directory")
+  {
+    let path = entry.expect("unable to unwrap glob entry");
+
+    if path.file_name().unwrap_or_default().to_string_lossy().contains("-arm.a") {
+      println!("skipping {} as it's already arm", path.to_string_lossy());
+      continue;
+    }
+
+    let parent = path.parent().expect("unable to extract parent");
+    let target_file = parent.join(format!(
+      "{}-arm.a",
+      &path.file_name().unwrap_or_default().to_string_lossy()
+    ));
+
+    println!(
+      "converting {} to {}",
+      path.to_string_lossy(),
+      target_file.to_string_lossy()
+    );
+
+    let result = std::process::Command::new("lipo")
+      .args(&[
+        "-thin",
+        "arm64",
+        &path.to_string_lossy().to_string(),
+        "-output",
+        &target_file.to_string_lossy().to_string(),
+      ])
+      .output()
+      .expect("unable to extract arm64 slice from library");
+
+    if !result.status.success() {
+      panic!("unable to convert fat library to arm64 version");
+    }
+
+    let renamed_file = parent.join(format!(
+      "{}.old",
+      &path.file_name().unwrap_or_default().to_string_lossy()
+    ));
+
+    std::fs::rename(&path, &renamed_file).expect("unable to rename fat library");
   }
 }
 

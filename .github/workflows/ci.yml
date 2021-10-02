@@ -59,8 +59,6 @@ jobs:
       #     limit-access-to-actor: true
       - name: Build
         run: |
-          SDKROOT=$(xcrun -sdk macosx11.3 --show-sdk-path) \
-          MACOSX_DEPLOYMENT_TARGET=$(xcrun -sdk macosx11.3 --show-sdk-platform-version) \
           cargo make build-macos-arm-binary
 
 # TODO: add clippy check
