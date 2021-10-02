@@ -203,7 +203,13 @@ fn build_native() {
 
       Command::new(out_wx_dir.join("configure"))
         .current_dir(build_dir.to_string_lossy().to_string())
-        .args(&["--disable-shared", "--without-libtiff", "--without-liblzma"])
+        .args(&[
+          "--disable-shared",
+          "--without-libtiff",
+          "--without-liblzma",
+          "--with-libjpeg=builtin",
+          "--with-libpng=builtin",
+        ])
         .env("CXXFLAGS", &configure_cxx_flags)
         .spawn()
         .expect("failed to execute configure")
@@ -297,7 +303,12 @@ fn convert_fat_libraries_to_arm(lib_dir: &Path) {
   {
     let path = entry.expect("unable to unwrap glob entry");
 
-    if path.file_name().unwrap_or_default().to_string_lossy().contains("-arm.a") {
+    if path
+      .file_name()
+      .unwrap_or_default()
+      .to_string_lossy()
+      .contains("-arm.a")
+    {
       println!("skipping {} as it's already arm", path.to_string_lossy());
       continue;
     }
@@ -310,7 +321,10 @@ fn convert_fat_libraries_to_arm(lib_dir: &Path) {
     let lipo_output = String::from_utf8_lossy(&lipo_output.stdout);
     let lipo_output = lipo_output.trim();
     if !lipo_output.contains("Fat header") {
-      println!("skipping {} as it's not a fat library", path.to_string_lossy());
+      println!(
+        "skipping {} as it's not a fat library",
+        path.to_string_lossy()
+      );
       continue;
     }
 
@@ -322,10 +336,7 @@ fn convert_fat_libraries_to_arm(lib_dir: &Path) {
 
     std::fs::rename(&path, &renamed_file).expect("unable to rename fat library");
 
-    println!(
-      "converting {} to arm",
-      path.to_string_lossy(),
-    );
+    println!("converting {} to arm", path.to_string_lossy(),);
 
     let result = std::process::Command::new("lipo")
       .args(&[
@@ -341,7 +352,6 @@ fn convert_fat_libraries_to_arm(lib_dir: &Path) {
     if !result.status.success() {
       panic!("unable to convert fat library to arm64 version");
     }
-
   }
 }
 
