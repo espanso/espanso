@@ -200,6 +200,7 @@ fn build_native() {
         "-isysroot {} -isystem {} -DSTDC_HEADERS=1 -DHAVE_FCNTL_H -arch arm64 -arch x86_64",
         xcode_sdk_path, xcode_sdk_path
       );
+      let configure_c_flags = "-arch arm64 -arch x86_64";
 
       Command::new(out_wx_dir.join("configure"))
         .current_dir(build_dir.to_string_lossy().to_string())
@@ -211,6 +212,7 @@ fn build_native() {
           "--with-libpng=builtin",
         ])
         .env("CXXFLAGS", &configure_cxx_flags)
+        .env("CFLAGS", configure_c_flags)
         .spawn()
         .expect("failed to execute configure")
     } else {
@@ -302,16 +304,6 @@ fn convert_fat_libraries_to_arm(lib_dir: &Path) {
     glob::glob(&format!("{}/*.a", lib_dir.to_string_lossy())).expect("failed to glob lib directory")
   {
     let path = entry.expect("unable to unwrap glob entry");
-
-    if path
-      .file_name()
-      .unwrap_or_default()
-      .to_string_lossy()
-      .contains("-arm.a")
-    {
-      println!("skipping {} as it's already arm", path.to_string_lossy());
-      continue;
-    }
 
     // Make sure it's a fat library
     let lipo_output = std::process::Command::new("lipo")

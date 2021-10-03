@@ -60,5 +60,8 @@ jobs:
       - name: Build
         run: |
           cargo make build-macos-arm-binary
+      - name: Debug
+        run: |
+          file target/aarch64-apple-darwin/debug/espanso
 
 # TODO: add clippy check
