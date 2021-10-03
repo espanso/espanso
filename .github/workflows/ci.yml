@@ -31,7 +31,7 @@ jobs:
         run: |
           cargo make build-binary
   
-  check-wayland:
+  build-wayland:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -44,7 +44,7 @@ jobs:
       - name: Build
         run: cargo make build-binary --env NO_X11=true
   
-  check-macos-arm:
+  build-macos-arm:
     runs-on: macos-11
     steps:
       - uses: actions/checkout@v2
@@ -56,12 +56,9 @@ jobs:
       - name: Build
         run: |
           cargo make build-macos-arm-binary
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
-        with:
-          limit-access-to-actor: true
-      - name: Debug
-        run: |
-          file target/aarch64-apple-darwin/debug/espanso
+      # - name: Setup tmate session
+      #   uses: mxschmitt/action-tmate@v3
+      #   with:
+      #     limit-access-to-actor: true
 
 # TODO: add clippy check
