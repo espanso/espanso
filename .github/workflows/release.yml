@@ -1,0 +1,93 @@
+# Huge thanks to Alacritty, as their configuration served as a starting point for this one!
+# See: https://github.com/alacritty/alacritty
+
+name: Release
+
+on:
+  push:
+    branches:
+      # TODO: replace this one with master
+      - dev-1.x-ci-pipelines
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  CARGO_TERM_COLOR: always
+
+jobs:
+  extract-version:
+    name: extract-version
+    runs-on: ubuntu-latest
+    outputs:
+      espanso_version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: "Extract version"
+        id: "version"
+        run: |
+          echo "::set-output name=version::v$(cat espanso/Cargo.toml | grep version | head -1 | awk -F '"' '{ print $2 }')"
+
+  windows:
+    needs: ["extract-version"]
+    runs-on: windows-latest
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Print target version
+        run: |
+          echo Using version ${{ needs.extract-version.outputs.espanso_version }}
+      - name: Test
+        run: cargo make test-binary --profile release
+      - name: Build
+        run: cargo make build-windows-all --profile release
+      - name: Create portable mode archive
+        shell: powershell
+        run: |
+          Rename-Item target/windows/portable target/windows/espanso-portable
+          Compress-Archive target/windows/espanso-portable Espanso-Win-Portable-x86_64.zip
+      - name: Calculate hashes
+        run: |
+          Get-FileHash target/windows/Espanso-Win-Portable-x86_64.zip -Algorithm SHA256 | select-object -ExpandProperty Hash > target/windows/Espanso-Win-Portable-x86_64.zip.sha256.txt
+          Get-FileHash target/windows/Espanso-Win-Installer-x86_64.exe -Algorithm SHA256 | select-object -ExpandProperty Hash > target/windows/Espanso-Win-Installer-x86_64.exe.sha256.txt
+      - name: Upload artifacts
+        run: |
+          gh release upload ${{ needs.extract-version.outputs.espanso_version }} target/windows/installer/Espanso-Win-Installer-x86_64.exe target/windows/installer/Espanso-Win-Portable-x86_64.zip target/windows/installer/Espanso-Win-Installer-x86_64.exe.sha256.txt target/windows/installer/Espanso-Win-Portable-x86_64.zip.sha256.txt
+  # macos-intel:
+  #   runs-on: macos-11
+
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - name: Install cargo-make
+  #       run: |
+  #         cargo install --force cargo-make
+  #     - name: Run test suite
+  #       run: cargo make test
+  #     - name: Build
+  #       run: |
+  #         cargo make build-binary       ./Alacritty-${GITHUB_REF##*/}-installer.msi $GITHUB_TOKEN
+  # linux:
+  #   runs-on: ubuntu-latest
+
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - name: Install dependencies
+  #       run: |
+  #         sudo apt-get install cmake pkg-config libfreetype6-dev libfontconfig1-dev \
+  #           libxcb-xfixes0-dev libxkbcommon-dev python3
+  #     - name: Test
+  #       run: cargo test --release
+  #     - name: Gzip manpage
+  #       run: gzip -c "./extra/alacritty.man" > "./alacritty.1.gz"
+  #     - name: Upload Assets
+  #       run: |
+  #         mv ./extra/logo/alacritty-term.svg ./Alacritty.svg
+  #         ./.github/workflows/upload_asset.sh ./Alacritty.svg $GITHUB_TOKEN
+  #         ./.github/workflows/upload_asset.sh ./alacritty.1.gz $GITHUB_TOKEN
+  #         ./.github/workflows/upload_asset.sh ./extra/completions/alacritty.bash $GITHUB_TOKEN
+  #         ./.github/workflows/upload_asset.sh ./extra/completions/alacritty.fish $GITHUB_TOKEN
+  #         ./.github/workflows/upload_asset.sh ./extra/completions/_alacritty $GITHUB_TOKEN
+  #         ./.github/workflows/upload_asset.sh ./extra/linux/Alacritty.desktop $GITHUB_TOKEN
+  #         ./.github/workflows/upload_asset.sh ./extra/alacritty.info $GITHUB_TOKEN
+  #         ./.github/workflows/upload_asset.sh ./alacritty.yml $GITHUB_TOKEN
