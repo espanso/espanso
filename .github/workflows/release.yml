@@ -51,9 +51,10 @@ jobs:
       - name: Create portable mode archive
         shell: powershell
         run: |
-          Rename-Item target/windows/portable target/windows/espanso-portable
+          Rename-Item target/windows/portable espanso-portable
           Compress-Archive target/windows/espanso-portable Espanso-Win-Portable-x86_64.zip
       - name: Calculate hashes
+        shell: powershell
         run: |
           Get-FileHash target/windows/Espanso-Win-Portable-x86_64.zip -Algorithm SHA256 | select-object -ExpandProperty Hash > target/windows/Espanso-Win-Portable-x86_64.zip.sha256.txt
           Get-FileHash target/windows/Espanso-Win-Installer-x86_64.exe -Algorithm SHA256 | select-object -ExpandProperty Hash > target/windows/Espanso-Win-Installer-x86_64.exe.sha256.txt
