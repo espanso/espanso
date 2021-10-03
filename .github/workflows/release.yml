@@ -20,10 +20,13 @@ jobs:
     outputs:
       espanso_version: ${{ steps.version.outputs.version }}
     steps:
+      - uses: actions/checkout@v2
       - name: "Extract version"
         id: "version"
         run: |
-          echo "::set-output name=version::v$(cat espanso/Cargo.toml | grep version | head -1 | awk -F '"' '{ print $2 }')"
+          ESPANSO_VERSION=$(cat espanso/Cargo.toml | grep version | head -1 | awk -F '"' '{ print $2 }')
+          echo version: $ESPANSO_VERSION
+          echo "::set-output name=version::v$ESPANSO_VERSION"
 
   windows:
     needs: ["extract-version"]
