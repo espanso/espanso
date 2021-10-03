@@ -184,24 +184,6 @@ fn build_native() {
       // Because of a configuration problem on the GitHub CI pipeline,
       // we need to use a series of workarounds to build for M1 machines.
       // See: https://github.com/actions/virtual-environments/issues/3288#issuecomment-830207746
-      let xcode_sdk_path = Command::new("xcrun")
-        .args(&["--sdk", "macosx", "--show-sdk-path"])
-        .output()
-        .expect("unable to obtain XCode sdk path");
-      let xcode_sdk_path = String::from_utf8_lossy(&xcode_sdk_path.stdout);
-      let xcode_sdk_path = xcode_sdk_path.trim();
-
-      if xcode_sdk_path.is_empty() {
-        panic!("could not query XCode sdk path");
-      }
-      println!("Using SDK path: {}", xcode_sdk_path);
-
-      let configure_cxx_flags = format!(
-        "-isysroot {} -isystem {} -DSTDC_HEADERS=1 -DHAVE_FCNTL_H -arch arm64 -arch x86_64",
-        xcode_sdk_path, xcode_sdk_path
-      );
-      let configure_c_flags = "-arch arm64 -arch x86_64";
-
       Command::new(out_wx_dir.join("configure"))
         .current_dir(build_dir.to_string_lossy().to_string())
         .args(&[
@@ -210,9 +192,8 @@ fn build_native() {
           "--without-liblzma",
           "--with-libjpeg=builtin",
           "--with-libpng=builtin",
+          "--enable-universal-binary=arm64,x86_64"
         ])
-        .env("CXXFLAGS", &configure_cxx_flags)
-        .env("CFLAGS", configure_c_flags)
         .spawn()
         .expect("failed to execute configure")
     } else {
@@ -258,6 +239,7 @@ fn build_native() {
   // This is needed until https://github.com/rust-lang/rust/issues/55235 is fixed
   if should_use_ci_m1_workaround {
     convert_fat_libraries_to_arm(&out_wx_dir.join("build-cocoa").join("lib"));
+    convert_fat_libraries_to_arm(&out_wx_dir.join("build-cocoa"));
   }
 
   let config_path = out_wx_dir.join("build-cocoa").join("wx-config");
@@ -301,7 +283,7 @@ fn build_native() {
 #[cfg(target_os = "macos")]
 fn convert_fat_libraries_to_arm(lib_dir: &Path) {
   for entry in
-    glob::glob(&format!("{}/*.a", lib_dir.to_string_lossy())).expect("failed to glob lib directory")
+    glob::glob(&format!("{}/*", lib_dir.to_string_lossy())).expect("failed to glob directory")
   {
     let path = entry.expect("unable to unwrap glob entry");
 
@@ -320,21 +302,13 @@ fn convert_fat_libraries_to_arm(lib_dir: &Path) {
       continue;
     }
 
-    let parent = path.parent().expect("unable to extract parent");
-    let renamed_file = parent.join(format!(
-      "{}.old",
-      &path.file_name().unwrap_or_default().to_string_lossy()
-    ));
-
-    std::fs::rename(&path, &renamed_file).expect("unable to rename fat library");
-
     println!("converting {} to arm", path.to_string_lossy(),);
 
     let result = std::process::Command::new("lipo")
       .args(&[
         "-thin",
         "arm64",
-        &renamed_file.to_string_lossy().to_string(),
+        &path.to_string_lossy().to_string(),
         "-output",
         &path.to_string_lossy().to_string(),
       ])
