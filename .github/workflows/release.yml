@@ -52,13 +52,20 @@ jobs:
         shell: powershell
         run: |
           Rename-Item target/windows/portable espanso-portable
-          Compress-Archive target/windows/espanso-portable Espanso-Win-Portable-x86_64.zip
+          Compress-Archive target/windows/espanso-portable target/windows/Espanso-Win-Portable-x86_64.zip
       - name: Calculate hashes
         shell: powershell
         run: |
           Get-FileHash target/windows/Espanso-Win-Portable-x86_64.zip -Algorithm SHA256 | select-object -ExpandProperty Hash > target/windows/Espanso-Win-Portable-x86_64.zip.sha256.txt
           Get-FileHash target/windows/Espanso-Win-Installer-x86_64.exe -Algorithm SHA256 | select-object -ExpandProperty Hash > target/windows/Espanso-Win-Installer-x86_64.exe.sha256.txt
-      - name: Upload artifacts
+      - uses: actions/upload-artifact@v2
+        name: "Upload artifacts"
+        with:
+          name: Windows Installer and Portable
+          path: |
+            target/windows/Espanso-Win-Installer-x86_64.exe
+            target/windows/Espanso-Win-Portable-x86_64.zip
+      - name: Upload artifacts to Github Releases
         run: |
           gh release upload ${{ needs.extract-version.outputs.espanso_version }} target/windows/installer/Espanso-Win-Installer-x86_64.exe target/windows/installer/Espanso-Win-Portable-x86_64.zip target/windows/installer/Espanso-Win-Installer-x86_64.exe.sha256.txt target/windows/installer/Espanso-Win-Portable-x86_64.zip.sha256.txt
   # macos-intel:
