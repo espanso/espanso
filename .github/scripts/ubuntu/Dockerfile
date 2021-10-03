@@ -3,7 +3,8 @@ FROM ubuntu:18.04
 RUN apt-get update \
     && apt-get install -y libssl-dev \
     libxdo-dev libxtst-dev libx11-dev \
-    wget git cmake build-essential pkg-config
+    libxkbcommon-dev libwxgtk3.0-gtk3-dev libdbus-1-dev \
+    wget git file build-essential pkg-config
 
 ENV RUSTUP_HOME=/usr/local/rustup \
     CARGO_HOME=/usr/local/cargo \
@@ -30,9 +31,8 @@ RUN set -eux; \
     cargo --version; \
     rustc --version;
 
-RUN mkdir espanso
+RUN mkdir espanso && cargo install --force cargo-make
 
 COPY . espanso
 
-RUN cd espanso \
-    && cargo install --force cargo-make
+RUN cd espanso

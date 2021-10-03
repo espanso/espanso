@@ -71,7 +71,7 @@ fn main() {
   // nested cargo build call.
   let all_vars = envmnt::vars();
   for (key, _) in all_vars {
-    if key.starts_with("CARGO") || key.starts_with("RUST") {
+    if key.starts_with("CARGO") || (key.starts_with("RUST") && !key.starts_with("RUSTUP")) {
       //println!("Removing {}", key);
       cmd.env_remove(key);
     }

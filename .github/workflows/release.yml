@@ -61,7 +61,7 @@ jobs:
       - uses: actions/upload-artifact@v2
         name: "Upload artifacts"
         with:
-          name: Windows Installer and Portable
+          name: Windows Artifacts
           path: |
             target/windows/installer/Espanso-Win-Installer-x86_64.exe
             target/windows/Espanso-Win-Portable-x86_64.zip
@@ -89,13 +89,13 @@ jobs:
       - uses: actions/upload-artifact@v2
         name: "Upload artifacts"
         with:
-          name: Linux X11 AppImage
+          name: Linux X11 Artifacts
           path: |
-            shared/Espanso-X11.AppImage
-            shared/Espanso-X11.AppImage.sha256.txt
+            Espanso-X11.AppImage
+            Espanso-X11.AppImage.sha256.txt
       - name: Upload artifacts to Github Releases
         run: |
-          gh release upload ${{ needs.extract-version.outputs.espanso_version }} shared/Espanso-X11.AppImage shared/Espanso-X11.AppImage.sha256.txt
+          gh release upload ${{ needs.extract-version.outputs.espanso_version }} Espanso-X11.AppImage Espanso-X11.AppImage.sha256.txt
   # macos-intel:
   #   runs-on: macos-11
 
