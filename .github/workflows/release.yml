@@ -36,12 +36,14 @@ jobs:
       - uses: actions/checkout@v2
       - name: Create new release (if it doesn't exist yet)
         run: |
+          COMMIT_HASH=$(git rev-list --max-count=1 HEAD)
           echo "Creating release: ${{ needs.extract-version.outputs.espanso_version }}"
+          echo "for hash: $COMMIT_HASH"
           gh release create ${{ needs.extract-version.outputs.espanso_version }} \
             -t ${{ needs.extract-version.outputs.espanso_version }} \
             --notes "Automatically released by CI" \
             --prerelease \
-            --target ${GITHUB_REF##*/}
+            --target $COMMIT_HASH
 
   windows:
     needs: ["extract-version", "create-release"]
