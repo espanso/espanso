@@ -96,6 +96,39 @@ jobs:
       - name: Upload artifacts to Github Releases
         run: |
           gh release upload ${{ needs.extract-version.outputs.espanso_version }} Espanso-X11.AppImage Espanso-X11.AppImage.sha256.txt
+
+  macos-intel:
+    needs: ["extract-version"]
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Print target version
+        run: |
+          echo Using version ${{ needs.extract-version.outputs.espanso_version }}
+      - name: Install cargo-make
+        run: |
+          cargo install --force cargo-make
+      - name: Test
+        run: cargo make test-binary --profile release
+      - name: Build
+        run: cargo make create-bundle --profile release
+      - name: Create ZIP archive
+        run: |
+          ditto -c -k --sequesterRsrc --keepParent target/mac/Espanso.app Espanso-Mac-Intel.zip
+      - name: Calculate hashes
+        run: |
+          shasum -a 256 Espanso-Mac-Intel.zip > Espanso-Mac-Intel.zip.sha256.txt
+      - uses: actions/upload-artifact@v2
+        name: "Upload artifacts"
+        with:
+          name: Mac Intel Artifacts
+          path: |
+            Espanso-Mac-Intel.zip
+            Espanso-Mac-Intel.zip.sha256.txt
+      - name: Upload artifacts to Github Releases
+        run: |
+          gh release upload ${{ needs.extract-version.outputs.espanso_version }} Espanso-Mac-Intel.zip Espanso-Mac-Intel.zip.sha256.txt
   # macos-intel:
   #   runs-on: macos-11
 
