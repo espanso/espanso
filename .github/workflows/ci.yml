@@ -55,8 +55,6 @@ jobs:
       - name: Install cargo-make
         run: |
           cargo install --force cargo-make
-      # - name: Run test suite
-      #   run: cargo make test-binary --env BUILD_ARCH=aarch64-apple-darwin
       - name: Build
         run: |
           cargo make build-macos-arm-binary
