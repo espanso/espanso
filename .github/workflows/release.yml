@@ -40,7 +40,8 @@ jobs:
           gh release create ${{ needs.extract-version.outputs.espanso_version }} \
             -t ${{ needs.extract-version.outputs.espanso_version }} \
             --notes "Automatically released by CI" \
-            --prerelease
+            --prerelease \
+            --target ${GITHUB_REF##*/}
 
   windows:
     needs: ["extract-version", "create-release"]
