@@ -28,8 +28,22 @@ jobs:
           echo version: $ESPANSO_VERSION
           echo "::set-output name=version::v$ESPANSO_VERSION"
 
-  windows:
+  create-release:
+    name: create-release
     needs: ["extract-version"]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Create new release (if it doesn't exist yet)
+        run: |
+          echo "Creating release: ${{ needs.extract-version.outputs.espanso_version }}"
+          gh release create ${{ needs.extract-version.outputs.espanso_version }} \
+            -t ${{ needs.extract-version.outputs.espanso_version }} \
+            --notes "Automatically released by CI" \
+            --prerelease
+
+  windows:
+    needs: ["extract-version", "create-release"]
     runs-on: windows-latest
 
     defaults:
@@ -72,7 +86,7 @@ jobs:
           gh release upload ${{ needs.extract-version.outputs.espanso_version }} target/windows/installer/Espanso-Win-Installer-x86_64.exe target/windows/Espanso-Win-Portable-x86_64.zip target/windows/installer/Espanso-Win-Installer-x86_64.exe.sha256.txt target/windows/Espanso-Win-Portable-x86_64.zip.sha256.txt
   
   linux-x11:
-    needs: ["extract-version"]
+    needs: ["extract-version", "create-release"]
     runs-on: ubuntu-latest
 
     steps:
@@ -98,7 +112,7 @@ jobs:
           gh release upload ${{ needs.extract-version.outputs.espanso_version }} Espanso-X11.AppImage Espanso-X11.AppImage.sha256.txt
 
   macos-intel:
-    needs: ["extract-version"]
+    needs: ["extract-version", "create-release"]
     runs-on: macos-11
 
     steps:
@@ -131,7 +145,7 @@ jobs:
           gh release upload ${{ needs.extract-version.outputs.espanso_version }} Espanso-Mac-Intel.zip Espanso-Mac-Intel.zip.sha256.txt
   
   macos-m1:
-    needs: ["extract-version"]
+    needs: ["extract-version", "create-release"]
     runs-on: macos-11
 
     steps:
@@ -175,40 +189,3 @@ jobs:
       - name: Upload artifacts to Github Releases
         run: |
           gh release upload ${{ needs.extract-version.outputs.espanso_version }} Espanso-Mac-M1.zip Espanso-Mac-M1.zip.sha256.txt
-  # macos-intel:
-  #   runs-on: macos-11
-
-  #   steps:
-  #     - uses: actions/checkout@v2
-  #     - name: Install cargo-make
-  #       run: |
-  #         cargo install --force cargo-make
-  #     - name: Run test suite
-  #       run: cargo make test
-  #     - name: Build
-  #       run: |
-  #         cargo make build-binary       ./Alacritty-${GITHUB_REF##*/}-installer.msi $GITHUB_TOKEN
-  # linux:
-  #   runs-on: ubuntu-latest
-
-  #   steps:
-  #     - uses: actions/checkout@v2
-  #     - name: Install dependencies
-  #       run: |
-  #         sudo apt-get install cmake pkg-config libfreetype6-dev libfontconfig1-dev \
-  #           libxcb-xfixes0-dev libxkbcommon-dev python3
-  #     - name: Test
-  #       run: cargo test --release
-  #     - name: Gzip manpage
-  #       run: gzip -c "./extra/alacritty.man" > "./alacritty.1.gz"
-  #     - name: Upload Assets
-  #       run: |
-  #         mv ./extra/logo/alacritty-term.svg ./Alacritty.svg
-  #         ./.github/workflows/upload_asset.sh ./Alacritty.svg $GITHUB_TOKEN
-  #         ./.github/workflows/upload_asset.sh ./alacritty.1.gz $GITHUB_TOKEN
-  #         ./.github/workflows/upload_asset.sh ./extra/completions/alacritty.bash $GITHUB_TOKEN
-  #         ./.github/workflows/upload_asset.sh ./extra/completions/alacritty.fish $GITHUB_TOKEN
-  #         ./.github/workflows/upload_asset.sh ./extra/completions/_alacritty $GITHUB_TOKEN
-  #         ./.github/workflows/upload_asset.sh ./extra/linux/Alacritty.desktop $GITHUB_TOKEN
-  #         ./.github/workflows/upload_asset.sh ./extra/alacritty.info $GITHUB_TOKEN
-  #         ./.github/workflows/upload_asset.sh ./alacritty.yml $GITHUB_TOKEN
