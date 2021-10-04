@@ -202,6 +202,9 @@ fn build_native() {
         .args(&[
           "--disable-shared",
           "--without-libtiff",
+          "--without-liblzma",
+          "--with-libjpeg=builtin",
+          "--with-libpng=builtin",
           &format!("--enable-macosx_arch={}", target_arch),
         ])
         .spawn()
