@@ -22,7 +22,7 @@ use super::VAR_REGEX;
 
 pub(crate) fn get_body_variable_names(body: &str) -> HashSet<&str> {
   let mut variables = HashSet::new();
-  for caps in VAR_REGEX.captures_iter(&body) {
+  for caps in VAR_REGEX.captures_iter(body) {
     let var_name = caps.name("name").unwrap().as_str();
     variables.insert(var_name);
   }

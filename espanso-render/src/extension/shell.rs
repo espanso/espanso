@@ -43,34 +43,34 @@ impl Shell {
     let mut command = match self {
       Shell::Cmd => {
         let mut command = Command::new("cmd");
-        command.args(&["/C", &cmd]);
+        command.args(&["/C", cmd]);
         command
       }
       Shell::Powershell => {
         let mut command = Command::new("powershell");
-        command.args(&["-Command", &cmd]);
+        command.args(&["-Command", cmd]);
         command
       }
       Shell::WSL => {
         is_wsl = true;
         let mut command = Command::new("bash");
-        command.args(&["-c", &cmd]);
+        command.args(&["-c", cmd]);
         command
       }
       Shell::WSL2 => {
         is_wsl = true;
         let mut command = Command::new("wsl");
-        command.args(&["bash", "-c", &cmd]);
+        command.args(&["bash", "-c", cmd]);
         command
       }
       Shell::Bash => {
         let mut command = Command::new("bash");
-        command.args(&["-c", &cmd]);
+        command.args(&["-c", cmd]);
         command
       }
       Shell::Sh => {
         let mut command = Command::new("sh");
-        command.args(&["-c", &cmd]);
+        command.args(&["-c", cmd]);
         command
       }
     };
@@ -87,8 +87,7 @@ impl Shell {
     // should be passed to linux.
     // For more information: https://devblogs.microsoft.com/commandline/share-environment-vars-between-wsl-and-windows/
     if is_wsl {
-      let mut tokens: Vec<&str> = Vec::new();
-      tokens.push("CONFIG/p");
+      let mut tokens: Vec<&str> = vec!["CONFIG/p"];
 
       // Add all the previous variables
       for (key, _) in vars.iter() {
@@ -166,7 +165,7 @@ impl Extension for ShellExtension {
         Shell::default()
       };
 
-      let mut env_variables = super::util::convert_to_env_variables(&scope);
+      let mut env_variables = super::util::convert_to_env_variables(scope);
       env_variables.insert(
         "CONFIG".to_string(),
         self.config_path.to_string_lossy().to_string(),
