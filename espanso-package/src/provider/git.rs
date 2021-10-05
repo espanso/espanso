@@ -44,9 +44,7 @@ impl GitPackageProvider {
   }
 
   fn clone_repo(dest_dir: &Path, repo_url: &str, repo_branch: Option<&str>) -> Result<()> {
-    let mut args = Vec::new();
-
-    args.push("clone");
+    let mut args = vec!["clone"];
 
     if let Some(branch) = repo_branch {
       args.push("-b");
