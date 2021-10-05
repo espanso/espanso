@@ -89,7 +89,7 @@ impl Extension for ScriptExtension {
 
       let mut command = Command::new(&args[0]);
       command.env("CONFIG", self.config_path.to_string_lossy().to_string());
-      for (key, value) in super::util::convert_to_env_variables(&scope) {
+      for (key, value) in super::util::convert_to_env_variables(scope) {
         command.env(key, value);
       }
 

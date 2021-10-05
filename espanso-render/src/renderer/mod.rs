@@ -96,7 +96,7 @@ impl<'a> Renderer for DefaultRenderer<'a> {
             })
             .collect()
         } else {
-          template.vars.iter().map(|var| var).collect()
+          template.vars.iter().collect()
         };
 
       // The implicit global variables will be evaluated first, followed by the local vars
@@ -154,7 +154,7 @@ impl<'a> Renderer for DefaultRenderer<'a> {
       match render_variables(&template.body, &scope) {
         Ok(output) => output,
         Err(error) => {
-          return RenderResult::Error(error.into());
+          return RenderResult::Error(error);
         }
       }
     } else {
@@ -196,7 +196,7 @@ impl<'a> Renderer for DefaultRenderer<'a> {
 pub(crate) fn render_variables(body: &str, scope: &Scope) -> Result<String> {
   let mut replacing_error = None;
   let output = VAR_REGEX
-    .replace_all(&body, |caps: &Captures| {
+    .replace_all(body, |caps: &Captures| {
       let var_name = caps.name("name").unwrap().as_str();
       let var_subname = caps.name("subname");
       match scope.get(var_name) {
@@ -230,7 +230,7 @@ pub(crate) fn render_variables(body: &str, scope: &Scope) -> Result<String> {
       }
     })
     .to_string();
-  
+
   if let Some(error) = replacing_error {
     return Err(error.into());
   }
@@ -282,24 +282,22 @@ mod tests {
       scope: &Scope,
       params: &crate::Params,
     ) -> ExtensionResult {
-      if let Some(value) = params.get("echo") {
-        if let Value::String(string) = value {
-          return ExtensionResult::Success(ExtensionOutput::Single(string.clone()));
-        }
+      if let Some(Value::String(string)) = params.get("echo") {
+        return ExtensionResult::Success(ExtensionOutput::Single(string.clone()));
       }
       // If the "read" param is present, echo the value of the corresponding result in the scope
-      if let Some(value) = params.get("read") {
-        if let Value::String(string) = value {
+      if let Some(Value::String(string)) = params.get("read") {
           if let Some(ExtensionOutput::Single(value)) = scope.get(string.as_str()) {
             return ExtensionResult::Success(ExtensionOutput::Single(value.to_string()));
           }
-        }
       }
       if params.get("abort").is_some() {
         return ExtensionResult::Aborted;
       }
       if params.get("error").is_some() {
-        return ExtensionResult::Error(RendererError::MissingVariable("missing".to_string()).into());
+        return ExtensionResult::Error(
+          RendererError::MissingVariable("missing".to_string()).into(),
+        );
       }
       ExtensionResult::Aborted
     }

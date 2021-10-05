@@ -88,12 +88,12 @@ impl<'a> Extension for FormExtension<'a> {
 }
 
 // TODO: test
-fn inject_scope(fields: &mut HashMap<String, Value>, scope: &HashMap<&str, ExtensionOutput>) -> () {
-  for (_, value) in fields {
+fn inject_scope(fields: &mut HashMap<String, Value>, scope: &HashMap<&str, ExtensionOutput>) {
+  for value in fields.values_mut() {
     if let Value::Object(field_options) = value {
       if let Some(Value::String(default_value)) = field_options.get_mut("default") {
         if VAR_REGEX.is_match(default_value) {
-          match render_variables(&default_value, scope) {
+          match render_variables(default_value, scope) {
             Ok(rendered) => *default_value = rendered,
             Err(err) => error!(
               "error while injecting variable in form default value: {}",
@@ -110,11 +110,4 @@ fn inject_scope(fields: &mut HashMap<String, Value>, scope: &HashMap<&str, Exten
 pub enum FormExtensionError {
   #[error("missing layout parameter")]
   MissingLayout,
-}
-
-#[cfg(test)]
-mod tests {
-  use super::*;
-
-  // TODO: test
 }
