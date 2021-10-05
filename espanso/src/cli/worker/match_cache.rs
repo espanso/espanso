@@ -17,7 +17,7 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::{collections::HashMap, iter::FromIterator};
+use std::{collections::HashMap};
 
 use espanso_config::{
   config::ConfigStore,
@@ -35,7 +35,7 @@ impl<'a> MatchCache<'a> {
     let mut cache = HashMap::new();
 
     let paths = config_store.get_all_match_paths();
-    let global_set = match_store.query(&Vec::from_iter(paths.into_iter()));
+    let global_set = match_store.query(&paths.into_iter().collect::<Vec<_>>());
 
     for m in global_set.matches {
       cache.insert(m.id, m);
@@ -98,8 +98,8 @@ impl<'a> CombinedMatchCache<'a> {
     }
 
     Self {
-      builtin_match_cache,
       user_match_cache,
+      builtin_match_cache,
     }
   }
 

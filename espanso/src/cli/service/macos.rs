@@ -59,7 +59,7 @@ pub fn register() -> Result<()> {
     // Copy the user PATH variable and inject it in the Plist file so that
     // it gets loaded by Launchd.
     // To see why this is necessary: https://github.com/federico-terzi/espanso/issues/233
-    let user_path = std::env::var("PATH").unwrap_or("".to_owned());
+    let user_path = std::env::var("PATH").unwrap_or_else(|_| "".to_owned());
     let plist_content = plist_content.replace("{{{PATH}}}", &user_path);
 
     std::fs::write(plist_file.clone(), plist_content).expect("Unable to write plist file");
@@ -131,7 +131,7 @@ pub fn start_service() -> Result<()> {
     eprintln!("Unable to start espanso as a service as it's not been registered.");
     eprintln!("You can either register it first with `espanso service register` or");
     eprintln!("you can run it in unmanaged mode with `espanso service start --unmanaged`");
-    eprintln!("");
+    eprintln!();
     eprintln!("NOTE: unmanaged mode means espanso does not rely on the system service manager");
     eprintln!("      to run, but as a result, you are in charge of starting/stopping espanso");
     eprintln!("      when needed.");

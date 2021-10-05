@@ -24,19 +24,19 @@ use std::{
   process::{Command, Stdio},
 };
 
-const BLUR_CHROME_WINDOWS_SCRIPT: &'static str =
+const BLUR_CHROME_WINDOWS_SCRIPT: &str =
   include_str!("../../res/macos/scripts/blur_chrome_windows.scpt");
 
-const GET_RUNNING_APPS_SCRIPT: &'static str =
+const GET_RUNNING_APPS_SCRIPT: &str =
   include_str!("../../res/macos/scripts/get_running_apps.scpt");
 
-const FOCUS_BITWARDEN_SCRIPT: &'static str =
+const FOCUS_BITWARDEN_SCRIPT: &str =
   include_str!("../../res/macos/scripts/focus_bitwarden.scpt");
 
-const SECURE_INPUT_ASK_LOCK_SCREEN_SCRIPT: &'static str =
+const SECURE_INPUT_ASK_LOCK_SCREEN_SCRIPT: &str =
   include_str!("../../res/macos/scripts/secure_input_ask_lock_screen.scpt");
 
-const SUCCESS_DIALOG_SCRIPT: &'static str =
+const SUCCESS_DIALOG_SCRIPT: &str =
   include_str!("../../res/macos/scripts/secure_input_disabled_dialog.scpt");
 
 pub fn run_secure_input_workaround() -> Result<()> {
@@ -58,10 +58,10 @@ fn execute_secure_input_workaround() -> Result<()> {
       .unwrap_or_default()
   );
   println!("so restarting that application could solve the problem.");
-  println!("");
+  println!();
   println!("Unfortunately, that guess might be wrong if SecureInput was activated by");
   println!("the application while in the background.");
-  println!("");
+  println!();
   println!("This workaround will attempt to execute a series of known actions that often");
   println!("help in disabling secure input.");
 
@@ -112,7 +112,6 @@ fn run_apple_script(script: &str) -> Result<String> {
 
   let child_stdin = child.stdin.as_mut().unwrap();
   child_stdin.write_all(script.as_bytes())?;
-  drop(child_stdin);
 
   let output = child.wait_with_output()?;
   let stdout = String::from_utf8_lossy(&output.stdout);

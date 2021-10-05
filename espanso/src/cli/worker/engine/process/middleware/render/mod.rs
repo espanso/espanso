@@ -115,8 +115,8 @@ fn generate_context<'a>(
   }
 
   Context {
-    templates,
     global_vars,
+    templates,
   }
 }
 
