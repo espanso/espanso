@@ -86,32 +86,20 @@ fn get_app_name_from_path(path: &str) -> Option<String> {
   };
 
   let caps = APP_REGEX.captures(&path);
-  if let Some(caps) = caps {
-    Some(caps.get(1).map_or("", |m| m.as_str()).to_owned())
-  } else {
-    None
-  }
+  caps.map(|caps| caps.get(1).map_or("", |m| m.as_str()).to_owned())
 }
 
 #[cfg(target_os = "macos")]
 pub fn check_accessibility() -> bool {
   unsafe {
-    if ffi::mac_utils_check_accessibility() > 0 {
-      true
-    } else {
-      false
-    }
+    ffi::mac_utils_check_accessibility() > 0
   }
 }
 
 #[cfg(target_os = "macos")]
 pub fn prompt_accessibility() -> bool {
   unsafe {
-    if ffi::mac_utils_prompt_accessibility() > 0 {
-      true
-    } else {
-      false
-    }
+    ffi::mac_utils_prompt_accessibility() > 0
   }
 }
 
