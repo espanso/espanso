@@ -111,8 +111,8 @@ fn split_config(config: LegacyConfig) -> (LegacyInteropConfig, LegacyMatchGroup)
     .collect();
 
   let match_group = LegacyMatchGroup {
-    global_vars,
     matches,
+    global_vars,
   };
 
   let config: LegacyInteropConfig = config.into();

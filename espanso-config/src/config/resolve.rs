@@ -23,7 +23,7 @@ use anyhow::Result;
 use log::error;
 use regex::Regex;
 use std::{collections::HashSet, path::Path};
-use std::{iter::FromIterator, path::PathBuf};
+use std::{path::PathBuf};
 use thiserror::Error;
 
 const STANDARD_INCLUDES: &[&str] = &["../match/**/*.yml"];
@@ -459,7 +459,7 @@ impl ResolvedConfig {
     let exclude_paths = calculate_paths(base_dir, excludes.iter());
     let include_paths = calculate_paths(base_dir, includes.iter());
 
-    HashSet::from_iter(include_paths.difference(&exclude_paths).cloned())
+    include_paths.difference(&exclude_paths).cloned().collect::<HashSet<_>>()
   }
 }
 
@@ -474,7 +474,6 @@ mod tests {
   use super::*;
   use crate::util::tests::use_test_directory;
   use std::fs::create_dir_all;
-  use std::iter::FromIterator;
 
   #[test]
   fn aggregate_includes_empty_config() {
@@ -482,7 +481,7 @@ mod tests {
       ResolvedConfig::aggregate_includes(&ParsedConfig {
         ..Default::default()
       }),
-      HashSet::from_iter(vec!["../match/**/*.yml".to_string(),].iter().cloned())
+      vec!["../match/**/*.yml".to_string(),].iter().cloned().collect::<HashSet<_>>()
     );
   }
 
@@ -504,11 +503,9 @@ mod tests {
         includes: Some(vec!["custom/*.yml".to_string()]),
         ..Default::default()
       }),
-      HashSet::from_iter(
-        vec!["../match/**/*.yml".to_string(), "custom/*.yml".to_string()]
+      vec!["../match/**/*.yml".to_string(), "custom/*.yml".to_string()]
           .iter()
-          .cloned()
-      )
+          .cloned().collect::<HashSet<_>>()
     );
   }
 
@@ -519,11 +516,9 @@ mod tests {
         extra_includes: Some(vec!["custom/*.yml".to_string()]),
         ..Default::default()
       }),
-      HashSet::from_iter(
-        vec!["../match/**/*.yml".to_string(), "custom/*.yml".to_string()]
+      vec!["../match/**/*.yml".to_string(), "custom/*.yml".to_string()]
           .iter()
-          .cloned()
-      )
+          .cloned().collect::<HashSet<_>>()
     );
   }
 
@@ -535,15 +530,13 @@ mod tests {
         extra_includes: Some(vec!["custom/*.yml".to_string()]),
         ..Default::default()
       }),
-      HashSet::from_iter(
-        vec![
+      vec![
           "../match/**/*.yml".to_string(),
           "custom/*.yml".to_string(),
           "sub/*.yml".to_string()
         ]
         .iter()
-        .cloned()
-      )
+        .cloned().collect::<HashSet<_>>()
     );
   }
 
@@ -553,7 +546,7 @@ mod tests {
       ResolvedConfig::aggregate_excludes(&ParsedConfig {
         ..Default::default()
       }),
-      HashSet::from_iter(vec!["../match/**/_*.yml".to_string(),].iter().cloned())
+      vec!["../match/**/_*.yml".to_string(),].iter().cloned().collect::<HashSet<_>>()
     );
   }
 
@@ -575,11 +568,9 @@ mod tests {
         excludes: Some(vec!["custom/*.yml".to_string()]),
         ..Default::default()
       }),
-      HashSet::from_iter(
-        vec!["../match/**/_*.yml".to_string(), "custom/*.yml".to_string()]
+      vec!["../match/**/_*.yml".to_string(), "custom/*.yml".to_string()]
           .iter()
-          .cloned()
-      )
+          .cloned().collect::<HashSet<_>>()
     );
   }
 
@@ -590,11 +581,9 @@ mod tests {
         extra_excludes: Some(vec!["custom/*.yml".to_string()]),
         ..Default::default()
       }),
-      HashSet::from_iter(
-        vec!["../match/**/_*.yml".to_string(), "custom/*.yml".to_string()]
+      vec!["../match/**/_*.yml".to_string(), "custom/*.yml".to_string()]
           .iter()
-          .cloned()
-      )
+          .cloned().collect::<HashSet<_>>()
     );
   }
 
@@ -606,15 +595,13 @@ mod tests {
         extra_excludes: Some(vec!["custom/*.yml".to_string()]),
         ..Default::default()
       }),
-      HashSet::from_iter(
-        vec![
+      vec![
           "../match/**/_*.yml".to_string(),
           "custom/*.yml".to_string(),
           "sub/*.yml".to_string()
         ]
         .iter()
-        .cloned()
-      )
+        .cloned().collect::<HashSet<_>>()
     );
   }
 
