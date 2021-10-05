@@ -97,18 +97,20 @@ fn generate_html_descriptor(html: &str) -> String {
   // For more information, look here:
   // https://docs.microsoft.com/en-us/windows/win32/dataxchg/html-clipboard-format
   // https://docs.microsoft.com/en-za/troubleshoot/cpp/add-html-code-clipboard
-  let mut tokens = Vec::new();
-  tokens.push("Version:0.9");
-  tokens.push("StartHTML:<<STR*#>");
-  tokens.push("EndHTML:<<END*#>");
-  tokens.push("StartFragment:<<SFG#*>");
-  tokens.push("EndFragment:<<EFG#*>");
-  tokens.push("<html>");
-  tokens.push("<body>");
   let content = format!("<!--StartFragment-->{}<!--EndFragment-->", html);
-  tokens.push(&content);
-  tokens.push("</body>");
-  tokens.push("</html>");
+
+  let tokens = vec![
+    "Version:0.9",
+    "StartHTML:<<STR*#>",
+    "EndHTML:<<END*#>",
+    "StartFragment:<<SFG#*>",
+    "EndFragment:<<EFG#*>",
+    "<html>",
+    "<body>",
+    &content,
+    "</body>",
+    "</html>",
+  ];
 
   let mut render = tokens.join("\r\n");
 
