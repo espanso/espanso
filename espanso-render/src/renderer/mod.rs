@@ -321,9 +321,7 @@ mod tests {
       .map(|(name, value)| Variable {
         name: (*name).to_string(),
         var_type: "mock".to_string(),
-        params: Params::from_iter(
-          vec![("echo".to_string(), Value::String((*value).to_string()))].into_iter(),
-        ),
+        params: vec![("echo".to_string(), Value::String((*value).to_string()))].into_iter().collect::<Params>(),
       })
       .collect();
     Template {
@@ -432,9 +430,7 @@ mod tests {
         Variable {
           name: "local".to_string(),
           var_type: "mock".to_string(),
-          params: Params::from_iter(
-            vec![("echo".to_string(), Value::String("Bob".to_string()))].into_iter(),
-          ),
+          params: vec![("echo".to_string(), Value::String("Bob".to_string()))].into_iter().collect::<Params>(),
         },
         Variable {
           name: "var".to_string(),
@@ -470,9 +466,7 @@ mod tests {
       vars: vec![Variable {
         name: "var".to_string(),
         var_type: "match".to_string(),
-        params: Params::from_iter(
-          vec![("trigger".to_string(), Value::String("nested".to_string()))].into_iter(),
-        ),
+        params: vec![("trigger".to_string(), Value::String("nested".to_string()))].into_iter().collect::<Params>(),
       }],
       ..Default::default()
     };
@@ -500,9 +494,7 @@ mod tests {
       vars: vec![Variable {
         name: "var".to_string(),
         var_type: "match".to_string(),
-        params: Params::from_iter(
-          vec![("trigger".to_string(), Value::String("nested".to_string()))].into_iter(),
-        ),
+        params: vec![("trigger".to_string(), Value::String("nested".to_string()))].into_iter().collect::<Params>(),
       }],
       ..Default::default()
     };
@@ -524,7 +516,7 @@ mod tests {
       vars: vec![Variable {
         name: "var".to_string(),
         var_type: "mock".to_string(),
-        params: Params::from_iter(vec![("abort".to_string(), Value::Null)].into_iter()),
+        params: vec![("abort".to_string(), Value::Null)].into_iter().collect::<Params>(),
       }],
       ..Default::default()
     };
@@ -540,7 +532,7 @@ mod tests {
       vars: vec![Variable {
         name: "var".to_string(),
         var_type: "mock".to_string(),
-        params: Params::from_iter(vec![("error".to_string(), Value::Null)].into_iter()),
+        params: vec![("error".to_string(), Value::Null)].into_iter().collect::<Params>(),
       }],
       ..Default::default()
     };

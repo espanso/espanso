@@ -181,7 +181,6 @@ mod tests {
   use super::*;
   #[cfg(not(target_os = "windows"))]
   use crate::Scope;
-  use std::iter::FromIterator;
 
   fn get_extension() -> ScriptExtension {
     ScriptExtension::new(&PathBuf::new(), &PathBuf::new(), &PathBuf::new())
@@ -192,16 +191,14 @@ mod tests {
   fn basic() {
     let extension = get_extension();
 
-    let param = Params::from_iter(
-      vec![(
+    let param = vec![(
         "args".to_string(),
         Value::Array(vec![
           Value::String("echo".to_string()),
           Value::String("hello world".to_string()),
         ]),
       )]
-      .into_iter(),
-    );
+      .into_iter().collect::<Params>();
     assert_eq!(
       extension
         .calculate(&Default::default(), &Default::default(), &param)
@@ -216,8 +213,7 @@ mod tests {
   fn basic_no_trim() {
     let extension = get_extension();
 
-    let param = Params::from_iter(
-      vec![
+    let param = vec![
         (
           "args".to_string(),
           Value::Array(vec![
@@ -227,8 +223,7 @@ mod tests {
         ),
         ("trim".to_string(), Value::Bool(false)),
       ]
-      .into_iter(),
-    );
+      .into_iter().collect::<Params>();
     if cfg!(target_os = "windows") {
       assert_eq!(
         extension
@@ -253,8 +248,7 @@ mod tests {
   fn var_injection() {
     let extension = get_extension();
 
-    let param = Params::from_iter(
-      vec![
+    let param = vec![
         (
           "args".to_string(),
           Value::Array(vec![
@@ -264,8 +258,7 @@ mod tests {
           ]),
         ),
       ]
-      .into_iter(),
-    );
+      .into_iter().collect::<Params>();
     let mut scope = Scope::new();
     scope.insert("var1", ExtensionOutput::Single("hello world".to_string()));
     assert_eq!(
@@ -281,8 +274,7 @@ mod tests {
   fn invalid_command() {
     let extension = get_extension();
 
-    let param = Params::from_iter(
-      vec![
+    let param = vec![
         (
           "args".to_string(),
           Value::Array(vec![
@@ -290,8 +282,7 @@ mod tests {
           ]),
         ),
       ]
-      .into_iter(),
-    );
+      .into_iter().collect::<Params>();
     assert!(matches!(
       extension.calculate(&Default::default(), &Default::default(), &param),
       ExtensionResult::Error(_)
@@ -303,8 +294,7 @@ mod tests {
   fn exit_error() {
     let extension = get_extension();
     
-    let param = Params::from_iter(
-      vec![
+    let param = vec![
         (
           "args".to_string(),
           Value::Array(vec![
@@ -314,8 +304,7 @@ mod tests {
           ]),
         ),
       ]
-      .into_iter(),
-    );
+      .into_iter().collect::<Params>();
     assert!(matches!(
       extension.calculate(&Default::default(), &Default::default(), &param),
       ExtensionResult::Error(_)
@@ -327,8 +316,7 @@ mod tests {
   fn ignore_error() {
     let extension = get_extension();
     
-    let param = Params::from_iter(
-      vec![
+    let param = vec![
         (
           "args".to_string(),
           Value::Array(vec![
@@ -339,8 +327,7 @@ mod tests {
         ),
         ("ignore_error".to_string(), Value::Bool(true)),
       ]
-      .into_iter(),
-    );
+      .into_iter().collect::<Params>();
     assert_eq!(
       extension
         .calculate(&Default::default(), &Default::default(), &param)

@@ -67,14 +67,13 @@ pub enum EchoExtensionError {
 #[cfg(test)]
 mod tests {
   use super::*;
-  use std::iter::FromIterator;
 
   #[test]
   fn echo_works_correctly() {
     let extension = EchoExtension::new();
 
     let param =
-      Params::from_iter(vec![("echo".to_string(), Value::String("test".to_string()))].into_iter());
+      vec![("echo".to_string(), Value::String("test".to_string()))].into_iter().collect::<Params>();
     assert_eq!(
       extension
         .calculate(&Default::default(), &Default::default(), &param)

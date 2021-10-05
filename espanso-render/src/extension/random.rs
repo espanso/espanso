@@ -71,14 +71,12 @@ pub enum RandomExtensionError {
 #[cfg(test)]
 mod tests {
   use super::*;
-  use std::iter::FromIterator;
 
   #[test]
   fn random_works_correctly() {
     let extension = RandomExtension::new();
 
-    let param = Params::from_iter(
-      vec![(
+    let param = vec![(
         "choices".to_string(),
         Value::Array(vec![
           Value::String("first".to_string()),
@@ -86,8 +84,7 @@ mod tests {
           Value::String("third".to_string()),
         ]),
       )]
-      .into_iter(),
-    );
+      .into_iter().collect::<Params>();
     assert!(matches!(
       extension
         .calculate(&Default::default(), &Default::default(), &param)
