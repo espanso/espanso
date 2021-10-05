@@ -196,8 +196,9 @@ pub fn convert(input_files: HashMap<String, Hash>) -> HashMap<String, ConvertedF
 fn sort_input_files(input_files: &HashMap<String, Hash>) -> Vec<String> {
   let mut files: Vec<String> = input_files.iter().map(|(key, _)| key.clone()).collect();
   files.sort_by(|f1, f2| {
-    let f1_slashes = f1.matches("/").count();
-    let f2_slashes = f2.matches("/").count();
+    let f1_slashes = f1.matches('/').count();
+    let f2_slashes = f2.matches('/').count();
+    #[allow(clippy::comparison_chain)]
     if f1_slashes > f2_slashes {
       Ordering::Greater
     } else if f1_slashes < f2_slashes {
@@ -254,7 +255,7 @@ fn yaml_get_string<'a>(yaml: &'a Hash, name: &str) -> Option<&'a str> {
     .and_then(|v| v.as_str())
 }
 
-fn yaml_get_bool<'a>(yaml: &'a Hash, name: &str) -> Option<bool> {
+fn yaml_get_bool(yaml: &Hash, name: &str) -> Option<bool> {
   yaml
     .get(&Yaml::String(name.to_string()))
     .and_then(|v| v.as_bool())

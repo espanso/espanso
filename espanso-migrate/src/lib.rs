@@ -17,13 +17,16 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#[allow(unused_imports)]
 #[macro_use]
 extern crate lazy_static;
 
+#[allow(unused_imports)]
 #[macro_use]
 #[cfg(test)]
 extern crate include_dir;
 
+#[allow(unused_imports)]
 #[macro_use]
 #[cfg(test)]
 extern crate test_case;
@@ -198,6 +201,7 @@ mod tests {
   static ALL_PARAMS_CASE: Dir = include_dir!("test/all_params");
   static OTHER_DIRS_CASE: Dir = include_dir!("test/other_dirs");
 
+  #[allow(clippy::unused_unit)]
   #[test_case(&SIMPLE_CASE; "simple case")]
   #[test_case(&BASE_CASE; "base case")]
   #[test_case(&ALL_PARAMS_CASE; "all config parameters case")]
@@ -217,7 +221,7 @@ mod tests {
       for (file, converted) in to_sorted_list(converted_files) {
         assert_peq!(
           to_sorted_hash(&converted),
-          to_sorted_hash(&expected_files.get(&file).unwrap())
+          to_sorted_hash(expected_files.get(&file).unwrap())
         );
       }
 
