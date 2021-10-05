@@ -115,7 +115,7 @@ impl KVS for PersistentJsonKVS {
 }
 
 fn is_valid_key_name(key: &str) -> bool {
-  if key.len() == 0 || key.len() > 200 {
+  if key.is_empty() || key.len() > 200 {
     return false;
   }
 
