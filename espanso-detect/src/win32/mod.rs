@@ -129,7 +129,7 @@ impl Source for Win32Source {
 
     // Register the hotkeys
     self.hotkeys.iter().for_each(|hk| {
-      let raw = convert_hotkey_to_raw(&hk);
+      let raw = convert_hotkey_to_raw(hk);
       if let Some(raw_hk) = raw {
         if unsafe { detect_register_hotkey(handle, raw_hk) } == 0 {
           error!("unable to register hotkey: {}", hk);
@@ -158,13 +158,14 @@ impl Source for Win32Source {
 
     extern "C" fn callback(_self: *mut Win32Source, event: RawInputEvent) {
       // Filter out keyboard events without an explicit HID device source.
-      // This is needed to filter out the software-generated events, including 
+      // This is needed to filter out the software-generated events, including
       // those from espanso.
-      if event.event_type == INPUT_EVENT_TYPE_KEYBOARD && event.has_known_source == 0 {
-        if unsafe { (*_self).exclude_orphan_events } {
-          trace!("skipping keyboard event with unknown HID source (probably software generated).");
-          return;
-        }
+      if event.event_type == INPUT_EVENT_TYPE_KEYBOARD
+        && event.has_known_source == 0
+        && unsafe { (*_self).exclude_orphan_events }
+      {
+        trace!("skipping keyboard event with unknown HID source (probably software generated).");
+        return;
       }
 
       let event: Option<InputEvent> = event.into();
@@ -205,31 +206,25 @@ impl Drop for Win32Source {
 
 fn convert_hotkey_to_raw(hk: &HotKey) -> Option<RawHotKey> {
   let key_code = hk.key.to_code()?;
-  let code: Result<u32, _> = key_code.try_into();
-  if let Ok(code) = code {
-    let mut flags = 0x4000; // NOREPEAT flags
-    if hk.has_ctrl() {
-      flags |= 0x0002;
-    }
-    if hk.has_alt() {
-      flags |= 0x0001;
-    }
-    if hk.has_meta() {
-      flags |= 0x0008;
-    }
-    if hk.has_shift() {
-      flags |= 0x0004;
-    }
-
-    Some(RawHotKey {
-      id: hk.id,
-      code,
-      flags,
-    })
-  } else {
-    error!("unable to generate raw hotkey, the key_code is overflowing");
-    None
+  let mut flags = 0x4000; // NOREPEAT flags
+  if hk.has_ctrl() {
+    flags |= 0x0002;
   }
+  if hk.has_alt() {
+    flags |= 0x0001;
+  }
+  if hk.has_meta() {
+    flags |= 0x0008;
+  }
+  if hk.has_shift() {
+    flags |= 0x0004;
+  }
+
+  Some(RawHotKey {
+    id: hk.id,
+    code: key_code,
+    flags,
+  })
 }
 
 #[derive(Error, Debug)]
