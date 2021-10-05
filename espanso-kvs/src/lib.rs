@@ -44,7 +44,7 @@ mod tests {
     let dir = TempDir::new("kvstempconfig").unwrap();
 
     callback(
-      &dir.path(),
+      dir.path(),
     );
   }
 
@@ -53,19 +53,19 @@ mod tests {
     use_test_directory(|base_dir| {
       let kvs = get_persistent(base_dir).unwrap();
 
-      assert_eq!(kvs.get::<String>("my_key").unwrap().is_none(), true);
-      assert_eq!(kvs.get::<bool>("another_key").unwrap().is_none(), true);
+      assert!(kvs.get::<String>("my_key").unwrap().is_none());
+      assert!(kvs.get::<bool>("another_key").unwrap().is_none());
 
       kvs.set("my_key", "test".to_string()).unwrap();
       kvs.set("another_key", false).unwrap();
 
       assert_eq!(kvs.get::<String>("my_key").unwrap().unwrap(), "test");
-      assert_eq!(kvs.get::<bool>("another_key").unwrap().unwrap(), false);
+      assert!(!kvs.get::<bool>("another_key").unwrap().unwrap());
 
       kvs.delete("my_key").unwrap();
 
-      assert_eq!(kvs.get::<String>("my_key").unwrap().is_none(), true);
-      assert_eq!(kvs.get::<bool>("another_key").unwrap().unwrap(), false);
+      assert!(kvs.get::<String>("my_key").unwrap().is_none());
+      assert!(!kvs.get::<bool>("another_key").unwrap().unwrap());
     });
   }
 
@@ -74,12 +74,12 @@ mod tests {
     use_test_directory(|base_dir| {
       let kvs = get_persistent(base_dir).unwrap();
 
-      assert_eq!(kvs.get::<String>("my_key").unwrap().is_none(), true);
+      assert!(kvs.get::<String>("my_key").unwrap().is_none());
 
       kvs.set("my_key", "test".to_string()).unwrap();
 
-      assert_eq!(kvs.get::<bool>("my_key").is_err(), true);
-      assert_eq!(kvs.get::<String>("my_key").is_ok(), true);
+      assert!(kvs.get::<bool>("my_key").is_err());
+      assert!(kvs.get::<String>("my_key").is_ok());
     });
   }
 
@@ -97,8 +97,8 @@ mod tests {
     use_test_directory(|base_dir| {
       let kvs = get_persistent(base_dir).unwrap();
 
-      assert_eq!(kvs.get::<String>("invalid key name").is_err(), true);
-      assert_eq!(kvs.get::<String>("").is_err(), true);
+      assert!(kvs.get::<String>("invalid key name").is_err());
+      assert!(kvs.get::<String>("").is_err());
     });
   }
 }
