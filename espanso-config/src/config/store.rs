@@ -22,8 +22,8 @@ use crate::error::NonFatalErrorSet;
 use super::{resolve::ResolvedConfig, Config, ConfigStore, ConfigStoreError};
 use anyhow::{Context, Result};
 use log::{debug, error};
-use std::{collections::HashSet, path::Path};
 use std::sync::Arc;
+use std::{collections::HashSet, path::Path};
 
 pub(crate) struct DefaultConfigStore {
   default: Arc<dyn Config>,
@@ -39,18 +39,17 @@ impl ConfigStore for DefaultConfigStore {
     // Find a custom config that matches or fallback to the default one
     for custom in self.customs.iter() {
       if custom.is_match(app) {
-        return Arc::clone(&custom);
+        return Arc::clone(custom);
       }
     }
     Arc::clone(&self.default)
   }
 
   fn configs(&self) -> Vec<Arc<dyn Config>> {
-    let mut configs = Vec::new();
+    let mut configs = vec![Arc::clone(&self.default)];
 
-    configs.push(Arc::clone(&self.default));
     for custom in self.customs.iter() {
-      configs.push(Arc::clone(&custom));
+      configs.push(Arc::clone(custom));
     }
 
     configs
@@ -83,8 +82,8 @@ impl DefaultConfigStore {
 
     let mut non_fatal_errors = Vec::new();
 
-    let default =
-      ResolvedConfig::load(&default_file, None).context("failed to load default.yml configuration")?;
+    let default = ResolvedConfig::load(&default_file, None)
+      .context("failed to load default.yml configuration")?;
     debug!("loaded default config at path: {:?}", default_file);
 
     // Then the others

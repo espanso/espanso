@@ -50,9 +50,9 @@ impl Default for Match {
 
 impl Match {
   // TODO: test
-  pub fn description<'a>(&'a self) -> &'a str {
+  pub fn description(&self) -> &str {
     if let Some(label) = &self.label {
-      &label
+      label
     } else if let MatchEffect::Text(text_effect) = &self.effect {
       &text_effect.replace
     } else if let MatchEffect::Image(_) = &self.effect {
@@ -63,7 +63,7 @@ impl Match {
   }
 
   // TODO: test
-  pub fn cause_description<'a>(&'a self) -> Option<&'a str> {
+  pub fn cause_description(&self) -> Option<&str> {
     self.cause.description()
   }
 }
@@ -80,7 +80,7 @@ pub enum MatchCause {
 
 impl MatchCause {
   // TODO: test
-  pub fn description<'a>(&'a self) -> Option<&'a str> {
+  pub fn description(&self) -> Option<&str> {
     if let MatchCause::Trigger(trigger_cause) = &self {
       trigger_cause.triggers.first().map(|s| s.as_str())
     } else {
@@ -91,7 +91,7 @@ impl MatchCause {
   }
 
   // TODO: test
-  pub fn long_description<'a>(&'a self) -> String {
+  pub fn long_description(&self) -> String {
     if let MatchCause::Trigger(trigger_cause) = &self {
       format!("triggers: {:?}", trigger_cause.triggers)
     } else {

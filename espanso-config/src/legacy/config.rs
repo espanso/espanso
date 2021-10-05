@@ -560,8 +560,7 @@ impl LegacyConfigSet {
     let mut name_set = HashSet::new();
     let mut children_map: HashMap<String, Vec<LegacyConfig>> = HashMap::new();
     let mut package_map: HashMap<String, Vec<LegacyConfig>> = HashMap::new();
-    let mut root_configs = Vec::new();
-    root_configs.push(default);
+    let mut root_configs = vec![default];
 
     let mut file_loader = |entry: walkdir::Result<DirEntry>,
                            dest_map: &mut HashMap<String, Vec<LegacyConfig>>|
@@ -592,7 +591,7 @@ impl LegacyConfigSet {
             return Ok(());
           }
 
-          let mut config = LegacyConfig::load_config(&path)?;
+          let mut config = LegacyConfig::load_config(path)?;
 
           // Make sure the config does not contain reserved fields
           if !config.validate_user_defined_config() {
@@ -811,7 +810,7 @@ mod tests {
   #[test]
   fn test_config_file_not_found() {
     let config = LegacyConfig::load_config(Path::new("invalid/path"));
-    assert_eq!(config.is_err(), true);
+    assert!(config.is_err());
     assert_eq!(config.unwrap_err(), ConfigLoadError::FileNotFound);
   }
 
@@ -833,13 +832,13 @@ mod tests {
     let mut result = true;
 
     validate_field!(result, 3, 3);
-    assert_eq!(result, true);
+    assert!(result);
 
     validate_field!(result, 10, 3);
-    assert_eq!(result, false);
+    assert!(!result);
 
     validate_field!(result, 3, 3);
-    assert_eq!(result, false);
+    assert!(!result);
   }
 
   #[test]
@@ -852,7 +851,7 @@ mod tests {
         "###,
     );
     let config = LegacyConfig::load_config(working_config_file.path());
-    assert_eq!(config.unwrap().validate_user_defined_config(), true);
+    assert!(config.unwrap().validate_user_defined_config());
   }
 
   #[test]
@@ -866,7 +865,7 @@ mod tests {
         "###,
     );
     let config = LegacyConfig::load_config(working_config_file.path());
-    assert_eq!(config.unwrap().validate_user_defined_config(), false);
+    assert!(!config.unwrap().validate_user_defined_config());
   }
 
   #[test]
@@ -880,7 +879,7 @@ mod tests {
         "###,
     );
     let config = LegacyConfig::load_config(working_config_file.path());
-    assert_eq!(config.unwrap().validate_user_defined_config(), false);
+    assert!(!config.unwrap().validate_user_defined_config());
   }
 
   #[test]
@@ -894,7 +893,7 @@ mod tests {
         "###,
     );
     let config = LegacyConfig::load_config(working_config_file.path());
-    assert_eq!(config.unwrap().validate_user_defined_config(), false);
+    assert!(!config.unwrap().validate_user_defined_config());
   }
 
   #[test]
@@ -908,14 +907,14 @@ mod tests {
         "###,
     );
     let config = LegacyConfig::load_config(working_config_file.path());
-    assert_eq!(config.unwrap().validate_user_defined_config(), false);
+    assert!(!config.unwrap().validate_user_defined_config());
   }
 
   #[test]
   fn test_config_loaded_correctly() {
     let working_config_file = create_tmp_file(TEST_WORKING_CONFIG_FILE);
     let config = LegacyConfig::load_config(working_config_file.path());
-    assert_eq!(config.is_ok(), true);
+    assert!(config.is_ok());
   }
 
   // Test ConfigSet
@@ -936,7 +935,7 @@ mod tests {
     (data_dir, package_dir)
   }
 
-  pub fn create_temp_file_in_dir(tmp_dir: &PathBuf, name: &str, content: &str) -> PathBuf {
+  pub fn create_temp_file_in_dir(tmp_dir: &Path, name: &str, content: &str) -> PathBuf {
     let user_defined_path = tmp_dir.join(name);
     let user_defined_path_copy = user_defined_path.clone();
     fs::write(user_defined_path, content).unwrap();
@@ -979,7 +978,7 @@ mod tests {
   fn test_config_set_load_fail_bad_directory() {
     let config_set =
       LegacyConfigSet::load(Path::new("invalid/path"), Path::new("invalid/path"));
-    assert_eq!(config_set.is_err(), true);
+    assert!(config_set.is_err());
     assert_eq!(
       config_set.unwrap_err(),
       ConfigLoadError::InvalidConfigDirectory
@@ -992,7 +991,7 @@ mod tests {
     let package_dir = TempDir::new().expect("unable to create package directory");
 
     let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path());
-    assert_eq!(config_set.is_err(), true);
+    assert!(config_set.is_err());
     assert_eq!(config_set.unwrap_err(), ConfigLoadError::FileNotFound);
   }
 
@@ -1607,9 +1606,8 @@ mod tests {
 
   #[test]
   fn test_list_has_conflict_no_conflict() {
-    assert_eq!(
-      LegacyConfigSet::list_has_conflicts(&[":ab".to_owned(), ":bc".to_owned()]),
-      false
+    assert!(
+      !LegacyConfigSet::list_has_conflicts(&[":ab".to_owned(), ":bc".to_owned()])
     );
   }
 
@@ -1617,7 +1615,7 @@ mod tests {
   fn test_list_has_conflict_conflict() {
     let mut list = vec!["ac".to_owned(), "ab".to_owned(), "abc".to_owned()];
     list.sort();
-    assert_eq!(LegacyConfigSet::list_has_conflicts(&list), true);
+    assert!(LegacyConfigSet::list_has_conflicts(&list));
   }
 
   #[test]
@@ -1645,9 +1643,8 @@ mod tests {
     );
 
     let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
-    assert_eq!(
-      LegacyConfigSet::has_conflicts(&config_set.default, &config_set.specific),
-      false
+    assert!(
+      !LegacyConfigSet::has_conflicts(&config_set.default, &config_set.specific),
     );
   }
 
@@ -1678,9 +1675,8 @@ mod tests {
     );
 
     let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
-    assert_eq!(
+    assert!(
       LegacyConfigSet::has_conflicts(&config_set.default, &config_set.specific),
-      true
     );
   }
 
@@ -1709,9 +1705,8 @@ mod tests {
     );
 
     let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
-    assert_eq!(
+    assert!(
       LegacyConfigSet::has_conflicts(&config_set.default, &config_set.specific),
-      true
     );
   }
 
@@ -1751,9 +1746,8 @@ mod tests {
     );
 
     let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
-    assert_eq!(
-      LegacyConfigSet::has_conflicts(&config_set.default, &config_set.specific),
-      false
+    assert!(
+      !LegacyConfigSet::has_conflicts(&config_set.default, &config_set.specific),
     );
   }
 

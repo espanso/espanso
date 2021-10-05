@@ -20,6 +20,7 @@
 use serde::{Deserialize, Serialize};
 
 #[allow(non_camel_case_types)]
+#[allow(clippy::upper_case_acronyms)]
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum KeyModifier {
   CTRL,

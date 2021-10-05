@@ -240,7 +240,7 @@ impl Config for ResolvedConfig {
   }
 
   fn word_separators(&self) -> Vec<String> {
-    self.parsed.word_separators.clone().unwrap_or(vec![
+    self.parsed.word_separators.clone().unwrap_or_else(|| vec![
       " ".to_string(),
       ",".to_string(),
       ".".to_string(),

@@ -72,7 +72,7 @@ impl MatchStore for DefaultMatchStore {
   }
 
   fn loaded_paths(&self) -> Vec<String> {
-    self.groups.keys().map(|key| key.clone()).collect()
+    self.groups.keys().cloned().collect()
   }
 }
 
