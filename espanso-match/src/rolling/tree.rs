@@ -66,15 +66,13 @@ fn insert_items_recursively<Id>(id: Id, node: &mut MatcherTreeNode<Id>, items: &
     return;
   }
 
+  let item = items.get(0).unwrap();
   if items.len() == 1 {
-    let item = items.get(0).unwrap();
     match item {
       RollingItem::WordSeparator => {
         let mut new_matches = Vec::new();
-        if let Some(node_ref) = node.word_separators.take() {
-          if let MatcherTreeRef::Matches(matches) = node_ref {
-            new_matches.extend(matches);
-          }
+        if let Some(MatcherTreeRef::Matches(matches)) = node.word_separators.take() {
+          new_matches.extend(matches);
         }
         new_matches.push(id);
         node.word_separators = Some(MatcherTreeRef::Matches(new_matches))
@@ -125,7 +123,6 @@ fn insert_items_recursively<Id>(id: Id, node: &mut MatcherTreeNode<Id>, items: &
       }
     }
   } else {
-    let item = items.get(0).unwrap();
     match item {
       RollingItem::WordSeparator => match node.word_separators.as_mut() {
         Some(MatcherTreeRef::Node(next_node)) => {

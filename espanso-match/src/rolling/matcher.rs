@@ -203,10 +203,10 @@ impl<Id: Clone> RollingMatcher<Id> {
   fn is_word_separator(&self, event: &Event) -> bool {
     match event {
       Event::Key { key, chars } => {
-        if self.key_word_separators.contains(&key) {
+        if self.key_word_separators.contains(key) {
           true
         } else if let Some(char) = chars {
-          self.char_word_separators.contains(&char)
+          self.char_word_separators.contains(char)
         } else {
           false
         }

@@ -30,16 +30,18 @@ pub(crate) fn extract_string_from_events(
   let mut right_separator = None;
 
   for (i, (event, is_word_separator)) in events.iter().enumerate() {
-    if let Event::Key { key: _, chars } = event {
-      if let Some(chars) = chars {
-        string.push_str(chars);
+    if let Event::Key {
+      key: _,
+      chars: Some(chars),
+    } = event
+    {
+      string.push_str(chars);
 
-        if *is_word_separator {
-          if i == 0 {
-            left_separator = Some(chars.clone());
-          } else if i == (events.len() - 1) {
-            right_separator = Some(chars.clone());
-          }
+      if *is_word_separator {
+        if i == 0 {
+          left_separator = Some(chars.clone());
+        } else if i == (events.len() - 1) {
+          right_separator = Some(chars.clone());
         }
       }
     }

@@ -91,10 +91,12 @@ where
       "".to_string()
     };
 
-    if let Event::Key { key: _, chars } = event {
-      if let Some(chars) = chars {
-        buffer.push_str(&chars);
-      }
+    if let Event::Key {
+      key: _,
+      chars: Some(chars),
+    } = event
+    {
+      buffer.push_str(&chars);
     }
 
     // Keep the buffer length in check
@@ -259,13 +261,16 @@ mod tests {
         RegexMatch::new(2, "multi\\((?P<name1>.*?),(?P<name2>.*?)\\)"),
       ],
       RegexMatcherOptions {
-        max_buffer_size: 15
+        max_buffer_size: 15,
       },
     );
     assert_eq!(
       get_matches_after_str("say hello(mary)", &matcher),
       vec![match_result(1, "hello(mary)", &[("name", "mary")])]
     );
-    assert_eq!(get_matches_after_str("hello(very long name over buffer)", &matcher), vec![]);
+    assert_eq!(
+      get_matches_after_str("hello(very long name over buffer)", &matcher),
+      vec![]
+    );
   }
 }
