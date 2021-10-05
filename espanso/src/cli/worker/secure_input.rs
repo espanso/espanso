@@ -17,12 +17,10 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::time::Duration;
-
 use anyhow::Result;
 use crossbeam::channel::Sender;
-use log::{error, info};
 
+#[allow(dead_code)]
 pub enum SecureInputEvent {
   Disabled,
   Enabled { app_name: String, app_path: String },
@@ -36,6 +34,9 @@ pub fn initialize_and_spawn(_secure_input_send: Sender<SecureInputEvent>) -> Res
 
 #[cfg(target_os = "macos")]
 pub fn initialize_and_spawn(secure_input_sender: Sender<SecureInputEvent>) -> Result<()> {
+  use log::{error, info};
+  use std::time::Duration;
+
   std::thread::Builder::new()
     .name("secure-input-monitor".to_string())
     .spawn(move || {

@@ -50,7 +50,7 @@ impl<'a> funnel::Source<'a> for DetectSource {
           status: convert_to_engine_status(keyboard_event.status),
           variant: keyboard_event
             .variant
-            .map(|variant| convert_to_engine_variant(variant)),
+            .map(convert_to_engine_variant),
         }),
       },
       InputEvent::Mouse(mouse_event) => Event {

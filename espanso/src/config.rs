@@ -79,8 +79,8 @@ pub struct ConfigLoadResult {
 }
 
 pub fn load_config(config_path: &Path, packages_path: &Path) -> Result<ConfigLoadResult> {
-  if espanso_config::is_legacy_config(&config_path) {
-    let (config_store, match_store) = espanso_config::load_legacy(&config_path, &packages_path)
+  if espanso_config::is_legacy_config(config_path) {
+    let (config_store, match_store) = espanso_config::load_legacy(config_path, packages_path)
       .context("unable to load legacy config")?;
 
     Ok(ConfigLoadResult {
@@ -92,7 +92,7 @@ pub fn load_config(config_path: &Path, packages_path: &Path) -> Result<ConfigLoa
     })
   } else {
     let (config_store, match_store, non_fatal_errors) =
-      espanso_config::load(&config_path).context("unable to load config")?;
+      espanso_config::load(config_path).context("unable to load config")?;
 
     // TODO: add an option to avoid dumping the errors in the logs
     if !non_fatal_errors.is_empty() {

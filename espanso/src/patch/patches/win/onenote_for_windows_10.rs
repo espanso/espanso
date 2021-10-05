@@ -24,7 +24,7 @@ use crate::patch::PatchDefinition;
 
 pub fn patch() -> PatchDefinition {
   PatchDefinition {
-    name: module_path!().split(":").last().unwrap_or("unknown"),
+    name: module_path!().split(':').last().unwrap_or("unknown"),
     is_enabled: || cfg!(target_os = "windows"),
     should_patch: |app| app.title.unwrap_or_default().contains("OneNote"),
     apply: |base, name| {

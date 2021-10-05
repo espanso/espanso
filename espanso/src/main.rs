@@ -434,7 +434,7 @@ fn main() {
   let mut handler = if let Some(alias) = alias {
     CLI_HANDLERS
       .iter()
-      .find(|cli| &cli.subcommand == &alias.forward_into)
+      .find(|cli| cli.subcommand == alias.forward_into)
   } else {
     CLI_HANDLERS
       .iter()
@@ -480,7 +480,7 @@ fn main() {
       if !handler.disable_logs_terminal_output {
         outputs.insert(
           0,
-          TermLogger::new(log_level, config.clone(), TerminalMode::Mixed),
+          TermLogger::new(log_level, config, TerminalMode::Mixed),
         );
       }
 
@@ -580,7 +580,7 @@ fn get_path_override(matches: &ArgMatches, argument: &str, env_var: &str) -> Opt
   if let Some(path) = matches.value_of(argument) {
     let path = PathBuf::from(path.trim());
     if path.is_dir() {
-      return Some(path);
+      Some(path)
     } else {
       error_eprintln!("{} argument was specified, but it doesn't point to a valid directory. Make sure to create it first.", argument);
       std::process::exit(1);
@@ -588,7 +588,7 @@ fn get_path_override(matches: &ArgMatches, argument: &str, env_var: &str) -> Opt
   } else if let Ok(path) = std::env::var(env_var) {
     let path = PathBuf::from(path.trim());
     if path.is_dir() {
-      return Some(path);
+      Some(path)
     } else {
       error_eprintln!("{} env variable was specified, but it doesn't point to a valid directory. Make sure to create it first.", env_var);
       std::process::exit(1);

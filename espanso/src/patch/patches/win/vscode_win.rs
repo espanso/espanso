@@ -26,7 +26,7 @@ use crate::patch::PatchDefinition;
 
 pub fn patch() -> PatchDefinition {
   PatchDefinition {
-    name: module_path!().split(":").last().unwrap_or("unknown"),
+    name: module_path!().split(':').last().unwrap_or("unknown"),
     is_enabled: || cfg!(target_os = "windows"),
     should_patch: |app| app.exec.unwrap_or_default().contains("Code.exe"),
     apply: |base, name| {

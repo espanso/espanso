@@ -86,9 +86,7 @@ fn generate_global_vars_map(config_provider: &dyn ConfigProvider) -> HashMap<i32
 
   for (_, match_set) in config_provider.configs() {
     for var in match_set.global_vars.iter() {
-      if !global_vars_map.contains_key(&var.id) {
-        global_vars_map.insert(var.id, convert_var((*var).clone()));
-      }
+      global_vars_map.entry(var.id).or_insert_with(|| convert_var((*var).clone()));
     }
   }
 

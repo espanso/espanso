@@ -46,7 +46,7 @@ pub fn new() -> CliModule {
 
 #[cfg(feature = "modulo")]
 fn launcher_main(args: CliModuleArgs) -> i32 {
-  use espanso_modulo::wizard::{DetectedOS, MigrationResult, WizardHandlers, WizardOptions};
+  use espanso_modulo::wizard::{MigrationResult, WizardHandlers, WizardOptions};
   let paths = args.paths.expect("missing paths in launcher main");
 
   // TODO: should we create a non-gui wizard? We can also use it for the non-modulo versions of espanso
@@ -84,8 +84,8 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
     Box::new(move || match util::migrate_configuration(&paths_clone) {
       Ok(_) => MigrationResult::Success,
       Err(error) => match error.downcast_ref::<MigrationError>() {
-        Some(MigrationError::DirtyError) => MigrationResult::DirtyFailure,
-        Some(MigrationError::CleanError) => MigrationResult::CleanFailure,
+        Some(MigrationError::Dirty) => MigrationResult::DirtyFailure,
+        Some(MigrationError::Clean) => MigrationResult::CleanFailure,
         _ => MigrationResult::UnknownFailure,
       },
     });
@@ -94,12 +94,10 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
     if cfg!(not(target_os = "linux")) && !preferences.has_completed_wizard() {
       if cfg!(target_os = "macos") {
         !crate::path::is_espanso_in_path()
+      } else if paths.is_portable_mode {
+        false
       } else {
-        if paths.is_portable_mode {
-          false
-        } else {
-          !crate::path::is_espanso_in_path()
-        }
+        !crate::path::is_espanso_in_path()
       }
     } else {
       false
@@ -118,14 +116,13 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
     false
   };
   let is_accessibility_enabled_handler =
-    Box::new(move || accessibility::is_accessibility_enabled());
+    Box::new(accessibility::is_accessibility_enabled);
   let enable_accessibility_handler = Box::new(move || {
     accessibility::prompt_enable_accessibility();
   });
 
-  let preferences_clone = preferences.clone();
   let on_completed_handler = Box::new(move || {
-    preferences_clone.set_completed_wizard(true);
+    preferences.set_completed_wizard(true);
   });
 
   // Only show the wizard if a panel should be displayed

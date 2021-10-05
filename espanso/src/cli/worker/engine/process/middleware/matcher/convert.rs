@@ -64,7 +64,7 @@ impl<'a> MatchConverter<'a> {
         for trigger in cause.triggers.iter() {
           matches.push(RollingMatch::from_string(
             m.id,
-            &trigger,
+            trigger,
             &StringMatchOptions {
               case_insensitive: cause.propagate_case,
               left_word: cause.left_word,
@@ -80,7 +80,7 @@ impl<'a> MatchConverter<'a> {
       for trigger in m.triggers.iter() {
         matches.push(RollingMatch::from_string(
           m.id,
-          &trigger,
+          trigger,
           &StringMatchOptions::default(),
         ))
       }

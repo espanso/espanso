@@ -113,10 +113,10 @@ fn extract_icon(data: &[u8], target_file: &Path) -> Result<PathBuf> {
       "skipping extraction for '{:?}', as it's already present",
       target_file
     );
-    Ok(target_file.to_owned())
   } else {
     std::fs::write(target_file, data)?;
     info!("extracted icon to: {:?}", target_file);
-    Ok(target_file.to_owned())
   }
+
+  Ok(target_file.to_owned())
 }

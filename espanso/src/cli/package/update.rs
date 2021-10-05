@@ -55,7 +55,7 @@ pub fn update_package(paths: &Paths, matches: &ArgMatches) -> Result<UpdateResul
   let mut update_errors = Vec::new();
 
   for package_name in &packages_to_update {
-    if let Err(err) = perform_package_update(paths, &*archiver, &package_name) {
+    if let Err(err) = perform_package_update(paths, &*archiver, package_name) {
       error_eprintln!("error updating package '{}': {:?}", package_name, err);
       update_errors.push(err);
     }

@@ -18,7 +18,7 @@
  */
 
 use super::{CliModule, CliModuleArgs};
-use crate::{error_eprintln, exit_code::{WORKAROUND_FAILURE, WORKAROUND_SUCCESS}};
+use crate::{error_eprintln, exit_code::{WORKAROUND_SUCCESS}};
 
 #[cfg(target_os = "macos")]
 mod secure_input;
@@ -37,6 +37,7 @@ fn workaround_main(args: CliModuleArgs) -> i32 {
   if cli_args.subcommand_matches("secure-input").is_some() {
     #[cfg(target_os = "macos")]
     {
+      use crate::exit_code::WORKAROUND_FAILURE;
       if let Err(err) = secure_input::run_secure_input_workaround() {
         error_eprintln!("secure-input workaround reported error: {}", err);
         return WORKAROUND_FAILURE;

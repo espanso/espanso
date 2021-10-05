@@ -48,10 +48,8 @@ impl FileProxy {
 
   pub fn set_output_file(&self, path: &Path, read_only: bool, create_new: bool) -> Result<()> {
     // Remove previous log, if present
-    if create_new && !read_only {
-      if path.is_file() {
-        std::fs::remove_file(path)?;
-      }
+    if create_new && !read_only && path.is_file() {
+      std::fs::remove_file(path)?;
     }
 
     let mut log_file = OpenOptions::new()
@@ -64,7 +62,7 @@ impl FileProxy {
 
     // Transfer the log content that has been buffered into the file
     if let Output::Memory(buffered) = &mut (*lock) {
-      log_file.write_all(&buffered)?;
+      log_file.write_all(buffered)?;
       buffered.clear();
     }
     *lock = Output::File(log_file);

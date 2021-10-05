@@ -52,10 +52,13 @@ pub const SERVICE_ALREADY_RUNNING: i32 = 3;
 pub const SERVICE_NOT_RUNNING: i32 = 4;
 
 pub const WORKAROUND_SUCCESS: i32 = 0;
+#[allow(dead_code)]
 pub const WORKAROUND_FAILURE: i32 = 1;
 pub const WORKAROUND_NOT_AVAILABLE: i32 = 2;
 
+#[allow(dead_code)]
 pub const PACKAGE_SUCCESS: i32 = 0;
+#[allow(dead_code)]
 pub const PACKAGE_UNEXPECTED_FAILURE: i32 = 1;
 pub const PACKAGE_INSTALL_FAILED: i32 = 2;
 pub const PACKAGE_UNINSTALL_FAILED: i32 = 3;

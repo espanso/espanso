@@ -57,7 +57,7 @@ fn modulo_main(args: CliModuleArgs) -> i32 {
     return welcome::welcome_main(matches, &paths, &icon_paths);
   }
   
-  if let Some(_) = cli_args.subcommand_matches("troubleshoot") {
+  if cli_args.subcommand_matches("troubleshoot").is_some() {
     return troubleshoot::troubleshoot_main(&paths, &icon_paths);
   }
 

@@ -78,7 +78,7 @@ pub fn load_config_or_troubleshoot(paths: &Paths, paths_overrides: &PathsOverrid
   match crate::load_config(&paths.config, &paths.packages) {
     Ok(load_result) => {
       if load_result.non_fatal_errors.is_empty() {
-        return LoadResult::Correct(load_result);
+        LoadResult::Correct(load_result)
       } else {
         let mut troubleshoot_handle = None;
 
@@ -96,13 +96,13 @@ pub fn load_config_or_troubleshoot(paths: &Paths, paths_overrides: &PathsOverrid
           }
         }
 
-        return LoadResult::Warning(load_result, troubleshoot_handle);
+        LoadResult::Warning(load_result, troubleshoot_handle)
       }
     }
     Err(_) => {
-      return LoadResult::Fatal(
+      LoadResult::Fatal(
         launch_troubleshoot(paths_overrides).expect("unable to launch troubleshoot GUI"),
-      );
+      )
     }
   }
 }

@@ -40,18 +40,17 @@ impl<KVSType: KVS> DefaultPreferences<KVSType> {
   }
 
   fn get<T: DeserializeOwned>(&self, key: &str) -> Option<T> {
-    let value = self
+    self
       .kvs
       .get(key)
-      .expect(&format!("unable to read preference for key {}", key));
-    value
+      .unwrap_or_else(|_| panic!("unable to read preference for key {}", key))
   }
 
   fn set<T: Serialize>(&self, key: &str, value: T) {
     self
       .kvs
       .set(key, value)
-      .expect(&format!("unable to write preference for key {}", key))
+      .unwrap_or_else(|_| panic!("unable to write preference for key {}", key))
   }
 }
 

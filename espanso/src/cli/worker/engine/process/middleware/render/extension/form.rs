@@ -78,7 +78,7 @@ fn convert_fields(fields: &Params) -> HashMap<String, FormField> {
               .and_then(|val| val.as_array())
               .map(|arr| {
                 arr
-                  .into_iter()
+                  .iter()
                   .flat_map(|choice| choice.as_string())
                   .cloned()
                   .collect()
@@ -95,7 +95,7 @@ fn convert_fields(fields: &Params) -> HashMap<String, FormField> {
               .and_then(|val| val.as_array())
               .map(|arr| {
                 arr
-                  .into_iter()
+                  .iter()
                   .flat_map(|choice| choice.as_string())
                   .cloned()
                   .collect()

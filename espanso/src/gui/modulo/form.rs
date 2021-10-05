@@ -57,13 +57,13 @@ impl<'a> FormUI for ModuloFormUI<'a> {
     match json {
       Ok(json) => {
         if json.is_empty() {
-          return Ok(None);
+          Ok(None)
         } else {
-          return Ok(Some(json));
+          Ok(Some(json))
         }
       }
       Err(error) => {
-        return Err(error.into());
+        Err(error.into())
       }
     }
   }

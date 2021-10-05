@@ -29,6 +29,7 @@ pub struct Lock {
 }
 
 impl Lock {
+  #[allow(dead_code)]
   pub fn release(self) -> Result<()> {
     self.lock_file.unlock()?;
     Ok(())
@@ -41,10 +42,8 @@ impl Lock {
       .write(true)
       .create(true)
       .open(&lock_file_path)
-      .expect(&format!(
-        "unable to create reference to lock file: {:?}",
-        lock_file_path
-      ));
+      .unwrap_or_else(|_| panic!("unable to create reference to lock file: {:?}",
+        lock_file_path));
 
     if lock_file.try_lock_exclusive().is_ok() {
       Some(Lock { lock_file })
@@ -59,7 +58,7 @@ impl Drop for Lock {
     self
       .lock_file
       .unlock()
-      .expect(&format!("unable to unlock lock_file: {:?}", self.lock_file));
+      .unwrap_or_else(|_| panic!("unable to unlock lock_file: {:?}", self.lock_file));
   }
 }
 
