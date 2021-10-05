@@ -156,11 +156,7 @@ mod interop {
 
   impl From<types::Field> for OwnedField {
     fn from(field: types::Field) -> Self {
-      let id = if let Some(id) = field.id {
-        Some(CString::new(id).expect("unable to create cstring for field id"))
-      } else {
-        None
-      };
+      let id = field.id.map(|id| CString::new(id).expect("unable to create cstring for field id"));
 
       let field_type = match field.field_type {
         types::FieldType::Row(_) => FieldType_ROW,

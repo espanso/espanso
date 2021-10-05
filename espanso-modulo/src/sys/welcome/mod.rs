@@ -39,7 +39,7 @@ pub fn show(options: WelcomeOptions) {
       .expect("unable to acquire lock in dont_show_again_changed method");
     let handlers_ref = (*lock).as_ref().expect("unable to unwrap handlers");
     if let Some(handler_ref) = handlers_ref.dont_show_again_changed.as_ref() {
-      let value = if dont_show == 1 { true } else { false };
+      let value = dont_show == 1;
       (*handler_ref)(value);
     }
   }

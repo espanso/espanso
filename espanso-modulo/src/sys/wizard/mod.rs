@@ -17,7 +17,7 @@
  * along with modulo.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::os::raw::{c_char, c_int};
+use std::os::raw::{c_int};
 use std::{ffi::CString, sync::Mutex};
 
 use crate::sys::interop::{
@@ -200,9 +200,5 @@ pub fn show(options: WizardOptions) -> bool {
 
   let successful = unsafe { super::interop::interop_show_wizard(&wizard_metadata) };
 
-  if successful == 1 {
-    true
-  } else {
-    false
-  }
+  successful == 1
 }

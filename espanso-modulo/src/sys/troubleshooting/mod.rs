@@ -68,12 +68,8 @@ mod interop {
 
   impl From<&ErrorSet> for OwnedErrorSet {
     fn from(error_set: &ErrorSet) -> Self {
-      let file_path = if let Some(file_path) = &error_set.file {
-        Some(CString::new(file_path.to_string_lossy().to_string())
-        .expect("unable to convert file_path to CString"))
-      } else {
-        None
-      };
+      let file_path = error_set.file.as_ref().map(|file_path| CString::new(file_path.to_string_lossy().to_string())
+        .expect("unable to convert file_path to CString"));
 
       let errors: Vec<OwnedErrorMetadata> =
         error_set.errors.iter().map(|item| item.into()).collect();
@@ -136,7 +132,7 @@ pub fn show(options: TroubleshootingOptions) -> Result<()> {
       .expect("unable to acquire lock in dont_show_again_changed method");
     let handlers_ref = (*lock).as_ref().expect("unable to unwrap handlers");
     if let Some(handler_ref) = handlers_ref.dont_show_again_changed.as_ref() {
-      let value = if dont_show == 1 { true } else { false };
+      let value = dont_show == 1;
       (*handler_ref)(value);
     }
   }

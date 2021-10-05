@@ -114,7 +114,7 @@ fn command_filter(
       )
     };
 
-    let results = search_algorithm(trimmed_query, &items);
+    let results = search_algorithm(trimmed_query, items);
 
     results
       .into_iter()
