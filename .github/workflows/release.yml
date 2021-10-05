@@ -6,8 +6,7 @@ name: Release
 on:
   push:
     branches:
-      # TODO: replace this one with master
-      - dev-1.x-ci-pipelines
+      - master
 
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
