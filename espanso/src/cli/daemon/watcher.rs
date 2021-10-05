@@ -128,6 +128,6 @@ fn has_hidden_attribute(path: &Path) -> bool {
 }
 
 #[cfg(not(windows))]
-fn has_hidden_attribute(path: &Path) -> bool {
+fn has_hidden_attribute(_: &Path) -> bool {
   false
 }

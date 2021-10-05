@@ -24,7 +24,6 @@ use espanso_config::{
   matches::store::{MatchSet, MatchStore},
 };
 use espanso_info::{AppInfo, AppInfoProvider};
-use std::iter::FromIterator;
 
 use super::builtin::is_builtin_match;
 
@@ -75,7 +74,7 @@ fn to_app_properties(info: &AppInfo) -> AppProperties {
 
 impl<'a> espanso_engine::process::MatchFilter for ConfigManager<'a> {
   fn filter_active(&self, matches_ids: &[i32]) -> Vec<i32> {
-    let ids_set: HashSet<i32> = HashSet::from_iter(matches_ids.iter().copied());
+    let ids_set: HashSet<i32> = matches_ids.iter().copied().collect::<HashSet<_>>();
     let (_, match_set) = self.active_context();
 
     let active_user_defined_matches: Vec<i32> = match_set

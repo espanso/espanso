@@ -63,7 +63,7 @@ pub fn add_espanso_to_path(prompt_when_necessary: bool) -> Result<()> {
           return Err(PathError::SymlinkError(error).into());
         }
       }
-      other_error => {
+      _other_error => {
         return Err(PathError::SymlinkError(error).into());
       }
     }
@@ -103,7 +103,7 @@ pub fn remove_espanso_from_path(prompt_when_necessary: bool) -> Result<()> {
           return Err(PathError::SymlinkError(error).into());
         }
       }
-      other_error => {
+      _other_error => {
         return Err(PathError::SymlinkError(error).into());
       }
     }

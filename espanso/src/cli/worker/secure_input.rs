@@ -34,9 +34,6 @@ pub fn initialize_and_spawn(_secure_input_send: Sender<SecureInputEvent>) -> Res
 
 #[cfg(target_os = "macos")]
 pub fn initialize_and_spawn(secure_input_sender: Sender<SecureInputEvent>) -> Result<()> {
-  use log::{error, info};
-  use std::time::Duration;
-
   std::thread::Builder::new()
     .name("secure-input-monitor".to_string())
     .spawn(move || {
@@ -54,9 +51,11 @@ pub fn initialize_and_spawn(secure_input_sender: Sender<SecureInputEvent>) -> Re
 #[cfg(target_os = "macos")]
 fn secure_input_main(
   secure_input_sender: Sender<SecureInputEvent>,
-  min_watch_interval: Duration,
-  max_watch_interval: Duration,
+  min_watch_interval: std::time::Duration,
+  max_watch_interval: std::time::Duration,
 ) {
+  use log::{error, info};
+
   info!("monitoring the status of secure input");
 
   let mut last_secure_input_pid: Option<i64> = None;
@@ -67,6 +66,7 @@ fn secure_input_main(
       // Some application is currently on SecureInput
       let should_notify = if let Some(old_pid) = last_secure_input_pid {
         // We already detected a SecureInput app
+        #[allow(clippy::needless_bool)]
         if old_pid != pid {
           // The old app is different from the current one, we should take action
           true
@@ -100,7 +100,7 @@ fn secure_input_main(
       // No app is currently keeping SecureInput
 
       // If there was an app with SecureInput, notify that is now free
-      if let Some(_) = last_secure_input_pid {
+      if last_secure_input_pid.is_some() {
         info!("secure input has been disabled");
 
         if let Err(error) = secure_input_sender.send(SecureInputEvent::Disabled) {

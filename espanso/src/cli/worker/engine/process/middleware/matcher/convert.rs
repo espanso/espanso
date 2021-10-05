@@ -30,7 +30,6 @@ use espanso_match::{
   rolling::{RollingMatch, StringMatchOptions},
 };
 use log::error;
-use std::iter::FromIterator;
 
 use crate::cli::worker::builtin::BuiltInMatch;
 
@@ -125,6 +124,6 @@ impl<'a> MatchConverter<'a> {
 
   fn global_match_set(&self) -> MatchSet {
     let paths = self.config_store.get_all_match_paths();
-    self.match_store.query(&Vec::from_iter(paths.into_iter()))
+    self.match_store.query(&paths.into_iter().collect::<Vec<_>>())
   }
 }
