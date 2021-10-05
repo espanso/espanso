@@ -56,7 +56,7 @@ impl<'a> ConfigManager<'a> {
   pub fn active_context(&self) -> (Arc<dyn Config>, MatchSet) {
     let config = self.active();
     let match_paths = config.match_paths();
-    (config.clone(), self.match_store.query(&match_paths))
+    (config.clone(), self.match_store.query(match_paths))
   }
 
   pub fn default(&self) -> Arc<dyn Config> {
@@ -86,9 +86,8 @@ impl<'a> espanso_engine::process::MatchFilter for ConfigManager<'a> {
       .collect();
 
     let builtin_matches: Vec<i32> = matches_ids
-      .into_iter()
-      .filter(|id| is_builtin_match(**id))
-      .map(|id| *id)
+      .iter()
+      .filter(|id| is_builtin_match(**id)).copied()
       .collect();
 
     let mut output = active_user_defined_matches;

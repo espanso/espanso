@@ -55,6 +55,7 @@ pub fn initialize_and_spawn(runtime_dir: &Path, exit_notify: Sender<ExitMode>) -
 
             EventHandlerResponse::NoResponse
           }
+          #[allow(unreachable_patterns)]
           unexpected_event => {
             warn!(
               "received unexpected event in worker ipc handler: {:?}",

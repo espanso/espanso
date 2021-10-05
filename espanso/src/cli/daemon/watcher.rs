@@ -78,11 +78,9 @@ fn watcher_main(config_dir: &Path, watcher_notify: &Sender<()>) {
           if ["yml", "yaml"].iter().any(|ext| ext == &extension) {
             // Only load non-hidden yml files
             !is_file_hidden(&path)
-          } else if extension == "" {
-            // No extension, probably a folder
-            true
-          } else {
-            false
+          } else { 
+            // If there is no extension, it's probably a folder 
+            extension.is_empty() 
           }
         } else {
           false
@@ -112,9 +110,9 @@ fn is_file_hidden(path: &Path) -> bool {
     .file_name()
     .unwrap_or_default()
     .to_string_lossy()
-    .starts_with(".");
+    .starts_with('.');
 
-  return starts_with_dot || has_hidden_attribute(path);
+  starts_with_dot || has_hidden_attribute(path)
 }
 
 #[cfg(windows)]
@@ -126,11 +124,7 @@ fn has_hidden_attribute(path: &Path) -> bool {
   }
   let attributes = metadata.unwrap().file_attributes();
 
-  if (attributes & 0x2) > 0 {
-    true
-  } else {
-    false
-  }
+  (attributes & 0x2) > 0
 }
 
 #[cfg(not(windows))]

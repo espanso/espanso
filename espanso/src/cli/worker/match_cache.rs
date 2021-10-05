@@ -55,7 +55,7 @@ impl<'a> super::engine::process::middleware::render::MatchProvider<'a> for Match
   }
 
   fn get(&self, id: i32) -> Option<&'a Match> {
-    self.cache.get(&id).map(|m| *m)
+    self.cache.get(&id).copied()
   }
 }
 
@@ -104,11 +104,11 @@ impl<'a> CombinedMatchCache<'a> {
   }
 
   pub fn get(&self, match_id: i32) -> Option<MatchVariant<'a>> {
-    if let Some(user_match) = self.user_match_cache.cache.get(&match_id).map(|m| *m) {
+    if let Some(user_match) = self.user_match_cache.cache.get(&match_id).copied() {
       return Some(MatchVariant::User(user_match));
     }
 
-    if let Some(builtin_match) = self.builtin_match_cache.get(&match_id).map(|m| *m) {
+    if let Some(builtin_match) = self.builtin_match_cache.get(&match_id).copied() {
       return Some(MatchVariant::Builtin(builtin_match));
     }
 

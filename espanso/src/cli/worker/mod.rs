@@ -138,7 +138,7 @@ fn worker_main(args: CliModuleArgs) -> i32 {
   // This is needed to avoid "dangling" worker processes
   // if the daemon crashes or is forcefully terminated.
   if cli_args.is_present("monitor-daemon") {
-    daemon_monitor::initialize_and_spawn(&paths.runtime, engine_exit_notify.clone())
+    daemon_monitor::initialize_and_spawn(&paths.runtime, engine_exit_notify)
       .expect("unable to initialize daemon monitor thread");
   }
 
@@ -159,20 +159,20 @@ fn worker_main(args: CliModuleArgs) -> i32 {
     Ok(mode) => match mode {
       ExitMode::Exit => {
         info!("exiting worker process...");
-        return WORKER_SUCCESS;
+        WORKER_SUCCESS
       }
       ExitMode::ExitAllProcesses => {
         info!("exiting worker process and daemon...");
-        return WORKER_EXIT_ALL_PROCESSES;
+        WORKER_EXIT_ALL_PROCESSES
       }
       ExitMode::RestartWorker => {
         info!("exiting worker (to be restarted)");
-        return WORKER_RESTART;
+        WORKER_RESTART
       }
     },
     Err(err) => {
       error!("unable to read engine exit mode: {:?}", err);
-      return WORKER_GENERAL_ERROR;
+      WORKER_GENERAL_ERROR
     }
   }
 }

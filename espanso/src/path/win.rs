@@ -61,7 +61,7 @@ fn read_user_path_value() -> Result<String> {
 
 fn read_paths() -> Vec<String> {
   let path_value = read_user_path_value().unwrap_or_default();
-  let paths = path_value.split(";");
+  let paths = path_value.split(';');
   paths.map(String::from).collect()
 }
 

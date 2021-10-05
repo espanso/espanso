@@ -67,7 +67,7 @@ fn migrate_main(args: CliModuleArgs) -> i32 {
 
   println!("\n{}\n", "Welcome to espanso v2!".bold());
   println!("This migration tool will help you to smoothly transition to the new espanso v2 configuration format.");
-  println!("");
+  println!();
   println!(
     "1. Firstly, espanso will {} your current configuration, located in:\n",
     "backup".green().bold()
@@ -80,7 +80,7 @@ fn migrate_main(args: CliModuleArgs) -> i32 {
     "convert".bold().green()
   );
   println!("   the current content of the config directory.");
-  println!("");
+  println!();
 
   info!(
     "backing up the configuration directory: '{}'",
@@ -91,15 +91,12 @@ fn migrate_main(args: CliModuleArgs) -> i32 {
     target_backup_dir.to_string_lossy()
   );
 
-  if !cli_args.is_present("noconfirm") {
-    if !Confirm::new()
+  if !cli_args.is_present("noconfirm") && !Confirm::new()
       .with_prompt("Do you want to proceed?")
       .default(true)
       .interact()
-      .expect("unable to read choice")
-    {
-      return MIGRATE_USER_ABORTED;
-    }
+      .expect("unable to read choice") {
+    return MIGRATE_USER_ABORTED;
   }
 
   println!("Backing up your configuration...");

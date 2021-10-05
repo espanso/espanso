@@ -33,6 +33,5 @@ pub fn create_match_trigger_search_bar(
     triggers: trigger.map(|trigger| vec![trigger]).unwrap_or_default(),
     hotkey,
     action: |_| EventType::ShowSearchBar,
-    ..Default::default()
   }
 }

@@ -42,7 +42,7 @@ impl<'a> SearchUI for ModuloSearchUI<'a> {
     let modulo_config = ModuloSearchConfig {
       title: "espanso",
       hint,
-      items: convert_items(&items),
+      items: convert_items(items),
     };
 
     let json_config = serde_json::to_string(&modulo_config)?;
@@ -53,13 +53,13 @@ impl<'a> SearchUI for ModuloSearchUI<'a> {
     match json {
       Ok(json) => {
         if let Some(Value::String(selected_id)) = json.get("selected") {
-          return Ok(Some(selected_id.clone()));
+          Ok(Some(selected_id.clone()))
         } else {
-          return Ok(None);
+          Ok(None)
         }
       }
       Err(error) => {
-        return Err(error.into());
+        Err(error.into())
       }
     }
   }
@@ -81,7 +81,7 @@ struct ModuloSearchItemConfig<'a> {
 }
 
 // TODO: test
-fn convert_items<'a>(items: &'a [SearchItem]) -> Vec<ModuloSearchItemConfig<'a>> {
+fn convert_items(items: &[SearchItem]) -> Vec<ModuloSearchItemConfig> {
   items.iter().map(|item| ModuloSearchItemConfig {
     id: &item.id,
     label: &item.label, 

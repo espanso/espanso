@@ -197,7 +197,7 @@ impl<'a> Drop for ClipboardRestoreGuard<'a> {
 }
 
 fn parse_combination(combination: &str) -> Option<Vec<Key>> {
-  let tokens = combination.split("+");
+  let tokens = combination.split('+');
   let mut keys: Vec<Key> = Vec::new();
   for token in tokens {
     keys.push(Key::parse(token)?);

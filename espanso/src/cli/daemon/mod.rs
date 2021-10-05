@@ -95,7 +95,7 @@ fn daemon_main(args: CliModuleArgs) -> i32 {
     .expect("unable to initialize config watcher thread");
 
   let (_keyboard_layout_watcher_notify, keyboard_layout_watcher_signal) = unbounded::<()>();
-  keyboard_layout_watcher::initialize_and_spawn(_keyboard_layout_watcher_notify.clone())
+  keyboard_layout_watcher::initialize_and_spawn(_keyboard_layout_watcher_notify)
     .expect("unable to initialize keyboard layout watcher thread");
 
   let config_store =
@@ -198,7 +198,7 @@ fn daemon_main(args: CliModuleArgs) -> i32 {
 }
 
 fn terminate_worker_if_already_running(runtime_dir: &Path) {
-  let lock_file = acquire_worker_lock(&runtime_dir);
+  let lock_file = acquire_worker_lock(runtime_dir);
   if lock_file.is_some() {
     return;
   }
@@ -252,7 +252,7 @@ fn spawn_worker(
   ];
   if let Some(start_reason) = &start_reason {
     args.push("--start-reason");
-    args.push(&start_reason);
+    args.push(start_reason);
   }
   command.args(&args);
   command.with_paths_overrides(paths_overrides);
@@ -313,7 +313,7 @@ fn restart_worker(
 
   if !has_timed_out {
     spawn_worker(
-      &paths_overrides,
+      paths_overrides,
       exit_notify,
       start_reason,
     );
