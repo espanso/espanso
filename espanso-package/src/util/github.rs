@@ -114,6 +114,6 @@ mod tests {
       name: "espanso".to_string(),
     });
 
-    assert_eq!(extract_github_url_parts("https://gitlab.com/federicoterzi/espanso-test-package/").is_none(), true);
+    assert!(extract_github_url_parts("https://gitlab.com/federicoterzi/espanso-test-package/").is_none());
   }
 }

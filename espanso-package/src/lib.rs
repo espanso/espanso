@@ -100,6 +100,6 @@ pub(crate) mod tests {
     let tmp_dir = TempDir::new("espanso-package").unwrap();
     let tmp_path = tmp_dir.path();
 
-    action(&tmp_path);
+    action(tmp_path);
   }
 }

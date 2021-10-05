@@ -78,7 +78,7 @@ pub fn resolve_all_packages(base_dir: &Path) -> Result<Vec<ResolvedPackage>> {
   for manifest_file in manifest_files {
     let base_dir = manifest_file
       .parent()
-      .ok_or(anyhow!("unable to determine base_dir from manifest path"))?
+      .ok_or_else(|| anyhow!("unable to determine base_dir from manifest path"))?
       .to_owned();
     let manifest = Manifest::parse(&manifest_file).context("manifest YAML parsing error")?;
     manifests.push(ResolvedPackage { manifest, base_dir });
@@ -331,7 +331,7 @@ mod tests {
   #[test]
   fn test_no_manifest_error() {
     run_with_temp_dir(|base_dir| {
-      assert_eq!(resolve_all_packages(base_dir).is_err(), true);
+      assert!(resolve_all_packages(base_dir).is_err());
     });
   }
 
