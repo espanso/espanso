@@ -24,6 +24,7 @@ use serde::{de::DeserializeOwned, Serialize};
 
 mod persistent;
 
+#[allow(clippy::upper_case_acronyms)]
 pub trait KVS: Send + Sync + Clone {
   fn get<T: DeserializeOwned>(&self, key: &str) -> Result<Option<T>>;
   fn set<T: Serialize>(&self, key: &str, value: T) -> Result<()>;
