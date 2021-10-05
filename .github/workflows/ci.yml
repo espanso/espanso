@@ -18,6 +18,14 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+      - name: Check formatting
+        run: |
+          rustup component add rustfmt
+          cargo fmt --all -- --check
+      - name: Check clippy
+        run: |
+          rustup component add clippy
+          cargo clippy -- -D warnings
       - name: Install cargo-make
         run: |
           cargo install --force cargo-make
@@ -35,6 +43,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - name: Check formatting
+        run: |
+          rustup component add rustfmt
+          cargo fmt --all -- --check
+      - name: Check clippy
+        run: |
+          rustup component add clippy
+          cargo clippy -p espanso --features wayland -- -D warnings
       - name: Install dependencies
         run: |
           sudo apt install libxkbcommon-dev libwxgtk3.0-gtk3-dev libdbus-1-dev
