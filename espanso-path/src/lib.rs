@@ -292,7 +292,7 @@ fn is_portable_mode() -> bool {
   false
 }
 
-const LEGACY_RUNTIME_DIR_CANDIDATES_FILE: &[&'static str] = &[
+const LEGACY_RUNTIME_DIR_CANDIDATES_FILE: &[&str] = &[
   "espanso.log",
   "espanso.lock",
   "espanso-worker.lock",
