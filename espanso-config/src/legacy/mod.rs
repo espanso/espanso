@@ -414,11 +414,7 @@ impl LegacyMatchStore {
 impl MatchStore for LegacyMatchStore {
   fn query(&self, paths: &[String]) -> MatchSet {
     let group = if !paths.is_empty() {
-      if let Some(group) = self.groups.get(&paths[0]) {
-        Some(group)
-      } else {
-        None
-      }
+      self.groups.get(&paths[0])
     } else {
       None
     };
@@ -437,7 +433,7 @@ impl MatchStore for LegacyMatchStore {
   }
 
   fn loaded_paths(&self) -> Vec<String> {
-    self.groups.keys().map(|key| key.clone()).collect()
+    self.groups.keys().cloned().collect()
   }
 }
 

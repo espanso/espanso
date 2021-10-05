@@ -33,6 +33,7 @@ mod legacy;
 pub mod matches;
 mod util;
 
+#[allow(clippy::type_complexity)]
 pub fn load(base_path: &Path) -> Result<(Box<dyn ConfigStore>, Box<dyn MatchStore>, Vec<error::NonFatalErrorSet>)> {
   let config_dir = base_path.join("config");
   if !config_dir.exists() || !config_dir.is_dir() {
@@ -125,7 +126,7 @@ mod tests {
       )
       .unwrap();
 
-      let (config_store, match_store, errors) = load(&base).unwrap();
+      let (config_store, match_store, errors) = load(base).unwrap();
 
       assert_eq!(errors.len(), 0);
       assert_eq!(config_store.default().match_paths().len(), 2);
@@ -220,7 +221,7 @@ mod tests {
       )
       .unwrap();
 
-      let (config_store, match_store, errors) = load(&base).unwrap();
+      let (config_store, match_store, errors) = load(base).unwrap();
       
       assert_eq!(errors.len(), 3);
       // It shouldn't have loaded the "config.yml" one because of the YAML error
@@ -248,7 +249,7 @@ mod tests {
       let config_file = config_dir.join("default.yml");
       std::fs::write(&config_file, r#""#).unwrap();
 
-      let (config_store, match_store, errors) = load(&base).unwrap();
+      let (config_store, match_store, errors) = load(base).unwrap();
       
       assert_eq!(errors.len(), 1);
       assert_eq!(errors[0].file, base_file);
@@ -286,7 +287,7 @@ mod tests {
       "#).unwrap();
 
       // A syntax error in the default.yml file cannot be handled gracefully 
-      assert!(load(&base).is_err());
+      assert!(load(base).is_err());
     });
   }
 
@@ -294,7 +295,7 @@ mod tests {
   fn load_without_valid_config_dir() {
     use_test_directory(|_, match_dir, _| {
       // To correcly load the configs, the "load" method looks for the "config" directory
-      assert!(load(&match_dir).is_err());
+      assert!(load(match_dir).is_err());
     });
   }
 }

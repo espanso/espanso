@@ -111,8 +111,8 @@ impl Importer for YAMLImporter {
     Ok((
       MatchGroup {
         imports: resolved_imports,
-        global_vars: global_vars,
-        matches: matches,
+        global_vars,
+        matches,
       },
       non_fatal_error_set,
     ))
@@ -130,10 +130,8 @@ pub fn try_convert_into_match(yaml_match: YAMLMatch) -> Result<(Match, Vec<Warni
 
   let triggers = if let Some(trigger) = yaml_match.trigger {
     Some(vec![trigger])
-  } else if let Some(triggers) = yaml_match.triggers {
-    Some(triggers)
   } else {
-    None
+    yaml_match.triggers
   };
 
   let uppercase_style = match yaml_match

@@ -54,21 +54,21 @@ pub mod tests {
 
   #[test]
   fn is_yaml_empty_document_empty() {
-    assert_eq!(is_yaml_empty(""), true);
+    assert!(is_yaml_empty(""));
   }
 
   #[test]
   fn is_yaml_empty_document_with_comments() {
-    assert_eq!(is_yaml_empty("\n#comment \n \n"), true);
+    assert!(is_yaml_empty("\n#comment \n \n"));
   }
 
   #[test]
   fn is_yaml_empty_document_with_comments_and_content() {
-    assert_eq!(is_yaml_empty("\n#comment \n field: true\n"), false);
+    assert!(!is_yaml_empty("\n#comment \n field: true\n"));
   }
 
   #[test]
   fn is_yaml_empty_document_with_content() {
-    assert_eq!(is_yaml_empty("\nfield: true\n"), false);
+    assert!(!is_yaml_empty("\nfield: true\n"));
   }
 }
