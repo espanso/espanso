@@ -81,15 +81,17 @@ pub fn get_clipboard(_: ClipboardOptions) -> Result<Box<dyn Clipboard>> {
 #[cfg(target_os = "linux")]
 #[cfg(feature = "wayland")]
 pub fn get_clipboard(options: ClipboardOptions) -> Result<Box<dyn Clipboard>> {
-  // TODO: On some Wayland compositors (currently sway), the "wlr-data-control" protocol 
+  // TODO: On some Wayland compositors (currently sway), the "wlr-data-control" protocol
   // could enable the use of a much more efficient implementation relying on the "wl-clipboard-rs" crate.
   // Useful links: https://github.com/YaLTeR/wl-clipboard-rs/issues/8
   //
-  // We could even decide the correct implementation at runtime by checking if the 
+  // We could even decide the correct implementation at runtime by checking if the
   // required protocol is available, if so use the efficient implementation
   // instead of the fallback one, which calls the wl-copy and wl-paste binaries, and is thus
-  // less efficient 
+  // less efficient
 
   info!("using WaylandFallbackClipboard");
-  Ok(Box::new(wayland::fallback::WaylandFallbackClipboard::new(options)?))
+  Ok(Box::new(wayland::fallback::WaylandFallbackClipboard::new(
+    options,
+  )?))
 }

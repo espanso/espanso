@@ -19,7 +19,10 @@
 
 mod ffi;
 
-use std::{ffi::{CStr, CString}, path::PathBuf};
+use std::{
+  ffi::{CStr, CString},
+  path::PathBuf,
+};
 
 use crate::Clipboard;
 use anyhow::Result;

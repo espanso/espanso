@@ -17,7 +17,11 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::{ffi::{CStr, CString}, io::Read, path::PathBuf};
+use std::{
+  ffi::{CStr, CString},
+  io::Read,
+  path::PathBuf,
+};
 
 use crate::Clipboard;
 use anyhow::Result;
@@ -67,9 +71,7 @@ impl Clipboard for X11NativeClipboard {
     let mut data = Vec::new();
     file.read_to_end(&mut data)?;
 
-    let native_result = unsafe {
-      ffi::clipboard_x11_set_image(data.as_ptr(), data.len() as i32)
-    };
+    let native_result = unsafe { ffi::clipboard_x11_set_image(data.as_ptr(), data.len() as i32) };
 
     if native_result > 0 {
       Ok(())
