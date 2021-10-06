@@ -60,7 +60,7 @@ pub fn spawn_launcher(paths_overrides: &PathsOverrides) -> Result<()> {
   let espanso_exe_path = std::env::current_exe()?;
   let mut command = std::process::Command::new(&espanso_exe_path.to_string_lossy().to_string());
   command.args(&["launcher"]);
-  command.with_paths_overrides(&paths_overrides);
+  command.with_paths_overrides(paths_overrides);
 
   let mut child = command.spawn()?;
   let result = child.wait()?;
