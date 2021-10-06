@@ -24,7 +24,7 @@ use fs_extra::dir::CopyOptions;
 
 use crate::PackageSpecifier;
 
-use super::{PACKAGE_SOURCE_FILE, PackageSource};
+use super::{PackageSource, PACKAGE_SOURCE_FILE};
 
 // TODO: test
 pub fn copy_dir_without_dot_files(source_dir: &Path, inside_dir: &Path) -> Result<()> {

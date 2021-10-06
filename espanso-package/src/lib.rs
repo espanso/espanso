@@ -34,7 +34,11 @@ pub use archive::{ArchivedPackage, Archiver, SaveOptions, StoredPackage};
 pub use package::Package;
 pub use provider::{PackageProvider, PackageSpecifier, ProviderOptions};
 
-pub fn get_provider(package: &PackageSpecifier, runtime_dir: &Path, options: &ProviderOptions) -> Result<Box<dyn PackageProvider>> {
+pub fn get_provider(
+  package: &PackageSpecifier,
+  runtime_dir: &Path,
+  options: &ProviderOptions,
+) -> Result<Box<dyn PackageProvider>> {
   if let Some(git_repo_url) = package.git_repo_url.as_deref() {
     if !package.use_native_git {
       let matches_known_hosts =
@@ -81,7 +85,10 @@ pub fn get_provider(package: &PackageSpecifier, runtime_dir: &Path, options: &Pr
     Ok(Box::new(provider::git::GitPackageProvider::new()))
   } else {
     // Download from the official espanso hub
-    Ok(Box::new(provider::hub::EspansoHubPackageProvider::new(runtime_dir, options.force_index_update)))
+    Ok(Box::new(provider::hub::EspansoHubPackageProvider::new(
+      runtime_dir,
+      options.force_index_update,
+    )))
   }
 }
 
