@@ -85,7 +85,7 @@ fn get_app_name_from_path(path: &str) -> Option<String> {
     static ref APP_REGEX: Regex = Regex::new("/([^/]+).(app|bundle)/").unwrap();
   };
 
-  let caps = APP_REGEX.captures(&path);
+  let caps = APP_REGEX.captures(path);
   caps.map(|caps| caps.get(1).map_or("", |m| m.as_str()).to_owned())
 }
 
