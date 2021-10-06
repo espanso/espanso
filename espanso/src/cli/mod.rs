@@ -45,7 +45,7 @@ pub struct CliModule {
   pub subcommand: String,
   pub show_in_dock: bool,
   pub requires_linux_capabilities: bool,
-  pub entry: fn(CliModuleArgs)->i32,
+  pub entry: fn(CliModuleArgs) -> i32,
 }
 
 impl Default for CliModule {
@@ -54,12 +54,12 @@ impl Default for CliModule {
       enable_logs: false,
       log_mode: LogMode::Read,
       disable_logs_terminal_output: false,
-      requires_paths: false, 
-      requires_config: false, 
-      subcommand: "".to_string(), 
+      requires_paths: false,
+      requires_config: false,
+      subcommand: "".to_string(),
       show_in_dock: false,
       requires_linux_capabilities: false,
-      entry: |_| {0},
+      entry: |_| 0,
     }
   }
 }

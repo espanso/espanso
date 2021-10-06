@@ -29,7 +29,16 @@ use espanso_path::Paths;
 use espanso_ui::{event::UIEvent, UIRemote};
 use log::{debug, error, info, warn};
 
-use crate::{cli::worker::{context::Context, engine::{dispatch::executor::{clipboard_injector::ClipboardInjectorAdapter, context_menu::ContextMenuHandlerAdapter, event_injector::EventInjectorAdapter, icon::IconHandlerAdapter, key_injector::KeyInjectorAdapter, secure_input::SecureInputManagerAdapter}, process::middleware::{
+use crate::{
+  cli::worker::{
+    context::Context,
+    engine::{
+      dispatch::executor::{
+        clipboard_injector::ClipboardInjectorAdapter, context_menu::ContextMenuHandlerAdapter,
+        event_injector::EventInjectorAdapter, icon::IconHandlerAdapter,
+        key_injector::KeyInjectorAdapter, secure_input::SecureInputManagerAdapter,
+      },
+      process::middleware::{
         image_resolve::PathProviderAdapter,
         match_select::MatchSelectorAdapter,
         matcher::{
@@ -42,15 +51,25 @@ use crate::{cli::worker::{context::Context, engine::{dispatch::executor::{clipbo
           extension::{clipboard::ClipboardAdapter, form::FormProviderAdapter},
           RendererAdapter,
         },
-      }}, match_cache::{CombinedMatchCache, MatchCache}, ui::notification::NotificationManager}, common_flags::{WORKER_START_REASON_CONFIG_CHANGED, WORKER_START_REASON_KEYBOARD_LAYOUT_CHANGED, WORKER_START_REASON_MANUAL}, preferences::Preferences};
+      },
+    },
+    match_cache::{CombinedMatchCache, MatchCache},
+    ui::notification::NotificationManager,
+  },
+  common_flags::{
+    WORKER_START_REASON_CONFIG_CHANGED, WORKER_START_REASON_KEYBOARD_LAYOUT_CHANGED,
+    WORKER_START_REASON_MANUAL,
+  },
+  preferences::Preferences,
+};
 
 use super::secure_input::SecureInputEvent;
 
+mod caches;
 pub mod dispatch;
 pub mod funnel;
-pub mod process;
-mod caches;
 mod keyboard_layout_util;
+pub mod process;
 
 #[allow(clippy::too_many_arguments)]
 pub fn initialize_and_spawn(
@@ -68,12 +87,16 @@ pub fn initialize_and_spawn(
     .name("engine thread".to_string())
     .spawn(move || {
       // TODO: properly order the initializations if necessary
-      let preferences = crate::preferences::get_default(&paths.runtime).expect("unable to load preferences");
+      let preferences =
+        crate::preferences::get_default(&paths.runtime).expect("unable to load preferences");
 
       let app_info_provider =
         espanso_info::get_provider().expect("unable to initialize app info provider");
       // TODO: read interval from configs?
-      let cached_app_info_provider = caches::app_info_provider::CachedAppInfoProvider::from(&*app_info_provider, std::time::Duration::from_millis(400));
+      let cached_app_info_provider = caches::app_info_provider::CachedAppInfoProvider::from(
+        &*app_info_provider,
+        std::time::Duration::from_millis(400),
+      );
       let config_manager =
         super::config::ConfigManager::new(&*config_store, &*match_store, &cached_app_info_provider);
       let match_cache = MatchCache::load(&*config_store, &*match_store);
@@ -83,7 +106,10 @@ pub fn initialize_and_spawn(
       let modulo_form_ui = crate::gui::modulo::form::ModuloFormUI::new(&modulo_manager);
       let modulo_search_ui = crate::gui::modulo::search::ModuloSearchUI::new(&modulo_manager);
 
-      let context: Box<dyn Context> = Box::new(super::context::DefaultContext::new(&config_manager, &cached_app_info_provider));
+      let context: Box<dyn Context> = Box::new(super::context::DefaultContext::new(
+        &config_manager,
+        &cached_app_info_provider,
+      ));
       let builtin_matches = super::builtin::get_builtin_matches(&*config_manager.default());
       let combined_match_cache = CombinedMatchCache::load(&match_cache, &builtin_matches);
 
@@ -95,7 +121,9 @@ pub fn initialize_and_spawn(
       let (detect_source, modifier_state_store, sequencer, key_state_store) =
         super::engine::funnel::init_and_spawn(SourceCreationOptions {
           use_evdev: use_evdev_backend,
-          evdev_keyboard_rmlvo: keyboard_layout_util::generate_detect_rmlvo(&*config_manager.default()),
+          evdev_keyboard_rmlvo: keyboard_layout_util::generate_detect_rmlvo(
+            &*config_manager.default(),
+          ),
           hotkeys: match_converter.get_hotkeys(),
           win32_exclude_orphan_events: default_config.win32_exclude_orphan_events(),
         })
@@ -136,8 +164,11 @@ pub fn initialize_and_spawn(
 
       let injector = espanso_inject::get_injector(InjectorCreationOptions {
         use_evdev: use_evdev_backend,
-        keyboard_state_provider: key_state_store.map(|store| Box::new(store) as Box<dyn KeyboardStateProvider>),
-        evdev_keyboard_rmlvo: keyboard_layout_util::generate_inject_rmlvo(&*config_manager.default()),
+        keyboard_state_provider: key_state_store
+          .map(|store| Box::new(store) as Box<dyn KeyboardStateProvider>),
+        evdev_keyboard_rmlvo: keyboard_layout_util::generate_inject_rmlvo(
+          &*config_manager.default(),
+        ),
         ..Default::default()
       })
       .expect("failed to initialize injector module"); // TODO: handle the options
@@ -234,7 +265,7 @@ pub fn initialize_and_spawn(
         }
         _ => {
           notification_manager.notify_start();
-          
+
           if !preferences.has_displayed_welcome() {
             super::ui::welcome::show_welcome_screen();
             preferences.set_has_displayed_welcome(true);

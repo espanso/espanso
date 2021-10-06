@@ -76,12 +76,8 @@ impl Write for FileProxy {
       Ok(mut lock) => {
         match &mut (*lock) {
           // Write to the memory buffer until a file is ready
-          Output::Memory(buffer) => {
-            buffer.write(buf)
-          }
-          Output::File(output) => {
-            output.write(buf)
-          }
+          Output::Memory(buffer) => buffer.write(buf),
+          Output::File(output) => output.write(buf),
         }
       }
       Err(_) => Err(std::io::Error::new(
@@ -93,16 +89,10 @@ impl Write for FileProxy {
 
   fn flush(&mut self) -> std::io::Result<()> {
     match self.output.lock() {
-      Ok(mut lock) => {
-        match &mut (*lock) {
-          Output::Memory(buffer) => {
-            buffer.flush()
-          }
-          Output::File(output) => {
-            output.flush()
-          }
-        }
-      }
+      Ok(mut lock) => match &mut (*lock) {
+        Output::Memory(buffer) => buffer.flush(),
+        Output::File(output) => output.flush(),
+      },
       Err(_) => Err(std::io::Error::new(
         std::io::ErrorKind::Other,
         "lock poison error",

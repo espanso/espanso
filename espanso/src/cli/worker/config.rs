@@ -86,7 +86,8 @@ impl<'a> espanso_engine::process::MatchFilter for ConfigManager<'a> {
 
     let builtin_matches: Vec<i32> = matches_ids
       .iter()
-      .filter(|id| is_builtin_match(**id)).copied()
+      .filter(|id| is_builtin_match(**id))
+      .copied()
       .collect();
 
     let mut output = active_user_defined_matches;
@@ -164,9 +165,9 @@ impl<'a> espanso_engine::process::UndoEnabledProvider for ConfigManager<'a> {
   fn is_undo_enabled(&self) -> bool {
     // Disable undo_backspace on Wayland for now as it's not stable
     if cfg!(feature = "wayland") {
-      return false
+      return false;
     }
-    
+
     self.active().undo_backspace()
   }
 }

@@ -124,6 +124,8 @@ impl<'a> MatchConverter<'a> {
 
   fn global_match_set(&self) -> MatchSet {
     let paths = self.config_store.get_all_match_paths();
-    self.match_store.query(&paths.into_iter().collect::<Vec<_>>())
+    self
+      .match_store
+      .query(&paths.into_iter().collect::<Vec<_>>())
   }
 }

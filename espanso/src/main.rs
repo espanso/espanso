@@ -478,10 +478,7 @@ fn main() {
       )];
 
       if !handler.disable_logs_terminal_output {
-        outputs.insert(
-          0,
-          TermLogger::new(log_level, config, TerminalMode::Mixed),
-        );
+        outputs.insert(0, TermLogger::new(log_level, config, TerminalMode::Mixed));
       }
 
       CombinedLogger::init(outputs).expect("unable to initialize logs");

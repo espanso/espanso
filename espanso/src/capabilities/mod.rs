@@ -26,4 +26,3 @@ pub use linux::*;
 mod fallback;
 #[cfg(not(target_os = "linux"))]
 pub use fallback::*;
-

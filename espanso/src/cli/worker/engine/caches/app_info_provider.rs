@@ -17,14 +17,17 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::{cell::RefCell, time::{Duration, Instant}};
+use std::{
+  cell::RefCell,
+  time::{Duration, Instant},
+};
 
 use espanso_info::{AppInfo, AppInfoProvider};
 
 pub struct CachedAppInfoProvider<'a> {
   app_info_provider: &'a dyn AppInfoProvider,
   caching_interval: Duration,
-  
+
   _cached_info: RefCell<Option<(Instant, AppInfo)>>,
 }
 
@@ -50,7 +53,7 @@ impl<'a> AppInfoProvider for CachedAppInfoProvider<'a> {
 
     let info = self.app_info_provider.get_info();
     *cached_info = Some((Instant::now(), info.clone()));
-    
+
     info
   }
 }

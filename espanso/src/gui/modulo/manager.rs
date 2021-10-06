@@ -77,22 +77,16 @@ impl ModuloManager {
                       Err(ModuloError::EmptyOutput.into())
                     }
                   }
-                  Err(error) => {
-                    Err(ModuloError::Error(error).into())
-                  }
+                  Err(error) => Err(ModuloError::Error(error).into()),
                 }
               }
-              Err(error) => {
-                Err(ModuloError::Error(error).into())
-              }
+              Err(error) => Err(ModuloError::Error(error).into()),
             }
           } else {
             Err(ModuloError::StdinError.into())
           }
         }
-        Err(error) => {
-          Err(ModuloError::Error(error).into())
-        }
+        Err(error) => Err(ModuloError::Error(error).into()),
       }
     } else {
       Err(ModuloError::MissingModulo.into())
@@ -102,7 +96,9 @@ impl ModuloManager {
 
 #[derive(Error, Debug)]
 pub enum ModuloError {
-  #[error("attempt to invoke modulo, but this version of espanso is not compiled with support for it")]
+  #[error(
+    "attempt to invoke modulo, but this version of espanso is not compiled with support for it"
+  )]
   MissingModulo,
 
   #[error("modulo returned an empty output")]

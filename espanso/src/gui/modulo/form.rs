@@ -19,7 +19,7 @@
 
 use serde::Serialize;
 use serde_json::{json, Map, Value};
-use std::{collections::HashMap};
+use std::collections::HashMap;
 
 use crate::gui::{FormField, FormUI};
 
@@ -31,9 +31,7 @@ pub struct ModuloFormUI<'a> {
 
 impl<'a> ModuloFormUI<'a> {
   pub fn new(manager: &'a ModuloManager) -> Self {
-    Self {
-      manager,
-    }
+    Self { manager }
   }
 }
 
@@ -62,9 +60,7 @@ impl<'a> FormUI for ModuloFormUI<'a> {
           Ok(Some(json))
         }
       }
-      Err(error) => {
-        Err(error.into())
-      }
+      Err(error) => Err(error.into()),
     }
   }
 }

@@ -23,7 +23,7 @@ use espanso_config::config::Config;
 
 mod default;
 pub use default::DefaultContext;
-use espanso_info::{AppInfo};
+use espanso_info::AppInfo;
 
 pub trait Context: ConfigContext + AppInfoContext {}
 

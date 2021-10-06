@@ -18,7 +18,7 @@
  */
 
 use anyhow::Result;
-use std::{path::PathBuf};
+use std::path::PathBuf;
 use thiserror::Error;
 
 pub fn is_espanso_in_path() -> bool {

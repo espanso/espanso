@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
- 
+
 use espanso_config::config::{Backend, RMLVOConfig, ToggleKey};
 
 #[cfg(target_os = "windows")]

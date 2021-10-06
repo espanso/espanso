@@ -17,9 +17,9 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use clap::{ArgMatches};
-use espanso_modulo::form::*;
 use crate::icon::IconPaths;
+use clap::ArgMatches;
+use espanso_modulo::form::*;
 
 pub fn form_main(matches: &ArgMatches, _icon_paths: &IconPaths) -> i32 {
   let as_json: bool = matches.is_present("json");
@@ -43,9 +43,12 @@ pub fn form_main(matches: &ArgMatches, _icon_paths: &IconPaths) -> i32 {
   } else {
     serde_json::from_str(&data).expect("unable to parse form configuration")
   };
-  
+
   // Overwrite the icon
-  config.icon = _icon_paths.form_icon.as_deref().map(|path| path.to_string_lossy().to_string());
+  config.icon = _icon_paths
+    .form_icon
+    .as_deref()
+    .map(|path| path.to_string_lossy().to_string());
 
   let form = generator::generate(config);
   let values = show(form);

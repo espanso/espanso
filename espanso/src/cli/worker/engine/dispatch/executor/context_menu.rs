@@ -40,7 +40,7 @@ impl<'a> ContextMenuHandler for ContextMenuHandlerAdapter<'a> {
     };
 
     self.remote.show_context_menu(&ui_menu);
-    
+
     Ok(())
   }
 }

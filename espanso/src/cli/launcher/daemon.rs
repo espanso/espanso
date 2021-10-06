@@ -22,8 +22,8 @@ use std::process::Command;
 use anyhow::Result;
 use thiserror::Error;
 
-use crate::cli::PathsOverrides;
 use crate::cli::util::CommandExt;
+use crate::cli::PathsOverrides;
 
 pub fn launch_daemon(paths_overrides: &PathsOverrides) -> Result<()> {
   let espanso_exe_path = std::env::current_exe()?;

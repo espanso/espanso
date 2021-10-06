@@ -70,8 +70,12 @@ pub fn install_package(paths: &Paths, matches: &ArgMatches) -> Result<()> {
     error_eprintln!("Error: the requested package is hosted on an external repository");
     error_eprintln!("and its contents may not have been verified by the espanso team.");
     error_eprintln!("");
-    error_eprintln!("For security reasons, espanso blocks packages that are not verified by default.");
-    error_eprintln!("If you want to install the package anyway, you can proceed with the installation");
+    error_eprintln!(
+      "For security reasons, espanso blocks packages that are not verified by default."
+    );
+    error_eprintln!(
+      "If you want to install the package anyway, you can proceed with the installation"
+    );
     error_eprintln!("by passing the '--external' flag, but please do it only if you trust the");
     error_eprintln!("source or you verified the contents of the package yourself.");
     error_eprintln!("");
