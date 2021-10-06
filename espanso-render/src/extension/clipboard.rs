@@ -29,13 +29,13 @@ pub struct ClipboardExtension<'a> {
 }
 
 #[allow(clippy::new_without_default)]
-impl <'a> ClipboardExtension<'a> {
+impl<'a> ClipboardExtension<'a> {
   pub fn new(provider: &'a dyn ClipboardProvider) -> Self {
     Self { provider }
   }
 }
 
-impl <'a> Extension for ClipboardExtension<'a> {
+impl<'a> Extension for ClipboardExtension<'a> {
   fn name(&self) -> &str {
     "clipboard"
   }

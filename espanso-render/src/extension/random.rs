@@ -77,14 +77,15 @@ mod tests {
     let extension = RandomExtension::new();
 
     let param = vec![(
-        "choices".to_string(),
-        Value::Array(vec![
-          Value::String("first".to_string()),
-          Value::String("second".to_string()),
-          Value::String("third".to_string()),
-        ]),
-      )]
-      .into_iter().collect::<Params>();
+      "choices".to_string(),
+      Value::Array(vec![
+        Value::String("first".to_string()),
+        Value::String("second".to_string()),
+        Value::String("third".to_string()),
+      ]),
+    )]
+    .into_iter()
+    .collect::<Params>();
     assert!(matches!(
       extension
         .calculate(&Default::default(), &Default::default(), &param)

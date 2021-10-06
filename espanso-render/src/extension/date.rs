@@ -84,7 +84,9 @@ mod tests {
     let mut extension = DateExtension::new();
     extension.fixed_date = Some(Local.ymd(2014, 7, 8).and_hms(9, 10, 11));
 
-    let param = vec![("format".to_string(), Value::String("%H:%M:%S".to_string()))].into_iter().collect::<Params>();
+    let param = vec![("format".to_string(), Value::String("%H:%M:%S".to_string()))]
+      .into_iter()
+      .collect::<Params>();
     assert_eq!(
       extension
         .calculate(&Default::default(), &Default::default(), &param)
@@ -100,10 +102,11 @@ mod tests {
     extension.fixed_date = Some(Local.ymd(2014, 7, 8).and_hms(9, 10, 11));
 
     let param = vec![
-        ("format".to_string(), Value::String("%H:%M:%S".to_string())),
-        ("offset".to_string(), Value::Number(Number::Integer(3600))),
-      ]
-      .into_iter().collect::<Params>();
+      ("format".to_string(), Value::String("%H:%M:%S".to_string())),
+      ("offset".to_string(), Value::Number(Number::Integer(3600))),
+    ]
+    .into_iter()
+    .collect::<Params>();
     assert_eq!(
       extension
         .calculate(&Default::default(), &Default::default(), &param)
