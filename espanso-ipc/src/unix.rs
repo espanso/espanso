@@ -17,14 +17,14 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::{EventHandlerResponse, IPCClientError, util::read_line};
+use crate::{util::read_line, EventHandlerResponse, IPCClientError};
 use anyhow::Result;
 use log::{error, info};
 use serde::{de::DeserializeOwned, Serialize};
 use std::{
-  io::{Write},
+  io::Write,
   os::unix::net::{UnixListener, UnixStream},
-  path::{Path},
+  path::Path,
 };
 
 use crate::{EventHandler, IPCClient, IPCServer};

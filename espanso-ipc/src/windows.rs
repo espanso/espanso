@@ -17,16 +17,14 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::util::read_line;
 use anyhow::Result;
 use log::{error, info};
 use named_pipe::{ConnectingServer, PipeClient, PipeOptions};
 use serde::{de::DeserializeOwned, Serialize};
-use std::{io::{Write}};
-use crate::util::read_line;
+use std::io::Write;
 
-use crate::{
-  EventHandler, EventHandlerResponse, IPCClient, IPCClientError, IPCServer,
-};
+use crate::{EventHandler, EventHandlerResponse, IPCClient, IPCClientError, IPCServer};
 
 const DEFAULT_CLIENT_TIMEOUT: u32 = 2000;
 

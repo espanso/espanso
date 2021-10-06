@@ -19,7 +19,7 @@
 
 use anyhow::Result;
 use serde::{de::DeserializeOwned, Serialize};
-use std::{path::Path};
+use std::path::Path;
 use thiserror::Error;
 
 #[cfg(target_os = "windows")]
@@ -58,7 +58,10 @@ pub fn server<Event: Send + Sync + DeserializeOwned + Serialize>(
 }
 
 #[cfg(not(target_os = "windows"))]
-pub fn client<Event: Serialize + DeserializeOwned>(id: &str, parent_dir: &Path) -> Result<impl IPCClient<Event>> {
+pub fn client<Event: Serialize + DeserializeOwned>(
+  id: &str,
+  parent_dir: &Path,
+) -> Result<impl IPCClient<Event>> {
   let client = unix::UnixIPCClient::new(id, parent_dir)?;
   Ok(client)
 }
@@ -73,7 +76,10 @@ pub fn server<Event: Send + Sync + DeserializeOwned + Serialize>(
 }
 
 #[cfg(target_os = "windows")]
-pub fn client<Event: Serialize + DeserializeOwned>(id: &str, _: &Path) -> Result<impl IPCClient<Event>> {
+pub fn client<Event: Serialize + DeserializeOwned>(
+  id: &str,
+  _: &Path,
+) -> Result<impl IPCClient<Event>> {
   let client = windows::WinIPCClient::new(id)?;
   Ok(client)
 }
@@ -101,9 +107,7 @@ pub enum IPCClientError {
 
 #[cfg(test)]
 mod tests {
-  use std::{
-    sync::{mpsc::channel},
-  };
+  use std::sync::mpsc::channel;
 
   use super::*;
   use serde::{Deserialize, Serialize};
@@ -119,7 +123,7 @@ mod tests {
   #[test]
   fn ipc_async_message() {
     let server = server::<Event>("testespansoipcasync", &std::env::temp_dir()).unwrap();
-    
+
     let client_handle = std::thread::spawn(move || {
       let mut client = client::<Event>("testespansoipcasync", &std::env::temp_dir()).unwrap();
 
@@ -143,7 +147,7 @@ mod tests {
   #[test]
   fn ipc_sync_message() {
     let server = server::<Event>("testespansoipcsync", &std::env::temp_dir()).unwrap();
-    
+
     let client_handle = std::thread::spawn(move || {
       let mut client = client::<Event>("testespansoipcsync", &std::env::temp_dir()).unwrap();
 
@@ -167,9 +171,10 @@ mod tests {
   #[test]
   fn ipc_multiple_sync_with_delay_message() {
     let server = server::<Event>("testespansoipcmultiplesync", &std::env::temp_dir()).unwrap();
-    
+
     let client_handle = std::thread::spawn(move || {
-      let mut client = client::<Event>("testespansoipcmultiplesync", &std::env::temp_dir()).unwrap();
+      let mut client =
+        client::<Event>("testespansoipcmultiplesync", &std::env::temp_dir()).unwrap();
 
       let response = client.send_sync(Event::Sync("test".to_owned())).unwrap();
 
@@ -198,7 +203,7 @@ mod tests {
     let server = server::<Event>("testespansoipcmultiple", &std::env::temp_dir()).unwrap();
 
     let (tx, rx) = channel();
-    
+
     let client_handle = std::thread::spawn(move || {
       let mut client = client::<Event>("testespansoipcmultiple", &std::env::temp_dir()).unwrap();
 
@@ -234,10 +239,10 @@ mod tests {
     client_handle2.join().unwrap();
   }
 
-   #[test]
+  #[test]
   fn ipc_sync_big_payload_message() {
     let server = server::<Event>("testespansoipcsyncbig", &std::env::temp_dir()).unwrap();
-    
+
     let client_handle = std::thread::spawn(move || {
       let mut client = client::<Event>("testespansoipcsyncbig", &std::env::temp_dir()).unwrap();
 
