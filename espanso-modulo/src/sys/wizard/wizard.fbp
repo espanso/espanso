@@ -1021,7 +1021,7 @@
                                             <property name="hidden">0</property>
                                             <property name="hover_color"></property>
                                             <property name="id">wxID_ANY</property>
-                                            <property name="label">https://espanso.org/migration#uninstall</property>
+                                            <property name="label">https://espanso.org/legacy/uninstall</property>
                                             <property name="max_size"></property>
                                             <property name="maximize_button">0</property>
                                             <property name="maximum_size"></property>
@@ -1044,7 +1044,7 @@
                                             <property name="subclass">; ; forward_declare</property>
                                             <property name="toolbar_pane">0</property>
                                             <property name="tooltip"></property>
-                                            <property name="url">https://espanso.org/migration#uninstall</property>
+                                            <property name="url">https://espanso.org/legacy/uninstall</property>
                                             <property name="visited_color"></property>
                                             <property name="window_extra_style"></property>
                                             <property name="window_name"></property>

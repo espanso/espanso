@@ -115,7 +115,7 @@ WizardFrame::WizardFrame( wxWindow* parent, wxWindowID id, const wxString& title
 	legacy_version_description->Wrap( 500 );
 	bSizer21->Add( legacy_version_description, 0, wxLEFT|wxRIGHT|wxTOP, 10 );
 
-	legacy_version_docs_link = new wxHyperlinkCtrl( legacy_version_panel, wxID_ANY, wxT("https://espanso.org/migration#uninstall"), wxT("https://espanso.org/migration#uninstall"), wxDefaultPosition, wxDefaultSize, wxHL_DEFAULT_STYLE );
+	legacy_version_docs_link = new wxHyperlinkCtrl( legacy_version_panel, wxID_ANY, wxT("https://espanso.org/legacy/uninstall"), wxT("https://espanso.org/legacy/uninstall"), wxDefaultPosition, wxDefaultSize, wxHL_DEFAULT_STYLE );
 	bSizer21->Add( legacy_version_docs_link, 0, wxLEFT|wxRIGHT, 10 );
 
 
