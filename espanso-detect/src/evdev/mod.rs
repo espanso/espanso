@@ -214,7 +214,7 @@ impl Source for EVDEVSource {
               if let Some(event) = event {
                 // On Wayland we need to detect the global shortcuts manually
                 if let InputEvent::Keyboard(key_event) = &event {
-                  if let Some(hotkey) = (*hotkey_filter).process_event(&key_event) {
+                  if let Some(hotkey) = (*hotkey_filter).process_event(key_event) {
                     event_callback(InputEvent::HotKey(HotKeyEvent { hotkey_id: hotkey }))
                   }
                 }
