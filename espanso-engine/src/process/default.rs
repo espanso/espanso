@@ -19,7 +19,8 @@
 
 use log::trace;
 
-use super::{DisableOptions, EnabledStatusProvider, MatchFilter, MatchInfoProvider, MatchProvider, MatchSelector, Matcher, MatcherMiddlewareConfigProvider, Middleware, Multiplexer, PathProvider, Processor, Renderer, UndoEnabledProvider, middleware::{
+use super::{
+  middleware::{
     action::{ActionMiddleware, EventSequenceProvider},
     cause::CauseCompensateMiddleware,
     cursor_hint::CursorHintMiddleware,
@@ -30,8 +31,20 @@ use super::{DisableOptions, EnabledStatusProvider, MatchFilter, MatchInfoProvide
     multiplex::MultiplexMiddleware,
     past_discard::PastEventsDiscardMiddleware,
     render::RenderMiddleware,
-  }};
-use crate::{event::{Event, EventType}, process::middleware::{context_menu::ContextMenuMiddleware, disable::DisableMiddleware, exit::ExitMiddleware, hotkey::HotKeyMiddleware, icon_status::IconStatusMiddleware, image_resolve::ImageResolverMiddleware, search::SearchMiddleware, suppress::SuppressMiddleware, undo::UndoMiddleware}};
+  },
+  DisableOptions, EnabledStatusProvider, MatchFilter, MatchInfoProvider, MatchProvider,
+  MatchSelector, Matcher, MatcherMiddlewareConfigProvider, Middleware, Multiplexer, PathProvider,
+  Processor, Renderer, UndoEnabledProvider,
+};
+use crate::{
+  event::{Event, EventType},
+  process::middleware::{
+    context_menu::ContextMenuMiddleware, disable::DisableMiddleware, exit::ExitMiddleware,
+    hotkey::HotKeyMiddleware, icon_status::IconStatusMiddleware,
+    image_resolve::ImageResolverMiddleware, search::SearchMiddleware, suppress::SuppressMiddleware,
+    undo::UndoMiddleware,
+  },
+};
 use std::collections::VecDeque;
 
 pub struct DefaultProcessor<'a> {
