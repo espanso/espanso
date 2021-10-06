@@ -77,7 +77,8 @@ pub fn resolve_paths(
     packages_dir
   };
 
-  let is_portable_mode = is_portable_mode() && force_config_dir.is_none() && force_runtime_dir.is_none();
+  let is_portable_mode =
+    is_portable_mode() && force_config_dir.is_none() && force_runtime_dir.is_none();
 
   Paths {
     config: config_dir,
@@ -312,7 +313,7 @@ fn is_legacy_runtime_dir(path: &Path) -> bool {
   for candidate in LEGACY_RUNTIME_DIR_CANDIDATES_FILE {
     let candidate_path = path.join(candidate);
     if candidate_path.is_file() {
-      return true
+      return true;
     }
   }
 
