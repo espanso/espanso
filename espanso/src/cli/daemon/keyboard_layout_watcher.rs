@@ -19,7 +19,7 @@
 
 use anyhow::Result;
 use crossbeam::channel::Sender;
-use log::{error, debug};
+use log::{debug, error};
 
 const WATCHER_INTERVAL: u64 = 1000;
 

@@ -20,9 +20,9 @@
 use anyhow::Result;
 use const_format::formatcp;
 use regex::Regex;
+use std::fs::create_dir_all;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
-use std::{fs::create_dir_all};
 use thiserror::Error;
 
 use crate::{error_eprintln, info_println, warn_eprintln};
@@ -143,8 +143,7 @@ pub fn is_registered() -> bool {
         if cmd_output.status.success() {
           let caps = EXEC_PATH_REGEX.captures(output).unwrap();
           let path = caps.get(1).map_or("", |m| m.as_str());
-          let espanso_path =
-            get_binary_path().expect("unable to get espanso executable path");
+          let espanso_path = get_binary_path().expect("unable to get espanso executable path");
 
           if espanso_path.to_string_lossy() != path {
             error_eprintln!("Espanso is registered as a systemd service, but it points to another binary location:");
@@ -195,8 +194,12 @@ pub fn start_service() -> Result<()> {
       );
       error_eprintln!("You can run it in unmanaged mode with `espanso service start --unmanaged`");
       error_eprintln!("");
-      error_eprintln!("NOTE: unmanaged mode means espanso does not rely on the system service manager");
-      error_eprintln!("      to run, but as a result, you are in charge of starting/stopping espanso");
+      error_eprintln!(
+        "NOTE: unmanaged mode means espanso does not rely on the system service manager"
+      );
+      error_eprintln!(
+        "      to run, but as a result, you are in charge of starting/stopping espanso"
+      );
       error_eprintln!("      when needed.");
       return Err(StartError::SystemdNotFound.into());
     }
@@ -207,8 +210,12 @@ pub fn start_service() -> Result<()> {
     error_eprintln!("You can either register it first with `espanso service register` or");
     error_eprintln!("you can run it in unmanaged mode with `espanso service start --unmanaged`");
     error_eprintln!("");
-    error_eprintln!("NOTE: unmanaged mode means espanso does not rely on the system service manager");
-    error_eprintln!("      to run, but as a result, you are in charge of starting/stopping espanso");
+    error_eprintln!(
+      "NOTE: unmanaged mode means espanso does not rely on the system service manager"
+    );
+    error_eprintln!(
+      "      to run, but as a result, you are in charge of starting/stopping espanso"
+    );
     error_eprintln!("      when needed.");
     return Err(StartError::NotRegistered.into());
   }

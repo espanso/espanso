@@ -34,7 +34,10 @@ pub fn convert_icon_paths_to_tray_vec(icon_paths: &IconPaths) -> Vec<(TrayIcon, 
   }
 
   if let Some(system_disabled) = &icon_paths.tray_icon_system_disabled {
-    paths.push((TrayIcon::SystemDisabled, system_disabled.to_string_lossy().to_string()));
+    paths.push((
+      TrayIcon::SystemDisabled,
+      system_disabled.to_string_lossy().to_string(),
+    ));
   }
 
   paths

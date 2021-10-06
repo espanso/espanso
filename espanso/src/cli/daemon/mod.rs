@@ -29,7 +29,7 @@ use log::{error, info, warn};
 
 use crate::{
   cli::util::CommandExt,
-  common_flags::{*},
+  common_flags::*,
   exit_code::{
     DAEMON_ALREADY_RUNNING, DAEMON_FATAL_CONFIG_ERROR, DAEMON_GENERAL_ERROR,
     DAEMON_LEGACY_ALREADY_RUNNING, DAEMON_SUCCESS, WORKER_EXIT_ALL_PROCESSES, WORKER_RESTART,
@@ -123,11 +123,7 @@ fn daemon_main(args: CliModuleArgs) -> i32 {
 
   // TODO: register signals to terminate the worker if the daemon terminates
 
-  spawn_worker(
-    &paths_overrides,
-    exit_notify.clone(),
-    None
-  );
+  spawn_worker(&paths_overrides, exit_notify.clone(), None);
 
   ipc::initialize_and_spawn(&paths.runtime, exit_notify.clone())
     .expect("unable to initialize ipc server for daemon");
@@ -246,10 +242,7 @@ fn spawn_worker(
 
   let mut command = Command::new(&espanso_exe_path.to_string_lossy().to_string());
 
-  let mut args = vec![
-    "worker",
-    "--monitor-daemon",
-  ];
+  let mut args = vec!["worker", "--monitor-daemon"];
   if let Some(start_reason) = &start_reason {
     args.push("--start-reason");
     args.push(start_reason);
@@ -312,11 +305,7 @@ fn restart_worker(
   }
 
   if !has_timed_out {
-    spawn_worker(
-      paths_overrides,
-      exit_notify,
-      start_reason,
-    );
+    spawn_worker(paths_overrides, exit_notify, start_reason);
   } else {
     error!("could not restart worker, as the exit process has timed out");
   }

@@ -78,9 +78,9 @@ fn watcher_main(config_dir: &Path, watcher_notify: &Sender<()>) {
           if ["yml", "yaml"].iter().any(|ext| ext == &extension) {
             // Only load non-hidden yml files
             !is_file_hidden(&path)
-          } else { 
-            // If there is no extension, it's probably a folder 
-            extension.is_empty() 
+          } else {
+            // If there is no extension, it's probably a folder
+            extension.is_empty()
           }
         } else {
           false

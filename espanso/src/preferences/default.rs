@@ -72,7 +72,9 @@ impl<KVSType: KVS> Preferences for DefaultPreferences<KVSType> {
   }
 
   fn should_display_troubleshoot_for_non_fatal_errors(&self) -> bool {
-    self.get(SHOULD_DISPLAY_TROUBLESHOOT_FOR_NON_FATAL_ERRORS).unwrap_or(true)
+    self
+      .get(SHOULD_DISPLAY_TROUBLESHOOT_FOR_NON_FATAL_ERRORS)
+      .unwrap_or(true)
   }
 
   fn set_should_display_troubleshoot_for_non_fatal_errors(&self, value: bool) {

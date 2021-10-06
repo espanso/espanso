@@ -24,11 +24,9 @@ pub struct ClipboardAdapter<'a> {
   clipboard: &'a dyn Clipboard,
 }
 
-impl <'a> ClipboardAdapter<'a> {
+impl<'a> ClipboardAdapter<'a> {
   pub fn new(clipboard: &'a dyn Clipboard) -> Self {
-    Self {
-      clipboard
-    }
+    Self { clipboard }
   }
 }
 

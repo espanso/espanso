@@ -36,7 +36,11 @@ pub struct SearchItem {
 }
 
 pub trait FormUI {
-  fn show(&self, layout: &str, fields: &HashMap<String, FormField>) -> Result<Option<HashMap<String, String>>>;
+  fn show(
+    &self,
+    layout: &str,
+    fields: &HashMap<String, FormField>,
+  ) -> Result<Option<HashMap<String, String>>>;
 }
 
 #[derive(Debug)]
@@ -52,5 +56,5 @@ pub enum FormField {
   List {
     default: Option<String>,
     values: Vec<String>,
-  }
+  },
 }

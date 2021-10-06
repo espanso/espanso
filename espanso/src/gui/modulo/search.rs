@@ -19,7 +19,7 @@
 
 use serde::Serialize;
 use serde_json::Value;
-use std::{collections::HashMap};
+use std::collections::HashMap;
 
 use crate::gui::{SearchItem, SearchUI};
 
@@ -31,9 +31,7 @@ pub struct ModuloSearchUI<'a> {
 
 impl<'a> ModuloSearchUI<'a> {
   pub fn new(manager: &'a ModuloManager) -> Self {
-    Self {
-      manager,
-    }
+    Self { manager }
   }
 }
 
@@ -58,9 +56,7 @@ impl<'a> SearchUI for ModuloSearchUI<'a> {
           Ok(None)
         }
       }
-      Err(error) => {
-        Err(error.into())
-      }
+      Err(error) => Err(error.into()),
     }
   }
 }
@@ -82,10 +78,13 @@ struct ModuloSearchItemConfig<'a> {
 
 // TODO: test
 fn convert_items(items: &[SearchItem]) -> Vec<ModuloSearchItemConfig> {
-  items.iter().map(|item| ModuloSearchItemConfig {
-    id: &item.id,
-    label: &item.label, 
-    trigger: item.tag.as_deref(), 
-    is_builtin: item.is_builtin,
-  }).collect()
+  items
+    .iter()
+    .map(|item| ModuloSearchItemConfig {
+      id: &item.id,
+      label: &item.label,
+      trigger: item.tag.as_deref(),
+      is_builtin: item.is_builtin,
+    })
+    .collect()
 }

@@ -18,8 +18,11 @@
  */
 
 use self::util::MigrationError;
-use crate::{exit_code::{LAUNCHER_ALREADY_RUNNING, LAUNCHER_CONFIG_DIR_POPULATION_FAILURE, LAUNCHER_SUCCESS}, lock::acquire_daemon_lock};
 use crate::preferences::Preferences;
+use crate::{
+  exit_code::{LAUNCHER_ALREADY_RUNNING, LAUNCHER_CONFIG_DIR_POPULATION_FAILURE, LAUNCHER_SUCCESS},
+  lock::acquire_daemon_lock,
+};
 use log::error;
 
 use super::{CliModule, CliModuleArgs};
@@ -75,8 +78,9 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
   let runtime_dir_clone = paths.runtime.clone();
   let is_legacy_version_running_handler =
     Box::new(move || util::is_legacy_version_running(&runtime_dir_clone));
-  
-  let (is_wrong_edition_page_enabled, wrong_edition_detected_os) = edition_check::is_wrong_edition();
+
+  let (is_wrong_edition_page_enabled, wrong_edition_detected_os) =
+    edition_check::is_wrong_edition();
 
   let is_migrate_page_enabled = espanso_config::is_legacy_config(&paths.config);
   let paths_clone = paths.clone();
@@ -115,8 +119,7 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
   } else {
     false
   };
-  let is_accessibility_enabled_handler =
-    Box::new(accessibility::is_accessibility_enabled);
+  let is_accessibility_enabled_handler = Box::new(accessibility::is_accessibility_enabled);
   let enable_accessibility_handler = Box::new(move || {
     accessibility::prompt_enable_accessibility();
   });

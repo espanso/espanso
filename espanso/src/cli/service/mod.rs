@@ -18,7 +18,15 @@
  */
 
 use super::{CliModule, CliModuleArgs};
-use crate::{error_eprintln, exit_code::{SERVICE_ALREADY_RUNNING, SERVICE_FAILURE, SERVICE_NOT_REGISTERED, SERVICE_NOT_RUNNING, SERVICE_SUCCESS}, info_println, lock::acquire_worker_lock};
+use crate::{
+  error_eprintln,
+  exit_code::{
+    SERVICE_ALREADY_RUNNING, SERVICE_FAILURE, SERVICE_NOT_REGISTERED, SERVICE_NOT_RUNNING,
+    SERVICE_SUCCESS,
+  },
+  info_println,
+  lock::acquire_worker_lock,
+};
 
 #[cfg(target_os = "macos")]
 mod macos;
@@ -123,7 +131,7 @@ fn service_main(args: CliModuleArgs) -> i32 {
       error_eprintln!("unable to stop espanso: {}", err);
       return SERVICE_FAILURE;
     }
-  } 
+  }
 
   SERVICE_SUCCESS
 }

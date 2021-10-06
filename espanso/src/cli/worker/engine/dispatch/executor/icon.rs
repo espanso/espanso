@@ -17,7 +17,7 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use espanso_ui::{UIRemote, icons::TrayIcon};
+use espanso_ui::{icons::TrayIcon, UIRemote};
 
 use espanso_engine::{dispatch::IconHandler, event::ui::IconStatus};
 
@@ -35,8 +35,8 @@ impl<'a> IconHandler for IconHandlerAdapter<'a> {
   fn update_icon(&self, status: &IconStatus) -> anyhow::Result<()> {
     let icon = match status {
       IconStatus::Enabled => TrayIcon::Normal,
-      IconStatus::Disabled => TrayIcon::Disabled, 
-      IconStatus::SecureInputDisabled => TrayIcon::SystemDisabled, 
+      IconStatus::Disabled => TrayIcon::Disabled,
+      IconStatus::SecureInputDisabled => TrayIcon::SystemDisabled,
     };
 
     self.remote.update_tray_icon(icon);

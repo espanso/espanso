@@ -99,11 +99,9 @@ pub fn load_config_or_troubleshoot(paths: &Paths, paths_overrides: &PathsOverrid
         LoadResult::Warning(load_result, troubleshoot_handle)
       }
     }
-    Err(_) => {
-      LoadResult::Fatal(
-        launch_troubleshoot(paths_overrides).expect("unable to launch troubleshoot GUI"),
-      )
-    }
+    Err(_) => LoadResult::Fatal(
+      launch_troubleshoot(paths_overrides).expect("unable to launch troubleshoot GUI"),
+    ),
   }
 }
 

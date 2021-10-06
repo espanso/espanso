@@ -18,7 +18,7 @@
  */
 
 use super::{CliModule, CliModuleArgs};
-use crate::{error_eprintln, exit_code::{WORKAROUND_SUCCESS}};
+use crate::{error_eprintln, exit_code::WORKAROUND_SUCCESS};
 
 #[cfg(target_os = "macos")]
 mod secure_input;

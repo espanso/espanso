@@ -17,7 +17,7 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::{collections::HashMap};
+use std::collections::HashMap;
 
 use espanso_config::{
   config::ConfigStore,

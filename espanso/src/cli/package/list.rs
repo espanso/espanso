@@ -42,10 +42,15 @@ pub fn list_packages(paths: &Paths, _: &ArgMatches) -> Result<()> {
     match package {
       StoredPackage::Legacy(legacy) => {
         info_println!("- {} (legacy)", legacy.name);
-      },
+      }
       StoredPackage::Modern(package) => {
-        info_println!("- {} - version: {} ({})", package.manifest.name, package.manifest.version, package.source);
-      },
+        info_println!(
+          "- {} - version: {} ({})",
+          package.manifest.name,
+          package.manifest.version,
+          package.source
+        );
+      }
     }
   }
 

@@ -19,7 +19,10 @@
 
 use crossbeam::channel::{Receiver, Select, SelectedOperation};
 
-use espanso_engine::{event::{Event, EventType, ExitMode}, funnel};
+use espanso_engine::{
+  event::{Event, EventType, ExitMode},
+  funnel,
+};
 
 use super::sequencer::Sequencer;
 
@@ -28,7 +31,7 @@ pub struct ExitSource<'a> {
   pub sequencer: &'a Sequencer,
 }
 
-impl <'a> ExitSource<'a> {
+impl<'a> ExitSource<'a> {
   pub fn new(exit_signal: Receiver<ExitMode>, sequencer: &'a Sequencer) -> Self {
     ExitSource {
       exit_signal,

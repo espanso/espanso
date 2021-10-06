@@ -17,8 +17,8 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::path::Path;
 use anyhow::Result;
+use std::path::Path;
 
 mod default;
 

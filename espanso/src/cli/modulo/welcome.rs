@@ -17,8 +17,8 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use clap::{ArgMatches};
 use crate::icon::IconPaths;
+use clap::ArgMatches;
 use espanso_modulo::welcome::*;
 use espanso_path::Paths;
 
@@ -30,7 +30,7 @@ pub fn welcome_main(matches: &ArgMatches, _: &Paths, icon_paths: &IconPaths) -> 
 
   let is_already_running = matches.is_present("already-running");
 
-  espanso_modulo::welcome::show(WelcomeOptions{
+  espanso_modulo::welcome::show(WelcomeOptions {
     window_icon_path: icon_paths
       .wizard_icon
       .as_ref()

@@ -17,9 +17,9 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::cli::util::CommandExt;
 use anyhow::Result;
 use thiserror::Error;
-use crate::cli::util::CommandExt;
 
 use crate::cli::PathsOverrides;
 

@@ -65,7 +65,7 @@ impl<'a> MatchSelector for MatchSelectorAdapter<'a> {
         }
       })
       .collect();
-    
+
     let hint = if is_search {
       Some("Search matches by content or trigger (or type > to see commands)")
     } else {

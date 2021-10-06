@@ -50,11 +50,10 @@ pub fn add_espanso_to_path(prompt_when_necessary: bool) -> Result<()> {
             target_link_path.to_string_lossy(),
           );
 
-          let mut child = std::process::Command::new("osascript").args(&[
-            "-e",
-            &params,
-          ]).spawn()?;
-          
+          let mut child = std::process::Command::new("osascript")
+            .args(&["-e", &params])
+            .spawn()?;
+
           let result = child.wait()?;
           if !result.success() {
             return Err(PathError::ElevationRequestFailure.into());
@@ -90,11 +89,10 @@ pub fn remove_espanso_from_path(prompt_when_necessary: bool) -> Result<()> {
             target_link_path.to_string_lossy(),
           );
 
-          let mut child = std::process::Command::new("osascript").args(&[
-            "-e",
-            &params,
-          ]).spawn()?;
-          
+          let mut child = std::process::Command::new("osascript")
+            .args(&["-e", &params])
+            .spawn()?;
+
           let result = child.wait()?;
           if !result.success() {
             return Err(PathError::ElevationRequestFailure.into());
@@ -119,7 +117,7 @@ pub enum PathError {
 
   #[error("symlink error: `{0}`")]
   SymlinkError(std::io::Error),
-  
+
   #[error("elevation request failed")]
   ElevationRequestFailure,
 

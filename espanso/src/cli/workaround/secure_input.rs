@@ -27,11 +27,9 @@ use std::{
 const BLUR_CHROME_WINDOWS_SCRIPT: &str =
   include_str!("../../res/macos/scripts/blur_chrome_windows.scpt");
 
-const GET_RUNNING_APPS_SCRIPT: &str =
-  include_str!("../../res/macos/scripts/get_running_apps.scpt");
+const GET_RUNNING_APPS_SCRIPT: &str = include_str!("../../res/macos/scripts/get_running_apps.scpt");
 
-const FOCUS_BITWARDEN_SCRIPT: &str =
-  include_str!("../../res/macos/scripts/focus_bitwarden.scpt");
+const FOCUS_BITWARDEN_SCRIPT: &str = include_str!("../../res/macos/scripts/focus_bitwarden.scpt");
 
 const SECURE_INPUT_ASK_LOCK_SCREEN_SCRIPT: &str =
   include_str!("../../res/macos/scripts/secure_input_ask_lock_screen.scpt");

@@ -17,8 +17,8 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::{fs::File, io::BufReader};
 use std::io::BufRead;
+use std::{fs::File, io::BufReader};
 
 use super::{CliModule, CliModuleArgs};
 

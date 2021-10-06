@@ -89,7 +89,7 @@ impl<'a> ClipboardInjectorAdapter<'a> {
       InjectionOptions {
         delay: params.paste_shortcut_event_delay as i32,
         disable_fast_inject: params.disable_x11_fast_inject,
-        ..Default::default() 
+        ..Default::default()
       },
     )?;
 

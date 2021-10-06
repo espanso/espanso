@@ -17,9 +17,16 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::{path::PathBuf};
+use std::path::PathBuf;
 
-use crate::{exit_code::{MIGRATE_ALREADY_NEW_FORMAT, MIGRATE_CLEAN_FAILURE, MIGRATE_DIRTY_FAILURE, MIGRATE_LEGACY_INSTANCE_RUNNING, MIGRATE_SUCCESS, MIGRATE_USER_ABORTED, configure_custom_panic_hook, update_panic_exit_code}, lock::acquire_legacy_lock};
+use crate::{
+  exit_code::{
+    configure_custom_panic_hook, update_panic_exit_code, MIGRATE_ALREADY_NEW_FORMAT,
+    MIGRATE_CLEAN_FAILURE, MIGRATE_DIRTY_FAILURE, MIGRATE_LEGACY_INSTANCE_RUNNING, MIGRATE_SUCCESS,
+    MIGRATE_USER_ABORTED,
+  },
+  lock::acquire_legacy_lock,
+};
 
 use super::{CliModule, CliModuleArgs};
 use colored::*;
@@ -91,11 +98,13 @@ fn migrate_main(args: CliModuleArgs) -> i32 {
     target_backup_dir.to_string_lossy()
   );
 
-  if !cli_args.is_present("noconfirm") && !Confirm::new()
+  if !cli_args.is_present("noconfirm")
+    && !Confirm::new()
       .with_prompt("Do you want to proceed?")
       .default(true)
       .interact()
-      .expect("unable to read choice") {
+      .expect("unable to read choice")
+  {
     return MIGRATE_USER_ABORTED;
   }
 
@@ -132,7 +141,7 @@ fn migrate_main(args: CliModuleArgs) -> i32 {
     fs_extra::dir::get_dir_content(&paths.config).expect("unable to list legacy dir files");
   to_be_removed.extend(legacy_dir_content.files);
   to_be_removed.extend(legacy_dir_content.directories);
-  
+
   // Skip the config directory itself to preserve the symbolic link (if present)
   let config_dir_as_str = paths.config.to_string_lossy().to_string();
   to_be_removed.retain(|path| path != &config_dir_as_str);

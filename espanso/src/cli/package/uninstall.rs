@@ -31,7 +31,9 @@ pub fn uninstall_package(paths: &Paths, matches: &ArgMatches) -> Result<()> {
   let archiver =
     espanso_package::get_archiver(&paths.packages).context("unable to get package archiver")?;
 
-  archiver.delete(package_name).context("unable to delete package")?;
+  archiver
+    .delete(package_name)
+    .context("unable to delete package")?;
 
   info_println!("package '{}' uninstalled!", package_name);
 

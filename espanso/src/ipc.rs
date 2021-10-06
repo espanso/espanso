@@ -18,9 +18,9 @@
  */
 
 use anyhow::Result;
-use espanso_ipc::{IPCServer, IPCClient};
+use espanso_ipc::{IPCClient, IPCServer};
+use serde::{Deserialize, Serialize};
 use std::path::Path;
-use serde::{Serialize, Deserialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum IPCEvent {
@@ -40,13 +40,9 @@ pub fn create_ipc_client_to_worker(runtime_dir: &Path) -> Result<impl IPCClient<
   create_ipc_client(runtime_dir, "workerv2")
 }
 
-fn create_ipc_server(
-  runtime_dir: &Path,
-  name: &str,
-) -> Result<impl IPCServer<IPCEvent>> {
+fn create_ipc_server(runtime_dir: &Path, name: &str) -> Result<impl IPCServer<IPCEvent>> {
   espanso_ipc::server(&format!("espanso{}", name), runtime_dir)
 }
-
 
 fn create_ipc_client(runtime_dir: &Path, target_process: &str) -> Result<impl IPCClient<IPCEvent>> {
   let client = espanso_ipc::client(&format!("espanso{}", target_process), runtime_dir)?;

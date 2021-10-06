@@ -28,9 +28,7 @@ pub fn create_match_exit() -> BuiltInMatch {
     id: generate_next_builtin_id(),
     label: "Exit espanso",
     triggers: Vec::new(),
-    action: |_| {
-      EventType::ExitRequested(ExitMode::ExitAllProcesses)
-    },
+    action: |_| EventType::ExitRequested(ExitMode::ExitAllProcesses),
     ..Default::default()
   }
 }
@@ -40,9 +38,7 @@ pub fn create_match_restart() -> BuiltInMatch {
     id: generate_next_builtin_id(),
     label: "Restart espanso",
     triggers: Vec::new(),
-    action: |_| {
-      EventType::ExitRequested(ExitMode::RestartWorker)
-    },
+    action: |_| EventType::ExitRequested(ExitMode::RestartWorker),
     ..Default::default()
   }
 }

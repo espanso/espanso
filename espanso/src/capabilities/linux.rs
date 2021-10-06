@@ -26,7 +26,7 @@ pub fn can_use_capabilities() -> bool {
     Err(err) => {
       error!("error while checking if capabilities are enabled: {}", err);
       false
-    },
+    }
   }
 }
 

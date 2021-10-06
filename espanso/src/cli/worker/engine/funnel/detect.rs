@@ -48,9 +48,7 @@ impl<'a> funnel::Source<'a> for DetectSource {
           key: convert_to_engine_key(keyboard_event.key),
           value: keyboard_event.value,
           status: convert_to_engine_status(keyboard_event.status),
-          variant: keyboard_event
-            .variant
-            .map(convert_to_engine_variant),
+          variant: keyboard_event.variant.map(convert_to_engine_variant),
         }),
       },
       InputEvent::Mouse(mouse_event) => Event {

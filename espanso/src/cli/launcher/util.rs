@@ -20,10 +20,13 @@
 use std::{path::Path, process::Command};
 
 use anyhow::Result;
-use thiserror::Error;
 use espanso_path::Paths;
+use thiserror::Error;
 
-use crate::{exit_code::{MIGRATE_CLEAN_FAILURE, MIGRATE_DIRTY_FAILURE}, lock::acquire_legacy_lock};
+use crate::{
+  exit_code::{MIGRATE_CLEAN_FAILURE, MIGRATE_DIRTY_FAILURE},
+  lock::acquire_legacy_lock,
+};
 
 pub fn is_legacy_version_running(runtime_path: &Path) -> bool {
   let legacy_lock_file = acquire_legacy_lock(runtime_path);
@@ -55,8 +58,8 @@ pub fn migrate_configuration(paths: &Paths) -> Result<()> {
   } else {
     match result.code() {
       Some(code) if code == MIGRATE_CLEAN_FAILURE => Err(MigrationError::Clean.into()),
-      Some(code) if code == MIGRATE_DIRTY_FAILURE=> Err(MigrationError::Dirty.into()),
-      _ => Err(MigrationError::Unexpected.into())
+      Some(code) if code == MIGRATE_DIRTY_FAILURE => Err(MigrationError::Dirty.into()),
+      _ => Err(MigrationError::Unexpected.into()),
     }
   }
 }
