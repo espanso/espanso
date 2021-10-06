@@ -976,8 +976,7 @@ mod tests {
 
   #[test]
   fn test_config_set_load_fail_bad_directory() {
-    let config_set =
-      LegacyConfigSet::load(Path::new("invalid/path"), Path::new("invalid/path"));
+    let config_set = LegacyConfigSet::load(Path::new("invalid/path"), Path::new("invalid/path"));
     assert!(config_set.is_err());
     assert_eq!(
       config_set.unwrap_err(),
@@ -1606,9 +1605,10 @@ mod tests {
 
   #[test]
   fn test_list_has_conflict_no_conflict() {
-    assert!(
-      !LegacyConfigSet::list_has_conflicts(&[":ab".to_owned(), ":bc".to_owned()])
-    );
+    assert!(!LegacyConfigSet::list_has_conflicts(&[
+      ":ab".to_owned(),
+      ":bc".to_owned()
+    ]));
   }
 
   #[test]
@@ -1643,9 +1643,10 @@ mod tests {
     );
 
     let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
-    assert!(
-      !LegacyConfigSet::has_conflicts(&config_set.default, &config_set.specific),
-    );
+    assert!(!LegacyConfigSet::has_conflicts(
+      &config_set.default,
+      &config_set.specific
+    ),);
   }
 
   #[test]
@@ -1675,9 +1676,10 @@ mod tests {
     );
 
     let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
-    assert!(
-      LegacyConfigSet::has_conflicts(&config_set.default, &config_set.specific),
-    );
+    assert!(LegacyConfigSet::has_conflicts(
+      &config_set.default,
+      &config_set.specific
+    ),);
   }
 
   #[test]
@@ -1705,9 +1707,10 @@ mod tests {
     );
 
     let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
-    assert!(
-      LegacyConfigSet::has_conflicts(&config_set.default, &config_set.specific),
-    );
+    assert!(LegacyConfigSet::has_conflicts(
+      &config_set.default,
+      &config_set.specific
+    ),);
   }
 
   #[test]
@@ -1746,9 +1749,10 @@ mod tests {
     );
 
     let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
-    assert!(
-      !LegacyConfigSet::has_conflicts(&config_set.default, &config_set.specific),
-    );
+    assert!(!LegacyConfigSet::has_conflicts(
+      &config_set.default,
+      &config_set.specific
+    ),);
   }
 
   #[test]

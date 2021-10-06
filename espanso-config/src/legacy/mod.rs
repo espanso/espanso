@@ -360,11 +360,11 @@ impl Config for LegacyInteropConfig {
   }
 
   fn search_trigger(&self) -> Option<String> {
-    self.config.search_trigger.clone()   
+    self.config.search_trigger.clone()
   }
 
   fn search_shortcut(&self) -> Option<String> {
-    self.config.search_shortcut.clone()   
+    self.config.search_shortcut.clone()
   }
 
   fn undo_backspace(&self) -> bool {
@@ -390,7 +390,7 @@ impl Config for LegacyInteropConfig {
   fn win32_exclude_orphan_events(&self) -> bool {
     true
   }
-  
+
   fn evdev_modifier_delay(&self) -> Option<usize> {
     Some(10)
   }

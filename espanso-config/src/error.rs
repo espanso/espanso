@@ -17,8 +17,8 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::path::{Path, PathBuf};
 use anyhow::Error;
+use std::path::{Path, PathBuf};
 
 #[derive(Debug)]
 pub struct NonFatalErrorSet {

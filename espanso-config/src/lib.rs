@@ -34,7 +34,13 @@ pub mod matches;
 mod util;
 
 #[allow(clippy::type_complexity)]
-pub fn load(base_path: &Path) -> Result<(Box<dyn ConfigStore>, Box<dyn MatchStore>, Vec<error::NonFatalErrorSet>)> {
+pub fn load(
+  base_path: &Path,
+) -> Result<(
+  Box<dyn ConfigStore>,
+  Box<dyn MatchStore>,
+  Vec<error::NonFatalErrorSet>,
+)> {
   let config_dir = base_path.join("config");
   if !config_dir.exists() || !config_dir.is_dir() {
     return Err(ConfigError::MissingConfigDir().into());
@@ -43,16 +49,24 @@ pub fn load(base_path: &Path) -> Result<(Box<dyn ConfigStore>, Box<dyn MatchStor
   let (config_store, non_fatal_config_errors) = config::load_store(&config_dir)?;
   let root_paths = config_store.get_all_match_paths();
 
-  let (match_store, non_fatal_match_errors) = matches::store::load(&root_paths.into_iter().collect::<Vec<String>>());
+  let (match_store, non_fatal_match_errors) =
+    matches::store::load(&root_paths.into_iter().collect::<Vec<String>>());
 
   let mut non_fatal_errors = Vec::new();
   non_fatal_errors.extend(non_fatal_config_errors.into_iter());
   non_fatal_errors.extend(non_fatal_match_errors.into_iter());
 
-  Ok((Box::new(config_store), Box::new(match_store), non_fatal_errors))
+  Ok((
+    Box::new(config_store),
+    Box::new(match_store),
+    non_fatal_errors,
+  ))
 }
 
-pub fn load_legacy(config_dir: &Path, package_dir: &Path) -> Result<(Box<dyn ConfigStore>, Box<dyn MatchStore>)> {
+pub fn load_legacy(
+  config_dir: &Path,
+  package_dir: &Path,
+) -> Result<(Box<dyn ConfigStore>, Box<dyn MatchStore>)> {
   legacy::load(config_dir, package_dir)
 }
 
@@ -70,7 +84,7 @@ pub enum ConfigError {
 mod tests {
   use super::*;
   use crate::util::tests::use_test_directory;
-  use config::{AppProperties};
+  use config::AppProperties;
 
   #[test]
   fn load_works_correctly() {
@@ -222,12 +236,12 @@ mod tests {
       .unwrap();
 
       let (config_store, match_store, errors) = load(base).unwrap();
-      
+
       assert_eq!(errors.len(), 3);
       // It shouldn't have loaded the "config.yml" one because of the YAML error
       assert_eq!(config_store.configs().len(), 1);
       // It shouldn't load "base.yml" and "_sub.yml" due to YAML errors
-      assert_eq!(match_store.loaded_paths().len(), 1); 
+      assert_eq!(match_store.loaded_paths().len(), 1);
     });
   }
 
@@ -250,7 +264,7 @@ mod tests {
       std::fs::write(&config_file, r#""#).unwrap();
 
       let (config_store, match_store, errors) = load(base).unwrap();
-      
+
       assert_eq!(errors.len(), 1);
       assert_eq!(errors[0].file, base_file);
       assert_eq!(errors[0].errors.len(), 1);
@@ -280,13 +294,17 @@ mod tests {
       .unwrap();
 
       let config_file = config_dir.join("default.yml");
-      std::fs::write(&config_file, r#"
+      std::fs::write(
+        &config_file,
+        r#"
       invalid
 
       "
-      "#).unwrap();
+      "#,
+      )
+      .unwrap();
 
-      // A syntax error in the default.yml file cannot be handled gracefully 
+      // A syntax error in the default.yml file cannot be handled gracefully
       assert!(load(base).is_err());
     });
   }
