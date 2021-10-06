@@ -42,7 +42,7 @@ pub trait AppInfoProvider {
 pub struct AppInfo {
   pub title: Option<String>,
   pub exec: Option<String>,
-  pub class: Option<String>,  
+  pub class: Option<String>,
 }
 
 #[cfg(target_os = "windows")]
