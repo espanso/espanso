@@ -37,7 +37,7 @@ use uinput::UInputDevice;
 use crate::{
   linux::raw_keys::convert_to_sym_array, InjectorCreationOptions, KeyboardStateProvider,
 };
-use anyhow::{Result, bail};
+use anyhow::{bail, Result};
 use itertools::Itertools;
 use thiserror::Error;
 
