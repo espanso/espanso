@@ -25,6 +25,7 @@ pub struct xkb_rule_names {
 }
 
 #[repr(C)]
+#[allow(clippy::upper_case_acronyms)]
 pub enum xkb_key_direction {
   UP,
   DOWN,
