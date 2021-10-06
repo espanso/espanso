@@ -140,17 +140,26 @@ mod tests {
   #[test]
   fn convert_value_params() {
     let mut mapping = serde_yaml::Mapping::new();
-    mapping.insert(serde_yaml::Value::String("test".to_string()), serde_yaml::Value::Null);
+    mapping.insert(
+      serde_yaml::Value::String("test".to_string()),
+      serde_yaml::Value::Null,
+    );
 
     let mut expected = Params::new();
     expected.insert("test".to_string(), Value::Null);
-    assert_eq!(convert_value(serde_yaml::Value::Mapping(mapping)).unwrap(), Value::Object(expected));
+    assert_eq!(
+      convert_value(serde_yaml::Value::Mapping(mapping)).unwrap(),
+      Value::Object(expected)
+    );
   }
 
   #[test]
   fn convert_params_works_correctly() {
     let mut mapping = serde_yaml::Mapping::new();
-    mapping.insert(serde_yaml::Value::String("test".to_string()), serde_yaml::Value::Null);
+    mapping.insert(
+      serde_yaml::Value::String("test".to_string()),
+      serde_yaml::Value::Null,
+    );
 
     let mut expected = Params::new();
     expected.insert("test".to_string(), Value::Null);

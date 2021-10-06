@@ -17,13 +17,22 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use super::{AppProperties, Backend, Config, RMLVOConfig, ToggleKey, default::{DEFAULT_CLIPBOARD_THRESHOLD, DEFAULT_PRE_PASTE_DELAY, DEFAULT_RESTORE_CLIPBOARD_DELAY, DEFAULT_SHORTCUT_EVENT_DELAY}, parse::ParsedConfig, path::calculate_paths, util::os_matches};
+use super::{
+  default::{
+    DEFAULT_CLIPBOARD_THRESHOLD, DEFAULT_PRE_PASTE_DELAY, DEFAULT_RESTORE_CLIPBOARD_DELAY,
+    DEFAULT_SHORTCUT_EVENT_DELAY,
+  },
+  parse::ParsedConfig,
+  path::calculate_paths,
+  util::os_matches,
+  AppProperties, Backend, Config, RMLVOConfig, ToggleKey,
+};
 use crate::{counter::next_id, merge};
 use anyhow::Result;
 use log::error;
 use regex::Regex;
+use std::path::PathBuf;
 use std::{collections::HashSet, path::Path};
-use std::{path::PathBuf};
 use thiserror::Error;
 
 const STANDARD_INCLUDES: &[&str] = &["../match/**/*.yml"];
@@ -149,7 +158,7 @@ impl Config for ResolvedConfig {
       }
     }
   }
-  
+
   fn enable(&self) -> bool {
     self.parsed.enable.unwrap_or(true)
   }
@@ -240,16 +249,18 @@ impl Config for ResolvedConfig {
   }
 
   fn word_separators(&self) -> Vec<String> {
-    self.parsed.word_separators.clone().unwrap_or_else(|| vec![
-      " ".to_string(),
-      ",".to_string(),
-      ".".to_string(),
-      "?".to_string(),
-      "!".to_string(),
-      "\r".to_string(),
-      "\n".to_string(),
-      (22u8 as char).to_string(),
-    ])
+    self.parsed.word_separators.clone().unwrap_or_else(|| {
+      vec![
+        " ".to_string(),
+        ",".to_string(),
+        ".".to_string(),
+        "?".to_string(),
+        "!".to_string(),
+        "\r".to_string(),
+        "\n".to_string(),
+        (22u8 as char).to_string(),
+      ]
+    })
   }
 
   fn backspace_limit(&self) -> usize {
@@ -261,13 +272,17 @@ impl Config for ResolvedConfig {
   }
 
   fn keyboard_layout(&self) -> Option<RMLVOConfig> {
-    self.parsed.keyboard_layout.as_ref().map(|layout| RMLVOConfig {
-      rules: layout.get("rules").map(String::from),
-      model: layout.get("model").map(String::from),
-      layout: layout.get("layout").map(String::from),
-      variant: layout.get("variant").map(String::from),
-      options: layout.get("options").map(String::from),
-    })
+    self
+      .parsed
+      .keyboard_layout
+      .as_ref()
+      .map(|layout| RMLVOConfig {
+        rules: layout.get("rules").map(String::from),
+        model: layout.get("model").map(String::from),
+        layout: layout.get("layout").map(String::from),
+        variant: layout.get("variant").map(String::from),
+        options: layout.get("options").map(String::from),
+      })
   }
 
   fn search_trigger(&self) -> Option<String> {
@@ -459,7 +474,10 @@ impl ResolvedConfig {
     let exclude_paths = calculate_paths(base_dir, excludes.iter());
     let include_paths = calculate_paths(base_dir, includes.iter());
 
-    include_paths.difference(&exclude_paths).cloned().collect::<HashSet<_>>()
+    include_paths
+      .difference(&exclude_paths)
+      .cloned()
+      .collect::<HashSet<_>>()
   }
 }
 
@@ -481,7 +499,10 @@ mod tests {
       ResolvedConfig::aggregate_includes(&ParsedConfig {
         ..Default::default()
       }),
-      vec!["../match/**/*.yml".to_string(),].iter().cloned().collect::<HashSet<_>>()
+      vec!["../match/**/*.yml".to_string(),]
+        .iter()
+        .cloned()
+        .collect::<HashSet<_>>()
     );
   }
 
@@ -504,8 +525,9 @@ mod tests {
         ..Default::default()
       }),
       vec!["../match/**/*.yml".to_string(), "custom/*.yml".to_string()]
-          .iter()
-          .cloned().collect::<HashSet<_>>()
+        .iter()
+        .cloned()
+        .collect::<HashSet<_>>()
     );
   }
 
@@ -517,8 +539,9 @@ mod tests {
         ..Default::default()
       }),
       vec!["../match/**/*.yml".to_string(), "custom/*.yml".to_string()]
-          .iter()
-          .cloned().collect::<HashSet<_>>()
+        .iter()
+        .cloned()
+        .collect::<HashSet<_>>()
     );
   }
 
@@ -531,12 +554,13 @@ mod tests {
         ..Default::default()
       }),
       vec![
-          "../match/**/*.yml".to_string(),
-          "custom/*.yml".to_string(),
-          "sub/*.yml".to_string()
-        ]
-        .iter()
-        .cloned().collect::<HashSet<_>>()
+        "../match/**/*.yml".to_string(),
+        "custom/*.yml".to_string(),
+        "sub/*.yml".to_string()
+      ]
+      .iter()
+      .cloned()
+      .collect::<HashSet<_>>()
     );
   }
 
@@ -546,7 +570,10 @@ mod tests {
       ResolvedConfig::aggregate_excludes(&ParsedConfig {
         ..Default::default()
       }),
-      vec!["../match/**/_*.yml".to_string(),].iter().cloned().collect::<HashSet<_>>()
+      vec!["../match/**/_*.yml".to_string(),]
+        .iter()
+        .cloned()
+        .collect::<HashSet<_>>()
     );
   }
 
@@ -569,8 +596,9 @@ mod tests {
         ..Default::default()
       }),
       vec!["../match/**/_*.yml".to_string(), "custom/*.yml".to_string()]
-          .iter()
-          .cloned().collect::<HashSet<_>>()
+        .iter()
+        .cloned()
+        .collect::<HashSet<_>>()
     );
   }
 
@@ -582,8 +610,9 @@ mod tests {
         ..Default::default()
       }),
       vec!["../match/**/_*.yml".to_string(), "custom/*.yml".to_string()]
-          .iter()
-          .cloned().collect::<HashSet<_>>()
+        .iter()
+        .cloned()
+        .collect::<HashSet<_>>()
     );
   }
 
@@ -596,12 +625,13 @@ mod tests {
         ..Default::default()
       }),
       vec![
-          "../match/**/_*.yml".to_string(),
-          "custom/*.yml".to_string(),
-          "sub/*.yml".to_string()
-        ]
-        .iter()
-        .cloned().collect::<HashSet<_>>()
+        "../match/**/_*.yml".to_string(),
+        "custom/*.yml".to_string(),
+        "sub/*.yml".to_string()
+      ]
+      .iter()
+      .cloned()
+      .collect::<HashSet<_>>()
     );
   }
 

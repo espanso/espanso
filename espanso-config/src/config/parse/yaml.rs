@@ -269,14 +269,15 @@ mod tests {
     .unwrap();
     let parsed_config: ParsedConfig = config.try_into().unwrap();
 
-    let keyboard_layout: BTreeMap<String, String> =
-      vec![
-        ("rules".to_string(), "test_rule".to_string()),
-        ("model".to_string(), "test_model".to_string()),
-        ("layout".to_string(), "test_layout".to_string()),
-        ("variant".to_string(), "test_variant".to_string()),
-        ("options".to_string(), "test_options".to_string()),
-      ].into_iter().collect();
+    let keyboard_layout: BTreeMap<String, String> = vec![
+      ("rules".to_string(), "test_rule".to_string()),
+      ("model".to_string(), "test_model".to_string()),
+      ("layout".to_string(), "test_layout".to_string()),
+      ("variant".to_string(), "test_variant".to_string()),
+      ("options".to_string(), "test_options".to_string()),
+    ]
+    .into_iter()
+    .collect();
 
     assert_eq!(
       parsed_config,

@@ -17,11 +17,11 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::{path::Path};
+use std::path::Path;
 
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
-use serde_yaml::{Mapping};
+use serde_yaml::Mapping;
 
 use crate::util::is_yaml_empty;
 
