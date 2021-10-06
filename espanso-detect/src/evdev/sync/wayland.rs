@@ -44,13 +44,13 @@ pub fn get_modifiers_state() -> Result<Option<super::ModifiersState>> {
     .create_window::<FallbackFrame, _>(surface, None, dimensions, move |evt, mut dispatch_data| {
       let next_action = dispatch_data.get::<Option<WEvent>>().unwrap();
       // Keep last event in priority order : Close > Configure > Refresh
-      let replace = match (&evt, &*next_action) {
+      let replace = matches!(
+        (&evt, &*next_action),
         (_, &None)
-        | (_, &Some(WEvent::Refresh))
-        | (&WEvent::Configure { .. }, &Some(WEvent::Configure { .. }))
-        | (&WEvent::Close, _) => true,
-        _ => false,
-      };
+          | (_, &Some(WEvent::Refresh))
+          | (&WEvent::Configure { .. }, &Some(WEvent::Configure { .. }))
+          | (&WEvent::Close, _)
+      );
       if replace {
         *next_action = Some(evt);
       }
@@ -138,12 +138,10 @@ pub fn get_modifiers_state() -> Result<Option<super::ModifiersState>> {
           }
         }
       }
-    } else {
-      if let Some((kbd, source)) = opt_kbd.take() {
-        // the keyboard has been removed, cleanup
-        kbd.release();
-        loop_handle.remove(source);
-      }
+    } else if let Some((kbd, source)) = opt_kbd.take() {
+      // the keyboard has been removed, cleanup
+      kbd.release();
+      loop_handle.remove(source);
     }
   });
 
@@ -182,7 +180,7 @@ pub fn get_modifiers_state() -> Result<Option<super::ModifiersState>> {
         let result_ref = result_clone.borrow();
 
         if let Some(result) = &*result_ref {
-          return Ok(Some(result.clone()));
+          return Ok(Some(*result));
         }
       }
     }
@@ -215,6 +213,7 @@ fn keyboard_event_handler(
   }
 }
 
+#[allow(clippy::many_single_char_names)]
 fn redraw(
   pool: &mut AutoMemPool,
   surface: &wl_surface::WlSurface,

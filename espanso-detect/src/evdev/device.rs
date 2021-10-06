@@ -140,7 +140,7 @@ impl Device {
     let is_down = value == KEY_STATE_PRESS;
 
     // Check if the current event originated from a mouse
-    if code >= 0x110 && code <= 0x117 {
+    if (0x110..=0x117).contains(&code) {
       // Mouse event
       return Some(RawInputEvent::Mouse(RawMouseEvent { code, is_down }));
     }
