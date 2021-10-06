@@ -136,7 +136,7 @@ impl Source for CocoaSource {
       .hotkeys
       .iter()
       .filter_map(|hk| {
-        let raw = convert_hotkey_to_raw(&hk);
+        let raw = convert_hotkey_to_raw(hk);
         if raw.is_none() {
           error!("unable to register hotkey: {:?}", hk);
         }
