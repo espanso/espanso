@@ -73,7 +73,7 @@ impl X11Injector {
 
     let display = unsafe { ffi::XOpenDisplay(std::ptr::null()) };
     if display.is_null() {
-      return Err(X11InjectorError::InitFailure().into());
+      return Err(X11InjectorError::Init().into());
     }
 
     let (char_map, sym_map) = Self::generate_maps(display);
@@ -155,9 +155,9 @@ impl X11Injector {
       .map(|sym| {
         self
           .sym_map
-          .get(&sym)
+          .get(sym)
           .cloned()
-          .ok_or_else(|| X11InjectorError::SymMappingFailure(*sym).into())
+          .ok_or_else(|| X11InjectorError::SymMapping(*sym).into())
       })
       .collect()
   }
@@ -337,7 +337,7 @@ impl Injector for X11Injector {
           .char_map
           .get(&char)
           .cloned()
-          .ok_or_else(|| X11InjectorError::CharMappingFailure(char).into())
+          .ok_or_else(|| X11InjectorError::CharMapping(char).into())
       })
       .collect();
 
@@ -401,18 +401,18 @@ impl Injector for X11Injector {
     // First press the keys
     for record in records.iter() {
       if options.disable_fast_inject {
-        self.xtest_send_key(&record, true, delay_us);
+        self.xtest_send_key(record, true, delay_us);
       } else {
-        self.send_key(focused_window, &record, true, delay_us);
+        self.send_key(focused_window, record, true, delay_us);
       }
     }
 
     // Then release them
     for record in records.iter().rev() {
       if options.disable_fast_inject {
-        self.xtest_send_key(&record, false, delay_us);
+        self.xtest_send_key(record, false, delay_us);
       } else {
-        self.send_key(focused_window, &record, false, delay_us);
+        self.send_key(focused_window, record, false, delay_us);
       }
     }
 
@@ -423,11 +423,11 @@ impl Injector for X11Injector {
 #[derive(Error, Debug)]
 pub enum X11InjectorError {
   #[error("failed to initialize x11 display")]
-  InitFailure(),
+  Init(),
 
   #[error("missing vkey mapping for char `{0}`")]
-  CharMappingFailure(String),
+  CharMapping(String),
 
   #[error("missing record mapping for sym `{0}`")]
-  SymMappingFailure(u64),
+  SymMapping(u64),
 }

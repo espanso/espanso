@@ -39,7 +39,7 @@ impl UInputDevice {
     let uinput_path = CString::new("/dev/uinput").expect("unable to generate /dev/uinput path");
     let raw_fd = unsafe { open(uinput_path.as_ptr(), O_WRONLY | O_NONBLOCK) };
     if raw_fd < 0 {
-      return Err(UInputDeviceError::OpenFailed().into());
+      return Err(UInputDeviceError::Open().into());
     }
     let fd = scopeguard::guard(raw_fd, |raw_fd| unsafe {
       close(raw_fd);
@@ -47,24 +47,24 @@ impl UInputDevice {
 
     // Enable keyboard events
     if unsafe { ioctl(*fd, ui_set_evbit(), EV_KEY as c_uint) } != 0 {
-      return Err(UInputDeviceError::KeyEVBitFailed().into());
+      return Err(UInputDeviceError::KeyEVBit().into());
     }
 
     // Register all keycodes
     for key_code in 0..256 {
       if unsafe { ioctl(*fd, ui_set_keybit(), key_code) } != 0 {
-        return Err(UInputDeviceError::KeyBitFailed().into());
+        return Err(UInputDeviceError::KeyBit().into());
       }
     }
 
     // Register the virtual device
     if unsafe { setup_uinput_device(*fd) } != 0 {
-      return Err(UInputDeviceError::DeviceSetupFailed().into());
+      return Err(UInputDeviceError::DeviceSetup().into());
     }
 
     // Create the device
     if unsafe { ioctl(*fd, ui_dev_create()) } != 0 {
-      return Err(UInputDeviceError::DeviceCreateFailed().into());
+      return Err(UInputDeviceError::DeviceCreate().into());
     }
 
     Ok(Self {
@@ -92,17 +92,17 @@ impl Drop for UInputDevice {
 #[derive(Error, Debug)]
 pub enum UInputDeviceError {
   #[error("could not open uinput device")]
-  OpenFailed(),
+  Open(),
 
   #[error("could not set keyboard evbit")]
-  KeyEVBitFailed(),
+  KeyEVBit(),
 
   #[error("could not set keyboard keybit")]
-  KeyBitFailed(),
+  KeyBit(),
 
   #[error("could not register virtual device")]
-  DeviceSetupFailed(),
+  DeviceSetup(),
 
   #[error("could not create uinput device")]
-  DeviceCreateFailed(),
+  DeviceCreate(),
 }
