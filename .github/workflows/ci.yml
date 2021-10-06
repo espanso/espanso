@@ -22,6 +22,10 @@ jobs:
         run: |
           rustup component add rustfmt
           cargo fmt --all -- --check
+      - name: Install Linux dependencies
+        if: ${{ runner.os == 'Linux' }}
+        run: |
+          sudo apt install libx11-dev libxtst-dev libxkbcommon-dev libdbus-1-dev libwxgtk3.0-gtk3-dev
       - name: Check clippy
         run: |
           rustup component add clippy
@@ -29,10 +33,6 @@ jobs:
       - name: Install cargo-make
         run: |
           cargo install --force cargo-make
-      - name: Install Linux dependencies
-        if: ${{ runner.os == 'Linux' }}
-        run: |
-          sudo apt install libx11-dev libxtst-dev libxkbcommon-dev libdbus-1-dev libwxgtk3.0-gtk3-dev
       - name: Run test suite
         run: cargo make test-binary
       - name: Build
@@ -47,13 +47,13 @@ jobs:
         run: |
           rustup component add rustfmt
           cargo fmt --all -- --check
+      - name: Install Linux dependencies
+        run: |
+          sudo apt install libxkbcommon-dev libwxgtk3.0-gtk3-dev libdbus-1-dev
       - name: Check clippy
         run: |
           rustup component add clippy
           cargo clippy -p espanso --features wayland -- -D warnings
-      - name: Install dependencies
-        run: |
-          sudo apt install libxkbcommon-dev libwxgtk3.0-gtk3-dev libdbus-1-dev
       - name: Install cargo-make
         run: |
           cargo install --force cargo-make
