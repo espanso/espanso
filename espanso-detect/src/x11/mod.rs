@@ -163,7 +163,7 @@ impl Source for X11Source {
     // Register the hotkeys
     let raw_hotkey_mapping = &mut self.raw_hotkey_mapping;
     self.hotkeys.iter().for_each(|hk| {
-      let raw = convert_hotkey_to_raw(&hk);
+      let raw = convert_hotkey_to_raw(hk);
       if let Some(raw_hk) = raw {
         let result = unsafe { detect_register_hotkey(handle, raw_hk, mod_indexes) };
         if result.success == 0 {
