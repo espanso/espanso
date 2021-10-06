@@ -95,7 +95,13 @@ fn daemon_main(args: CliModuleArgs) -> i32 {
     .expect("unable to initialize config watcher thread");
 
   let (_keyboard_layout_watcher_notify, keyboard_layout_watcher_signal) = unbounded::<()>();
-  keyboard_layout_watcher::initialize_and_spawn(_keyboard_layout_watcher_notify)
+
+  #[allow(clippy::redundant_clone)]
+  // IMPORTANT: Here we clone the channel instead of simply passing it to avoid
+  // dropping the channel immediately on those platforms that don't support the
+  // layout watcher (currently Windows and macOS).
+  // Otherwise, the select below would always return an error because the channel is closed.
+  keyboard_layout_watcher::initialize_and_spawn(_keyboard_layout_watcher_notify.clone()) // DON'T REMOVE THE CLONE!
     .expect("unable to initialize keyboard layout watcher thread");
 
   let config_store =
