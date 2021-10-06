@@ -17,7 +17,7 @@
  * along with modulo.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::os::raw::{c_int};
+use std::os::raw::c_int;
 use std::{ffi::CString, sync::Mutex};
 
 use crate::sys::interop::{

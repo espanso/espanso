@@ -192,7 +192,7 @@ fn build_native() {
           "--without-liblzma",
           "--with-libjpeg=builtin",
           "--with-libpng=builtin",
-          "--enable-universal-binary=arm64,x86_64"
+          "--enable-universal-binary=arm64,x86_64",
         ])
         .spawn()
         .expect("failed to execute configure")

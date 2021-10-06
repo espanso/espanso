@@ -17,11 +17,14 @@
  * along with modulo.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::os::raw::{c_int};
-use std::{ sync::Mutex};
+use std::os::raw::c_int;
+use std::sync::Mutex;
 
 use crate::sys::util::convert_to_cstring_or_null;
-use crate::{sys::interop::{WelcomeMetadata}, welcome::{WelcomeHandlers, WelcomeOptions}};
+use crate::{
+  sys::interop::WelcomeMetadata,
+  welcome::{WelcomeHandlers, WelcomeOptions},
+};
 
 lazy_static! {
   static ref HANDLERS: Mutex<Option<WelcomeHandlers>> = Mutex::new(None);
@@ -43,7 +46,7 @@ pub fn show(options: WelcomeOptions) {
       (*handler_ref)(value);
     }
   }
-  
+
   {
     let mut lock = HANDLERS.lock().expect("unable to acquire handlers lock");
     *lock = Some(options.handlers)

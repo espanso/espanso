@@ -136,12 +136,12 @@ pub struct WizardMetadata {
   pub accessibility_image_2_path: *const c_char,
   pub detected_os: c_int,
 
-  pub is_legacy_version_running: extern fn() -> c_int,
-  pub backup_and_migrate: extern fn() -> c_int,
-  pub add_to_path: extern fn() -> c_int,
-  pub enable_accessibility: extern fn() -> c_int,
-  pub is_accessibility_enabled: extern fn() -> c_int,
-  pub on_completed: extern fn(),
+  pub is_legacy_version_running: extern "C" fn() -> c_int,
+  pub backup_and_migrate: extern "C" fn() -> c_int,
+  pub add_to_path: extern "C" fn() -> c_int,
+  pub enable_accessibility: extern "C" fn() -> c_int,
+  pub is_accessibility_enabled: extern "C" fn() -> c_int,
+  pub on_completed: extern "C" fn(),
 }
 
 #[repr(C)]
@@ -152,7 +152,7 @@ pub struct WelcomeMetadata {
 
   pub already_running: c_int,
 
-  pub dont_show_again_changed: extern fn(c_int),
+  pub dont_show_again_changed: extern "C" fn(c_int),
 }
 
 #[repr(C)]
@@ -164,8 +164,8 @@ pub struct TroubleshootingMetadata {
   pub error_sets: *const ErrorSetMetadata,
   pub error_sets_count: c_int,
 
-  pub dont_show_again_changed: extern fn(c_int),
-  pub open_file: extern fn(*const c_char),
+  pub dont_show_again_changed: extern "C" fn(c_int),
+  pub open_file: extern "C" fn(*const c_char),
 }
 
 #[repr(C)]
@@ -216,6 +216,6 @@ extern "C" {
   // WELCOME
   pub(crate) fn interop_show_welcome(metadata: *const WelcomeMetadata);
 
-  // TROUBLESHOOTING 
+  // TROUBLESHOOTING
   pub(crate) fn interop_show_troubleshooting(metadata: *const TroubleshootingMetadata);
 }

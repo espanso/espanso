@@ -156,7 +156,9 @@ mod interop {
 
   impl From<types::Field> for OwnedField {
     fn from(field: types::Field) -> Self {
-      let id = field.id.map(|id| CString::new(id).expect("unable to create cstring for field id"));
+      let id = field
+        .id
+        .map(|id| CString::new(id).expect("unable to create cstring for field id"));
 
       let field_type = match field.field_type {
         types::FieldType::Row(_) => FieldType_ROW,
@@ -353,8 +355,7 @@ pub fn show(form: types::Form) -> HashMap<String, String> {
   let mut value_map: HashMap<String, String> = HashMap::new();
 
   extern "C" fn callback(values: *const ValuePair, size: c_int, map: *mut c_void) {
-    let values: &[ValuePair] =
-      unsafe { std::slice::from_raw_parts(values, size as usize) };
+    let values: &[ValuePair] = unsafe { std::slice::from_raw_parts(values, size as usize) };
     let map = map as *mut HashMap<String, String>;
     let map = unsafe { &mut (*map) };
     for pair in values.iter() {

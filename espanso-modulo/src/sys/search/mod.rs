@@ -40,8 +40,8 @@ pub mod types {
 
 #[allow(dead_code)]
 mod interop {
-  use super::types;
   use super::super::interop::*;
+  use super::types;
   use std::ffi::{c_void, CString};
 
   pub(crate) struct OwnedSearch {
@@ -102,7 +102,14 @@ mod interop {
         hintText: hint_ptr,
       });
 
-      Self { title, icon_path, hint, items, interop_items, _interop }
+      Self {
+        title,
+        icon_path,
+        hint,
+        items,
+        interop_items,
+        _interop,
+      }
     }
   }
 
