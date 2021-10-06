@@ -17,7 +17,7 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::{AppInfoProvider, AppInfo};
+use crate::{AppInfo, AppInfoProvider};
 
 pub(crate) struct WaylandAppInfoProvider {}
 
