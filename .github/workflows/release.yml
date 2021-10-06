@@ -7,6 +7,7 @@ on:
   push:
     branches:
       - master
+      - dev
 
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -33,7 +34,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Create new release (if it doesn't exist yet)
+      - name: Create new release (only on master)
+        if: ${{ github.ref == 'refs/heads/master' }}
         run: |
           COMMIT_HASH=$(git rev-list --max-count=1 HEAD)
           echo "Creating release: ${{ needs.extract-version.outputs.espanso_version }}"
@@ -83,7 +85,8 @@ jobs:
             target/windows/Espanso-Win-Portable-x86_64.zip
             target/windows/installer/Espanso-Win-Installer-x86_64.exe.sha256.txt
             target/windows/Espanso-Win-Portable-x86_64.zip.sha256.txt
-      - name: Upload artifacts to Github Releases
+      - name: Upload artifacts to Github Releases (if master)
+        if: ${{ github.ref == 'refs/heads/master' }}
         run: |
           gh release upload ${{ needs.extract-version.outputs.espanso_version }} target/windows/installer/Espanso-Win-Installer-x86_64.exe target/windows/Espanso-Win-Portable-x86_64.zip target/windows/installer/Espanso-Win-Installer-x86_64.exe.sha256.txt target/windows/Espanso-Win-Portable-x86_64.zip.sha256.txt
   
@@ -109,7 +112,8 @@ jobs:
           path: |
             Espanso-X11.AppImage
             Espanso-X11.AppImage.sha256.txt
-      - name: Upload artifacts to Github Releases
+      - name: Upload artifacts to Github Releases (if master)
+        if: ${{ github.ref == 'refs/heads/master' }}
         run: |
           gh release upload ${{ needs.extract-version.outputs.espanso_version }} Espanso-X11.AppImage Espanso-X11.AppImage.sha256.txt
 
@@ -142,7 +146,8 @@ jobs:
           path: |
             Espanso-Mac-Intel.zip
             Espanso-Mac-Intel.zip.sha256.txt
-      - name: Upload artifacts to Github Releases
+      - name: Upload artifacts to Github Releases (if master)
+        if: ${{ github.ref == 'refs/heads/master' }}
         run: |
           gh release upload ${{ needs.extract-version.outputs.espanso_version }} Espanso-Mac-Intel.zip Espanso-Mac-Intel.zip.sha256.txt
   
@@ -188,6 +193,7 @@ jobs:
           path: |
             Espanso-Mac-M1.zip
             Espanso-Mac-M1.zip.sha256.txt
-      - name: Upload artifacts to Github Releases
+      - name: Upload artifacts to Github Releases (if master)
+        if: ${{ github.ref == 'refs/heads/master' }}
         run: |
           gh release upload ${{ needs.extract-version.outputs.espanso_version }} Espanso-Mac-M1.zip Espanso-Mac-M1.zip.sha256.txt
