@@ -91,16 +91,12 @@ fn get_app_name_from_path(path: &str) -> Option<String> {
 
 #[cfg(target_os = "macos")]
 pub fn check_accessibility() -> bool {
-  unsafe {
-    ffi::mac_utils_check_accessibility() > 0
-  }
+  unsafe { ffi::mac_utils_check_accessibility() > 0 }
 }
 
 #[cfg(target_os = "macos")]
 pub fn prompt_accessibility() -> bool {
-  unsafe {
-    ffi::mac_utils_prompt_accessibility() > 0
-  }
+  unsafe { ffi::mac_utils_prompt_accessibility() > 0 }
 }
 
 #[cfg(target_os = "macos")]
