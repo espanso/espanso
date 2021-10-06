@@ -178,7 +178,7 @@ pub fn get_modifiers_state() -> Result<Option<super::ModifiersState>> {
         redraw(&mut pool, window.surface(), dimensions).expect("Failed to draw");
       }
       None => {
-        let result_clone= result.clone();
+        let result_clone = result.clone();
         let result_ref = result_clone.borrow();
 
         if let Some(result) = &*result_ref {
@@ -191,10 +191,7 @@ pub fn get_modifiers_state() -> Result<Option<super::ModifiersState>> {
     display.flush().unwrap();
 
     event_loop
-      .dispatch(
-        Some(std::time::Duration::from_millis(10)),
-        &mut next_action,
-      )
+      .dispatch(Some(std::time::Duration::from_millis(10)), &mut next_action)
       .unwrap();
   }
 
