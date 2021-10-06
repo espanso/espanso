@@ -235,7 +235,7 @@ impl From<RawUIEvent> for Option<UIEvent> {
       UI_EVENT_TYPE_CONTEXT_MENU_CLICK => {
         return Some(UIEvent::ContextMenuClick(raw.context_menu_id));
       }
-      UI_EVENT_TYPE_HEARTBEAT  => {
+      UI_EVENT_TYPE_HEARTBEAT => {
         return Some(UIEvent::Heartbeat);
       }
       _ => {}
