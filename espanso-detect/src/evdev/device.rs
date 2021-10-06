@@ -199,26 +199,70 @@ impl Device {
     }
   }
 
-  pub fn update_modifier_state(&mut self, modifiers_state: &ModifiersState, modifiers_map: &HashMap<String, u32>) {
+  pub fn update_modifier_state(
+    &mut self,
+    modifiers_state: &ModifiersState,
+    modifiers_map: &HashMap<String, u32>,
+  ) {
     if modifiers_state.alt {
-      self.update_key(*modifiers_map.get("alt").expect("unable to find modifiers key in map"), true);
+      self.update_key(
+        *modifiers_map
+          .get("alt")
+          .expect("unable to find modifiers key in map"),
+        true,
+      );
     }
     if modifiers_state.ctrl {
-      self.update_key(*modifiers_map.get("ctrl").expect("unable to find modifiers key in map"), true);
+      self.update_key(
+        *modifiers_map
+          .get("ctrl")
+          .expect("unable to find modifiers key in map"),
+        true,
+      );
     }
     if modifiers_state.meta {
-      self.update_key(*modifiers_map.get("meta").expect("unable to find modifiers key in map"), true);
+      self.update_key(
+        *modifiers_map
+          .get("meta")
+          .expect("unable to find modifiers key in map"),
+        true,
+      );
     }
     if modifiers_state.num_lock {
-      self.update_key(*modifiers_map.get("num_lock").expect("unable to find modifiers key in map"), true);
-      self.update_key(*modifiers_map.get("num_lock").expect("unable to find modifiers key in map"), false);
+      self.update_key(
+        *modifiers_map
+          .get("num_lock")
+          .expect("unable to find modifiers key in map"),
+        true,
+      );
+      self.update_key(
+        *modifiers_map
+          .get("num_lock")
+          .expect("unable to find modifiers key in map"),
+        false,
+      );
     }
     if modifiers_state.shift {
-      self.update_key(*modifiers_map.get("shift").expect("unable to find modifiers key in map"), true);
+      self.update_key(
+        *modifiers_map
+          .get("shift")
+          .expect("unable to find modifiers key in map"),
+        true,
+      );
     }
     if modifiers_state.caps_lock {
-      self.update_key(*modifiers_map.get("caps_lock").expect("unable to find modifiers key in map"), true);
-      self.update_key(*modifiers_map.get("caps_lock").expect("unable to find modifiers key in map"), false);
+      self.update_key(
+        *modifiers_map
+          .get("caps_lock")
+          .expect("unable to find modifiers key in map"),
+        true,
+      );
+      self.update_key(
+        *modifiers_map
+          .get("caps_lock")
+          .expect("unable to find modifiers key in map"),
+        false,
+      );
     }
   }
 }
