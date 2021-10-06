@@ -2,7 +2,7 @@
 
 This document tries to explain the various steps needed to build espanso. (Work in progress).
 
-## Prerequisites
+# Prerequisites
 
 These are the basic tools required to build espanso:
 
@@ -19,10 +19,12 @@ steps. You can install it by running:
 cargo install --force cargo-make
 ```
 
-## Linux
+# Linux
 
 Espanso on Linux comes in two different flavors: one for X11 and one for Wayland. 
 If you don't know which one to choose, follow these steps to determine which one you are running: https://unix.stackexchange.com/a/325972
+
+## Compiling for X11
 
 ### Necessary packages
 
@@ -40,13 +42,15 @@ You can create the AppImage by running (this will work on X11 systems):
 cargo make create-app-image --profile release
 ```
 
-Or if you are on **Wayland**:
-
-```
-cargo make create-app-image --profile release --env NO_X11=true
-```
-
 You will find the resulting AppImage in the `target/linux/AppImage/out` folder.
+
+### Binary
+
+TODO
+
+## Compiling on Wayland
+
+TODO
 
 ## Advanced
 
