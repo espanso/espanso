@@ -17,14 +17,10 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::{
-  package::DefaultPackage,
-  resolver::{resolve_package},
-  Package, PackageSpecifier,
-};
+use super::PackageProvider;
+use crate::{package::DefaultPackage, resolver::resolve_package, Package, PackageSpecifier};
 use anyhow::{anyhow, bail, Context, Result};
 use std::{path::Path, process::Command};
-use super::PackageProvider;
 
 pub struct GitPackageProvider {}
 

@@ -17,13 +17,15 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use anyhow::Result;
 use lazy_static::lazy_static;
 use regex::Regex;
-use anyhow::Result;
 use reqwest::StatusCode;
 
 lazy_static! {
-  static ref GITLAB_REGEX: Regex = Regex::new(r"(https://gitlab.com/|git@gitlab.com:)(?P<author>.*?)/(?P<name>.*?)(/|\.|$)").unwrap();
+  static ref GITLAB_REGEX: Regex =
+    Regex::new(r"(https://gitlab.com/|git@gitlab.com:)(?P<author>.*?)/(?P<name>.*?)(/|\.|$)")
+      .unwrap();
 }
 
 #[derive(Debug, PartialEq)]
@@ -36,7 +38,7 @@ pub fn extract_gitlab_url_parts(url: &str) -> Option<GitLabParts> {
   let captures = GITLAB_REGEX.captures(url)?;
   let author = captures.name("author")?;
   let name = captures.name("name")?;
-  
+
   Some(GitLabParts {
     author: author.as_str().to_string(),
     name: name.as_str().to_string(),
@@ -49,14 +51,17 @@ pub struct ResolvedRepoScheme {
   pub branch: String,
 }
 
-pub fn resolve_repo_scheme(parts: GitLabParts, force_branch: Option<&str>) -> Result<Option<ResolvedRepoScheme>> {
+pub fn resolve_repo_scheme(
+  parts: GitLabParts,
+  force_branch: Option<&str>,
+) -> Result<Option<ResolvedRepoScheme>> {
   if let Some(force_branch) = force_branch {
     if check_repo_with_branch(&parts, force_branch)? {
       return Ok(Some(ResolvedRepoScheme {
         author: parts.author,
         name: parts.name,
         branch: force_branch.to_string(),
-      }))
+      }));
     }
   } else {
     if check_repo_with_branch(&parts, "main")? {
@@ -89,7 +94,10 @@ pub fn check_repo_with_branch(parts: &GitLabParts, branch: &str) -> Result<bool>
 }
 
 fn generate_gitlab_download_url(parts: &GitLabParts, branch: &str) -> String {
-  format!("https://gitlab.com/{}/{}/-/archive/{}/{}-{}.zip", parts.author, parts.name, branch, parts.name, branch)
+  format!(
+    "https://gitlab.com/{}/{}/-/archive/{}/{}-{}.zip",
+    parts.author, parts.name, branch, parts.name, branch
+  )
 }
 
 #[cfg(test)]
@@ -98,21 +106,33 @@ mod tests {
 
   #[test]
   fn test_extract_gitlab_url_parts() {
-    assert_eq!(extract_gitlab_url_parts("https://gitlab.com/federicoterzi/espanso-test-package/").unwrap(), GitLabParts {
-      author: "federicoterzi".to_string(),
-      name: "espanso-test-package".to_string(),
-    });
+    assert_eq!(
+      extract_gitlab_url_parts("https://gitlab.com/federicoterzi/espanso-test-package/").unwrap(),
+      GitLabParts {
+        author: "federicoterzi".to_string(),
+        name: "espanso-test-package".to_string(),
+      }
+    );
 
-    assert_eq!(extract_gitlab_url_parts("git@gitlab.com:federicoterzi/espanso-test-package.git").unwrap(), GitLabParts {
-      author: "federicoterzi".to_string(),
-      name: "espanso-test-package".to_string(),
-    });
+    assert_eq!(
+      extract_gitlab_url_parts("git@gitlab.com:federicoterzi/espanso-test-package.git").unwrap(),
+      GitLabParts {
+        author: "federicoterzi".to_string(),
+        name: "espanso-test-package".to_string(),
+      }
+    );
 
-    assert_eq!(extract_gitlab_url_parts("https://gitlab.com/federicoterzi/espanso-test-package.git").unwrap(), GitLabParts {
-      author: "federicoterzi".to_string(),
-      name: "espanso-test-package".to_string(),
-    });
+    assert_eq!(
+      extract_gitlab_url_parts("https://gitlab.com/federicoterzi/espanso-test-package.git")
+        .unwrap(),
+      GitLabParts {
+        author: "federicoterzi".to_string(),
+        name: "espanso-test-package".to_string(),
+      }
+    );
 
-    assert!(extract_gitlab_url_parts("https://github.com/federicoterzi/espanso-test-package/").is_none());
+    assert!(
+      extract_gitlab_url_parts("https://github.com/federicoterzi/espanso-test-package/").is_none()
+    );
   }
 }

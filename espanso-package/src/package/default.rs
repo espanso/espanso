@@ -21,7 +21,7 @@ use std::path::PathBuf;
 
 use tempdir::TempDir;
 
-use crate::{Package, manifest::Manifest};
+use crate::{manifest::Manifest, Package};
 
 #[allow(dead_code)]
 pub struct DefaultPackage {
@@ -34,11 +34,7 @@ pub struct DefaultPackage {
 }
 
 impl DefaultPackage {
-  pub fn new(
-    manifest: Manifest,
-    temp_dir: TempDir,
-    location: PathBuf,
-  ) -> Self {
+  pub fn new(manifest: Manifest, temp_dir: TempDir, location: PathBuf) -> Self {
     Self {
       manifest,
       temp_dir,

@@ -17,11 +17,9 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::{
-  package::DefaultPackage, resolver::resolve_package, Package, PackageSpecifier,
-};
-use anyhow::{Result};
 use super::PackageProvider;
+use crate::{package::DefaultPackage, resolver::resolve_package, Package, PackageSpecifier};
+use anyhow::Result;
 
 pub struct GitLabPackageProvider {
   repo_author: String,
