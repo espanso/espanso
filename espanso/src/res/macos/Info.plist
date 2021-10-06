@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist SYSTEM "file://localhost/System/Library/DTDs/PropertyList.dtd">
+<plist version="0.9">
+<dict>
+	<key>LSEnvironment</key>
+	<dict>
+    <key>MAC_LAUNCH_CONTEXT</key>
+    <string>bundle</string>
+	</dict>
+	<key>NSPrincipalClass</key>
+	<string>NSApplication</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleIdentifier</key>
+	<string>com.federicoterzi.espanso</string>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>English</string>
+	<key>CFBundleExecutable</key>
+	<string>espanso</string>
+	<key>CFBundleIconFile</key>
+	<string>icon.icns</string>
+	<key>CFBundleName</key>
+	<string>Espanso</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleSignature</key>
+	<string>????</string>
+	<key>CFBundleVersion</key>
+	<string>VERSION</string>
+	<key>CFBundleShortVersionString</key>
+	<string>VERSION</string>
+	<key>CFBundleGetInfoString</key>
+	<string>Espanso version VERSION (C) 2019-2021 Federico Terzi</string>
+	<key>CFBundleLongVersionString</key>
+	<string>VERSION (C) 2019-2021 Federico Terzi</string>
+	<key>NSHumanReadableCopyright</key>
+	<string>Copyright 2019-2021 Federico Terzi</string>
+	<key>LSRequiresCarbon</key>
+	<true/>
+	<key>LSUIElement</key>
+	<string>1</string>
+</dict>
+</plist>
