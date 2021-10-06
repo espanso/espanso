@@ -58,26 +58,28 @@ mod tests {
 
   #[test]
   fn test_context_menu_serializes_correctly() {
-    let menu = Menu { items: vec![
-      MenuItem::Simple(SimpleMenuItem {
-        id: 0,
-        label: "Open".to_string()
-      }),
-      MenuItem::Separator,
-      MenuItem::Sub(SubMenuItem {
-        label: "Sub".to_string(),
-        items: vec![
-          MenuItem::Simple(SimpleMenuItem {
-            label: "Sub 1".to_string(),
-            id: 1,
-          }),
-          MenuItem::Simple(SimpleMenuItem {
-            label: "Sub 2".to_string(),
-            id: 2,
-          }),
-        ],
-      }),
-    ]};
+    let menu = Menu {
+      items: vec![
+        MenuItem::Simple(SimpleMenuItem {
+          id: 0,
+          label: "Open".to_string(),
+        }),
+        MenuItem::Separator,
+        MenuItem::Sub(SubMenuItem {
+          label: "Sub".to_string(),
+          items: vec![
+            MenuItem::Simple(SimpleMenuItem {
+              label: "Sub 1".to_string(),
+              id: 1,
+            }),
+            MenuItem::Simple(SimpleMenuItem {
+              label: "Sub 2".to_string(),
+              id: 2,
+            }),
+          ],
+        }),
+      ],
+    };
 
     assert_eq!(
       menu.to_json().unwrap(),

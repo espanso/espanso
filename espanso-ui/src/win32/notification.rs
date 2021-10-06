@@ -17,14 +17,20 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::{path::{PathBuf}, sync::{Arc, Mutex, mpsc::{Sender, channel}}};
+use std::{
+  path::PathBuf,
+  sync::{
+    mpsc::{channel, Sender},
+    Arc, Mutex,
+  },
+};
 
-use anyhow::{Result, anyhow, bail};
+use anyhow::{anyhow, bail, Result};
 use lazy_static::lazy_static;
 use log::{error, warn};
+use std::os::windows::process::CommandExt;
 use std::process::Command;
 use winrt_notification::{IconCrop, Toast};
-use std::os::windows::process::CommandExt;
 
 const ESPANSO_APP_USER_MODEL_ID: &str = "{5E3B6C0F-1A4D-45C4-8872-D8174702101A}";
 
@@ -34,9 +40,11 @@ lazy_static! {
 
 pub fn initialize_notification_thread(notification_icon_path: PathBuf) -> Result<()> {
   let (sender, receiver) = channel::<String>();
-  
+
   {
-    let mut lock = SEND_CHANNEL.lock().map_err(|e| anyhow!("failed to define shared notification sender: {}", e))?;
+    let mut lock = SEND_CHANNEL
+      .lock()
+      .map_err(|e| anyhow!("failed to define shared notification sender: {}", e))?;
     *lock = Some(sender);
   }
 
@@ -68,12 +76,14 @@ pub fn initialize_notification_thread(notification_icon_path: PathBuf) -> Result
 }
 
 pub fn show_notification(msg: &str) -> Result<()> {
-  let mut lock = SEND_CHANNEL.lock().map_err(|e| anyhow!("unable to acquire notification send channel: {}", e))?;
+  let mut lock = SEND_CHANNEL
+    .lock()
+    .map_err(|e| anyhow!("unable to acquire notification send channel: {}", e))?;
   match &mut *lock {
     Some(sender) => {
       sender.send(msg.to_string())?;
       Ok(())
-    },
+    }
     None => bail!("notification sender not available"),
   }
 }
