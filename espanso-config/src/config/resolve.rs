@@ -35,8 +35,7 @@ use std::path::PathBuf;
 use std::{collections::HashSet, path::Path};
 use thiserror::Error;
 
-const STANDARD_INCLUDES: &[&str] = &["../match/**/*.yml"];
-const STANDARD_EXCLUDES: &[&str] = &["../match/**/_*.yml"];
+const STANDARD_INCLUDES: &[&str] = &["../match/**/[!_]*.yml"];
 
 #[derive(Debug, Clone)]
 pub(crate) struct ResolvedConfig {
@@ -445,12 +444,6 @@ impl ResolvedConfig {
   fn aggregate_excludes(config: &ParsedConfig) -> HashSet<String> {
     let mut excludes = HashSet::new();
 
-    if config.use_standard_includes.is_none() || config.use_standard_includes.unwrap() {
-      STANDARD_EXCLUDES.iter().for_each(|exclude| {
-        excludes.insert(exclude.to_string());
-      })
-    }
-
     if let Some(yaml_excludes) = config.excludes.as_ref() {
       yaml_excludes.iter().for_each(|exclude| {
         excludes.insert(exclude.to_string());
@@ -499,7 +492,7 @@ mod tests {
       ResolvedConfig::aggregate_includes(&ParsedConfig {
         ..Default::default()
       }),
-      vec!["../match/**/*.yml".to_string(),]
+      vec!["../match/**/[!_]*.yml".to_string(),]
         .iter()
         .cloned()
         .collect::<HashSet<_>>()
@@ -524,10 +517,13 @@ mod tests {
         includes: Some(vec!["custom/*.yml".to_string()]),
         ..Default::default()
       }),
-      vec!["../match/**/*.yml".to_string(), "custom/*.yml".to_string()]
-        .iter()
-        .cloned()
-        .collect::<HashSet<_>>()
+      vec![
+        "../match/**/[!_]*.yml".to_string(),
+        "custom/*.yml".to_string()
+      ]
+      .iter()
+      .cloned()
+      .collect::<HashSet<_>>()
     );
   }
 
@@ -538,10 +534,13 @@ mod tests {
         extra_includes: Some(vec!["custom/*.yml".to_string()]),
         ..Default::default()
       }),
-      vec!["../match/**/*.yml".to_string(), "custom/*.yml".to_string()]
-        .iter()
-        .cloned()
-        .collect::<HashSet<_>>()
+      vec![
+        "../match/**/[!_]*.yml".to_string(),
+        "custom/*.yml".to_string()
+      ]
+      .iter()
+      .cloned()
+      .collect::<HashSet<_>>()
     );
   }
 
@@ -554,7 +553,7 @@ mod tests {
         ..Default::default()
       }),
       vec![
-        "../match/**/*.yml".to_string(),
+        "../match/**/[!_]*.yml".to_string(),
         "custom/*.yml".to_string(),
         "sub/*.yml".to_string()
       ]
@@ -569,11 +568,9 @@ mod tests {
     assert_eq!(
       ResolvedConfig::aggregate_excludes(&ParsedConfig {
         ..Default::default()
-      }),
-      vec!["../match/**/_*.yml".to_string(),]
-        .iter()
-        .cloned()
-        .collect::<HashSet<_>>()
+      })
+      .len(),
+      0
     );
   }
 
@@ -595,7 +592,7 @@ mod tests {
         excludes: Some(vec!["custom/*.yml".to_string()]),
         ..Default::default()
       }),
-      vec!["../match/**/_*.yml".to_string(), "custom/*.yml".to_string()]
+      vec!["custom/*.yml".to_string()]
         .iter()
         .cloned()
         .collect::<HashSet<_>>()
@@ -609,7 +606,7 @@ mod tests {
         extra_excludes: Some(vec!["custom/*.yml".to_string()]),
         ..Default::default()
       }),
-      vec!["../match/**/_*.yml".to_string(), "custom/*.yml".to_string()]
+      vec!["custom/*.yml".to_string()]
         .iter()
         .cloned()
         .collect::<HashSet<_>>()
@@ -624,14 +621,10 @@ mod tests {
         extra_excludes: Some(vec!["custom/*.yml".to_string()]),
         ..Default::default()
       }),
-      vec![
-        "../match/**/_*.yml".to_string(),
-        "custom/*.yml".to_string(),
-        "sub/*.yml".to_string()
-      ]
-      .iter()
-      .cloned()
-      .collect::<HashSet<_>>()
+      vec!["custom/*.yml".to_string(), "sub/*.yml".to_string()]
+        .iter()
+        .cloned()
+        .collect::<HashSet<_>>()
     );
   }
 
@@ -755,6 +748,41 @@ mod tests {
       let expected = vec![base_file.to_string_lossy().to_string()];
 
       assert_eq!(parent.match_paths(), expected.as_slice());
+    });
+  }
+
+  #[test]
+  fn match_paths_generated_correctly_with_underscore_files() {
+    use_test_directory(|_, match_dir, config_dir| {
+      let sub_dir = match_dir.join("sub");
+      create_dir_all(&sub_dir).unwrap();
+
+      let base_file = match_dir.join("base.yml");
+      std::fs::write(&base_file, "test").unwrap();
+      let another_file = match_dir.join("another.yml");
+      std::fs::write(&another_file, "test").unwrap();
+      let under_file = match_dir.join("_sub.yml");
+      std::fs::write(&under_file, "test").unwrap();
+      let sub_file = sub_dir.join("sub.yml");
+      std::fs::write(&sub_file, "test").unwrap();
+
+      let config_file = config_dir.join("default.yml");
+      std::fs::write(&config_file, "extra_includes: ['../match/_sub.yml']").unwrap();
+
+      let config = ResolvedConfig::load(&config_file, None).unwrap();
+
+      let mut expected = vec![
+        base_file.to_string_lossy().to_string(),
+        another_file.to_string_lossy().to_string(),
+        sub_file.to_string_lossy().to_string(),
+        under_file.to_string_lossy().to_string(),
+      ];
+      expected.sort();
+
+      let mut result = config.match_paths().to_vec();
+      result.sort();
+
+      assert_eq!(result, expected.as_slice());
     });
   }
 
