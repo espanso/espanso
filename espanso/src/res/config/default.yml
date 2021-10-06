@@ -1,0 +1,40 @@
+# espanso configuration file
+
+# For a complete introduction, visit the official docs at: https://espanso.org/docs/
+
+# You can use this file to define the global configuration options for espanso.
+# These are the parameters that will be used by default on every application,
+# but you can also override them on a per-application basis.
+
+# To make customization easier, this file contains some of the commonly used
+# parameters. Feel free to uncomment and tune them to fit your needs!
+
+# --- Toggle key
+
+# Customize the key used to disable and enable espanso (when double tapped)
+# Available options: CTRL, SHIFT, ALT, CMD, OFF
+# You can also specify the key variant, such as LEFT_CTRL, RIGHT_SHIFT, etc...
+# toggle_key: ALT
+# You can also disable the toggle key completely with
+# toggle_key: OFF
+
+# --- Injection Backend
+
+# Espanso supports multiple ways of injecting text into applications. Each of
+# them has its quirks, therefore you may want to change it if you are having problems.
+# By default, espanso uses the "Auto" backend which should work well in most cases,
+# but you may want to try the "Clipboard" or "Inject" backend in case of issues.
+# backend: Clipboard
+
+# --- Auto-restart
+
+# Enable/disable the config auto-reload after a file change is detected.
+# auto_restart: false
+
+# --- Clipboard threshold
+
+# Because injecting long texts char-by-char is a slow operation, espanso automatically
+# uses the clipboard if the text is longer than 'clipboard_threshold' characters.
+# clipboard_threshold: 100
+
+# For a list of all the available options, visit the official docs at: https://espanso.org/docs/

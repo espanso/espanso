@@ -1,0 +1,4 @@
+matches:
+  - trigger: "jon"
+    replace: "snow"
+

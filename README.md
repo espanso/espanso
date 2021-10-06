@@ -1,4 +1,4 @@
-![espanso](images/titlebar.png)
+![espanso](images/logo_extended.png)
 
 > A cross-platform Text Expander written in Rust
 
@@ -6,7 +6,6 @@
 ![Language](https://img.shields.io/badge/language-rust-orange)
 ![Platforms](https://img.shields.io/badge/platforms-Windows%2C%20macOS%20and%20Linux-blue)
 ![License](https://img.shields.io/github/license/federico-terzi/espanso)
-[![Build Status](https://dev.azure.com/freddy6896/espanso/_apis/build/status/federico-terzi.espanso?branchName=master)](https://dev.azure.com/freddy6896/espanso/_build/latest?definitionId=1&branchName=master)
 
 ![example](images/example.gif)
 
@@ -30,6 +29,7 @@ ___
 * Works with almost **any program**
 * Works with **Emojis** 😄
 * Works with **Images**
+* Includes a powerful **Search Bar** 🔎
 * **Date** expansion support
 * **Custom scripts** support
 * **Shell commands** support
@@ -38,6 +38,8 @@ ___
 * Expandable with **packages**
 * Built-in **package manager** for [espanso hub](https://hub.espanso.org/)
 * File based configuration
+* Support Regex triggers
+* Experimental Wayland support
 
 ## Get Started
 
@@ -60,20 +62,17 @@ please consider making a small donation, it really helps :)
 
 ## Contributors
 
-Many people helped the project along the way, thanks to all of you. In particular, I want to thank: 
+Many people helped the project along the way, thank you to all of you!
 
-* [Scrumplex](https://scrumplex.net/) - Official AUR repo mantainer and Linux Guru
-* [Luca Antognetti](https://github.com/luca-ant) - Linux and Windows Tester
-* [Matteo Pellegrino](https://www.matteopellegrino.me/) - MacOS Tester
-* [Timo Runge](http://timorunge.com/) - MacOS contributor
-* [NickSeagull](http://nickseagull.github.io/) - Contributor
-* [matt-h](https://github.com/matt-h) - Contributor
+<a href="https://github.com/federico-terzi/espanso/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=federico-terzi/espanso" />
+</a>
 
 ## Remarks
 
 * Thanks to [libxdo](https://github.com/jordansissel/xdotool) and [xclip](https://github.com/astrand/xclip), used to implement the Linux port.
-* Thanks to the ModifyPath
-  script, used by espanso to improve the Windows installer.
+* Thanks to [libxkbcommon](https://xkbcommon.org/) and [wl-clipboard](https://github.com/bugaevc/wl-clipboard), used to implement the Wayland port.
+* Thanks to [wxWidgets](https://www.wxwidgets.org/) for providing a powerful cross-platform GUI library.
 
 ## License
 

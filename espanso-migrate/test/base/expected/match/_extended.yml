@@ -1,0 +1,9 @@
+global_vars:
+  - name: "test"
+    type: "date"
+    params:
+      format: "%H"
+
+matches:
+  - trigger: "extend"
+    replace: "match"
