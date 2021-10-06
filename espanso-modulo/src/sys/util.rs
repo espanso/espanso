@@ -17,8 +17,8 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::os::raw::{c_char};
 use std::ffi::CString;
+use std::os::raw::c_char;
 
 pub fn convert_to_cstring_or_null(str: Option<String>) -> (Option<CString>, *const c_char) {
   let c_string =

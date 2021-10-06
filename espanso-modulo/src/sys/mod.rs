@@ -20,8 +20,8 @@
 pub mod form;
 pub mod search;
 pub mod troubleshooting;
-pub mod wizard;
 pub mod welcome;
+pub mod wizard;
 
 #[allow(non_upper_case_globals)]
 #[allow(dead_code)]

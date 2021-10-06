@@ -23,7 +23,7 @@ use std::path::PathBuf;
 use std::sync::Mutex;
 
 use crate::sys::interop::{ErrorSetMetadata, TroubleshootingMetadata};
-use crate::sys::troubleshooting::interop::{OwnedErrorSet};
+use crate::sys::troubleshooting::interop::OwnedErrorSet;
 use crate::sys::util::convert_to_cstring_or_null;
 use crate::troubleshooting::{TroubleshootingHandlers, TroubleshootingOptions};
 use anyhow::Result;
@@ -39,10 +39,7 @@ mod interop {
   use super::interop::{ErrorMetadata, ErrorSetMetadata};
 
   use super::super::interop::*;
-  use std::{
-    ffi::{CString},
-    os::raw::c_int,
-  };
+  use std::{ffi::CString, os::raw::c_int};
 
   pub(crate) struct OwnedErrorSet {
     file_path: Option<CString>,
@@ -68,8 +65,10 @@ mod interop {
 
   impl From<&ErrorSet> for OwnedErrorSet {
     fn from(error_set: &ErrorSet) -> Self {
-      let file_path = error_set.file.as_ref().map(|file_path| CString::new(file_path.to_string_lossy().to_string())
-        .expect("unable to convert file_path to CString"));
+      let file_path = error_set.file.as_ref().map(|file_path| {
+        CString::new(file_path.to_string_lossy().to_string())
+          .expect("unable to convert file_path to CString")
+      });
 
       let errors: Vec<OwnedErrorMetadata> =
         error_set.errors.iter().map(|item| item.into()).collect();

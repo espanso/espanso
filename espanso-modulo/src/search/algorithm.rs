@@ -97,19 +97,21 @@ fn command_filter(
     let (valid_ids, trimmed_query) = if query.starts_with('>') {
       (
         items
-            .iter()
-            .enumerate()
-            .filter(|(_, item)| item.is_builtin)
-            .map(|(i, _)| i).collect::<HashSet<usize>>(),
+          .iter()
+          .enumerate()
+          .filter(|(_, item)| item.is_builtin)
+          .map(|(i, _)| i)
+          .collect::<HashSet<usize>>(),
         query.trim_start_matches('>'),
       )
     } else {
       (
         items
-            .iter()
-            .enumerate()
-            .filter(|(_, item)| !item.is_builtin)
-            .map(|(i, _)| i).collect::<HashSet<usize>>(),
+          .iter()
+          .enumerate()
+          .filter(|(_, item)| !item.is_builtin)
+          .map(|(i, _)| i)
+          .collect::<HashSet<usize>>(),
         query,
       )
     };
