@@ -287,9 +287,9 @@ mod tests {
       }
       // If the "read" param is present, echo the value of the corresponding result in the scope
       if let Some(Value::String(string)) = params.get("read") {
-          if let Some(ExtensionOutput::Single(value)) = scope.get(string.as_str()) {
-            return ExtensionResult::Success(ExtensionOutput::Single(value.to_string()));
-          }
+        if let Some(ExtensionOutput::Single(value)) = scope.get(string.as_str()) {
+          return ExtensionResult::Success(ExtensionOutput::Single(value.to_string()));
+        }
       }
       if params.get("abort").is_some() {
         return ExtensionResult::Aborted;
@@ -321,7 +321,9 @@ mod tests {
       .map(|(name, value)| Variable {
         name: (*name).to_string(),
         var_type: "mock".to_string(),
-        params: vec![("echo".to_string(), Value::String((*value).to_string()))].into_iter().collect::<Params>(),
+        params: vec![("echo".to_string(), Value::String((*value).to_string()))]
+          .into_iter()
+          .collect::<Params>(),
       })
       .collect();
     Template {
@@ -430,7 +432,9 @@ mod tests {
         Variable {
           name: "local".to_string(),
           var_type: "mock".to_string(),
-          params: vec![("echo".to_string(), Value::String("Bob".to_string()))].into_iter().collect::<Params>(),
+          params: vec![("echo".to_string(), Value::String("Bob".to_string()))]
+            .into_iter()
+            .collect::<Params>(),
         },
         Variable {
           name: "var".to_string(),
@@ -466,7 +470,9 @@ mod tests {
       vars: vec![Variable {
         name: "var".to_string(),
         var_type: "match".to_string(),
-        params: vec![("trigger".to_string(), Value::String("nested".to_string()))].into_iter().collect::<Params>(),
+        params: vec![("trigger".to_string(), Value::String("nested".to_string()))]
+          .into_iter()
+          .collect::<Params>(),
       }],
       ..Default::default()
     };
@@ -494,7 +500,9 @@ mod tests {
       vars: vec![Variable {
         name: "var".to_string(),
         var_type: "match".to_string(),
-        params: vec![("trigger".to_string(), Value::String("nested".to_string()))].into_iter().collect::<Params>(),
+        params: vec![("trigger".to_string(), Value::String("nested".to_string()))]
+          .into_iter()
+          .collect::<Params>(),
       }],
       ..Default::default()
     };
@@ -516,7 +524,9 @@ mod tests {
       vars: vec![Variable {
         name: "var".to_string(),
         var_type: "mock".to_string(),
-        params: vec![("abort".to_string(), Value::Null)].into_iter().collect::<Params>(),
+        params: vec![("abort".to_string(), Value::Null)]
+          .into_iter()
+          .collect::<Params>(),
       }],
       ..Default::default()
     };
@@ -532,7 +542,9 @@ mod tests {
       vars: vec![Variable {
         name: "var".to_string(),
         var_type: "mock".to_string(),
-        params: vec![("error".to_string(), Value::Null)].into_iter().collect::<Params>(),
+        params: vec![("error".to_string(), Value::Null)]
+          .into_iter()
+          .collect::<Params>(),
       }],
       ..Default::default()
     };

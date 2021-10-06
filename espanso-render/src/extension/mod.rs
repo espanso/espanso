@@ -17,11 +17,11 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+pub mod clipboard;
 pub mod date;
 pub mod echo;
 pub mod form;
-pub mod clipboard;
-pub mod shell;
-pub mod script;
 pub mod random;
+pub mod script;
+pub mod shell;
 mod util;

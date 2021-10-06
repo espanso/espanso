@@ -17,8 +17,8 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::collections::HashSet;
 use super::VAR_REGEX;
+use std::collections::HashSet;
 
 pub(crate) fn get_body_variable_names(body: &str) -> HashSet<&str> {
   let mut variables = HashSet::new();

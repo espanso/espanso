@@ -192,13 +192,14 @@ mod tests {
     let extension = get_extension();
 
     let param = vec![(
-        "args".to_string(),
-        Value::Array(vec![
-          Value::String("echo".to_string()),
-          Value::String("hello world".to_string()),
-        ]),
-      )]
-      .into_iter().collect::<Params>();
+      "args".to_string(),
+      Value::Array(vec![
+        Value::String("echo".to_string()),
+        Value::String("hello world".to_string()),
+      ]),
+    )]
+    .into_iter()
+    .collect::<Params>();
     assert_eq!(
       extension
         .calculate(&Default::default(), &Default::default(), &param)
@@ -214,16 +215,17 @@ mod tests {
     let extension = get_extension();
 
     let param = vec![
-        (
-          "args".to_string(),
-          Value::Array(vec![
-            Value::String("echo".to_string()),
-            Value::String("hello world".to_string()),
-          ]),
-        ),
-        ("trim".to_string(), Value::Bool(false)),
-      ]
-      .into_iter().collect::<Params>();
+      (
+        "args".to_string(),
+        Value::Array(vec![
+          Value::String("echo".to_string()),
+          Value::String("hello world".to_string()),
+        ]),
+      ),
+      ("trim".to_string(), Value::Bool(false)),
+    ]
+    .into_iter()
+    .collect::<Params>();
     if cfg!(target_os = "windows") {
       assert_eq!(
         extension
@@ -248,17 +250,16 @@ mod tests {
   fn var_injection() {
     let extension = get_extension();
 
-    let param = vec![
-        (
-          "args".to_string(),
-          Value::Array(vec![
-            Value::String("sh".to_string()),
-            Value::String("-c".to_string()),
-            Value::String("echo $ESPANSO_VAR1".to_string()),
-          ]),
-        ),
-      ]
-      .into_iter().collect::<Params>();
+    let param = vec![(
+      "args".to_string(),
+      Value::Array(vec![
+        Value::String("sh".to_string()),
+        Value::String("-c".to_string()),
+        Value::String("echo $ESPANSO_VAR1".to_string()),
+      ]),
+    )]
+    .into_iter()
+    .collect::<Params>();
     let mut scope = Scope::new();
     scope.insert("var1", ExtensionOutput::Single("hello world".to_string()));
     assert_eq!(
@@ -274,15 +275,12 @@ mod tests {
   fn invalid_command() {
     let extension = get_extension();
 
-    let param = vec![
-        (
-          "args".to_string(),
-          Value::Array(vec![
-            Value::String("nonexistentcommand".to_string()),
-          ]),
-        ),
-      ]
-      .into_iter().collect::<Params>();
+    let param = vec![(
+      "args".to_string(),
+      Value::Array(vec![Value::String("nonexistentcommand".to_string())]),
+    )]
+    .into_iter()
+    .collect::<Params>();
     assert!(matches!(
       extension.calculate(&Default::default(), &Default::default(), &param),
       ExtensionResult::Error(_)
@@ -293,18 +291,17 @@ mod tests {
   #[cfg(not(target_os = "windows"))]
   fn exit_error() {
     let extension = get_extension();
-    
-    let param = vec![
-        (
-          "args".to_string(),
-          Value::Array(vec![
-            Value::String("sh".to_string()),
-            Value::String("-c".to_string()),
-            Value::String("exit 1".to_string()),
-          ]),
-        ),
-      ]
-      .into_iter().collect::<Params>();
+
+    let param = vec![(
+      "args".to_string(),
+      Value::Array(vec![
+        Value::String("sh".to_string()),
+        Value::String("-c".to_string()),
+        Value::String("exit 1".to_string()),
+      ]),
+    )]
+    .into_iter()
+    .collect::<Params>();
     assert!(matches!(
       extension.calculate(&Default::default(), &Default::default(), &param),
       ExtensionResult::Error(_)
@@ -315,19 +312,20 @@ mod tests {
   #[cfg(not(target_os = "windows"))]
   fn ignore_error() {
     let extension = get_extension();
-    
+
     let param = vec![
-        (
-          "args".to_string(),
-          Value::Array(vec![
-            Value::String("sh".to_string()),
-            Value::String("-c".to_string()),
-            Value::String("exit 1".to_string()),
-          ]),
-        ),
-        ("ignore_error".to_string(), Value::Bool(true)),
-      ]
-      .into_iter().collect::<Params>();
+      (
+        "args".to_string(),
+        Value::Array(vec![
+          Value::String("sh".to_string()),
+          Value::String("-c".to_string()),
+          Value::String("exit 1".to_string()),
+        ]),
+      ),
+      ("ignore_error".to_string(), Value::Bool(true)),
+    ]
+    .into_iter()
+    .collect::<Params>();
     assert_eq!(
       extension
         .calculate(&Default::default(), &Default::default(), &param)
