@@ -44,9 +44,7 @@ mod tests {
   pub fn use_test_directory(callback: impl FnOnce(&Path)) {
     let dir = TempDir::new("kvstempconfig").unwrap();
 
-    callback(
-      dir.path(),
-    );
+    callback(dir.path());
   }
 
   #[test]
