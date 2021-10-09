@@ -1,0 +1,25 @@
+[package]
+name = "espanso-config"
+version = "0.1.0"
+authors = ["Federico Terzi <federico-terzi@users.noreply.github.com>"]
+edition = "2018"
+
+[dependencies]
+log = "0.4.14"
+anyhow = "1.0.38"
+thiserror = "1.0.23"
+serde = { version = "1.0.123", features = ["derive"] }
+serde_yaml = "0.8.17"
+glob = "0.3.0"
+regex = "1.4.3"
+lazy_static = "1.4.0"
+dunce = "1.0.1"
+walkdir = "2.3.1"
+enum-as-inner = "0.3.3"
+ordered-float = "2.0"
+indoc = "1.0.3"
+
+[dev-dependencies]
+tempdir = "0.3.7"
+tempfile = "3.2.0"
+mockall = "0.9.1"

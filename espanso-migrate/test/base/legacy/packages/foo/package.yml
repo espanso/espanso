@@ -1,0 +1,6 @@
+name: foo
+parent: default
+
+matches:
+  - trigger: "package_foo"
+    replace: "package_bar"

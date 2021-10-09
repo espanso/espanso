@@ -1,0 +1,1 @@
+display alert "Secure input successfully disabled!" buttons {"Great!"}

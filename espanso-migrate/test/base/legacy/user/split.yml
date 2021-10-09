@@ -1,0 +1,5 @@
+parent: default
+
+matches:
+  - trigger: "jon"
+    replace: "snow"
