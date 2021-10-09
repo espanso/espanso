@@ -17,7 +17,7 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use super::{CliModule, CliModuleArgs};
+use super::{CliModule, CliModuleArgs, PathsOverrides};
 use crate::{
   error_eprintln,
   exit_code::{
@@ -92,18 +92,18 @@ fn service_main(args: CliModuleArgs) -> i32 {
       return SERVICE_NOT_REGISTERED;
     }
   } else if let Some(sub_args) = cli_args.subcommand_matches("start") {
-    return start_main(&paths, sub_args);
+    return start_main(&paths, &paths_overrides, sub_args);
   } else if cli_args.subcommand_matches("stop").is_some() {
     return stop_main(&paths);
   } else if let Some(sub_args) = cli_args.subcommand_matches("restart") {
     stop_main(&paths);
-    return start_main(&paths, sub_args);
+    return start_main(&paths, &paths_overrides, sub_args);
   }
 
   SERVICE_SUCCESS
 }
 
-fn start_main(paths: &Paths, args: &ArgMatches) -> i32 {
+fn start_main(paths: &Paths, _paths_overrides: &PathsOverrides, args: &ArgMatches) -> i32 {
   let lock_file = acquire_worker_lock(&paths.runtime);
   if lock_file.is_none() {
     error_eprintln!("espanso is already running!");
@@ -115,7 +115,7 @@ fn start_main(paths: &Paths, args: &ArgMatches) -> i32 {
     // Unmanaged service
     #[cfg(unix)]
     {
-      if let Err(err) = fork_daemon(&paths_overrides) {
+      if let Err(err) = fork_daemon(&_paths_overrides) {
         error_eprintln!("unable to start service (unmanaged): {}", err);
         return SERVICE_FAILURE;
       }
