@@ -94,6 +94,24 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
       },
     });
 
+  let is_auto_start_page_enabled = !preferences.has_selected_auto_start_option();
+  let preferences_clone = preferences.clone();
+  let auto_start_handler = Box::new(move |auto_start| {
+    preferences_clone.set_has_selected_auto_start_option(true);
+
+    if auto_start {
+      match util::configure_auto_start(true) {
+        Ok(_) => true,
+        Err(error) => {
+          eprintln!("Service register returned error: {}", error);
+          false
+        }
+      }
+    } else {
+      true
+    }
+  });
+
   let is_add_path_page_enabled =
     if cfg!(not(target_os = "linux")) && !preferences.has_completed_wizard() {
       if cfg!(target_os = "macos") {
@@ -133,6 +151,7 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
     || is_move_bundle_page_enabled
     || is_legacy_version_page_enabled
     || is_migrate_page_enabled
+    || is_auto_start_page_enabled
     || is_add_path_page_enabled
     || is_accessibility_page_enabled
     || is_wrong_edition_page_enabled
@@ -144,6 +163,7 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
       is_legacy_version_page_enabled,
       is_wrong_edition_page_enabled,
       is_migrate_page_enabled,
+      is_auto_start_page_enabled,
       is_add_path_page_enabled,
       is_accessibility_page_enabled,
       window_icon_path: icon_paths
@@ -162,6 +182,7 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
       handlers: WizardHandlers {
         is_legacy_version_running: Some(is_legacy_version_running_handler),
         backup_and_migrate: Some(backup_and_migrate_handler),
+        auto_start: Some(auto_start_handler),
         add_to_path: Some(add_to_path_handler),
         enable_accessibility: Some(enable_accessibility_handler),
         is_accessibility_enabled: Some(is_accessibility_enabled_handler),

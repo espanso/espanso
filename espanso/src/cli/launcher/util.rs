@@ -19,13 +19,14 @@
 
 use std::{path::Path, process::Command};
 
-use anyhow::Result;
+use anyhow::{bail, Result};
 use espanso_path::Paths;
 use thiserror::Error;
 
 use crate::{
   exit_code::{MIGRATE_CLEAN_FAILURE, MIGRATE_DIRTY_FAILURE},
   lock::acquire_legacy_lock,
+  util::set_command_flags,
 };
 
 pub fn is_legacy_version_running(runtime_path: &Path) -> bool {
@@ -105,4 +106,27 @@ pub fn show_already_running_warning() -> Result<()> {
   let mut child = command.spawn()?;
   child.wait()?;
   Ok(())
+}
+
+pub fn configure_auto_start(auto_start: bool) -> Result<()> {
+  let espanso_exe_path = std::env::current_exe()?;
+  let mut command = Command::new(&espanso_exe_path.to_string_lossy().to_string());
+  let mut args = vec!["service"];
+  if auto_start {
+    args.push("register");
+  } else {
+    args.push("unregister");
+  }
+
+  command.args(&args);
+  set_command_flags(&mut command);
+
+  let mut child = command.spawn()?;
+  let result = child.wait()?;
+
+  if result.success() {
+    Ok(())
+  } else {
+    bail!("service registration returned non-zero exit code");
+  }
 }

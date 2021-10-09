@@ -24,6 +24,7 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use thiserror::Error;
 
+use crate::util::set_command_flags;
 use crate::{error_eprintln, warn_eprintln};
 
 pub fn register() -> Result<()> {
@@ -145,13 +146,15 @@ fn create_shortcut_target_file(
   target_path: &Path,
   arguments: &str,
 ) -> Result<()> {
-  let output = Command::new("powershell")
-            .arg("-c")
-            .arg("$WshShell = New-Object -comObject WScript.Shell; $Shortcut = $WshShell.CreateShortcut($env:SHORTCUT_PATH); $Shortcut.TargetPath = $env:TARGET_PATH; $Shortcut.Arguments = $env:TARGET_ARGS; $Shortcut.Save()")
-            .env("SHORTCUT_PATH", shortcut_path.to_string_lossy().to_string())
-            .env("TARGET_PATH", target_path.to_string_lossy().to_string())
-            .env("TARGET_ARGS", arguments)
-            .output()?;
+  let mut command = Command::new("powershell");
+  command.arg("-c");
+  command.arg("$WshShell = New-Object -comObject WScript.Shell; $Shortcut = $WshShell.CreateShortcut($env:SHORTCUT_PATH); $Shortcut.TargetPath = $env:TARGET_PATH; $Shortcut.Arguments = $env:TARGET_ARGS; $Shortcut.Save()");
+  command.env("SHORTCUT_PATH", shortcut_path.to_string_lossy().to_string());
+  command.env("TARGET_PATH", target_path.to_string_lossy().to_string());
+  command.env("TARGET_ARGS", arguments);
+
+  set_command_flags(&mut command);
+  let output = command.output()?;
 
   if !output.status.success() {
     return Err(ShortcutError::PowershellNonZeroExitCode.into());
