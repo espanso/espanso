@@ -28,6 +28,7 @@ const HAS_COMPLETED_WIZARD_KEY: &str = "has_completed_wizard";
 const HAS_DISPLAYED_WELCOME_KEY: &str = "has_displayed_welcome";
 const SHOULD_DISPLAY_TROUBLESHOOT_FOR_NON_FATAL_ERRORS: &str =
   "should_display_troubleshoot_for_non_fatal_errors";
+const HAS_SELECTED_AUTO_START_OPTION: &str = "has_selected_auto_start_option";
 
 #[derive(Clone)]
 pub struct DefaultPreferences<KVSType: KVS> {
@@ -79,5 +80,13 @@ impl<KVSType: KVS> Preferences for DefaultPreferences<KVSType> {
 
   fn set_should_display_troubleshoot_for_non_fatal_errors(&self, value: bool) {
     self.set(SHOULD_DISPLAY_TROUBLESHOOT_FOR_NON_FATAL_ERRORS, value);
+  }
+
+  fn has_selected_auto_start_option(&self) -> bool {
+    self.get(HAS_SELECTED_AUTO_START_OPTION).unwrap_or(false)
+  }
+
+  fn set_has_selected_auto_start_option(&self, value: bool) {
+    self.set(HAS_SELECTED_AUTO_START_OPTION, value);
   }
 }
