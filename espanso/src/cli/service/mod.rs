@@ -115,7 +115,7 @@ fn start_main(paths: &Paths, _paths_overrides: &PathsOverrides, args: &ArgMatche
     // Unmanaged service
     #[cfg(unix)]
     {
-      if let Err(err) = fork_daemon(&_paths_overrides) {
+      if let Err(err) = fork_daemon(_paths_overrides) {
         error_eprintln!("unable to start service (unmanaged): {}", err);
         return SERVICE_FAILURE;
       }
