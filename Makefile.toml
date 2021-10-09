@@ -1,0 +1,105 @@
+[config]
+default_to_workspace = false
+
+[env]
+DEBUG = true 
+RELEASE = false
+NO_X11 = false
+NO_MODULO = false
+EXEC_PATH = "target/debug/espanso"
+BUILD_ARCH = "current"
+
+[env.release]
+DEBUG = false
+RELEASE = true
+EXEC_PATH = "target/release/espanso"
+
+# Build variants
+
+# This one was written in Rust instead of bash because it has to run on Windows as well
+[tasks.build-binary]
+script_runner = "@rust"
+script = { file = "scripts/build_binary.rs" }
+
+[tasks.run-binary]
+command = "${EXEC_PATH}"
+args = ["${@}"]
+dependencies = ["build-binary"]
+
+[tasks.test-binary]
+script_runner = "@rust"
+script = { file = "scripts/test_binary.rs" }
+
+# Windows
+
+[tasks.build-windows-resources]
+script_runner = "@rust"
+script = { file = "scripts/build_windows_resources.rs" }
+dependencies = ["build-binary"]
+
+[tasks.build-windows-portable]
+script_runner = "@rust"
+script = { file = "scripts/build_windows_portable.rs" }
+dependencies = ["build-windows-resources"]
+
+[tasks.build-windows-installer]
+script_runner = "@rust"
+script = { file = "scripts/build_windows_installer.rs" }
+dependencies = ["build-windows-resources"]
+
+[tasks.build-windows-all]
+dependencies = ["build-windows-portable", "build-windows-installer"]
+
+# macOS
+
+[tasks.build-macos-arm-binary]
+env = { "BUILD_ARCH" = "aarch64-apple-darwin" }
+run_task = [
+  { name = "build-binary" }
+]
+
+[tasks.build-macos-x86-binary]
+env = { "BUILD_ARCH" = "x86_64-apple-darwin" }
+run_task = [
+  { name = "build-binary" }
+]
+
+[tasks.build-universal-binary]
+script = { file = "scripts/join_universal_binary.sh"}
+dependencies=["build-macos-arm-binary", "build-macos-x86-binary"]
+
+[tasks.create-bundle]
+script = { file = "scripts/create_bundle.sh" }
+dependencies=["build-binary"]
+
+[tasks.create-universal-bundle]
+env = { "EXEC_PATH" = "target/universal/espanso" }
+script = { file = "scripts/create_bundle.sh" }
+dependencies=["build-universal-binary"]
+
+[tasks.run-bundle]
+command="target/mac/Espanso.app/Contents/MacOS/espanso"
+args=["${@}"]
+dependencies=["create-bundle"]
+
+# Linux
+
+[tasks.create-app-image]
+script = { file = "scripts/create_app_image.sh" }
+dependencies=["build-binary"]
+
+[tasks.run-app-image]
+args=["${@}"]
+script='''
+#!/usr/bin/env bash
+set -e
+echo Launching AppImage with args: "$@"
+./target/linux/AppImage/out/Espanso-*.AppImage "$@"
+'''
+dependencies=["create-app-image"]
+
+# Test runs
+
+[tasks.test-output]
+command = "cargo"
+args = ["test", "--workspace", "--exclude", "espanso-modulo", "--exclude", "espanso-ipc", "--no-default-features", "--", "--nocapture"]

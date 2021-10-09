@@ -1,0 +1,6 @@
+matches:
+  - name: ":hi"
+    trigger: "Hello"
+  
+  - name: ":greet"
+    trigger: "Hi {{name}}"
