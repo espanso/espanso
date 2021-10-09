@@ -69,6 +69,12 @@ class WizardFrame : public wxFrame
 		wxHyperlinkCtrl* migrate_link;
 		wxButton* migrate_compatibility_mode_button;
 		wxButton* migrate_backup_and_migrate_button;
+		wxPanel* auto_start_panel;
+		wxStaticText* auto_start_title;
+		wxStaticText* auto_start_description;
+		wxCheckBox* auto_start_checkbox;
+		wxStaticText* auto_start_note;
+		wxButton* auto_start_continue;
 		wxPanel* add_path_panel;
 		wxStaticText* add_path_title;
 		wxStaticText* add_path_description;
@@ -92,6 +98,7 @@ class WizardFrame : public wxFrame
 		virtual void quit_espanso_clicked( wxCommandEvent& event ) { event.Skip(); }
 		virtual void migrate_compatibility_mode_clicked( wxCommandEvent& event ) { event.Skip(); }
 		virtual void migrate_button_clicked( wxCommandEvent& event ) { event.Skip(); }
+		virtual void auto_start_continue_clicked( wxCommandEvent& event ) { event.Skip(); }
 		virtual void add_path_continue_clicked( wxCommandEvent& event ) { event.Skip(); }
 		virtual void accessibility_enable_clicked( wxCommandEvent& event ) { event.Skip(); }
 

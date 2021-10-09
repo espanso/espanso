@@ -219,6 +219,46 @@ WizardFrame::WizardFrame( wxWindow* parent, wxWindowID id, const wxString& title
 	migrate_panel->Layout();
 	bSizer211->Fit( migrate_panel );
 	m_simplebook->AddPage( migrate_panel, wxT("a page"), false );
+	auto_start_panel = new wxPanel( m_simplebook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	auto_start_panel->SetBackgroundColour( wxSystemSettings::GetColour( wxSYS_COLOUR_WINDOW ) );
+
+	wxBoxSizer* bSizer2122;
+	bSizer2122 = new wxBoxSizer( wxVERTICAL );
+
+	auto_start_title = new wxStaticText( auto_start_panel, wxID_ANY, wxT("Launch on System startup"), wxDefaultPosition, wxDefaultSize, 0 );
+	auto_start_title->Wrap( -1 );
+	auto_start_title->SetFont( wxFont( 18, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD, false, wxEmptyString ) );
+
+	bSizer2122->Add( auto_start_title, 0, wxALIGN_CENTER_HORIZONTAL|wxALIGN_LEFT|wxTOP, 20 );
+
+
+	bSizer2122->Add( 0, 20, 0, 0, 5 );
+
+	auto_start_description = new wxStaticText( auto_start_panel, wxID_ANY, wxT("Espanso can be launched automatically when you start your PC. \n\nDo you want to proceed?"), wxDefaultPosition, wxDefaultSize, 0 );
+	auto_start_description->Wrap( 500 );
+	bSizer2122->Add( auto_start_description, 0, wxLEFT|wxRIGHT|wxTOP, 10 );
+
+	auto_start_checkbox = new wxCheckBox( auto_start_panel, wxID_ANY, wxT("Yes, launch Espanso on system startup (recommended)"), wxDefaultPosition, wxDefaultSize, 0 );
+	auto_start_checkbox->SetValue(true);
+	bSizer2122->Add( auto_start_checkbox, 0, wxALL, 20 );
+
+	auto_start_note = new wxStaticText( auto_start_panel, wxID_ANY, wxT("Note: you can always disable this option later."), wxDefaultPosition, wxDefaultSize, 0 );
+	auto_start_note->Wrap( 500 );
+	bSizer2122->Add( auto_start_note, 0, wxALL, 10 );
+
+
+	bSizer2122->Add( 0, 0, 1, wxEXPAND, 5 );
+
+	auto_start_continue = new wxButton( auto_start_panel, wxID_ANY, wxT("Continue"), wxDefaultPosition, wxDefaultSize, 0 );
+
+	auto_start_continue->SetDefault();
+	bSizer2122->Add( auto_start_continue, 0, wxALIGN_RIGHT|wxALL, 10 );
+
+
+	auto_start_panel->SetSizer( bSizer2122 );
+	auto_start_panel->Layout();
+	bSizer2122->Fit( auto_start_panel );
+	m_simplebook->AddPage( auto_start_panel, wxT("a page"), false );
 	add_path_panel = new wxPanel( m_simplebook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
 	add_path_panel->SetBackgroundColour( wxSystemSettings::GetColour( wxSYS_COLOUR_WINDOW ) );
 
@@ -326,6 +366,7 @@ WizardFrame::WizardFrame( wxWindow* parent, wxWindowID id, const wxString& title
 	wrong_edition_button->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( WizardFrame::quit_espanso_clicked ), NULL, this );
 	migrate_compatibility_mode_button->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( WizardFrame::migrate_compatibility_mode_clicked ), NULL, this );
 	migrate_backup_and_migrate_button->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( WizardFrame::migrate_button_clicked ), NULL, this );
+	auto_start_continue->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( WizardFrame::auto_start_continue_clicked ), NULL, this );
 	add_path_continue_button->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( WizardFrame::add_path_continue_clicked ), NULL, this );
 	accessibility_enable_button->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( WizardFrame::accessibility_enable_clicked ), NULL, this );
 }
@@ -340,6 +381,7 @@ WizardFrame::~WizardFrame()
 	wrong_edition_button->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( WizardFrame::quit_espanso_clicked ), NULL, this );
 	migrate_compatibility_mode_button->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( WizardFrame::migrate_compatibility_mode_clicked ), NULL, this );
 	migrate_backup_and_migrate_button->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( WizardFrame::migrate_button_clicked ), NULL, this );
+	auto_start_continue->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( WizardFrame::auto_start_continue_clicked ), NULL, this );
 	add_path_continue_button->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( WizardFrame::add_path_continue_clicked ), NULL, this );
 	accessibility_enable_button->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( WizardFrame::accessibility_enable_clicked ), NULL, this );
 
