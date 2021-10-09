@@ -30,6 +30,8 @@ use crate::{
 
 #[cfg(target_os = "macos")]
 mod macos;
+use clap::ArgMatches;
+use espanso_path::Paths;
 #[cfg(target_os = "macos")]
 use macos::*;
 
@@ -90,47 +92,62 @@ fn service_main(args: CliModuleArgs) -> i32 {
       return SERVICE_NOT_REGISTERED;
     }
   } else if let Some(sub_args) = cli_args.subcommand_matches("start") {
-    let lock_file = acquire_worker_lock(&paths.runtime);
-    if lock_file.is_none() {
-      error_eprintln!("espanso is already running!");
-      return SERVICE_ALREADY_RUNNING;
-    }
-    drop(lock_file);
-
-    if sub_args.is_present("unmanaged") && !cfg!(target_os = "windows") {
-      // Unmanaged service
-      #[cfg(unix)]
-      {
-        if let Err(err) = fork_daemon(&paths_overrides) {
-          error_eprintln!("unable to start service (unmanaged): {}", err);
-          return SERVICE_FAILURE;
-        }
-      }
-      #[cfg(windows)]
-      {
-        unreachable!();
-      }
-    } else {
-      // Managed service
-      if let Err(err) = start_service() {
-        error_eprintln!("unable to start service: {}", err);
-        return SERVICE_FAILURE;
-      } else {
-        info_println!("espanso started correctly!");
-      }
-    }
+    return start_main(&paths, sub_args);
   } else if cli_args.subcommand_matches("stop").is_some() {
-    let lock_file = acquire_worker_lock(&paths.runtime);
-    if lock_file.is_some() {
-      error_eprintln!("espanso is not running!");
-      return SERVICE_NOT_RUNNING;
-    }
-    drop(lock_file);
+    return stop_main(&paths);
+  } else if let Some(sub_args) = cli_args.subcommand_matches("restart") {
+    stop_main(&paths);
+    return start_main(&paths, sub_args);
+  }
 
-    if let Err(err) = stop::terminate_worker(&paths.runtime) {
-      error_eprintln!("unable to stop espanso: {}", err);
-      return SERVICE_FAILURE;
+  SERVICE_SUCCESS
+}
+
+fn start_main(paths: &Paths, args: &ArgMatches) -> i32 {
+  let lock_file = acquire_worker_lock(&paths.runtime);
+  if lock_file.is_none() {
+    error_eprintln!("espanso is already running!");
+    return SERVICE_ALREADY_RUNNING;
+  }
+  drop(lock_file);
+
+  if args.is_present("unmanaged") && !cfg!(target_os = "windows") {
+    // Unmanaged service
+    #[cfg(unix)]
+    {
+      if let Err(err) = fork_daemon(&paths_overrides) {
+        error_eprintln!("unable to start service (unmanaged): {}", err);
+        return SERVICE_FAILURE;
+      }
     }
+    #[cfg(windows)]
+    {
+      unreachable!();
+    }
+  } else {
+    // Managed service
+    if let Err(err) = start_service() {
+      error_eprintln!("unable to start service: {}", err);
+      return SERVICE_FAILURE;
+    } else {
+      info_println!("espanso started correctly!");
+    }
+  }
+
+  SERVICE_SUCCESS
+}
+
+fn stop_main(paths: &Paths) -> i32 {
+  let lock_file = acquire_worker_lock(&paths.runtime);
+  if lock_file.is_some() {
+    error_eprintln!("espanso is not running!");
+    return SERVICE_NOT_RUNNING;
+  }
+  drop(lock_file);
+
+  if let Err(err) = stop::terminate_worker(&paths.runtime) {
+    error_eprintln!("unable to stop espanso: {}", err);
+    return SERVICE_FAILURE;
   }
 
   SERVICE_SUCCESS
