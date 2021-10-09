@@ -81,6 +81,22 @@ pub fn show(options: WizardOptions) -> bool {
     }
   }
 
+  extern "C" fn auto_start(auto_start: c_int) -> c_int {
+    let lock = HANDLERS
+      .lock()
+      .expect("unable to acquire lock in auto_start method");
+    let handlers_ref = (*lock).as_ref().expect("unable to unwrap handlers");
+    if let Some(handler_ref) = handlers_ref.auto_start.as_ref() {
+      if (*handler_ref)(auto_start != 0) {
+        1
+      } else {
+        0
+      }
+    } else {
+      -1
+    }
+  }
+
   extern "C" fn add_to_path() -> c_int {
     let lock = HANDLERS
       .lock()
@@ -169,6 +185,11 @@ pub fn show(options: WizardOptions) -> bool {
     } else {
       0
     },
+    is_auto_start_page_enabled: if options.is_auto_start_page_enabled {
+      1
+    } else {
+      0
+    },
     is_add_path_page_enabled: if options.is_add_path_page_enabled {
       1
     } else {
@@ -192,6 +213,7 @@ pub fn show(options: WizardOptions) -> bool {
 
     is_legacy_version_running,
     backup_and_migrate,
+    auto_start,
     add_to_path,
     enable_accessibility,
     is_accessibility_enabled,

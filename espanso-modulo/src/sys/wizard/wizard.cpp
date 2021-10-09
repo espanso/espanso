@@ -32,7 +32,8 @@ const int MOVE_BUNDLE_PAGE_INDEX = WELCOME_PAGE_INDEX + 1;
 const int LEGACY_VERSION_PAGE_INDEX = MOVE_BUNDLE_PAGE_INDEX + 1;
 const int WRONG_EDITION_PAGE_INDEX = LEGACY_VERSION_PAGE_INDEX + 1;
 const int MIGRATE_PAGE_INDEX = WRONG_EDITION_PAGE_INDEX + 1;
-const int ADD_PATH_PAGE_INDEX = MIGRATE_PAGE_INDEX + 1;
+const int AUTO_START_PAGE_INDEX = MIGRATE_PAGE_INDEX + 1;
+const int ADD_PATH_PAGE_INDEX = AUTO_START_PAGE_INDEX + 1;
 const int ACCESSIBILITY_PAGE_INDEX = ADD_PATH_PAGE_INDEX + 1;
 const int MAX_PAGE_INDEX = ACCESSIBILITY_PAGE_INDEX + 1; // Update if a new page is added at the end
 
@@ -82,6 +83,11 @@ int find_next_page(int current_index)
     {
       return MIGRATE_PAGE_INDEX;
     }
+  case AUTO_START_PAGE_INDEX:
+    if (wizard_metadata->is_auto_start_page_enabled)
+    {
+      return AUTO_START_PAGE_INDEX;
+    }
   case ADD_PATH_PAGE_INDEX:
     if (wizard_metadata->is_add_path_page_enabled)
     {
@@ -105,6 +111,7 @@ protected:
   void welcome_start_clicked(wxCommandEvent &event);
   void migrate_button_clicked(wxCommandEvent &event);
   void migrate_compatibility_mode_clicked(wxCommandEvent &event);
+	void auto_start_continue_clicked( wxCommandEvent& event );
 	void add_path_continue_clicked( wxCommandEvent& event );
 	void accessibility_enable_clicked( wxCommandEvent& event );
 	void quit_espanso_clicked( wxCommandEvent& event );
@@ -218,6 +225,45 @@ void DerivedFrame::migrate_button_clicked(wxCommandEvent &event)
   }
 }
 
+void DerivedFrame::auto_start_continue_clicked( wxCommandEvent& event ) {
+  if (!auto_start_checkbox->IsChecked()) {
+    if (wizard_metadata->auto_start)
+    {
+      wizard_metadata->auto_start(0);
+    }
+    this->navigate_to_next_page_or_close();
+    return;
+  } 
+
+  if (wizard_metadata->auto_start)
+  {
+    while (true) {
+      int result = wizard_metadata->auto_start(1);
+      if (result == 1)
+      {
+        this->navigate_to_next_page_or_close();
+        return;
+      }
+      else 
+      {
+        wxMessageDialog* dialog = new wxMessageDialog(this,
+          "An error occurred while registering Espanso as a service, please check the logs for more information.\nDo you want to retry? You can always configure this option later",
+          "Operation failed",
+          wxCENTER | wxOK_DEFAULT | wxOK | wxCANCEL |
+          wxICON_EXCLAMATION);
+
+        dialog->SetOKLabel("Retry");
+
+        int prompt_result = dialog->ShowModal(); 
+        if (prompt_result == wxID_CANCEL) {
+          this->navigate_to_next_page_or_close();
+          break;
+        }
+      }
+    }
+  }
+}
+
 void DerivedFrame::add_path_continue_clicked( wxCommandEvent& event ) {
   if (!add_path_checkbox->IsChecked()) {
     this->navigate_to_next_page_or_close();
@@ -252,6 +298,7 @@ void DerivedFrame::add_path_continue_clicked( wxCommandEvent& event ) {
     }
   }
 }
+
 
 void DerivedFrame::accessibility_enable_clicked( wxCommandEvent& event )
 {

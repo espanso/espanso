@@ -109,6 +109,7 @@ typedef struct WizardMetadata {
   const int is_legacy_version_page_enabled; 
   const int is_wrong_edition_page_enabled; 
   const int is_migrate_page_enabled; 
+  const int is_auto_start_page_enabled; 
   const int is_add_path_page_enabled; 
   const int is_accessibility_page_enabled; 
 
@@ -121,6 +122,7 @@ typedef struct WizardMetadata {
   // METHODS
   int (*is_legacy_version_running)();
   int (*backup_and_migrate)();
+  int (*auto_start)(int);
   int (*add_to_path)();
   int (*enable_accessibility)();
   int (*is_accessibility_enabled)();

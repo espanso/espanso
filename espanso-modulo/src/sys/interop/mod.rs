@@ -127,6 +127,7 @@ pub struct WizardMetadata {
   pub is_legacy_version_page_enabled: c_int,
   pub is_wrong_edition_page_enabled: c_int,
   pub is_migrate_page_enabled: c_int,
+  pub is_auto_start_page_enabled: c_int,
   pub is_add_path_page_enabled: c_int,
   pub is_accessibility_page_enabled: c_int,
 
@@ -138,6 +139,7 @@ pub struct WizardMetadata {
 
   pub is_legacy_version_running: extern "C" fn() -> c_int,
   pub backup_and_migrate: extern "C" fn() -> c_int,
+  pub auto_start: extern "C" fn(auto_start: c_int) -> c_int,
   pub add_to_path: extern "C" fn() -> c_int,
   pub enable_accessibility: extern "C" fn() -> c_int,
   pub is_accessibility_enabled: extern "C" fn() -> c_int,
