@@ -24,6 +24,7 @@ use espanso_config::{config::ConfigStore, error::NonFatalErrorSet, matches::stor
 use espanso_path::Paths;
 
 pub mod daemon;
+pub mod edit;
 pub mod env_path;
 pub mod launcher;
 pub mod log;

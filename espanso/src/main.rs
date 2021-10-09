@@ -60,6 +60,7 @@ const LOG_FILE_NAME: &str = "espanso.log";
 lazy_static! {
   static ref CLI_HANDLERS: Vec<CliModule> = vec![
     cli::path::new(),
+    cli::edit::new(),
     cli::launcher::new(),
     cli::log::new(),
     cli::worker::new(),
@@ -215,17 +216,20 @@ fn main() {
     //     .subcommand(SubCommand::with_name("toggle")
     //         .about("Toggle the status of the espanso replacement engine."))
     // )
-    // .subcommand(SubCommand::with_name("edit")
-    //     .about("Open the default text editor to edit config files and reload them automatically when exiting")
-    //     .arg(Arg::with_name("config")
-    //         .help("Defaults to \"default\". The configuration file name to edit (without the .yml extension)."))
-    //     .arg(Arg::with_name("norestart")
-    //         .short("n")
-    //         .long("norestart")
-    //         .required(false)
-    //         .takes_value(false)
-    //         .help("Avoid restarting espanso after editing the file"))
-    // )
+    .subcommand(SubCommand::with_name("edit")
+        .about("Shortcut to open the default text editor to edit config files")
+        .arg(Arg::with_name("target_file")
+            .help(r#"Defaults to "match/base.yml", it contains the relative path of the file you want to edit, 
+such as 'config/default.yml' or 'match/base.yml'. 
+For convenience, you can also specify the name directly and Espanso will figure out the path. 
+For example, specifying 'email' is equivalent to 'match/email.yml'."#))
+        // .arg(Arg::with_name("norestart")
+        //     .short("n")
+        //     .long("norestart")
+        //     .required(false)
+        //     .takes_value(false)
+        //     .help("Avoid restarting espanso after editing the file"))
+    )
     // .subcommand(SubCommand::with_name("detect")
     //     .about("Tool to detect current window properties, to simplify filters creation."))
     .subcommand(
