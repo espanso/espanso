@@ -50,6 +50,7 @@ fn get_builtin_patches() -> Vec<PatchDefinition> {
     patches::linux::simple_terminal_2_x11::patch(),
     patches::linux::terminator_terminal_x11::patch(),
     patches::linux::termite_terminal_x11::patch(),
+    patches::linux::thunderbird_x11::patch(),
     patches::linux::tilix_terminal_x11::patch(),
     patches::linux::urxvt_terminal_x11::patch(),
     patches::linux::xterm_terminal_x11::patch(),
