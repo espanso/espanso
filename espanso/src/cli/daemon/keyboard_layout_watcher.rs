@@ -19,7 +19,7 @@
 
 use anyhow::Result;
 use crossbeam::channel::Sender;
-use log::{debug, error};
+use log::{debug, error, warn};
 
 const WATCHER_INTERVAL: u64 = 1000;
 
@@ -39,34 +39,28 @@ pub fn initialize_and_spawn(watcher_notify: Sender<()>) -> Result<()> {
 }
 
 fn watcher_main(watcher_notify: &Sender<()>) {
-  let layout = espanso_detect::get_active_layout();
+  let mut layout = espanso_detect::get_active_layout();
 
   if layout.is_none() {
-    error!("unable to start keyboard layout watcher, as espanso couldn't determine active layout.");
-    return;
+    warn!("keyboard layout watcher couldn't determine active layout.")
   }
-
-  let mut layout = layout.expect("missing active layout");
 
   loop {
     std::thread::sleep(std::time::Duration::from_millis(WATCHER_INTERVAL));
 
-    if let Some(current_layout) = espanso_detect::get_active_layout() {
-      if current_layout != layout {
-        debug!(
-          "detected keyboard layout change: from {} to {}",
-          layout, current_layout
-        );
+    let current_layout = espanso_detect::get_active_layout();
+    if current_layout != layout {
+      debug!(
+        "detected keyboard layout change: from '{}' to '{}'",
+        layout.as_deref().unwrap_or_default(),
+        current_layout.as_deref().unwrap_or_default(),
+      );
 
-        if let Err(error) = watcher_notify.send(()) {
-          error!("unable to send keyboard layout changed event: {}", error);
-        }
-
-        layout = current_layout;
+      if let Err(error) = watcher_notify.send(()) {
+        error!("unable to send keyboard layout changed event: {}", error);
       }
-    } else {
-      error!("keyboard layout watcher couldn't determine active layout");
-      break;
+
+      layout = current_layout;
     }
   }
 }
