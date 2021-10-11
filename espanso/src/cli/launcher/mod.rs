@@ -94,7 +94,8 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
       },
     });
 
-  let is_auto_start_page_enabled = !preferences.has_selected_auto_start_option();
+  let is_auto_start_page_enabled =
+    !preferences.has_selected_auto_start_option() && !cfg!(target_os = "linux");
   let preferences_clone = preferences.clone();
   let auto_start_handler = Box::new(move |auto_start| {
     preferences_clone.set_has_selected_auto_start_option(true);

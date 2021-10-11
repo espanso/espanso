@@ -27,6 +27,7 @@ pub mod simple_terminal_2_x11;
 pub mod simple_terminal_x11;
 pub mod terminator_terminal_x11;
 pub mod termite_terminal_x11;
+pub mod thunderbird_x11;
 pub mod tilix_terminal_x11;
 pub mod urxvt_terminal_x11;
 pub mod xterm_terminal_x11;

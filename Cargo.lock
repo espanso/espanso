@@ -572,7 +572,7 @@ dependencies = [
 
 [[package]]
 name = "espanso"
-version = "2.0.1"
+version = "2.0.2-alpha"
 dependencies = [
  "anyhow",
  "caps",
@@ -787,7 +787,7 @@ dependencies = [
  "test-case",
  "thiserror",
  "walkdir",
- "yaml-rust 0.4.5 (git+https://github.com/federico-terzi/yaml-rust)",
+ "yaml-rust 0.4.6",
 ]
 
 [[package]]
@@ -2399,7 +2399,7 @@ dependencies = [
  "dtoa",
  "linked-hash-map",
  "serde",
- "yaml-rust 0.4.5 (registry+https://github.com/rust-lang/crates.io-index)",
+ "yaml-rust 0.4.5",
 ]
 
 [[package]]
@@ -3312,8 +3312,8 @@ dependencies = [
 
 [[package]]
 name = "yaml-rust"
-version = "0.4.5"
-source = "git+https://github.com/federico-terzi/yaml-rust#b1a195252fcdabf743f68d03f4d84d151a5a3f62"
+version = "0.4.6"
+source = "git+https://github.com/federico-terzi/yaml-rust#454221bebabc93307bbf7aa7f556407dd3027363"
 dependencies = [
  "linked-hash-map",
 ]

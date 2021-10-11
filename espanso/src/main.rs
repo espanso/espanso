@@ -86,6 +86,10 @@ lazy_static! {
       forward_into: "service".to_owned(),
     },
     CliAlias {
+      subcommand: "status".to_owned(),
+      forward_into: "service".to_owned(),
+    },
+    CliAlias {
       subcommand: "install".to_owned(),
       forward_into: "package".to_owned(),
     },
@@ -171,6 +175,8 @@ fn main() {
     .about("Restart the espanso service")
     .name("restart");
   let stop_subcommand = SubCommand::with_name("stop").about("Stop espanso service");
+  let status_subcommand =
+    SubCommand::with_name("status").about("Check if the espanso daemon is running or not.");
 
   let mut clap_instance = App::new("espanso")
     .version(VERSION)
@@ -299,12 +305,6 @@ For example, specifying 'email' is equivalent to 'match/email.yml'."#))
             ),
         ),
     )
-    // .subcommand(SubCommand::with_name("start")
-    //     .about("Start the daemon spawning a new process in the background."))
-    // .subcommand(SubCommand::with_name("stop")
-    //     .about("Stop the espanso daemon."))
-    // .subcommand(SubCommand::with_name("restart")
-    //     .about("Restart the espanso daemon."))
     // .subcommand(SubCommand::with_name("status")
     //     .about("Check if the espanso daemon is running or not."))
     .subcommand(
@@ -346,11 +346,13 @@ For example, specifying 'email' is equivalent to 'match/email.yml'."#))
         .subcommand(start_subcommand.clone())
         .subcommand(restart_subcommand.clone())
         .subcommand(stop_subcommand.clone())
+        .subcommand(status_subcommand.clone())
         .about("Register and manage 'espanso' as a system service."),
     )
     .subcommand(start_subcommand)
     .subcommand(restart_subcommand)
     .subcommand(stop_subcommand)
+    .subcommand(status_subcommand)
     // .subcommand(SubCommand::with_name("match")
     //     .about("List and execute matches from the CLI")
     //     .subcommand(SubCommand::with_name("list")

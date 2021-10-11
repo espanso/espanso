@@ -95,6 +95,8 @@ fn service_main(args: CliModuleArgs) -> i32 {
     return start_main(&paths, &paths_overrides, sub_args);
   } else if cli_args.subcommand_matches("stop").is_some() {
     return stop_main(&paths);
+  } else if cli_args.subcommand_matches("status").is_some() {
+    return status_main(&paths);
   } else if let Some(sub_args) = cli_args.subcommand_matches("restart") {
     stop_main(&paths);
     return start_main(&paths, &paths_overrides, sub_args);
@@ -150,5 +152,17 @@ fn stop_main(paths: &Paths) -> i32 {
     return SERVICE_FAILURE;
   }
 
+  SERVICE_SUCCESS
+}
+
+fn status_main(paths: &Paths) -> i32 {
+  let lock_file = acquire_worker_lock(&paths.runtime);
+  if lock_file.is_some() {
+    error_eprintln!("espanso is not running");
+    return SERVICE_NOT_RUNNING;
+  }
+  drop(lock_file);
+
+  info_println!("espanso is running");
   SERVICE_SUCCESS
 }
