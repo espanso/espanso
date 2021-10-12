@@ -166,7 +166,7 @@ private:
 
 bool SearchApp::OnInit()
 {
-    SearchFrame *frame = new SearchFrame(searchMetadata->windowTitle, wxPoint(50, 50), wxSize(450, 340));
+    SearchFrame *frame = new SearchFrame(wxString::FromUTF8(searchMetadata->windowTitle), wxPoint(50, 50), wxSize(450, 340));
     frame->Show(true);
     SetupWindowStyle(frame);
     Activate(frame);
@@ -198,7 +198,7 @@ SearchFrame::SearchFrame(const wxString &title, const wxPoint &pos, const wxSize
     iconPanel = nullptr;
     if (searchMetadata->iconPath)
     {
-        wxString iconPath = wxString(searchMetadata->iconPath);
+        wxString iconPath = wxString::FromUTF8(searchMetadata->iconPath);
         if (wxFileExists(iconPath))
         {
             wxBitmap bitmap = wxBitmap(iconPath, wxBITMAP_TYPE_PNG);

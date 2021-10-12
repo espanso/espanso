@@ -81,7 +81,7 @@ public:
       if (error_set_metadata->errors[i].level == ERROR_METADATA_LEVEL_WARNING) {
         level = wxT("WARNING");
       }
-      wxString error_text = wxString::Format(wxT("[%s] %s\n"), level, error_set_metadata->errors[i].message);
+      wxString error_text = wxString::Format(wxT("[%s] %s\n"), level, wxString::FromUTF8(error_set_metadata->errors[i].message));
       errors_text.Append(error_text);
     }
 
@@ -171,7 +171,7 @@ bool TroubleshootingApp::OnInit()
 
   if (troubleshooting_metadata->window_icon_path)
   {
-    setFrameIcon(troubleshooting_metadata->window_icon_path, frame);
+    setFrameIcon(wxString::FromUTF8(troubleshooting_metadata->window_icon_path), frame);
   }
 
   frame->Show(true);
