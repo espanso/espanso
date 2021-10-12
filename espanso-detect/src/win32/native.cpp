@@ -116,7 +116,7 @@ LRESULT CALLBACK detect_window_procedure(HWND window, unsigned int msg, WPARAM w
     {
       // We only want KEY UP AND KEY DOWN events
       if (raw->data.keyboard.Message != WM_KEYDOWN && raw->data.keyboard.Message != WM_KEYUP &&
-          raw->data.keyboard.Message != WM_SYSKEYDOWN)
+          raw->data.keyboard.Message != WM_SYSKEYDOWN && raw->data.keyboard.Message != WM_SYSKEYUP)
       {
         return 0;
       }
