@@ -54,7 +54,7 @@ DerivedWelcomeFrame::DerivedWelcomeFrame(wxWindow *parent)
 
   if (welcome_metadata->tray_image_path)
   {
-    wxBitmap trayBitmap = wxBitmap(welcome_metadata->tray_image_path, wxBITMAP_TYPE_PNG);
+    wxBitmap trayBitmap = wxBitmap(wxString::FromUTF8(welcome_metadata->tray_image_path), wxBITMAP_TYPE_PNG);
     this->tray_bitmap->SetBitmap(trayBitmap);
     #ifdef __WXOSX__
       this->tray_info_label->SetLabel("You should see the espanso icon on the status bar:");
@@ -91,7 +91,7 @@ bool WelcomeApp::OnInit()
 
   if (welcome_metadata->window_icon_path)
   {
-    setFrameIcon(welcome_metadata->window_icon_path, frame);
+    setFrameIcon(wxString::FromUTF8(welcome_metadata->window_icon_path), frame);
   }
 
   frame->Show(true);

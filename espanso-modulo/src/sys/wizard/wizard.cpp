@@ -130,7 +130,7 @@ DerivedFrame::DerivedFrame(wxWindow *parent)
 
   if (wizard_metadata->welcome_image_path)
   {
-    wxBitmap welcomeBitmap = wxBitmap(wizard_metadata->welcome_image_path, wxBITMAP_TYPE_PNG);
+    wxBitmap welcomeBitmap = wxBitmap(wxString::FromUTF8(wizard_metadata->welcome_image_path), wxBITMAP_TYPE_PNG);
     this->welcome_image->SetBitmap(welcomeBitmap);
   }
 
@@ -140,12 +140,12 @@ DerivedFrame::DerivedFrame(wxWindow *parent)
 
   if (wizard_metadata->accessibility_image_1_path)
   {
-    wxBitmap accessiblityImage1 = wxBitmap(wizard_metadata->accessibility_image_1_path, wxBITMAP_TYPE_PNG);
+    wxBitmap accessiblityImage1 = wxBitmap(wxString::FromUTF8(wizard_metadata->accessibility_image_1_path), wxBITMAP_TYPE_PNG);
     this->accessibility_image1->SetBitmap(accessiblityImage1);
   }
   if (wizard_metadata->accessibility_image_2_path)
   {
-    wxBitmap accessiblityImage2 = wxBitmap(wizard_metadata->accessibility_image_2_path, wxBITMAP_TYPE_PNG);
+    wxBitmap accessiblityImage2 = wxBitmap(wxString::FromUTF8(wizard_metadata->accessibility_image_2_path), wxBITMAP_TYPE_PNG);
     this->accessibility_image2->SetBitmap(accessiblityImage2);
   }
 
@@ -380,7 +380,7 @@ bool WizardApp::OnInit()
 
   if (wizard_metadata->window_icon_path)
   {
-    setFrameIcon(wizard_metadata->window_icon_path, frame);
+    setFrameIcon(wxString::FromUTF8(wizard_metadata->window_icon_path), frame);
   }
 
   frame->Show(true);
