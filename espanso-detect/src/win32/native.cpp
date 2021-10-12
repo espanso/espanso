@@ -156,9 +156,10 @@ LRESULT CALLBACK detect_window_procedure(HWND window, unsigned int msg, WPARAM w
       std::vector<BYTE> lpKeyState(256);
       if (GetKeyboardState(lpKeyState.data()))
       {
-        // This flag is needed to avoid chaning the keyboard state for some layouts.
-        // Refer to issue: https://github.com/federico-terzi/espanso/issues/86
-        UINT flags = 1 << 2;
+        // This flag is needed to avoid changing the keyboard state for some layouts.
+        // The 1 << 2 (setting bit 2) part is needed due to this issue: https://github.com/federico-terzi/espanso/issues/86
+        // while the 1 (setting bit 0) part is needed due to this issue: https://github.com/federico-terzi/espanso/issues/552
+        UINT flags = 1 << 2 | 1;
 
         int result = ToUnicodeEx(raw->data.keyboard.VKey, raw->data.keyboard.MakeCode, lpKeyState.data(), reinterpret_cast<LPWSTR>(event.buffer), (sizeof(event.buffer)/sizeof(event.buffer[0])) - 1, flags, variables->current_keyboard_layout);
 
