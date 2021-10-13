@@ -27,7 +27,7 @@ mod default;
 
 pub trait Source<'a> {
   fn register(&'a self, select: &mut Select<'a>) -> usize;
-  fn receive(&'a self, op: SelectedOperation) -> Event;
+  fn receive(&'a self, op: SelectedOperation) -> Option<Event>;
 }
 
 pub trait Funnel {
@@ -36,6 +36,7 @@ pub trait Funnel {
 
 pub enum FunnelResult {
   Event(Event),
+  Skipped,
   EndOfStream,
 }
 
