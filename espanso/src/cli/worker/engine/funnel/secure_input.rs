@@ -50,13 +50,13 @@ impl<'a> funnel::Source<'a> for SecureInputSource<'a> {
     }
   }
 
-  fn receive(&self, op: SelectedOperation) -> Event {
+  fn receive(&self, op: SelectedOperation) -> Option<Event> {
     if cfg!(target_os = "macos") {
       let si_event = op
         .recv(&self.receiver)
         .expect("unable to select data from SecureInputSource receiver");
 
-      Event {
+      Some(Event {
         source_id: self.sequencer.next_id(),
         etype: match si_event {
           SecureInputEvent::Disabled => EventType::SecureInputDisabled,
@@ -64,13 +64,12 @@ impl<'a> funnel::Source<'a> for SecureInputSource<'a> {
             EventType::SecureInputEnabled(SecureInputEnabledEvent { app_name, app_path })
           }
         },
-      }
+      })
     } else {
-      println!("noop");
-      Event {
+      Some(Event {
         source_id: self.sequencer.next_id(),
         etype: EventType::NOOP,
-      }
+      })
     }
   }
 }
