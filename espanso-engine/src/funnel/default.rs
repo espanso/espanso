@@ -48,7 +48,10 @@ impl<'a> Funnel for DefaultFunnel<'a> {
       .expect("invalid source index returned by select operation");
 
     // Receive (and convert) the event
-    let event = source.receive(op);
-    FunnelResult::Event(event)
+    if let Some(event) = source.receive(op) {
+      FunnelResult::Event(event)
+    } else {
+      FunnelResult::Skipped
+    }
   }
 }
