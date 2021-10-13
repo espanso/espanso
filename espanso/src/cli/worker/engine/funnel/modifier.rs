@@ -91,6 +91,13 @@ impl ModifierStateStore {
       }
     }
   }
+
+  pub fn clear_state(&self) {
+    let mut state = self.state.lock().expect("unable to obtain modifier state");
+    for (_, status) in &mut state.modifiers {
+      status.release();
+    }
+  }
 }
 
 struct ModifiersState {

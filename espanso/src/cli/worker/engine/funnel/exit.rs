@@ -45,13 +45,13 @@ impl<'a> funnel::Source<'a> for ExitSource<'a> {
     select.recv(&self.exit_signal)
   }
 
-  fn receive(&self, op: SelectedOperation) -> Event {
+  fn receive(&self, op: SelectedOperation) -> Option<Event> {
     let mode = op
       .recv(&self.exit_signal)
       .expect("unable to select data from ExitSource receiver");
-    Event {
+    Some(Event {
       source_id: self.sequencer.next_id(),
       etype: EventType::ExitRequested(mode),
-    }
+    })
   }
 }
