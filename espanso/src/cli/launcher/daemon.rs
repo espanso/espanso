@@ -20,6 +20,7 @@
 use std::process::Command;
 
 use anyhow::Result;
+use std::process::ExitStatus;
 use thiserror::Error;
 
 use crate::cli::util::CommandExt;
@@ -31,8 +32,7 @@ pub fn launch_daemon(paths_overrides: &PathsOverrides) -> Result<()> {
   command.args(&["daemon"]);
   command.with_paths_overrides(paths_overrides);
 
-  let mut child = command.spawn()?;
-  let result = child.wait()?;
+  let result = spawn_and_wait(command)?;
 
   if result.success() {
     Ok(())
@@ -45,4 +45,34 @@ pub fn launch_daemon(paths_overrides: &PathsOverrides) -> Result<()> {
 pub enum DaemonError {
   #[error("unexpected error, 'espanso daemon' returned a non-zero exit code.")]
   NonZeroExitCode,
+}
+
+#[cfg(not(target_os = "macos"))]
+fn spawn_and_wait(mut command: Command) -> Result<ExitStatus> {
+  let mut child = command.spawn()?;
+  Ok(child.wait()?)
+}
+
+// On macOS, if we simply wait for the daemon process to terminate, the application will
+// appear as "Not Responding" after a few seconds, even though it's working correctly.
+// To avoid this undesirable behavior, we spawn an headless eventloop so that the
+// launcher looks "alive", while waiting for the daemon
+#[cfg(target_os = "macos")]
+fn spawn_and_wait(mut command: Command) -> Result<ExitStatus> {
+  let mut child = command.spawn()?;
+
+  let result = std::thread::Builder::new()
+    .name("daemon-monitor-thread".to_owned())
+    .spawn(move || {
+      let results = child.wait();
+
+      espanso_mac_utils::exit_headless_eventloop();
+
+      results
+    })?;
+
+  espanso_mac_utils::start_headless_eventloop();
+
+  let thread_result = result.join().expect("unable to join daemon-monitor-thread");
+  Ok(thread_result?)
 }
