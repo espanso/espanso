@@ -29,4 +29,6 @@ extern "C" {
   pub fn mac_utils_prompt_accessibility() -> i32;
   pub fn mac_utils_transition_to_foreground_app();
   pub fn mac_utils_transition_to_background_app();
+  pub fn mac_utils_start_headless_eventloop();
+  pub fn mac_utils_exit_headless_eventloop();
 }
