@@ -241,6 +241,13 @@ impl From<RawInputEvent> for Option<InputEvent> {
       INPUT_EVENT_TYPE_KEYBOARD => {
         let (key, variant) = key_code_to_key(raw.key_code);
 
+        // When a global keyboard shortcut is relased, the callback returns an event with keycode 0
+        // and status 0.
+        // We need to handle it for this reason: https://github.com/federico-terzi/espanso/issues/791
+        if raw.key_code == 0 && raw.status == 0 {
+          return Some(InputEvent::AllModifiersReleased);
+        }
+
         let value = if raw.buffer_len > 0 {
           let raw_string_result =
             CStr::from_bytes_with_nul(&raw.buffer[..((raw.buffer_len + 1) as usize)]);
