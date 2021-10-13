@@ -380,24 +380,4 @@ mod tests {
       ExtensionResult::Error(_)
     ));
   }
-
-  #[test]
-  #[cfg(not(target_os = "windows"))]
-  fn ignore_error() {
-    let extension = ShellExtension::new(&PathBuf::new());
-
-    let param = vec![
-      ("cmd".to_string(), Value::String("exit 1".to_string())),
-      ("ignore_error".to_string(), Value::Bool(true)),
-    ]
-    .into_iter()
-    .collect::<Params>();
-    assert_eq!(
-      extension
-        .calculate(&Default::default(), &Default::default(), &param)
-        .into_success()
-        .unwrap(),
-      ExtensionOutput::Single("".to_string())
-    );
-  }
 }
