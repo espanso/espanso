@@ -30,6 +30,8 @@ jobs:
         run: |
           rustup component add clippy
           cargo clippy -- -D warnings
+        env:
+          MACOSX_DEPLOYMENT_TARGET: "10.13"
       - name: Install cargo-make
         run: |
           cargo install --force cargo-make
