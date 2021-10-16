@@ -149,3 +149,44 @@ impl ModifierStatusProvider for ModifierStateStore {
     self.is_any_conflicting_modifier_pressed()
   }
 }
+
+impl espanso_engine::process::ModifierStateProvider for ModifierStateStore {
+  fn get_modifier_state(&self) -> espanso_engine::process::ModifierState {
+    let mut state = self.state.lock().expect("unable to obtain modifier state");
+
+    let mut is_ctrl_down = false;
+    let mut is_alt_down = false;
+    let mut is_meta_down = false;
+
+    for (modifier, status) in &mut state.modifiers {
+      if status.is_outdated() {
+        warn!(
+          "detected outdated modifier records for {:?}, releasing the state",
+          modifier
+        );
+        status.release();
+      }
+
+      if status.is_pressed() {
+        match modifier {
+          Modifier::Ctrl => {
+            is_ctrl_down = true;
+          }
+          Modifier::Alt => {
+            is_alt_down = true;
+          }
+          Modifier::Meta => {
+            is_meta_down = true;
+          }
+          _ => {}
+        }
+      }
+    }
+
+    espanso_engine::process::ModifierState {
+      is_ctrl_down,
+      is_alt_down,
+      is_meta_down,
+    }
+  }
+}
