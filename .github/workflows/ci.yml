@@ -25,7 +25,8 @@ jobs:
       - name: Install Linux dependencies
         if: ${{ runner.os == 'Linux' }}
         run: |
-          sudo apt install libx11-dev libxtst-dev libxkbcommon-dev libdbus-1-dev libwxgtk3.0-gtk3-dev
+          sudo apt-get update
+          sudo apt-get install -y libx11-dev libxtst-dev libxkbcommon-dev libdbus-1-dev libwxgtk3.0-gtk3-dev
       - name: Check clippy
         run: |
           rustup component add clippy
@@ -51,7 +52,8 @@ jobs:
           cargo fmt --all -- --check
       - name: Install Linux dependencies
         run: |
-          sudo apt install libxkbcommon-dev libwxgtk3.0-gtk3-dev libdbus-1-dev
+          sudo apt-get update
+          sudo apt-get install -y libxkbcommon-dev libwxgtk3.0-gtk3-dev libdbus-1-dev
       - name: Check clippy
         run: |
           rustup component add clippy
