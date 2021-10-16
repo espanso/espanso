@@ -39,7 +39,8 @@ pub use middleware::disable::DisableOptions;
 pub use middleware::image_resolve::PathProvider;
 pub use middleware::match_select::{MatchFilter, MatchSelector};
 pub use middleware::matcher::{
-  MatchResult, Matcher, MatcherEvent, MatcherMiddlewareConfigProvider,
+  MatchResult, Matcher, MatcherEvent, MatcherMiddlewareConfigProvider, ModifierState,
+  ModifierStateProvider,
 };
 pub use middleware::multiplex::Multiplexer;
 pub use middleware::render::{Renderer, RendererError};
@@ -63,6 +64,7 @@ pub fn default<'a, MatcherState>(
   match_provider: &'a dyn MatchProvider,
   undo_enabled_provider: &'a dyn UndoEnabledProvider,
   enabled_status_provider: &'a dyn EnabledStatusProvider,
+  modifier_state_provider: &'a dyn ModifierStateProvider,
 ) -> impl Processor + 'a {
   default::DefaultProcessor::new(
     matchers,
@@ -79,5 +81,6 @@ pub fn default<'a, MatcherState>(
     match_provider,
     undo_enabled_provider,
     enabled_status_provider,
+    modifier_state_provider,
   )
 }

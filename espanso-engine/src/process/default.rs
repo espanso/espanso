@@ -33,8 +33,8 @@ use super::{
     render::RenderMiddleware,
   },
   DisableOptions, EnabledStatusProvider, MatchFilter, MatchInfoProvider, MatchProvider,
-  MatchSelector, Matcher, MatcherMiddlewareConfigProvider, Middleware, Multiplexer, PathProvider,
-  Processor, Renderer, UndoEnabledProvider,
+  MatchSelector, Matcher, MatcherMiddlewareConfigProvider, Middleware, ModifierStateProvider,
+  Multiplexer, PathProvider, Processor, Renderer, UndoEnabledProvider,
 };
 use crate::{
   event::{Event, EventType},
@@ -69,6 +69,7 @@ impl<'a> DefaultProcessor<'a> {
     match_provider: &'a dyn MatchProvider,
     undo_enabled_provider: &'a dyn UndoEnabledProvider,
     enabled_status_provider: &'a dyn EnabledStatusProvider,
+    modifier_state_provider: &'a dyn ModifierStateProvider,
   ) -> DefaultProcessor<'a> {
     Self {
       event_queue: VecDeque::new(),
@@ -76,7 +77,11 @@ impl<'a> DefaultProcessor<'a> {
         Box::new(EventsDiscardMiddleware::new()),
         Box::new(DisableMiddleware::new(disable_options)),
         Box::new(IconStatusMiddleware::new()),
-        Box::new(MatcherMiddleware::new(matchers, matcher_options_provider)),
+        Box::new(MatcherMiddleware::new(
+          matchers,
+          matcher_options_provider,
+          modifier_state_provider,
+        )),
         Box::new(SuppressMiddleware::new(enabled_status_provider)),
         Box::new(ContextMenuMiddleware::new()),
         Box::new(HotKeyMiddleware::new()),
