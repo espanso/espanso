@@ -26,9 +26,8 @@
 #include "mac.h"
 #endif
 
-void setFrameIcon(const char * iconPath, wxFrame * frame) {
-    if (iconPath) {
-        wxString iconPath(iconPath);
+void setFrameIcon(wxString iconPath, wxFrame * frame) {
+    if (!iconPath.IsEmpty()) {
         wxBitmapType imgType = wxICON_DEFAULT_TYPE;
 
         #ifdef __WXMSW__
