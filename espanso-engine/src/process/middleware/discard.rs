@@ -24,42 +24,54 @@ use log::trace;
 use super::super::Middleware;
 use crate::event::{Event, EventType, SourceId};
 
-/// This middleware discards all events that have a source_id smaller than its
-/// configured threshold. This useful to discard past events that might have
-/// been stuck in the event queue for too long.
-pub struct PastEventsDiscardMiddleware {
-  source_id_threshold: RefCell<SourceId>,
+/// This middleware discards all events that have a source_id between
+/// the given maximum and minimum.
+/// This useful to discard past events that might have been stuck in the
+/// event queue for too long, or events generated while the search bar was open.
+pub struct EventsDiscardMiddleware {
+  min_id_threshold: RefCell<SourceId>,
+  max_id_threshold: RefCell<SourceId>,
 }
 
-impl PastEventsDiscardMiddleware {
+impl EventsDiscardMiddleware {
   pub fn new() -> Self {
     Self {
-      source_id_threshold: RefCell::new(0),
+      min_id_threshold: RefCell::new(0),
+      max_id_threshold: RefCell::new(0),
     }
   }
 }
 
-impl Middleware for PastEventsDiscardMiddleware {
+impl Middleware for EventsDiscardMiddleware {
   fn name(&self) -> &'static str {
-    "past_discard"
+    "discard"
   }
 
   fn next(&self, event: Event, _: &mut dyn FnMut(Event)) -> Event {
-    let mut source_id_threshold = self.source_id_threshold.borrow_mut();
+    let mut min_id_threshold = self.min_id_threshold.borrow_mut();
+    let mut max_id_threshold = self.max_id_threshold.borrow_mut();
 
     // Filter out previous events
-    if event.source_id < *source_id_threshold {
+    if event.source_id < *max_id_threshold && event.source_id >= *min_id_threshold {
       trace!("discarding previous event: {:?}", event);
       return Event::caused_by(event.source_id, EventType::NOOP);
     }
 
-    // Update the minimum threshold
+    // Update the thresholds
     if let EventType::DiscardPrevious(m_event) = &event.etype {
       trace!(
-        "updating minimum source id threshold for events to: {}",
+        "updating discard max_id_threshold threshold for events to: {}",
         m_event.minimum_source_id
       );
-      *source_id_threshold = m_event.minimum_source_id;
+      *max_id_threshold = m_event.minimum_source_id;
+    } else if let EventType::DiscardBetween(m_event) = &event.etype {
+      trace!(
+        "updating discard thresholds for events to: max={} min={}",
+        m_event.end_id,
+        m_event.start_id
+      );
+      *max_id_threshold = m_event.end_id;
+      *min_id_threshold = m_event.start_id;
     }
 
     event
