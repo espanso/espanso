@@ -167,6 +167,15 @@ LRESULT CALLBACK detect_window_procedure(HWND window, unsigned int msg, WPARAM w
         if (result >= 1)
         {
           event.buffer_len = result;
+
+          // Filter out the value if the key was pressed while the ALT key was down
+          // but not if AltGr is down (which is a shortcut to ALT+CTRL on some keyboards, such 
+          // as the italian one).
+          // This is needed in conjunction with the fix for: https://github.com/federico-terzi/espanso/issues/725
+          if ((lpKeyState[VK_MENU] & 0x80) != 0 && (lpKeyState[VK_CONTROL] & 0x80) == 0) {
+            memset(event.buffer, 0, sizeof(event.buffer));
+            event.buffer_len = 0;
+          }
         }
         else
         {
