@@ -246,7 +246,7 @@ fn should_skip_key_event_due_to_modifier_press(modifier_state: &ModifierState) -
   if cfg!(target_os = "macos") {
     modifier_state.is_meta_down
   } else if cfg!(target_os = "windows") {
-    modifier_state.is_alt_down
+    false
   } else if cfg!(target_os = "linux") {
     modifier_state.is_alt_down || modifier_state.is_meta_down
   } else {
