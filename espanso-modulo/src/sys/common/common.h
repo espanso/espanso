@@ -27,7 +27,7 @@
     #include <wx/wx.h>
 #endif
 
-void setFrameIcon(const char * iconPath, wxFrame * frame);
+void setFrameIcon(wxString iconPath, wxFrame * frame);
 
 void Activate(wxFrame * frame);
 
