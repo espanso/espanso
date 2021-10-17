@@ -1,5 +1,5 @@
 name: espanso
-version: 0.7.3
+version: 2.0.3-alpha
 summary: A Cross-platform Text Expander written in Rust
 description: |
   espanso is a Cross-platform, Text Expander written in Rust.
@@ -21,13 +21,17 @@ description: |
   * Works with almost any program
   * Works with Emojis ¯\_(ツ)_/¯
   * Works with Images
+  * Includes a powerful Search Bar
   * Date expansion support
   * Custom scripts support
   * Shell commands support
+  * Support Forms
   * App-specific configurations
   * Expandable with packages
   * Built-in package manager for espanso hub: https://hub.espanso.org/
   * File based configuration
+  * Support Regex triggers
+  * Experimental Wayland support (currently not available through Snap, visit the website for more info).
 
   ## Get Started
 
@@ -47,23 +51,35 @@ parts:
     source: .
     build-packages:
      - libssl-dev
+     - libdbus-1-dev
+     - libwxgtk3.0-gtk3-dev
      - pkg-config
-     - cmake
+     - libxkbcommon-dev
      - libxtst-dev
      - libx11-dev
-     - libxdo-dev
     stage-packages:
      - libx11-6
      - libxau6
      - libxcb1
      - libxdmcp6
-     - libxdo3
      - libxext6
      - libxinerama1
      - libxkbcommon0
      - libxtst6
      - libnotify-bin
-     - xclip
+     - libdbus-1-3
+     - libssl1.1
+     - libwxbase3.0-0v5
+     - libwxgtk3.0-0v5
+     - libatk-bridge2.0-0
+     - libatspi2.0-0
+     - libcairo-gobject2
+     - libepoxy0
+     - libgtk-3-0
+     - libwayland-client0
+     - libwayland-cursor0
+     - libwayland-egl1
+     - libwxgtk3.0-gtk3-0v5
 
 apps:
   espanso:
