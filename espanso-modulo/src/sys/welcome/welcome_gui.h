@@ -54,7 +54,7 @@ class WelcomeFrame : public wxFrame
 
 	public:
 
-		WelcomeFrame( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Espanso is running!"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 521,544 ), long style = wxCAPTION|wxCLOSE_BOX|wxSYSTEM_MENU|wxTAB_TRAVERSAL );
+		WelcomeFrame( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Espanso is running!"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 521,597 ), long style = wxCAPTION|wxCLOSE_BOX|wxSYSTEM_MENU|wxTAB_TRAVERSAL );
 
 		~WelcomeFrame();
 

@@ -45,7 +45,7 @@
             <property name="minimum_size"></property>
             <property name="name">WelcomeFrame</property>
             <property name="pos"></property>
-            <property name="size">521,544</property>
+            <property name="size">521,597</property>
             <property name="style">wxCAPTION|wxCLOSE_BOX|wxSYSTEM_MENU</property>
             <property name="subclass">; ; forward_declare</property>
             <property name="title">Espanso is running!</property>

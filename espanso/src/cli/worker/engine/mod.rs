@@ -223,6 +223,7 @@ pub fn initialize_and_spawn(
         &combined_match_cache,
         &config_manager,
         &config_manager,
+        &modifier_state_store,
       );
 
       let event_injector = EventInjectorAdapter::new(&*injector, &config_manager);

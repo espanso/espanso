@@ -89,3 +89,15 @@ void mac_utils_transition_to_background_app() {
   ProcessSerialNumber psn = { 0, kCurrentProcess };
   TransformProcessType(&psn, kProcessTransformToUIElementApplication);
 }
+
+void mac_utils_start_headless_eventloop() {
+  NSApplication * application = [NSApplication sharedApplication];
+  [NSApp run];
+}
+
+void mac_utils_exit_headless_eventloop() {
+  dispatch_async(dispatch_get_main_queue(), ^(void) {
+    [NSApp stop:nil];
+    [NSApp abortModal];
+  });
+}

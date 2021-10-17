@@ -40,4 +40,8 @@ extern "C" void mac_utils_transition_to_foreground_app();
 // When called, convert the current process to a background app (hide the dock icon).
 extern "C" void mac_utils_transition_to_background_app();
 
+// Start and stop a "headless" eventloop to receive NSApplication events.
+extern "C" void mac_utils_start_headless_eventloop();
+extern "C" void mac_utils_exit_headless_eventloop();
+
 #endif //ESPANSO_MAC_UTILS_H

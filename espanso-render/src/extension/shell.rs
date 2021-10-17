@@ -24,7 +24,7 @@ use std::{
 };
 
 use crate::{Extension, ExtensionOutput, ExtensionResult, Params, Value};
-use log::{info, warn};
+use log::{error, info};
 use thiserror::Error;
 
 #[allow(clippy::upper_case_acronyms)]
@@ -191,23 +191,15 @@ impl Extension for ShellExtension {
             info!("this debug information was shown because the 'debug' option is true.");
           }
 
-          let ignore_error = params
-            .get("ignore_error")
-            .and_then(|v| v.as_bool())
-            .copied()
-            .unwrap_or(false);
-
-          if !output.status.success() || !error_str.trim().is_empty() {
-            warn!(
+          if !output.status.success() {
+            error!(
               "shell command exited with code: {} and error: {}",
               output.status, error_str
             );
 
-            if !ignore_error {
-              return ExtensionResult::Error(
-                ShellExtensionError::ExecutionError(error_str.to_string()).into(),
-              );
-            }
+            return ExtensionResult::Error(
+              ShellExtensionError::ExecutionError(error_str.to_string()).into(),
+            );
           }
 
           let trim = params
@@ -387,25 +379,5 @@ mod tests {
       extension.calculate(&Default::default(), &Default::default(), &param),
       ExtensionResult::Error(_)
     ));
-  }
-
-  #[test]
-  #[cfg(not(target_os = "windows"))]
-  fn ignore_error() {
-    let extension = ShellExtension::new(&PathBuf::new());
-
-    let param = vec![
-      ("cmd".to_string(), Value::String("exit 1".to_string())),
-      ("ignore_error".to_string(), Value::Bool(true)),
-    ]
-    .into_iter()
-    .collect::<Params>();
-    assert_eq!(
-      extension
-        .calculate(&Default::default(), &Default::default(), &param)
-        .into_success()
-        .unwrap(),
-      ExtensionOutput::Single("".to_string())
-    );
   }
 }

@@ -57,18 +57,32 @@ pub trait MatcherMiddlewareConfigProvider {
   fn max_history_size(&self) -> usize;
 }
 
+pub trait ModifierStateProvider {
+  fn get_modifier_state(&self) -> ModifierState;
+}
+
+#[derive(Debug, Clone)]
+pub struct ModifierState {
+  pub is_ctrl_down: bool,
+  pub is_alt_down: bool,
+  pub is_meta_down: bool,
+}
+
 pub struct MatcherMiddleware<'a, State> {
   matchers: &'a [&'a dyn Matcher<'a, State>],
 
   matcher_states: RefCell<VecDeque<Vec<State>>>,
 
   max_history_size: usize,
+
+  modifier_status_provider: &'a dyn ModifierStateProvider,
 }
 
 impl<'a, State> MatcherMiddleware<'a, State> {
   pub fn new(
     matchers: &'a [&'a dyn Matcher<'a, State>],
     options_provider: &'a dyn MatcherMiddlewareConfigProvider,
+    modifier_status_provider: &'a dyn ModifierStateProvider,
   ) -> Self {
     let max_history_size = options_provider.max_history_size();
 
@@ -76,6 +90,7 @@ impl<'a, State> MatcherMiddleware<'a, State> {
       matchers,
       matcher_states: RefCell::new(VecDeque::new()),
       max_history_size,
+      modifier_status_provider,
     }
   }
 }
@@ -99,6 +114,17 @@ impl<'a, State> Middleware for MatcherMiddleware<'a, State> {
         if keyboard_event.key == Key::Backspace {
           trace!("popping the last matcher state");
           matcher_states.pop_back();
+          return event;
+        }
+
+        // We need to filter out some keyboard events if they are generated
+        // while some modifier keys are pressed, otherwise we could have
+        // wrong matches being detected.
+        // See: https://github.com/federico-terzi/espanso/issues/725
+        if should_skip_key_event_due_to_modifier_press(
+          &self.modifier_status_provider.get_modifier_state(),
+        ) {
+          trace!("skipping keyboard event because incompatible modifiers are pressed");
           return event;
         }
       }
@@ -161,6 +187,17 @@ fn is_event_of_interest(event_type: &EventType) -> bool {
         // Skip non-press events
         false
       } else {
+        // Skip linux Keyboard (XKB) Extension function and modifier keys
+        // In hex, they have the byte 3 = 0xfe
+        // See list in "keysymdef.h" file
+        if cfg!(target_os = "linux") {
+          if let Key::Other(raw_code) = &keyboard_event.key {
+            if (65025..=65276).contains(raw_code) {
+              return false;
+            }
+          }
+        }
+
         // Skip modifier keys
         !matches!(
           keyboard_event.key,
@@ -202,6 +239,18 @@ fn is_invalidating_event(event_type: &EventType) -> bool {
     ),
     EventType::Mouse(_) => true,
     _ => false,
+  }
+}
+
+fn should_skip_key_event_due_to_modifier_press(modifier_state: &ModifierState) -> bool {
+  if cfg!(target_os = "macos") {
+    modifier_state.is_meta_down
+  } else if cfg!(target_os = "windows") {
+    false
+  } else if cfg!(target_os = "linux") {
+    modifier_state.is_alt_down || modifier_state.is_meta_down
+  } else {
+    unreachable!()
   }
 }
 

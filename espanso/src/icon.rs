@@ -69,25 +69,25 @@ pub fn load_icon_paths(runtime_dir: &Path) -> Result<IconPaths> {
   Ok(IconPaths {
     form_icon: Some(extract_icon(
       WINDOWS_LOGO_ICO_BINARY,
-      &runtime_dir.join("form.ico"),
+      &runtime_dir.join("formv2.ico"),
     )?),
     search_icon: Some(extract_icon(ICON_BINARY, &runtime_dir.join("search.png"))?),
     wizard_icon: Some(extract_icon(
       WINDOWS_LOGO_ICO_BINARY,
-      &runtime_dir.join("wizard.ico"),
+      &runtime_dir.join("wizardv2.ico"),
     )?),
     tray_icon_normal: Some(extract_icon(
       WINDOWS_NORMAL_DARK_ICO_BINARY,
-      &runtime_dir.join("normal.ico"),
+      &runtime_dir.join("normalv2.ico"),
     )?),
     tray_icon_disabled: Some(extract_icon(
       WINDOWS_DISABLED_DARK_ICO_BINARY,
-      &runtime_dir.join("disabled.ico"),
+      &runtime_dir.join("disabledv2.ico"),
     )?),
-    logo: Some(extract_icon(ICON_BINARY, &runtime_dir.join("icon.png"))?),
+    logo: Some(extract_icon(ICON_BINARY, &runtime_dir.join("iconv2.png"))?),
     logo_no_background: Some(extract_icon(
       LOGO_NO_BACKGROUND_BINARY,
-      &runtime_dir.join("icon_no_background.png"),
+      &runtime_dir.join("icon_no_backgroundv2.png"),
     )?),
     tray_explain_image: Some(extract_icon(
       WINDOWS_TRAY_EXPLAIN_IMAGE,
@@ -100,17 +100,20 @@ pub fn load_icon_paths(runtime_dir: &Path) -> Result<IconPaths> {
 #[cfg(target_os = "macos")]
 pub fn load_icon_paths(runtime_dir: &Path) -> Result<IconPaths> {
   Ok(IconPaths {
-    search_icon: Some(extract_icon(ICON_BINARY, &runtime_dir.join("search.png"))?),
-    tray_icon_normal: Some(extract_icon(MAC_BINARY, &runtime_dir.join("normal.png"))?),
+    search_icon: Some(extract_icon(
+      ICON_BINARY,
+      &runtime_dir.join("searchv2.png"),
+    )?),
+    tray_icon_normal: Some(extract_icon(MAC_BINARY, &runtime_dir.join("normalv2.png"))?),
     tray_icon_disabled: Some(extract_icon(
       MAC_DISABLED_BINARY,
-      &runtime_dir.join("disabled.png"),
+      &runtime_dir.join("disabledv2.png"),
     )?),
     tray_icon_system_disabled: Some(extract_icon(
       MAC_SYSTEM_DISABLED_BINARY,
-      &runtime_dir.join("systemdisabled.png"),
+      &runtime_dir.join("systemdisabledv2.png"),
     )?),
-    logo: Some(extract_icon(ICON_BINARY, &runtime_dir.join("icon.png"))?),
+    logo: Some(extract_icon(ICON_BINARY, &runtime_dir.join("iconv2.png"))?),
     logo_no_background: Some(extract_icon(
       LOGO_NO_BACKGROUND_BINARY,
       &runtime_dir.join("icon_no_background.png"),

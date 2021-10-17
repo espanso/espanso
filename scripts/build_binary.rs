@@ -67,6 +67,17 @@ fn main() {
   let mut cmd = Command::new("cargo");
   cmd.args(&args);
 
+  // If compiling for macOS x86-64, set the minimum supported version
+  // to 10.13
+  let is_macos = cfg!(target_os = "macos");
+  let is_x86_arch = cfg!(target_arch = "x86_64");
+  if is_macos
+    && (override_target_arch == "current" && is_x86_arch
+      || override_target_arch == "x86_64-apple-darwin")
+  {
+    cmd.env("MACOSX_DEPLOYMENT_TARGET", "10.13");
+  }
+
   // Remove cargo/rust-specific env variables, as otherwise they mess up the
   // nested cargo build call.
   let all_vars = envmnt::vars();
