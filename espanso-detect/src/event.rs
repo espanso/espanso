@@ -25,6 +25,11 @@ pub enum InputEvent {
   Mouse(MouseEvent),
   Keyboard(KeyboardEvent),
   HotKey(HotKeyEvent),
+
+  // Special event type only used on macOS
+  // This is sent after a global keyboard shortcut is released
+  // See https://github.com/federico-terzi/espanso/issues/791
+  AllModifiersReleased,
 }
 
 #[derive(Debug, PartialEq)]

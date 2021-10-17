@@ -68,6 +68,9 @@ impl<'a> Engine<'a> {
           debug!("end of stream received");
           return ExitMode::Exit;
         }
+        FunnelResult::Skipped => {
+          // This event has been skipped, no need to handle it
+        }
       }
     }
   }

@@ -86,6 +86,14 @@ pub struct DiscardPreviousEvent {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+pub struct DiscardBetweenEvent {
+  // All Events with a source_id between start_id (included) and end_id (excluded)
+  // will be discarded
+  pub start_id: u32,
+  pub end_id: u32,
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct SecureInputEnabledEvent {
   pub app_name: String,
   pub app_path: String,

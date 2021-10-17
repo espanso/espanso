@@ -113,6 +113,20 @@ pub fn convert_to_background_app() {
   }
 }
 
+#[cfg(target_os = "macos")]
+pub fn start_headless_eventloop() {
+  unsafe {
+    ffi::mac_utils_start_headless_eventloop();
+  }
+}
+
+#[cfg(target_os = "macos")]
+pub fn exit_headless_eventloop() {
+  unsafe {
+    ffi::mac_utils_exit_headless_eventloop();
+  }
+}
+
 #[cfg(test)]
 #[cfg(target_os = "macos")]
 mod tests {

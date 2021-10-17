@@ -20,7 +20,13 @@
 use log::{debug, error};
 
 use super::super::Middleware;
-use crate::event::{internal::MatchSelectedEvent, Event, EventType};
+use crate::{
+  event::{
+    internal::{DiscardBetweenEvent, MatchSelectedEvent},
+    Event, EventType,
+  },
+  process::EventSequenceProvider,
+};
 
 pub trait MatchFilter {
   fn filter_active(&self, matches_ids: &[i32]) -> Vec<i32>;
@@ -33,13 +39,19 @@ pub trait MatchSelector {
 pub struct MatchSelectMiddleware<'a> {
   match_filter: &'a dyn MatchFilter,
   match_selector: &'a dyn MatchSelector,
+  event_sequence_provider: &'a dyn EventSequenceProvider,
 }
 
 impl<'a> MatchSelectMiddleware<'a> {
-  pub fn new(match_filter: &'a dyn MatchFilter, match_selector: &'a dyn MatchSelector) -> Self {
+  pub fn new(
+    match_filter: &'a dyn MatchFilter,
+    match_selector: &'a dyn MatchSelector,
+    event_sequence_provider: &'a dyn EventSequenceProvider,
+  ) -> Self {
     Self {
       match_filter,
       match_selector,
+      event_sequence_provider,
     }
   }
 }
@@ -49,7 +61,7 @@ impl<'a> Middleware for MatchSelectMiddleware<'a> {
     "match_select"
   }
 
-  fn next(&self, event: Event, _: &mut dyn FnMut(Event)) -> Event {
+  fn next(&self, event: Event, dispatch: &mut dyn FnMut(Event)) -> Event {
     if let EventType::MatchesDetected(m_event) = event.etype {
       let matches_ids: Vec<i32> = m_event.matches.iter().map(|m| m.id).collect();
 
@@ -75,22 +87,40 @@ impl<'a> Middleware for MatchSelectMiddleware<'a> {
           }
         }
         _ => {
+          let start_event_id = self.event_sequence_provider.get_next_id();
+
           // Multiple matches, we need to ask the user which one to use
-          if let Some(selected_id) = self.match_selector.select(&valid_ids, m_event.is_search) {
-            let m = m_event.matches.into_iter().find(|m| m.id == selected_id);
-            if let Some(m) = m {
-              Event::caused_by(
-                event.source_id,
-                EventType::MatchSelected(MatchSelectedEvent { chosen: m }),
-              )
+          let next_event =
+            if let Some(selected_id) = self.match_selector.select(&valid_ids, m_event.is_search) {
+              let m = m_event.matches.into_iter().find(|m| m.id == selected_id);
+              if let Some(m) = m {
+                Event::caused_by(
+                  event.source_id,
+                  EventType::MatchSelected(MatchSelectedEvent { chosen: m }),
+                )
+              } else {
+                error!("MatchSelectMiddleware could not find the correspondent match");
+                Event::caused_by(event.source_id, EventType::NOOP)
+              }
             } else {
-              error!("MatchSelectMiddleware could not find the correspondent match");
+              debug!("MatchSelectMiddleware did not receive any match selection");
               Event::caused_by(event.source_id, EventType::NOOP)
-            }
-          } else {
-            debug!("MatchSelectMiddleware did not receive any match selection");
-            Event::caused_by(event.source_id, EventType::NOOP)
-          }
+            };
+
+          let end_event_id = self.event_sequence_provider.get_next_id();
+
+          // We want to prevent espanso from "stacking up" events while the search bar is open,
+          // therefore we filter out all events that were generated while the search bar was open.
+          // See also: https://github.com/federico-terzi/espanso/issues/781
+          dispatch(Event::caused_by(
+            event.source_id,
+            EventType::DiscardBetween(DiscardBetweenEvent {
+              start_id: start_event_id,
+              end_id: end_event_id,
+            }),
+          ));
+
+          next_event
         }
       };
     }

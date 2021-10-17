@@ -32,8 +32,8 @@ use crate::{
   common_flags::*,
   exit_code::{
     DAEMON_ALREADY_RUNNING, DAEMON_FATAL_CONFIG_ERROR, DAEMON_GENERAL_ERROR,
-    DAEMON_LEGACY_ALREADY_RUNNING, DAEMON_SUCCESS, WORKER_EXIT_ALL_PROCESSES, WORKER_RESTART,
-    WORKER_SUCCESS,
+    DAEMON_LEGACY_ALREADY_RUNNING, DAEMON_SUCCESS, WORKER_ERROR_EXIT_NO_CODE,
+    WORKER_EXIT_ALL_PROCESSES, WORKER_RESTART, WORKER_SUCCESS,
   },
   ipc::{create_ipc_client_to_worker, IPCEvent},
   lock::{acquire_daemon_lock, acquire_legacy_lock, acquire_worker_lock},
@@ -271,6 +271,10 @@ fn spawn_worker(
               .send(code)
               .expect("unable to forward worker exit code");
           }
+        } else {
+          exit_notify
+            .send(WORKER_ERROR_EXIT_NO_CODE)
+            .expect("unable to forward worker exit code");
         }
       }
     })

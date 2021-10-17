@@ -102,8 +102,8 @@ enum
 
 bool FormApp::OnInit()
 {
-    FormFrame *frame = new FormFrame(formMetadata->windowTitle, wxPoint(50, 50), wxSize(450, 340) );
-    setFrameIcon(formMetadata->iconPath, frame);
+    FormFrame *frame = new FormFrame(wxString::FromUTF8(formMetadata->windowTitle), wxPoint(50, 50), wxSize(450, 340) );
+    setFrameIcon(wxString::FromUTF8(formMetadata->iconPath), frame);
     frame->Show( true );
     
     Activate(frame);

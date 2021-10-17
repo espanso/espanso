@@ -37,12 +37,12 @@ impl<'a> funnel::Source<'a> for DetectSource {
     select.recv(&self.receiver)
   }
 
-  fn receive(&self, op: SelectedOperation) -> Event {
+  fn receive(&self, op: SelectedOperation) -> Option<Event> {
     let (input_event, source_id) = op
       .recv(&self.receiver)
       .expect("unable to select data from DetectSource receiver");
     match input_event {
-      InputEvent::Keyboard(keyboard_event) => Event {
+      InputEvent::Keyboard(keyboard_event) => Some(Event {
         source_id,
         etype: EventType::Keyboard(KeyboardEvent {
           key: convert_to_engine_key(keyboard_event.key),
@@ -50,20 +50,21 @@ impl<'a> funnel::Source<'a> for DetectSource {
           status: convert_to_engine_status(keyboard_event.status),
           variant: keyboard_event.variant.map(convert_to_engine_variant),
         }),
-      },
-      InputEvent::Mouse(mouse_event) => Event {
+      }),
+      InputEvent::Mouse(mouse_event) => Some(Event {
         source_id,
         etype: EventType::Mouse(MouseEvent {
           status: convert_to_engine_status(mouse_event.status),
           button: convert_to_engine_mouse_button(mouse_event.button),
         }),
-      },
-      InputEvent::HotKey(hotkey_event) => Event {
+      }),
+      InputEvent::HotKey(hotkey_event) => Some(Event {
         source_id,
         etype: EventType::HotKey(HotKeyEvent {
           hotkey_id: hotkey_event.hotkey_id,
         }),
-      },
+      }),
+      InputEvent::AllModifiersReleased => None,
     }
   }
 }

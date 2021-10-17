@@ -131,8 +131,12 @@ jobs:
           cargo install --force cargo-make
       - name: Test
         run: cargo make test-binary --profile release
+        env:
+          MACOSX_DEPLOYMENT_TARGET: "10.13"
       - name: Build
         run: cargo make create-bundle --profile release
+        env:
+          MACOSX_DEPLOYMENT_TARGET: "10.13"
       - name: Create ZIP archive
         run: |
           ditto -c -k --sequesterRsrc --keepParent target/mac/Espanso.app Espanso-Mac-Intel.zip
