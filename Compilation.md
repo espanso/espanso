@@ -16,7 +16,7 @@ These are the basic tools required to build espanso:
 steps. You can install it by running:
 
 ```
-cargo install --force cargo-make
+cargo install --force cargo-make --version 0.34.0
 ```
 
 # Linux
