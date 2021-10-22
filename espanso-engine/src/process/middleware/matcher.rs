@@ -191,7 +191,7 @@ fn is_event_of_interest(event_type: &EventType) -> bool {
         // In hex, they have the byte 3 = 0xfe
         // See list in "keysymdef.h" file
         if cfg!(target_os = "linux") {
-          if let Key::Other(raw_code) = &keyboard_event.key {
+          if let (Key::Other(raw_code), None) = (&keyboard_event.key, &keyboard_event.value) {
             if (65025..=65276).contains(raw_code) {
               return false;
             }
