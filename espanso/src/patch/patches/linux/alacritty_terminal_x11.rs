@@ -19,6 +19,8 @@
 
 use std::sync::Arc;
 
+use espanso_config::config::Backend;
+
 use crate::patch::patches::{PatchedConfig, Patches};
 use crate::patch::PatchDefinition;
 
@@ -33,6 +35,7 @@ pub fn patch() -> PatchDefinition {
         name,
         Patches {
           paste_shortcut: Some(Some("CTRL+SHIFT+V".to_string())),
+          backend: Some(Backend::Clipboard),
           ..Default::default()
         },
       ))
