@@ -6,6 +6,7 @@ use libc::{input_event, size_t, ssize_t, EWOULDBLOCK, O_CLOEXEC, O_NONBLOCK, O_R
 use log::trace;
 use scopeguard::ScopeGuard;
 use std::collections::HashMap;
+use std::os::raw::c_char;
 use std::os::unix::io::AsRawFd;
 use std::{
   ffi::{c_void, CStr},
@@ -160,16 +161,16 @@ impl Device {
     }
 
     // Extract the utf8 char
-    let mut buffer: [u8; 16] = [0; 16];
+    let mut buffer: [c_char; 16] = [0; 16];
     unsafe {
       xkb_state_key_get_utf8(
         self.get_state(),
         keycode,
-        buffer.as_mut_ptr() as *mut i8,
+        buffer.as_mut_ptr(),
         std::mem::size_of_val(&buffer),
       )
     };
-    let content_raw = unsafe { CStr::from_ptr(buffer.as_ptr() as *mut i8) };
+    let content_raw = unsafe { CStr::from_ptr(buffer.as_ptr()) };
     let content = content_raw.to_string_lossy().to_string();
 
     let event = RawKeyboardEvent {
