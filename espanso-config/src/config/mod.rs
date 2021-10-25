@@ -156,6 +156,12 @@ pub trait Config: Send + Sync {
   // Disabling this option might conflict with the undo feature.
   fn win32_exclude_orphan_events(&self) -> bool;
 
+  // The maximum interval (in milliseconds) for which a keyboard layout
+  // can be cached. If switching often between different layouts, you
+  // could lower this amount to avoid the "lost detection" effect described
+  // in this issue: https://github.com/federico-terzi/espanso/issues/745
+  fn win32_keyboard_layout_cache_interval(&self) -> i64;
+
   fn is_match<'a>(&self, app: &AppProperties<'a>) -> bool;
 
   fn pretty_dump(&self) -> String {
@@ -187,6 +193,9 @@ pub trait Config: Send + Sync {
         show_notifications: {:?}
         secure_input_notification: {:?}
 
+        win32_exclude_orphan_events: {:?}
+        win32_keyboard_layout_cache_interval: {:?}
+
         match_paths: {:#?}
       ", 
       self.label(),
@@ -214,6 +223,9 @@ pub trait Config: Send + Sync {
       self.show_icon(),
       self.show_notifications(),
       self.secure_input_notification(),
+
+      self.win32_exclude_orphan_events(),
+      self.win32_keyboard_layout_cache_interval(),
 
       self.match_paths(),
     }

@@ -323,6 +323,13 @@ impl Config for ResolvedConfig {
   fn evdev_modifier_delay(&self) -> Option<usize> {
     self.parsed.evdev_modifier_delay
   }
+
+  fn win32_keyboard_layout_cache_interval(&self) -> i64 {
+    self
+      .parsed
+      .win32_keyboard_layout_cache_interval
+      .unwrap_or(2000)
+  }
 }
 
 impl ResolvedConfig {
@@ -405,6 +412,7 @@ impl ResolvedConfig {
       show_notifications,
       secure_input_notification,
       win32_exclude_orphan_events,
+      win32_keyboard_layout_cache_interval,
       includes,
       excludes,
       extra_includes,
