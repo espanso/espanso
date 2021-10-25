@@ -39,8 +39,6 @@
 #include <strsafe.h>
 #include <Windows.h>
 
-// How many milliseconds must pass between events before refreshing the keyboard layout
-const long DETECT_REFRESH_KEYBOARD_LAYOUT_INTERVAL = 2000;
 const wchar_t *const DETECT_WINCLASS = L"EspansoDetect";
 const USHORT MOUSE_DOWN_FLAGS = RI_MOUSE_LEFT_BUTTON_DOWN | RI_MOUSE_RIGHT_BUTTON_DOWN | RI_MOUSE_MIDDLE_BUTTON_DOWN |
                         RI_MOUSE_BUTTON_1_DOWN | RI_MOUSE_BUTTON_2_DOWN | RI_MOUSE_BUTTON_3_DOWN |
@@ -52,6 +50,8 @@ const USHORT MOUSE_UP_FLAGS = RI_MOUSE_LEFT_BUTTON_UP | RI_MOUSE_RIGHT_BUTTON_UP
 typedef struct {
   HKL current_keyboard_layout;
   DWORD last_key_press_tick;
+  // How many milliseconds must pass between events before refreshing the keyboard layout
+  long keyboard_layout_cache_interval;
 
   // Rust interop
   void * rust_instance;
@@ -130,7 +130,7 @@ LRESULT CALLBACK detect_window_procedure(HWND window, unsigned int msg, WPARAM w
       DWORD currentTick = GetTickCount();
 
       // If enough time has passed between the last keypress and now, refresh the keyboard layout
-      if ((currentTick - variables->last_key_press_tick) > DETECT_REFRESH_KEYBOARD_LAYOUT_INTERVAL)
+      if ((currentTick - variables->last_key_press_tick) > variables->keyboard_layout_cache_interval)
       {
 
         // Because keyboard layouts on windows are Window-specific, to get the current
@@ -269,7 +269,7 @@ LRESULT CALLBACK detect_window_procedure(HWND window, unsigned int msg, WPARAM w
   }
 }
 
-void * detect_initialize(void *_self, int32_t *error_code)
+void * detect_initialize(void *_self, InitOptions * options, int32_t *error_code)
 {
   HWND window = NULL;
 
@@ -297,6 +297,7 @@ void * detect_initialize(void *_self, int32_t *error_code)
 
     // Initialize the default keyboard layout
     variables->current_keyboard_layout = GetKeyboardLayout(0);
+    variables->keyboard_layout_cache_interval = options->keyboard_layout_cache_interval;
 
     // Docs: https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-createwindowexw
     window = CreateWindowEx(

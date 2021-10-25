@@ -66,6 +66,12 @@ pub struct SourceCreationOptions {
   // those from espanso, but might need to be disabled when using some software-level keyboards.
   // Disabling this option might conflict with the undo feature.
   pub win32_exclude_orphan_events: bool,
+
+  // The maximum interval (in milliseconds) for which a keyboard layout
+  // can be cached. If switching often between different layouts, you
+  // could lower this amount to avoid the "lost detection" effect described
+  // in this issue: https://github.com/federico-terzi/espanso/issues/745
+  pub win32_keyboard_layout_cache_interval: i64,
 }
 
 // This struct identifies the keyboard layout that
@@ -87,6 +93,7 @@ impl Default for SourceCreationOptions {
       evdev_keyboard_rmlvo: None,
       hotkeys: Vec::new(),
       win32_exclude_orphan_events: true,
+      win32_keyboard_layout_cache_interval: 2000,
     }
   }
 }
@@ -97,6 +104,7 @@ pub fn get_source(options: SourceCreationOptions) -> Result<Box<dyn Source>> {
   Ok(Box::new(win32::Win32Source::new(
     &options.hotkeys,
     options.win32_exclude_orphan_events,
+    options.win32_keyboard_layout_cache_interval,
   )))
 }
 
