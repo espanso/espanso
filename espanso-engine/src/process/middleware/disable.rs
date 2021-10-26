@@ -64,18 +64,24 @@ impl Middleware for DisableMiddleware {
 
     match &event.etype {
       EventType::Keyboard(m_event) => {
-        if is_toggle_key(m_event, &self.options) {
+        if m_event.status == Status::Released {
           let mut last_toggle_press = self.last_toggle_press.borrow_mut();
-          if let Some(previous_press) = *last_toggle_press {
-            if previous_press.elapsed() < self.options.toggle_key_maximum_window {
-              *enabled = !*enabled;
-              *last_toggle_press = None;
-              has_status_changed = true;
+          if is_toggle_key(m_event, &self.options) {
+            if let Some(previous_press) = *last_toggle_press {
+              if previous_press.elapsed() < self.options.toggle_key_maximum_window {
+                *enabled = !*enabled;
+                *last_toggle_press = None;
+                has_status_changed = true;
+              } else {
+                *last_toggle_press = Some(Instant::now());
+              }
             } else {
               *last_toggle_press = Some(Instant::now());
             }
           } else {
-            *last_toggle_press = Some(Instant::now());
+            // If another key is pressed (not the toggle key), we should reset the window
+            // For more information, see: https://github.com/federico-terzi/espanso/issues/815
+            *last_toggle_press = None;
           }
         }
       }
@@ -115,10 +121,6 @@ impl Middleware for DisableMiddleware {
 }
 
 fn is_toggle_key(event: &KeyboardEvent, options: &DisableOptions) -> bool {
-  if event.status != Status::Released {
-    return false;
-  }
-
   if options
     .toggle_key
     .as_ref()

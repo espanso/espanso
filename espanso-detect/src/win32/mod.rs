@@ -17,6 +17,7 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use std::os::raw::c_long;
 use std::{convert::TryInto, ffi::c_void};
 
 use lazycell::LazyCell;
@@ -79,10 +80,19 @@ pub struct RawHotKey {
   pub flags: u32,
 }
 
+#[repr(C)]
+pub struct InitOptions {
+  pub keyboard_layout_cache_interval: c_long,
+}
+
 #[allow(improper_ctypes)]
 #[link(name = "espansodetect", kind = "static")]
 extern "C" {
-  pub fn detect_initialize(_self: *const Win32Source, error_code: *mut i32) -> *mut c_void;
+  pub fn detect_initialize(
+    _self: *const Win32Source,
+    options: *const InitOptions,
+    error_code: *mut i32,
+  ) -> *mut c_void;
   pub fn detect_register_hotkey(window: *const c_void, hotkey: RawHotKey) -> i32;
 
   pub fn detect_eventloop(
@@ -99,24 +109,35 @@ pub struct Win32Source {
   hotkeys: Vec<HotKey>,
 
   exclude_orphan_events: bool,
+  keyboard_layout_cache_interval: i64,
 }
 
 #[allow(clippy::new_without_default)]
 impl Win32Source {
-  pub fn new(hotkeys: &[HotKey], exclude_orphan_events: bool) -> Win32Source {
+  pub fn new(
+    hotkeys: &[HotKey],
+    exclude_orphan_events: bool,
+    keyboard_layout_cache_interval: i64,
+  ) -> Win32Source {
     Self {
       handle: std::ptr::null_mut(),
       callback: LazyCell::new(),
       hotkeys: hotkeys.to_vec(),
       exclude_orphan_events,
+      keyboard_layout_cache_interval,
     }
   }
 }
 
 impl Source for Win32Source {
   fn initialize(&mut self) -> Result<()> {
+    let options = InitOptions {
+      keyboard_layout_cache_interval: self.keyboard_layout_cache_interval.try_into().unwrap(),
+    };
+
     let mut error_code = 0;
-    let handle = unsafe { detect_initialize(self as *const Win32Source, &mut error_code) };
+    let handle =
+      unsafe { detect_initialize(self as *const Win32Source, &options, &mut error_code) };
 
     if handle.is_null() {
       let error = match error_code {

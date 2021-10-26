@@ -457,22 +457,5 @@ fn build_native() {
 }
 
 fn main() {
-  println!("cargo:rerun-if-changed=src/x11/native/native.h");
-  println!("cargo:rerun-if-changed=src/sys/interop/interop.h");
-  println!("cargo:rerun-if-changed=src/sys/form/form.cpp");
-  println!("cargo:rerun-if-changed=src/sys/common/mac.h");
-  println!("cargo:rerun-if-changed=src/sys/common/mac.mm");
-  println!("cargo:rerun-if-changed=src/sys/common/common.h");
-  println!("cargo:rerun-if-changed=src/sys/common/common.cpp");
-  println!("cargo:rerun-if-changed=src/sys/welcome/welcome_gui.h");
-  println!("cargo:rerun-if-changed=src/sys/welcome/welcome_gui.cpp");
-  println!("cargo:rerun-if-changed=src/sys/welcome/welcome.cpp");
-  println!("cargo:rerun-if-changed=src/sys/troubleshooting/troubleshooting_gui.h");
-  println!("cargo:rerun-if-changed=src/sys/troubleshooting/troubleshooting_gui.cpp");
-  println!("cargo:rerun-if-changed=src/sys/troubleshooting/troubleshooting.cpp");
-  println!("cargo:rerun-if-changed=src/sys/search/search.cpp");
-  println!("cargo:rerun-if-changed=src/sys/wizard/wizard.cpp");
-  println!("cargo:rerun-if-changed=src/sys/wizard/wizard_gui.cpp");
-  println!("cargo:rerun-if-changed=src/sys/wizard/wizard_gui.h");
   build_native();
 }

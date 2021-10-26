@@ -55,6 +55,7 @@ fn get_builtin_patches() -> Vec<PatchDefinition> {
     patches::linux::urxvt_terminal_x11::patch(),
     patches::linux::xterm_terminal_x11::patch(),
     patches::linux::yakuake_terminal_x11::patch(),
+    patches::linux::virtualbox_x11::patch(),
   ];
 }
 
