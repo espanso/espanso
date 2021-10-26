@@ -35,7 +35,7 @@ jobs:
           MACOSX_DEPLOYMENT_TARGET: "10.13"
       - name: Install cargo-make
         run: |
-          cargo install --force cargo-make
+          cargo install --force cargo-make --version 0.34.0
       - name: Run test suite
         run: cargo make test-binary
       - name: Build
@@ -60,7 +60,7 @@ jobs:
           cargo clippy -p espanso --features wayland -- -D warnings
       - name: Install cargo-make
         run: |
-          cargo install --force cargo-make
+          cargo install --force cargo-make --version 0.34.0
       - name: Run test suite
         run: cargo make test-binary --env NO_X11=true
       - name: Build
@@ -74,7 +74,7 @@ jobs:
         run: rustup update && rustup target add aarch64-apple-darwin
       - name: Install cargo-make
         run: |
-          cargo install --force cargo-make
+          cargo install --force cargo-make --version 0.34.0
       - name: Build
         run: |
           cargo make build-macos-arm-binary

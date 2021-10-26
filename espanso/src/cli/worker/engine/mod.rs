@@ -126,6 +126,8 @@ pub fn initialize_and_spawn(
           ),
           hotkeys: match_converter.get_hotkeys(),
           win32_exclude_orphan_events: default_config.win32_exclude_orphan_events(),
+          win32_keyboard_layout_cache_interval: default_config
+            .win32_keyboard_layout_cache_interval(),
         })
         .expect("failed to initialize detector module");
       let exit_source = super::engine::funnel::exit::ExitSource::new(exit_signal, &sequencer);

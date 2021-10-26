@@ -61,7 +61,7 @@ jobs:
           echo Using version ${{ needs.extract-version.outputs.espanso_version }}
       - name: Install cargo-make
         run: |
-          cargo install --force cargo-make
+          cargo install --force cargo-make --version 0.34.0
       - name: Test
         run: cargo make test-binary --profile release
       - name: Build
@@ -128,7 +128,7 @@ jobs:
           echo Using version ${{ needs.extract-version.outputs.espanso_version }}
       - name: Install cargo-make
         run: |
-          cargo install --force cargo-make
+          cargo install --force cargo-make --version 0.34.0
       - name: Test
         run: cargo make test-binary --profile release
         env:
@@ -168,7 +168,7 @@ jobs:
         run: rustup update && rustup target add aarch64-apple-darwin
       - name: Install cargo-make
         run: |
-          cargo install --force cargo-make
+          cargo install --force cargo-make --version 0.34.0
       - name: Build
         run: cargo make create-bundle --profile release --env BUILD_ARCH=aarch64-apple-darwin
       - name: Codesign executable

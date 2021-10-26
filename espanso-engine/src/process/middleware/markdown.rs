@@ -17,6 +17,8 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use log::error;
+
 use super::super::Middleware;
 use crate::event::{effect::HtmlInjectRequest, Event, EventType};
 
@@ -37,23 +39,33 @@ impl Middleware for MarkdownMiddleware {
   fn next(&self, event: Event, _: &mut dyn FnMut(Event)) -> Event {
     if let EventType::MarkdownInject(m_event) = &event.etype {
       // Render the markdown into HTML
-      let html = markdown::to_html(&m_event.markdown);
-      let mut html = html.trim();
+      // NOTE: we wrap the `to_html` call between catch_unwind because if the markdown is malformed,
+      // the library panics. Ideally, the library would return a Result::Err in that case, but
+      // for now it doesn't, so we employ that workaround.
+      // See also: https://github.com/federico-terzi/espanso/issues/759
+      let html = std::panic::catch_unwind(|| markdown::to_html(&m_event.markdown));
+      if let Ok(html) = html {
+        let mut html = html.trim();
 
-      // Remove the surrounding paragraph
-      if html.starts_with("<p>") {
-        html = html.trim_start_matches("<p>");
-      }
-      if html.ends_with("</p>") {
-        html = html.trim_end_matches("</p>");
-      }
+        // Remove the surrounding paragraph
+        if html.starts_with("<p>") {
+          html = html.trim_start_matches("<p>");
+        }
+        if html.ends_with("</p>") {
+          html = html.trim_end_matches("</p>");
+        }
 
-      return Event::caused_by(
-        event.source_id,
-        EventType::HtmlInject(HtmlInjectRequest {
-          html: html.to_owned(),
-        }),
-      );
+        return Event::caused_by(
+          event.source_id,
+          EventType::HtmlInject(HtmlInjectRequest {
+            html: html.to_owned(),
+          }),
+        );
+      } else {
+        error!("unable to convert markdown to HTML, is it malformed?");
+
+        return Event::caused_by(event.source_id, EventType::NOOP);
+      }
     }
 
     event

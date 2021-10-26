@@ -28,14 +28,16 @@ pub fn patch() -> PatchDefinition {
   PatchDefinition {
     name: module_path!().split(':').last().unwrap_or("unknown"),
     is_enabled: || cfg!(target_os = "linux") && !super::util::is_wayland(),
-    should_patch: |app| app.class.unwrap_or_default().contains("Alacritty"),
+    should_patch: |app| app.class.unwrap_or_default().contains("VirtualBox Machine"),
     apply: |base, name| {
       Arc::new(PatchedConfig::patch(
         base,
         name,
         Patches {
-          paste_shortcut: Some(Some("CTRL+SHIFT+V".to_string())),
-          backend: Some(Backend::Clipboard),
+          backend: Some(Backend::Inject),
+          key_delay: Some(Some(10)),
+          inject_delay: Some(Some(15)),
+          disable_x11_fast_inject: Some(true),
           ..Default::default()
         },
       ))

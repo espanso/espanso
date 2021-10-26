@@ -31,7 +31,7 @@ RUN set -eux; \
     cargo --version; \
     rustc --version;
 
-RUN mkdir espanso && cargo install --force cargo-make
+RUN mkdir espanso && cargo install --force cargo-make --version 0.34.0
 
 COPY . espanso
 

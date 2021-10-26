@@ -394,6 +394,10 @@ impl Config for LegacyInteropConfig {
   fn evdev_modifier_delay(&self) -> Option<usize> {
     Some(10)
   }
+
+  fn win32_keyboard_layout_cache_interval(&self) -> i64 {
+    2000
+  }
 }
 
 struct LegacyMatchGroup {

@@ -49,5 +49,6 @@ generate_patchable_config!(
   apply_patch -> bool,
   undo_backspace -> bool,
   win32_exclude_orphan_events -> bool,
+  win32_keyboard_layout_cache_interval -> i64,
   keyboard_layout -> Option<RMLVOConfig>
 );

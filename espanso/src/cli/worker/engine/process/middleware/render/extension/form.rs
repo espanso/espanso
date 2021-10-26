@@ -55,55 +55,53 @@ fn convert_fields(fields: &Params) -> HashMap<String, FormField> {
     let mut form_field = None;
 
     if let Value::Object(params) = field {
-      if let Some(Value::String(field_type)) = params.get("type") {
-        form_field = match field_type.as_str() {
-          "text" => Some(FormField::Text {
-            default: params
-              .get("default")
-              .and_then(|val| val.as_string())
-              .cloned(),
-            multiline: params
-              .get("multiline")
-              .and_then(|val| val.as_bool())
-              .cloned()
-              .unwrap_or(false),
-          }),
-          "choice" => Some(FormField::Choice {
-            default: params
-              .get("default")
-              .and_then(|val| val.as_string())
-              .cloned(),
-            values: params
-              .get("values")
-              .and_then(|val| val.as_array())
-              .map(|arr| {
-                arr
-                  .iter()
-                  .flat_map(|choice| choice.as_string())
-                  .cloned()
-                  .collect()
-              })
-              .unwrap_or_default(),
-          }),
-          "list" => Some(FormField::List {
-            default: params
-              .get("default")
-              .and_then(|val| val.as_string())
-              .cloned(),
-            values: params
-              .get("values")
-              .and_then(|val| val.as_array())
-              .map(|arr| {
-                arr
-                  .iter()
-                  .flat_map(|choice| choice.as_string())
-                  .cloned()
-                  .collect()
-              })
-              .unwrap_or_default(),
-          }),
-          _ => None,
-        }
+      form_field = match params.get("type") {
+        Some(Value::String(field_type)) if field_type == "choice" => Some(FormField::Choice {
+          default: params
+            .get("default")
+            .and_then(|val| val.as_string())
+            .cloned(),
+          values: params
+            .get("values")
+            .and_then(|val| val.as_array())
+            .map(|arr| {
+              arr
+                .iter()
+                .flat_map(|choice| choice.as_string())
+                .cloned()
+                .collect()
+            })
+            .unwrap_or_default(),
+        }),
+        Some(Value::String(field_type)) if field_type == "list" => Some(FormField::List {
+          default: params
+            .get("default")
+            .and_then(|val| val.as_string())
+            .cloned(),
+          values: params
+            .get("values")
+            .and_then(|val| val.as_array())
+            .map(|arr| {
+              arr
+                .iter()
+                .flat_map(|choice| choice.as_string())
+                .cloned()
+                .collect()
+            })
+            .unwrap_or_default(),
+        }),
+        // By default, it's considered type 'text'
+        _ => Some(FormField::Text {
+          default: params
+            .get("default")
+            .and_then(|val| val.as_string())
+            .cloned(),
+          multiline: params
+            .get("multiline")
+            .and_then(|val| val.as_bool())
+            .cloned()
+            .unwrap_or(false),
+        }),
       }
     }
 
