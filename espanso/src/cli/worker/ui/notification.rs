@@ -68,4 +68,9 @@ impl<'a> espanso_engine::process::NotificationManager for NotificationManager<'a
       self.notify("Espanso disabled!")
     }
   }
+
+  fn notify_rendering_error(&self) {
+    self
+      .notify("An error occurred during rendering, please examine the logs for more information.");
+  }
 }
