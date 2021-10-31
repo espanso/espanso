@@ -23,7 +23,7 @@ use anyhow::Result;
 use crossbeam::channel::Receiver;
 use espanso_config::{config::ConfigStore, matches::store::MatchStore};
 use espanso_detect::SourceCreationOptions;
-use espanso_engine::event::ExitMode;
+use espanso_engine::event::{EventType, ExitMode};
 use espanso_inject::{InjectorCreationOptions, KeyboardStateProvider};
 use espanso_path::Paths;
 use espanso_ui::{event::UIEvent, UIRemote};
@@ -82,6 +82,7 @@ pub fn initialize_and_spawn(
   secure_input_receiver: Receiver<SecureInputEvent>,
   use_evdev_backend: bool,
   start_reason: Option<String>,
+  ipc_event_receiver: Receiver<EventType>,
 ) -> Result<JoinHandle<ExitMode>> {
   let handle = std::thread::Builder::new()
     .name("engine thread".to_string())
@@ -131,17 +132,18 @@ pub fn initialize_and_spawn(
         })
         .expect("failed to initialize detector module");
       let exit_source = super::engine::funnel::exit::ExitSource::new(exit_signal, &sequencer);
+      let ipc_event_source =
+        super::engine::funnel::ipc::IpcEventSource::new(ipc_event_receiver, &sequencer);
       let ui_source = super::engine::funnel::ui::UISource::new(ui_event_receiver, &sequencer);
       let secure_input_source = super::engine::funnel::secure_input::SecureInputSource::new(
         secure_input_receiver,
         &sequencer,
       );
-      let sources: Vec<&dyn espanso_engine::funnel::Source> = vec![
-        &detect_source,
-        &exit_source,
-        &ui_source,
-        &secure_input_source,
-      ];
+      let mut sources: Vec<&dyn espanso_engine::funnel::Source> =
+        vec![&detect_source, &exit_source, &ui_source, &ipc_event_source];
+      if cfg!(target_os = "macos") {
+        sources.push(&secure_input_source);
+      }
       let funnel = espanso_engine::funnel::default(&sources);
 
       let rolling_matcher = RollingMatcherAdapter::new(
@@ -226,6 +228,7 @@ pub fn initialize_and_spawn(
         &config_manager,
         &config_manager,
         &modifier_state_store,
+        &combined_match_cache,
       );
 
       let event_injector = EventInjectorAdapter::new(&*injector, &config_manager);

@@ -19,10 +19,12 @@
 
 use super::{CliModule, CliModuleArgs};
 
+mod exec;
 mod list;
 
 pub fn new() -> CliModule {
   CliModule {
+    requires_paths: true,
     requires_config: true,
     subcommand: "match".to_string(),
     entry: match_main,
@@ -34,14 +36,18 @@ fn match_main(args: CliModuleArgs) -> i32 {
   let cli_args = args.cli_args.expect("missing cli_args");
   let config_store = args.config_store.expect("missing config_store");
   let match_store = args.match_store.expect("missing match_store");
+  let paths = args.paths.expect("missing paths");
 
   if let Some(sub_args) = cli_args.subcommand_matches("list") {
     if let Err(err) = list::list_main(sub_args, config_store, match_store) {
       eprintln!("unable to list matches: {:?}", err);
       return 1;
     }
-  } else if let Some(_sub_args) = cli_args.subcommand_matches("exec") {
-    todo!();
+  } else if let Some(sub_args) = cli_args.subcommand_matches("exec") {
+    if let Err(err) = exec::exec_main(sub_args, &paths) {
+      eprintln!("unable to exec match: {:?}", err);
+      return 1;
+    }
   } else {
     eprintln!("Invalid use, please run 'espanso match --help' to get more information.");
     return 1;

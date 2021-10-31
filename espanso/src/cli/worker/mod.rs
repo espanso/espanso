@@ -112,6 +112,7 @@ fn worker_main(args: CliModuleArgs) -> i32 {
     .expect("unable to initialize UI module");
 
   let (engine_exit_notify, engine_exit_receiver) = unbounded();
+  let (ipc_event_notify, ipc_event_receiver) = unbounded();
   let (engine_ui_event_sender, engine_ui_event_receiver) = unbounded();
   let (engine_secure_input_sender, engine_secure_input_receiver) = unbounded();
 
@@ -126,11 +127,12 @@ fn worker_main(args: CliModuleArgs) -> i32 {
     engine_secure_input_receiver,
     use_evdev_backend,
     start_reason,
+    ipc_event_receiver,
   )
   .expect("unable to initialize engine");
 
   // Setup the IPC server
-  ipc::initialize_and_spawn(&paths.runtime, engine_exit_notify.clone())
+  ipc::initialize_and_spawn(&paths.runtime, engine_exit_notify.clone(), ipc_event_notify)
     .expect("unable to initialize IPC server");
 
   // If specified, automatically monitor the daemon status and
