@@ -33,16 +33,16 @@ use super::{
     render::RenderMiddleware,
   },
   DisableOptions, EnabledStatusProvider, MatchFilter, MatchInfoProvider, MatchProvider,
-  MatchSelector, Matcher, MatcherMiddlewareConfigProvider, Middleware, ModifierStateProvider,
-  Multiplexer, PathProvider, Processor, Renderer, UndoEnabledProvider,
+  MatchResolver, MatchSelector, Matcher, MatcherMiddlewareConfigProvider, Middleware,
+  ModifierStateProvider, Multiplexer, PathProvider, Processor, Renderer, UndoEnabledProvider,
 };
 use crate::{
   event::{Event, EventType},
   process::middleware::{
     context_menu::ContextMenuMiddleware, disable::DisableMiddleware, exit::ExitMiddleware,
     hotkey::HotKeyMiddleware, icon_status::IconStatusMiddleware,
-    image_resolve::ImageResolverMiddleware, search::SearchMiddleware, suppress::SuppressMiddleware,
-    undo::UndoMiddleware,
+    image_resolve::ImageResolverMiddleware, match_exec::MatchExecRequestMiddleware,
+    search::SearchMiddleware, suppress::SuppressMiddleware, undo::UndoMiddleware,
   },
 };
 use std::collections::VecDeque;
@@ -70,6 +70,7 @@ impl<'a> DefaultProcessor<'a> {
     undo_enabled_provider: &'a dyn UndoEnabledProvider,
     enabled_status_provider: &'a dyn EnabledStatusProvider,
     modifier_state_provider: &'a dyn ModifierStateProvider,
+    match_resolver: &'a dyn MatchResolver,
   ) -> DefaultProcessor<'a> {
     Self {
       event_queue: VecDeque::new(),
@@ -82,6 +83,7 @@ impl<'a> DefaultProcessor<'a> {
           matcher_options_provider,
           modifier_state_provider,
         )),
+        Box::new(MatchExecRequestMiddleware::new(match_resolver)),
         Box::new(SuppressMiddleware::new(enabled_status_provider)),
         Box::new(ContextMenuMiddleware::new()),
         Box::new(HotKeyMiddleware::new()),

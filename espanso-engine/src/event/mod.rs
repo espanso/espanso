@@ -18,6 +18,7 @@
  */
 
 pub mod effect;
+pub mod external;
 pub mod input;
 pub mod internal;
 pub mod ui;
@@ -59,6 +60,9 @@ pub enum EventType {
   HotKey(input::HotKeyEvent),
   TrayIconClicked,
   ContextMenuClicked(input::ContextMenuClickedEvent),
+
+  // External requests
+  MatchExecRequest(external::MatchExecRequestEvent),
 
   // Internal
   MatchesDetected(internal::MatchesDetectedEvent),
