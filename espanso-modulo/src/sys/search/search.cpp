@@ -236,6 +236,7 @@ SearchFrame::SearchFrame(const wxString &title, const wxPoint &pos, const wxSize
     vbox->Add(resultBox, 5, wxEXPAND | wxALL, 0);
 
     Bind(wxEVT_CHAR_HOOK, &SearchFrame::OnCharEvent, this, wxID_ANY);
+    searchBar->Bind(wxEVT_CHAR, &SearchFrame::OnCharEvent, this, wxID_ANY);
     Bind(wxEVT_TEXT, &SearchFrame::OnQueryChange, this, textId);
     Bind(wxEVT_LISTBOX_DCLICK, &SearchFrame::OnItemClickEvent, this, resultId);
     Bind(wxEVT_ACTIVATE, &SearchFrame::OnActivate, this, wxID_ANY);
@@ -276,9 +277,9 @@ void SearchFrame::OnCharEvent(wxKeyEvent &event)
             SelectNext();
         }
     }
-    else if (event.GetKeyCode() >= 49 && event.GetKeyCode() <= 56)
+    else if (event.GetUnicodeKey() >= '1' && event.GetUnicodeKey() <= '9')
     { // Alt + num shortcut
-        int index = event.GetKeyCode() - 49;
+        int index = event.GetUnicodeKey() - '1';
         if (wxGetKeyState(WXK_ALT))
         {
             if (resultBox->GetItemCount() > index)
