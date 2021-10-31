@@ -212,6 +212,8 @@ pub fn initialize_and_spawn(
       let disable_options =
         process::middleware::disable::extract_disable_options(&*config_manager.default());
 
+      let notification_manager = NotificationManager::new(&*ui_remote, default_config);
+
       let mut processor = espanso_engine::process::default(
         &matchers,
         &config_manager,
@@ -229,6 +231,7 @@ pub fn initialize_and_spawn(
         &config_manager,
         &modifier_state_store,
         &combined_match_cache,
+        &notification_manager,
       );
 
       let event_injector = EventInjectorAdapter::new(&*injector, &config_manager);
@@ -256,8 +259,6 @@ pub fn initialize_and_spawn(
           error!("unable to revoke linux capabilities: {}", err);
         }
       }
-
-      let notification_manager = NotificationManager::new(&*ui_remote, default_config);
 
       match start_reason.as_deref() {
         Some(flag) if flag == WORKER_START_REASON_CONFIG_CHANGED => {
