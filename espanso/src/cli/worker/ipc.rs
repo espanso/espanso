@@ -21,13 +21,17 @@ use std::path::Path;
 
 use anyhow::Result;
 use crossbeam::channel::Sender;
-use espanso_engine::event::ExitMode;
+use espanso_engine::event::{external::MatchExecRequestEvent, EventType, ExitMode};
 use espanso_ipc::{EventHandlerResponse, IPCServer};
 use log::{error, warn};
 
 use crate::ipc::IPCEvent;
 
-pub fn initialize_and_spawn(runtime_dir: &Path, exit_notify: Sender<ExitMode>) -> Result<()> {
+pub fn initialize_and_spawn(
+  runtime_dir: &Path,
+  exit_notify: Sender<ExitMode>,
+  event_notify: Sender<EventType>,
+) -> Result<()> {
   let server = crate::ipc::create_worker_ipc_server(runtime_dir)?;
 
   std::thread::Builder::new()
@@ -49,6 +53,21 @@ pub fn initialize_and_spawn(runtime_dir: &Path, exit_notify: Sender<ExitMode>) -
             if let Err(err) = exit_notify.send(ExitMode::ExitAllProcesses) {
               error!(
                 "experienced error while sending exit signal from worker ipc handler: {}",
+                err
+              );
+            }
+
+            EventHandlerResponse::NoResponse
+          }
+          IPCEvent::RequestMatchExpansion(payload) => {
+            if let Err(err) =
+              event_notify.send(EventType::MatchExecRequest(MatchExecRequestEvent {
+                trigger: payload.trigger,
+                args: payload.args,
+              }))
+            {
+              error!(
+                "experienced error while sending event signal from worker ipc handler: {}",
                 err
               );
             }
