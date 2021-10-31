@@ -44,6 +44,7 @@ pub use middleware::matcher::{
   ModifierStateProvider,
 };
 pub use middleware::multiplex::Multiplexer;
+pub use middleware::notification::NotificationManager;
 pub use middleware::render::{Renderer, RendererError};
 pub use middleware::search::MatchProvider;
 pub use middleware::suppress::EnabledStatusProvider;
@@ -67,6 +68,7 @@ pub fn default<'a, MatcherState>(
   enabled_status_provider: &'a dyn EnabledStatusProvider,
   modifier_state_provider: &'a dyn ModifierStateProvider,
   match_resolver: &'a dyn MatchResolver,
+  notification_manager: &'a dyn NotificationManager,
 ) -> impl Processor + 'a {
   default::DefaultProcessor::new(
     matchers,
@@ -85,5 +87,6 @@ pub fn default<'a, MatcherState>(
     enabled_status_provider,
     modifier_state_provider,
     match_resolver,
+    notification_manager,
   )
 }
