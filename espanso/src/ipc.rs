@@ -27,6 +27,11 @@ pub enum IPCEvent {
   Exit,
   ExitAllProcesses,
 
+  EnableRequest,
+  DisableRequest,
+  ToggleRequest,
+  OpenSearchBar,
+
   RequestMatchExpansion(RequestMatchExpansionPayload),
 }
 

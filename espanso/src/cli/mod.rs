@@ -23,6 +23,7 @@ use clap::ArgMatches;
 use espanso_config::{config::ConfigStore, error::NonFatalErrorSet, matches::store::MatchStore};
 use espanso_path::Paths;
 
+pub mod cmd;
 pub mod daemon;
 pub mod edit;
 pub mod env_path;
