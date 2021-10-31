@@ -49,7 +49,6 @@ impl Event {
 #[allow(clippy::upper_case_acronyms)]
 pub enum EventType {
   NOOP,
-  ProcessingError(String),
   ExitRequested(ExitMode),
   Exit(ExitMode),
   Heartbeat,
@@ -77,6 +76,7 @@ pub enum EventType {
   DiscardPrevious(internal::DiscardPreviousEvent),
   DiscardBetween(internal::DiscardBetweenEvent),
   Undo(internal::UndoEvent),
+  RenderingError,
 
   Disabled,
   Enabled,
