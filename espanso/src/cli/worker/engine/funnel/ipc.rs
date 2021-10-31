@@ -68,5 +68,12 @@ impl<'a> funnel::Source<'a> for IpcEventSource<'a> {
 }
 
 fn is_event_type_allowed(event: &EventType) -> bool {
-  matches!(event, EventType::MatchExecRequest(_))
+  matches!(
+    event,
+    EventType::MatchExecRequest(_)
+      | EventType::ShowSearchBar
+      | EventType::DisableRequest
+      | EventType::EnableRequest
+      | EventType::ToggleRequest
+  )
 }

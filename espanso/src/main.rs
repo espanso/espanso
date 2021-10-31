@@ -72,6 +72,7 @@ lazy_static! {
     cli::workaround::new(),
     cli::package::new(),
     cli::match_cli::new(),
+    cli::cmd::new(),
   ];
   static ref ALIASES: Vec<CliAlias> = vec![
     CliAlias {
@@ -220,17 +221,17 @@ fn main() {
         .subcommand(SubCommand::with_name("unregister").about("Remove 'espanso' command from PATH"))
         .about("Add or remove the 'espanso' command from the PATH"),
     )
-    // .subcommand(SubCommand::with_name("cmd")
-    //     .about("Send a command to the espanso daemon.")
-    //     .subcommand(SubCommand::with_name("exit")
-    //         .about("Terminate the daemon."))
-    //     .subcommand(SubCommand::with_name("enable")
-    //         .about("Enable the espanso replacement engine."))
-    //     .subcommand(SubCommand::with_name("disable")
-    //         .about("Disable the espanso replacement engine."))
-    //     .subcommand(SubCommand::with_name("toggle")
-    //         .about("Toggle the status of the espanso replacement engine."))
-    // )
+    .subcommand(SubCommand::with_name("cmd")
+        .about("Send a command to the espanso daemon.")
+        .subcommand(SubCommand::with_name("enable")
+            .about("Enable expansions."))
+        .subcommand(SubCommand::with_name("disable")
+            .about("Disable expansions."))
+        .subcommand(SubCommand::with_name("toggle")
+            .about("Enable/Disable expansions."))
+        .subcommand(SubCommand::with_name("search")
+            .about("Open the Espanso's search bar."))
+    )
     .subcommand(SubCommand::with_name("edit")
         .about("Shortcut to open the default text editor to edit config files")
         .arg(Arg::with_name("target_file")
@@ -252,10 +253,6 @@ For example, specifying 'email' is equivalent to 'match/email.yml'."#))
         .setting(AppSettings::Hidden)
         .about("Start the daemon without spawning a new process."),
     )
-    // .subcommand(SubCommand::with_name("register")
-    //     .about("MacOS and Linux only. Register espanso in the system daemon manager."))
-    // .subcommand(SubCommand::with_name("unregister")
-    //     .about("MacOS and Linux only. Unregister espanso from the system daemon manager."))
     .subcommand(SubCommand::with_name("launcher").setting(AppSettings::Hidden))
     .subcommand(SubCommand::with_name("log").about("Print the daemon logs."))
     .subcommand(
@@ -306,8 +303,6 @@ For example, specifying 'email' is equivalent to 'match/email.yml'."#))
             ),
         ),
     )
-    // .subcommand(SubCommand::with_name("status")
-    //     .about("Check if the espanso daemon is running or not."))
     .subcommand(
       SubCommand::with_name("path")
         .about("Prints all the espanso directory paths to easily locate configuration and matches.")

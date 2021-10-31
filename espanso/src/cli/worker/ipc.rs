@@ -59,21 +59,17 @@ pub fn initialize_and_spawn(
 
             EventHandlerResponse::NoResponse
           }
-          IPCEvent::RequestMatchExpansion(payload) => {
-            if let Err(err) =
-              event_notify.send(EventType::MatchExecRequest(MatchExecRequestEvent {
-                trigger: payload.trigger,
-                args: payload.args,
-              }))
-            {
-              error!(
-                "experienced error while sending event signal from worker ipc handler: {}",
-                err
-              );
-            }
-
-            EventHandlerResponse::NoResponse
-          }
+          IPCEvent::DisableRequest => send_event(&event_notify, EventType::DisableRequest),
+          IPCEvent::EnableRequest => send_event(&event_notify, EventType::EnableRequest),
+          IPCEvent::ToggleRequest => send_event(&event_notify, EventType::ToggleRequest),
+          IPCEvent::OpenSearchBar => send_event(&event_notify, EventType::ShowSearchBar),
+          IPCEvent::RequestMatchExpansion(payload) => send_event(
+            &event_notify,
+            EventType::MatchExecRequest(MatchExecRequestEvent {
+              trigger: payload.trigger,
+              args: payload.args,
+            }),
+          ),
           #[allow(unreachable_patterns)]
           unexpected_event => {
             warn!(
@@ -88,4 +84,18 @@ pub fn initialize_and_spawn(
     })?;
 
   Ok(())
+}
+
+fn send_event(
+  event_notify: &Sender<EventType>,
+  event: EventType,
+) -> EventHandlerResponse<IPCEvent> {
+  if let Err(err) = event_notify.send(event) {
+    error!(
+      "experienced error while sending event signal from worker ipc handler: {}",
+      err
+    );
+  }
+
+  EventHandlerResponse::NoResponse
 }
