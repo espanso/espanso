@@ -22,6 +22,7 @@ use crate::event::{Event, EventType};
 
 pub trait NotificationManager {
   fn notify_status_change(&self, enabled: bool);
+  fn notify_rendering_error(&self);
 }
 
 pub struct NotificationMiddleware<'a> {
@@ -45,6 +46,7 @@ impl<'a> Middleware for NotificationMiddleware<'a> {
     match &event.etype {
       EventType::Enabled => self.notification_manager.notify_status_change(true),
       EventType::Disabled => self.notification_manager.notify_status_change(false),
+      EventType::RenderingError => self.notification_manager.notify_rendering_error(),
       _ => {}
     }
 
