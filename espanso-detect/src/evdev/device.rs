@@ -2,7 +2,7 @@
 // https://github.com/xkbcommon/libxkbcommon/blob/master/tools/interactive-evdev.c
 
 use anyhow::Result;
-use libc::{input_event, size_t, ssize_t, EWOULDBLOCK, O_CLOEXEC, O_NONBLOCK, O_RDONLY};
+use libc::{input_event, size_t, ssize_t, ENODEV, EWOULDBLOCK, O_CLOEXEC, O_NONBLOCK, O_RDONLY};
 use log::trace;
 use scopeguard::ScopeGuard;
 use std::collections::HashMap;
@@ -127,7 +127,11 @@ impl Device {
     }
 
     if len < 0 && unsafe { *errno_ptr } != EWOULDBLOCK {
-      return Err(DeviceError::BlockingReadOperation().into());
+      if unsafe { *errno_ptr } == ENODEV {
+        return Err(DeviceError::FailedReadNoSuchDevice.into());
+      }
+
+      return Err(DeviceError::FailedRead(unsafe { *errno_ptr }).into());
     }
 
     Ok(events)
@@ -322,6 +326,9 @@ pub enum DeviceError {
   #[error("no devices found")]
   NoDevicesFound(),
 
-  #[error("read operation can't block device")]
-  BlockingReadOperation(),
+  #[error("read operation failed with code: `{0}`")]
+  FailedRead(i32),
+
+  #[error("read operation failed: ENODEV No such device")]
+  FailedReadNoSuchDevice,
 }
