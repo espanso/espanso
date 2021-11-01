@@ -53,3 +53,19 @@ impl CommandExt for Command {
     self
   }
 }
+
+// For context, see also this issue: https://github.com/federico-terzi/espanso/issues/648
+#[cfg(target_os = "macos")]
+pub fn prevent_running_as_root_on_macos() {
+  use crate::{error_eprintln, exit_code::UNEXPECTED_RUN_AS_ROOT};
+
+  if unsafe { libc::geteuid() } == 0 {
+    error_eprintln!("Espanso is being run as root, but this can create unwanted side-effects. Please run it as a normal user.");
+    std::process::exit(UNEXPECTED_RUN_AS_ROOT);
+  }
+}
+
+#[cfg(not(target_os = "macos"))]
+pub fn prevent_running_as_root_on_macos() {
+  // Do nothing on other platforms
+}

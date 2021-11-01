@@ -22,6 +22,7 @@ use espanso_engine::event::ExitMode;
 use log::{debug, error, info};
 
 use crate::{
+  cli::util::prevent_running_as_root_on_macos,
   exit_code::{
     WORKER_ALREADY_RUNNING, WORKER_EXIT_ALL_PROCESSES, WORKER_GENERAL_ERROR,
     WORKER_LEGACY_ALREADY_RUNNING, WORKER_RESTART, WORKER_SUCCESS,
@@ -58,6 +59,8 @@ pub fn new() -> CliModule {
 }
 
 fn worker_main(args: CliModuleArgs) -> i32 {
+  prevent_running_as_root_on_macos();
+
   let paths = args.paths.expect("missing paths in worker main");
   let cli_args = args.cli_args.expect("missing cli_args in worker main");
 
