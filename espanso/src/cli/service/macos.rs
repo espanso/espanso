@@ -23,12 +23,16 @@ use std::process::Command;
 use std::{fs::create_dir_all, process::ExitStatus};
 use thiserror::Error;
 
+use crate::cli::util::prevent_running_as_root_on_macos;
+
 #[cfg(target_os = "macos")]
 const SERVICE_PLIST_CONTENT: &str = include_str!("../../res/macos/com.federicoterzi.espanso.plist");
 #[cfg(target_os = "macos")]
 const SERVICE_PLIST_FILE_NAME: &str = "com.federicoterzi.espanso.plist";
 
 pub fn register() -> Result<()> {
+  prevent_running_as_root_on_macos();
+
   let home_dir = dirs::home_dir().expect("could not get user home directory");
   let library_dir = home_dir.join("Library");
   let agents_dir = library_dir.join("LaunchAgents");
@@ -94,6 +98,8 @@ pub enum RegisterError {
 }
 
 pub fn unregister() -> Result<()> {
+  prevent_running_as_root_on_macos();
+
   let home_dir = dirs::home_dir().expect("could not get user home directory");
   let library_dir = home_dir.join("Library");
   let agents_dir = library_dir.join("LaunchAgents");
