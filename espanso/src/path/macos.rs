@@ -42,8 +42,10 @@ pub fn add_espanso_to_path(prompt_when_necessary: bool) -> Result<()> {
         ErrorKind::PermissionDenied if prompt_when_necessary => {
           warn!("target link file can't be accessed with current permissions, requesting elevated ones through AppleScript.");
 
-          create_link_with_applescript(&exec_path, &target_link_path)
+          create_dir_and_link_with_applescript(&exec_path, &target_link_path)
             .context("unable to create link with AppleScript")?;
+
+          return Ok(());
         }
         _other_error => {
           return Err(PathError::SymlinkError(error).into());
@@ -57,8 +59,10 @@ pub fn add_espanso_to_path(prompt_when_necessary: bool) -> Result<()> {
       ErrorKind::PermissionDenied if prompt_when_necessary => {
         warn!("target link file can't be accessed with current permissions, requesting elevated ones through AppleScript.");
 
-        create_link_with_applescript(&exec_path, &target_link_path)
+        create_dir_and_link_with_applescript(&exec_path, &target_link_path)
           .context("unable to create link with AppleScript")?;
+
+        return Ok(());
       }
       _other_error => {
         return Err(PathError::SymlinkError(error).into());
@@ -69,7 +73,7 @@ pub fn add_espanso_to_path(prompt_when_necessary: bool) -> Result<()> {
   Ok(())
 }
 
-fn create_link_with_applescript(exec_path: &Path, target_link_path: &Path) -> Result<()> {
+fn create_dir_and_link_with_applescript(exec_path: &Path, target_link_path: &Path) -> Result<()> {
   let params = format!(
     r##"do shell script "mkdir -p /usr/local/bin && ln -sf '{}' '{}'" with administrator privileges"##,
     exec_path.to_string_lossy(),
