@@ -101,6 +101,7 @@ fn service_main(args: CliModuleArgs) -> i32 {
     return status_main(&paths);
   } else if let Some(sub_args) = cli_args.subcommand_matches("restart") {
     stop_main(&paths);
+    std::thread::sleep(std::time::Duration::from_millis(300));
     return start_main(&paths, &paths_overrides, sub_args);
   }
 
