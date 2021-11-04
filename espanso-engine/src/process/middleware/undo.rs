@@ -89,14 +89,13 @@ impl<'a> Middleware for UndoMiddleware<'a> {
         }
         *record = None;
       }
-    } else if let EventType::Mouse(_) = &event.etype {
-      // Any mouse event invalidates the undo feature, as it could
-      // represent a change in application
-      *record = None;
-    } else if let EventType::CursorHintCompensation(_) = &event.etype {
-      // Cursor hints invalidate the undo feature, as it would be pretty
-      // complex to determine which delete operations should be performed.
-      // This might change in the future.
+    } else if let EventType::Mouse(_) | EventType::CursorHintCompensation(_) = &event.etype {
+      // Explanation:
+      // * Any mouse event invalidates the undo feature, as it could
+      //   represent a change in application
+      // * Cursor hints invalidate the undo feature, as it would be pretty
+      //   complex to determine which delete operations should be performed.
+      //   This might change in the future.
       *record = None;
     }
 
