@@ -51,6 +51,7 @@ pub const SERVICE_FAILURE: i32 = 1;
 pub const SERVICE_NOT_REGISTERED: i32 = 2;
 pub const SERVICE_ALREADY_RUNNING: i32 = 3;
 pub const SERVICE_NOT_RUNNING: i32 = 4;
+pub const SERVICE_TIMED_OUT: i32 = 5;
 
 pub const WORKAROUND_SUCCESS: i32 = 0;
 #[allow(dead_code)]
