@@ -72,7 +72,7 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
 
   let is_welcome_page_enabled = !preferences.has_completed_wizard();
 
-  let is_move_bundle_page_enabled = false; // TODO
+  let is_move_bundle_page_enabled = crate::cli::util::is_subject_to_app_translocation_on_macos();
 
   let is_legacy_version_page_enabled = util::is_legacy_version_running(&paths.runtime);
   let runtime_dir_clone = paths.runtime.clone();
