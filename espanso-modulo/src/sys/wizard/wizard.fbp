@@ -708,7 +708,7 @@
                                             <property name="window_extra_style"></property>
                                             <property name="window_name"></property>
                                             <property name="window_style"></property>
-                                            <property name="wrap">-1</property>
+                                            <property name="wrap">500</property>
                                         </object>
                                     </object>
                                     <object class="sizeritem" expanded="1">
