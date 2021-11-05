@@ -86,7 +86,7 @@ WizardFrame::WizardFrame( wxWindow* parent, wxWindowID id, const wxString& title
 
 	bSizer22->Add( 0, 20, 1, wxEXPAND, 5 );
 
-	move_bundle_quit_button = new wxButton( move_bundle_panel, wxID_ANY, wxT("Start"), wxDefaultPosition, wxDefaultSize, 0 );
+	move_bundle_quit_button = new wxButton( move_bundle_panel, wxID_ANY, wxT("Quit"), wxDefaultPosition, wxDefaultSize, 0 );
 
 	move_bundle_quit_button->SetDefault();
 	bSizer22->Add( move_bundle_quit_button, 0, wxALIGN_RIGHT|wxALL, 10 );
