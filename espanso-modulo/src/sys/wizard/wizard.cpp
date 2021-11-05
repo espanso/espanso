@@ -115,6 +115,7 @@ protected:
 	void add_path_continue_clicked( wxCommandEvent& event );
 	void accessibility_enable_clicked( wxCommandEvent& event );
 	void quit_espanso_clicked( wxCommandEvent& event );
+	void move_bundle_quit_clicked( wxCommandEvent& event );
 
   void navigate_to_next_page_or_close();
   void change_default_button(int target_page);
@@ -371,6 +372,11 @@ void DerivedFrame::change_default_button(int target_page)
     break;
   }
   }
+}
+
+void DerivedFrame::move_bundle_quit_clicked( wxCommandEvent& event )
+{
+  Close(true);
 }
 
 bool WizardApp::OnInit()
