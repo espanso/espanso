@@ -98,6 +98,7 @@ impl Default for Template {
 pub struct Variable {
   pub name: String,
   pub var_type: String,
+  pub inject_vars: bool,
   pub params: Params,
 }
 
@@ -106,6 +107,7 @@ impl Default for Variable {
     Self {
       name: "".to_string(),
       var_type: "".to_string(),
+      inject_vars: true,
       params: Params::new(),
     }
   }
