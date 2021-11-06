@@ -18,6 +18,7 @@
  */
 
 pub mod effect;
+pub mod external;
 pub mod input;
 pub mod internal;
 pub mod ui;
@@ -48,7 +49,6 @@ impl Event {
 #[allow(clippy::upper_case_acronyms)]
 pub enum EventType {
   NOOP,
-  ProcessingError(String),
   ExitRequested(ExitMode),
   Exit(ExitMode),
   Heartbeat,
@@ -59,6 +59,9 @@ pub enum EventType {
   HotKey(input::HotKeyEvent),
   TrayIconClicked,
   ContextMenuClicked(input::ContextMenuClickedEvent),
+
+  // External requests
+  MatchExecRequest(external::MatchExecRequestEvent),
 
   // Internal
   MatchesDetected(internal::MatchesDetectedEvent),
@@ -73,11 +76,13 @@ pub enum EventType {
   DiscardPrevious(internal::DiscardPreviousEvent),
   DiscardBetween(internal::DiscardBetweenEvent),
   Undo(internal::UndoEvent),
+  RenderingError,
 
   Disabled,
   Enabled,
   DisableRequest,
   EnableRequest,
+  ToggleRequest,
   SecureInputEnabled(internal::SecureInputEnabledEvent),
   SecureInputDisabled,
 

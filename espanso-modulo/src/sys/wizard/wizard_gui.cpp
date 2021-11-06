@@ -80,13 +80,13 @@ WizardFrame::WizardFrame( wxWindow* parent, wxWindowID id, const wxString& title
 	bSizer22->Add( 0, 20, 0, 0, 5 );
 
 	move_bundle_description = new wxStaticText( move_bundle_panel, wxID_ANY, wxT("Espanso is being run from outside the Applications directory, which prevents it from working correctly.\n\nPlease move the Espanso.app bundle inside your Applications folder and start it again.\n"), wxDefaultPosition, wxDefaultSize, 0 );
-	move_bundle_description->Wrap( -1 );
+	move_bundle_description->Wrap( 500 );
 	bSizer22->Add( move_bundle_description, 0, wxALL, 10 );
 
 
 	bSizer22->Add( 0, 20, 1, wxEXPAND, 5 );
 
-	move_bundle_quit_button = new wxButton( move_bundle_panel, wxID_ANY, wxT("Start"), wxDefaultPosition, wxDefaultSize, 0 );
+	move_bundle_quit_button = new wxButton( move_bundle_panel, wxID_ANY, wxT("Quit"), wxDefaultPosition, wxDefaultSize, 0 );
 
 	move_bundle_quit_button->SetDefault();
 	bSizer22->Add( move_bundle_quit_button, 0, wxALIGN_RIGHT|wxALL, 10 );

@@ -22,7 +22,7 @@ use std::collections::HashMap;
 use log::error;
 
 use super::super::Middleware;
-use crate::event::{internal::RenderedEvent, Event, EventType};
+use crate::event::{effect::TextInjectRequest, internal::RenderedEvent, Event, EventType};
 use anyhow::Result;
 use thiserror::Error;
 
@@ -62,7 +62,7 @@ impl<'a> Middleware for RenderMiddleware<'a> {
     "render"
   }
 
-  fn next(&self, event: Event, _: &mut dyn FnMut(Event)) -> Event {
+  fn next(&self, event: Event, dispatch: &mut dyn FnMut(Event)) -> Event {
     if let EventType::RenderingRequested(m_event) = event.etype {
       match self.renderer.render(
         m_event.match_id,
@@ -91,7 +91,16 @@ impl<'a> Middleware for RenderMiddleware<'a> {
           }
           _ => {
             error!("error during rendering: {:?}", err);
-            return Event::caused_by(event.source_id, EventType::ProcessingError("An error has occurred during rendering, please examine the logs or contact support.".to_string()));
+
+            dispatch(Event::caused_by(
+                event.source_id,
+                EventType::TextInject(TextInjectRequest {
+                  text: "[Espanso]: An error occurred during rendering, please examine the logs for more information.".to_string(),
+                  ..Default::default()
+                }),
+              ));
+
+            return Event::caused_by(event.source_id, EventType::RenderingError);
           }
         },
       }

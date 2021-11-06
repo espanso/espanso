@@ -44,7 +44,11 @@ int32_t clipboard_set_text(char * text) {
   [pasteboard declareTypes:array owner:nil];
 
   NSString *nsText = [NSString stringWithUTF8String:text];
-  [pasteboard setString:nsText forType:NSPasteboardTypeString];
+  if (![pasteboard setString:nsText forType:NSPasteboardTypeString]) {
+    return 0;
+  }
+
+  return 1;
 }
 
 int32_t clipboard_set_image(char * image_path) {

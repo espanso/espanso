@@ -1,7 +1,7 @@
 // This code is a port of the libxkbcommon "interactive-evdev.c" example
 // https://github.com/xkbcommon/libxkbcommon/blob/master/tools/interactive-evdev.c
 
-use std::ffi::CStr;
+use std::{ffi::CStr, os::raw::c_char};
 
 use scopeguard::ScopeGuard;
 
@@ -48,17 +48,17 @@ impl State {
   }
 
   pub fn get_string(&self, code: u32) -> Option<String> {
-    let mut buffer: [u8; 16] = [0; 16];
+    let mut buffer: [c_char; 16] = [0; 16];
     let len = unsafe {
       xkb_state_key_get_utf8(
         self.state,
         code,
-        buffer.as_mut_ptr() as *mut i8,
+        buffer.as_mut_ptr(),
         std::mem::size_of_val(&buffer),
       )
     };
     if len > 0 {
-      let content_raw = unsafe { CStr::from_ptr(buffer.as_ptr() as *mut i8) };
+      let content_raw = unsafe { CStr::from_ptr(buffer.as_ptr()) };
       let string = content_raw.to_string_lossy().to_string();
       if string.is_empty() {
         None

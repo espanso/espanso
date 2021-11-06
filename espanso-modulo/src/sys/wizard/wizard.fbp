@@ -708,7 +708,7 @@
                                             <property name="window_extra_style"></property>
                                             <property name="window_name"></property>
                                             <property name="window_style"></property>
-                                            <property name="wrap">-1</property>
+                                            <property name="wrap">500</property>
                                         </object>
                                     </object>
                                     <object class="sizeritem" expanded="1">
@@ -758,7 +758,7 @@
                                             <property name="gripper">0</property>
                                             <property name="hidden">0</property>
                                             <property name="id">wxID_ANY</property>
-                                            <property name="label">Start</property>
+                                            <property name="label">Quit</property>
                                             <property name="margins"></property>
                                             <property name="markup">0</property>
                                             <property name="max_size"></property>

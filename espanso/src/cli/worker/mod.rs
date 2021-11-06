@@ -22,6 +22,7 @@ use espanso_engine::event::ExitMode;
 use log::{debug, error, info};
 
 use crate::{
+  cli::util::prevent_running_as_root_on_macos,
   exit_code::{
     WORKER_ALREADY_RUNNING, WORKER_EXIT_ALL_PROCESSES, WORKER_GENERAL_ERROR,
     WORKER_LEGACY_ALREADY_RUNNING, WORKER_RESTART, WORKER_SUCCESS,
@@ -58,6 +59,8 @@ pub fn new() -> CliModule {
 }
 
 fn worker_main(args: CliModuleArgs) -> i32 {
+  prevent_running_as_root_on_macos();
+
   let paths = args.paths.expect("missing paths in worker main");
   let cli_args = args.cli_args.expect("missing cli_args in worker main");
 
@@ -112,6 +115,7 @@ fn worker_main(args: CliModuleArgs) -> i32 {
     .expect("unable to initialize UI module");
 
   let (engine_exit_notify, engine_exit_receiver) = unbounded();
+  let (ipc_event_notify, ipc_event_receiver) = unbounded();
   let (engine_ui_event_sender, engine_ui_event_receiver) = unbounded();
   let (engine_secure_input_sender, engine_secure_input_receiver) = unbounded();
 
@@ -126,11 +130,12 @@ fn worker_main(args: CliModuleArgs) -> i32 {
     engine_secure_input_receiver,
     use_evdev_backend,
     start_reason,
+    ipc_event_receiver,
   )
   .expect("unable to initialize engine");
 
   // Setup the IPC server
-  ipc::initialize_and_spawn(&paths.runtime, engine_exit_notify.clone())
+  ipc::initialize_and_spawn(&paths.runtime, engine_exit_notify.clone(), ipc_event_notify)
     .expect("unable to initialize IPC server");
 
   // If specified, automatically monitor the daemon status and

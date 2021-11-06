@@ -45,15 +45,8 @@ impl Middleware for MarkdownMiddleware {
       // See also: https://github.com/federico-terzi/espanso/issues/759
       let html = std::panic::catch_unwind(|| markdown::to_html(&m_event.markdown));
       if let Ok(html) = html {
-        let mut html = html.trim();
-
-        // Remove the surrounding paragraph
-        if html.starts_with("<p>") {
-          html = html.trim_start_matches("<p>");
-        }
-        if html.ends_with("</p>") {
-          html = html.trim_end_matches("</p>");
-        }
+        let html = html.trim();
+        let html = remove_paragraph_tag_if_single_occurrence(html);
 
         return Event::caused_by(
           event.source_id,
@@ -72,4 +65,42 @@ impl Middleware for MarkdownMiddleware {
   }
 }
 
-// TODO: test
+// If the match is composed of a single paragraph, we remove the tag to avoid
+// a forced "newline" on some editors. In other words, we assume that if the snippet
+// is composed of a single paragraph, then it should be inlined.
+// On the other hand, if the snippet is composed of multiple paragraphs, then we
+// avoid removing the paragraph to prevent HTML corruption.
+// See: https://github.com/federico-terzi/espanso/issues/811
+fn remove_paragraph_tag_if_single_occurrence(html: &str) -> &str {
+  let paragraph_count = html.matches("<p>").count();
+  if paragraph_count <= 1 {
+    let mut new_html = html;
+    if new_html.starts_with("<p>") {
+      new_html = new_html.trim_start_matches("<p>");
+    }
+    if new_html.ends_with("</p>") {
+      new_html = new_html.trim_end_matches("</p>");
+    }
+
+    new_html
+  } else {
+    html
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn test_remove_paragraph_tag_if_single_occurrence() {
+    assert_eq!(
+      remove_paragraph_tag_if_single_occurrence("<p>single occurrence</p>"),
+      "single occurrence"
+    );
+    assert_eq!(
+      remove_paragraph_tag_if_single_occurrence("<p>multi</p> <p>occurrence</p>"),
+      "<p>multi</p> <p>occurrence</p>"
+    );
+  }
+}

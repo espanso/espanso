@@ -420,15 +420,26 @@ fn macos_link_search_path() -> Option<String> {
 #[cfg(target_os = "linux")]
 fn build_native() {
   // Make sure wxWidgets is installed
-  if std::process::Command::new("wx-config")
+  // Depending on the installation package, the 'wx-config' command might also be available as 'wx-config-gtk3',
+  // so we need to check for both.
+  // See also: https://github.com/federico-terzi/espanso/issues/840
+  let wx_config_command = if std::process::Command::new("wx-config")
     .arg("--version")
     .output()
-    .is_err()
+    .is_ok()
   {
-    panic!("wxWidgets is not installed, as `wx-config` cannot be exectued")
-  }
+    "wx-config"
+  } else if std::process::Command::new("wx-config-gtk3")
+    .arg("--version")
+    .output()
+    .is_ok()
+  {
+    "wx-config-gtk3"
+  } else {
+    panic!("wxWidgets is not installed, as `wx-config` cannot be executed")
+  };
 
-  let config_path = PathBuf::from("wx-config");
+  let config_path = PathBuf::from(wx_config_command);
   let cpp_flags = get_cpp_flags(&config_path);
 
   let mut build = cc::Build::new();

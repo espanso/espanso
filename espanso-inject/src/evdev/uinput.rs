@@ -23,6 +23,7 @@ use libc::{c_uint, close, ioctl, open, O_NONBLOCK, O_WRONLY};
 use scopeguard::ScopeGuard;
 
 use anyhow::Result;
+use log::error;
 use thiserror::Error;
 
 use super::ffi::{
@@ -39,6 +40,9 @@ impl UInputDevice {
     let uinput_path = CString::new("/dev/uinput").expect("unable to generate /dev/uinput path");
     let raw_fd = unsafe { open(uinput_path.as_ptr(), O_WRONLY | O_NONBLOCK) };
     if raw_fd < 0 {
+      error!("Error: could not open uinput device");
+      error!("This might be due to a recent kernel update, please restart your PC so that the uinput module can be loaded correctly.");
+
       return Err(UInputDeviceError::Open().into());
     }
     let fd = scopeguard::guard(raw_fd, |raw_fd| unsafe {

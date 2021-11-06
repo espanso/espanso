@@ -20,12 +20,25 @@
 use anyhow::Result;
 use espanso_ipc::{IPCClient, IPCServer};
 use serde::{Deserialize, Serialize};
-use std::path::Path;
+use std::{collections::HashMap, path::Path};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum IPCEvent {
   Exit,
   ExitAllProcesses,
+
+  EnableRequest,
+  DisableRequest,
+  ToggleRequest,
+  OpenSearchBar,
+
+  RequestMatchExpansion(RequestMatchExpansionPayload),
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct RequestMatchExpansionPayload {
+  pub trigger: Option<String>,
+  pub args: HashMap<String, String>,
 }
 
 pub fn create_daemon_ipc_server(runtime_dir: &Path) -> Result<impl IPCServer<IPCEvent>> {

@@ -17,11 +17,11 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::io::ErrorKind;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
+use std::{fs::create_dir_all, io::ErrorKind};
 use thiserror::Error;
 
-use anyhow::Result;
+use anyhow::{bail, Context, Result};
 use log::{error, warn};
 
 pub fn is_espanso_in_path() -> bool {
@@ -29,43 +29,73 @@ pub fn is_espanso_in_path() -> bool {
 }
 
 pub fn add_espanso_to_path(prompt_when_necessary: bool) -> Result<()> {
+  if crate::cli::util::is_subject_to_app_translocation_on_macos() {
+    error_eprintln!("Unable to register Espanso to PATH, please move the Espanso.app bundle inside the /Applications directory to proceed.");
+    error_eprintln!(
+      "For more information, please see: https://github.com/federico-terzi/espanso/issues/844"
+    );
+    bail!("macOS activated app-translocation on Espanso");
+  }
+
   let target_link_dir = PathBuf::from("/usr/local/bin");
   let exec_path = std::env::current_exe()?;
 
-  if !target_link_dir.is_dir() {
-    return Err(PathError::UsrLocalBinDirDoesNotExist.into());
-  }
-
   let target_link_path = target_link_dir.join("espanso");
+
+  if !target_link_dir.is_dir() {
+    warn!("/usr/local/bin folder does not exist, attempting to create one...");
+
+    if let Err(error) = create_dir_all(&target_link_dir) {
+      match error.kind() {
+        ErrorKind::PermissionDenied if prompt_when_necessary => {
+          warn!("target link file can't be accessed with current permissions, requesting elevated ones through AppleScript.");
+
+          create_dir_and_link_with_applescript(&exec_path, &target_link_path)
+            .context("unable to create link with AppleScript")?;
+
+          return Ok(());
+        }
+        _other_error => {
+          return Err(PathError::SymlinkError(error).into());
+        }
+      }
+    }
+  }
 
   if let Err(error) = std::os::unix::fs::symlink(&exec_path, &target_link_path) {
     match error.kind() {
-      ErrorKind::PermissionDenied => {
-        if prompt_when_necessary {
-          warn!("target link file can't be accessed with current permissions, requesting elevated ones through AppleScript.");
+      ErrorKind::PermissionDenied if prompt_when_necessary => {
+        warn!("target link file can't be accessed with current permissions, requesting elevated ones through AppleScript.");
 
-          let params = format!(
-            r##"do shell script "mkdir -p /usr/local/bin && ln -sf '{}' '{}'" with administrator privileges"##,
-            exec_path.to_string_lossy(),
-            target_link_path.to_string_lossy(),
-          );
+        create_dir_and_link_with_applescript(&exec_path, &target_link_path)
+          .context("unable to create link with AppleScript")?;
 
-          let mut child = std::process::Command::new("osascript")
-            .args(&["-e", &params])
-            .spawn()?;
-
-          let result = child.wait()?;
-          if !result.success() {
-            return Err(PathError::ElevationRequestFailure.into());
-          }
-        } else {
-          return Err(PathError::SymlinkError(error).into());
-        }
+        return Ok(());
       }
       _other_error => {
         return Err(PathError::SymlinkError(error).into());
       }
     }
+  }
+
+  Ok(())
+}
+
+fn create_dir_and_link_with_applescript(exec_path: &Path, target_link_path: &Path) -> Result<()> {
+  let params = format!(
+    r##"do shell script "mkdir -p /usr/local/bin && ln -sf '{}' '{}'" with administrator privileges"##,
+    exec_path.to_string_lossy(),
+    target_link_path.to_string_lossy(),
+  );
+
+  let mut child = std::process::Command::new("osascript")
+    .args(&["-e", &params])
+    .spawn()?;
+
+  let result = child.wait()?;
+
+  if !result.success() {
+    return Err(PathError::ElevationRequestFailure.into());
   }
 
   Ok(())
@@ -112,9 +142,6 @@ pub fn remove_espanso_from_path(prompt_when_necessary: bool) -> Result<()> {
 
 #[derive(Error, Debug)]
 pub enum PathError {
-  #[error("/usr/local/bin directory doesn't exist")]
-  UsrLocalBinDirDoesNotExist,
-
   #[error("symlink error: `{0}`")]
   SymlinkError(std::io::Error),
 

@@ -30,7 +30,7 @@ pub struct CursorHintCompensationEvent {
   pub cursor_hint_back_count: usize,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct TextInjectRequest {
   pub text: String,
   pub force_mode: Option<TextInjectMode>,
