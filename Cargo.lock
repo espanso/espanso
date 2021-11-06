@@ -572,7 +572,7 @@ dependencies = [
 
 [[package]]
 name = "espanso"
-version = "2.0.5-alpha"
+version = "2.0.6-alpha"
 dependencies = [
  "anyhow",
  "caps",
