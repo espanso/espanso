@@ -26,7 +26,7 @@ use std::{
 
 use crate::{Clipboard, ClipboardOptions};
 use anyhow::Result;
-use log::error;
+use log::{error, warn};
 use std::process::Command;
 use thiserror::Error;
 use wait_timeout::ChildExt;
@@ -49,7 +49,15 @@ impl WaylandFallbackClipboard {
 
     // Try to connect to the wayland display
     let wayland_socket = if let Ok(runtime_dir) = std::env::var("XDG_RUNTIME_DIR") {
-      PathBuf::from(runtime_dir).join("wayland-0")
+      let wayland_display = if let Ok(display) = std::env::var("WAYLAND_DISPLAY") {
+        display
+      } else {
+        warn!("Could not determine wayland display from WAYLAND_DISPLAY env variable, falling back to 'wayland-0'");
+        warn!("Note that this might not work on some systems.");
+        "wayland-0".to_string()
+      };
+
+      PathBuf::from(runtime_dir).join(wayland_display)
     } else {
       error!("environment variable XDG_RUNTIME_DIR is missing, can't initialize the clipboard");
       return Err(WaylandFallbackClipboardError::MissingEnvVariable().into());
