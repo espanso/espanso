@@ -53,3 +53,33 @@ impl CommandExt for Command {
     self
   }
 }
+
+// For context, see also this issue: https://github.com/federico-terzi/espanso/issues/648
+#[cfg(target_os = "macos")]
+pub fn prevent_running_as_root_on_macos() {
+  use crate::{error_eprintln, exit_code::UNEXPECTED_RUN_AS_ROOT};
+
+  if unsafe { libc::geteuid() } == 0 {
+    error_eprintln!("Espanso is being run as root, but this can create unwanted side-effects. Please run it as a normal user.");
+    std::process::exit(UNEXPECTED_RUN_AS_ROOT);
+  }
+}
+
+#[cfg(not(target_os = "macos"))]
+pub fn prevent_running_as_root_on_macos() {
+  // Do nothing on other platforms
+}
+
+// This is needed to make sure the app is NOT subject to "App Translocation" on
+// macOS, which would make Espanso misbehave on some circumstances.
+// For more information, see: https://github.com/federico-terzi/espanso/issues/844
+pub fn is_subject_to_app_translocation_on_macos() -> bool {
+  if !cfg!(target_os = "macos") {
+    return false;
+  }
+
+  let exec_path = std::env::current_exe().expect("unable to extract executable path");
+  let exec_path = exec_path.to_string_lossy();
+
+  exec_path.contains("/private/")
+}

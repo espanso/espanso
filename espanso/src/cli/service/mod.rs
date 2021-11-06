@@ -17,12 +17,14 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use std::time::Instant;
+
 use super::{CliModule, CliModuleArgs, PathsOverrides};
 use crate::{
   error_eprintln,
   exit_code::{
     SERVICE_ALREADY_RUNNING, SERVICE_FAILURE, SERVICE_NOT_REGISTERED, SERVICE_NOT_RUNNING,
-    SERVICE_SUCCESS,
+    SERVICE_SUCCESS, SERVICE_TIMED_OUT,
   },
   info_println,
   lock::acquire_worker_lock,
@@ -99,6 +101,7 @@ fn service_main(args: CliModuleArgs) -> i32 {
     return status_main(&paths);
   } else if let Some(sub_args) = cli_args.subcommand_matches("restart") {
     stop_main(&paths);
+    std::thread::sleep(std::time::Duration::from_millis(300));
     return start_main(&paths, &paths_overrides, sub_args);
   }
 
@@ -131,12 +134,23 @@ fn start_main(paths: &Paths, _paths_overrides: &PathsOverrides, args: &ArgMatche
     if let Err(err) = start_service() {
       error_eprintln!("unable to start service: {}", err);
       return SERVICE_FAILURE;
-    } else {
-      info_println!("espanso started correctly!");
     }
   }
 
-  SERVICE_SUCCESS
+  let now = Instant::now();
+  while now.elapsed() < std::time::Duration::from_secs(5) {
+    let lock_file = acquire_worker_lock(&paths.runtime);
+    if lock_file.is_none() {
+      info_println!("espanso started correctly!");
+      return SERVICE_SUCCESS;
+    }
+    drop(lock_file);
+
+    std::thread::sleep(std::time::Duration::from_millis(200));
+  }
+
+  error_eprintln!("unable to start service: timed out");
+  SERVICE_TIMED_OUT
 }
 
 fn stop_main(paths: &Paths) -> i32 {

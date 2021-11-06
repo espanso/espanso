@@ -17,24 +17,10 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub mod action;
-pub mod cause;
-pub mod context_menu;
-pub mod cursor_hint;
-pub mod delay_modifiers;
-pub mod disable;
-pub mod discard;
-pub mod exit;
-pub mod hotkey;
-pub mod icon_status;
-pub mod image_resolve;
-pub mod markdown;
-pub mod match_exec;
-pub mod match_select;
-pub mod matcher;
-pub mod multiplex;
-pub mod notification;
-pub mod render;
-pub mod search;
-pub mod suppress;
-pub mod undo;
+use std::collections::HashMap;
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct MatchExecRequestEvent {
+  pub trigger: Option<String>,
+  pub args: HashMap<String, String>,
+}

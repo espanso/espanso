@@ -35,6 +35,7 @@ use self::{
 
 pub mod detect;
 pub mod exit;
+pub mod ipc;
 pub mod key_state;
 pub mod modifier;
 pub mod secure_input;

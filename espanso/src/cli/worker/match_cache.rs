@@ -21,8 +21,9 @@ use std::collections::HashMap;
 
 use espanso_config::{
   config::ConfigStore,
-  matches::{store::MatchStore, Match, MatchEffect},
+  matches::{store::MatchStore, Match, MatchCause, MatchEffect},
 };
+use espanso_engine::event::internal::DetectedMatch;
 
 use super::{builtin::BuiltInMatch, engine::process::middleware::match_select::MatchSummary};
 
@@ -162,5 +163,52 @@ impl<'a> espanso_engine::process::MatchProvider for CombinedMatchCache<'a> {
     let mut ids: Vec<i32> = self.builtin_match_cache.keys().copied().collect();
     ids.extend(self.user_match_cache.ids());
     ids
+  }
+}
+
+impl<'a> espanso_engine::process::MatchResolver for CombinedMatchCache<'a> {
+  fn find_matches_from_trigger(&self, trigger: &str) -> Vec<DetectedMatch> {
+    let user_matches: Vec<DetectedMatch> = self
+      .user_match_cache
+      .cache
+      .values()
+      .filter_map(|m| {
+        if let MatchCause::Trigger(trigger_cause) = &m.cause {
+          if trigger_cause.triggers.iter().any(|t| t == trigger) {
+            Some(DetectedMatch {
+              id: m.id,
+              trigger: Some(trigger.to_string()),
+              ..Default::default()
+            })
+          } else {
+            None
+          }
+        } else {
+          None
+        }
+      })
+      .collect();
+
+    let builtin_matches: Vec<DetectedMatch> = self
+      .builtin_match_cache
+      .values()
+      .filter_map(|m| {
+        if m.triggers.iter().any(|t| t == trigger) {
+          Some(DetectedMatch {
+            id: m.id,
+            trigger: Some(trigger.to_string()),
+            ..Default::default()
+          })
+        } else {
+          None
+        }
+      })
+      .collect();
+
+    let mut matches = Vec::with_capacity(user_matches.len() + builtin_matches.len());
+    matches.extend(user_matches);
+    matches.extend(builtin_matches);
+
+    matches
   }
 }

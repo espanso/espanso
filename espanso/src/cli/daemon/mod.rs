@@ -28,7 +28,7 @@ use espanso_path::Paths;
 use log::{error, info, warn};
 
 use crate::{
-  cli::util::CommandExt,
+  cli::util::{prevent_running_as_root_on_macos, CommandExt},
   common_flags::*,
   exit_code::{
     DAEMON_ALREADY_RUNNING, DAEMON_FATAL_CONFIG_ERROR, DAEMON_GENERAL_ERROR,
@@ -60,6 +60,8 @@ pub fn new() -> CliModule {
 }
 
 fn daemon_main(args: CliModuleArgs) -> i32 {
+  prevent_running_as_root_on_macos();
+
   let paths = args.paths.expect("missing paths in daemon main");
   let paths_overrides = args
     .paths_overrides

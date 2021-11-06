@@ -38,8 +38,9 @@ use keymap::Keymap;
 use lazycell::LazyCell;
 use libc::{
   __errno_location, close, epoll_ctl, epoll_event, epoll_wait, EINTR, EPOLLIN, EPOLL_CTL_ADD,
+  EPOLL_CTL_DEL,
 };
-use log::{debug, error, info, trace};
+use log::{debug, error, info, trace, warn};
 use thiserror::Error;
 
 use crate::event::{InputEvent, Key, KeyboardEvent, Variant};
@@ -204,7 +205,9 @@ impl Source for EVDEVSource {
         }
       }
 
-      for ev in evs.iter() {
+      #[allow(clippy::needless_range_loop)]
+      for i in 0usize..(ret as usize) {
+        let ev = evs[i];
         let device = &self.devices[ev.u64 as usize];
         match device.read() {
           Ok(events) if !events.is_empty() => {
@@ -226,7 +229,30 @@ impl Source for EVDEVSource {
             });
           }
           Ok(_) => { /* SKIP EMPTY */ }
-          Err(err) => error!("Can't read from device {}: {}", device.get_path(), err),
+          Err(err) => {
+            if let Some(DeviceError::FailedReadNoSuchDevice) = err.downcast_ref::<DeviceError>() {
+              warn!("Can't read from device {}, this error usually means the device has been disconnected, removing from epoll.", device.get_path());
+
+              if unsafe {
+                epoll_ctl(
+                  *epfd,
+                  EPOLL_CTL_DEL,
+                  device.get_raw_fd(),
+                  std::ptr::null_mut(),
+                )
+              } != 0
+              {
+                error!(
+                  "Could not remove {} from epoll, errno {}",
+                  device.get_path(),
+                  unsafe { *errno_ptr }
+                );
+                return Err(EVDEVSourceError::Internal().into());
+              }
+            } else {
+              error!("Can't read from device {}: {}", device.get_path(), err)
+            }
+          }
         }
       }
     }

@@ -21,13 +21,17 @@ use std::path::Path;
 
 use anyhow::Result;
 use crossbeam::channel::Sender;
-use espanso_engine::event::ExitMode;
+use espanso_engine::event::{external::MatchExecRequestEvent, EventType, ExitMode};
 use espanso_ipc::{EventHandlerResponse, IPCServer};
 use log::{error, warn};
 
 use crate::ipc::IPCEvent;
 
-pub fn initialize_and_spawn(runtime_dir: &Path, exit_notify: Sender<ExitMode>) -> Result<()> {
+pub fn initialize_and_spawn(
+  runtime_dir: &Path,
+  exit_notify: Sender<ExitMode>,
+  event_notify: Sender<EventType>,
+) -> Result<()> {
   let server = crate::ipc::create_worker_ipc_server(runtime_dir)?;
 
   std::thread::Builder::new()
@@ -55,6 +59,17 @@ pub fn initialize_and_spawn(runtime_dir: &Path, exit_notify: Sender<ExitMode>) -
 
             EventHandlerResponse::NoResponse
           }
+          IPCEvent::DisableRequest => send_event(&event_notify, EventType::DisableRequest),
+          IPCEvent::EnableRequest => send_event(&event_notify, EventType::EnableRequest),
+          IPCEvent::ToggleRequest => send_event(&event_notify, EventType::ToggleRequest),
+          IPCEvent::OpenSearchBar => send_event(&event_notify, EventType::ShowSearchBar),
+          IPCEvent::RequestMatchExpansion(payload) => send_event(
+            &event_notify,
+            EventType::MatchExecRequest(MatchExecRequestEvent {
+              trigger: payload.trigger,
+              args: payload.args,
+            }),
+          ),
           #[allow(unreachable_patterns)]
           unexpected_event => {
             warn!(
@@ -69,4 +84,18 @@ pub fn initialize_and_spawn(runtime_dir: &Path, exit_notify: Sender<ExitMode>) -
     })?;
 
   Ok(())
+}
+
+fn send_event(
+  event_notify: &Sender<EventType>,
+  event: EventType,
+) -> EventHandlerResponse<IPCEvent> {
+  if let Err(err) = event_notify.send(event) {
+    error!(
+      "experienced error while sending event signal from worker ipc handler: {}",
+      err
+    );
+  }
+
+  EventHandlerResponse::NoResponse
 }

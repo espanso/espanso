@@ -93,6 +93,10 @@ impl Middleware for DisableMiddleware {
         *enabled = false;
         has_status_changed = true;
       }
+      EventType::ToggleRequest => {
+        *enabled = !*enabled;
+        has_status_changed = true;
+      }
       _ => {}
     }
 

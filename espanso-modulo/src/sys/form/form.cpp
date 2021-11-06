@@ -89,11 +89,16 @@ public:
     std::vector<void *> fields;
     std::unordered_map<const char *, std::unique_ptr<FieldWrapper>> idMap;
     wxButton *submit;
+    wxStaticText *helpText;
+    bool hasFocusedMultilineControl;
 private:
     void AddComponent(wxPanel *parent, wxBoxSizer *sizer, FieldMetadata meta);
     void Submit();
     void OnSubmitBtn(wxCommandEvent& event);
-    void OnEscape(wxKeyEvent& event);
+    void OnCharHook(wxKeyEvent& event);
+    void UpdateHelpText();
+    void HandleNormalFocus(wxFocusEvent& event);
+    void HandleMultilineFocus(wxFocusEvent& event);
 };
 enum
 {
@@ -113,6 +118,8 @@ bool FormApp::OnInit()
 FormFrame::FormFrame(const wxString& title, const wxPoint& pos, const wxSize& size)
         : wxFrame(NULL, wxID_ANY, title, pos, size, DEFAULT_STYLE)
 {
+    hasFocusedMultilineControl = false;
+
     panel = new wxPanel(this, wxID_ANY);
     wxBoxSizer *vbox = new wxBoxSizer(wxVERTICAL);
     panel->SetSizer(vbox);
@@ -125,8 +132,15 @@ FormFrame::FormFrame(const wxString& title, const wxPoint& pos, const wxSize& si
     submit = new wxButton(panel, ID_Submit, "Submit");
     vbox->Add(submit, 1, wxEXPAND | wxALL, PADDING);
 
+    helpText = new wxStaticText(panel, wxID_ANY, "", wxDefaultPosition, wxDefaultSize);
+    wxFont helpFont = helpText->GetFont();
+    helpFont.SetPointSize(8);
+    helpText->SetFont(helpFont);
+    vbox->Add(helpText, 0, wxLEFT | wxRIGHT | wxBOTTOM, PADDING);
+    UpdateHelpText();
+
     Bind(wxEVT_BUTTON, &FormFrame::OnSubmitBtn, this, ID_Submit);
-    Bind(wxEVT_CHAR_HOOK, &FormFrame::OnEscape, this, wxID_ANY);
+    Bind(wxEVT_CHAR_HOOK, &FormFrame::OnCharHook, this, wxID_ANY);
     // TODO: register ESC click handler: https://forums.wxwidgets.org/viewtopic.php?t=41926
 
     this->SetClientSize(panel->GetBestSize());
@@ -157,6 +171,9 @@ void FormFrame::AddComponent(wxPanel *parent, wxBoxSizer *sizer, FieldMetadata m
             
             if (textMeta->multiline) {
                 textControl->SetMinSize(wxSize(MULTILINE_MIN_WIDTH, MULTILINE_MIN_HEIGHT));
+                textControl->Bind(wxEVT_SET_FOCUS, &FormFrame::HandleMultilineFocus, this, wxID_ANY);
+            } else {
+                textControl->Bind(wxEVT_SET_FOCUS, &FormFrame::HandleNormalFocus, this, wxID_ANY);
             }
 
             // Create the field wrapper
@@ -188,6 +205,8 @@ void FormFrame::AddComponent(wxPanel *parent, wxBoxSizer *sizer, FieldMetadata m
                     ((wxChoice*)choice)->SetSelection(selectedItem);
                 }
 
+                ((wxChoice*)choice)->Bind(wxEVT_SET_FOCUS, &FormFrame::HandleNormalFocus, this, wxID_ANY);
+
                 // Create the field wrapper
                 std::unique_ptr<FieldWrapper> field((FieldWrapper*) new ChoiceFieldWrapper((wxChoice*) choice));
                 idMap[meta.id] = std::move(field);
@@ -197,14 +216,14 @@ void FormFrame::AddComponent(wxPanel *parent, wxBoxSizer *sizer, FieldMetadata m
                 if (selectedItem >= 0) {
                     ((wxListBox*)choice)->SetSelection(selectedItem);
                 }
+
+                ((wxListBox*)choice)->Bind(wxEVT_SET_FOCUS, &FormFrame::HandleNormalFocus, this, wxID_ANY);
                 
                 // Create the field wrapper
                 std::unique_ptr<FieldWrapper> field((FieldWrapper*) new ListFieldWrapper((wxListBox*) choice));
                 idMap[meta.id] = std::move(field);
             }
             
-            
-
             control = choice;
             fields.push_back(choice);
             break;
@@ -253,15 +272,40 @@ void FormFrame::Submit() {
     Close(true);
 }
 
+void FormFrame::HandleNormalFocus(wxFocusEvent& event) {
+    hasFocusedMultilineControl = false;
+    UpdateHelpText();
+    event.Skip();
+}
+
+void FormFrame::HandleMultilineFocus(wxFocusEvent& event) {
+    hasFocusedMultilineControl = true;
+    UpdateHelpText();
+    event.Skip();
+}
+
+void FormFrame::UpdateHelpText() {
+    if (hasFocusedMultilineControl) {
+        helpText->SetLabel("(or press CTRL+Enter to submit, ESC to cancel)");
+    } else {
+        helpText->SetLabel("(or press Enter to submit, ESC to cancel)");
+    }
+    this->SetClientSize(panel->GetBestSize());
+}
+
 void FormFrame::OnSubmitBtn(wxCommandEvent &event) {
     Submit();
 }
 
-void FormFrame::OnEscape(wxKeyEvent& event) {
+void FormFrame::OnCharHook(wxKeyEvent& event) {
     if (event.GetKeyCode() == WXK_ESCAPE) {
         Close(true);
-    }else if(event.GetKeyCode() == WXK_RETURN && wxGetKeyState(WXK_RAW_CONTROL)) {
-        Submit();
+    }else if(event.GetKeyCode() == WXK_RETURN) {
+        if (!hasFocusedMultilineControl || wxGetKeyState(WXK_RAW_CONTROL)) {
+            Submit();
+        } else {
+            event.Skip();
+        }
     }else{
         event.Skip();
     }

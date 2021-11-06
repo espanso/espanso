@@ -17,11 +17,14 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use anyhow::Result;
-use log::{info, warn};
+use anyhow::{bail, Result};
+use log::{error, info, warn};
 use std::process::Command;
 use std::{fs::create_dir_all, process::ExitStatus};
 use thiserror::Error;
+
+use crate::cli::util::prevent_running_as_root_on_macos;
+use crate::error_eprintln;
 
 #[cfg(target_os = "macos")]
 const SERVICE_PLIST_CONTENT: &str = include_str!("../../res/macos/com.federicoterzi.espanso.plist");
@@ -29,6 +32,16 @@ const SERVICE_PLIST_CONTENT: &str = include_str!("../../res/macos/com.federicote
 const SERVICE_PLIST_FILE_NAME: &str = "com.federicoterzi.espanso.plist";
 
 pub fn register() -> Result<()> {
+  prevent_running_as_root_on_macos();
+
+  if crate::cli::util::is_subject_to_app_translocation_on_macos() {
+    error_eprintln!("Unable to register Espanso as service, please move the Espanso.app bundle inside the /Applications directory to proceed.");
+    error_eprintln!(
+      "For more information, please see: https://github.com/federico-terzi/espanso/issues/844"
+    );
+    bail!("macOS activated app-translocation on Espanso");
+  }
+
   let home_dir = dirs::home_dir().expect("could not get user home directory");
   let library_dir = home_dir.join("Library");
   let agents_dir = library_dir.join("LaunchAgents");
@@ -94,6 +107,8 @@ pub enum RegisterError {
 }
 
 pub fn unregister() -> Result<()> {
+  prevent_running_as_root_on_macos();
+
   let home_dir = dirs::home_dir().expect("could not get user home directory");
   let library_dir = home_dir.join("Library");
   let agents_dir = library_dir.join("LaunchAgents");
