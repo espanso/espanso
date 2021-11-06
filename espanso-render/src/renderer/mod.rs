@@ -1,5 +1,5 @@
 /*
- * This file is part of esp name: (), var_type: (), params: ()anso.
+ * This file is part of espanso.
  *
  * Copyright (C) 2019-2021 Federico Terzi
  *
@@ -17,17 +17,21 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::collections::{HashMap, HashSet};
+use std::{
+  borrow::Cow,
+  collections::{HashMap, HashSet},
+};
 
 use crate::{
   CasingStyle, Context, Extension, ExtensionOutput, ExtensionResult, RenderOptions, RenderResult,
   Renderer, Scope, Template, Value, Variable,
 };
-use anyhow::Result;
 use log::{error, warn};
 use regex::{Captures, Regex};
 use thiserror::Error;
 use util::get_body_variable_names;
+
+use self::util::{inject_variables_into_params, render_variables};
 
 mod util;
 
@@ -123,7 +127,22 @@ impl<'a> Renderer for DefaultRenderer<'a> {
             return RenderResult::Error(RendererError::MissingSubMatch.into());
           }
         } else if let Some(extension) = self.extensions.get(&variable.var_type) {
-          match extension.calculate(context, &scope, &variable.params) {
+          let variable_params = if variable.inject_vars {
+            match inject_variables_into_params(&variable.params, &scope) {
+              Ok(augmented_params) => Cow::Owned(augmented_params),
+              Err(err) => {
+                error!(
+                  "unable to inject variables into params of variable '{}': {}",
+                  variable.name, err
+                );
+                return RenderResult::Error(err);
+              }
+            }
+          } else {
+            Cow::Borrowed(&variable.params)
+          };
+
+          match extension.calculate(context, &scope, &variable_params) {
             ExtensionResult::Success(output) => {
               scope.insert(&variable.name, output);
             }
@@ -190,52 +209,6 @@ impl<'a> Renderer for DefaultRenderer<'a> {
 
     RenderResult::Success(body_with_casing)
   }
-}
-
-// TODO: test
-pub(crate) fn render_variables(body: &str, scope: &Scope) -> Result<String> {
-  let mut replacing_error = None;
-  let output = VAR_REGEX
-    .replace_all(body, |caps: &Captures| {
-      let var_name = caps.name("name").unwrap().as_str();
-      let var_subname = caps.name("subname");
-      match scope.get(var_name) {
-        Some(output) => match output {
-          ExtensionOutput::Single(output) => output,
-          ExtensionOutput::Multiple(results) => match var_subname {
-            Some(var_subname) => {
-              let var_subname = var_subname.as_str();
-              results.get(var_subname).map_or("", |value| &*value)
-            }
-            None => {
-              error!(
-                "nested name missing from multi-value variable: {}",
-                var_name
-              );
-              replacing_error = Some(RendererError::MissingVariable(format!(
-                "nested name missing from multi-value variable: {}",
-                var_name
-              )));
-              ""
-            }
-          },
-        },
-        None => {
-          replacing_error = Some(RendererError::MissingVariable(format!(
-            "variable '{}' is missing",
-            var_name
-          )));
-          ""
-        }
-      }
-    })
-    .to_string();
-
-  if let Some(error) = replacing_error {
-    return Err(error.into());
-  }
-
-  Ok(output)
 }
 
 fn get_matching_template<'a>(
@@ -324,6 +297,7 @@ mod tests {
         params: vec![("echo".to_string(), Value::String((*value).to_string()))]
           .into_iter()
           .collect::<Params>(),
+        ..Default::default()
       })
       .collect();
     Template {
@@ -415,6 +389,7 @@ mod tests {
             "echo".to_string(),
             Value::String("world".to_string()),
           )]),
+          ..Default::default()
         }],
         ..Default::default()
       },
@@ -435,6 +410,7 @@ mod tests {
           params: vec![("echo".to_string(), Value::String("Bob".to_string()))]
             .into_iter()
             .collect::<Params>(),
+          ..Default::default()
         },
         Variable {
           name: "var".to_string(),
@@ -454,6 +430,7 @@ mod tests {
             "read".to_string(),
             Value::String("local".to_string()),
           )]),
+          ..Default::default()
         }],
         ..Default::default()
       },
@@ -473,6 +450,7 @@ mod tests {
         params: vec![("trigger".to_string(), Value::String("nested".to_string()))]
           .into_iter()
           .collect::<Params>(),
+        ..Default::default()
       }],
       ..Default::default()
     };
@@ -503,6 +481,7 @@ mod tests {
         params: vec![("trigger".to_string(), Value::String("nested".to_string()))]
           .into_iter()
           .collect::<Params>(),
+        ..Default::default()
       }],
       ..Default::default()
     };
@@ -527,6 +506,7 @@ mod tests {
         params: vec![("abort".to_string(), Value::Null)]
           .into_iter()
           .collect::<Params>(),
+        ..Default::default()
       }],
       ..Default::default()
     };
@@ -545,9 +525,92 @@ mod tests {
         params: vec![("error".to_string(), Value::Null)]
           .into_iter()
           .collect::<Params>(),
+        ..Default::default()
       }],
       ..Default::default()
     };
+    let res = renderer.render(&template, &Default::default(), &Default::default());
+    assert!(matches!(res, RenderResult::Error(_)));
+  }
+
+  #[test]
+  fn variable_injection() {
+    let renderer = get_renderer();
+    let mut template = template_for_str("hello {{fullname}}");
+    template.vars = vec![
+      Variable {
+        name: "firstname".to_string(),
+        var_type: "mock".to_string(),
+        params: Params::from_iter(vec![(
+          "echo".to_string(),
+          Value::String("John".to_string()),
+        )]),
+        ..Default::default()
+      },
+      Variable {
+        name: "lastname".to_string(),
+        var_type: "mock".to_string(),
+        params: Params::from_iter(vec![(
+          "echo".to_string(),
+          Value::String("Snow".to_string()),
+        )]),
+        ..Default::default()
+      },
+      Variable {
+        name: "fullname".to_string(),
+        var_type: "mock".to_string(),
+        params: Params::from_iter(vec![(
+          "echo".to_string(),
+          Value::String("{{firstname}} {{lastname}}".to_string()),
+        )]),
+        inject_vars: true,
+      },
+    ];
+
+    let res = renderer.render(&template, &Default::default(), &Default::default());
+    assert!(matches!(res, RenderResult::Success(str) if str == "hello John Snow"));
+  }
+
+  #[test]
+  fn disable_variable_injection() {
+    let renderer = get_renderer();
+    let mut template = template_for_str("hello {{second}}");
+    template.vars = vec![
+      Variable {
+        name: "first".to_string(),
+        var_type: "mock".to_string(),
+        params: Params::from_iter(vec![("echo".to_string(), Value::String("one".to_string()))]),
+        ..Default::default()
+      },
+      Variable {
+        name: "second".to_string(),
+        var_type: "mock".to_string(),
+        params: Params::from_iter(vec![(
+          "echo".to_string(),
+          Value::String("{{first}} two".to_string()),
+        )]),
+        inject_vars: false,
+      },
+    ];
+
+    let res = renderer.render(&template, &Default::default(), &Default::default());
+    assert!(matches!(res, RenderResult::Success(str) if str == "hello {{first}} two"));
+  }
+
+  #[test]
+  fn variable_injection_missing_var() {
+    let renderer = get_renderer();
+    let mut template = template_for_str("hello {{second}}");
+    template.vars = vec![Variable {
+      name: "second".to_string(),
+      var_type: "mock".to_string(),
+      params: Params::from_iter(vec![(
+        "echo".to_string(),
+        Value::String("the next is {{missing}}".to_string()),
+      )]),
+      ..Default::default()
+    }];
+
     let res = renderer.render(&template, &Default::default(), &Default::default());
     assert!(matches!(res, RenderResult::Error(_)));
   }
