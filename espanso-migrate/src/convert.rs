@@ -17,6 +17,7 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use regex::{Captures, Regex};
 use std::{cmp::Ordering, collections::HashMap, path::PathBuf};
 use yaml_rust::{yaml::Hash, Yaml};
 
@@ -69,24 +70,32 @@ pub fn convert(input_files: HashMap<String, Hash>) -> HashMap<String, ConvertedF
         });
 
       if let Some(global_vars) = yaml_global_vars {
+        let mut patched_global_vars: Vec<Yaml> = global_vars.clone();
+        patched_global_vars
+          .iter_mut()
+          .for_each(apply_form_syntax_patch_to_variable);
+
         let output_global_vars = output_yaml
           .content
           .entry(Yaml::String("global_vars".to_string()))
           .or_insert(Yaml::Array(Vec::new()));
         if let Yaml::Array(out_global_vars) = output_global_vars {
-          out_global_vars.extend(global_vars.clone());
+          out_global_vars.extend(patched_global_vars);
         } else {
           eprintln!("unable to transform global_vars for file: {}", input_path);
         }
       }
 
       if let Some(matches) = yaml_matches {
+        let mut patched_matches = matches.clone();
+        apply_form_syntax_patch(&mut patched_matches);
+
         let output_matches = output_yaml
           .content
           .entry(Yaml::String("matches".to_string()))
           .or_insert(Yaml::Array(Vec::new()));
         if let Yaml::Array(out_matches) = output_matches {
-          out_matches.extend(matches.clone());
+          out_matches.extend(patched_matches);
         } else {
           eprintln!("unable to transform matches for file: {}", input_path);
         }
@@ -323,4 +332,58 @@ fn map_field_if_present(
       eprintln!("could not convert value for field: {}", input_field_name);
     }
   }
+}
+
+// This is needed to convert the old form's {{control}} syntax to the new [[control]] one.
+fn apply_form_syntax_patch(matches: &mut Vec<Yaml>) {
+  matches.iter_mut().for_each(|m| {
+    if let Yaml::Hash(fields) = m {
+      if let Some(Yaml::String(form_option)) = fields.get_mut(&Yaml::String("form".to_string())) {
+        let converted = replace_legacy_form_syntax_with_new_one(form_option);
+        if &converted != form_option {
+          form_option.clear();
+          form_option.push_str(&converted);
+        }
+      }
+
+      if let Some(Yaml::Array(vars)) = fields.get_mut(&Yaml::String("vars".to_string())) {
+        vars
+          .iter_mut()
+          .for_each(apply_form_syntax_patch_to_variable)
+      }
+    }
+  })
+}
+
+fn apply_form_syntax_patch_to_variable(variable: &mut Yaml) {
+  if let Yaml::Hash(fields) = variable {
+    if let Some(Yaml::String(var_type)) = fields.get(&Yaml::String("type".to_string())) {
+      if var_type != "form" {
+        return;
+      }
+    }
+
+    if let Some(Yaml::Hash(params)) = fields.get_mut(&Yaml::String("params".to_string())) {
+      if let Some(Yaml::String(layout)) = params.get_mut(&Yaml::String("layout".to_string())) {
+        let converted = replace_legacy_form_syntax_with_new_one(layout);
+        if &converted != layout {
+          layout.clear();
+          layout.push_str(&converted);
+        }
+      }
+    }
+  }
+}
+
+lazy_static! {
+  static ref LEGACY_FIELD_REGEX: Regex = Regex::new(r"\{\{(?P<name>.*?)\}\}").unwrap();
+}
+
+fn replace_legacy_form_syntax_with_new_one(layout: &str) -> String {
+  LEGACY_FIELD_REGEX
+    .replace_all(layout, |caps: &Captures| {
+      let field_name = caps.name("name").unwrap().as_str();
+      format!("[[{}]]", field_name)
+    })
+    .to_string()
 }
