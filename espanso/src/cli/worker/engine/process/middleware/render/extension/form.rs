@@ -63,14 +63,7 @@ fn convert_fields(fields: &Params) -> HashMap<String, FormField> {
             .cloned(),
           values: params
             .get("values")
-            .and_then(|val| val.as_array())
-            .map(|arr| {
-              arr
-                .iter()
-                .flat_map(|choice| choice.as_string())
-                .cloned()
-                .collect()
-            })
+            .and_then(|v| extract_values(v, params.get("trim_string_values")))
             .unwrap_or_default(),
         }),
         Some(Value::String(field_type)) if field_type == "list" => Some(FormField::List {
@@ -80,14 +73,7 @@ fn convert_fields(fields: &Params) -> HashMap<String, FormField> {
             .cloned(),
           values: params
             .get("values")
-            .and_then(|val| val.as_array())
-            .map(|arr| {
-              arr
-                .iter()
-                .flat_map(|choice| choice.as_string())
-                .cloned()
-                .collect()
-            })
+            .and_then(|v| extract_values(v, params.get("trim_string_values")))
             .unwrap_or_default(),
         }),
         // By default, it's considered type 'text'
@@ -112,4 +98,39 @@ fn convert_fields(fields: &Params) -> HashMap<String, FormField> {
     }
   }
   out
+}
+
+fn extract_values(value: &Value, trim_string_values: Option<&Value>) -> Option<Vec<String>> {
+  let trim_string_values = *trim_string_values
+    .and_then(|v| v.as_bool())
+    .unwrap_or(&true);
+
+  match value {
+    Value::Array(values) => Some(
+      values
+        .iter()
+        .flat_map(|choice| choice.as_string())
+        .cloned()
+        .collect(),
+    ),
+    Value::String(values) => Some(
+      values
+        .lines()
+        .filter_map(|line| {
+          if trim_string_values {
+            let trimmed_line = line.trim();
+            if !trimmed_line.is_empty() {
+              Some(trimmed_line)
+            } else {
+              None
+            }
+          } else {
+            Some(line)
+          }
+        })
+        .map(String::from)
+        .collect(),
+    ),
+    _ => None,
+  }
 }
