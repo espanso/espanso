@@ -74,7 +74,7 @@ impl Importer for YAMLImporter {
 
     let mut global_vars = Vec::new();
     for yaml_global_var in yaml_group.global_vars.as_ref().cloned().unwrap_or_default() {
-      match try_convert_into_variable(yaml_global_var) {
+      match try_convert_into_variable(yaml_global_var, false) {
         Ok((var, warnings)) => {
           global_vars.push(var);
           non_fatal_errors.extend(warnings.into_iter().map(ErrorRecord::warn));
@@ -208,8 +208,9 @@ pub fn try_convert_into_match(
 
       let mut vars: Vec<Variable> = Vec::new();
       for yaml_var in yaml_match.vars.unwrap_or_default() {
-        let (var, var_warnings) = try_convert_into_variable(yaml_var.clone())
-          .with_context(|| format!("failed to load variable: {:?}", yaml_var))?;
+        let (var, var_warnings) =
+          try_convert_into_variable(yaml_var.clone(), use_compatibility_mode)
+            .with_context(|| format!("failed to load variable: {:?}", yaml_var))?;
         warnings.extend(var_warnings);
         vars.push(var);
       }
@@ -270,6 +271,7 @@ pub fn try_convert_into_match(
         name: "form1".to_owned(),
         var_type: "form".to_owned(),
         params,
+        ..Default::default()
       }];
 
       MatchEffect::Text(TextEffect {
@@ -303,13 +305,17 @@ pub fn try_convert_into_match(
   ))
 }
 
-pub fn try_convert_into_variable(yaml_var: YAMLVariable) -> Result<(Variable, Vec<Warning>)> {
+pub fn try_convert_into_variable(
+  yaml_var: YAMLVariable,
+  use_compatibility_mode: bool,
+) -> Result<(Variable, Vec<Warning>)> {
   Ok((
     Variable {
       name: yaml_var.name,
       var_type: yaml_var.var_type,
       params: convert_params(yaml_var.params)?,
       id: next_id(),
+      inject_vars: !use_compatibility_mode && yaml_var.inject_vars.unwrap_or(true),
     },
     Vec::new(),
   ))
@@ -615,7 +621,8 @@ mod tests {
             id: 0,
             name: "form1".to_string(),
             var_type: "form".to_string(),
-            params
+            params,
+            ..Default::default()
           }],
           ..Default::default()
         }),
@@ -651,7 +658,8 @@ mod tests {
             id: 0,
             name: "form1".to_string(),
             var_type: "form".to_string(),
-            params
+            params,
+            ..Default::default()
           }],
           ..Default::default()
         }),
@@ -689,7 +697,8 @@ mod tests {
             id: 0,
             name: "form1".to_string(),
             var_type: "form".to_string(),
-            params
+            params,
+            ..Default::default()
           }],
           ..Default::default()
         }),
