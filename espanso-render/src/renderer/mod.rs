@@ -135,6 +135,29 @@ impl<'a> Renderer for DefaultRenderer<'a> {
                   "unable to inject variables into params of variable '{}': {}",
                   variable.name, err
                 );
+
+                if variable.var_type == "form" {
+                  if let Some(RendererError::MissingVariable(_)) =
+                    err.downcast_ref::<RendererError>()
+                  {
+                    error!("");
+                    error!("TIP: This error might be happening because since version 2.1.0-alpha, Espanso changed");
+                    error!("the syntax to define form controls. Instead of `{{{{control}}}}` you need to use");
+                    error!("[[control]] (using square brackets instead of curly brackets).");
+                    error!("");
+                    error!("For example, you have a form defined like the following:");
+                    error!("  - trigger: test");
+                    error!("    form: |");
+                    error!("      Hi {{{{name}}}}!");
+                    error!("");
+                    error!("You'll need to replace it with:");
+                    error!("  - trigger: test");
+                    error!("    form: |");
+                    error!("      Hi [[name]]!");
+                    error!("");
+                  }
+                }
+
                 return RenderResult::Error(err);
               }
             }
