@@ -125,6 +125,9 @@ pub struct YAMLVariable {
 
   #[serde(default = "default_params")]
   pub params: Mapping,
+
+  #[serde(default)]
+  pub inject_vars: Option<bool>,
 }
 
 fn default_params() -> Mapping {
