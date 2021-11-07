@@ -43,6 +43,8 @@ mod util;
 
 lazy_static! {
   static ref VAR_REGEX: Regex = Regex::new("\\{\\{\\s*(\\w+)(\\.\\w+)?\\s*\\}\\}").unwrap();
+  static ref FORM_CONTROL_REGEX: Regex =
+    Regex::new("\\[\\[\\s*(\\w+)(\\.\\w+)?\\s*\\]\\]").unwrap();
 }
 
 // Create an alias to make the meaning more explicit
@@ -85,7 +87,7 @@ impl Importer for YAMLImporter {
 
     let mut matches = Vec::new();
     for yaml_match in yaml_group.matches.as_ref().cloned().unwrap_or_default() {
-      match try_convert_into_match(yaml_match) {
+      match try_convert_into_match(yaml_match, false) {
         Ok((m, warnings)) => {
           matches.push(m);
           non_fatal_errors.extend(warnings.into_iter().map(ErrorRecord::warn));
@@ -119,7 +121,10 @@ impl Importer for YAMLImporter {
   }
 }
 
-pub fn try_convert_into_match(yaml_match: YAMLMatch) -> Result<(Match, Vec<Warning>)> {
+pub fn try_convert_into_match(
+  yaml_match: YAMLMatch,
+  use_compatibility_mode: bool,
+) -> Result<(Match, Vec<Warning>)> {
   let mut warnings = Vec::new();
 
   if yaml_match.uppercase_style.is_some() && yaml_match.propagate_case.is_none() {
@@ -216,21 +221,45 @@ pub fn try_convert_into_match(yaml_match: YAMLMatch) -> Result<(Match, Vec<Warni
         force_mode,
       })
     } else if let Some(form_layout) = yaml_match.form {
-      // TODO: test form case
       // Replace all the form fields with actual variables
-      let resolved_layout = VAR_REGEX
-        .replace_all(&form_layout, |caps: &Captures| {
-          let var_name = caps.get(1).unwrap().as_str();
-          format!("{{{{form1.{}}}}}", var_name)
-        })
-        .to_string();
+
+      // In v2.1.0-alpha the form control syntax was replaced with [[control]]
+      // instead of {{control}}, so we check if compatibility mode is being used.
+      // TODO: remove once compatibility mode is removed
+
+      let (resolved_replace, resolved_layout) = if use_compatibility_mode {
+        (
+          VAR_REGEX
+            .replace_all(&form_layout, |caps: &Captures| {
+              let var_name = caps.get(1).unwrap().as_str();
+              format!("{{{{form1.{}}}}}", var_name)
+            })
+            .to_string(),
+          VAR_REGEX
+            .replace_all(&form_layout, |caps: &Captures| {
+              let var_name = caps.get(1).unwrap().as_str();
+              format!("[[{}]]", var_name)
+            })
+            .to_string(),
+        )
+      } else {
+        (
+          FORM_CONTROL_REGEX
+            .replace_all(&form_layout, |caps: &Captures| {
+              let var_name = caps.get(1).unwrap().as_str();
+              format!("{{{{form1.{}}}}}", var_name)
+            })
+            .to_string(),
+          form_layout,
+        )
+      };
 
       // Convert escaped brakets in forms
-      let resolved_layout = resolved_layout.replace("\\{", "{ ").replace("\\}", " }");
+      let resolved_replace = resolved_replace.replace("\\{", "{ ").replace("\\}", " }");
 
       // Convert the form data to valid variables
       let mut params = Params::new();
-      params.insert("layout".to_string(), Value::String(form_layout));
+      params.insert("layout".to_string(), Value::String(resolved_layout));
 
       if let Some(fields) = yaml_match.form_fields {
         params.insert("fields".to_string(), Value::Object(convert_params(fields)?));
@@ -244,7 +273,7 @@ pub fn try_convert_into_match(yaml_match: YAMLMatch) -> Result<(Match, Vec<Warni
       }];
 
       MatchEffect::Text(TextEffect {
-        replace: resolved_layout,
+        replace: resolved_replace,
         vars,
         format: TextFormat::Plain,
         force_mode,
@@ -295,9 +324,12 @@ mod tests {
   };
   use std::fs::create_dir_all;
 
-  fn create_match_with_warnings(yaml: &str) -> Result<(Match, Vec<Warning>)> {
+  fn create_match_with_warnings(
+    yaml: &str,
+    use_compatibility_mode: bool,
+  ) -> Result<(Match, Vec<Warning>)> {
     let yaml_match: YAMLMatch = serde_yaml::from_str(yaml)?;
-    let (mut m, warnings) = try_convert_into_match(yaml_match)?;
+    let (mut m, warnings) = try_convert_into_match(yaml_match, use_compatibility_mode)?;
 
     // Reset the IDs to correctly compare them
     m.id = 0;
@@ -309,7 +341,7 @@ mod tests {
   }
 
   fn create_match(yaml: &str) -> Result<Match> {
-    let (m, warnings) = create_match_with_warnings(yaml)?;
+    let (m, warnings) = create_match_with_warnings(yaml, false)?;
     if !warnings.is_empty() {
       panic!("warnings were detected but not handled: {:?}", warnings);
     }
@@ -529,6 +561,7 @@ mod tests {
         replace: "world"
         uppercase_style: "capitalize"
         "#,
+      false,
     )
     .unwrap();
     assert_eq!(
@@ -545,6 +578,7 @@ mod tests {
         uppercase_style: "invalid"
         propagate_case: true
         "#,
+      false,
     )
     .unwrap();
     assert_eq!(
@@ -552,6 +586,116 @@ mod tests {
       UpperCasingStyle::Uppercase,
     );
     assert_eq!(warnings.len(), 1);
+  }
+
+  #[test]
+  fn form_maps_correctly() {
+    let mut params = Params::new();
+    params.insert(
+      "layout".to_string(),
+      Value::String("Hi [[name]]!".to_string()),
+    );
+
+    assert_eq!(
+      create_match(
+        r#"
+        trigger: "Hello"
+        form: "Hi [[name]]!"
+        "#
+      )
+      .unwrap(),
+      Match {
+        cause: MatchCause::Trigger(TriggerCause {
+          triggers: vec!["Hello".to_string()],
+          ..Default::default()
+        }),
+        effect: MatchEffect::Text(TextEffect {
+          replace: "Hi {{form1.name}}!".to_string(),
+          vars: vec![Variable {
+            id: 0,
+            name: "form1".to_string(),
+            var_type: "form".to_string(),
+            params
+          }],
+          ..Default::default()
+        }),
+        ..Default::default()
+      }
+    )
+  }
+
+  #[test]
+  fn form_maps_correctly_with_variable_injection() {
+    let mut params = Params::new();
+    params.insert(
+      "layout".to_string(),
+      Value::String("Hi [[name]]! {{signature}}".to_string()),
+    );
+
+    assert_eq!(
+      create_match(
+        r#"
+        trigger: "Hello"
+        form: "Hi [[name]]! {{signature}}"
+        "#
+      )
+      .unwrap(),
+      Match {
+        cause: MatchCause::Trigger(TriggerCause {
+          triggers: vec!["Hello".to_string()],
+          ..Default::default()
+        }),
+        effect: MatchEffect::Text(TextEffect {
+          replace: "Hi {{form1.name}}! {{signature}}".to_string(),
+          vars: vec![Variable {
+            id: 0,
+            name: "form1".to_string(),
+            var_type: "form".to_string(),
+            params
+          }],
+          ..Default::default()
+        }),
+        ..Default::default()
+      }
+    )
+  }
+
+  #[test]
+  fn form_maps_correctly_legacy_format() {
+    let mut params = Params::new();
+    params.insert(
+      "layout".to_string(),
+      Value::String("Hi [[name]]!".to_string()),
+    );
+
+    assert_eq!(
+      create_match_with_warnings(
+        r#"
+        trigger: "Hello"
+        form: "Hi {{name}}!"
+        "#,
+        true
+      )
+      .unwrap()
+      .0,
+      Match {
+        cause: MatchCause::Trigger(TriggerCause {
+          triggers: vec!["Hello".to_string()],
+          ..Default::default()
+        }),
+        effect: MatchEffect::Text(TextEffect {
+          replace: "Hi {{form1.name}}!".to_string(),
+          vars: vec![Variable {
+            id: 0,
+            name: "form1".to_string(),
+            var_type: "form".to_string(),
+            params
+          }],
+          ..Default::default()
+        }),
+        ..Default::default()
+      }
+    )
   }
 
   #[test]

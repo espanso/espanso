@@ -102,7 +102,7 @@ fn split_config(config: LegacyConfig) -> (LegacyInteropConfig, LegacyMatchGroup)
     .iter()
     .filter_map(|var| {
       let m: YAMLMatch = serde_yaml::from_value(var.clone()).ok()?;
-      let (m, warnings) = try_convert_into_match(m).ok()?;
+      let (m, warnings) = try_convert_into_match(m, true).ok()?;
       warnings.into_iter().for_each(|warning| {
         warn!("{}", warning);
       });
