@@ -151,6 +151,7 @@ fn convert_var(var: espanso_config::matches::Variable) -> espanso_render::Variab
     name: var.name,
     var_type: var.var_type,
     params: convert_params(var.params),
+    inject_vars: var.inject_vars,
   }
 }
 
@@ -225,6 +226,7 @@ impl<'a> Renderer<'a> for RendererAdapter<'a> {
               name,
               var_type: "echo".to_string(),
               params,
+              inject_vars: false,
             },
           )
         }
