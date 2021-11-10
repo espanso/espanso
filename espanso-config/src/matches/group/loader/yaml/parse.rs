@@ -128,6 +128,9 @@ pub struct YAMLVariable {
 
   #[serde(default)]
   pub inject_vars: Option<bool>,
+
+  #[serde(default)]
+  pub depends_on: Vec<String>,
 }
 
 fn default_params() -> Mapping {

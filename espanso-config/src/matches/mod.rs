@@ -206,6 +206,7 @@ pub struct Variable {
   pub var_type: String,
   pub params: Params,
   pub inject_vars: bool,
+  pub depends_on: Vec<String>,
 }
 
 impl Default for Variable {
@@ -216,6 +217,7 @@ impl Default for Variable {
       var_type: String::new(),
       params: Params::new(),
       inject_vars: true,
+      depends_on: Vec::new(),
     }
   }
 }
