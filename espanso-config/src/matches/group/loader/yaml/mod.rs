@@ -316,6 +316,7 @@ pub fn try_convert_into_variable(
       params: convert_params(yaml_var.params)?,
       id: next_id(),
       inject_vars: !use_compatibility_mode && yaml_var.inject_vars.unwrap_or(true),
+      depends_on: yaml_var.depends_on,
     },
     Vec::new(),
   ))
@@ -727,6 +728,52 @@ mod tests {
             type: test
             params:
               param1: true
+        "#
+      )
+      .unwrap(),
+      Match {
+        cause: MatchCause::Trigger(TriggerCause {
+          triggers: vec!["Hello".to_string()],
+          ..Default::default()
+        }),
+        effect: MatchEffect::Text(TextEffect {
+          replace: "world".to_string(),
+          vars,
+          ..Default::default()
+        }),
+        ..Default::default()
+      }
+    )
+  }
+
+  #[test]
+  fn vars_inject_vars_and_depends_on() {
+    let vars = vec![
+      Variable {
+        name: "var1".to_string(),
+        var_type: "test".to_string(),
+        depends_on: vec!["test".to_owned()],
+        ..Default::default()
+      },
+      Variable {
+        name: "var2".to_string(),
+        var_type: "test".to_string(),
+        inject_vars: false,
+        ..Default::default()
+      },
+    ];
+    assert_eq!(
+      create_match(
+        r#"
+        trigger: "Hello"
+        replace: "world"
+        vars:
+          - name: var1
+            type: test
+            depends_on: ["test"]
+          - name: var2
+            type: "test"
+            inject_vars: false
         "#
       )
       .unwrap(),
