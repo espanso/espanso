@@ -34,6 +34,38 @@ pub(crate) fn get_body_variable_names(body: &str) -> HashSet<&str> {
   variables
 }
 
+pub(crate) fn get_params_variable_names(params: &Params) -> HashSet<&str> {
+  let mut names = HashSet::new();
+
+  for (_, value) in params.iter() {
+    let local_names = get_value_variable_names_recursively(value);
+    names.extend(local_names);
+  }
+
+  names
+}
+
+fn get_value_variable_names_recursively(value: &Value) -> HashSet<&str> {
+  match value {
+    Value::String(s_value) => get_body_variable_names(s_value),
+    Value::Array(values) => {
+      let mut local_names: HashSet<&str> = HashSet::new();
+      for value in values {
+        local_names.extend(get_value_variable_names_recursively(value));
+      }
+      local_names
+    }
+    Value::Object(fields) => {
+      let mut local_names: HashSet<&str> = HashSet::new();
+      for value in fields.values() {
+        local_names.extend(get_value_variable_names_recursively(value));
+      }
+      local_names
+    }
+    _ => HashSet::new(),
+  }
+}
+
 pub(crate) fn render_variables(body: &str, scope: &Scope) -> Result<String> {
   let mut replacing_error = None;
   let output = VAR_REGEX

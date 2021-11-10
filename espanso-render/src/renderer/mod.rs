@@ -17,10 +17,7 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::{
-  borrow::Cow,
-  collections::{HashMap, HashSet},
-};
+use std::{borrow::Cow, collections::HashMap};
 
 use crate::{
   CasingStyle, Context, Extension, ExtensionOutput, ExtensionResult, RenderOptions, RenderResult,
@@ -29,10 +26,10 @@ use crate::{
 use log::{error, warn};
 use regex::{Captures, Regex};
 use thiserror::Error;
-use util::get_body_variable_names;
 
 use self::util::{inject_variables_into_params, render_variables};
 
+mod resolve;
 mod util;
 
 lazy_static! {
@@ -63,23 +60,6 @@ impl<'a> Renderer for DefaultRenderer<'a> {
     options: &RenderOptions,
   ) -> RenderResult {
     let body = if VAR_REGEX.is_match(&template.body) {
-      // In order to define a variable evaluation order, we first need to find
-      // the global variables that are being used but for which an explicit order
-      // is not defined.
-      let body_variable_names = get_body_variable_names(&template.body);
-      let local_variable_names: HashSet<&str> =
-        template.vars.iter().map(|var| var.name.as_str()).collect();
-      let missing_global_variable_names: HashSet<&str> = body_variable_names
-        .difference(&local_variable_names)
-        .copied()
-        .collect();
-      let missing_global_variables: Vec<&Variable> = context
-        .global_vars
-        .iter()
-        .copied()
-        .filter(|global_var| missing_global_variable_names.contains(&*global_var.name))
-        .collect();
-
       // Convert "global" variable type aliases when needed
       let local_variables: Vec<&Variable> =
         if template.vars.iter().any(|var| var.var_type == "global") {
@@ -103,10 +83,16 @@ impl<'a> Renderer for DefaultRenderer<'a> {
           template.vars.iter().collect()
         };
 
-      // The implicit global variables will be evaluated first, followed by the local vars
-      let mut variables: Vec<&Variable> = Vec::new();
-      variables.extend(missing_global_variables);
-      variables.extend(local_variables.iter());
+      // Here we execute a graph dependency resolution algorithm to determine a valid
+      // evaluation order for variables.
+      let variables = match resolve::resolve_evaluation_order(
+        &template.body,
+        &local_variables,
+        &context.global_vars,
+      ) {
+        Ok(variables) => variables,
+        Err(err) => return RenderResult::Error(err),
+      };
 
       // Compute the variable outputs
       let mut scope = Scope::new();
@@ -257,6 +243,9 @@ pub enum RendererError {
 
   #[error("missing sub match")]
   MissingSubMatch,
+
+  #[error("circular dependency: `{0}` -> `{1}`")]
+  CircularDependency(String, String),
 }
 
 #[cfg(test)]
@@ -463,6 +452,147 @@ mod tests {
   }
 
   #[test]
+  fn nested_global_variable() {
+    let renderer = get_renderer();
+    let template = template("hello {{var2}}", &[]);
+    let res = renderer.render(
+      &template,
+      &Context {
+        global_vars: vec![
+          &Variable {
+            name: "var".to_string(),
+            var_type: "mock".to_string(),
+            params: Params::from_iter(vec![(
+              "echo".to_string(),
+              Value::String("world".to_string()),
+            )]),
+            ..Default::default()
+          },
+          &Variable {
+            name: "var2".to_string(),
+            var_type: "mock".to_string(),
+            params: Params::from_iter(vec![(
+              "echo".to_string(),
+              Value::String("{{var}}".to_string()),
+            )]),
+            ..Default::default()
+          },
+        ],
+        ..Default::default()
+      },
+      &Default::default(),
+    );
+    assert!(matches!(res, RenderResult::Success(str) if str == "hello world"));
+  }
+
+  #[test]
+  fn nested_global_variable_circular_dependency_should_fail() {
+    let renderer = get_renderer();
+    let template = template("hello {{var}}", &[]);
+    let res = renderer.render(
+      &template,
+      &Context {
+        global_vars: vec![
+          &Variable {
+            name: "var".to_string(),
+            var_type: "mock".to_string(),
+            params: Params::from_iter(vec![(
+              "echo".to_string(),
+              Value::String("{{var2}}".to_string()),
+            )]),
+            ..Default::default()
+          },
+          &Variable {
+            name: "var2".to_string(),
+            var_type: "mock".to_string(),
+            params: Params::from_iter(vec![(
+              "echo".to_string(),
+              Value::String("{{var3}}".to_string()),
+            )]),
+            ..Default::default()
+          },
+          &Variable {
+            name: "var3".to_string(),
+            var_type: "mock".to_string(),
+            params: Params::from_iter(vec![(
+              "echo".to_string(),
+              Value::String("{{var}}".to_string()),
+            )]),
+            ..Default::default()
+          },
+        ],
+        ..Default::default()
+      },
+      &Default::default(),
+    );
+    assert!(matches!(res, RenderResult::Error(_)));
+  }
+
+  #[test]
+  fn global_variable_depends_on() {
+    let renderer = get_renderer();
+    let template = template("hello {{var}}", &[]);
+    let res = renderer.render(
+      &template,
+      &Context {
+        global_vars: vec![
+          &Variable {
+            name: "var".to_string(),
+            var_type: "mock".to_string(),
+            params: Params::from_iter(vec![(
+              "echo".to_string(),
+              Value::String("world".to_string()),
+            )]),
+            depends_on: vec!["var2".to_string()],
+            ..Default::default()
+          },
+          &Variable {
+            name: "var2".to_string(),
+            var_type: "mock".to_string(),
+            params: Params::from_iter(vec![("abort".to_string(), Value::Null)]),
+            ..Default::default()
+          },
+        ],
+        ..Default::default()
+      },
+      &Default::default(),
+    );
+    assert!(matches!(res, RenderResult::Aborted));
+  }
+
+  #[test]
+  fn local_variable_explicit_ordering() {
+    let renderer = get_renderer();
+    let template = Template {
+      body: "hello {{var}}".to_string(),
+      vars: vec![Variable {
+        name: "var".to_string(),
+        var_type: "mock".to_string(),
+        params: vec![("echo".to_string(), Value::String("something".to_string()))]
+          .into_iter()
+          .collect::<Params>(),
+        depends_on: vec!["global".to_string()],
+        ..Default::default()
+      }],
+      ..Default::default()
+    };
+    let res = renderer.render(
+      &template,
+      &Context {
+        global_vars: vec![&Variable {
+          name: "global".to_string(),
+          var_type: "mock".to_string(),
+          params: Params::from_iter(vec![("abort".to_string(), Value::Null)]),
+          ..Default::default()
+        }],
+        ..Default::default()
+      },
+      &Default::default(),
+    );
+    assert!(matches!(res, RenderResult::Aborted));
+  }
+
+  #[test]
   fn nested_match() {
     let renderer = get_renderer();
     let template = Template {
@@ -587,6 +717,7 @@ mod tests {
           Value::String("{{firstname}} {{lastname}}".to_string()),
         )]),
         inject_vars: true,
+        ..Default::default()
       },
     ];
 
@@ -613,6 +744,7 @@ mod tests {
           Value::String("{{first}} two".to_string()),
         )]),
         inject_vars: false,
+        ..Default::default()
       },
     ];
 
@@ -636,5 +768,89 @@ mod tests {
 
     let res = renderer.render(&template, &Default::default(), &Default::default());
     assert!(matches!(res, RenderResult::Error(_)));
+  }
+
+  #[test]
+  fn variable_injection_with_global_variable() {
+    let renderer = get_renderer();
+    let mut template = template_for_str("hello {{output}}");
+    template.vars = vec![
+      Variable {
+        name: "var".to_string(),
+        var_type: "global".to_string(),
+        ..Default::default()
+      },
+      Variable {
+        name: "output".to_string(),
+        var_type: "mock".to_string(),
+        params: Params::from_iter(vec![(
+          "echo".to_string(),
+          Value::String("{{var}}".to_string()),
+        )]),
+        ..Default::default()
+      },
+    ];
+
+    let res = renderer.render(
+      &template,
+      &Context {
+        global_vars: vec![&Variable {
+          name: "var".to_string(),
+          var_type: "mock".to_string(),
+          params: Params::from_iter(vec![(
+            "echo".to_string(),
+            Value::String("global".to_string()),
+          )]),
+          ..Default::default()
+        }],
+        ..Default::default()
+      },
+      &Default::default(),
+    );
+    assert!(matches!(res, RenderResult::Success(str) if str == "hello global"));
+  }
+
+  #[test]
+  fn variable_injection_local_var_takes_precedence_over_global() {
+    let renderer = get_renderer();
+    let mut template = template_for_str("hello {{output}}");
+    template.vars = vec![
+      Variable {
+        name: "var".to_string(),
+        var_type: "mock".to_string(),
+        params: Params::from_iter(vec![(
+          "echo".to_string(),
+          Value::String("local".to_string()),
+        )]),
+        ..Default::default()
+      },
+      Variable {
+        name: "output".to_string(),
+        var_type: "mock".to_string(),
+        params: Params::from_iter(vec![(
+          "echo".to_string(),
+          Value::String("{{var}}".to_string()),
+        )]),
+        ..Default::default()
+      },
+    ];
+
+    let res = renderer.render(
+      &template,
+      &Context {
+        global_vars: vec![&Variable {
+          name: "var".to_string(),
+          var_type: "mock".to_string(),
+          params: Params::from_iter(vec![(
+            "echo".to_string(),
+            Value::String("global".to_string()),
+          )]),
+          ..Default::default()
+        }],
+        ..Default::default()
+      },
+      &Default::default(),
+    );
+    assert!(matches!(res, RenderResult::Success(str) if str == "hello local"));
   }
 }

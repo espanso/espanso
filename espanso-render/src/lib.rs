@@ -100,6 +100,8 @@ pub struct Variable {
   pub var_type: String,
   pub inject_vars: bool,
   pub params: Params,
+  // Name of the variables this variable depends on
+  pub depends_on: Vec<String>,
 }
 
 impl Default for Variable {
@@ -109,6 +111,7 @@ impl Default for Variable {
       var_type: "".to_string(),
       inject_vars: true,
       params: Params::new(),
+      depends_on: Vec::new(),
     }
   }
 }
