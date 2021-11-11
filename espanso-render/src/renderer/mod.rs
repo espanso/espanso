@@ -270,6 +270,13 @@ mod tests {
       if let Some(Value::String(string)) = params.get("echo") {
         return ExtensionResult::Success(ExtensionOutput::Single(string.clone()));
       }
+      if let (Some(Value::String(name)), Some(Value::String(value))) =
+        (params.get("name"), params.get("value"))
+      {
+        let mut map = HashMap::new();
+        map.insert(name.to_string(), value.to_string());
+        return ExtensionResult::Success(ExtensionOutput::Multiple(map));
+      }
       // If the "read" param is present, echo the value of the corresponding result in the scope
       if let Some(Value::String(string)) = params.get("read") {
         if let Some(ExtensionOutput::Single(value)) = scope.get(string.as_str()) {
@@ -380,6 +387,28 @@ mod tests {
   }
 
   #[test]
+  fn dict_variable_variable() {
+    let renderer = get_renderer();
+    let template = Template {
+      body: "hello {{var.nested}}".to_string(),
+      vars: vec![Variable {
+        name: "var".to_string(),
+        var_type: "mock".to_string(),
+        params: vec![
+          ("name".to_string(), Value::String("nested".to_string())),
+          ("value".to_string(), Value::String("dict".to_string())),
+        ]
+        .into_iter()
+        .collect::<Params>(),
+        ..Default::default()
+      }],
+      ..Default::default()
+    };
+    let res = renderer.render(&template, &Default::default(), &Default::default());
+    assert!(matches!(res, RenderResult::Success(str) if str == "hello dict"));
+  }
+
+  #[test]
   fn missing_variable() {
     let renderer = get_renderer();
     let template = template_for_str("hello {{var}}");
@@ -408,6 +437,31 @@ mod tests {
       &Default::default(),
     );
     assert!(matches!(res, RenderResult::Success(str) if str == "hello world"));
+  }
+
+  #[test]
+  fn global_dict_variable() {
+    let renderer = get_renderer();
+    let template = template("hello {{var.nested}}", &[]);
+    let res = renderer.render(
+      &template,
+      &Context {
+        global_vars: vec![&Variable {
+          name: "var".to_string(),
+          var_type: "mock".to_string(),
+          params: vec![
+            ("name".to_string(), Value::String("nested".to_string())),
+            ("value".to_string(), Value::String("dict".to_string())),
+          ]
+          .into_iter()
+          .collect::<Params>(),
+          ..Default::default()
+        }],
+        ..Default::default()
+      },
+      &Default::default(),
+    );
+    assert!(matches!(res, RenderResult::Success(str) if str == "hello dict"));
   }
 
   #[test]
