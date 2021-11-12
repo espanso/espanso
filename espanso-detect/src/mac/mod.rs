@@ -32,7 +32,7 @@ use log::{error, trace, warn};
 use anyhow::Result;
 use thiserror::Error;
 
-use crate::event::{HotKeyEvent, InputEvent, Key, KeyboardEvent, Variant};
+use crate::event::{HotKeyEvent, InputEvent, Key, KeyboardEvent, Status, Variant};
 use crate::event::{Key::*, MouseButton, MouseEvent};
 use crate::{event::Status::*, Source, SourceCallback};
 use crate::{event::Variant::*, hotkey::HotKey};
@@ -50,6 +50,7 @@ const INPUT_MOUSE_MIDDLE_BUTTON: i32 = 3;
 
 // Take a look at the native.h header file for an explanation of the fields
 #[repr(C)]
+#[derive(Debug)]
 pub struct RawInputEvent {
   pub event_type: i32,
 
@@ -58,6 +59,12 @@ pub struct RawInputEvent {
 
   pub key_code: i32,
   pub status: i32,
+
+  pub is_caps_lock_pressed: i32,
+  pub is_shift_pressed: i32,
+  pub is_control_pressed: i32,
+  pub is_option_pressed: i32,
+  pub is_command_pressed: i32,
 }
 
 #[repr(C)]
@@ -82,15 +89,97 @@ extern "C" {
   );
 }
 
+#[derive(Debug, Default)]
+struct ModifierState {
+  is_ctrl_down: bool,
+  is_shift_down: bool,
+  is_command_down: bool,
+  is_option_down: bool,
+}
+
 lazy_static! {
   static ref CURRENT_SENDER: Arc<Mutex<Option<Sender<InputEvent>>>> = Arc::new(Mutex::new(None));
+  static ref MODIFIER_STATE: Arc<Mutex<ModifierState>> =
+    Arc::new(Mutex::new(ModifierState::default()));
 }
 
 extern "C" fn native_callback(raw_event: RawInputEvent) {
   let lock = CURRENT_SENDER
     .lock()
     .expect("unable to acquire CocoaSource sender lock");
+
+  // Most of the times, when pressing a modifier key (such as Alt, Ctrl, Shift, Cmd),
+  // we get both a Pressed and Released event. This is important to keep Espanso's
+  // internal representation of modifiers in sync.
+  // Unfortunately, there are times when the corresponding "release" event is not sent,
+  // and this causes Espanso to mistakenly think that the modifier is still pressed.
+  // This can happen for various reasons, such as when using external bluetooth keyboards
+  // or certain keyboard shortcuts.
+  // Luckily, most key events include the "modifiers flag" information, that tells us which
+  // modifier keys were currently pressed at that time.
+  // We use this modifier flag information to detect "inconsistent" states to send the corresponding
+  // modifier release events, keeping espanso's state in sync.
+  // For more info, see:
+  // https://github.com/federico-terzi/espanso/issues/825
+  // https://github.com/federico-terzi/espanso/issues/858
+  let mut compensating_events = Vec::new();
+  if raw_event.event_type == INPUT_EVENT_TYPE_KEYBOARD {
+    let (key_code, _) = key_code_to_key(raw_event.key_code);
+    let mut current_mod_state = MODIFIER_STATE
+      .lock()
+      .expect("unable to acquire modifier state in cocoa detector");
+
+    if let Key::Alt = &key_code {
+      current_mod_state.is_option_down = raw_event.status == INPUT_STATUS_PRESSED;
+    } else if let Key::Meta = &key_code {
+      current_mod_state.is_command_down = raw_event.status == INPUT_STATUS_PRESSED;
+    } else if let Key::Shift = &key_code {
+      current_mod_state.is_shift_down = raw_event.status == INPUT_STATUS_PRESSED;
+    } else if let Key::Control = &key_code {
+      current_mod_state.is_ctrl_down = raw_event.status == INPUT_STATUS_PRESSED;
+    } else {
+      if current_mod_state.is_command_down && raw_event.is_command_pressed == 0 {
+        compensating_events.push((Key::Meta, 0x37));
+        current_mod_state.is_command_down = false;
+      }
+      if current_mod_state.is_ctrl_down && raw_event.is_control_pressed == 0 {
+        compensating_events.push((Key::Control, 0x3B));
+        current_mod_state.is_ctrl_down = false;
+      }
+      if current_mod_state.is_shift_down && raw_event.is_shift_pressed == 0 {
+        compensating_events.push((Key::Shift, 0x38));
+        current_mod_state.is_shift_down = false;
+      }
+      if current_mod_state.is_option_down && raw_event.is_option_pressed == 0 {
+        compensating_events.push((Key::Alt, 0x3A));
+        current_mod_state.is_option_down = false;
+      }
+    }
+  }
+
+  if !compensating_events.is_empty() {
+    warn!(
+      "detected inconsistent modifier state for keys {:?}, sending compensating events...",
+      compensating_events
+    );
+  }
+
   if let Some(sender) = lock.as_ref() {
+    for (key, code) in compensating_events {
+      if let Err(error) = sender.send(InputEvent::Keyboard(KeyboardEvent {
+        key,
+        value: None,
+        status: Status::Released,
+        variant: None,
+        code,
+      })) {
+        error!(
+          "Unable to send compensating event to Cocoa Sender: {}",
+          error
+        );
+      }
+    }
+
     let event: Option<InputEvent> = raw_event.into();
     if let Some(event) = event {
       if let Err(error) = sender.send(event) {
@@ -386,6 +475,11 @@ mod tests {
       buffer_len: 0,
       key_code: 0,
       status: INPUT_STATUS_PRESSED,
+      is_caps_lock_pressed: 0,
+      is_shift_pressed: 0,
+      is_control_pressed: 0,
+      is_option_pressed: 0,
+      is_command_pressed: 0,
     }
   }
 
