@@ -23,6 +23,7 @@ use std::{
 };
 
 use anyhow::{anyhow, Result};
+use log::error;
 
 use crate::Variable;
 
@@ -179,6 +180,12 @@ fn resolve_dependencies<'a>(
             resolve_dependencies(dependency_node, node_map, eval_order, resolved, seen)?
           }
           None => {
+            error!("could not resolve variable {:?}", dependency);
+            if let Some(variable) = &node.variable {
+              if variable.var_type == "form" {
+                super::log_new_form_syntax_tip();
+              }
+            }
             return Err(RendererError::MissingVariable(dependency.to_string()).into());
           }
         }
