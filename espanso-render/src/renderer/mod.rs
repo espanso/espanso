@@ -175,6 +175,8 @@ impl<'a> Renderer for DefaultRenderer<'a> {
       template.body.clone()
     };
 
+    let body = util::unescape_variable_inections(&body);
+
     // Process the casing style
     let body_with_casing = match options.casing_style {
       CasingStyle::None => body,
@@ -811,6 +813,32 @@ mod tests {
   }
 
   #[test]
+  fn escaped_variable_injection() {
+    let renderer = get_renderer();
+    let mut template = template_for_str("hello {{second}}");
+    template.vars = vec![
+      Variable {
+        name: "first".to_string(),
+        var_type: "mock".to_string(),
+        params: Params::from_iter(vec![("echo".to_string(), Value::String("one".to_string()))]),
+        ..Default::default()
+      },
+      Variable {
+        name: "second".to_string(),
+        var_type: "mock".to_string(),
+        params: Params::from_iter(vec![(
+          "echo".to_string(),
+          Value::String("\\{\\{first\\}\\} two".to_string()),
+        )]),
+        ..Default::default()
+      },
+    ];
+
+    let res = renderer.render(&template, &Default::default(), &Default::default());
+    assert!(matches!(res, RenderResult::Success(str) if str == "hello {{first}} two"));
+  }
+
+  #[test]
   fn variable_injection_missing_var() {
     let renderer = get_renderer();
     let mut template = template_for_str("hello {{second}}");
@@ -910,5 +938,13 @@ mod tests {
       &Default::default(),
     );
     assert!(matches!(res, RenderResult::Success(str) if str == "hello local"));
+  }
+
+  #[test]
+  fn variable_escape() {
+    let renderer = get_renderer();
+    let template = template("hello \\{\\{var\\}\\}", &[("var", "world")]);
+    let res = renderer.render(&template, &Default::default(), &Default::default());
+    assert!(matches!(res, RenderResult::Success(str) if str == "hello {{var}}"));
   }
 }
