@@ -76,6 +76,19 @@ void * detect_initialize(EventCallback callback, InitializeOptions options) {
           strncpy(inputEvent.buffer, chars, 23);
           inputEvent.buffer_len = event.characters.length;
 
+          // We also send the modifier key status to "correct" missing modifier release events
+          if (([event modifierFlags] & NSEventModifierFlagShift) != 0) {
+            inputEvent.is_shift_pressed = 1;
+          } else if (([event modifierFlags] & NSEventModifierFlagControl) != 0) {
+            inputEvent.is_control_pressed = 1;
+          } else if (([event modifierFlags] & NSEventModifierFlagCapsLock) != 0) {
+            inputEvent.is_caps_lock_pressed = 1;
+          } else if (([event modifierFlags] & NSEventModifierFlagOption) != 0) {
+            inputEvent.is_option_pressed = 1;
+          } else if (([event modifierFlags] & NSEventModifierFlagCommand) != 0) {
+            inputEvent.is_command_pressed = 1;
+          }
+
           callback(inputEvent);
         }else if (event.type == NSEventTypeLeftMouseDown || event.type == NSEventTypeRightMouseDown || event.type == NSEventTypeOtherMouseDown ||
                   event.type == NSEventTypeLeftMouseUp || event.type == NSEventTypeRightMouseUp || event.type == NSEventTypeOtherMouseUp) {
@@ -106,6 +119,20 @@ void * detect_initialize(EventCallback callback, InitializeOptions options) {
           } else if (event.keyCode == kVK_Option || event.keyCode == kVK_RightOption) {
             inputEvent.status = (([event modifierFlags] & NSEventModifierFlagOption) == 0) ? INPUT_STATUS_RELEASED : INPUT_STATUS_PRESSED;
           }
+
+          // We also send the modifier key status to "correct" missing modifier release events
+          if (([event modifierFlags] & NSEventModifierFlagShift) != 0) {
+            inputEvent.is_shift_pressed = 1;
+          } else if (([event modifierFlags] & NSEventModifierFlagControl) != 0) {
+            inputEvent.is_control_pressed = 1;
+          } else if (([event modifierFlags] & NSEventModifierFlagCapsLock) != 0) {
+            inputEvent.is_caps_lock_pressed = 1;
+          } else if (([event modifierFlags] & NSEventModifierFlagOption) != 0) {
+            inputEvent.is_option_pressed = 1;
+          } else if (([event modifierFlags] & NSEventModifierFlagCommand) != 0) {
+            inputEvent.is_command_pressed = 1;
+          }
+
           callback(inputEvent);
         }
     }];
