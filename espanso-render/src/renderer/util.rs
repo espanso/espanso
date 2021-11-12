@@ -108,7 +108,12 @@ pub(crate) fn render_variables(body: &str, scope: &Scope) -> Result<String> {
     return Err(error.into());
   }
 
-  Ok(output)
+  let unescaped_output = unescape_variable_inections(&output);
+  Ok(unescaped_output)
+}
+
+pub(crate) fn unescape_variable_inections(body: &str) -> String {
+  body.replace("\\{\\{", "{{").replace("\\}\\}", "}}")
 }
 
 pub(crate) fn inject_variables_into_params(params: &Params, scope: &Scope) -> Result<Params> {
