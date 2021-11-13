@@ -1,5 +1,5 @@
 /*
- * This file is part of esp name: (), var_type: (), params: ()anso.
+ * This file is part of espanso.
  *
  * Copyright (C) 2019-2021 Federico Terzi
  *
@@ -17,18 +17,19 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::collections::{HashMap, HashSet};
+use std::{borrow::Cow, collections::HashMap};
 
 use crate::{
   CasingStyle, Context, Extension, ExtensionOutput, ExtensionResult, RenderOptions, RenderResult,
   Renderer, Scope, Template, Value, Variable,
 };
-use anyhow::Result;
 use log::{error, warn};
 use regex::{Captures, Regex};
 use thiserror::Error;
-use util::get_body_variable_names;
 
+use self::util::{inject_variables_into_params, render_variables};
+
+mod resolve;
 mod util;
 
 lazy_static! {
@@ -59,23 +60,6 @@ impl<'a> Renderer for DefaultRenderer<'a> {
     options: &RenderOptions,
   ) -> RenderResult {
     let body = if VAR_REGEX.is_match(&template.body) {
-      // In order to define a variable evaluation order, we first need to find
-      // the global variables that are being used but for which an explicit order
-      // is not defined.
-      let body_variable_names = get_body_variable_names(&template.body);
-      let local_variable_names: HashSet<&str> =
-        template.vars.iter().map(|var| var.name.as_str()).collect();
-      let missing_global_variable_names: HashSet<&str> = body_variable_names
-        .difference(&local_variable_names)
-        .copied()
-        .collect();
-      let missing_global_variables: Vec<&Variable> = context
-        .global_vars
-        .iter()
-        .copied()
-        .filter(|global_var| missing_global_variable_names.contains(&*global_var.name))
-        .collect();
-
       // Convert "global" variable type aliases when needed
       let local_variables: Vec<&Variable> =
         if template.vars.iter().any(|var| var.var_type == "global") {
@@ -99,10 +83,16 @@ impl<'a> Renderer for DefaultRenderer<'a> {
           template.vars.iter().collect()
         };
 
-      // The implicit global variables will be evaluated first, followed by the local vars
-      let mut variables: Vec<&Variable> = Vec::new();
-      variables.extend(missing_global_variables);
-      variables.extend(local_variables.iter());
+      // Here we execute a graph dependency resolution algorithm to determine a valid
+      // evaluation order for variables.
+      let variables = match resolve::resolve_evaluation_order(
+        &template.body,
+        &local_variables,
+        &context.global_vars,
+      ) {
+        Ok(variables) => variables,
+        Err(err) => return RenderResult::Error(err),
+      };
 
       // Compute the variable outputs
       let mut scope = Scope::new();
@@ -123,7 +113,31 @@ impl<'a> Renderer for DefaultRenderer<'a> {
             return RenderResult::Error(RendererError::MissingSubMatch.into());
           }
         } else if let Some(extension) = self.extensions.get(&variable.var_type) {
-          match extension.calculate(context, &scope, &variable.params) {
+          let variable_params = if variable.inject_vars {
+            match inject_variables_into_params(&variable.params, &scope) {
+              Ok(augmented_params) => Cow::Owned(augmented_params),
+              Err(err) => {
+                error!(
+                  "unable to inject variables into params of variable '{}': {}",
+                  variable.name, err
+                );
+
+                if variable.var_type == "form" {
+                  if let Some(RendererError::MissingVariable(_)) =
+                    err.downcast_ref::<RendererError>()
+                  {
+                    log_new_form_syntax_tip();
+                  }
+                }
+
+                return RenderResult::Error(err);
+              }
+            }
+          } else {
+            Cow::Borrowed(&variable.params)
+          };
+
+          match extension.calculate(context, &scope, &variable_params) {
             ExtensionResult::Success(output) => {
               scope.insert(&variable.name, output);
             }
@@ -161,6 +175,8 @@ impl<'a> Renderer for DefaultRenderer<'a> {
       template.body.clone()
     };
 
+    let body = util::unescape_variable_inections(&body);
+
     // Process the casing style
     let body_with_casing = match options.casing_style {
       CasingStyle::None => body,
@@ -192,52 +208,6 @@ impl<'a> Renderer for DefaultRenderer<'a> {
   }
 }
 
-// TODO: test
-pub(crate) fn render_variables(body: &str, scope: &Scope) -> Result<String> {
-  let mut replacing_error = None;
-  let output = VAR_REGEX
-    .replace_all(body, |caps: &Captures| {
-      let var_name = caps.name("name").unwrap().as_str();
-      let var_subname = caps.name("subname");
-      match scope.get(var_name) {
-        Some(output) => match output {
-          ExtensionOutput::Single(output) => output,
-          ExtensionOutput::Multiple(results) => match var_subname {
-            Some(var_subname) => {
-              let var_subname = var_subname.as_str();
-              results.get(var_subname).map_or("", |value| &*value)
-            }
-            None => {
-              error!(
-                "nested name missing from multi-value variable: {}",
-                var_name
-              );
-              replacing_error = Some(RendererError::MissingVariable(format!(
-                "nested name missing from multi-value variable: {}",
-                var_name
-              )));
-              ""
-            }
-          },
-        },
-        None => {
-          replacing_error = Some(RendererError::MissingVariable(format!(
-            "variable '{}' is missing",
-            var_name
-          )));
-          ""
-        }
-      }
-    })
-    .to_string();
-
-  if let Some(error) = replacing_error {
-    return Err(error.into());
-  }
-
-  Ok(output)
-}
-
 fn get_matching_template<'a>(
   variable: &Variable,
   templates: &'a [&Template],
@@ -254,6 +224,24 @@ fn get_matching_template<'a>(
   }
 }
 
+fn log_new_form_syntax_tip() {
+  error!("");
+  error!("TIP: This error might be happening because since version 2.1.0-alpha, Espanso changed");
+  error!("the syntax to define form controls. Instead of `{{{{control}}}}` you need to use");
+  error!("[[control]] (using square brackets instead of curly brackets).");
+  error!("");
+  error!("For example, if you have a form defined like the following:");
+  error!("  - trigger: test");
+  error!("    form: |");
+  error!("      Hi {{{{name}}}}!");
+  error!("");
+  error!("You'll need to replace it with:");
+  error!("  - trigger: test");
+  error!("    form: |");
+  error!("      Hi [[name]]!");
+  error!("");
+}
+
 #[derive(Error, Debug)]
 pub enum RendererError {
   #[error("missing variable: `{0}`")]
@@ -261,6 +249,9 @@ pub enum RendererError {
 
   #[error("missing sub match")]
   MissingSubMatch,
+
+  #[error("circular dependency: `{0}` -> `{1}`")]
+  CircularDependency(String, String),
 }
 
 #[cfg(test)]
@@ -284,6 +275,13 @@ mod tests {
     ) -> ExtensionResult {
       if let Some(Value::String(string)) = params.get("echo") {
         return ExtensionResult::Success(ExtensionOutput::Single(string.clone()));
+      }
+      if let (Some(Value::String(name)), Some(Value::String(value))) =
+        (params.get("name"), params.get("value"))
+      {
+        let mut map = HashMap::new();
+        map.insert(name.to_string(), value.to_string());
+        return ExtensionResult::Success(ExtensionOutput::Multiple(map));
       }
       // If the "read" param is present, echo the value of the corresponding result in the scope
       if let Some(Value::String(string)) = params.get("read") {
@@ -324,6 +322,7 @@ mod tests {
         params: vec![("echo".to_string(), Value::String((*value).to_string()))]
           .into_iter()
           .collect::<Params>(),
+        ..Default::default()
       })
       .collect();
     Template {
@@ -394,6 +393,28 @@ mod tests {
   }
 
   #[test]
+  fn dict_variable_variable() {
+    let renderer = get_renderer();
+    let template = Template {
+      body: "hello {{var.nested}}".to_string(),
+      vars: vec![Variable {
+        name: "var".to_string(),
+        var_type: "mock".to_string(),
+        params: vec![
+          ("name".to_string(), Value::String("nested".to_string())),
+          ("value".to_string(), Value::String("dict".to_string())),
+        ]
+        .into_iter()
+        .collect::<Params>(),
+        ..Default::default()
+      }],
+      ..Default::default()
+    };
+    let res = renderer.render(&template, &Default::default(), &Default::default());
+    assert!(matches!(res, RenderResult::Success(str) if str == "hello dict"));
+  }
+
+  #[test]
   fn missing_variable() {
     let renderer = get_renderer();
     let template = template_for_str("hello {{var}}");
@@ -415,12 +436,38 @@ mod tests {
             "echo".to_string(),
             Value::String("world".to_string()),
           )]),
+          ..Default::default()
         }],
         ..Default::default()
       },
       &Default::default(),
     );
     assert!(matches!(res, RenderResult::Success(str) if str == "hello world"));
+  }
+
+  #[test]
+  fn global_dict_variable() {
+    let renderer = get_renderer();
+    let template = template("hello {{var.nested}}", &[]);
+    let res = renderer.render(
+      &template,
+      &Context {
+        global_vars: vec![&Variable {
+          name: "var".to_string(),
+          var_type: "mock".to_string(),
+          params: vec![
+            ("name".to_string(), Value::String("nested".to_string())),
+            ("value".to_string(), Value::String("dict".to_string())),
+          ]
+          .into_iter()
+          .collect::<Params>(),
+          ..Default::default()
+        }],
+        ..Default::default()
+      },
+      &Default::default(),
+    );
+    assert!(matches!(res, RenderResult::Success(str) if str == "hello dict"));
   }
 
   #[test]
@@ -435,6 +482,7 @@ mod tests {
           params: vec![("echo".to_string(), Value::String("Bob".to_string()))]
             .into_iter()
             .collect::<Params>(),
+          ..Default::default()
         },
         Variable {
           name: "var".to_string(),
@@ -454,12 +502,154 @@ mod tests {
             "read".to_string(),
             Value::String("local".to_string()),
           )]),
+          ..Default::default()
         }],
         ..Default::default()
       },
       &Default::default(),
     );
     assert!(matches!(res, RenderResult::Success(str) if str == "hello Bob Bob"));
+  }
+
+  #[test]
+  fn nested_global_variable() {
+    let renderer = get_renderer();
+    let template = template("hello {{var2}}", &[]);
+    let res = renderer.render(
+      &template,
+      &Context {
+        global_vars: vec![
+          &Variable {
+            name: "var".to_string(),
+            var_type: "mock".to_string(),
+            params: Params::from_iter(vec![(
+              "echo".to_string(),
+              Value::String("world".to_string()),
+            )]),
+            ..Default::default()
+          },
+          &Variable {
+            name: "var2".to_string(),
+            var_type: "mock".to_string(),
+            params: Params::from_iter(vec![(
+              "echo".to_string(),
+              Value::String("{{var}}".to_string()),
+            )]),
+            ..Default::default()
+          },
+        ],
+        ..Default::default()
+      },
+      &Default::default(),
+    );
+    assert!(matches!(res, RenderResult::Success(str) if str == "hello world"));
+  }
+
+  #[test]
+  fn nested_global_variable_circular_dependency_should_fail() {
+    let renderer = get_renderer();
+    let template = template("hello {{var}}", &[]);
+    let res = renderer.render(
+      &template,
+      &Context {
+        global_vars: vec![
+          &Variable {
+            name: "var".to_string(),
+            var_type: "mock".to_string(),
+            params: Params::from_iter(vec![(
+              "echo".to_string(),
+              Value::String("{{var2}}".to_string()),
+            )]),
+            ..Default::default()
+          },
+          &Variable {
+            name: "var2".to_string(),
+            var_type: "mock".to_string(),
+            params: Params::from_iter(vec![(
+              "echo".to_string(),
+              Value::String("{{var3}}".to_string()),
+            )]),
+            ..Default::default()
+          },
+          &Variable {
+            name: "var3".to_string(),
+            var_type: "mock".to_string(),
+            params: Params::from_iter(vec![(
+              "echo".to_string(),
+              Value::String("{{var}}".to_string()),
+            )]),
+            ..Default::default()
+          },
+        ],
+        ..Default::default()
+      },
+      &Default::default(),
+    );
+    assert!(matches!(res, RenderResult::Error(_)));
+  }
+
+  #[test]
+  fn global_variable_depends_on() {
+    let renderer = get_renderer();
+    let template = template("hello {{var}}", &[]);
+    let res = renderer.render(
+      &template,
+      &Context {
+        global_vars: vec![
+          &Variable {
+            name: "var".to_string(),
+            var_type: "mock".to_string(),
+            params: Params::from_iter(vec![(
+              "echo".to_string(),
+              Value::String("world".to_string()),
+            )]),
+            depends_on: vec!["var2".to_string()],
+            ..Default::default()
+          },
+          &Variable {
+            name: "var2".to_string(),
+            var_type: "mock".to_string(),
+            params: Params::from_iter(vec![("abort".to_string(), Value::Null)]),
+            ..Default::default()
+          },
+        ],
+        ..Default::default()
+      },
+      &Default::default(),
+    );
+    assert!(matches!(res, RenderResult::Aborted));
+  }
+
+  #[test]
+  fn local_variable_explicit_ordering() {
+    let renderer = get_renderer();
+    let template = Template {
+      body: "hello {{var}}".to_string(),
+      vars: vec![Variable {
+        name: "var".to_string(),
+        var_type: "mock".to_string(),
+        params: vec![("echo".to_string(), Value::String("something".to_string()))]
+          .into_iter()
+          .collect::<Params>(),
+        depends_on: vec!["global".to_string()],
+        ..Default::default()
+      }],
+      ..Default::default()
+    };
+    let res = renderer.render(
+      &template,
+      &Context {
+        global_vars: vec![&Variable {
+          name: "global".to_string(),
+          var_type: "mock".to_string(),
+          params: Params::from_iter(vec![("abort".to_string(), Value::Null)]),
+          ..Default::default()
+        }],
+        ..Default::default()
+      },
+      &Default::default(),
+    );
+    assert!(matches!(res, RenderResult::Aborted));
   }
 
   #[test]
@@ -473,6 +663,7 @@ mod tests {
         params: vec![("trigger".to_string(), Value::String("nested".to_string()))]
           .into_iter()
           .collect::<Params>(),
+        ..Default::default()
       }],
       ..Default::default()
     };
@@ -503,6 +694,7 @@ mod tests {
         params: vec![("trigger".to_string(), Value::String("nested".to_string()))]
           .into_iter()
           .collect::<Params>(),
+        ..Default::default()
       }],
       ..Default::default()
     };
@@ -527,6 +719,7 @@ mod tests {
         params: vec![("abort".to_string(), Value::Null)]
           .into_iter()
           .collect::<Params>(),
+        ..Default::default()
       }],
       ..Default::default()
     };
@@ -545,10 +738,213 @@ mod tests {
         params: vec![("error".to_string(), Value::Null)]
           .into_iter()
           .collect::<Params>(),
+        ..Default::default()
       }],
       ..Default::default()
     };
     let res = renderer.render(&template, &Default::default(), &Default::default());
     assert!(matches!(res, RenderResult::Error(_)));
+  }
+
+  #[test]
+  fn variable_injection() {
+    let renderer = get_renderer();
+    let mut template = template_for_str("hello {{fullname}}");
+    template.vars = vec![
+      Variable {
+        name: "firstname".to_string(),
+        var_type: "mock".to_string(),
+        params: Params::from_iter(vec![(
+          "echo".to_string(),
+          Value::String("John".to_string()),
+        )]),
+        ..Default::default()
+      },
+      Variable {
+        name: "lastname".to_string(),
+        var_type: "mock".to_string(),
+        params: Params::from_iter(vec![(
+          "echo".to_string(),
+          Value::String("Snow".to_string()),
+        )]),
+        ..Default::default()
+      },
+      Variable {
+        name: "fullname".to_string(),
+        var_type: "mock".to_string(),
+        params: Params::from_iter(vec![(
+          "echo".to_string(),
+          Value::String("{{firstname}} {{lastname}}".to_string()),
+        )]),
+        inject_vars: true,
+        ..Default::default()
+      },
+    ];
+
+    let res = renderer.render(&template, &Default::default(), &Default::default());
+    assert!(matches!(res, RenderResult::Success(str) if str == "hello John Snow"));
+  }
+
+  #[test]
+  fn disable_variable_injection() {
+    let renderer = get_renderer();
+    let mut template = template_for_str("hello {{second}}");
+    template.vars = vec![
+      Variable {
+        name: "first".to_string(),
+        var_type: "mock".to_string(),
+        params: Params::from_iter(vec![("echo".to_string(), Value::String("one".to_string()))]),
+        ..Default::default()
+      },
+      Variable {
+        name: "second".to_string(),
+        var_type: "mock".to_string(),
+        params: Params::from_iter(vec![(
+          "echo".to_string(),
+          Value::String("{{first}} two".to_string()),
+        )]),
+        inject_vars: false,
+        ..Default::default()
+      },
+    ];
+
+    let res = renderer.render(&template, &Default::default(), &Default::default());
+    assert!(matches!(res, RenderResult::Success(str) if str == "hello {{first}} two"));
+  }
+
+  #[test]
+  fn escaped_variable_injection() {
+    let renderer = get_renderer();
+    let mut template = template_for_str("hello {{second}}");
+    template.vars = vec![
+      Variable {
+        name: "first".to_string(),
+        var_type: "mock".to_string(),
+        params: Params::from_iter(vec![("echo".to_string(), Value::String("one".to_string()))]),
+        ..Default::default()
+      },
+      Variable {
+        name: "second".to_string(),
+        var_type: "mock".to_string(),
+        params: Params::from_iter(vec![(
+          "echo".to_string(),
+          Value::String("\\{\\{first\\}\\} two".to_string()),
+        )]),
+        ..Default::default()
+      },
+    ];
+
+    let res = renderer.render(&template, &Default::default(), &Default::default());
+    assert!(matches!(res, RenderResult::Success(str) if str == "hello {{first}} two"));
+  }
+
+  #[test]
+  fn variable_injection_missing_var() {
+    let renderer = get_renderer();
+    let mut template = template_for_str("hello {{second}}");
+    template.vars = vec![Variable {
+      name: "second".to_string(),
+      var_type: "mock".to_string(),
+      params: Params::from_iter(vec![(
+        "echo".to_string(),
+        Value::String("the next is {{missing}}".to_string()),
+      )]),
+      ..Default::default()
+    }];
+
+    let res = renderer.render(&template, &Default::default(), &Default::default());
+    assert!(matches!(res, RenderResult::Error(_)));
+  }
+
+  #[test]
+  fn variable_injection_with_global_variable() {
+    let renderer = get_renderer();
+    let mut template = template_for_str("hello {{output}}");
+    template.vars = vec![
+      Variable {
+        name: "var".to_string(),
+        var_type: "global".to_string(),
+        ..Default::default()
+      },
+      Variable {
+        name: "output".to_string(),
+        var_type: "mock".to_string(),
+        params: Params::from_iter(vec![(
+          "echo".to_string(),
+          Value::String("{{var}}".to_string()),
+        )]),
+        ..Default::default()
+      },
+    ];
+
+    let res = renderer.render(
+      &template,
+      &Context {
+        global_vars: vec![&Variable {
+          name: "var".to_string(),
+          var_type: "mock".to_string(),
+          params: Params::from_iter(vec![(
+            "echo".to_string(),
+            Value::String("global".to_string()),
+          )]),
+          ..Default::default()
+        }],
+        ..Default::default()
+      },
+      &Default::default(),
+    );
+    assert!(matches!(res, RenderResult::Success(str) if str == "hello global"));
+  }
+
+  #[test]
+  fn variable_injection_local_var_takes_precedence_over_global() {
+    let renderer = get_renderer();
+    let mut template = template_for_str("hello {{output}}");
+    template.vars = vec![
+      Variable {
+        name: "var".to_string(),
+        var_type: "mock".to_string(),
+        params: Params::from_iter(vec![(
+          "echo".to_string(),
+          Value::String("local".to_string()),
+        )]),
+        ..Default::default()
+      },
+      Variable {
+        name: "output".to_string(),
+        var_type: "mock".to_string(),
+        params: Params::from_iter(vec![(
+          "echo".to_string(),
+          Value::String("{{var}}".to_string()),
+        )]),
+        ..Default::default()
+      },
+    ];
+
+    let res = renderer.render(
+      &template,
+      &Context {
+        global_vars: vec![&Variable {
+          name: "var".to_string(),
+          var_type: "mock".to_string(),
+          params: Params::from_iter(vec![(
+            "echo".to_string(),
+            Value::String("global".to_string()),
+          )]),
+          ..Default::default()
+        }],
+        ..Default::default()
+      },
+      &Default::default(),
+    );
+    assert!(matches!(res, RenderResult::Success(str) if str == "hello local"));
+  }
+
+  #[test]
+  fn variable_escape() {
+    let renderer = get_renderer();
+    let template = template("hello \\{\\{var\\}\\}", &[("var", "world")]);
+    let res = renderer.render(&template, &Default::default(), &Default::default());
+    assert!(matches!(res, RenderResult::Success(str) if str == "hello {{var}}"));
   }
 }

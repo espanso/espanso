@@ -98,7 +98,10 @@ impl Default for Template {
 pub struct Variable {
   pub name: String,
   pub var_type: String,
+  pub inject_vars: bool,
   pub params: Params,
+  // Name of the variables this variable depends on
+  pub depends_on: Vec<String>,
 }
 
 impl Default for Variable {
@@ -106,7 +109,9 @@ impl Default for Variable {
     Self {
       name: "".to_string(),
       var_type: "".to_string(),
+      inject_vars: true,
       params: Params::new(),
+      depends_on: Vec::new(),
     }
   }
 }

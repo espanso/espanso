@@ -17,14 +17,11 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::renderer::VAR_REGEX;
 use log::error;
 use std::collections::HashMap;
 use thiserror::Error;
 
-use crate::{
-  renderer::render_variables, Extension, ExtensionOutput, ExtensionResult, Params, Value,
-};
+use crate::{Extension, ExtensionOutput, ExtensionResult, Params, Value};
 
 lazy_static! {
   static ref EMPTY_PARAMS: Params = Params::new();
@@ -59,7 +56,7 @@ impl<'a> Extension for FormExtension<'a> {
   fn calculate(
     &self,
     _: &crate::Context,
-    scope: &crate::Scope,
+    _: &crate::Scope,
     params: &Params,
   ) -> crate::ExtensionResult {
     let layout = if let Some(Value::String(layout)) = params.get("layout") {
@@ -68,14 +65,11 @@ impl<'a> Extension for FormExtension<'a> {
       return crate::ExtensionResult::Error(FormExtensionError::MissingLayout.into());
     };
 
-    let mut fields = if let Some(Value::Object(fields)) = params.get("fields") {
+    let fields = if let Some(Value::Object(fields)) = params.get("fields") {
       fields.clone()
     } else {
       Params::new()
     };
-
-    // Inject scope variables into fields (if needed)
-    inject_scope(&mut fields, scope);
 
     match self.provider.show(layout, &fields, &EMPTY_PARAMS) {
       FormProviderResult::Success(values) => {
@@ -83,25 +77,6 @@ impl<'a> Extension for FormExtension<'a> {
       }
       FormProviderResult::Aborted => ExtensionResult::Aborted,
       FormProviderResult::Error(error) => ExtensionResult::Error(error),
-    }
-  }
-}
-
-// TODO: test
-fn inject_scope(fields: &mut HashMap<String, Value>, scope: &HashMap<&str, ExtensionOutput>) {
-  for value in fields.values_mut() {
-    if let Value::Object(field_options) = value {
-      if let Some(Value::String(default_value)) = field_options.get_mut("default") {
-        if VAR_REGEX.is_match(default_value) {
-          match render_variables(default_value, scope) {
-            Ok(rendered) => *default_value = rendered,
-            Err(err) => error!(
-              "error while injecting variable in form default value: {}",
-              err
-            ),
-          }
-        }
-      }
     }
   }
 }
