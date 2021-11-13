@@ -21,7 +21,8 @@ use super::split::*;
 use regex::Regex;
 
 lazy_static! {
-  static ref FIELD_REGEX: Regex = Regex::new(r"\{\{(.*?)\}\}").unwrap();
+  // We need to match for both the new [[name]] syntax and the legacy {{name}} one
+  static ref FIELD_REGEX: Regex = Regex::new(r"\{\{(.*?)\}\}|\[\[(.*?)\]\]").unwrap();
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -57,6 +58,9 @@ pub fn parse_layout(layout: &str) -> Vec<Vec<Token>> {
           if let Some(name) = caps.get(1) {
             let name = name.as_str().to_owned();
             row.push(Token::Field(name));
+          } else if let Some(name) = caps.get(2) {
+            let name = name.as_str().to_owned();
+            row.push(Token::Field(name));
           }
         }
       }
@@ -74,7 +78,7 @@ mod tests {
 
   #[test]
   fn test_parse_layout() {
-    let layout = "Hey {{name}},\nHow are you?\n  \nCheers";
+    let layout = "Hey [[name]],\nHow are you?\n  \nCheers";
     let result = parse_layout(layout);
     assert_eq!(
       result,
@@ -92,7 +96,7 @@ mod tests {
 
   #[test]
   fn test_parse_layout_2() {
-    let layout = "Hey {{name}} {{surname}},";
+    let layout = "Hey [[name]] [[surname]],";
     let result = parse_layout(layout);
     assert_eq!(
       result,
@@ -103,6 +107,24 @@ mod tests {
         Token::Field("surname".to_owned()),
         Token::Text(",".to_owned())
       ],]
+    );
+  }
+
+  #[test]
+  fn test_parse_layout_legacy_syntax() {
+    let layout = "Hey {{name}},\nHow are you?\n  \nCheers";
+    let result = parse_layout(layout);
+    assert_eq!(
+      result,
+      vec![
+        vec![
+          Token::Text("Hey ".to_owned()),
+          Token::Field("name".to_owned()),
+          Token::Text(",".to_owned())
+        ],
+        vec![Token::Text("How are you?".to_owned())],
+        vec![Token::Text("Cheers".to_owned())],
+      ]
     );
   }
 }

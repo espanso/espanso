@@ -52,6 +52,16 @@ typedef struct {
   
   // Pressed or Released status
   int32_t status;
+
+  // Modifier keys status, this is needed to "correct" missing modifier release events.
+  // For more info, see the following issues:
+  // https://github.com/federico-terzi/espanso/issues/825
+  // https://github.com/federico-terzi/espanso/issues/858
+  int32_t is_caps_lock_pressed;
+  int32_t is_shift_pressed;
+  int32_t is_control_pressed;
+  int32_t is_option_pressed;
+  int32_t is_command_pressed;
 } InputEvent;
 
 typedef void (*EventCallback)(InputEvent data);
