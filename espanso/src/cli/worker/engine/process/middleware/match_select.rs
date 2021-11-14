@@ -55,11 +55,15 @@ impl<'a> MatchSelector for MatchSelectorAdapter<'a> {
     let search_items: Vec<SearchItem> = matches
       .into_iter()
       .map(|m| {
-        let clipped_label = &m.label[..std::cmp::min(m.label.len(), MAX_LABEL_LEN)];
+        let clipped_label: String = m
+          .label
+          .chars()
+          .take(std::cmp::min(m.label.len(), MAX_LABEL_LEN))
+          .collect();
 
         SearchItem {
           id: m.id.to_string(),
-          label: clipped_label.to_string(),
+          label: clipped_label,
           tag: m.tag.map(String::from),
           is_builtin: m.is_builtin,
         }
