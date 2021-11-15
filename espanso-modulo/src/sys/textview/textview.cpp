@@ -42,6 +42,8 @@ class DerivedTextViewFrame : public TextViewFrame
 {
 protected:
   void on_copy_to_clipboard( wxCommandEvent& event );
+  
+  void on_char_event(wxKeyEvent &event);
 
 public:
   DerivedTextViewFrame(wxWindow *parent);
@@ -52,6 +54,16 @@ DerivedTextViewFrame::DerivedTextViewFrame(wxWindow *parent)
 {
   this->text_content->SetValue(wxString::FromUTF8(text_view_metadata->content));
   this->SetTitle(wxString::FromUTF8(text_view_metadata->title));
+
+
+  Bind(wxEVT_CHAR_HOOK, &DerivedTextViewFrame::on_char_event, this, wxID_ANY);
+}
+
+void DerivedTextViewFrame::on_char_event(wxKeyEvent &event) {
+  if (event.GetKeyCode() == WXK_ESCAPE)
+  {
+    Close(true);
+  }
 }
 
 void DerivedTextViewFrame::on_copy_to_clipboard( wxCommandEvent& event ) {
