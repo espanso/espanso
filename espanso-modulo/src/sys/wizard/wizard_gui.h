@@ -20,12 +20,12 @@
 #include <wx/settings.h>
 #include <wx/string.h>
 #include <wx/stattext.h>
-#include <wx/button.h>
 #include <wx/sizer.h>
+#include <wx/scrolwin.h>
+#include <wx/button.h>
 #include <wx/panel.h>
 #include <wx/hyperlink.h>
 #include <wx/checkbox.h>
-#include <wx/scrolwin.h>
 #include <wx/simplebook.h>
 #include <wx/frame.h>
 
@@ -43,6 +43,7 @@ class WizardFrame : public wxFrame
 		wxTimer check_timer;
 		wxSimplebook* m_simplebook;
 		wxPanel* welcome_panel;
+		wxScrolledWindow* m_scrolledWindow2;
 		wxStaticBitmap* welcome_image;
 		wxStaticText* welcome_title_text;
 		wxStaticText* welcome_version_text;
@@ -65,17 +66,20 @@ class WizardFrame : public wxFrame
 		wxButton* wrong_edition_button;
 		wxPanel* migrate_panel;
 		wxStaticText* migrate_title;
+		wxScrolledWindow* m_scrolledWindow4;
 		wxStaticText* migrate_description;
 		wxHyperlinkCtrl* migrate_link;
 		wxButton* migrate_compatibility_mode_button;
 		wxButton* migrate_backup_and_migrate_button;
 		wxPanel* auto_start_panel;
+		wxScrolledWindow* m_scrolledWindow6;
 		wxStaticText* auto_start_title;
 		wxStaticText* auto_start_description;
 		wxCheckBox* auto_start_checkbox;
 		wxStaticText* auto_start_note;
 		wxButton* auto_start_continue;
 		wxPanel* add_path_panel;
+		wxScrolledWindow* m_scrolledWindow8;
 		wxStaticText* add_path_title;
 		wxStaticText* add_path_description;
 		wxCheckBox* add_path_checkbox;
@@ -105,7 +109,7 @@ class WizardFrame : public wxFrame
 
 	public:
 
-		WizardFrame( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Espanso"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 550,577 ), long style = wxCAPTION|wxCLOSE_BOX|wxSYSTEM_MENU|wxTAB_TRAVERSAL );
+		WizardFrame( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Espanso"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 600,577 ), long style = wxCAPTION|wxCLOSE_BOX|wxRESIZE_BORDER|wxSYSTEM_MENU|wxTAB_TRAVERSAL );
 
 		~WizardFrame();
 
