@@ -189,6 +189,14 @@ pub struct ErrorMetadata {
   pub message: *const c_char,
 }
 
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct TextViewMetadata {
+  pub window_icon_path: *const c_char,
+  pub title: *const c_char,
+  pub content: *const c_char,
+}
+
 // Native bindings
 
 #[allow(improper_ctypes)]
@@ -220,4 +228,7 @@ extern "C" {
 
   // TROUBLESHOOTING
   pub(crate) fn interop_show_troubleshooting(metadata: *const TroubleshootingMetadata);
+
+  // TEXTVIEW
+  pub(crate) fn interop_show_text_view(metadata: *const TextViewMetadata);
 }

@@ -168,3 +168,11 @@ typedef struct TroubleshootingMetadata {
   int (*dont_show_again_changed)(int);
   int (*open_file)(const char * file_name);
 } TroubleshootingMetadata;
+
+// TextView
+
+typedef struct TextViewMetadata {
+  const char *window_icon_path;
+  const char *title;
+  const char *content;
+} TextViewMetadata;
