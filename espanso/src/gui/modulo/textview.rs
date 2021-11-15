@@ -17,7 +17,35 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub mod form;
-pub mod manager;
-pub mod search;
-pub mod textview;
+use crate::gui::TextUI;
+
+use super::manager::ModuloManager;
+
+pub struct ModuloTextUI<'a> {
+  manager: &'a ModuloManager,
+}
+
+impl<'a> ModuloTextUI<'a> {
+  pub fn new(manager: &'a ModuloManager) -> Self {
+    Self { manager }
+  }
+}
+
+impl<'a> TextUI for ModuloTextUI<'a> {
+  fn show_text(&self, title: &str, text: &str) -> anyhow::Result<()> {
+    self
+      .manager
+      .invoke_no_output(&["textview", "--title", title, "-i", "-"], text)?;
+
+    Ok(())
+  }
+
+  fn show_file(&self, title: &str, path: &std::path::Path) -> anyhow::Result<()> {
+    let path_str = path.to_string_lossy().to_string();
+    self
+      .manager
+      .invoke_no_output(&["textview", "--title", title, "-i", &path_str], "")?;
+
+    Ok(())
+  }
+}

@@ -37,6 +37,7 @@ use crate::{
         clipboard_injector::ClipboardInjectorAdapter, context_menu::ContextMenuHandlerAdapter,
         event_injector::EventInjectorAdapter, icon::IconHandlerAdapter,
         key_injector::KeyInjectorAdapter, secure_input::SecureInputManagerAdapter,
+        text_ui::TextUIHandlerAdapter,
       },
       process::middleware::{
         image_resolve::PathProviderAdapter,
@@ -106,6 +107,7 @@ pub fn initialize_and_spawn(
       let modulo_manager = crate::gui::modulo::manager::ModuloManager::new();
       let modulo_form_ui = crate::gui::modulo::form::ModuloFormUI::new(&modulo_manager);
       let modulo_search_ui = crate::gui::modulo::search::ModuloSearchUI::new(&modulo_manager);
+      let modulo_text_ui = crate::gui::modulo::textview::ModuloTextUI::new(&modulo_manager);
 
       let context: Box<dyn Context> = Box::new(super::context::DefaultContext::new(
         &config_manager,
@@ -241,6 +243,7 @@ pub fn initialize_and_spawn(
       let context_menu_adapter = ContextMenuHandlerAdapter::new(&*ui_remote);
       let icon_adapter = IconHandlerAdapter::new(&*ui_remote);
       let secure_input_adapter = SecureInputManagerAdapter::new();
+      let text_ui_adapter = TextUIHandlerAdapter::new(&modulo_text_ui);
       let dispatcher = espanso_engine::dispatch::default(
         &event_injector,
         &clipboard_injector,
@@ -251,6 +254,7 @@ pub fn initialize_and_spawn(
         &context_menu_adapter,
         &icon_adapter,
         &secure_input_adapter,
+        &text_ui_adapter,
       );
 
       // Disable previously granted linux capabilities if not needed anymore
