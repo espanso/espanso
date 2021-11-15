@@ -243,7 +243,7 @@ pub fn initialize_and_spawn(
       let context_menu_adapter = ContextMenuHandlerAdapter::new(&*ui_remote);
       let icon_adapter = IconHandlerAdapter::new(&*ui_remote);
       let secure_input_adapter = SecureInputManagerAdapter::new();
-      let text_ui_adapter = TextUIHandlerAdapter::new(&modulo_text_ui);
+      let text_ui_adapter = TextUIHandlerAdapter::new(&modulo_text_ui, &paths);
       let dispatcher = espanso_engine::dispatch::default(
         &event_injector,
         &clipboard_injector,
