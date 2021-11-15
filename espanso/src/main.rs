@@ -292,6 +292,23 @@ For example, specifying 'email' is equivalent to 'match/email.yml'."#))
                 .help("Interpret the input data as JSON"),
             ),
         )
+        .subcommand(
+          SubCommand::with_name("textview")
+            .about("Display a Text View")
+            .arg(
+              Arg::with_name("input_file")
+                .short("i")
+                .takes_value(true)
+                .help("Input file or - for stdin"),
+            )
+            .arg(
+              Arg::with_name("title")
+              .long("title")
+                .required(true)
+                .takes_value(true)
+                .help("Window title to display"),
+            ),
+        )
         .subcommand(SubCommand::with_name("troubleshoot").about("Display the troubleshooting GUI"))
         .subcommand(
           SubCommand::with_name("welcome")

@@ -24,6 +24,8 @@ mod form;
 #[cfg(feature = "modulo")]
 mod search;
 #[cfg(feature = "modulo")]
+mod textview;
+#[cfg(feature = "modulo")]
 mod troubleshoot;
 #[cfg(feature = "modulo")]
 mod welcome;
@@ -55,6 +57,10 @@ fn modulo_main(args: CliModuleArgs) -> i32 {
 
   if let Some(matches) = cli_args.subcommand_matches("welcome") {
     return welcome::welcome_main(matches, &paths, &icon_paths);
+  }
+
+  if let Some(matches) = cli_args.subcommand_matches("textview") {
+    return textview::textview_main(matches, &icon_paths);
   }
 
   if cli_args.subcommand_matches("troubleshoot").is_some() {
