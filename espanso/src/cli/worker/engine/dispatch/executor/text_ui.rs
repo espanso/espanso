@@ -17,7 +17,23 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub mod form;
-pub mod manager;
-pub mod search;
-pub mod textview;
+use espanso_engine::dispatch::TextUIHandler;
+
+use crate::gui::TextUI;
+
+pub struct TextUIHandlerAdapter<'a> {
+  text_ui: &'a dyn TextUI,
+}
+
+impl<'a> TextUIHandlerAdapter<'a> {
+  pub fn new(text_ui: &'a dyn TextUI) -> Self {
+    Self { text_ui }
+  }
+}
+
+impl<'a> TextUIHandler for TextUIHandlerAdapter<'a> {
+  fn show_text(&self, title: &str, text: &str) -> anyhow::Result<()> {
+    self.text_ui.show_text(title, text)?;
+    Ok(())
+  }
+}

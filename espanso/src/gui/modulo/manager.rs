@@ -39,6 +39,52 @@ impl ModuloManager {
     Self { is_support_enabled }
   }
 
+  pub fn invoke_no_output(&self, args: &[&str], body: &str) -> Result<()> {
+    if self.is_support_enabled {
+      let exec_path = std::env::current_exe().expect("unable to obtain current exec path");
+      let mut command = Command::new(exec_path);
+      let mut full_args = vec!["modulo"];
+      full_args.extend(args);
+      command
+        .args(full_args)
+        .stdin(std::process::Stdio::piped())
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped());
+
+      crate::util::set_command_flags(&mut command);
+
+      let child = command.spawn();
+
+      match child {
+        Ok(mut child) => {
+          if let Some(stdin) = child.stdin.as_mut() {
+            match stdin.write_all(body.as_bytes()) {
+              Ok(_) => {
+                // Get the output
+                match child.wait_with_output() {
+                  Ok(child_output) => {
+                    if child_output.status.success() {
+                      Ok(())
+                    } else {
+                      Err(ModuloError::NonZeroExit.into())
+                    }
+                  }
+                  Err(error) => Err(ModuloError::Error(error).into()),
+                }
+              }
+              Err(error) => Err(ModuloError::Error(error).into()),
+            }
+          } else {
+            Err(ModuloError::StdinError.into())
+          }
+        }
+        Err(error) => Err(ModuloError::Error(error).into()),
+      }
+    } else {
+      Err(ModuloError::MissingModulo.into())
+    }
+  }
+
   pub fn invoke(&self, args: &[&str], body: &str) -> Result<String> {
     if self.is_support_enabled {
       let exec_path = std::env::current_exe().expect("unable to obtain current exec path");
@@ -100,6 +146,9 @@ pub enum ModuloError {
     "attempt to invoke modulo, but this version of espanso is not compiled with support for it"
   )]
   MissingModulo,
+
+  #[error("modulo returned a non-zero exit code")]
+  NonZeroExit,
 
   #[error("modulo returned an empty output")]
   EmptyOutput,
