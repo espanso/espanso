@@ -102,6 +102,7 @@ pub enum EventType {
   DisplaySecureInputTroubleshoot,
   ShowSearchBar,
   ShowText(ui::ShowTextEvent),
+  ShowLogs,
 
   // Other
   LaunchSecureInputAutoFix,
