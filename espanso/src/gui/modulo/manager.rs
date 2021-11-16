@@ -39,7 +39,7 @@ impl ModuloManager {
     Self { is_support_enabled }
   }
 
-  pub fn invoke_no_output(&self, args: &[&str], body: &str) -> Result<()> {
+  pub fn spawn(&self, args: &[&str], body: &str) -> Result<()> {
     if self.is_support_enabled {
       let exec_path = std::env::current_exe().expect("unable to obtain current exec path");
       let mut command = Command::new(exec_path);
@@ -59,19 +59,7 @@ impl ModuloManager {
         Ok(mut child) => {
           if let Some(stdin) = child.stdin.as_mut() {
             match stdin.write_all(body.as_bytes()) {
-              Ok(_) => {
-                // Get the output
-                match child.wait_with_output() {
-                  Ok(child_output) => {
-                    if child_output.status.success() {
-                      Ok(())
-                    } else {
-                      Err(ModuloError::NonZeroExit.into())
-                    }
-                  }
-                  Err(error) => Err(ModuloError::Error(error).into()),
-                }
-              }
+              Ok(_) => Ok(()),
               Err(error) => Err(ModuloError::Error(error).into()),
             }
           } else {
@@ -146,9 +134,6 @@ pub enum ModuloError {
     "attempt to invoke modulo, but this version of espanso is not compiled with support for it"
   )]
   MissingModulo,
-
-  #[error("modulo returned a non-zero exit code")]
-  NonZeroExit,
 
   #[error("modulo returned an empty output")]
   EmptyOutput,

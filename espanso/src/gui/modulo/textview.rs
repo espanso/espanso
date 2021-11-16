@@ -35,7 +35,7 @@ impl<'a> TextUI for ModuloTextUI<'a> {
   fn show_text(&self, title: &str, text: &str) -> anyhow::Result<()> {
     self
       .manager
-      .invoke_no_output(&["textview", "--title", title, "-i", "-"], text)?;
+      .spawn(&["textview", "--title", title, "-i", "-"], text)?;
 
     Ok(())
   }
@@ -44,7 +44,7 @@ impl<'a> TextUI for ModuloTextUI<'a> {
     let path_str = path.to_string_lossy().to_string();
     self
       .manager
-      .invoke_no_output(&["textview", "--title", title, "-i", &path_str], "")?;
+      .spawn(&["textview", "--title", title, "-i", &path_str], "")?;
 
     Ok(())
   }
