@@ -24,7 +24,7 @@ use std::{
   process::Stdio,
 };
 
-use crate::{Clipboard, ClipboardOptions};
+use crate::{Clipboard, ClipboardOperationOptions, ClipboardOptions};
 use anyhow::Result;
 use log::{error, warn};
 use std::process::Command;
@@ -74,7 +74,7 @@ impl WaylandFallbackClipboard {
 }
 
 impl Clipboard for WaylandFallbackClipboard {
-  fn get_text(&self) -> Option<String> {
+  fn get_text(&self, _: &ClipboardOperationOptions) -> Option<String> {
     let timeout = std::time::Duration::from_millis(self.command_timeout);
     match Command::new("wl-paste")
       .arg("--no-newline")
@@ -116,11 +116,15 @@ impl Clipboard for WaylandFallbackClipboard {
     }
   }
 
-  fn set_text(&self, text: &str) -> anyhow::Result<()> {
+  fn set_text(&self, text: &str, _: &ClipboardOperationOptions) -> anyhow::Result<()> {
     self.invoke_command_with_timeout(&mut Command::new("wl-copy"), text.as_bytes(), "wl-copy")
   }
 
-  fn set_image(&self, image_path: &std::path::Path) -> anyhow::Result<()> {
+  fn set_image(
+    &self,
+    image_path: &std::path::Path,
+    _: &ClipboardOperationOptions,
+  ) -> anyhow::Result<()> {
     if !image_path.exists() || !image_path.is_file() {
       return Err(WaylandFallbackClipboardError::ImageNotFound(image_path.to_path_buf()).into());
     }
@@ -137,7 +141,12 @@ impl Clipboard for WaylandFallbackClipboard {
     )
   }
 
-  fn set_html(&self, html: &str, _fallback_text: Option<&str>) -> anyhow::Result<()> {
+  fn set_html(
+    &self,
+    html: &str,
+    _fallback_text: Option<&str>,
+    _: &ClipboardOperationOptions,
+  ) -> anyhow::Result<()> {
     self.invoke_command_with_timeout(
       &mut Command::new("wl-copy").arg("--type").arg("text/html"),
       html.as_bytes(),

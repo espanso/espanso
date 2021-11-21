@@ -23,7 +23,7 @@ use std::{
   path::PathBuf,
 };
 
-use crate::Clipboard;
+use crate::{Clipboard, ClipboardOperationOptions};
 use anyhow::Result;
 use std::os::raw::c_char;
 use thiserror::Error;
@@ -39,7 +39,7 @@ impl X11NativeClipboard {
 }
 
 impl Clipboard for X11NativeClipboard {
-  fn get_text(&self) -> Option<String> {
+  fn get_text(&self, _: &ClipboardOperationOptions) -> Option<String> {
     let mut buffer: [c_char; 2048] = [0; 2048];
     let native_result =
       unsafe { ffi::clipboard_x11_get_text(buffer.as_mut_ptr(), (buffer.len() - 1) as i32) };
@@ -51,7 +51,7 @@ impl Clipboard for X11NativeClipboard {
     }
   }
 
-  fn set_text(&self, text: &str) -> anyhow::Result<()> {
+  fn set_text(&self, text: &str, _: &ClipboardOperationOptions) -> anyhow::Result<()> {
     let string = CString::new(text)?;
     let native_result = unsafe { ffi::clipboard_x11_set_text(string.as_ptr()) };
     if native_result > 0 {
@@ -61,7 +61,11 @@ impl Clipboard for X11NativeClipboard {
     }
   }
 
-  fn set_image(&self, image_path: &std::path::Path) -> anyhow::Result<()> {
+  fn set_image(
+    &self,
+    image_path: &std::path::Path,
+    _: &ClipboardOperationOptions,
+  ) -> anyhow::Result<()> {
     if !image_path.exists() || !image_path.is_file() {
       return Err(X11NativeClipboardError::ImageNotFound(image_path.to_path_buf()).into());
     }
@@ -80,7 +84,12 @@ impl Clipboard for X11NativeClipboard {
     }
   }
 
-  fn set_html(&self, html: &str, fallback_text: Option<&str>) -> anyhow::Result<()> {
+  fn set_html(
+    &self,
+    html: &str,
+    fallback_text: Option<&str>,
+    _: &ClipboardOperationOptions,
+  ) -> anyhow::Result<()> {
     let html_string = CString::new(html)?;
     let fallback_string = CString::new(fallback_text.unwrap_or_default())?;
     let fallback_ptr = if fallback_text.is_some() {

@@ -37,10 +37,28 @@ mod wayland;
 mod cocoa;
 
 pub trait Clipboard {
-  fn get_text(&self) -> Option<String>;
-  fn set_text(&self, text: &str) -> Result<()>;
-  fn set_image(&self, image_path: &Path) -> Result<()>;
-  fn set_html(&self, html: &str, fallback_text: Option<&str>) -> Result<()>;
+  fn get_text(&self, options: &ClipboardOperationOptions) -> Option<String>;
+  fn set_text(&self, text: &str, options: &ClipboardOperationOptions) -> Result<()>;
+  fn set_image(&self, image_path: &Path, options: &ClipboardOperationOptions) -> Result<()>;
+  fn set_html(
+    &self,
+    html: &str,
+    fallback_text: Option<&str>,
+    options: &ClipboardOperationOptions,
+  ) -> Result<()>;
+}
+
+#[allow(dead_code)]
+pub struct ClipboardOperationOptions {
+  pub use_xclip_backend: bool,
+}
+
+impl Default for ClipboardOperationOptions {
+  fn default() -> Self {
+    Self {
+      use_xclip_backend: false,
+    }
+  }
 }
 
 #[allow(dead_code)]
@@ -74,8 +92,8 @@ pub fn get_clipboard(_: ClipboardOptions) -> Result<Box<dyn Clipboard>> {
 #[cfg(target_os = "linux")]
 #[cfg(not(feature = "wayland"))]
 pub fn get_clipboard(_: ClipboardOptions) -> Result<Box<dyn Clipboard>> {
-  info!("using X11NativeClipboard");
-  Ok(Box::new(x11::native::X11NativeClipboard::new()?))
+  info!("using X11Clipboard");
+  Ok(Box::new(x11::X11Clipboard::new()?))
 }
 
 #[cfg(target_os = "linux")]

@@ -21,7 +21,7 @@ mod ffi;
 
 use std::{ffi::CString, path::PathBuf};
 
-use crate::Clipboard;
+use crate::{Clipboard, ClipboardOperationOptions};
 use anyhow::Result;
 use log::error;
 use thiserror::Error;
@@ -36,7 +36,7 @@ impl Win32Clipboard {
 }
 
 impl Clipboard for Win32Clipboard {
-  fn get_text(&self) -> Option<String> {
+  fn get_text(&self, _: &ClipboardOperationOptions) -> Option<String> {
     let mut buffer: [u16; 2048] = [0; 2048];
     let native_result =
       unsafe { ffi::clipboard_get_text(buffer.as_mut_ptr(), (buffer.len() - 1) as i32) };
@@ -48,7 +48,7 @@ impl Clipboard for Win32Clipboard {
     }
   }
 
-  fn set_text(&self, text: &str) -> anyhow::Result<()> {
+  fn set_text(&self, text: &str, _: &ClipboardOperationOptions) -> anyhow::Result<()> {
     let string = U16CString::from_str(text)?;
     let native_result = unsafe { ffi::clipboard_set_text(string.as_ptr()) };
     if native_result > 0 {
@@ -58,7 +58,11 @@ impl Clipboard for Win32Clipboard {
     }
   }
 
-  fn set_image(&self, image_path: &std::path::Path) -> anyhow::Result<()> {
+  fn set_image(
+    &self,
+    image_path: &std::path::Path,
+    _: &ClipboardOperationOptions,
+  ) -> anyhow::Result<()> {
     if !image_path.exists() || !image_path.is_file() {
       return Err(Win32ClipboardError::ImageNotFound(image_path.to_path_buf()).into());
     }
@@ -73,7 +77,12 @@ impl Clipboard for Win32Clipboard {
     }
   }
 
-  fn set_html(&self, html: &str, fallback_text: Option<&str>) -> anyhow::Result<()> {
+  fn set_html(
+    &self,
+    html: &str,
+    fallback_text: Option<&str>,
+    _: &ClipboardOperationOptions,
+  ) -> anyhow::Result<()> {
     let html_descriptor = generate_html_descriptor(html);
     let html_string = CString::new(html_descriptor)?;
     let fallback_string = U16CString::from_str(fallback_text.unwrap_or_default())?;
