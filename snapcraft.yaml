@@ -80,6 +80,7 @@ parts:
      - libwayland-cursor0
      - libwayland-egl1
      - libwxgtk3.0-gtk3-0v5
+     - xclip
 
 apps:
   espanso:
