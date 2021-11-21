@@ -20,6 +20,7 @@
 #include "native.h"
 #include <string.h>
 #import <Foundation/Foundation.h>
+#import <CoreGraphics/CoreGraphics.h>
 #include <vector>
 
 // Events dispatched by espanso are "marked" with a custom location
