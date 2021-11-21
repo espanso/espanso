@@ -330,6 +330,10 @@ impl Config for ResolvedConfig {
       .win32_keyboard_layout_cache_interval
       .unwrap_or(2000)
   }
+
+  fn x11_use_xclip_backend(&self) -> bool {
+    self.parsed.x11_use_xclip_backend.unwrap_or(false)
+  }
 }
 
 impl ResolvedConfig {
@@ -413,6 +417,7 @@ impl ResolvedConfig {
       secure_input_notification,
       win32_exclude_orphan_events,
       win32_keyboard_layout_cache_interval,
+      x11_use_xclip_backend,
       includes,
       excludes,
       extra_includes,
