@@ -17,21 +17,36 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use espanso_clipboard::Clipboard;
+use espanso_clipboard::{Clipboard, ClipboardOperationOptions};
 use espanso_render::extension::clipboard::ClipboardProvider;
+
+pub trait ClipboardOperationOptionsProvider {
+  fn get_operation_options(&self) -> ClipboardOperationOptions;
+}
 
 pub struct ClipboardAdapter<'a> {
   clipboard: &'a dyn Clipboard,
+  clipboard_operation_options_provider: &'a dyn ClipboardOperationOptionsProvider,
 }
 
 impl<'a> ClipboardAdapter<'a> {
-  pub fn new(clipboard: &'a dyn Clipboard) -> Self {
-    Self { clipboard }
+  pub fn new(
+    clipboard: &'a dyn Clipboard,
+    clipboard_operation_options_provider: &'a dyn ClipboardOperationOptionsProvider,
+  ) -> Self {
+    Self {
+      clipboard,
+      clipboard_operation_options_provider,
+    }
   }
 }
 
 impl<'a> ClipboardProvider for ClipboardAdapter<'a> {
   fn get_text(&self) -> Option<String> {
-    self.clipboard.get_text()
+    self.clipboard.get_text(
+      &self
+        .clipboard_operation_options_provider
+        .get_operation_options(),
+    )
   }
 }
