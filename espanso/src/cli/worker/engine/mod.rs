@@ -181,7 +181,7 @@ pub fn initialize_and_spawn(
       let clipboard = espanso_clipboard::get_clipboard(Default::default())
         .expect("failed to initialize clipboard module"); // TODO: handle options
 
-      let clipboard_adapter = ClipboardAdapter::new(&*clipboard);
+      let clipboard_adapter = ClipboardAdapter::new(&*clipboard, &config_manager);
       let clipboard_extension =
         espanso_render::extension::clipboard::ClipboardExtension::new(&clipboard_adapter);
       let date_extension = espanso_render::extension::date::DateExtension::new();
