@@ -24,7 +24,7 @@ use std::{
   path::PathBuf,
 };
 
-use crate::Clipboard;
+use crate::{Clipboard, ClipboardOperationOptions};
 use anyhow::Result;
 use log::error;
 use thiserror::Error;
@@ -38,7 +38,7 @@ impl CocoaClipboard {
 }
 
 impl Clipboard for CocoaClipboard {
-  fn get_text(&self) -> Option<String> {
+  fn get_text(&self, _: &ClipboardOperationOptions) -> Option<String> {
     let mut buffer: [i8; 2048] = [0; 2048];
     let native_result =
       unsafe { ffi::clipboard_get_text(buffer.as_mut_ptr(), (buffer.len() - 1) as i32) };
@@ -50,7 +50,7 @@ impl Clipboard for CocoaClipboard {
     }
   }
 
-  fn set_text(&self, text: &str) -> anyhow::Result<()> {
+  fn set_text(&self, text: &str, _: &ClipboardOperationOptions) -> anyhow::Result<()> {
     let string = CString::new(text)?;
     let native_result = unsafe { ffi::clipboard_set_text(string.as_ptr()) };
     if native_result > 0 {
@@ -60,7 +60,11 @@ impl Clipboard for CocoaClipboard {
     }
   }
 
-  fn set_image(&self, image_path: &std::path::Path) -> anyhow::Result<()> {
+  fn set_image(
+    &self,
+    image_path: &std::path::Path,
+    _: &ClipboardOperationOptions,
+  ) -> anyhow::Result<()> {
     if !image_path.exists() || !image_path.is_file() {
       return Err(CocoaClipboardError::ImageNotFound(image_path.to_path_buf()).into());
     }
@@ -75,7 +79,12 @@ impl Clipboard for CocoaClipboard {
     }
   }
 
-  fn set_html(&self, html: &str, fallback_text: Option<&str>) -> anyhow::Result<()> {
+  fn set_html(
+    &self,
+    html: &str,
+    fallback_text: Option<&str>,
+    _: &ClipboardOperationOptions,
+  ) -> anyhow::Result<()> {
     let html_string = CString::new(html)?;
     let fallback_string = CString::new(fallback_text.unwrap_or_default())?;
     let fallback_ptr = if fallback_text.is_some() {

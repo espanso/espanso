@@ -17,4 +17,66 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub(crate) mod native;
+use anyhow::Result;
+
+use crate::{Clipboard, ClipboardOperationOptions};
+
+mod native;
+mod xclip;
+
+pub(crate) struct X11Clipboard {
+  native_backend: native::X11NativeClipboard,
+  xclip_backend: xclip::XClipClipboard,
+}
+
+impl X11Clipboard {
+  pub fn new() -> Result<Self> {
+    Ok(Self {
+      native_backend: native::X11NativeClipboard::new()?,
+      xclip_backend: xclip::XClipClipboard::new(),
+    })
+  }
+}
+
+impl Clipboard for X11Clipboard {
+  fn get_text(&self, options: &ClipboardOperationOptions) -> Option<String> {
+    if options.use_xclip_backend {
+      self.xclip_backend.get_text(options)
+    } else {
+      self.native_backend.get_text(options)
+    }
+  }
+
+  fn set_text(&self, text: &str, options: &ClipboardOperationOptions) -> anyhow::Result<()> {
+    if options.use_xclip_backend {
+      self.xclip_backend.set_text(text, options)
+    } else {
+      self.native_backend.set_text(text, options)
+    }
+  }
+
+  fn set_image(
+    &self,
+    image_path: &std::path::Path,
+    options: &ClipboardOperationOptions,
+  ) -> anyhow::Result<()> {
+    if options.use_xclip_backend {
+      self.xclip_backend.set_image(image_path, options)
+    } else {
+      self.native_backend.set_image(image_path, options)
+    }
+  }
+
+  fn set_html(
+    &self,
+    html: &str,
+    fallback_text: Option<&str>,
+    options: &ClipboardOperationOptions,
+  ) -> anyhow::Result<()> {
+    if options.use_xclip_backend {
+      self.xclip_backend.set_html(html, fallback_text, options)
+    } else {
+      self.native_backend.set_html(html, fallback_text, options)
+    }
+  }
+}
