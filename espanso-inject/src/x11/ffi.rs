@@ -47,17 +47,31 @@ pub struct XModifierKeymap {
   pub modifiermap: *mut KeyCode,
 }
 
+// XCreateIC values
+#[allow(non_upper_case_globals)]
+pub const XIMPreeditNothing: c_int = 0x0008;
+#[allow(non_upper_case_globals)]
+pub const XIMStatusNothing: c_int = 0x0400;
+
+#[allow(non_upper_case_globals)]
+pub const XNClientWindow_0: &[u8] = b"clientWindow\0";
+#[allow(non_upper_case_globals)]
+pub const XNInputStyle_0: &[u8] = b"inputStyle\0";
+
+pub enum _XIC {}
+pub enum _XIM {}
+pub enum _XrmHashBucketRec {}
+
+#[allow(clippy::upper_case_acronyms)]
+pub type XIC = *mut _XIC;
+#[allow(clippy::upper_case_acronyms)]
+pub type XIM = *mut _XIM;
+pub type XrmDatabase = *mut _XrmHashBucketRec;
+
 #[link(name = "X11")]
 extern "C" {
   pub fn XOpenDisplay(name: *const c_char) -> *mut Display;
   pub fn XCloseDisplay(display: *mut Display);
-  pub fn XLookupString(
-    event: *const XKeyEvent,
-    buffer_return: *mut c_char,
-    bytes_buffer: c_int,
-    keysym_return: *mut KeySym,
-    status_in_out: *const c_void,
-  ) -> c_int;
   pub fn XDefaultRootWindow(display: *mut Display) -> Window;
   pub fn XGetInputFocus(
     display: *mut Display,
@@ -82,4 +96,31 @@ extern "C" {
   ) -> c_int;
   pub fn XSync(display: *mut Display, discard: c_int) -> c_int;
   pub fn XQueryKeymap(display: *mut Display, keys_return: *mut u8);
+  pub fn XOpenIM(
+    display: *mut Display,
+    db: XrmDatabase,
+    res_name: *mut c_char,
+    res_class: *mut c_char,
+  ) -> XIM;
+  pub fn XCreateIC(
+    input_method: XIM,
+    p2: *const u8,
+    p3: c_int,
+    p4: *const u8,
+    p5: c_int,
+    p6: *const c_void,
+  ) -> XIC;
+  pub fn XDestroyIC(input_context: XIC);
+  pub fn XmbResetIC(input_context: XIC) -> *mut c_char;
+  pub fn Xutf8LookupString(
+    input_context: XIC,
+    event: *mut XKeyEvent,
+    buffer: *mut c_char,
+    buff_size: c_int,
+    keysym_return: *mut c_ulong,
+    status_return: *mut c_int,
+  ) -> c_int;
+  pub fn XFilterEvent(event: *mut XKeyEvent, window: c_ulong) -> c_int;
+  pub fn XCloseIM(input_method: XIM) -> c_int;
+  pub fn XFree(data: *mut c_void) -> c_int;
 }
