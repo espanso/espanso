@@ -20,7 +20,7 @@
 mod ffi;
 
 use std::{
-  collections::HashMap,
+  collections::{HashMap, HashSet},
   ffi::{CStr, CString},
   os::raw::c_char,
   slice,
@@ -28,28 +28,43 @@ use std::{
 
 use ffi::{
   Display, KeyCode, KeyPress, KeyRelease, KeySym, Window, XCloseDisplay, XDefaultRootWindow,
-  XFlush, XFreeModifiermap, XGetInputFocus, XGetModifierMapping, XKeyEvent, XLookupString,
-  XQueryKeymap, XSendEvent, XSync, XTestFakeKeyEvent,
+  XFlush, XFreeModifiermap, XGetInputFocus, XGetModifierMapping, XKeyEvent, XQueryKeymap,
+  XSendEvent, XSync, XTestFakeKeyEvent,
 };
-use log::error;
+use libc::c_void;
+use log::{debug, error};
 
-use crate::linux::raw_keys::convert_to_sym_array;
-use anyhow::Result;
+use crate::{linux::raw_keys::convert_to_sym_array, x11::ffi::Xutf8LookupString};
+use anyhow::{bail, Result};
 use thiserror::Error;
 
 use crate::{keys, InjectionOptions, Injector};
+
+use self::ffi::{
+  XCloseIM, XCreateIC, XDestroyIC, XFilterEvent, XFree, XIMPreeditNothing, XIMStatusNothing,
+  XNClientWindow_0, XNInputStyle_0, XOpenIM, XmbResetIC, XIC,
+};
 
 // Offset between evdev keycodes (where KEY_ESCAPE is 1), and the evdev XKB
 // keycode set (where ESC is 9).
 const EVDEV_OFFSET: u32 = 8;
 
 #[derive(Clone, Copy, Debug)]
-struct KeyRecord {
+struct KeyPair {
   // Keycode
   code: u32,
   // Modifier state which combined with the code produces the char
   // This is a bit mask:
   state: u32,
+}
+
+#[derive(Clone, Copy, Debug)]
+struct KeyRecord {
+  main: KeyPair,
+
+  // Under some keyboard layouts (de, es), a deadkey
+  // press might be needed to generate the right char
+  preceding_dead_key: Option<KeyPair>,
 }
 
 type CharMap = HashMap<String, KeyRecord>;
@@ -76,7 +91,7 @@ impl X11Injector {
       return Err(X11InjectorError::Init().into());
     }
 
-    let (char_map, sym_map) = Self::generate_maps(display);
+    let (char_map, sym_map) = Self::generate_maps(display)?;
 
     Ok(Self {
       display,
@@ -85,27 +100,169 @@ impl X11Injector {
     })
   }
 
-  fn generate_maps(display: *mut Display) -> (CharMap, SymMap) {
+  fn generate_maps(display: *mut Display) -> Result<(CharMap, SymMap)> {
+    debug!("generating key maps");
+
     let mut char_map = HashMap::new();
     let mut sym_map = HashMap::new();
 
-    let root_window = unsafe { XDefaultRootWindow(display) };
+    let input_method = unsafe {
+      XOpenIM(
+        display,
+        std::ptr::null_mut(),
+        std::ptr::null_mut(),
+        std::ptr::null_mut(),
+      )
+    };
+    if input_method.is_null() {
+      bail!("could not open input method");
+    }
+    let _im_guard = scopeguard::guard((), |_| {
+      unsafe { XCloseIM(input_method) };
+    });
+
+    let input_context = unsafe {
+      XCreateIC(
+        input_method,
+        XNInputStyle_0.as_ptr(),
+        XIMPreeditNothing | XIMStatusNothing,
+        XNClientWindow_0.as_ptr(),
+        0,
+        std::ptr::null_mut(),
+      )
+    };
+    if input_context.is_null() {
+      bail!("could not open input context");
+    }
+    let _ic_guard = scopeguard::guard((), |_| {
+      unsafe { XDestroyIC(input_context) };
+    });
+
+    let deadkeys = Self::find_deadkeys(display, &input_context)?;
+
+    // Cycle through all state/code combinations to populate the reverse lookup tables
+    for key_code in 0..256u32 {
+      for modifier_state in 0..256u32 {
+        for dead_key in deadkeys.iter() {
+          let code_with_offset = key_code + EVDEV_OFFSET;
+
+          let preceding_dead_key = if let Some(dead_key) = dead_key {
+            let mut dead_key_event = XKeyEvent {
+              display,
+              keycode: dead_key.code,
+              state: dead_key.state,
+
+              // These might not even need to be filled
+              window: 0,
+              root: 0,
+              same_screen: 1,
+              time: 0,
+              type_: KeyPress,
+              x_root: 1,
+              y_root: 1,
+              x: 1,
+              y: 1,
+              subwindow: 0,
+              serial: 0,
+              send_event: 0,
+            };
+
+            unsafe { XFilterEvent(&mut dead_key_event, 0) };
+
+            Some(*dead_key)
+          } else {
+            None
+          };
+
+          let mut key_event = XKeyEvent {
+            display,
+            keycode: code_with_offset,
+            state: modifier_state,
+
+            // These might not even need to be filled
+            window: 0,
+            root: 0,
+            same_screen: 1,
+            time: 0,
+            type_: KeyPress,
+            x_root: 1,
+            y_root: 1,
+            x: 1,
+            y: 1,
+            subwindow: 0,
+            serial: 0,
+            send_event: 0,
+          };
+
+          unsafe { XFilterEvent(&mut key_event, 0) };
+          let mut sym: KeySym = 0;
+          let mut buffer: [c_char; 10] = [0; 10];
+
+          let result = unsafe {
+            Xutf8LookupString(
+              input_context,
+              &mut key_event,
+              buffer.as_mut_ptr(),
+              (buffer.len() - 1) as i32,
+              &mut sym,
+              std::ptr::null_mut(),
+            )
+          };
+
+          let key_record = KeyRecord {
+            main: KeyPair {
+              code: code_with_offset,
+              state: modifier_state,
+            },
+            preceding_dead_key,
+          };
+
+          // Keysym was found
+          if sym != 0 {
+            sym_map.entry(sym).or_insert(key_record);
+          };
+
+          // Char was found
+          if result > 0 {
+            let raw_string = unsafe { CStr::from_ptr(buffer.as_ptr()) };
+            let string = raw_string.to_string_lossy().to_string();
+            char_map.entry(string).or_insert(key_record);
+          };
+
+          // We need to reset the context state to prevent
+          // deadkeys effect to propagate to the next combination
+          let _reset = unsafe { XmbResetIC(input_context) };
+          unsafe { XFree(_reset as *mut c_void) };
+        }
+      }
+    }
+
+    debug!("Populated char_map with {} symbols", char_map.len());
+    debug!("Populated sym_map with {} symbols", sym_map.len());
+    debug!("Detected {} dead key combinations", deadkeys.len());
+
+    Ok((char_map, sym_map))
+  }
+
+  fn find_deadkeys(display: *mut Display, input_context: &XIC) -> Result<Vec<Option<KeyPair>>> {
+    let mut deadkeys = vec![None];
+    let mut seen_keysyms: HashSet<KeySym> = HashSet::new();
 
     // Cycle through all state/code combinations to populate the reverse lookup tables
     for key_code in 0..256u32 {
       for modifier_state in 0..256u32 {
         let code_with_offset = key_code + EVDEV_OFFSET;
-        let event = XKeyEvent {
+        let mut event = XKeyEvent {
           display,
           keycode: code_with_offset,
           state: modifier_state,
 
           // These might not even need to be filled
-          window: root_window,
-          root: root_window,
+          window: 0,
+          root: 0,
           same_screen: 1,
           time: 0,
-          type_: KeyRelease,
+          type_: KeyPress,
           x_root: 1,
           y_root: 1,
           x: 1,
@@ -115,38 +272,38 @@ impl X11Injector {
           send_event: 0,
         };
 
-        let mut sym: KeySym = 0;
-        let mut buffer: [c_char; 10] = [0; 10];
-        let result = unsafe {
-          XLookupString(
-            &event,
-            buffer.as_mut_ptr(),
-            (buffer.len() - 1) as i32,
-            &mut sym,
-            std::ptr::null(),
-          )
-        };
+        let filter = unsafe { XFilterEvent(&mut event, 0) };
+        if filter == 1 {
+          let mut sym: KeySym = 0;
+          let mut buffer: [c_char; 10] = [0; 10];
 
-        let key_record = KeyRecord {
-          code: code_with_offset,
-          state: modifier_state,
-        };
+          unsafe {
+            Xutf8LookupString(
+              *input_context,
+              &mut event,
+              buffer.as_mut_ptr(),
+              (buffer.len() - 1) as i32,
+              &mut sym,
+              std::ptr::null_mut(),
+            )
+          };
 
-        // Keysym was found
-        if sym != 0 {
-          sym_map.entry(sym).or_insert(key_record);
+          if sym != 0 && !seen_keysyms.contains(&sym) {
+            let key_record = KeyPair {
+              code: code_with_offset,
+              state: modifier_state,
+            };
+            deadkeys.push(Some(key_record));
+            seen_keysyms.insert(sym);
+          }
         }
 
-        // Char was found
-        if result > 0 {
-          let raw_string = unsafe { CStr::from_ptr(buffer.as_ptr()) };
-          let string = raw_string.to_string_lossy().to_string();
-          char_map.entry(string).or_insert(key_record);
-        }
+        let _reset = unsafe { XmbResetIC(*input_context) };
+        unsafe { XFree(_reset as *mut c_void) };
       }
     }
 
-    (char_map, sym_map)
+    Ok(deadkeys)
   }
 
   fn convert_to_record_array(&self, syms: &[KeySym]) -> Result<Vec<KeyRecord>> {
@@ -202,12 +359,12 @@ impl X11Injector {
 
       // Render the state by applying the modifiers
       for (mod_index, modifier) in modifiers_codes.iter().enumerate() {
-        if modifier.contains(&(record.code as u8)) {
+        if modifier.contains(&(record.main.code as u8)) {
           current_state |= 1 << mod_index;
         }
       }
 
-      current_record.state = current_state;
+      current_record.main.state = current_state;
       records.push(current_record);
     }
 
@@ -223,7 +380,7 @@ impl X11Injector {
     focused_window
   }
 
-  fn send_key(&self, window: Window, record: &KeyRecord, pressed: bool, delay_us: u32) {
+  fn send_key(&self, window: Window, record: &KeyPair, pressed: bool, delay_us: u32) {
     let root_window = unsafe { XDefaultRootWindow(self.display) };
     let mut event = XKeyEvent {
       display: self.display,
@@ -269,7 +426,7 @@ impl X11Injector {
     }
   }
 
-  fn xtest_send_key(&self, record: &KeyRecord, pressed: bool, delay_us: u32) {
+  fn xtest_send_key(&self, record: &KeyPair, pressed: bool, delay_us: u32) {
     // If the key requires any modifier, we need to send those events
     if record.state != 0 {
       self.xtest_send_modifiers(record.state, pressed);
@@ -345,11 +502,21 @@ impl Injector for X11Injector {
 
     for record in records? {
       if options.disable_fast_inject {
-        self.xtest_send_key(&record, true, delay_us);
-        self.xtest_send_key(&record, false, delay_us);
+        if let Some(deadkey) = &record.preceding_dead_key {
+          self.xtest_send_key(deadkey, true, delay_us);
+          self.xtest_send_key(deadkey, false, delay_us);
+        }
+
+        self.xtest_send_key(&record.main, true, delay_us);
+        self.xtest_send_key(&record.main, false, delay_us);
       } else {
-        self.send_key(focused_window, &record, true, delay_us);
-        self.send_key(focused_window, &record, false, delay_us);
+        if let Some(deadkey) = &record.preceding_dead_key {
+          self.send_key(focused_window, deadkey, true, delay_us);
+          self.send_key(focused_window, deadkey, false, delay_us);
+        }
+
+        self.send_key(focused_window, &record.main, true, delay_us);
+        self.send_key(focused_window, &record.main, false, delay_us);
       }
     }
 
@@ -371,11 +538,11 @@ impl Injector for X11Injector {
 
     for record in records {
       if options.disable_fast_inject {
-        self.xtest_send_key(&record, true, delay_us);
-        self.xtest_send_key(&record, false, delay_us);
+        self.xtest_send_key(&record.main, true, delay_us);
+        self.xtest_send_key(&record.main, false, delay_us);
       } else {
-        self.send_key(focused_window, &record, true, delay_us);
-        self.send_key(focused_window, &record, false, delay_us);
+        self.send_key(focused_window, &record.main, true, delay_us);
+        self.send_key(focused_window, &record.main, false, delay_us);
       }
     }
 
@@ -401,18 +568,18 @@ impl Injector for X11Injector {
     // First press the keys
     for record in records.iter() {
       if options.disable_fast_inject {
-        self.xtest_send_key(record, true, delay_us);
+        self.xtest_send_key(&record.main, true, delay_us);
       } else {
-        self.send_key(focused_window, record, true, delay_us);
+        self.send_key(focused_window, &record.main, true, delay_us);
       }
     }
 
     // Then release them
     for record in records.iter().rev() {
       if options.disable_fast_inject {
-        self.xtest_send_key(record, false, delay_us);
+        self.xtest_send_key(&record.main, false, delay_us);
       } else {
-        self.send_key(focused_window, record, false, delay_us);
+        self.send_key(focused_window, &record.main, false, delay_us);
       }
     }
 

@@ -38,6 +38,7 @@ pub use executor::image_inject::ImageInjector;
 pub use executor::key_inject::KeyInjector;
 pub use executor::secure_input::SecureInputManager;
 pub use executor::text_inject::{Mode, ModeProvider, TextInjector};
+pub use executor::text_ui::{TextUIExecutor, TextUIHandler};
 
 #[allow(clippy::too_many_arguments)]
 pub fn default<'a>(
@@ -50,6 +51,7 @@ pub fn default<'a>(
   context_menu_handler: &'a dyn ContextMenuHandler,
   icon_handler: &'a dyn IconHandler,
   secure_input_manager: &'a dyn SecureInputManager,
+  text_ui_handler: &'a dyn TextUIHandler,
 ) -> impl Dispatcher + 'a {
   default::DefaultDispatcher::new(
     event_injector,
@@ -61,5 +63,6 @@ pub fn default<'a>(
     context_menu_handler,
     icon_handler,
     secure_input_manager,
+    text_ui_handler,
   )
 }

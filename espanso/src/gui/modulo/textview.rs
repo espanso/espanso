@@ -17,22 +17,35 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub mod alacritty_terminal_x11;
-pub mod emacs_x11;
-pub mod gedit_x11;
-pub mod generic_terminal_x11;
-pub mod kitty_terminal_x11;
-pub mod konsole_terminal_x11;
-pub mod libreoffice_writer_x11;
-pub mod simple_terminal_2_x11;
-pub mod simple_terminal_x11;
-pub mod terminator_terminal_x11;
-pub mod termite_terminal_x11;
-pub mod thunderbird_x11;
-pub mod tilix_terminal_x11;
-pub mod urxvt_terminal_x11;
-pub mod virtualbox_x11;
-pub mod xterm_terminal_x11;
-pub mod yakuake_terminal_x11;
+use crate::gui::TextUI;
 
-mod util;
+use super::manager::ModuloManager;
+
+pub struct ModuloTextUI<'a> {
+  manager: &'a ModuloManager,
+}
+
+impl<'a> ModuloTextUI<'a> {
+  pub fn new(manager: &'a ModuloManager) -> Self {
+    Self { manager }
+  }
+}
+
+impl<'a> TextUI for ModuloTextUI<'a> {
+  fn show_text(&self, title: &str, text: &str) -> anyhow::Result<()> {
+    self
+      .manager
+      .spawn(&["textview", "--title", title, "-i", "-"], text)?;
+
+    Ok(())
+  }
+
+  fn show_file(&self, title: &str, path: &std::path::Path) -> anyhow::Result<()> {
+    let path_str = path.to_string_lossy().to_string();
+    self
+      .manager
+      .spawn(&["textview", "--title", title, "-i", &path_str], "")?;
+
+    Ok(())
+  }
+}

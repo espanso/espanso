@@ -20,3 +20,4 @@
 pub mod form;
 pub mod manager;
 pub mod search;
+pub mod textview;

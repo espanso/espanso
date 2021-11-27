@@ -24,3 +24,4 @@ pub mod image_inject;
 pub mod key_inject;
 pub mod secure_input;
 pub mod text_inject;
+pub mod text_ui;

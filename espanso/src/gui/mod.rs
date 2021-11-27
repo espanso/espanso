@@ -17,7 +17,7 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::collections::HashMap;
+use std::{collections::HashMap, path::Path};
 
 use anyhow::Result;
 
@@ -57,4 +57,9 @@ pub enum FormField {
     default: Option<String>,
     values: Vec<String>,
   },
+}
+
+pub trait TextUI {
+  fn show_text(&self, title: &str, text: &str) -> Result<()>;
+  fn show_file(&self, title: &str, path: &Path) -> Result<()>;
 }

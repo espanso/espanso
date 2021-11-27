@@ -39,6 +39,40 @@ impl ModuloManager {
     Self { is_support_enabled }
   }
 
+  pub fn spawn(&self, args: &[&str], body: &str) -> Result<()> {
+    if self.is_support_enabled {
+      let exec_path = std::env::current_exe().expect("unable to obtain current exec path");
+      let mut command = Command::new(exec_path);
+      let mut full_args = vec!["modulo"];
+      full_args.extend(args);
+      command
+        .args(full_args)
+        .stdin(std::process::Stdio::piped())
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped());
+
+      crate::util::set_command_flags(&mut command);
+
+      let child = command.spawn();
+
+      match child {
+        Ok(mut child) => {
+          if let Some(stdin) = child.stdin.as_mut() {
+            match stdin.write_all(body.as_bytes()) {
+              Ok(_) => Ok(()),
+              Err(error) => Err(ModuloError::Error(error).into()),
+            }
+          } else {
+            Err(ModuloError::StdinError.into())
+          }
+        }
+        Err(error) => Err(ModuloError::Error(error).into()),
+      }
+    } else {
+      Err(ModuloError::MissingModulo.into())
+    }
+  }
+
   pub fn invoke(&self, args: &[&str], body: &str) -> Result<String> {
     if self.is_support_enabled {
       let exec_path = std::env::current_exe().expect("unable to obtain current exec path");

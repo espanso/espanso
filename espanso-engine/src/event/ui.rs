@@ -52,3 +52,9 @@ pub enum IconStatus {
   Disabled,
   SecureInputDisabled,
 }
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct ShowTextEvent {
+  pub title: String,
+  pub text: String,
+}

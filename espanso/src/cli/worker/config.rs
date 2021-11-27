@@ -25,7 +25,10 @@ use espanso_config::{
 };
 use espanso_info::{AppInfo, AppInfoProvider};
 
-use super::builtin::is_builtin_match;
+use super::{
+  builtin::is_builtin_match,
+  engine::process::middleware::render::extension::clipboard::ClipboardOperationOptionsProvider,
+};
 
 pub struct ConfigManager<'a> {
   config_store: &'a dyn ConfigStore,
@@ -139,6 +142,16 @@ impl<'a> super::engine::dispatch::executor::clipboard_injector::ClipboardParamsP
       disable_x11_fast_inject: active.disable_x11_fast_inject(),
       restore_clipboard: active.preserve_clipboard(),
       restore_clipboard_delay: active.restore_clipboard_delay(),
+      x11_use_xclip_backend: active.x11_use_xclip_backend(),
+    }
+  }
+}
+
+impl<'a> ClipboardOperationOptionsProvider for ConfigManager<'a> {
+  fn get_operation_options(&self) -> espanso_clipboard::ClipboardOperationOptions {
+    let active = self.active();
+    espanso_clipboard::ClipboardOperationOptions {
+      use_xclip_backend: active.x11_use_xclip_backend(),
     }
   }
 }

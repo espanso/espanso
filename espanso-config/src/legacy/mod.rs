@@ -398,6 +398,10 @@ impl Config for LegacyInteropConfig {
   fn win32_keyboard_layout_cache_interval(&self) -> i64 {
     2000
   }
+
+  fn x11_use_xclip_backend(&self) -> bool {
+    false
+  }
 }
 
 struct LegacyMatchGroup {
