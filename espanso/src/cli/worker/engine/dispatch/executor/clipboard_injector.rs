@@ -19,7 +19,7 @@
 
 use std::{convert::TryInto, path::PathBuf};
 
-use espanso_clipboard::Clipboard;
+use espanso_clipboard::{Clipboard, ClipboardOperationOptions};
 use espanso_inject::{keys::Key, InjectionOptions, Injector};
 use log::error;
 
@@ -39,6 +39,7 @@ pub struct ClipboardParams {
   pub disable_x11_fast_inject: bool,
   pub restore_clipboard: bool,
   pub restore_clipboard_delay: usize,
+  pub x11_use_xclip_backend: bool,
 }
 
 pub struct ClipboardInjectorAdapter<'a> {
@@ -103,9 +104,17 @@ impl<'a> ClipboardInjectorAdapter<'a> {
       Some(ClipboardRestoreGuard::lock(
         self.clipboard,
         params.restore_clipboard_delay.try_into().unwrap(),
+        self.get_operation_options(),
       ))
     } else {
       None
+    }
+  }
+
+  fn get_operation_options(&self) -> ClipboardOperationOptions {
+    let params = self.params_provider.get();
+    ClipboardOperationOptions {
+      use_xclip_backend: params.x11_use_xclip_backend,
     }
   }
 }
@@ -118,7 +127,9 @@ impl<'a> TextInjector for ClipboardInjectorAdapter<'a> {
   fn inject_text(&self, text: &str) -> anyhow::Result<()> {
     let _guard = self.restore_clipboard_guard();
 
-    self.clipboard.set_text(text)?;
+    self
+      .clipboard
+      .set_text(text, &self.get_operation_options())?;
 
     self.send_paste_combination()?;
 
@@ -130,7 +141,9 @@ impl<'a> HtmlInjector for ClipboardInjectorAdapter<'a> {
   fn inject_html(&self, html: &str, fallback_text: &str) -> anyhow::Result<()> {
     let _guard = self.restore_clipboard_guard();
 
-    self.clipboard.set_html(html, Some(fallback_text))?;
+    self
+      .clipboard
+      .set_html(html, Some(fallback_text), &self.get_operation_options())?;
 
     self.send_paste_combination()?;
 
@@ -153,7 +166,9 @@ impl<'a> ImageInjector for ClipboardInjectorAdapter<'a> {
 
     let _guard = self.restore_clipboard_guard();
 
-    self.clipboard.set_image(&path)?;
+    self
+      .clipboard
+      .set_image(&path, &self.get_operation_options())?;
 
     self.send_paste_combination()?;
 
@@ -165,16 +180,22 @@ struct ClipboardRestoreGuard<'a> {
   clipboard: &'a dyn Clipboard,
   content: Option<String>,
   restore_delay: u64,
+  clipboard_operation_options: ClipboardOperationOptions,
 }
 
 impl<'a> ClipboardRestoreGuard<'a> {
-  pub fn lock(clipboard: &'a dyn Clipboard, restore_delay: u64) -> Self {
-    let clipboard_content = clipboard.get_text();
+  pub fn lock(
+    clipboard: &'a dyn Clipboard,
+    restore_delay: u64,
+    clipboard_operation_options: ClipboardOperationOptions,
+  ) -> Self {
+    let clipboard_content = clipboard.get_text(&clipboard_operation_options);
 
     Self {
       clipboard,
       content: clipboard_content,
       restore_delay,
+      clipboard_operation_options,
     }
   }
 }
@@ -186,7 +207,10 @@ impl<'a> Drop for ClipboardRestoreGuard<'a> {
       // A delay is needed to mitigate the problem
       std::thread::sleep(std::time::Duration::from_millis(self.restore_delay));
 
-      if let Err(error) = self.clipboard.set_text(&content) {
+      if let Err(error) = self
+        .clipboard
+        .set_text(&content, &self.clipboard_operation_options)
+      {
         error!(
           "unable to restore clipboard content after expansion: {}",
           error

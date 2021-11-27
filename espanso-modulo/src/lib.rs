@@ -23,6 +23,7 @@ extern crate lazy_static;
 pub mod form;
 pub mod search;
 mod sys;
+pub mod textview;
 pub mod troubleshooting;
 pub mod welcome;
 pub mod wizard;

@@ -64,6 +64,7 @@ fn cc_config() {
   println!("cargo:rustc-link-lib=dylib=c++");
   println!("cargo:rustc-link-lib=static=espansoinject");
   println!("cargo:rustc-link-lib=framework=Cocoa");
+  println!("cargo:rustc-link-lib=framework=CoreGraphics");
 }
 
 fn main() {

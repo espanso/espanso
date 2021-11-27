@@ -121,6 +121,8 @@ fn build_native() {
     .file("src/sys/wizard/wizard_gui.cpp")
     .file("src/sys/welcome/welcome.cpp")
     .file("src/sys/welcome/welcome_gui.cpp")
+    .file("src/sys/textview/textview.cpp")
+    .file("src/sys/textview/textview_gui.cpp")
     .file("src/sys/troubleshooting/troubleshooting.cpp")
     .file("src/sys/troubleshooting/troubleshooting_gui.cpp")
     .flag("/EHsc")
@@ -258,6 +260,8 @@ fn build_native() {
     .file("src/sys/wizard/wizard_gui.cpp")
     .file("src/sys/welcome/welcome.cpp")
     .file("src/sys/welcome/welcome_gui.cpp")
+    .file("src/sys/textview/textview.cpp")
+    .file("src/sys/textview/textview_gui.cpp")
     .file("src/sys/troubleshooting/troubleshooting.cpp")
     .file("src/sys/troubleshooting/troubleshooting_gui.cpp")
     .file("src/sys/common/mac.mm");
@@ -452,6 +456,8 @@ fn build_native() {
     .file("src/sys/wizard/wizard_gui.cpp")
     .file("src/sys/welcome/welcome.cpp")
     .file("src/sys/welcome/welcome_gui.cpp")
+    .file("src/sys/textview/textview.cpp")
+    .file("src/sys/textview/textview_gui.cpp")
     .file("src/sys/troubleshooting/troubleshooting.cpp")
     .file("src/sys/troubleshooting/troubleshooting_gui.cpp");
   build.flag("-std=c++17");

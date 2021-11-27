@@ -42,6 +42,7 @@ fn get_builtin_patches() -> Vec<PatchDefinition> {
   return vec![
     patches::linux::alacritty_terminal_x11::patch(),
     patches::linux::emacs_x11::patch(),
+    patches::linux::gedit_x11::patch(),
     patches::linux::generic_terminal_x11::patch(),
     patches::linux::kitty_terminal_x11::patch(),
     patches::linux::konsole_terminal_x11::patch(),

@@ -17,22 +17,32 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub mod alacritty_terminal_x11;
-pub mod emacs_x11;
-pub mod gedit_x11;
-pub mod generic_terminal_x11;
-pub mod kitty_terminal_x11;
-pub mod konsole_terminal_x11;
-pub mod libreoffice_writer_x11;
-pub mod simple_terminal_2_x11;
-pub mod simple_terminal_x11;
-pub mod terminator_terminal_x11;
-pub mod termite_terminal_x11;
-pub mod thunderbird_x11;
-pub mod tilix_terminal_x11;
-pub mod urxvt_terminal_x11;
-pub mod virtualbox_x11;
-pub mod xterm_terminal_x11;
-pub mod yakuake_terminal_x11;
+use espanso_engine::dispatch::TextUIHandler;
+use espanso_path::Paths;
 
-mod util;
+use crate::gui::TextUI;
+
+pub struct TextUIHandlerAdapter<'a> {
+  text_ui: &'a dyn TextUI,
+  paths: &'a Paths,
+}
+
+impl<'a> TextUIHandlerAdapter<'a> {
+  pub fn new(text_ui: &'a dyn TextUI, paths: &'a Paths) -> Self {
+    Self { text_ui, paths }
+  }
+}
+
+impl<'a> TextUIHandler for TextUIHandlerAdapter<'a> {
+  fn show_text(&self, title: &str, text: &str) -> anyhow::Result<()> {
+    self.text_ui.show_text(title, text)?;
+    Ok(())
+  }
+
+  fn show_logs(&self) -> anyhow::Result<()> {
+    self
+      .text_ui
+      .show_file("Espanso Logs", &self.paths.runtime.join("espanso.log"))?;
+    Ok(())
+  }
+}

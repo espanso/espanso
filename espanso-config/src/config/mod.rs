@@ -150,6 +150,10 @@ pub trait Config: Send + Sync {
   // If false, avoid showing the SecureInput notification on macOS
   fn secure_input_notification(&self) -> bool;
 
+  // If true, use the `xclip` command to implement the clipboard instead of
+  // the built-in native module on X11.
+  fn x11_use_xclip_backend(&self) -> bool;
+
   // If true, filter out keyboard events without an explicit HID device source on Windows.
   // This is needed to filter out the software-generated events, including
   // those from espanso, but might need to be disabled when using some software-level keyboards.
@@ -193,6 +197,7 @@ pub trait Config: Send + Sync {
         show_notifications: {:?}
         secure_input_notification: {:?}
 
+        x11_use_xclip_backend: {:?}
         win32_exclude_orphan_events: {:?}
         win32_keyboard_layout_cache_interval: {:?}
 
@@ -224,6 +229,7 @@ pub trait Config: Send + Sync {
       self.show_notifications(),
       self.secure_input_notification(),
 
+      self.x11_use_xclip_backend(),
       self.win32_exclude_orphan_events(),
       self.win32_keyboard_layout_cache_interval(),
 
