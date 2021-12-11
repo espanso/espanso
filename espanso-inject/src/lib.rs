@@ -89,6 +89,7 @@ impl Default for InjectionOptions {
 }
 
 #[allow(dead_code)]
+#[derive(Default)]
 pub struct InjectorCreationOptions {
   // Only relevant in X11 Linux systems, use the EVDEV backend instead of X11.
   pub use_evdev: bool,
@@ -126,19 +127,6 @@ pub struct KeyboardConfig {
 
 pub trait KeyboardStateProvider {
   fn is_key_pressed(&self, code: u32) -> bool;
-}
-
-#[allow(clippy::derivable_impls)]
-impl Default for InjectorCreationOptions {
-  fn default() -> Self {
-    Self {
-      use_evdev: false,
-      evdev_modifiers: None,
-      evdev_max_modifier_combination_len: None,
-      evdev_keyboard_rmlvo: None,
-      keyboard_state_provider: None,
-    }
-  }
 }
 
 #[cfg(target_os = "windows")]

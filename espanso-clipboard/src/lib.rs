@@ -49,16 +49,9 @@ pub trait Clipboard {
 }
 
 #[allow(dead_code)]
+#[derive(Default)]
 pub struct ClipboardOperationOptions {
   pub use_xclip_backend: bool,
-}
-
-impl Default for ClipboardOperationOptions {
-  fn default() -> Self {
-    Self {
-      use_xclip_backend: false,
-    }
-  }
 }
 
 #[allow(dead_code)]
