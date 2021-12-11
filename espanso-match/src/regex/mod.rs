@@ -40,17 +40,9 @@ impl<Id> RegexMatch<Id> {
   }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct RegexMatcherState {
   buffer: String,
-}
-
-impl Default for RegexMatcherState {
-  fn default() -> Self {
-    Self {
-      buffer: String::new(),
-    }
-  }
 }
 
 pub struct RegexMatcherOptions {

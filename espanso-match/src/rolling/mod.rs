@@ -78,6 +78,7 @@ pub struct StringMatchOptions {
   pub right_word: bool,
 }
 
+#[allow(clippy::derivable_impls)]
 impl Default for StringMatchOptions {
   fn default() -> Self {
     Self {
