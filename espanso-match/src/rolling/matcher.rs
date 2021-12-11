@@ -50,18 +50,10 @@ struct RollingMatcherStatePath<'a, Id> {
   events: Vec<(Event, IsWordSeparator)>,
 }
 
+#[derive(Default)]
 pub struct RollingMatcherOptions {
   pub char_word_separators: Vec<String>,
   pub key_word_separators: Vec<Key>,
-}
-
-impl Default for RollingMatcherOptions {
-  fn default() -> Self {
-    Self {
-      char_word_separators: Vec::new(),
-      key_word_separators: Vec::new(),
-    }
-  }
 }
 
 pub struct RollingMatcher<Id> {
