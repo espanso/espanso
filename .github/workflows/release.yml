@@ -59,8 +59,9 @@ jobs:
       - name: Print target version
         run: |
           echo Using version ${{ needs.extract-version.outputs.espanso_version }}
-      - name: Install cargo-make
+      - name: Install rust-script and cargo-make
         run: |
+          cargo install rust-script --version "0.7.0"
           cargo install --force cargo-make --version 0.34.0
       - name: Test
         run: cargo make test-binary --profile release
@@ -126,8 +127,9 @@ jobs:
       - name: Print target version
         run: |
           echo Using version ${{ needs.extract-version.outputs.espanso_version }}
-      - name: Install cargo-make
+      - name: Install rust-script and cargo-make
         run: |
+          cargo install rust-script --version "0.7.0"
           cargo install --force cargo-make --version 0.34.0
       - name: Test
         run: cargo make test-binary --profile release
@@ -166,8 +168,9 @@ jobs:
           echo Using version ${{ needs.extract-version.outputs.espanso_version }}
       - name: Install rust target
         run: rustup update && rustup target add aarch64-apple-darwin
-      - name: Install cargo-make
+      - name: Install rust-script and cargo-make
         run: |
+          cargo install rust-script --version "0.7.0"
           cargo install --force cargo-make --version 0.34.0
       - name: Build
         run: cargo make create-bundle --profile release --env BUILD_ARCH=aarch64-apple-darwin
