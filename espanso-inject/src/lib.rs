@@ -128,6 +128,7 @@ pub trait KeyboardStateProvider {
   fn is_key_pressed(&self, code: u32) -> bool;
 }
 
+#[allow(clippy::derivable_impls)]
 impl Default for InjectorCreationOptions {
   fn default() -> Self {
     Self {
