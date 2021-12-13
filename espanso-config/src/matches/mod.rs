@@ -132,17 +132,9 @@ pub enum UpperCasingStyle {
   CapitalizeWords,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Default)]
 pub struct RegexCause {
   pub regex: String,
-}
-
-impl Default for RegexCause {
-  fn default() -> Self {
-    Self {
-      regex: String::new(),
-    }
-  }
 }
 
 // Effects
@@ -186,17 +178,9 @@ impl Default for TextEffect {
   }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Default)]
 pub struct ImageEffect {
   pub path: String,
-}
-
-impl Default for ImageEffect {
-  fn default() -> Self {
-    Self {
-      path: String::new(),
-    }
-  }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
