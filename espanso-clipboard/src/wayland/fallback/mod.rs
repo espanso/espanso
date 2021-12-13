@@ -135,7 +135,7 @@ impl Clipboard for WaylandFallbackClipboard {
     file.read_to_end(&mut data)?;
 
     self.invoke_command_with_timeout(
-      &mut Command::new("wl-copy").arg("--type").arg("image/png"),
+      Command::new("wl-copy").arg("--type").arg("image/png"),
       &data,
       "wl-copy",
     )
@@ -148,7 +148,7 @@ impl Clipboard for WaylandFallbackClipboard {
     _: &ClipboardOperationOptions,
   ) -> anyhow::Result<()> {
     self.invoke_command_with_timeout(
-      &mut Command::new("wl-copy").arg("--type").arg("text/html"),
+      Command::new("wl-copy").arg("--type").arg("text/html"),
       html.as_bytes(),
       "wl-copy",
     )
