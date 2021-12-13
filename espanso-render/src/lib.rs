@@ -42,18 +42,10 @@ pub enum RenderResult {
   Error(anyhow::Error),
 }
 
+#[derive(Default)]
 pub struct Context<'a> {
   pub global_vars: Vec<&'a Variable>,
   pub templates: Vec<&'a Template>,
-}
-
-impl<'a> Default for Context<'a> {
-  fn default() -> Self {
-    Self {
-      global_vars: Vec::new(),
-      templates: Vec::new(),
-    }
-  }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -77,21 +69,11 @@ pub enum CasingStyle {
   Uppercase,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Default)]
 pub struct Template {
   pub ids: Vec<String>,
   pub body: String,
   pub vars: Vec<Variable>,
-}
-
-impl Default for Template {
-  fn default() -> Self {
-    Self {
-      ids: Vec::new(),
-      body: "".to_string(),
-      vars: Vec::new(),
-    }
-  }
 }
 
 #[derive(Debug, Clone, PartialEq)]
