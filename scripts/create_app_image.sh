@@ -46,7 +46,7 @@ echo "Applying patch for libgmodule"
 ./Espanso*.AppImage --appimage-extract
 rm -Rf ./Espanso*.AppImage
 rm -Rf squashfs-root/usr/lib/libgmodule*
-$TOOL_DIR/appimagetool*.AppImage -v squashfs-root
+$TOOL_DIR/appimagetool*.AppImage --appimage-extract-and-run -v squashfs-root
 rm -Rf squashfs-root
 
 popd
