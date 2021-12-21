@@ -17,5 +17,6 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+pub mod choice;
 pub mod clipboard;
 pub mod form;
