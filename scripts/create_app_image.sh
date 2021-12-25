@@ -33,7 +33,6 @@ pushd $OUTPUT_DIR
 $TOOL_DIR/linuxdeploy*.AppImage --appimage-extract-and-run -e "$BASE_DIR/$EXEC_PATH" \
   -d "$BASE_DIR/espanso/src/res/linux/espanso.desktop" \
   -i "$BASE_DIR/espanso/src/res/linux/icon.png" \
-  --library "/usr/lib/x86_64-linux-gnu/libglib-2.0.so.0" \
   --appdir $BUILD_DIR \
   --output appimage
 chmod +x ./Espanso*.AppImage
