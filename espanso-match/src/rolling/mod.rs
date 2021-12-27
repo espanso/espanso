@@ -72,20 +72,11 @@ impl<Id> RollingMatch<Id> {
   }
 }
 
+#[derive(Default)]
 pub struct StringMatchOptions {
   pub case_insensitive: bool,
   pub left_word: bool,
   pub right_word: bool,
-}
-
-impl Default for StringMatchOptions {
-  fn default() -> Self {
-    Self {
-      case_insensitive: false,
-      left_word: false,
-      right_word: false,
-    }
-  }
 }
 
 #[cfg(test)]

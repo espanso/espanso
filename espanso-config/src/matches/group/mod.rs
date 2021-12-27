@@ -27,21 +27,11 @@ use super::{Match, Variable};
 pub(crate) mod loader;
 mod path;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Default)]
 pub(crate) struct MatchGroup {
   pub imports: Vec<String>,
   pub global_vars: Vec<Variable>,
   pub matches: Vec<Match>,
-}
-
-impl Default for MatchGroup {
-  fn default() -> Self {
-    Self {
-      imports: Vec::new(),
-      global_vars: Vec::new(),
-      matches: Vec::new(),
-    }
-  }
 }
 
 impl MatchGroup {

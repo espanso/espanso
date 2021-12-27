@@ -49,7 +49,9 @@ use crate::{
         },
         multiplex::MultiplexAdapter,
         render::{
-          extension::{clipboard::ClipboardAdapter, form::FormProviderAdapter},
+          extension::{
+            choice::ChoiceSelectorAdapter, clipboard::ClipboardAdapter, form::FormProviderAdapter,
+          },
           RendererAdapter,
         },
       },
@@ -198,6 +200,9 @@ pub fn initialize_and_spawn(
       let shell_extension = espanso_render::extension::shell::ShellExtension::new(&paths.config);
       let form_adapter = FormProviderAdapter::new(&modulo_form_ui);
       let form_extension = espanso_render::extension::form::FormExtension::new(&form_adapter);
+      let choice_adapter = ChoiceSelectorAdapter::new(&modulo_search_ui);
+      let choice_extension =
+        espanso_render::extension::choice::ChoiceExtension::new(&choice_adapter);
       let renderer = espanso_render::create(vec![
         &clipboard_extension,
         &date_extension,
@@ -207,6 +212,7 @@ pub fn initialize_and_spawn(
         &script_extension,
         &shell_extension,
         &form_extension,
+        &choice_extension,
       ]);
       let renderer_adapter = RendererAdapter::new(&match_cache, &config_manager, &renderer);
       let path_provider = PathProviderAdapter::new(&paths);

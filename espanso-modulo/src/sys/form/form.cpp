@@ -96,6 +96,7 @@ private:
     void Submit();
     void OnSubmitBtn(wxCommandEvent& event);
     void OnCharHook(wxKeyEvent& event);
+    void OnListBoxEvent(wxCommandEvent& event);
     void UpdateHelpText();
     void HandleNormalFocus(wxFocusEvent& event);
     void HandleMultilineFocus(wxFocusEvent& event);
@@ -141,7 +142,6 @@ FormFrame::FormFrame(const wxString& title, const wxPoint& pos, const wxSize& si
 
     Bind(wxEVT_BUTTON, &FormFrame::OnSubmitBtn, this, ID_Submit);
     Bind(wxEVT_CHAR_HOOK, &FormFrame::OnCharHook, this, wxID_ANY);
-    // TODO: register ESC click handler: https://forums.wxwidgets.org/viewtopic.php?t=41926
 
     this->SetClientSize(panel->GetBestSize());
     this->CentreOnScreen();
@@ -218,6 +218,11 @@ void FormFrame::AddComponent(wxPanel *parent, wxBoxSizer *sizer, FieldMetadata m
                 }
 
                 ((wxListBox*)choice)->Bind(wxEVT_SET_FOCUS, &FormFrame::HandleNormalFocus, this, wxID_ANY);
+                // ListBoxes prevent the global CHAR_HOOK handler from handling the Return key
+                // correctly, so we need to handle the double click event too (which is triggered
+                // when the enter key is pressed).
+                // See: https://github.com/federico-terzi/espanso/issues/857
+                ((wxListBox*)choice)->Bind(wxEVT_LISTBOX_DCLICK, &FormFrame::OnListBoxEvent, this, wxID_ANY);
                 
                 // Create the field wrapper
                 std::unique_ptr<FieldWrapper> field((FieldWrapper*) new ListFieldWrapper((wxListBox*) choice));
@@ -309,6 +314,10 @@ void FormFrame::OnCharHook(wxKeyEvent& event) {
     }else{
         event.Skip();
     }
+}
+
+void FormFrame::OnListBoxEvent(wxCommandEvent& event) {
+    Submit();
 }
 
 extern "C" void interop_show_form(FormMetadata * _metadata, void (*callback)(ValuePair *values, int size, void *data), void *data) {

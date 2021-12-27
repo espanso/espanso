@@ -31,6 +31,7 @@ pub fn patch_store(store: Box<dyn ConfigStore>) -> Box<dyn ConfigStore> {
 fn get_builtin_patches() -> Vec<PatchDefinition> {
   #[cfg(target_os = "windows")]
   return vec![
+    patches::win::brave::patch(),
     patches::win::onenote_for_windows_10::patch(),
     patches::win::vscode_win::patch(),
   ];

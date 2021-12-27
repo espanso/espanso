@@ -1,0 +1,12 @@
+#!/bin/sh
+
+echo "Stopping Espanso..."
+killall espanso
+
+# Here I've also tried to unregister the Systemd service, but couldn't manage to. 
+# The remove hook is run as Root, but the systemd service is registered as a user.
+# I couldn't find any (working) way to unregister a user systemd service as root.
+# I've also tried these solutions: https://unix.stackexchange.com/questions/552922/stop-systemd-user-services-as-root-user
+# but none seemed to work in this case.
+# If you manage to find a way to do so, feel free to open an issue so that
+# we can improve the hook! Thanks

@@ -76,16 +76,9 @@ impl KeyStateStore {
   }
 }
 
+#[derive(Default)]
 struct KeyState {
   keys: HashMap<u32, KeyStatus>,
-}
-
-impl Default for KeyState {
-  fn default() -> Self {
-    Self {
-      keys: HashMap::new(),
-    }
-  }
 }
 
 struct KeyStatus {
