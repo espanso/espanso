@@ -17,5 +17,6 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+pub mod brave;
 pub mod onenote_for_windows_10;
 pub mod vscode_win;

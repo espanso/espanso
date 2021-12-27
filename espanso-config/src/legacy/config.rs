@@ -701,18 +701,15 @@ impl LegacyConfigSet {
     let mut sorted_triggers: Vec<String> = default
       .matches
       .iter()
-      .flat_map(|t| triggers_for_match(t))
+      .flat_map(triggers_for_match)
       .collect();
     sorted_triggers.sort();
 
     let mut has_conflicts = Self::list_has_conflicts(&sorted_triggers);
 
     for s in specific.iter() {
-      let mut specific_triggers: Vec<String> = s
-        .matches
-        .iter()
-        .flat_map(|t| triggers_for_match(t))
-        .collect();
+      let mut specific_triggers: Vec<String> =
+        s.matches.iter().flat_map(triggers_for_match).collect();
       specific_triggers.sort();
       has_conflicts |= Self::list_has_conflicts(&specific_triggers);
     }

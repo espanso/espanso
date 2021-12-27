@@ -17,12 +17,25 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub mod choice;
-pub mod clipboard;
-pub mod date;
-pub mod echo;
-pub mod form;
-pub mod random;
-pub mod script;
-pub mod shell;
-mod util;
+use std::sync::Arc;
+
+use crate::patch::patches::{PatchedConfig, Patches};
+use crate::patch::PatchDefinition;
+
+pub fn patch() -> PatchDefinition {
+  PatchDefinition {
+    name: module_path!().split(':').last().unwrap_or("unknown"),
+    is_enabled: || cfg!(target_os = "windows"),
+    should_patch: |app| app.exec.unwrap_or_default().contains("brave.exe"),
+    apply: |base, name| {
+      Arc::new(PatchedConfig::patch(
+        base,
+        name,
+        Patches {
+          pre_paste_delay: Some(400),
+          ..Default::default()
+        },
+      ))
+    },
+  }
+}

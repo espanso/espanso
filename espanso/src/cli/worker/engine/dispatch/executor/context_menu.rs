@@ -58,11 +58,7 @@ fn convert_to_ui_menu_item(
     espanso_engine::event::ui::MenuItem::Sub(sub) => {
       espanso_ui::menu::MenuItem::Sub(espanso_ui::menu::SubMenuItem {
         label: sub.label.clone(),
-        items: sub
-          .items
-          .iter()
-          .map(|item| convert_to_ui_menu_item(item))
-          .collect(),
+        items: sub.items.iter().map(convert_to_ui_menu_item).collect(),
       })
     }
     espanso_engine::event::ui::MenuItem::Separator => espanso_ui::menu::MenuItem::Separator,

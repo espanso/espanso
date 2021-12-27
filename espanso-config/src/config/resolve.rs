@@ -37,7 +37,7 @@ use thiserror::Error;
 
 const STANDARD_INCLUDES: &[&str] = &["../match/**/[!_]*.yml"];
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub(crate) struct ResolvedConfig {
   parsed: ParsedConfig,
 
@@ -50,20 +50,6 @@ pub(crate) struct ResolvedConfig {
   filter_title: Option<Regex>,
   filter_class: Option<Regex>,
   filter_exec: Option<Regex>,
-}
-
-impl Default for ResolvedConfig {
-  fn default() -> Self {
-    Self {
-      parsed: Default::default(),
-      source_path: None,
-      id: 0,
-      match_paths: Vec::new(),
-      filter_title: None,
-      filter_class: None,
-      filter_exec: None,
-    }
-  }
 }
 
 impl Config for ResolvedConfig {
@@ -202,13 +188,10 @@ impl Config for ResolvedConfig {
       Some("left_shift") => Some(ToggleKey::LeftShift),
       Some("left_meta") | Some("left_cmd") => Some(ToggleKey::LeftMeta),
       Some("off") => None,
-      None => Some(ToggleKey::Alt),
+      None => None,
       err => {
-        error!(
-          "invalid toggle_key specified {:?}, falling back to ALT",
-          err
-        );
-        Some(ToggleKey::Alt)
+        error!("invalid toggle_key specified {:?}", err);
+        None
       }
     }
   }

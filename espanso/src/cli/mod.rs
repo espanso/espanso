@@ -74,6 +74,7 @@ pub enum LogMode {
   CleanAndAppend,
 }
 
+#[derive(Default)]
 pub struct CliModuleArgs {
   pub config_store: Option<Box<dyn ConfigStore>>,
   pub match_store: Option<Box<dyn MatchStore>>,
@@ -82,20 +83,6 @@ pub struct CliModuleArgs {
   pub paths: Option<Paths>,
   pub paths_overrides: Option<PathsOverrides>,
   pub cli_args: Option<ArgMatches<'static>>,
-}
-
-impl Default for CliModuleArgs {
-  fn default() -> Self {
-    Self {
-      config_store: None,
-      match_store: None,
-      is_legacy_config: false,
-      non_fatal_errors: Vec::new(),
-      paths: None,
-      paths_overrides: None,
-      cli_args: None,
-    }
-  }
 }
 
 pub struct PathsOverrides {
