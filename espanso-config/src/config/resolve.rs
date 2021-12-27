@@ -188,13 +188,10 @@ impl Config for ResolvedConfig {
       Some("left_shift") => Some(ToggleKey::LeftShift),
       Some("left_meta") | Some("left_cmd") => Some(ToggleKey::LeftMeta),
       Some("off") => None,
-      None => Some(ToggleKey::Alt),
+      None => None,
       err => {
-        error!(
-          "invalid toggle_key specified {:?}, falling back to ALT",
-          err
-        );
-        Some(ToggleKey::Alt)
+        error!("invalid toggle_key specified {:?}", err);
+        None
       }
     }
   }
