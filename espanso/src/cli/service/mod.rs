@@ -103,6 +103,8 @@ fn service_main(args: CliModuleArgs) -> i32 {
     stop_main(&paths);
     std::thread::sleep(std::time::Duration::from_millis(300));
     return start_main(&paths, &paths_overrides, sub_args);
+  } else {
+    eprintln!("Invalid usage, please run `espanso service --help` for more information.");
   }
 
   SERVICE_SUCCESS
