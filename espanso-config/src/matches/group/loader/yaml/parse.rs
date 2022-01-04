@@ -114,6 +114,9 @@ pub struct YAMLMatch {
 
   #[serde(default)]
   pub html: Option<String>,
+
+  #[serde(default)]
+  pub search_terms: Option<Vec<String>>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
