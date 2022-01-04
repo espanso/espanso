@@ -271,7 +271,7 @@ impl Config for ResolvedConfig {
     match self.parsed.search_trigger.as_deref() {
       Some("OFF") | Some("off") => None,
       Some(x) => Some(x.to_string()),
-      None => Some("jkj".to_string()),
+      None => None,
     }
   }
 
