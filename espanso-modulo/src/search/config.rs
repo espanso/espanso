@@ -58,6 +58,7 @@ pub struct SearchItem {
   pub id: String,
   pub label: String,
   pub trigger: Option<String>,
+  pub search_terms: Vec<String>,
 
   #[serde(default)]
   pub is_builtin: bool,
