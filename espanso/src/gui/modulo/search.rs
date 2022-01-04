@@ -73,6 +73,7 @@ struct ModuloSearchItemConfig<'a> {
   id: &'a str,
   label: &'a str,
   trigger: Option<&'a str>,
+  search_terms: Vec<&'a str>,
   is_builtin: bool,
 }
 
@@ -84,6 +85,15 @@ fn convert_items(items: &[SearchItem]) -> Vec<ModuloSearchItemConfig> {
       id: &item.id,
       label: &item.label,
       trigger: item.tag.as_deref(),
+      search_terms: if item.additional_search_terms.is_empty() {
+        vec![]
+      } else {
+        item
+          .additional_search_terms
+          .iter()
+          .map(|term| term.as_str())
+          .collect()
+      },
       is_builtin: item.is_builtin,
     })
     .collect()

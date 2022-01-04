@@ -129,12 +129,14 @@ impl<'a> super::engine::process::middleware::match_select::MatchProvider<'a>
           id: m.id,
           label: m.description(),
           tag: m.cause_description(),
+          additional_search_terms: m.search_terms(),
           is_builtin: false,
         },
         MatchVariant::Builtin(m) => MatchSummary {
           id: m.id,
           label: m.label,
           tag: m.triggers.first().map(String::as_ref),
+          additional_search_terms: vec![],
           is_builtin: true,
         },
       })
