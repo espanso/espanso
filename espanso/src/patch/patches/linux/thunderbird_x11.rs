@@ -19,8 +19,6 @@
 
 use std::sync::Arc;
 
-use espanso_config::config::Backend;
-
 use crate::patch::patches::{PatchedConfig, Patches};
 use crate::patch::PatchDefinition;
 
