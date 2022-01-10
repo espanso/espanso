@@ -117,6 +117,34 @@ jobs:
         if: ${{ github.ref == 'refs/heads/master' }}
         run: |
           gh release upload ${{ needs.extract-version.outputs.espanso_version }} Espanso-X11.AppImage Espanso-X11.AppImage.sha256.txt
+  
+  linux-deb:
+    needs: ["extract-version", "create-release"]
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Print target version
+        run: |
+          echo Using version ${{ needs.extract-version.outputs.espanso_version }}
+      - name: Build docker image
+        run: |
+          sudo docker build -t espanso-ubuntu . -f .github/scripts/ubuntu/Dockerfile
+      - name: Build AppImage
+        run: |
+          sudo docker run --rm -v "$(pwd):/shared" espanso-ubuntu espanso/.github/scripts/ubuntu/build_deb.sh
+      - uses: actions/upload-artifact@v2
+        name: "Upload artifacts"
+        with:
+          name: Ubuntu/Debian Artifacts
+          path: |
+            espanso-debian-x11-amd64.deb
+            espanso-debian-wayland-amd64.deb
+      - name: Upload artifacts to Github Releases (if master)
+        if: ${{ github.ref == 'refs/heads/master' }}
+        run: |
+          gh release upload ${{ needs.extract-version.outputs.espanso_version }} espanso-debian-x11-amd64.deb espanso-debian-wayland-amd64.deb espanso-debian-x11-amd64-sha256.txt espanso-debian-wayland-amd64-sha256.txt 
+
 
   macos-intel:
     needs: ["extract-version", "create-release"]
