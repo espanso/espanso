@@ -136,7 +136,7 @@ jobs:
       - uses: actions/upload-artifact@v2
         name: "Upload artifacts"
         with:
-          name: Ubuntu/Debian Artifacts
+          name: Ubuntu-Debian Artifacts
           path: |
             espanso-debian-x11-amd64.deb
             espanso-debian-wayland-amd64.deb
