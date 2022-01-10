@@ -76,12 +76,12 @@ regex = "1.4.3"
 
 [package.metadata.deb]
 maintainer = "Federico Terzi <federicoterzi96@gmail.com>"
-depends = "$auto, systemd, libxtst6, xclip, libnotify-bin, libxkbcommon0, libwxgtk3.0-0v5"
+depends = "$auto, systemd, libxtst6, xclip, libnotify-bin, libxkbcommon0, libwxgtk3.0-gtk3-0v5"
 section = "utility"
 license-file = ["../LICENSE", "1"]
 
 [package.metadata.deb.variants.wayland]
-depends = "$auto, systemd, libnotify-bin, libxkbcommon0, libwxgtk3.0-0v5"
+depends = "$auto, systemd, libnotify-bin, libxkbcommon0, libwxgtk3.0-gtk3-0v5"
 # TODO: once this issue [1] is fixed, we should create a variant for 
 # wayland to automatically run the setcap script.
 # [1]: https://github.com/mmstick/cargo-deb/issues/151
