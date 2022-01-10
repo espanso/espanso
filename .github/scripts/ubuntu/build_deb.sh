@@ -13,6 +13,7 @@ cargo deb -p espanso
 echo "Building Wayland deb package"
 cargo deb -p espanso --variant wayland -- --features wayland
 
+cd ..
 cp espanso/target/debian/espanso_*.deb espanso-debian-x11-amd64.deb
 sha256sum espanso-debian-x11-amd64.deb > espanso-debian-x11-amd64-sha256.txt
 cp espanso/target/debian/espanso-wayland*.deb espanso-debian-wayland-amd64.deb
