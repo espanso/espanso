@@ -3,7 +3,7 @@
 set -e
 
 echo "Installing cargo-deb"
-cargo install cargo-deb
+cargo install cargo-deb --version 1.34.0
 
 cd espanso
 
