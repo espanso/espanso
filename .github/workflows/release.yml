@@ -232,3 +232,28 @@ jobs:
         if: ${{ github.ref == 'refs/heads/master' }}
         run: |
           gh release upload ${{ needs.extract-version.outputs.espanso_version }} Espanso-Mac-M1.zip Espanso-Mac-M1.zip.sha256.txt
+
+  macos-publish-homebrew:
+    # TODO: update to include the two previous macos builds
+    needs: ["extract-version", "create-release"]
+    runs-on: macos-11
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Print target version
+        run: |
+          echo Using version ${{ needs.extract-version.outputs.espanso_version }}
+
+      - name: "Setup SSH deploy key"
+        uses: webfactory/ssh-agent@fc49353b67b2b7c1e0e6a600572d01a69f2672dd
+          with:
+            ssh-private-key: ${{ secrets.HOMEBREW_CASK_SSH_PRIVATE_KEY }}
+      - name: Create and Publish Homebrew Cask
+        # TODO: re-add the check
+        # if: ${{ github.ref == 'refs/heads/master' }}
+        # TODO: use the right version:
+        # VERSION="${{ needs.extract-version.outputs.espanso_version }}" ./scripts/publish_homebrew_version.sh
+        run: |
+          VERSION="v2.1.2-alpha" ./scripts/publish_homebrew_version.sh
+
+          echo "Cask formula has been published here: "
