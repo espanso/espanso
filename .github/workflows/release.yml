@@ -246,8 +246,8 @@ jobs:
 
       - name: "Setup SSH deploy key"
         uses: webfactory/ssh-agent@fc49353b67b2b7c1e0e6a600572d01a69f2672dd
-          with:
-            ssh-private-key: ${{ secrets.HOMEBREW_CASK_SSH_PRIVATE_KEY }}
+        with:
+          ssh-private-key: ${{ secrets.HOMEBREW_CASK_SSH_PRIVATE_KEY }}
       - name: Create and Publish Homebrew Cask
         # TODO: re-add the check
         # if: ${{ github.ref == 'refs/heads/master' }}
