@@ -32,6 +32,7 @@ pub struct MatchSummary<'a> {
   pub id: i32,
   pub label: &'a str,
   pub tag: Option<&'a str>,
+  pub additional_search_terms: Vec<&'a str>,
   pub is_builtin: bool,
 }
 
@@ -65,6 +66,11 @@ impl<'a> MatchSelector for MatchSelectorAdapter<'a> {
           id: m.id.to_string(),
           label: clipped_label,
           tag: m.tag.map(String::from),
+          additional_search_terms: m
+            .additional_search_terms
+            .into_iter()
+            .map(String::from)
+            .collect(),
           is_builtin: m.is_builtin,
         }
       })

@@ -300,6 +300,7 @@ pub fn try_convert_into_match(
       effect,
       label: yaml_match.label,
       id: next_id(),
+      search_terms: yaml_match.search_terms.unwrap_or_default(),
     },
     warnings,
   ))

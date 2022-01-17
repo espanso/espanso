@@ -35,6 +35,7 @@ pub struct Match {
 
   // Metadata
   pub label: Option<String>,
+  pub search_terms: Vec<String>,
 }
 
 impl Default for Match {
@@ -44,6 +45,7 @@ impl Default for Match {
       effect: MatchEffect::None,
       label: None,
       id: 0,
+      search_terms: vec![],
     }
   }
 }
@@ -65,6 +67,15 @@ impl Match {
   // TODO: test
   pub fn cause_description(&self) -> Option<&str> {
     self.cause.description()
+  }
+
+  pub fn search_terms(&self) -> Vec<&str> {
+    self
+      .search_terms
+      .iter()
+      .map(|term| term.as_str())
+      .chain(self.cause.search_terms())
+      .collect()
   }
 }
 
@@ -99,6 +110,14 @@ impl MatchCause {
     }
     // TODO: insert rendering for hotkey/shortcut
     // TODO: insert rendering for regex? I'm worried it might be too long
+  }
+
+  pub fn search_terms(&self) -> Vec<&str> {
+    if let MatchCause::Trigger(trigger_cause) = &self {
+      trigger_cause.triggers.iter().map(|s| s.as_str()).collect()
+    } else {
+      vec![]
+    }
   }
 }
 
