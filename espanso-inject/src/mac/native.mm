@@ -27,8 +27,10 @@
 // so that we can later skip them in the detect module.
 CGPoint ESPANSO_POINT_MARKER = CGPointMake(-27469, 0);
 
-void inject_string(char *string)
+void inject_string(char *string, int32_t delay)
 {
+  long udelay = delay * 1000;
+
   char * stringCopy = strdup(string);
   dispatch_async(dispatch_get_main_queue(), ^(void) {
     // Convert the c string to a UniChar array as required by the CGEventKeyboardSetUnicodeString method
@@ -49,7 +51,7 @@ void inject_string(char *string)
       CGEventPost(kCGHIDEventTap, e2);
       CFRelease(e2);
 
-      usleep(2000);
+      usleep(udelay);
     }
 
     // Because of a bug ( or undocumented limit ) of the CGEventKeyboardSetUnicodeString method
@@ -69,7 +71,7 @@ void inject_string(char *string)
       CGEventPost(kCGHIDEventTap, e);
       CFRelease(e);
 
-      usleep(2000);
+      usleep(udelay);
 
       // Some applications require an explicit release of the space key
       // For more information: https://github.com/federico-terzi/espanso/issues/159
@@ -78,7 +80,7 @@ void inject_string(char *string)
       CGEventPost(kCGHIDEventTap, e2);
       CFRelease(e2);
 
-      usleep(2000);
+      usleep(udelay);
 
       i += chunk_size;
     }

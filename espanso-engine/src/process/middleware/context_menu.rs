@@ -99,7 +99,7 @@ impl Middleware for ContextMenuMiddleware {
             0,
             MenuItem::Simple(SimpleMenuItem {
               id: CONTEXT_ITEM_SECURE_INPUT_EXPLAIN,
-              label: "Why is espanso not working?".to_string(),
+              label: "Why is Espanso not working?".to_string(),
             }),
           );
           items.insert(

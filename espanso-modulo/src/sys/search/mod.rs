@@ -26,6 +26,7 @@ pub mod types {
     pub id: String,
     pub label: String,
     pub trigger: Option<String>,
+    pub search_terms: Vec<String>,
     pub is_builtin: bool,
   }
 

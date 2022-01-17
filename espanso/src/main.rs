@@ -360,7 +360,7 @@ For example, specifying 'email' is equivalent to 'match/email.yml'."#))
         .subcommand(restart_subcommand.clone())
         .subcommand(stop_subcommand.clone())
         .subcommand(status_subcommand.clone())
-        .about("Register and manage 'espanso' as a system service."),
+        .about("A collection of commands to manage the Espanso service (for example, enabling auto-start on system boot)."),
     )
     .subcommand(start_subcommand)
     .subcommand(restart_subcommand)

@@ -44,7 +44,9 @@ fn exact_match(query: &str, items: &[SearchItem]) -> Vec<usize> {
     .iter()
     .enumerate()
     .filter(|(_, item)| {
-      item.label.contains(query) || item.trigger.as_deref().map_or(false, |t| t.contains(query))
+      item.label.contains(query)
+        || item.trigger.as_deref().map_or(false, |t| t.contains(query))
+        || item.search_terms.iter().any(|term| term.contains(query))
     })
     .map(|(i, _)| i)
     .collect()
@@ -61,6 +63,10 @@ fn case_insensitive_exact_match(query: &str, items: &[SearchItem]) -> Vec<usize>
           .trigger
           .as_deref()
           .map_or(false, |t| t.to_lowercase().contains(query))
+        || item
+          .search_terms
+          .iter()
+          .any(|term| term.to_lowercase().contains(&lowercase_query))
     })
     .map(|(i, _)| i)
     .collect()
@@ -79,6 +85,10 @@ fn case_insensitive_keyword(query: &str, items: &[SearchItem]) -> Vec<usize> {
             .trigger
             .as_deref()
             .map_or(false, |t| t.to_lowercase().contains(keyword))
+          && !item
+            .search_terms
+            .iter()
+            .any(|term| term.to_lowercase().contains(keyword))
         {
           return false;
         }
