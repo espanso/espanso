@@ -1,6 +1,6 @@
 [package]
 name = "espanso"
-version = "2.1.3-alpha"
+version = "2.1.4-beta"
 authors = ["Federico Terzi <federicoterzi96@gmail.com>"]
 license = "GPL-3.0"
 description = "Cross-platform Text Expander written in Rust"
