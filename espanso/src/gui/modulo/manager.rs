@@ -105,6 +105,13 @@ impl ModuloManager {
                       error!("modulo reported an error: {}", error);
                     }
 
+                    if !child_output.status.success() {
+                      error!(
+                        "modulo exited with non-zero status code: {:?}",
+                        child_output.status.code()
+                      )
+                    }
+
                     if !output.trim().is_empty() {
                       Ok(output.to_string())
                     } else {
