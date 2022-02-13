@@ -40,7 +40,7 @@ pub fn determine_path_env_variable_override(explicit_shell: Option<MacShell>) ->
 }
 
 #[cfg(not(target_os = "macos"))]
-pub fn determine_path_env_variable_override(explicit_shell: Option<MacShell>) -> Option<String> {
+pub fn determine_path_env_variable_override(_: Option<MacShell>) -> Option<String> {
   None
 }
 
@@ -96,9 +96,4 @@ fn launch_command_and_get_output(command: &str, args: &[&str]) -> Option<String>
 
   let output_str = String::from_utf8_lossy(&output.stdout);
   Some(output_str.to_string())
-}
-
-#[cfg(not(target_os = "macos"))]
-fn launch_command_and_get_output(command: &str, args: &[&str]) -> Option<String> {
-  None
 }
