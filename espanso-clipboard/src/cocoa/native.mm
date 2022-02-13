@@ -30,8 +30,6 @@ int32_t clipboard_get_text(char * buffer, int32_t buffer_size) {
       const char * text = [string UTF8String];
       strncpy(buffer, text, buffer_size);
 
-      [string release];
-
       return 1;
     }
   }
