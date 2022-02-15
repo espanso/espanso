@@ -414,6 +414,7 @@ impl LocaleProvider for DefaultLocaleProvider {
     sys_locale::get_locale().unwrap_or_else(|| String::from("en-US"))
   }
 }
+#[allow(clippy::new_without_default)]
 impl DefaultLocaleProvider {
   pub fn new() -> Self {
     Self {}
