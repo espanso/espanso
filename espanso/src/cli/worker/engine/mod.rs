@@ -186,7 +186,8 @@ pub fn initialize_and_spawn(
       let clipboard_adapter = ClipboardAdapter::new(&*clipboard, &config_manager);
       let clipboard_extension =
         espanso_render::extension::clipboard::ClipboardExtension::new(&clipboard_adapter);
-      let date_extension = espanso_render::extension::date::DateExtension::new();
+      let locale_provider = espanso_render::extension::date::DefaultLocaleProvider::new();
+      let date_extension = espanso_render::extension::date::DateExtension::new(&locale_provider);
       let echo_extension = espanso_render::extension::echo::EchoExtension::new();
       // For backwards compatiblity purposes, the echo extension can also be called with "dummy" type
       let dummy_extension = espanso_render::extension::echo::EchoExtension::new_with_alias("dummy");
