@@ -21,3 +21,5 @@ pub(crate) const DEFAULT_CLIPBOARD_THRESHOLD: usize = 100;
 pub(crate) const DEFAULT_PRE_PASTE_DELAY: usize = 100;
 pub(crate) const DEFAULT_SHORTCUT_EVENT_DELAY: usize = 10;
 pub(crate) const DEFAULT_RESTORE_CLIPBOARD_DELAY: usize = 300;
+pub(crate) const DEFAULT_POST_FORM_DELAY: usize = 200;
+pub(crate) const DEFAULT_POST_SEARCH_DELAY: usize = 200;
