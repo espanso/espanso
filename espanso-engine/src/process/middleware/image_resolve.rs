@@ -47,7 +47,7 @@ impl<'a> Middleware for ImageResolverMiddleware<'a> {
     if let EventType::ImageRequested(m_event) = &event.etype {
       // On Windows, we have to replace the forward / with the backslash \ in the path
       let path = if cfg!(target_os = "windows") {
-        m_event.image_path.replace("/", "\\")
+        m_event.image_path.replace('/', "\\")
       } else {
         m_event.image_path.to_owned()
       };
