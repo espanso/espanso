@@ -19,19 +19,30 @@
 
 use serde::Serialize;
 use serde_json::Value;
-use std::collections::HashMap;
+use std::{collections::HashMap, convert::TryInto};
 
 use crate::gui::{SearchItem, SearchUI};
 
 use super::manager::ModuloManager;
 
+pub trait ModuloSearchUIOptionProvider {
+  fn get_post_search_delay(&self) -> usize;
+}
+
 pub struct ModuloSearchUI<'a> {
   manager: &'a ModuloManager,
+  option_provider: &'a dyn ModuloSearchUIOptionProvider,
 }
 
 impl<'a> ModuloSearchUI<'a> {
-  pub fn new(manager: &'a ModuloManager) -> Self {
-    Self { manager }
+  pub fn new(
+    manager: &'a ModuloManager,
+    option_provider: &'a dyn ModuloSearchUIOptionProvider,
+  ) -> Self {
+    Self {
+      manager,
+      option_provider,
+    }
   }
 }
 
@@ -48,7 +59,7 @@ impl<'a> SearchUI for ModuloSearchUI<'a> {
       .manager
       .invoke(&["search", "-j", "-i", "-"], &json_config)?;
     let json: Result<HashMap<String, Value>, _> = serde_json::from_str(&output);
-    match json {
+    let result = match json {
       Ok(json) => {
         if let Some(Value::String(selected_id)) = json.get("selected") {
           Ok(Some(selected_id.clone()))
@@ -57,7 +68,16 @@ impl<'a> SearchUI for ModuloSearchUI<'a> {
         }
       }
       Err(error) => Err(error.into()),
+    };
+
+    let post_search_delay = self.option_provider.get_post_search_delay();
+    if post_search_delay > 0 {
+      std::thread::sleep(std::time::Duration::from_millis(
+        post_search_delay.try_into().unwrap(),
+      ));
     }
+
+    result
   }
 }
 

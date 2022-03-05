@@ -107,8 +107,10 @@ pub fn initialize_and_spawn(
       let default_config = &*config_manager.default();
 
       let modulo_manager = crate::gui::modulo::manager::ModuloManager::new();
-      let modulo_form_ui = crate::gui::modulo::form::ModuloFormUI::new(&modulo_manager);
-      let modulo_search_ui = crate::gui::modulo::search::ModuloSearchUI::new(&modulo_manager);
+      let modulo_form_ui =
+        crate::gui::modulo::form::ModuloFormUI::new(&modulo_manager, &config_manager);
+      let modulo_search_ui =
+        crate::gui::modulo::search::ModuloSearchUI::new(&modulo_manager, &config_manager);
       let modulo_text_ui = crate::gui::modulo::textview::ModuloTextUI::new(&modulo_manager);
 
       let context: Box<dyn Context> = Box::new(super::context::DefaultContext::new(

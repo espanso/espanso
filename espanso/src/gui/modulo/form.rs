@@ -20,18 +20,30 @@
 use serde::Serialize;
 use serde_json::{json, Map, Value};
 use std::collections::HashMap;
+use std::convert::TryInto;
 
 use crate::gui::{FormField, FormUI};
 
 use super::manager::ModuloManager;
 
+pub trait ModuloFormUIOptionProvider {
+  fn get_post_form_delay(&self) -> usize;
+}
+
 pub struct ModuloFormUI<'a> {
   manager: &'a ModuloManager,
+  option_provider: &'a dyn ModuloFormUIOptionProvider,
 }
 
 impl<'a> ModuloFormUI<'a> {
-  pub fn new(manager: &'a ModuloManager) -> Self {
-    Self { manager }
+  pub fn new(
+    manager: &'a ModuloManager,
+    option_provider: &'a dyn ModuloFormUIOptionProvider,
+  ) -> Self {
+    Self {
+      manager,
+      option_provider,
+    }
   }
 }
 
@@ -52,7 +64,7 @@ impl<'a> FormUI for ModuloFormUI<'a> {
       .manager
       .invoke(&["form", "-j", "-i", "-"], &json_config)?;
     let json: Result<HashMap<String, String>, _> = serde_json::from_str(&output);
-    match json {
+    let result = match json {
       Ok(json) => {
         if json.is_empty() {
           Ok(None)
@@ -61,7 +73,16 @@ impl<'a> FormUI for ModuloFormUI<'a> {
         }
       }
       Err(error) => Err(error.into()),
+    };
+
+    let post_form_delay = self.option_provider.get_post_form_delay();
+    if post_form_delay > 0 {
+      std::thread::sleep(std::time::Duration::from_millis(
+        post_form_delay.try_into().unwrap(),
+      ));
     }
+
+    result
   }
 }
 
