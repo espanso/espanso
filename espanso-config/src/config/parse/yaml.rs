@@ -104,6 +104,12 @@ pub(crate) struct YAMLConfig {
   pub show_icon: Option<bool>,
 
   #[serde(default)]
+  pub post_form_delay: Option<usize>,
+
+  #[serde(default)]
+  pub post_search_delay: Option<usize>,
+
+  #[serde(default)]
   pub secure_input_notification: Option<bool>,
 
   #[serde(default)]
@@ -201,6 +207,8 @@ impl TryFrom<YAMLConfig> for ParsedConfig {
       pre_paste_delay: yaml_config.pre_paste_delay,
       restore_clipboard_delay: yaml_config.restore_clipboard_delay,
       paste_shortcut_event_delay: yaml_config.paste_shortcut_event_delay,
+      post_form_delay: yaml_config.post_form_delay,
+      post_search_delay: yaml_config.post_search_delay,
 
       win32_exclude_orphan_events: yaml_config.win32_exclude_orphan_events,
       win32_keyboard_layout_cache_interval: yaml_config.win32_keyboard_layout_cache_interval,
@@ -260,6 +268,8 @@ mod tests {
     show_icon: false
     show_notifications: false
     secure_input_notification: false
+    post_form_delay: 300
+    post_search_delay: 400
     win32_exclude_orphan_events: false
     win32_keyboard_layout_cache_interval: 300
     x11_use_xclip_backend: true
@@ -314,6 +324,8 @@ mod tests {
         show_icon: Some(false),
         show_notifications: Some(false),
         secure_input_notification: Some(false),
+        post_form_delay: Some(300),
+        post_search_delay: Some(400),
         win32_exclude_orphan_events: Some(false),
         win32_keyboard_layout_cache_interval: Some(300),
         x11_use_xclip_backend: Some(true),

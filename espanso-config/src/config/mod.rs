@@ -150,6 +150,18 @@ pub trait Config: Send + Sync {
   // If false, avoid showing the SecureInput notification on macOS
   fn secure_input_notification(&self) -> bool;
 
+  // The number of milliseconds to wait after a form has been closed.
+  // This is useful to let the target application regain focus
+  // after a form has been closed, otherwise the injection might
+  // not be targeted to the right application.
+  fn post_form_delay(&self) -> usize;
+
+  // The number of milliseconds to wait after the search bar has been closed.
+  // This is useful to let the target application regain focus
+  // after the search bar has been closed, otherwise the injection might
+  // not be targeted to the right application.
+  fn post_search_delay(&self) -> usize;
+
   // If true, use the `xclip` command to implement the clipboard instead of
   // the built-in native module on X11.
   fn x11_use_xclip_backend(&self) -> bool;
@@ -188,6 +200,8 @@ pub trait Config: Send + Sync {
         toggle_key: {:?}
         auto_restart: {:?}
         restore_clipboard_delay: {:?} 
+        post_form_delay: {:?} 
+        post_search_delay: {:?} 
         backspace_limit: {}
         search_trigger: {:?}
         search_shortcut: {:?}
@@ -220,6 +234,8 @@ pub trait Config: Send + Sync {
       self.toggle_key(),
       self.auto_restart(),
       self.restore_clipboard_delay(),
+      self.post_form_delay(),
+      self.post_search_delay(),
       self.backspace_limit(),
       self.search_trigger(),
       self.search_shortcut(),
