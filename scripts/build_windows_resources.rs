@@ -1,6 +1,6 @@
 //! ```cargo
 //! [dependencies]
-//! cc = "1.0.66"
+//! cc = "1.0.73"
 //! glob = "0.3.0"
 //! envmnt = "*"
 //! ```
@@ -54,14 +54,21 @@ fn main() {
     .next()
     .expect("unable to find vcruntime140_1.dll file")
     .expect("unable to extract path of vcruntime140_1.dll file");
-  
+
   // Copy the DLLs in the target directory
-  let parent_dir = target_file.parent().expect("unable to obtain directory containing DLLs");
-  for entry in glob::glob(&format!(r"{}\*.dll", parent_dir.to_string_lossy().to_string())).expect("unable to glob over DLLs") {
+  let parent_dir = target_file
+    .parent()
+    .expect("unable to obtain directory containing DLLs");
+  for entry in glob::glob(&format!(
+    r"{}\*.dll",
+    parent_dir.to_string_lossy().to_string()
+  ))
+  .expect("unable to glob over DLLs")
+  {
     let entry = entry.expect("unable to unwrap DLL entry");
     let filename = entry.file_name().expect("unable to obtain filename");
     std::fs::copy(&entry, target_dir.join(filename)).expect("unable to copy DLL");
-  } 
+  }
 
   // Copy the executable
   let exec_path = envmnt::get_or_panic("EXEC_PATH");
