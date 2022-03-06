@@ -26,7 +26,7 @@ fn main() {
 
   // First, we try to find the directory containing the various versions:
   // C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Redist\MSVC\
-  let tool = cc::windows_registry::find_tool("msvc", "msbuild")
+  let tool = cc::windows_registry::find_tool("msvc", "devenv")
     .expect("unable to locate MSVC compiler, did you install Visual Studio?");
   let mut versions_dir = None;
   let mut current_root = tool.path();
