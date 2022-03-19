@@ -1,7 +1,7 @@
 /*
  * This file is part of espanso.
  *
- * Copyright (C) 2019-2021 Federico Terzi
+ * Copyright (C) 2019-2022 Federico Terzi
  *
  * espanso is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,6 +21,7 @@ pub mod choice;
 pub mod clipboard;
 pub mod date;
 pub mod echo;
+mod exec_util;
 pub mod form;
 pub mod random;
 pub mod script;

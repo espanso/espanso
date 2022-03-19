@@ -19,8 +19,8 @@
 
 use super::{
   default::{
-    DEFAULT_CLIPBOARD_THRESHOLD, DEFAULT_PRE_PASTE_DELAY, DEFAULT_RESTORE_CLIPBOARD_DELAY,
-    DEFAULT_SHORTCUT_EVENT_DELAY,
+    DEFAULT_CLIPBOARD_THRESHOLD, DEFAULT_POST_FORM_DELAY, DEFAULT_POST_SEARCH_DELAY,
+    DEFAULT_PRE_PASTE_DELAY, DEFAULT_RESTORE_CLIPBOARD_DELAY, DEFAULT_SHORTCUT_EVENT_DELAY,
   },
   parse::ParsedConfig,
   path::calculate_paths,
@@ -299,6 +299,20 @@ impl Config for ResolvedConfig {
     self.parsed.secure_input_notification.unwrap_or(true)
   }
 
+  fn post_form_delay(&self) -> usize {
+    self
+      .parsed
+      .post_form_delay
+      .unwrap_or(DEFAULT_POST_FORM_DELAY)
+  }
+
+  fn post_search_delay(&self) -> usize {
+    self
+      .parsed
+      .post_search_delay
+      .unwrap_or(DEFAULT_POST_SEARCH_DELAY)
+  }
+
   fn win32_exclude_orphan_events(&self) -> bool {
     self.parsed.win32_exclude_orphan_events.unwrap_or(true)
   }
@@ -398,6 +412,8 @@ impl ResolvedConfig {
       show_icon,
       show_notifications,
       secure_input_notification,
+      post_form_delay,
+      post_search_delay,
       win32_exclude_orphan_events,
       win32_keyboard_layout_cache_interval,
       x11_use_xclip_backend,

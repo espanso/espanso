@@ -387,6 +387,14 @@ impl Config for LegacyInteropConfig {
     self.config.enable_active
   }
 
+  fn post_form_delay(&self) -> usize {
+    crate::config::default::DEFAULT_POST_FORM_DELAY
+  }
+
+  fn post_search_delay(&self) -> usize {
+    crate::config::default::DEFAULT_POST_SEARCH_DELAY
+  }
+
   fn win32_exclude_orphan_events(&self) -> bool {
     true
   }

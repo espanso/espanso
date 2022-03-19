@@ -31,4 +31,4 @@ notify-rust = "4.2.2"
 crossbeam = "0.8.0"
 
 [build-dependencies]
-cc = "1.0.66"
+cc = "1.0.73"

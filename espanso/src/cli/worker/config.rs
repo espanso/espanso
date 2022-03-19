@@ -197,3 +197,15 @@ impl<'a> espanso_engine::process::EnabledStatusProvider for ConfigManager<'a> {
     self.active().enable()
   }
 }
+
+impl<'a> crate::gui::modulo::form::ModuloFormUIOptionProvider for ConfigManager<'a> {
+  fn get_post_form_delay(&self) -> usize {
+    self.active().post_form_delay()
+  }
+}
+
+impl<'a> crate::gui::modulo::search::ModuloSearchUIOptionProvider for ConfigManager<'a> {
+  fn get_post_search_delay(&self) -> usize {
+    self.active().post_search_delay()
+  }
+}

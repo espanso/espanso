@@ -10,6 +10,7 @@ anyhow = "1.0.38"
 thiserror = "1.0.23"
 regex = "1.4.3"
 lazy_static = "1.4.0"
-chrono = "0.4.19"
+chrono = {version = "0.4.19", features=["unstable-locales"]}
 enum-as-inner = "0.3.3"
 rand = "0.8.3"
+sys-locale = "0.1.0"
