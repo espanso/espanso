@@ -1,7 +1,7 @@
 /*
  * This file is part of espanso.
  *
- * Copyright (C) 2019-2021 Federico Terzi
+ * Copyright (C) 2019-2022 Federico Terzi
  *
  * espanso is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@ use std::{
 };
 
 use crate::{Extension, ExtensionOutput, ExtensionResult, Params, Value};
-use log::{error, info};
+use log::{debug, error, info};
 use thiserror::Error;
 
 #[allow(clippy::upper_case_acronyms)]
@@ -35,10 +35,16 @@ pub enum Shell {
   WSL2,
   Bash,
   Sh,
+  Zsh,
 }
 
 impl Shell {
-  fn execute_cmd(&self, cmd: &str, vars: &HashMap<String, String>) -> std::io::Result<Output> {
+  fn execute_cmd(
+    &self,
+    cmd: &str,
+    vars: &HashMap<String, String>,
+    override_path_on_macos: bool,
+  ) -> std::io::Result<Output> {
     let mut is_wsl = false;
 
     let mut command = match self {
@@ -74,6 +80,11 @@ impl Shell {
         command.args(&["-c", cmd]);
         command
       }
+      Shell::Zsh => {
+        let mut command = Command::new("zsh");
+        command.args(&["-c", cmd]);
+        command
+      }
     };
 
     // Set the OS-specific flags
@@ -82,6 +93,27 @@ impl Shell {
     // Inject all the previous variables
     for (key, value) in vars.iter() {
       command.env(key, value);
+    }
+
+    // If Espanso is executed as an app bundle on macOS, it doesn't inherit the PATH
+    // environment variables that are available inside a terminal, and this can be confusing for users.
+    // For example, one might use "jq" inside the terminal but then it throws an error with "command not found"
+    // if launched through the Espanso shell extension.
+    // For this reason, Espanso tries to obtain the same PATH value by spawning a login shell and extracting
+    // the PATH after the processing.
+    if cfg!(target_os = "macos") && override_path_on_macos {
+      let supported_mac_shell = match self {
+        Shell::Bash => Some(super::exec_util::MacShell::Bash),
+        Shell::Sh => Some(super::exec_util::MacShell::Sh),
+        Shell::Zsh => Some(super::exec_util::MacShell::Zsh),
+        _ => None,
+      };
+      if let Some(path_env_override) =
+        super::exec_util::determine_path_env_variable_override(supported_mac_shell)
+      {
+        debug!("overriding PATH env variable with: {}", path_env_override);
+        command.env("PATH", path_env_override);
+      }
     }
 
     // In WSL environment, we have to specify which ENV variables
@@ -110,6 +142,7 @@ impl Shell {
       "wsl2" => Some(Shell::WSL2),
       "bash" => Some(Shell::Bash),
       "sh" => Some(Shell::Sh),
+      "zsh" => Some(Shell::Zsh),
       _ => None,
     }
   }
@@ -120,7 +153,17 @@ impl Default for Shell {
     if cfg!(target_os = "windows") {
       Shell::Powershell
     } else if cfg!(target_os = "macos") {
-      Shell::Sh
+      lazy_static! {
+        static ref DEFAULT_MACOS_SHELL: Option<super::exec_util::MacShell> =
+          super::exec_util::determine_default_macos_shell();
+      }
+
+      match *DEFAULT_MACOS_SHELL {
+        Some(super::exec_util::MacShell::Bash) => Shell::Bash,
+        Some(super::exec_util::MacShell::Sh) => Shell::Sh,
+        Some(super::exec_util::MacShell::Zsh) => Shell::Zsh,
+        None => Shell::Sh,
+      }
     } else if cfg!(target_os = "linux") {
       Shell::Bash
     } else {
@@ -172,7 +215,13 @@ impl Extension for ShellExtension {
         self.config_path.to_string_lossy().to_string(),
       );
 
-      match shell.execute_cmd(cmd, &env_variables) {
+      let macos_override_path = params
+        .get("macos_override_path")
+        .and_then(|v| v.as_bool())
+        .copied()
+        .unwrap_or(true);
+
+      match shell.execute_cmd(cmd, &env_variables, macos_override_path) {
         Ok(output) => {
           let output_str = String::from_utf8_lossy(&output.stdout);
           let error_str = String::from_utf8_lossy(&output.stderr);

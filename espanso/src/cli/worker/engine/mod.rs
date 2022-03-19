@@ -107,8 +107,10 @@ pub fn initialize_and_spawn(
       let default_config = &*config_manager.default();
 
       let modulo_manager = crate::gui::modulo::manager::ModuloManager::new();
-      let modulo_form_ui = crate::gui::modulo::form::ModuloFormUI::new(&modulo_manager);
-      let modulo_search_ui = crate::gui::modulo::search::ModuloSearchUI::new(&modulo_manager);
+      let modulo_form_ui =
+        crate::gui::modulo::form::ModuloFormUI::new(&modulo_manager, &config_manager);
+      let modulo_search_ui =
+        crate::gui::modulo::search::ModuloSearchUI::new(&modulo_manager, &config_manager);
       let modulo_text_ui = crate::gui::modulo::textview::ModuloTextUI::new(&modulo_manager);
 
       let context: Box<dyn Context> = Box::new(super::context::DefaultContext::new(
@@ -186,7 +188,8 @@ pub fn initialize_and_spawn(
       let clipboard_adapter = ClipboardAdapter::new(&*clipboard, &config_manager);
       let clipboard_extension =
         espanso_render::extension::clipboard::ClipboardExtension::new(&clipboard_adapter);
-      let date_extension = espanso_render::extension::date::DateExtension::new();
+      let locale_provider = espanso_render::extension::date::DefaultLocaleProvider::new();
+      let date_extension = espanso_render::extension::date::DateExtension::new(&locale_provider);
       let echo_extension = espanso_render::extension::echo::EchoExtension::new();
       // For backwards compatiblity purposes, the echo extension can also be called with "dummy" type
       let dummy_extension = espanso_render::extension::echo::EchoExtension::new_with_alias("dummy");

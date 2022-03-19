@@ -37,7 +37,6 @@ pub fn get_active_layout() -> Option<String> {
   if gnome::is_gnome() {
     gnome::get_active_layout()
   } else {
-    log::warn!("unable to determine the currently active layout, you might need to explicitly specify the layout in the config for espanso to work correctly.");
     None
   }
 }
