@@ -27,7 +27,7 @@ use thiserror::Error;
 
 use crate::{error_eprintln, info_println, warn_eprintln};
 
-const LINUX_SERVICE_NAME: &str = "espanso";
+const LINUX_SERVICE_NAME: &str = "espanso.service";
 const LINUX_SERVICE_CONTENT: &str = include_str!("../../res/linux/systemd.service");
 #[allow(clippy::transmute_bytes_to_str)]
 const LINUX_SERVICE_FILENAME: &str = formatcp!("{}.service", LINUX_SERVICE_NAME);
