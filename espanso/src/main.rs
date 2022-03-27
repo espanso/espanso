@@ -194,18 +194,21 @@ fn main() {
       Arg::with_name("config_dir")
         .long("config_dir")
         .takes_value(true)
+        .hidden(true)
         .help("Specify a custom path from which espanso should read the configuration"),
     )
     .arg(
       Arg::with_name("package_dir")
         .long("package_dir")
         .takes_value(true)
+        .hidden(true)
         .help("Specify a custom path for the espanso package directory"),
     )
     .arg(
       Arg::with_name("runtime_dir")
         .long("runtime_dir")
         .takes_value(true)
+        .hidden(true)
         .help("Specify a custom path for the espanso runtime directory"),
     )
     .subcommand(
