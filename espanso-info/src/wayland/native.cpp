@@ -19,7 +19,7 @@
 
 // This file:
 // Created: 2022-04-04T08:37:16+02:00 by Hendrik G. Seliger (github@hseliger.eu)
-// Last changes: 2022-04-05T11:46:39+02:00 by Hendrik G. Seliger (github@hseliger.eu)
+// Last changes: 2022-04-06T08:10:44+02:00 by Hendrik G. Seliger (github@hseliger.eu)
 
 // Based on an example given by Ranjit Katuri on https://stackoverflow.com/a/17645247
 // Uses RapidJSON header-only parser (http://rapidjson.org/)
@@ -50,7 +50,7 @@ static const char* methods[] = { "FocusTitle", "FocusPID", "FocusClass" };
 
 #define MAX_CMD_LINE    120
 
-static const char* errMessage = "Error retrieving window info. Are you on Gnome and do you have the Window Calls extension installed and active?";
+static const char* gnomeReminder = "Are you on Gnome and do you have the Window Calls Extended extension installed and active?\n";
 
 // Helper function to setup connection
 int _vsetupconnection()
@@ -62,10 +62,9 @@ int _vsetupconnection()
     conn = dbus_bus_get(DBUS_BUS_SESSION, &err);
     if (dbus_error_is_set(&err)) {
         if (DEBUG > 0) {
-        ::perror("Connection Error. ");
-        ::perror(err.name);
-        ::perror(err.message);
+            fprintf(stderr, "Connection Error. (%s: %s)", err.name, err.message);
         }
+        fprintf(stderr, gnomeReminder);
         dbus_error_free(&err);
     }
     if (NULL == conn) {
@@ -73,7 +72,7 @@ int _vsetupconnection()
     }
     else   {
         if (DEBUG > 0) {
-            std::cerr << "Connected to session bus\n";
+            fprintf(stderr, "Connected to session bus\n");
         }
         return(1);
     }
@@ -93,8 +92,9 @@ DBusMessage* _sendMethodCall(const char* objectpath, const char* busname, const 
 
     if (methodcall == NULL)    {
         if (DEBUG > 0) {
-        ::perror("Cannot allocate DBus message!");
+            fprintf(stderr, "Cannot allocate DBus message!\n");
         }
+        fprintf(stderr, gnomeReminder);
         return(NULL);
     }
     //Now do a sync call
@@ -105,8 +105,9 @@ DBusMessage* _sendMethodCall(const char* objectpath, const char* busname, const 
     if (!dbus_connection_send_with_reply(conn, methodcall, &pending, -1))
     {
         if (DEBUG == 1) {
-        ::perror("failed to send message!");
+            fprintf(stderr, "failed to send message!\n");
         }
+        fprintf(stderr, gnomeReminder);
         return(NULL);
     }
     dbus_connection_flush(conn);
@@ -123,9 +124,9 @@ DBusMessage* _sendMethodCall(const char* objectpath, const char* busname, const 
 
     if(dbus_message_get_type(reply) ==  DBUS_MESSAGE_TYPE_ERROR)    {
         if (DEBUG >0 ) {
-        ::perror("Error!");
-        ::perror(dbus_message_get_error_name(reply));
+            fprintf(stderr, "Error! %s.\n", dbus_message_get_error_name(reply));
         }
+        fprintf(stderr, gnomeReminder);
         dbus_message_unref(reply);
         reply = NULL;
     }
@@ -133,10 +134,15 @@ DBusMessage* _sendMethodCall(const char* objectpath, const char* busname, const 
 }
 
 void _getInformation(int infoType, char *buffer, int32_t buffer_size) {
+    // If anything goes wrong, return an empty string
+    // Using strncpy just in case buffer size would be 0
+    strncpy(buffer, "", buffer_size);
     // First, ensure we get a connection. Then, which should never happen,
     // but just in case ensure we have a method for the infoType
     if ( (_vsetupconnection() == 1) && (infoType <= (int)sizeof(methods)) ) {
-        std::cerr << "Using method " << methods[infoType - 1] << "\n";
+        if (DEBUG >0 ) {
+            fprintf(stderr, "Using method %s\n", methods[infoType - 1] );
+        }
         DBusMessage* reply = _sendMethodCall(DB_PATH, DB_DESTINATION, DB_INTERFACE, methods[infoType - 1]);
         if(reply != NULL)    {
             DBusMessageIter MsgIter;
@@ -147,11 +153,10 @@ void _getInformation(int infoType, char *buffer, int32_t buffer_size) {
                 dbus_message_iter_get_basic(&MsgIter, &dbusMsg);
 
                 if (DEBUG > 1) {
-                    std::cerr << "Received string: " << dbusMsg << "\n";
+                    fprintf(stderr, "Received string: %s.\n", dbusMsg);
                 }
                 switch (infoType) {
                     case INFO_TITLE:
-                        // std::cout << "Title: " << (*p)["title"].GetString() << "\n";
                         strncpy(buffer, dbusMsg, buffer_size);
                         break;
                     case INFO_EXEC:
@@ -159,35 +164,33 @@ void _getInformation(int infoType, char *buffer, int32_t buffer_size) {
                             size_t pathLen  = snprintf(NULL, 0, "/proc/%s/cmdline", dbusMsg);
                             char* pathBuffer = (char*) malloc(pathLen);
                             sprintf(pathBuffer,"/proc/%s/exe", dbusMsg);
-                            // std::cout << "Proc file: " << pathBuffer << "\n";
                             readlink(pathBuffer, buffer, buffer_size);
                             free(pathBuffer);
                         }
                         break;
                     case INFO_WINCLASS:
-                        // std::cout << "Class: " << (*p)["class"].GetString() << "\n";
                         strncpy(buffer, dbusMsg, buffer_size);
                         break;
                     default:
-                        strncpy(buffer, errMessage, buffer_size);
+                        fprintf(stderr, gnomeReminder);
                 }
                 return;
             }
             dbus_message_unref(reply); //unref reply
         } else {
             if (DEBUG == 1) {
-            ::perror("Error! Send Message Call failed!");
+                fprintf(stderr, "Error! Send Message Call failed!");
             }
-            strncpy(buffer, errMessage, buffer_size);
+            fprintf(stderr, gnomeReminder);
         }
         // Closing gives error: Applications must not close shared connections - see dbus_connection_close() docs.
         // dbus_connection_close(conn);
 
     } else {
         if (DEBUG > 0) {
-        ::perror("Error! Could not get connection to session bus!");
+            fprintf(stderr, "Error! Could not get connection to session bus!");
         }
-        strncpy(buffer, errMessage, buffer_size);
+        fprintf(stderr, gnomeReminder);
     }
 }
 
