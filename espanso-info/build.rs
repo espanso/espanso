@@ -49,7 +49,20 @@ fn cc_config() {
     println!("cargo:rustc-link-lib=dylib=stdc++");
     println!("cargo:rustc-link-lib=dylib=X11");
   } else {
-    // Nothing to compile on wayland
+    println!("cargo:rerun-if-changed=src/wayland/native.h");
+    println!("cargo:rerun-if-changed=src/wayland/native.c");
+    cc::Build::new()
+      .cpp(true)
+      .include("src/wayland")
+      .include("/usr/include/dbus-1.0")
+      .include("/usr/lib64/dbus-1.0/include")
+      .file("src/wayland/native.cpp")
+      .compile("espansoinfo");
+
+    println!("cargo:rustc-link-search=native=/usr/lib/x86_64-linux-gnu/");
+    println!("cargo:rustc-link-lib=static=espansoinfo");
+    println!("cargo:rustc-link-lib=dylib=stdc++");
+    println!("cargo:rustc-link-lib=dylib=dbus-1");
   }
 }
 
