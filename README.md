@@ -45,6 +45,15 @@ ___
 
 Visit the [official documentation](https://espanso.org/docs/).
 
+## Wayland support
+
+Please look at the documentation for details. Application specific filters
+(filter_title, filter_class, filter_exec) currently only work und Wayland with Gnome
+version 41. In addition, a Gnome shell extension
+(https://extensions.gnome.org/extension/4974/window-calls-extended/)
+is required! Without this extension, espanso has no access to active window information.
+
+
 ## Support
 
 If you need some help to setup espanso, want to ask a question or simply get involved
