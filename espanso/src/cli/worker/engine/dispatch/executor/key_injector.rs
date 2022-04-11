@@ -59,6 +59,7 @@ impl<'a> KeyInjector for KeyInjectorAdapter<'a> {
         })
         .try_into()
         .unwrap(),
+      x11_use_xdotool_fallback: true, // TODO: put actual config
     };
 
     let converted_keys: Vec<_> = keys.iter().map(convert_to_inject_key).collect();
