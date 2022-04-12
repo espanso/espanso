@@ -49,6 +49,7 @@ pub(crate) struct ParsedConfig {
   pub win32_exclude_orphan_events: Option<bool>,
   pub win32_keyboard_layout_cache_interval: Option<i64>,
   pub x11_use_xclip_backend: Option<bool>,
+  pub x11_use_xdotool_backend: Option<bool>,
 
   pub pre_paste_delay: Option<usize>,
   pub restore_clipboard_delay: Option<usize>,

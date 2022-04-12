@@ -410,6 +410,10 @@ impl Config for LegacyInteropConfig {
   fn x11_use_xclip_backend(&self) -> bool {
     false
   }
+
+  fn x11_use_xdotool_backend(&self) -> bool {
+    false
+  }
 }
 
 struct LegacyMatchGroup {
