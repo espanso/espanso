@@ -927,6 +927,8 @@ void fast_send_key(const xdo_t *xdo, Window window, charcodemap_t *key,
                           int modstate, int is_press, useconds_t delay);
 int fast_enter_text_window(const xdo_t *xdo, Window window, const char *string, useconds_t delay);
 void fast_send_event(const xdo_t *xdo, Window window, int keycode, int pressed);
+int fast_send_keysequence_window(const xdo_t *xdo, Window window,
+                    const char *keysequence, useconds_t delay);
 
 #ifdef __cplusplus
 } /* extern "C" */

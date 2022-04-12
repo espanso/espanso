@@ -2238,3 +2238,29 @@ void fast_send_event(const xdo_t *xdo, Window window, int keycode, int pressed) 
 
     XSendEvent(xdo->xdpy, window, True, 0, &event);
 }
+
+int fast_send_keysequence_window_do(const xdo_t *xdo, Window window, const char *keyseq,
+                        int pressed, int *modifier, useconds_t delay) {
+  int ret = 0;
+  charcodemap_t *keys = NULL;
+  int nkeys = 0;
+
+  if (_xdo_send_keysequence_window_to_keycode_list(xdo, keyseq, &keys, &nkeys) == False) {
+    fprintf(stderr, "Failure converting key sequence '%s' to keycodes\n", keyseq);
+    return 1;
+  }
+
+  ret = fast_send_keysequence_window_list_do(xdo, window, keys, nkeys, pressed, modifier, delay);
+  free(keys);
+
+  return ret;
+}
+
+int fast_send_keysequence_window(const xdo_t *xdo, Window window, const char *keyseq,
+                    useconds_t delay) {
+  int ret = 0;
+  int modifier = 0;
+  ret += fast_send_keysequence_window_do(xdo, window, keyseq, True, &modifier, delay / 2);
+  ret += fast_send_keysequence_window_do(xdo, window, keyseq, False, &modifier, delay / 2);
+  return ret;
+}
