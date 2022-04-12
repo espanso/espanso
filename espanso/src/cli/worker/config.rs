@@ -143,6 +143,7 @@ impl<'a> super::engine::dispatch::executor::clipboard_injector::ClipboardParamsP
       restore_clipboard: active.preserve_clipboard(),
       restore_clipboard_delay: active.restore_clipboard_delay(),
       x11_use_xclip_backend: active.x11_use_xclip_backend(),
+      x11_use_xdotool_backend: active.x11_use_xdotool_backend(),
     }
   }
 }
@@ -164,6 +165,7 @@ impl<'a> super::engine::dispatch::executor::InjectParamsProvider for ConfigManag
       inject_delay: active.inject_delay(),
       key_delay: active.key_delay(),
       evdev_modifier_delay: active.evdev_modifier_delay(),
+      x11_use_xdotool_backend: active.x11_use_xdotool_backend(),
     }
   }
 }

@@ -37,6 +37,9 @@ fn cc_config() {
 fn cc_config() {
   println!("cargo:rerun-if-changed=src/evdev/native.h");
   println!("cargo:rerun-if-changed=src/evdev/native.c");
+  println!("cargo:rerun-if-changed=src/x11/xdotool/vendor/xdo.c");
+  println!("cargo:rerun-if-changed=src/x11/xdotool/vendor/xdo.h");
+  println!("cargo:rerun-if-changed=src/x11/xdotool/vendor/xdo_util.h");
   cc::Build::new()
     .include("src/evdev")
     .file("src/evdev/native.c")
@@ -47,6 +50,14 @@ fn cc_config() {
   println!("cargo:rustc-link-lib=dylib=xkbcommon");
 
   if cfg!(not(feature = "wayland")) {
+    cc::Build::new()
+      .cpp(false)
+      .include("src/x11/xdotool/vendor/xdo.h")
+      .include("src/x11/xdotool/vendor/xdo_util.h")
+      .file("src/x11/xdotool/vendor/xdo.c")
+      .compile("xdotoolvendor");
+
+    println!("cargo:rustc-link-lib=static=xdotoolvendor");
     println!("cargo:rustc-link-lib=dylib=X11");
     println!("cargo:rustc-link-lib=dylib=Xtst");
   }

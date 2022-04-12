@@ -67,6 +67,7 @@ impl<'a> TextInjector for EventInjectorAdapter<'a> {
         })
         .try_into()
         .unwrap(),
+      x11_use_xdotool_fallback: params.x11_use_xdotool_backend,
     };
 
     // We don't use the lines() method because it skips emtpy lines, which is not what we want.

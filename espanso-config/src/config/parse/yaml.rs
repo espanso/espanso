@@ -121,6 +121,9 @@ pub(crate) struct YAMLConfig {
   #[serde(default)]
   pub x11_use_xclip_backend: Option<bool>,
 
+  #[serde(default)]
+  pub x11_use_xdotool_backend: Option<bool>,
+
   // Include/Exclude
   #[serde(default)]
   pub includes: Option<Vec<String>>,
@@ -213,6 +216,7 @@ impl TryFrom<YAMLConfig> for ParsedConfig {
       win32_exclude_orphan_events: yaml_config.win32_exclude_orphan_events,
       win32_keyboard_layout_cache_interval: yaml_config.win32_keyboard_layout_cache_interval,
       x11_use_xclip_backend: yaml_config.x11_use_xclip_backend,
+      x11_use_xdotool_backend: yaml_config.x11_use_xdotool_backend,
 
       use_standard_includes: yaml_config.use_standard_includes,
       includes: yaml_config.includes,
@@ -273,6 +277,7 @@ mod tests {
     win32_exclude_orphan_events: false
     win32_keyboard_layout_cache_interval: 300
     x11_use_xclip_backend: true
+    x11_use_xdotool_backend: true
       
     use_standard_includes: true
     includes: ["test1"]
@@ -329,6 +334,7 @@ mod tests {
         win32_exclude_orphan_events: Some(false),
         win32_keyboard_layout_cache_interval: Some(300),
         x11_use_xclip_backend: Some(true),
+        x11_use_xdotool_backend: Some(true),
 
         pre_paste_delay: Some(300),
         evdev_modifier_delay: Some(40),

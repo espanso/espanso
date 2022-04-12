@@ -34,4 +34,5 @@ pub struct InjectParams {
   pub key_delay: Option<usize>,
   pub disable_x11_fast_inject: bool,
   pub evdev_modifier_delay: Option<usize>,
+  pub x11_use_xdotool_backend: bool,
 }

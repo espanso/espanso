@@ -166,6 +166,10 @@ pub trait Config: Send + Sync {
   // the built-in native module on X11.
   fn x11_use_xclip_backend(&self) -> bool;
 
+  // If true, use an alternative injection backend based on the `xdotool` library.
+  // This might improve the situation for certain locales/layouts on X11.
+  fn x11_use_xdotool_backend(&self) -> bool;
+
   // If true, filter out keyboard events without an explicit HID device source on Windows.
   // This is needed to filter out the software-generated events, including
   // those from espanso, but might need to be disabled when using some software-level keyboards.
@@ -212,6 +216,7 @@ pub trait Config: Send + Sync {
         secure_input_notification: {:?}
 
         x11_use_xclip_backend: {:?}
+        x11_use_xdotool_backend: {:?}
         win32_exclude_orphan_events: {:?}
         win32_keyboard_layout_cache_interval: {:?}
 
@@ -246,6 +251,7 @@ pub trait Config: Send + Sync {
       self.secure_input_notification(),
 
       self.x11_use_xclip_backend(),
+      self.x11_use_xdotool_backend(),
       self.win32_exclude_orphan_events(),
       self.win32_keyboard_layout_cache_interval(),
 
