@@ -6,7 +6,7 @@ use std::{
   os::raw::{c_char, c_long, c_uint, c_ulong},
 };
 
-use libc::c_int;
+use libc::{c_int, c_uchar};
 
 pub enum Display {}
 pub type Window = u64;
@@ -123,4 +123,6 @@ extern "C" {
   pub fn XFilterEvent(event: *mut XKeyEvent, window: c_ulong) -> c_int;
   pub fn XCloseIM(input_method: XIM) -> c_int;
   pub fn XFree(data: *mut c_void) -> c_int;
+  pub fn XKeycodeToKeysym(display: *mut Display, keycode: c_uchar, index: c_int) -> c_ulong;
+  pub fn XKeysymToString(keysym: c_ulong) -> *mut c_char;
 }
