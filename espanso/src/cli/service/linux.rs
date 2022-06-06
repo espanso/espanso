@@ -29,7 +29,7 @@ use crate::{error_eprintln, info_println, warn_eprintln};
 
 const LINUX_SERVICE_NAME: &str = "espanso";
 const LINUX_SERVICE_CONTENT: &str = include_str!("../../res/linux/systemd.service");
-#[allow(clippy::transmute-bytes-to-str)]
+#[allow(clippy::transmute_bytes_to_str)]
 const LINUX_SERVICE_FILENAME: &str = formatcp!("{}.service", LINUX_SERVICE_NAME);
 
 pub fn register() -> Result<()> {
