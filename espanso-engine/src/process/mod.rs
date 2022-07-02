@@ -34,6 +34,7 @@ pub trait Processor {
 // Dependency inversion entities
 
 pub use middleware::action::{EventSequenceProvider, MatchInfoProvider};
+pub use middleware::alt_code_synthesizer::AltCodeSynthEnabledProvider;
 pub use middleware::delay_modifiers::ModifierStatusProvider;
 pub use middleware::disable::DisableOptions;
 pub use middleware::image_resolve::PathProvider;
@@ -69,6 +70,7 @@ pub fn default<'a, MatcherState>(
   modifier_state_provider: &'a dyn ModifierStateProvider,
   match_resolver: &'a dyn MatchResolver,
   notification_manager: &'a dyn NotificationManager,
+  alt_code_synth_enabled_provider: &'a dyn AltCodeSynthEnabledProvider,
 ) -> impl Processor + 'a {
   default::DefaultProcessor::new(
     matchers,
@@ -88,5 +90,6 @@ pub fn default<'a, MatcherState>(
     modifier_state_provider,
     match_resolver,
     notification_manager,
+    alt_code_synth_enabled_provider,
   )
 }

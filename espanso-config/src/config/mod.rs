@@ -162,6 +162,14 @@ pub trait Config: Send + Sync {
   // not be targeted to the right application.
   fn post_search_delay(&self) -> usize;
 
+  // If enabled, Espanso emulates the Alt Code feature available on Windows
+  // (keeping ALT pressed and then typing a char code with the numpad).
+  // This feature is necessary on Windows because the mechanism used by Espanso
+  // to intercept keystrokes disables the Windows' native Alt code functionality
+  // as a side effect.
+  // Because many users relied on this feature, we try to bring it back by emulating it.
+  fn emulate_alt_codes(&self) -> bool;
+
   // If true, use the `xclip` command to implement the clipboard instead of
   // the built-in native module on X11.
   fn x11_use_xclip_backend(&self) -> bool;

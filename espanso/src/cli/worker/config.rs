@@ -211,3 +211,9 @@ impl<'a> crate::gui::modulo::search::ModuloSearchUIOptionProvider for ConfigMana
     self.active().post_search_delay()
   }
 }
+
+impl<'a> espanso_engine::process::AltCodeSynthEnabledProvider for ConfigManager<'a> {
+  fn is_alt_code_synthesizer_enabled(&self) -> bool {
+    self.active().emulate_alt_codes()
+  }
+}

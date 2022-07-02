@@ -22,6 +22,7 @@ use log::trace;
 use super::{
   middleware::{
     action::{ActionMiddleware, EventSequenceProvider},
+    alt_code_synthesizer::AltCodeSynthesizerMiddleware,
     cause::CauseCompensateMiddleware,
     cursor_hint::CursorHintMiddleware,
     delay_modifiers::{DelayForModifierReleaseMiddleware, ModifierStatusProvider},
@@ -32,10 +33,10 @@ use super::{
     multiplex::MultiplexMiddleware,
     render::RenderMiddleware,
   },
-  DisableOptions, EnabledStatusProvider, MatchFilter, MatchInfoProvider, MatchProvider,
-  MatchResolver, MatchSelector, Matcher, MatcherMiddlewareConfigProvider, Middleware,
-  ModifierStateProvider, Multiplexer, NotificationManager, PathProvider, Processor, Renderer,
-  UndoEnabledProvider,
+  AltCodeSynthEnabledProvider, DisableOptions, EnabledStatusProvider, MatchFilter,
+  MatchInfoProvider, MatchProvider, MatchResolver, MatchSelector, Matcher,
+  MatcherMiddlewareConfigProvider, Middleware, ModifierStateProvider, Multiplexer,
+  NotificationManager, PathProvider, Processor, Renderer, UndoEnabledProvider,
 };
 use crate::{
   event::{Event, EventType},
@@ -74,6 +75,7 @@ impl<'a> DefaultProcessor<'a> {
     modifier_state_provider: &'a dyn ModifierStateProvider,
     match_resolver: &'a dyn MatchResolver,
     notification_manager: &'a dyn NotificationManager,
+    alt_code_synth_enabled_provider: &'a dyn AltCodeSynthEnabledProvider,
   ) -> DefaultProcessor<'a> {
     Self {
       event_queue: VecDeque::new(),
@@ -81,6 +83,9 @@ impl<'a> DefaultProcessor<'a> {
         Box::new(EventsDiscardMiddleware::new()),
         Box::new(DisableMiddleware::new(disable_options)),
         Box::new(IconStatusMiddleware::new()),
+        Box::new(AltCodeSynthesizerMiddleware::new(
+          alt_code_synth_enabled_provider,
+        )),
         Box::new(MatcherMiddleware::new(
           matchers,
           matcher_options_provider,

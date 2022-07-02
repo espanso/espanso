@@ -395,6 +395,10 @@ impl Config for LegacyInteropConfig {
     crate::config::default::DEFAULT_POST_SEARCH_DELAY
   }
 
+  fn emulate_alt_codes(&self) -> bool {
+    false
+  }
+
   fn win32_exclude_orphan_events(&self) -> bool {
     true
   }

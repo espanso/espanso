@@ -125,6 +125,18 @@ pub enum Key {
   F19,
   F20,
 
+  // Numpad keys
+  Numpad0,
+  Numpad1,
+  Numpad2,
+  Numpad3,
+  Numpad4,
+  Numpad5,
+  Numpad6,
+  Numpad7,
+  Numpad8,
+  Numpad9,
+
   // Other keys, includes the raw code provided by the operating system
   Other(i32),
 }

@@ -113,6 +113,9 @@ pub(crate) struct YAMLConfig {
   pub secure_input_notification: Option<bool>,
 
   #[serde(default)]
+  pub emulate_alt_codes: Option<bool>,
+
+  #[serde(default)]
   pub win32_exclude_orphan_events: Option<bool>,
 
   #[serde(default)]
@@ -213,6 +216,8 @@ impl TryFrom<YAMLConfig> for ParsedConfig {
       post_form_delay: yaml_config.post_form_delay,
       post_search_delay: yaml_config.post_search_delay,
 
+      emulate_alt_codes: yaml_config.emulate_alt_codes,
+
       win32_exclude_orphan_events: yaml_config.win32_exclude_orphan_events,
       win32_keyboard_layout_cache_interval: yaml_config.win32_keyboard_layout_cache_interval,
       x11_use_xclip_backend: yaml_config.x11_use_xclip_backend,
@@ -274,6 +279,7 @@ mod tests {
     secure_input_notification: false
     post_form_delay: 300
     post_search_delay: 400
+    emulate_alt_codes: true
     win32_exclude_orphan_events: false
     win32_keyboard_layout_cache_interval: 300
     x11_use_xclip_backend: true
@@ -329,6 +335,7 @@ mod tests {
         show_icon: Some(false),
         show_notifications: Some(false),
         secure_input_notification: Some(false),
+        emulate_alt_codes: Some(true),
         post_form_delay: Some(300),
         post_search_delay: Some(400),
         win32_exclude_orphan_events: Some(false),
