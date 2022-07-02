@@ -299,6 +299,10 @@ impl Config for ResolvedConfig {
     self.parsed.secure_input_notification.unwrap_or(true)
   }
 
+  fn emulate_alt_codes(&self) -> bool {
+    self.parsed.emulate_alt_codes.unwrap_or(false)
+  }
+
   fn post_form_delay(&self) -> usize {
     self
       .parsed
@@ -416,6 +420,7 @@ impl ResolvedConfig {
       show_icon,
       show_notifications,
       secure_input_notification,
+      emulate_alt_codes,
       post_form_delay,
       post_search_delay,
       win32_exclude_orphan_events,
