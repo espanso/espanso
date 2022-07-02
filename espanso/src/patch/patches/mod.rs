@@ -50,6 +50,7 @@ generate_patchable_config!(
   undo_backspace -> bool,
   post_form_delay -> usize,
   post_search_delay -> usize,
+  emulate_alt_codes -> bool,
   win32_exclude_orphan_events -> bool,
   win32_keyboard_layout_cache_interval -> i64,
   x11_use_xclip_backend -> bool,

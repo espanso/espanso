@@ -395,6 +395,18 @@ fn key_code_to_key(key_code: i32) -> (Key, Option<Variant>) {
     0x82 => (F19, None),
     0x83 => (F20, None),
 
+    // Numpad
+    0x60 => (Numpad0, None),
+    0x61 => (Numpad1, None),
+    0x62 => (Numpad2, None),
+    0x63 => (Numpad3, None),
+    0x64 => (Numpad4, None),
+    0x65 => (Numpad5, None),
+    0x66 => (Numpad6, None),
+    0x67 => (Numpad7, None),
+    0x68 => (Numpad8, None),
+    0x69 => (Numpad9, None),
+
     // Other keys, includes the raw code provided by the operating system
     _ => (Other(key_code), None),
   }

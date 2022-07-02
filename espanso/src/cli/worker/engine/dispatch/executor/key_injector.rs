@@ -108,6 +108,16 @@ fn convert_to_inject_key(key: &espanso_engine::event::input::Key) -> espanso_inj
     espanso_engine::event::input::Key::F18 => espanso_inject::keys::Key::F18,
     espanso_engine::event::input::Key::F19 => espanso_inject::keys::Key::F19,
     espanso_engine::event::input::Key::F20 => espanso_inject::keys::Key::F20,
+    espanso_engine::event::input::Key::Numpad0 => espanso_inject::keys::Key::Numpad0,
+    espanso_engine::event::input::Key::Numpad1 => espanso_inject::keys::Key::Numpad1,
+    espanso_engine::event::input::Key::Numpad2 => espanso_inject::keys::Key::Numpad2,
+    espanso_engine::event::input::Key::Numpad3 => espanso_inject::keys::Key::Numpad3,
+    espanso_engine::event::input::Key::Numpad4 => espanso_inject::keys::Key::Numpad4,
+    espanso_engine::event::input::Key::Numpad5 => espanso_inject::keys::Key::Numpad5,
+    espanso_engine::event::input::Key::Numpad6 => espanso_inject::keys::Key::Numpad6,
+    espanso_engine::event::input::Key::Numpad7 => espanso_inject::keys::Key::Numpad7,
+    espanso_engine::event::input::Key::Numpad8 => espanso_inject::keys::Key::Numpad8,
+    espanso_engine::event::input::Key::Numpad9 => espanso_inject::keys::Key::Numpad9,
     espanso_engine::event::input::Key::Other(raw) => espanso_inject::keys::Key::Raw(*raw),
   }
 }
