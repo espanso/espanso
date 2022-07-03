@@ -40,6 +40,8 @@ jobs:
         run: |
           cargo install rust-script --version "0.7.0"
           cargo install cargo-make --version 0.34.0
+      # wxWidgets builds (internal to espanso-modulo) are by far the largest bottleneck
+      # in the current pipeline, so we cache the results for a faster compilation process
       - name: "Cache wxWidgets builds"
         if: ${{ runner.os != 'Linux' }}
         uses: actions/cache@v3
