@@ -179,6 +179,7 @@ fn build_native() {
     PathBuf::from(std::env::var("OUT_DIR").expect("missing OUT_DIR"))
   };
   let out_wx_dir = out_dir.join("wx");
+  println!("wxWidgets will be compiled into: {}", out_wx_dir.display());
 
   let target_arch = match std::env::var("CARGO_CFG_TARGET_ARCH")
     .expect("unable to read target arch")
