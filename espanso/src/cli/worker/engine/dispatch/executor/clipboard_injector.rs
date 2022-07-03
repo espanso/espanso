@@ -40,6 +40,7 @@ pub struct ClipboardParams {
   pub restore_clipboard: bool,
   pub restore_clipboard_delay: usize,
   pub x11_use_xclip_backend: bool,
+  pub x11_use_xdotool_backend: bool,
 }
 
 pub struct ClipboardInjectorAdapter<'a> {
@@ -95,6 +96,7 @@ impl<'a> ClipboardInjectorAdapter<'a> {
       InjectionOptions {
         delay: params.paste_shortcut_event_delay as i32,
         disable_fast_inject: params.disable_x11_fast_inject,
+        x11_use_xdotool_fallback: params.x11_use_xdotool_backend,
         ..Default::default()
       },
     )?;

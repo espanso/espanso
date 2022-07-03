@@ -335,7 +335,7 @@ fn map_field_if_present(
 }
 
 // This is needed to convert the old form's {{control}} syntax to the new [[control]] one.
-fn apply_form_syntax_patch(matches: &mut Vec<Yaml>) {
+fn apply_form_syntax_patch(matches: &mut [Yaml]) {
   matches.iter_mut().for_each(|m| {
     if let Yaml::Hash(fields) = m {
       if let Some(Yaml::String(form_option)) = fields.get_mut(&Yaml::String("form".to_string())) {

@@ -110,6 +110,16 @@ pub fn convert_to_engine_key(key: espanso_detect::event::Key) -> Key {
     espanso_detect::event::Key::F18 => Key::F18,
     espanso_detect::event::Key::F19 => Key::F19,
     espanso_detect::event::Key::F20 => Key::F20,
+    espanso_detect::event::Key::Numpad0 => Key::Numpad0,
+    espanso_detect::event::Key::Numpad1 => Key::Numpad1,
+    espanso_detect::event::Key::Numpad2 => Key::Numpad2,
+    espanso_detect::event::Key::Numpad3 => Key::Numpad3,
+    espanso_detect::event::Key::Numpad4 => Key::Numpad4,
+    espanso_detect::event::Key::Numpad5 => Key::Numpad5,
+    espanso_detect::event::Key::Numpad6 => Key::Numpad6,
+    espanso_detect::event::Key::Numpad7 => Key::Numpad7,
+    espanso_detect::event::Key::Numpad8 => Key::Numpad8,
+    espanso_detect::event::Key::Numpad9 => Key::Numpad9,
     espanso_detect::event::Key::Other(code) => Key::Other(code),
   }
 }
