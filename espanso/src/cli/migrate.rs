@@ -177,9 +177,8 @@ fn find_available_backup_dir() -> PathBuf {
       "".to_string()
     };
 
-    let target_backup_dir = dirs::document_dir()
-      .expect("unable to generate backup directory")
-      .join(format!("espanso-migrate-backup{}", num));
+    let target_backup_dir =
+      find_backup_dir_location().join(format!("espanso-migrate-backup{}", num));
 
     if !target_backup_dir.is_dir() {
       return target_backup_dir;
@@ -187,6 +186,22 @@ fn find_available_backup_dir() -> PathBuf {
   }
 
   panic!("could not generate valid backup directory");
+}
+
+fn find_backup_dir_location() -> PathBuf {
+  if let Some(documents_dir) = dirs::document_dir() {
+    return documents_dir;
+  }
+
+  if let Some(home_dir) = dirs::home_dir() {
+    return home_dir;
+  }
+
+  if let Ok(current_dir) = std::env::current_dir() {
+    return current_dir;
+  }
+
+  panic!("unable to generate suitable backup location directory");
 }
 
 fn error_print_and_log(msg: &str) {
