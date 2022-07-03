@@ -19,7 +19,7 @@
 
 use std::path::Path;
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
@@ -34,7 +34,13 @@ pub struct Manifest {
 impl Manifest {
   pub fn parse(manifest_path: &Path) -> Result<Self> {
     let manifest_str = std::fs::read_to_string(manifest_path)?;
-    Ok(serde_yaml::from_str(&manifest_str)?)
+
+    serde_yaml::from_str(&manifest_str).with_context(|| {
+      format!(
+        "Failed manifest parsing for path: {}",
+        manifest_path.display()
+      )
+    })
   }
 }
 

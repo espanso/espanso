@@ -17,7 +17,9 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use log::info;
 use std::process::Command;
+use sysinfo::{System, SystemExt};
 
 #[cfg(target_os = "windows")]
 pub fn set_command_flags(command: &mut Command) {
@@ -42,4 +44,14 @@ pub fn attach_console() {
 #[cfg(not(target_os = "windows"))]
 pub fn attach_console() {
   // Not necessary on Linux and macOS
+}
+
+pub fn log_system_info() {
+  let sys = System::new();
+  info!(
+    "system info: {} v{} - kernel: {}",
+    sys.name().unwrap_or_default(),
+    sys.os_version().unwrap_or_default(),
+    sys.kernel_version().unwrap_or_default()
+  );
 }

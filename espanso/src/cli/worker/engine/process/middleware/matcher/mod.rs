@@ -98,5 +98,6 @@ pub fn convert_to_match_key(key: Key) -> espanso_match::event::Key {
     Key::F19 => espanso_match::event::Key::F19,
     Key::F20 => espanso_match::event::Key::F20,
     Key::Other(_) => espanso_match::event::Key::Other,
+    _ => espanso_match::event::Key::Other,
   }
 }
