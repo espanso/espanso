@@ -36,6 +36,7 @@ use simplelog::{
 use crate::{
   cli::{LogMode, PathsOverrides},
   config::load_config,
+  util::log_system_info,
 };
 
 mod capabilities;
@@ -586,6 +587,7 @@ For example, specifying 'email' is equivalent to 'match/email.yml'."#))
       info!("reading configs from: {:?}", paths.config);
       info!("reading packages from: {:?}", paths.packages);
       info!("using runtime dir: {:?}", paths.runtime);
+      log_system_info();
 
       if handler.requires_config {
         let config_result =
