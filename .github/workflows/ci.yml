@@ -12,6 +12,7 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  WX_WIDGETS_BUILD_OUT_DIR: "wx-widgets-build"
 
 jobs:
   build:
@@ -37,6 +38,13 @@ jobs:
         run: |
           cargo install rust-script --version "0.7.0"
           cargo install cargo-make --version 0.34.0
+      - name: "Cache wxWidgets builds"
+        if: ${{ runner.os != 'Linux' }}
+        uses: actions/cache@v3
+        with:
+          path: |
+            wx-widgets-build/
+          key: ${{ runner.os }}-${{ hashFiles('espanso-modulo/build.rs') }}-${{ hashFiles('espanso-modulo/vendor/*') }}
       - name: Build
         run: |
           cargo make build-binary
@@ -70,6 +78,13 @@ jobs:
         run: |
           cargo install rust-script --version "0.7.0"
           cargo install cargo-make --version 0.34.0
+      - name: "Cache wxWidgets builds"
+        if: ${{ runner.os != 'Linux' }}
+        uses: actions/cache@v3
+        with:
+          path: |
+            wx-widgets-build/
+          key: ${{ runner.os }}-${{ hashFiles('espanso-modulo/build.rs') }}-${{ hashFiles('espanso-modulo/vendor/*') }}
       - name: Run test suite
         run: cargo make test-binary
   
@@ -128,6 +143,13 @@ jobs:
         run: |
           cargo install rust-script --version "0.7.0"
           cargo install cargo-make --version 0.34.0
+      - name: "Cache wxWidgets builds"
+        if: ${{ runner.os != 'Linux' }}
+        uses: actions/cache@v3
+        with:
+          path: |
+            wx-widgets-build/
+          key: ${{ runner.os }}-${{ hashFiles('espanso-modulo/build.rs') }}-${{ hashFiles('espanso-modulo/vendor/*') }}
       - name: Build
         run: |
           cargo make build-macos-arm-binary
