@@ -45,7 +45,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: |
-            ${{WX_WIDGETS_BUILD_OUT_DIR}}
+            ${{env.WX_WIDGETS_BUILD_OUT_DIR}}
           key: ${{ runner.os }}-${{ hashFiles('espanso-modulo/build.rs') }}-${{ hashFiles('espanso-modulo/vendor/*') }}
       - name: Build
         run: |
@@ -88,7 +88,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: |
-            ${{WX_WIDGETS_BUILD_OUT_DIR}}
+            ${{env.WX_WIDGETS_BUILD_OUT_DIR}}
           key: ${{ runner.os }}-${{ hashFiles('espanso-modulo/build.rs') }}-${{ hashFiles('espanso-modulo/vendor/*') }}
       - name: Run test suite
         run: cargo make test-binary
@@ -155,7 +155,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: |
-            ${{WX_WIDGETS_BUILD_OUT_DIR}}
+            ${{env.WX_WIDGETS_BUILD_OUT_DIR}}
           key: ${{ runner.os }}-${{ hashFiles('espanso-modulo/build.rs') }}-${{ hashFiles('espanso-modulo/vendor/*') }}
       - name: Build
         run: |
