@@ -18,6 +18,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+      - uses: Swatinem/rust-cache@v1
       - name: Check formatting
         run: |
           rustup component add rustfmt
@@ -27,26 +28,51 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libx11-dev libxtst-dev libxkbcommon-dev libdbus-1-dev libwxgtk3.0-gtk3-dev
+      - name: Install rust-script and cargo-make
+        run: |
+          cargo install rust-script --version "0.7.0"
+          cargo install --force cargo-make --version 0.34.0
+      - name: Build
+        run: |
+          cargo make build-binary
       - name: Check clippy
         run: |
           rustup component add clippy
           cargo clippy -- -D warnings
         env:
           MACOSX_DEPLOYMENT_TARGET: "10.13"
+
+  test:
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: Swatinem/rust-cache@v1
+      - name: Check formatting
+        run: |
+          rustup component add rustfmt
+          cargo fmt --all -- --check
+      - name: Install Linux dependencies
+        if: ${{ runner.os == 'Linux' }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libx11-dev libxtst-dev libxkbcommon-dev libdbus-1-dev libwxgtk3.0-gtk3-dev
       - name: Install rust-script and cargo-make
         run: |
           cargo install rust-script --version "0.7.0"
           cargo install --force cargo-make --version 0.34.0
       - name: Run test suite
         run: cargo make test-binary
-      - name: Build
-        run: |
-          cargo make build-binary
   
   build-wayland:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - uses: Swatinem/rust-cache@v1
       - name: Check formatting
         run: |
           rustup component add rustfmt
@@ -55,23 +81,42 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libxkbcommon-dev libwxgtk3.0-gtk3-dev libdbus-1-dev
+      - name: Install rust-script and cargo-make
+        run: |
+          cargo install rust-script --version "0.7.0"
+          cargo install --force cargo-make --version 0.34.0
+      - name: Build
+        run: cargo make build-binary --env NO_X11=true
       - name: Check clippy
         run: |
           rustup component add clippy
           cargo clippy -p espanso --features wayland -- -D warnings
+  
+  test-wayland:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: Swatinem/rust-cache@v1
+      - name: Check formatting
+        run: |
+          rustup component add rustfmt
+          cargo fmt --all -- --check
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libxkbcommon-dev libwxgtk3.0-gtk3-dev libdbus-1-dev
       - name: Install rust-script and cargo-make
         run: |
           cargo install rust-script --version "0.7.0"
           cargo install --force cargo-make --version 0.34.0
       - name: Run test suite
         run: cargo make test-binary --env NO_X11=true
-      - name: Build
-        run: cargo make build-binary --env NO_X11=true
   
   build-macos-arm:
     runs-on: macos-11
     steps:
       - uses: actions/checkout@v2
+      - uses: Swatinem/rust-cache@v1
       - name: Install target
         run: rustup update && rustup target add aarch64-apple-darwin
       - name: Install rust-script and cargo-make
