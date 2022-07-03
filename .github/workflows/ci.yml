@@ -36,7 +36,7 @@ jobs:
       - name: Install rust-script and cargo-make
         run: |
           cargo install rust-script --version "0.7.0"
-          cargo install --force cargo-make --version 0.34.0
+          cargo install cargo-make --version 0.34.0
       - name: Build
         run: |
           cargo make build-binary
@@ -69,7 +69,7 @@ jobs:
       - name: Install rust-script and cargo-make
         run: |
           cargo install rust-script --version "0.7.0"
-          cargo install --force cargo-make --version 0.34.0
+          cargo install cargo-make --version 0.34.0
       - name: Run test suite
         run: cargo make test-binary
   
@@ -89,7 +89,7 @@ jobs:
       - name: Install rust-script and cargo-make
         run: |
           cargo install rust-script --version "0.7.0"
-          cargo install --force cargo-make --version 0.34.0
+          cargo install cargo-make --version 0.34.0
       - name: Build
         run: cargo make build-binary --env NO_X11=true
       - name: Check clippy
@@ -113,7 +113,7 @@ jobs:
       - name: Install rust-script and cargo-make
         run: |
           cargo install rust-script --version "0.7.0"
-          cargo install --force cargo-make --version 0.34.0
+          cargo install cargo-make --version 0.34.0
       - name: Run test suite
         run: cargo make test-binary --env NO_X11=true
   
@@ -127,7 +127,7 @@ jobs:
       - name: Install rust-script and cargo-make
         run: |
           cargo install rust-script --version "0.7.0"
-          cargo install --force cargo-make --version 0.34.0
+          cargo install cargo-make --version 0.34.0
       - name: Build
         run: |
           cargo make build-macos-arm-binary
@@ -135,4 +135,3 @@ jobs:
       #   uses: mxschmitt/action-tmate@v3
       #   with:
       #     limit-access-to-actor: true
-      
