@@ -146,7 +146,7 @@ jobs:
         with:
           path: |
             ${{env.WX_WIDGETS_BUILD_OUT_DIR}}
-        key: ${{ github.job }}-${{ runner.os }}-${{ hashFiles('espanso-modulo/build.rs') }}-${{ hashFiles('espanso-modulo/vendor/*') }}
+          key: ${{ github.job }}-${{ runner.os }}-${{ hashFiles('espanso-modulo/build.rs') }}-${{ hashFiles('espanso-modulo/vendor/*') }}
       - name: Build
         run: |
           cargo make build-macos-arm-binary
