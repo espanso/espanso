@@ -14,7 +14,6 @@ serde_yaml = "0.8.17"
 tempdir = "0.3.7"
 glob = "0.3.0"
 natord = "1.0.9"
-reqwest = { version = "0.11.4", features = ["blocking"] }
 lazy_static = "1.4.0"
 regex = "1.4.3"
 zip = "0.5.13"
@@ -22,3 +21,12 @@ scopeguard = "1.1.0"
 fs_extra = "1.2.0"
 sha2 = "0.9.6"
 hex = "0.4.3"
+reqwest = { version = "0.11.4", features = ["blocking"], default-features = false}
+
+# On Linux we don't want to depend on openssl to avoid dependency issues
+# https://github.com/espanso/espanso/issues/1056
+# We need to use features to control this behavior instead of targets due to this Cargo bug:
+# https://github.com/rust-lang/cargo/issues/1197
+[features]
+default-tls=["reqwest/default-tls"]
+rustls-tls=["reqwest/rustls-tls"]

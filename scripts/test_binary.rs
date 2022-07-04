@@ -48,6 +48,13 @@ fn main() {
   if wayland {
     features.push("wayland");
   }
+  // On linux, we don't want to rely on OpenSSL to avoid dependency issues
+  // https://github.com/espanso/espanso/issues/1056
+  if cfg!(target_os = "linux") {
+    features.push("vendored-tls")
+  } else {
+    features.push("native-tls")
+  }
 
   let features_flag = features.join(" ");
 
