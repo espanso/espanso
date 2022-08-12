@@ -760,7 +760,7 @@ impl fmt::Display for ConfigLoadError {
             ConfigLoadError::InvalidYAML(path, e) => write!(f, "Error parsing YAML file '{}', invalid syntax: {}", path.to_str().unwrap_or_default(), e),
             ConfigLoadError::InvalidConfigDirectory =>  write!(f, "Invalid config directory"),
             ConfigLoadError::InvalidParameter(path) =>  write!(f, "Invalid parameter in '{}', use of reserved parameters in used defined configs is not permitted", path.to_str().unwrap_or_default()),
-            ConfigLoadError::NameDuplicate(path) =>  write!(f, "Found duplicate 'name' in '{}', please use different names", path.to_str().unwrap_or_default()),
+            ConfigLoadError::NameDuplicate(path) =>  write!(f, "Found duplicate filename, please use different names for your config files."),
             ConfigLoadError::UnableToCreateDefaultConfig =>  write!(f, "Could not generate default config file"),
         }
   }
