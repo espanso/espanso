@@ -9,7 +9,7 @@ These are the basic tools required to build espanso:
 * A recent Rust compiler. You can install it following these instructions: https://www.rust-lang.org/tools/install
 * A C/C++ compiler. There are multiple of them depending on the platform, but espanso officially supports the following:
   * On Windows, you should use the MSVC compiler. The easiest way to install it is by downloading Visual Studio and checking "Desktop development with C++" in the installer: https://visualstudio.microsoft.com/
-  * On macOS, you should use the official build tools that come with Xcode. If you don't want to install Xcode, you should be able to download only the build tools by executing `xcode-select —install` and following the instructions.
+  * On macOS, you should use the official build tools that come with Xcode. If you don't want to install Xcode, you should be able to download only the build tools by executing `xcode-select —-install` and following the instructions.
   * On Linux, you should use the default C/C++ compiler (it's usually GCC). On Ubuntu/Debian systems, you can install them with `sudo apt install build-essential`
 
 * Espanso heavily relies on [cargo make](https://github.com/sagiegurari/cargo-make) for the various packaging
