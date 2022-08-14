@@ -24,7 +24,7 @@ jobs:
       - name: "Extract version"
         id: "version"
         run: |
-          ESPANSO_VERSION=$(cat espanso/Cargo.toml | grep version | head -1 | awk -F '"' '{ print $2 }')
+          ESPANSO_VERSION=$(grep version espanso/Cargo.toml | head -1 | awk -F '"' '{ print $2 }')
           echo version: $ESPANSO_VERSION
           echo "::set-output name=version::v$ESPANSO_VERSION"
 
