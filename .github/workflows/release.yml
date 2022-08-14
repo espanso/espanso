@@ -161,10 +161,11 @@ jobs:
         run: |
           cargo install rust-script --version "0.7.0"
           cargo install --force cargo-make --version 0.34.0
-      - name: Test
-        run: cargo make test-binary --profile release
-        env:
-          MACOSX_DEPLOYMENT_TARGET: "10.13"
+      # TODO: restore after tests
+      # - name: Test
+      #   run: cargo make test-binary --profile release
+      #   env:
+      #     MACOSX_DEPLOYMENT_TARGET: "10.13"
       - name: Build
         run: cargo make create-bundle --profile release
         env:
@@ -182,7 +183,7 @@ jobs:
           security unlock-keychain -p "$MACOS_CI_KEYCHAIN_PWD" buildespanso.keychain
           security import certificate.p12 -k buildespanso.keychain -P "$MACOS_CERTIFICATE_PWD" -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$MACOS_CI_KEYCHAIN_PWD" buildespanso.keychain
-          /usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" target/mac/Espanso.app -v
+          /usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" --options runtime target/mac/Espanso.app -v
       - name: "Notarize executable"
         env:
           PROD_MACOS_NOTARIZATION_APPLE_ID: ${{ secrets.PROD_MACOS_NOTARIZATION_APPLE_ID }}
@@ -248,7 +249,7 @@ jobs:
           security unlock-keychain -p "$MACOS_CI_KEYCHAIN_PWD" buildespanso.keychain
           security import certificate.p12 -k buildespanso.keychain -P "$MACOS_CERTIFICATE_PWD" -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$MACOS_CI_KEYCHAIN_PWD" buildespanso.keychain
-          /usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" target/mac/Espanso.app -v
+          /usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" --options runtime target/mac/Espanso.app -v
       - name: "Notarize executable"
         env:
           PROD_MACOS_NOTARIZATION_APPLE_ID: ${{ secrets.PROD_MACOS_NOTARIZATION_APPLE_ID }}
