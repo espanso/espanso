@@ -8,8 +8,6 @@ on:
     branches:
       - master
       - dev
-      # TODO: remove once finished
-      - feat/add-macos-notarization-step
 
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -161,11 +159,10 @@ jobs:
         run: |
           cargo install rust-script --version "0.7.0"
           cargo install --force cargo-make --version 0.34.0
-      # TODO: restore after tests
-      # - name: Test
-      #   run: cargo make test-binary --profile release
-      #   env:
-      #     MACOSX_DEPLOYMENT_TARGET: "10.13"
+      - name: Test
+        run: cargo make test-binary --profile release
+        env:
+          MACOSX_DEPLOYMENT_TARGET: "10.13"
       - name: Build
         run: cargo make create-bundle --profile release
         env:
