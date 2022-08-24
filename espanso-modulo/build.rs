@@ -90,7 +90,7 @@ fn build_native() {
       )
       .args(&[
         "/k",
-        &vcvars_path.to_string_lossy().to_string(),
+        &vcvars_path.to_string_lossy(),
         "&",
         "nmake",
         "/f",

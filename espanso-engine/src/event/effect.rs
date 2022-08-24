@@ -19,13 +19,13 @@
 
 use super::input::Key;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TriggerCompensationEvent {
   pub trigger: String,
   pub left_separator: Option<String>,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CursorHintCompensationEvent {
   pub cursor_hint_back_count: usize,
 }
@@ -46,7 +46,7 @@ pub struct HtmlInjectRequest {
   pub html: String,
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Eq)]
 pub enum TextInjectMode {
   Keys,
   Clipboard,
