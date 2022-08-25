@@ -147,16 +147,15 @@ mod interop {
   }
 }
 
+type SearchAlgorithmCallback = dyn Fn(&str, &[types::SearchItem]) -> Vec<usize>;
+
 struct SearchData {
   owned_search: interop::OwnedSearch,
   items: Vec<types::SearchItem>,
-  algorithm: Box<dyn Fn(&str, &[types::SearchItem]) -> Vec<usize>>,
+  algorithm: Box<SearchAlgorithmCallback>,
 }
 
-pub fn show(
-  search: types::Search,
-  algorithm: Box<dyn Fn(&str, &[types::SearchItem]) -> Vec<usize>>,
-) -> Option<String> {
+pub fn show(search: types::Search, algorithm: Box<SearchAlgorithmCallback>) -> Option<String> {
   use super::interop::*;
 
   let owned_search: interop::OwnedSearch = (&search).into();

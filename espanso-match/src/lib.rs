@@ -26,7 +26,7 @@ pub mod regex;
 pub mod rolling;
 mod util;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MatchResult<Id> {
   pub id: Id,
   pub trigger: String,

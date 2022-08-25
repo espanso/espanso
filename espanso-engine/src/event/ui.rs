@@ -29,7 +29,7 @@ pub enum MenuItem {
   Separator,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SimpleMenuItem {
   pub id: u32,
   pub label: String,
@@ -41,19 +41,19 @@ pub struct SubMenuItem {
   pub items: Vec<MenuItem>,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct IconStatusChangeEvent {
   pub status: IconStatus,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum IconStatus {
   Enabled,
   Disabled,
   SecureInputDisabled,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ShowTextEvent {
   pub title: String,
   pub text: String,

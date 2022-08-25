@@ -42,10 +42,8 @@ pub fn register() -> Result<()> {
   info_println!("creating service file in {:?}", service_file);
   let espanso_path = get_binary_path().expect("unable to get espanso executable path");
 
-  let service_content = String::from(LINUX_SERVICE_CONTENT).replace(
-    "{{{espanso_path}}}",
-    &espanso_path.to_string_lossy().to_string(),
-  );
+  let service_content = String::from(LINUX_SERVICE_CONTENT)
+    .replace("{{{espanso_path}}}", &espanso_path.to_string_lossy());
 
   std::fs::write(service_file, service_content)?;
 

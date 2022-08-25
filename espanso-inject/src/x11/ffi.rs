@@ -20,7 +20,7 @@ pub const KeyPress: c_int = 2;
 #[allow(non_upper_case_globals)]
 pub const KeyRelease: c_int = 3;
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(C)]
 pub struct XKeyEvent {
   pub type_: c_int,
@@ -40,7 +40,7 @@ pub struct XKeyEvent {
   pub same_screen: Bool,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(C)]
 pub struct XModifierKeymap {
   pub max_keypermod: c_int,
