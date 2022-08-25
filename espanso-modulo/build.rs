@@ -320,7 +320,7 @@ fn convert_fat_libraries_to_arm(lib_dir: &Path) {
 
     // Make sure it's a fat library
     let lipo_output = std::process::Command::new("lipo")
-      .args(&["-detailed_info", &path.to_string_lossy().to_string()])
+      .args(&["-detailed_info", &path.to_string_lossy()])
       .output()
       .expect("unable to check if library is fat");
     let lipo_output = String::from_utf8_lossy(&lipo_output.stdout);
@@ -339,9 +339,9 @@ fn convert_fat_libraries_to_arm(lib_dir: &Path) {
       .args(&[
         "-thin",
         "arm64",
-        &path.to_string_lossy().to_string(),
+        &path.to_string_lossy(),
         "-output",
-        &path.to_string_lossy().to_string(),
+        &path.to_string_lossy(),
       ])
       .output()
       .expect("unable to extract arm64 slice from library");
