@@ -34,7 +34,7 @@ ___
 * **Custom scripts** support
 * **Shell commands** support
 * **App-specific** configurations
-* Support [Forms](https://espanso.org/docs/forms/)
+* Support [Forms](https://espanso.org/docs/matches/forms/)
 * Expandable with **packages**
 * Built-in **package manager** for [espanso hub](https://hub.espanso.org/)
 * File based configuration
