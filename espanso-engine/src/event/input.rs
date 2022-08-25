@@ -17,19 +17,19 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Eq)]
 pub enum Status {
   Pressed,
   Released,
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Eq)]
 pub enum Variant {
   Left,
   Right,
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Eq)]
 pub struct KeyboardEvent {
   pub key: Key,
   pub value: Option<String>,
@@ -37,7 +37,7 @@ pub struct KeyboardEvent {
   pub variant: Option<Variant>,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum MouseButton {
   Left,
   Right,
@@ -49,13 +49,13 @@ pub enum MouseButton {
   Button5,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MouseEvent {
   pub button: MouseButton,
   pub status: Status,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Key {
   // Modifiers
   Alt,
@@ -124,12 +124,12 @@ pub enum Key {
   Other(i32),
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ContextMenuClickedEvent {
   pub context_item_id: u32,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct HotKeyEvent {
   pub hotkey_id: i32,
 }

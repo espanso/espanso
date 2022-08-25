@@ -119,7 +119,7 @@ pub struct YAMLMatch {
   pub search_terms: Option<Vec<String>>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
 pub struct YAMLVariable {
   pub name: String,
 

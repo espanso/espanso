@@ -23,7 +23,7 @@ pub mod matcher;
 mod tree;
 mod util;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum RollingItem {
   WordSeparator,
   Key(Key),
@@ -31,7 +31,7 @@ pub enum RollingItem {
   CharInsensitive(String),
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct RollingMatch<Id> {
   pub id: Id,
   pub items: Vec<RollingItem>,

@@ -48,7 +48,7 @@ pub struct Context<'a> {
   pub templates: Vec<&'a Template>,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RenderOptions {
   pub casing_style: CasingStyle,
 }
@@ -61,7 +61,7 @@ impl Default for RenderOptions {
   }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CasingStyle {
   None,
   Capitalize,
@@ -123,7 +123,7 @@ pub trait Extension {
 
 pub type Scope<'a> = HashMap<&'a str, ExtensionOutput>;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum ExtensionOutput {
   Single(String),
   Multiple(HashMap<String, String>),
