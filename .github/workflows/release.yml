@@ -8,7 +8,7 @@ on:
     branches:
       - master
       - dev
-      # TODO: remove
+      # TODO: remove 2
       - feat/windows-code-sign
 
 env:
