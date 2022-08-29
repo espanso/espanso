@@ -379,6 +379,18 @@ fn key_sym_to_key(key_sym: i32) -> (Key, Option<Variant>) {
     0xFFD0 => (F19, None),
     0xFFD1 => (F20, None),
 
+    // Numpad
+    0xFFB0 => (Numpad0, None),
+    0xFFB1 => (Numpad1, None),
+    0xFFB2 => (Numpad2, None),
+    0xFFB3 => (Numpad3, None),
+    0xFFB4 => (Numpad4, None),
+    0xFFB5 => (Numpad5, None),
+    0xFFB6 => (Numpad6, None),
+    0xFFB7 => (Numpad7, None),
+    0xFFB8 => (Numpad8, None),
+    0xFFB9 => (Numpad9, None),
+
     // Other keys, includes the raw code provided by the operating system
     _ => (Other(key_sym), None),
   }

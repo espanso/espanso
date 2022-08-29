@@ -32,7 +32,7 @@ static MODIFIERS: &[ShortcutKey; 4] = &[
   ShortcutKey::Meta,
 ];
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Eq)]
 pub struct HotKey {
   pub id: i32,
   pub key: ShortcutKey,

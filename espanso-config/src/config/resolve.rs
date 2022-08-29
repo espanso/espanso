@@ -299,6 +299,10 @@ impl Config for ResolvedConfig {
     self.parsed.secure_input_notification.unwrap_or(true)
   }
 
+  fn emulate_alt_codes(&self) -> bool {
+    self.parsed.emulate_alt_codes.unwrap_or(false)
+  }
+
   fn post_form_delay(&self) -> usize {
     self
       .parsed
@@ -330,6 +334,10 @@ impl Config for ResolvedConfig {
 
   fn x11_use_xclip_backend(&self) -> bool {
     self.parsed.x11_use_xclip_backend.unwrap_or(false)
+  }
+
+  fn x11_use_xdotool_backend(&self) -> bool {
+    self.parsed.x11_use_xdotool_backend.unwrap_or(false)
   }
 }
 
@@ -412,11 +420,13 @@ impl ResolvedConfig {
       show_icon,
       show_notifications,
       secure_input_notification,
+      emulate_alt_codes,
       post_form_delay,
       post_search_delay,
       win32_exclude_orphan_events,
       win32_keyboard_layout_cache_interval,
       x11_use_xclip_backend,
+      x11_use_xdotool_backend,
       includes,
       excludes,
       extra_includes,

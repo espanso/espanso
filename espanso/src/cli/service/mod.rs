@@ -152,6 +152,14 @@ fn start_main(paths: &Paths, _paths_overrides: &PathsOverrides, args: &ArgMatche
   }
 
   error_eprintln!("unable to start service: timed out");
+
+  error_eprintln!(
+    "Hint: sometimes this happens because another Espanso process is left running for some reason."
+  );
+  error_eprintln!(
+    "      Please try running 'espanso restart' or manually killing all Espanso processes, then try again."
+  );
+
   SERVICE_TIMED_OUT
 }
 

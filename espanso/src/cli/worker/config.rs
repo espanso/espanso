@@ -143,6 +143,7 @@ impl<'a> super::engine::dispatch::executor::clipboard_injector::ClipboardParamsP
       restore_clipboard: active.preserve_clipboard(),
       restore_clipboard_delay: active.restore_clipboard_delay(),
       x11_use_xclip_backend: active.x11_use_xclip_backend(),
+      x11_use_xdotool_backend: active.x11_use_xdotool_backend(),
     }
   }
 }
@@ -164,6 +165,7 @@ impl<'a> super::engine::dispatch::executor::InjectParamsProvider for ConfigManag
       inject_delay: active.inject_delay(),
       key_delay: active.key_delay(),
       evdev_modifier_delay: active.evdev_modifier_delay(),
+      x11_use_xdotool_backend: active.x11_use_xdotool_backend(),
     }
   }
 }
@@ -207,5 +209,11 @@ impl<'a> crate::gui::modulo::form::ModuloFormUIOptionProvider for ConfigManager<
 impl<'a> crate::gui::modulo::search::ModuloSearchUIOptionProvider for ConfigManager<'a> {
   fn get_post_search_delay(&self) -> usize {
     self.active().post_search_delay()
+  }
+}
+
+impl<'a> espanso_engine::process::AltCodeSynthEnabledProvider for ConfigManager<'a> {
+  fn is_alt_code_synthesizer_enabled(&self) -> bool {
+    self.active().emulate_alt_codes()
   }
 }

@@ -29,6 +29,7 @@ use crate::{error_eprintln, info_println, warn_eprintln};
 
 const LINUX_SERVICE_NAME: &str = "espanso";
 const LINUX_SERVICE_CONTENT: &str = include_str!("../../res/linux/systemd.service");
+#[allow(clippy::transmute_bytes_to_str)]
 const LINUX_SERVICE_FILENAME: &str = formatcp!("{}.service", LINUX_SERVICE_NAME);
 
 pub fn register() -> Result<()> {
@@ -41,10 +42,8 @@ pub fn register() -> Result<()> {
   info_println!("creating service file in {:?}", service_file);
   let espanso_path = get_binary_path().expect("unable to get espanso executable path");
 
-  let service_content = String::from(LINUX_SERVICE_CONTENT).replace(
-    "{{{espanso_path}}}",
-    &espanso_path.to_string_lossy().to_string(),
-  );
+  let service_content = String::from(LINUX_SERVICE_CONTENT)
+    .replace("{{{espanso_path}}}", &espanso_path.to_string_lossy());
 
   std::fs::write(service_file, service_content)?;
 

@@ -28,7 +28,7 @@ lazy_static! {
       .unwrap();
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct GitLabParts {
   author: String,
   name: String,

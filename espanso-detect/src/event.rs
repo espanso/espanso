@@ -19,7 +19,7 @@
 #[cfg(test)]
 use enum_as_inner::EnumAsInner;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 #[cfg_attr(test, derive(EnumAsInner))]
 pub enum InputEvent {
   Mouse(MouseEvent),
@@ -32,7 +32,7 @@ pub enum InputEvent {
   AllModifiersReleased,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum MouseButton {
   Left,
   Right,
@@ -44,25 +44,25 @@ pub enum MouseButton {
   Button5,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct MouseEvent {
   pub button: MouseButton,
   pub status: Status,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum Status {
   Pressed,
   Released,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum Variant {
   Left,
   Right,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct KeyboardEvent {
   pub key: Key,
   pub value: Option<String>,
@@ -72,7 +72,7 @@ pub struct KeyboardEvent {
 }
 
 // A subset of the Web's key values: https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum Key {
   // Modifiers
   Alt,
@@ -125,11 +125,23 @@ pub enum Key {
   F19,
   F20,
 
+  // Numpad keys
+  Numpad0,
+  Numpad1,
+  Numpad2,
+  Numpad3,
+  Numpad4,
+  Numpad5,
+  Numpad6,
+  Numpad7,
+  Numpad8,
+  Numpad9,
+
   // Other keys, includes the raw code provided by the operating system
   Other(i32),
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct HotKeyEvent {
   pub hotkey_id: i32,
 }

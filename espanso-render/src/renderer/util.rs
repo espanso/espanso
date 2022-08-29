@@ -78,7 +78,7 @@ pub(crate) fn render_variables(body: &str, scope: &Scope) -> Result<String> {
           ExtensionOutput::Multiple(results) => match var_subname {
             Some(var_subname) => {
               let var_subname = var_subname.as_str();
-              results.get(var_subname).map_or("", |value| &*value)
+              results.get(var_subname).map_or("", |value| value)
             }
             None => {
               error!(

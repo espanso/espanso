@@ -61,6 +61,10 @@ pub struct InjectionOptions {
   // Used to set a modifier-specific delay.
   // NOTE: Only relevant on Wayland systems.
   pub evdev_modifier_delay: u32,
+
+  // If true, use the xdotool fallback to perform the expansions.
+  // NOTE: Only relevant on Linux-X11 systems.
+  pub x11_use_xdotool_fallback: bool,
 }
 
 impl Default for InjectionOptions {
@@ -84,6 +88,7 @@ impl Default for InjectionOptions {
       delay: default_delay,
       disable_fast_inject: false,
       evdev_modifier_delay: 10,
+      x11_use_xdotool_fallback: false,
     }
   }
 }
@@ -148,8 +153,8 @@ pub fn get_injector(options: InjectorCreationOptions) -> Result<Box<dyn Injector
     info!("using EVDEVInjector");
     Ok(Box::new(evdev::EVDEVInjector::new(options)?))
   } else {
-    info!("using X11Injector");
-    Ok(Box::new(x11::X11Injector::new()?))
+    info!("using X11ProxyInjector");
+    Ok(Box::new(x11::X11ProxyInjector::new()?))
   }
 }
 

@@ -185,7 +185,7 @@ impl<Id: Clone> RollingMatcher<Id> {
     // in the state.
     if !has_previous_state {
       if let Some(MatcherTreeRef::Node(node)) = node.word_separators.as_ref() {
-        refs.extend(self.find_refs(&*node, event, true));
+        refs.extend(self.find_refs(node, event, true));
       }
     }
 
