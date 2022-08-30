@@ -50,6 +50,16 @@ dependencies = ["build-windows-resources"]
 [tasks.build-windows-all]
 dependencies = ["build-windows-portable", "build-windows-installer"]
 
+[tasks.sign-windows-resources]
+env = { "TARGET_SIGNTOOL_FILE" = "target/windows/resources/espansod.exe" }
+script_runner = "@rust"
+script = { file = "scripts/sign_windows_exe.rs" }
+
+[tasks.sign-windows-installer]
+env = { "TARGET_SIGNTOOL_FILE" = "target/windows/installer/Espanso-Win-Installer-x86_64.exe" }
+script_runner = "@rust"
+script = { file = "scripts/sign_windows_exe.rs" }
+
 # macOS
 
 [tasks.build-macos-arm-binary]

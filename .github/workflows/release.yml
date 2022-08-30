@@ -65,8 +65,24 @@ jobs:
           cargo install --force cargo-make --version 0.34.0
       - name: Test
         run: cargo make test-binary --profile release
-      - name: Build
-        run: cargo make build-windows-all --profile release
+      - name: Build resources
+        run: cargo make build-windows-resources --profile release
+      - name: Sign resources
+        run: cargo make sign-windows-resources
+        env:
+          CODESIGN_PWD: ${{ secrets.WIN_CODESIGN_PWD }}
+          CODESIGN_CROSS_SIGNED_B64: ${{ secrets.WIN_CODESIGN_INTERMEDIATE_B64 }}
+          CODESIGN_CERTIFICATE_B64: ${{ secrets.WIN_CODESIGN_CERTIFICATE_B64 }}
+      - name: Build installer
+        run: cargo make build-windows-installer --profile release --skip-tasks build-windows-resources
+      - name: Sign installer
+        run: cargo make sign-windows-installer
+        env:
+          CODESIGN_PWD: ${{ secrets.WIN_CODESIGN_PWD }}
+          CODESIGN_CROSS_SIGNED_B64: ${{ secrets.WIN_CODESIGN_INTERMEDIATE_B64 }}
+          CODESIGN_CERTIFICATE_B64: ${{ secrets.WIN_CODESIGN_CERTIFICATE_B64 }}
+      - name: Build portable mode archive 
+        run: cargo make build-windows-portable --profile release --skip-tasks build-windows-resources
       - name: Create portable mode archive
         shell: powershell
         run: |
