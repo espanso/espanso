@@ -8,8 +8,6 @@ on:
     branches:
       - master
       - dev
-      # TODO: remove 3
-      - feat/windows-code-sign
 
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
