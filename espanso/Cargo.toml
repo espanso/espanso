@@ -1,6 +1,6 @@
 [package]
 name = "espanso"
-version = "2.1.6-beta"
+version = "2.1.7-beta"
 authors = ["Federico Terzi <federicoterzi96@gmail.com>"]
 license = "GPL-3.0"
 description = "Cross-platform Text Expander written in Rust"
@@ -9,7 +9,14 @@ homepage = "https://github.com/federico-terzi/espanso"
 edition = "2018"
 
 [features]
-default = ["modulo"]
+default = ["modulo", "native-tls"]
+
+# These features control whether Espanso will use the native TLS functionality
+# or not. On some platforms (currently Linux) we prefer vendoring the SSL
+# logic used by the packages to avoid dependency issues.
+# https://github.com/espanso/espanso/issues/1056
+native-tls = ["espanso-package/default-tls"]
+vendored-tls = ["espanso-package/rustls-tls"]
 
 # If the wayland feature is enabled, all X11 dependencies will be dropped
 # and only methods suitable for Wayland will be used

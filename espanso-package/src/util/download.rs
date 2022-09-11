@@ -82,7 +82,7 @@ fn extract_zip(data: Vec<u8>, dest_dir: &Path) -> Result<()> {
       None => continue,
     };
 
-    if (&*file.name()).ends_with('/') {
+    if file.name().ends_with('/') {
       std::fs::create_dir_all(&outpath)?;
     } else {
       if let Some(p) = outpath.parent() {

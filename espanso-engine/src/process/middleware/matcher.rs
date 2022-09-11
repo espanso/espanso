@@ -44,7 +44,7 @@ pub enum MatcherEvent {
   VirtualSeparator,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MatchResult {
   pub id: i32,
   pub trigger: String,
@@ -104,7 +104,7 @@ impl<'a, State> Middleware for MatcherMiddleware<'a, State> {
     if is_event_of_interest(&event.etype) {
       let mut matcher_states = self.matcher_states.borrow_mut();
       let prev_states = if !matcher_states.is_empty() {
-        matcher_states.get(matcher_states.len() - 1)
+        matcher_states.back()
       } else {
         None
       };

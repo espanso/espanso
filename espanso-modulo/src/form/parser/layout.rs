@@ -25,7 +25,7 @@ lazy_static! {
   static ref FIELD_REGEX: Regex = Regex::new(r"\{\{(.*?)\}\}|\[\[(.*?)\]\]").unwrap();
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Token {
   Text(String),  // Text
   Field(String), // id: String

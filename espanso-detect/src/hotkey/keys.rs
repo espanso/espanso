@@ -25,7 +25,7 @@ lazy_static! {
   static ref RAW_PARSER: Regex = Regex::new(r"^RAW\((\d+)\)$").unwrap();
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Eq)]
 pub enum ShortcutKey {
   Alt,
   Control,

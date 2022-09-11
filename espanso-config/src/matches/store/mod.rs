@@ -28,7 +28,7 @@ pub trait MatchStore: Send {
   fn loaded_paths(&self) -> Vec<String>;
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MatchSet<'a> {
   pub matches: Vec<&'a Match>,
   pub global_vars: Vec<&'a Variable>,
