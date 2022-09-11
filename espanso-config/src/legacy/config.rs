@@ -386,7 +386,7 @@ impl LegacyConfig {
   }
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Eq)]
 pub enum BackendType {
   Inject,
   Clipboard,
@@ -740,7 +740,7 @@ impl LegacyConfigSet {
 }
 
 // Error handling
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 #[allow(dead_code)]
 pub enum ConfigLoadError {
   FileNotFound,

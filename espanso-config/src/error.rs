@@ -64,7 +64,7 @@ impl ErrorRecord {
   }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum ErrorLevel {
   Error,
   Warning,

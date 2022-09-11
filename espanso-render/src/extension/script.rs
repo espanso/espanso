@@ -66,16 +66,13 @@ impl Extension for ScriptExtension {
       // Also replace %CONFIG% and %PACKAGES% path. See issue #380
       args.iter_mut().for_each(|arg| {
         if arg.contains("%HOME%") {
-          *arg = arg.replace("%HOME%", &self.home_path.to_string_lossy().to_string());
+          *arg = arg.replace("%HOME%", &self.home_path.to_string_lossy());
         }
         if arg.contains("%CONFIG%") {
-          *arg = arg.replace("%CONFIG%", &self.config_path.to_string_lossy().to_string());
+          *arg = arg.replace("%CONFIG%", &self.config_path.to_string_lossy());
         }
         if arg.contains("%PACKAGES%") {
-          *arg = arg.replace(
-            "%PACKAGES%",
-            &self.packages_path.to_string_lossy().to_string(),
-          );
+          *arg = arg.replace("%PACKAGES%", &self.packages_path.to_string_lossy());
         }
 
         // On Windows, correct paths separators

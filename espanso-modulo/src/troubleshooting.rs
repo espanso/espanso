@@ -44,7 +44,9 @@ pub enum ErrorLevel {
   Warning,
 }
 
+type OpenFileCallback = dyn Fn(&Path) + Send;
+
 pub struct TroubleshootingHandlers {
   pub dont_show_again_changed: Option<Box<dyn Fn(bool) + Send>>,
-  pub open_file: Option<Box<dyn Fn(&Path) + Send>>,
+  pub open_file: Option<Box<OpenFileCallback>>,
 }

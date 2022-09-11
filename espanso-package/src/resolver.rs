@@ -23,7 +23,7 @@ use anyhow::{anyhow, bail, Context, Result};
 
 use crate::manifest::Manifest;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct ResolvedPackage {
   pub manifest: Manifest,
   pub base_dir: PathBuf,
