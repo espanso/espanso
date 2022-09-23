@@ -107,6 +107,15 @@ jobs:
         run: |
           gh release upload ${{ needs.extract-version.outputs.espanso_version }} target/windows/installer/Espanso-Win-Installer-x86_64.exe target/windows/Espanso-Win-Portable-x86_64.zip target/windows/installer/Espanso-Win-Installer-x86_64.exe.sha256.txt target/windows/Espanso-Win-Portable-x86_64.zip.sha256.txt
   
+  windows-publish-winget:
+    needs: [ windows ]
+    runs-on: windows-latest
+    steps:
+      - uses: vedantmgoyal2009/winget-releaser@latest
+        with:
+          identifier: Espanso.Espanso
+          token: ${{ secrets.WINGET_TOKEN }}
+  
   linux-x11:
     needs: ["extract-version", "create-release"]
     runs-on: ubuntu-latest
