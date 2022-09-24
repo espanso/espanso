@@ -108,6 +108,7 @@ jobs:
           gh release upload ${{ needs.extract-version.outputs.espanso_version }} target/windows/installer/Espanso-Win-Installer-x86_64.exe target/windows/Espanso-Win-Portable-x86_64.zip target/windows/installer/Espanso-Win-Installer-x86_64.exe.sha256.txt target/windows/Espanso-Win-Portable-x86_64.zip.sha256.txt
   
   windows-publish-winget:
+    if: ${{ github.ref == 'refs/heads/master' }}
     needs: [ windows ]
     runs-on: windows-latest
     steps:
