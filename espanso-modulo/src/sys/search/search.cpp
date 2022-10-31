@@ -37,7 +37,7 @@ const long DEFAULT_STYLE = wxSTAY_ON_TOP | wxFRAME_TOOL_WINDOW;
 #endif
 #ifdef __WXOSX__
 const int SEARCH_BAR_FONT_SIZE = 20;
-const long DEFAULT_STYLE = wxSTAY_ON_TOP | wxFRAME_TOOL_WINDOW | wxRESIZE_BORDER;
+const long DEFAULT_STYLE = wxSTAY_ON_TOP | wxRESIZE_BORDER;
 #endif
 #ifdef __LINUX__
 const int SEARCH_BAR_FONT_SIZE = 20;
@@ -87,7 +87,7 @@ protected:
     // change the appearance by overriding these functions (this is optional)
     virtual void OnDrawBackground(wxDC &dc, const wxRect &rect, size_t n) const;
 
-    bool isDark;
+    bool isDark = false;
 
 public:
     wxDECLARE_NO_COPY_CLASS(ResultListBox);
@@ -137,11 +137,11 @@ class SearchFrame : public wxFrame
 public:
     SearchFrame(const wxString &title, const wxPoint &pos, const wxSize &size);
 
-    wxPanel *panel;
-    wxTextCtrl *searchBar;
-    wxStaticBitmap *iconPanel;
-    wxStaticText *helpText;
-    ResultListBox *resultBox;
+    wxPanel *panel = nullptr;
+    wxTextCtrl *searchBar = nullptr;
+    wxStaticBitmap *iconPanel = nullptr;
+    wxStaticText *helpText = nullptr;
+    ResultListBox *resultBox = nullptr;
     void SetItems(SearchItem *items, int itemSize);
 
 private:
