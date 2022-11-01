@@ -12,11 +12,11 @@ serde = { version = "1.0.123", features = ["derive"] }
 anyhow = "1.0.38"
 thiserror = "1.0.23"
 lazy_static = "1.4.0"
-regex = "1.4.3"
+regex = "1.5.5"
 
 [build-dependencies]
 cc = "1.0.73"
-regex = "1.4.3"
+regex = "1.5.5"
 zip = "0.5.12"
 winres = "0.1.11"
 glob = "0.3.0"
