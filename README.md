@@ -47,7 +47,7 @@ Visit the [official documentation](https://espanso.org/docs/).
 
 ## Provisional Wayland support
 
-This branch has provisional support for Wayland, albeit **only under Fedora 36 using Gnome**.
+This branch has provisional support for Wayland, albeit **only under Fedora 36/37 using Gnome**.
 
 Please look at the documentation for details. Application specific filters
 (filter_title, filter_class, filter_exec) currently only work und Wayland with Gnome
