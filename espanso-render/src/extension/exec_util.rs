@@ -50,7 +50,7 @@ pub fn determine_default_macos_shell() -> Option<MacShell> {
   use std::process::Command;
 
   let output = Command::new("sh")
-    .args(&["--login", "-c", "dscl . -read ~/ UserShell"])
+    .args(["--login", "-c", "dscl . -read ~/ UserShell"])
     .output()
     .ok()?;
 
