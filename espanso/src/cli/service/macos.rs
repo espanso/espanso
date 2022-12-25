@@ -81,14 +81,14 @@ pub fn register() -> Result<()> {
   info!("reloading espanso launchctl entry");
 
   if let Err(err) = Command::new("launchctl")
-    .args(&["unload", "-w", plist_file.to_str().unwrap_or_default()])
+    .args(["unload", "-w", plist_file.to_str().unwrap_or_default()])
     .output()
   {
     warn!("unload command failed: {}", err);
   }
 
   let res = Command::new("launchctl")
-    .args(&["load", "-w", plist_file.to_str().unwrap_or_default()])
+    .args(["load", "-w", plist_file.to_str().unwrap_or_default()])
     .status();
 
   if let Ok(status) = res {
@@ -116,7 +116,7 @@ pub fn unregister() -> Result<()> {
   let plist_file = agents_dir.join(SERVICE_PLIST_FILE_NAME);
   if plist_file.exists() {
     let _res = Command::new("launchctl")
-      .args(&["unload", "-w", plist_file.to_str().unwrap_or_default()])
+      .args(["unload", "-w", plist_file.to_str().unwrap_or_default()])
       .output();
 
     std::fs::remove_file(&plist_file)?;
@@ -154,7 +154,7 @@ pub fn start_service() -> Result<()> {
   }
 
   let res = Command::new("launchctl")
-    .args(&["start", "com.federicoterzi.espanso"])
+    .args(["start", "com.federicoterzi.espanso"])
     .status();
 
   if let Ok(status) = res {
