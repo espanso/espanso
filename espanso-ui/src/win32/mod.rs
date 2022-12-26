@@ -154,7 +154,7 @@ impl UIEventLoop for Win32EventLoop {
     }
 
     let options = RawUIOptions {
-      show_icon: if self.show_icon { 1 } else { 0 },
+      show_icon: i32::from(self.show_icon),
       icon_paths,
       icon_paths_count: self.icons.len() as i32,
     };

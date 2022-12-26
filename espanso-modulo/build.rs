@@ -88,7 +88,7 @@ fn build_native() {
           .to_string_lossy()
           .to_string(),
       )
-      .args(&[
+      .args([
         "/k",
         &vcvars_path.to_string_lossy(),
         "&",
@@ -212,7 +212,7 @@ fn build_native() {
       // See: https://github.com/actions/virtual-environments/issues/3288#issuecomment-830207746
       Command::new(out_wx_dir.join("configure"))
         .current_dir(build_dir.to_string_lossy().to_string())
-        .args(&[
+        .args([
           "--disable-shared",
           "--without-libtiff",
           "--without-liblzma",
@@ -225,7 +225,7 @@ fn build_native() {
     } else {
       Command::new(out_wx_dir.join("configure"))
         .current_dir(build_dir.to_string_lossy().to_string())
-        .args(&[
+        .args([
           "--disable-shared",
           "--without-libtiff",
           "--without-liblzma",
@@ -247,7 +247,7 @@ fn build_native() {
 
     let mut handle = Command::new("make")
       .current_dir(build_dir.to_string_lossy().to_string())
-      .args(&["-j8"])
+      .args(["-j8"])
       .spawn()
       .expect("failed to execute make");
     if !handle
@@ -320,7 +320,7 @@ fn convert_fat_libraries_to_arm(lib_dir: &Path) {
 
     // Make sure it's a fat library
     let lipo_output = std::process::Command::new("lipo")
-      .args(&["-detailed_info", &path.to_string_lossy()])
+      .args(["-detailed_info", &path.to_string_lossy()])
       .output()
       .expect("unable to check if library is fat");
     let lipo_output = String::from_utf8_lossy(&lipo_output.stdout);
@@ -336,7 +336,7 @@ fn convert_fat_libraries_to_arm(lib_dir: &Path) {
     println!("converting {} to arm", path.to_string_lossy(),);
 
     let result = std::process::Command::new("lipo")
-      .args(&[
+      .args([
         "-thin",
         "arm64",
         &path.to_string_lossy(),
@@ -354,7 +354,7 @@ fn convert_fat_libraries_to_arm(lib_dir: &Path) {
 
 #[cfg(not(target_os = "windows"))]
 fn get_cpp_flags(wx_config_path: &Path) -> Vec<String> {
-  let config_output = std::process::Command::new(&wx_config_path)
+  let config_output = std::process::Command::new(wx_config_path)
     .arg("--cxxflags")
     .output()
     .expect("unable to execute wx-config");
@@ -376,7 +376,7 @@ fn get_cpp_flags(wx_config_path: &Path) -> Vec<String> {
 #[cfg(not(target_os = "windows"))]
 fn generate_linker_flags(wx_config_path: &Path) {
   use regex::Regex;
-  let config_output = std::process::Command::new(&wx_config_path)
+  let config_output = std::process::Command::new(wx_config_path)
     .arg("--libs")
     .output()
     .expect("unable to execute wx-config libs");

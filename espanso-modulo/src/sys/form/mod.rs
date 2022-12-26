@@ -252,7 +252,7 @@ mod interop {
         .expect("unable to convert default text to CString");
       let _interop = Box::new(TextMetadata {
         defaultText: default_text.as_ptr(),
-        multiline: if text_metadata.multiline { 1 } else { 0 },
+        multiline: i32::from(text_metadata.multiline),
       });
       Self {
         default_text,
