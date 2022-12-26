@@ -97,7 +97,7 @@ fn generate_nodes<'a>(
     });
   }
 
-  let global_vars_nodes = global_vars.iter().map(|var| create_node_from_var(*var));
+  let global_vars_nodes = global_vars.iter().map(|var| create_node_from_var(var));
 
   // The body depends on all local variables + the variables read inside it (which might be global)
   let mut body_dependencies: HashSet<&str> =

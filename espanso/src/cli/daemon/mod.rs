@@ -248,7 +248,7 @@ fn spawn_worker(
   let espanso_exe_path =
     std::env::current_exe().expect("unable to obtain espanso executable location");
 
-  let mut command = Command::new(&espanso_exe_path.to_string_lossy().to_string());
+  let mut command = Command::new(espanso_exe_path.to_string_lossy().to_string());
 
   let mut args = vec!["worker", "--monitor-daemon"];
   if let Some(start_reason) = &start_reason {

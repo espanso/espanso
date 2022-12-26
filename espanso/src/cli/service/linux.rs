@@ -50,7 +50,7 @@ pub fn register() -> Result<()> {
   info_println!("enabling systemd service");
 
   match Command::new("systemctl")
-    .args(&["--user", "enable", LINUX_SERVICE_NAME])
+    .args(["--user", "enable", LINUX_SERVICE_NAME])
     .status()
   {
     Ok(status) => {
@@ -86,7 +86,7 @@ pub fn unregister() -> Result<()> {
   info_println!("disabling espanso systemd service");
 
   match Command::new("systemctl")
-    .args(&["--user", "disable", LINUX_SERVICE_NAME])
+    .args(["--user", "disable", LINUX_SERVICE_NAME])
     .status()
   {
     Ok(status) => {
@@ -120,7 +120,7 @@ pub enum UnregisterError {
 
 pub fn is_registered() -> bool {
   let res = Command::new("systemctl")
-    .args(&["--user", "is-enabled", LINUX_SERVICE_NAME])
+    .args(["--user", "is-enabled", LINUX_SERVICE_NAME])
     .output();
   if let Ok(output) = res {
     if !output.status.success() {
@@ -133,7 +133,7 @@ pub fn is_registered() -> bool {
     }
 
     match Command::new("systemctl")
-      .args(&["--user", "cat", LINUX_SERVICE_NAME])
+      .args(["--user", "cat", LINUX_SERVICE_NAME])
       .output()
     {
       Ok(cmd_output) => {
@@ -177,7 +177,7 @@ pub fn is_registered() -> bool {
 pub fn start_service() -> Result<()> {
   // Check if systemd is available in the system
   match Command::new("systemctl")
-    .args(&["--version"])
+    .args(["--version"])
     .stdin(Stdio::null())
     .stdout(Stdio::null())
     .status()
@@ -220,7 +220,7 @@ pub fn start_service() -> Result<()> {
   }
 
   match Command::new("systemctl")
-    .args(&["--user", "start", LINUX_SERVICE_NAME])
+    .args(["--user", "start", LINUX_SERVICE_NAME])
     .status()
   {
     Ok(status) => {

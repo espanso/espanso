@@ -36,8 +36,8 @@ pub fn is_legacy_version_running(runtime_path: &Path) -> bool {
 
 pub fn migrate_configuration(paths: &Paths) -> Result<()> {
   let espanso_exe_path = std::env::current_exe()?;
-  let mut command = Command::new(&espanso_exe_path.to_string_lossy().to_string());
-  command.args(&["migrate", "--noconfirm"]);
+  let mut command = Command::new(espanso_exe_path.to_string_lossy().to_string());
+  command.args(["migrate", "--noconfirm"]);
   command.env(
     "ESPANSO_CONFIG_DIR",
     paths.config.to_string_lossy().to_string(),
@@ -79,8 +79,8 @@ pub enum MigrationError {
 
 pub fn add_espanso_to_path() -> Result<()> {
   let espanso_exe_path = std::env::current_exe()?;
-  let mut command = Command::new(&espanso_exe_path.to_string_lossy().to_string());
-  command.args(&["env-path", "--prompt", "register"]);
+  let mut command = Command::new(espanso_exe_path.to_string_lossy().to_string());
+  command.args(["env-path", "--prompt", "register"]);
 
   let mut child = command.spawn()?;
   let result = child.wait()?;
@@ -100,8 +100,8 @@ pub enum AddToPathError {
 
 pub fn show_already_running_warning() -> Result<()> {
   let espanso_exe_path = std::env::current_exe()?;
-  let mut command = Command::new(&espanso_exe_path.to_string_lossy().to_string());
-  command.args(&["modulo", "welcome", "--already-running"]);
+  let mut command = Command::new(espanso_exe_path.to_string_lossy().to_string());
+  command.args(["modulo", "welcome", "--already-running"]);
 
   let mut child = command.spawn()?;
   child.wait()?;
@@ -110,7 +110,7 @@ pub fn show_already_running_warning() -> Result<()> {
 
 pub fn configure_auto_start(auto_start: bool) -> Result<()> {
   let espanso_exe_path = std::env::current_exe()?;
-  let mut command = Command::new(&espanso_exe_path.to_string_lossy().to_string());
+  let mut command = Command::new(espanso_exe_path.to_string_lossy().to_string());
   let mut args = vec!["service"];
   if auto_start {
     args.push("register");

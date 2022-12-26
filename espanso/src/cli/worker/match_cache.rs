@@ -52,7 +52,7 @@ impl<'a> MatchCache<'a> {
 
 impl<'a> super::engine::process::middleware::render::MatchProvider<'a> for MatchCache<'a> {
   fn matches(&self) -> Vec<&'a Match> {
-    self.cache.iter().map(|(_, m)| *m).collect()
+    self.cache.values().copied().collect()
   }
 
   fn get(&self, id: i32) -> Option<&'a Match> {

@@ -156,7 +156,7 @@ pub fn show(options: TroubleshootingOptions) -> Result<()> {
 
   let troubleshooting_metadata = TroubleshootingMetadata {
     window_icon_path: c_window_icon_path_ptr,
-    is_fatal_error: if options.is_fatal_error { 1 } else { 0 },
+    is_fatal_error: i32::from(options.is_fatal_error),
     error_sets: error_sets.as_ptr(),
     error_sets_count: error_sets.len() as c_int,
     dont_show_again_changed,

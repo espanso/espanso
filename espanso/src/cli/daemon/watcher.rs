@@ -56,7 +56,7 @@ fn watcher_main(config_dir: &Path, debounce_tx: crossbeam::channel::Sender<()>) 
       .expect("unable to create file watcher");
 
   watcher
-    .watch(&config_dir, RecursiveMode::Recursive)
+    .watch(config_dir, RecursiveMode::Recursive)
     .expect("unable to start file watcher");
 
   info!("watching for changes in path: {:?}", config_dir);

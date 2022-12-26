@@ -414,7 +414,7 @@ impl X11DefaultInjector {
     for (mod_index, modifier_codes) in modifiers_codes.into_iter().enumerate() {
       if (modmask & (1 << mod_index)) != 0 {
         for keycode in modifier_codes {
-          let is_press = if pressed { 1 } else { 0 };
+          let is_press = i32::from(pressed);
           unsafe {
             XTestFakeKeyEvent(self.display, keycode as u32, is_press, 0);
             XSync(self.display, 0);
@@ -430,7 +430,7 @@ impl X11DefaultInjector {
       self.xtest_send_modifiers(record.state, pressed);
     }
 
-    let is_press = if pressed { 1 } else { 0 };
+    let is_press = i32::from(pressed);
     unsafe {
       XTestFakeKeyEvent(self.display, record.code, is_press, 0);
       XSync(self.display, 0);

@@ -52,7 +52,7 @@ impl Archiver for DefaultArchiver {
     }
 
     // Backup the previous directory if present
-    let backup_dir = self.package_dir.join(&format!("{}.old", package.name()));
+    let backup_dir = self.package_dir.join(format!("{}.old", package.name()));
     let _backup_guard = if target_dir.is_dir() {
       std::fs::rename(&target_dir, &backup_dir)
         .context("unable to backup old package directory")?;

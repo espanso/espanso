@@ -144,7 +144,7 @@ impl EspansoHubPackageProvider {
       index,
     };
     let serialized = serde_json::to_string(&cached_index)?;
-    std::fs::write(&target_file, serialized)?;
+    std::fs::write(target_file, serialized)?;
     Ok(())
   }
 }

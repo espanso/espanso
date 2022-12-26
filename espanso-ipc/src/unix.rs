@@ -108,7 +108,7 @@ pub struct UnixIPCClient {
 impl UnixIPCClient {
   pub fn new(id: &str, parent_dir: &Path) -> Result<Self> {
     let socket_path = parent_dir.join(format!("{}.sock", id));
-    let stream = UnixStream::connect(&socket_path)?;
+    let stream = UnixStream::connect(socket_path)?;
 
     Ok(Self { stream })
   }

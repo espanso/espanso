@@ -89,7 +89,7 @@ fn create_dir_and_link_with_applescript(exec_path: &Path, target_link_path: &Pat
   );
 
   let mut child = std::process::Command::new("osascript")
-    .args(&["-e", &params])
+    .args(["-e", &params])
     .spawn()?;
 
   let result = child.wait()?;
@@ -120,7 +120,7 @@ pub fn remove_espanso_from_path(prompt_when_necessary: bool) -> Result<()> {
           );
 
           let mut child = std::process::Command::new("osascript")
-            .args(&["-e", &params])
+            .args(["-e", &params])
             .spawn()?;
 
           let result = child.wait()?;

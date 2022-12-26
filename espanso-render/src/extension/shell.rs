@@ -50,39 +50,39 @@ impl Shell {
     let mut command = match self {
       Shell::Cmd => {
         let mut command = Command::new("cmd");
-        command.args(&["/C", cmd]);
+        command.args(["/C", cmd]);
         command
       }
       Shell::Powershell => {
         let mut command = Command::new("powershell");
-        command.args(&["-Command", cmd]);
+        command.args(["-Command", cmd]);
         command
       }
       Shell::WSL => {
         is_wsl = true;
         let mut command = Command::new("bash");
-        command.args(&["-c", cmd]);
+        command.args(["-c", cmd]);
         command
       }
       Shell::WSL2 => {
         is_wsl = true;
         let mut command = Command::new("wsl");
-        command.args(&["bash", "-c", cmd]);
+        command.args(["bash", "-c", cmd]);
         command
       }
       Shell::Bash => {
         let mut command = Command::new("bash");
-        command.args(&["-c", cmd]);
+        command.args(["-c", cmd]);
         command
       }
       Shell::Sh => {
         let mut command = Command::new("sh");
-        command.args(&["-c", cmd]);
+        command.args(["-c", cmd]);
         command
       }
       Shell::Zsh => {
         let mut command = Command::new("zsh");
-        command.args(&["-c", cmd]);
+        command.args(["-c", cmd]);
         command
       }
     };

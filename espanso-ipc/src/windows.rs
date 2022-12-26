@@ -107,7 +107,7 @@ impl WinIPCClient {
   pub fn new(id: &str) -> Result<Self> {
     let pipe_name = format!("\\\\.\\pipe\\{}", id);
 
-    let stream = PipeClient::connect_ms(&pipe_name, DEFAULT_CLIENT_TIMEOUT)?;
+    let stream = PipeClient::connect_ms(pipe_name, DEFAULT_CLIENT_TIMEOUT)?;
     Ok(Self { stream })
   }
 }

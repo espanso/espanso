@@ -129,7 +129,7 @@ fn insert_items_recursively<Id>(id: Id, node: &mut MatcherTreeNode<Id>, items: &
           insert_items_recursively(id, next_node.as_mut(), &items[1..])
         }
         None => {
-          let mut next_node = Box::new(MatcherTreeNode::default());
+          let mut next_node = Box::<MatcherTreeNode<Id>>::default();
           insert_items_recursively(id, next_node.as_mut(), &items[1..]);
           node.word_separators = Some(MatcherTreeRef::Node(next_node));
         }
@@ -141,7 +141,7 @@ fn insert_items_recursively<Id>(id: Id, node: &mut MatcherTreeNode<Id>, items: &
             insert_items_recursively(id, next_node, &items[1..])
           }
         } else {
-          let mut next_node = Box::new(MatcherTreeNode::default());
+          let mut next_node = Box::<MatcherTreeNode<Id>>::default();
           insert_items_recursively(id, next_node.as_mut(), &items[1..]);
           node
             .keys
@@ -154,7 +154,7 @@ fn insert_items_recursively<Id>(id: Id, node: &mut MatcherTreeNode<Id>, items: &
             insert_items_recursively(id, next_node, &items[1..])
           }
         } else {
-          let mut next_node = Box::new(MatcherTreeNode::default());
+          let mut next_node = Box::<MatcherTreeNode<Id>>::default();
           insert_items_recursively(id, next_node.as_mut(), &items[1..]);
           node
             .chars
@@ -172,7 +172,7 @@ fn insert_items_recursively<Id>(id: Id, node: &mut MatcherTreeNode<Id>, items: &
             insert_items_recursively(id, next_node, &items[1..])
           }
         } else {
-          let mut next_node = Box::new(MatcherTreeNode::default());
+          let mut next_node = Box::<MatcherTreeNode<Id>>::default();
           insert_items_recursively(id, next_node.as_mut(), &items[1..]);
           node
             .chars_insensitive
