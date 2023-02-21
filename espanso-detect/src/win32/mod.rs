@@ -183,9 +183,13 @@ impl Source for Win32Source {
       // those from espanso.
       if event.event_type == INPUT_EVENT_TYPE_KEYBOARD
         && event.has_known_source == 0
-        && unsafe { (*_self).exclude_orphan_events }
+        && (unsafe { (*_self).exclude_orphan_events } || espanso_info::expansion_is_in_progress())
       {
         trace!("skipping keyboard event with unknown HID source (probably software generated).");
+        if event.key_code == 8 || event.key_code == 13 {
+          // For expansion in progress, only care about backspace (8) and enter (13)
+          espanso_info::decr_expansion_events();
+        }
         return;
       }
 

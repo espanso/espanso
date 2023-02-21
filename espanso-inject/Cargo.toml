@@ -17,6 +17,7 @@ anyhow = "1.0.38"
 thiserror = "1.0.23"
 lazy_static = "1.4.0"
 regex = "1.5.5"
+espanso-info = { path = "../espanso-info" }
 
 [target.'cfg(windows)'.dependencies]
 widestring = "0.4.3"

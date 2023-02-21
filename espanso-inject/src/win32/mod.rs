@@ -70,6 +70,8 @@ impl Injector for Win32Injector {
 
   fn send_keys(&self, keys: &[keys::Key], options: InjectionOptions) -> Result<()> {
     let virtual_keys = Self::convert_to_vk_array(keys)?;
+    // note: multiplying by 2 because there is a press and release event
+    espanso_info::add_expansion_events(keys.len() * 2);
 
     if options.delay == 0 {
       unsafe {
