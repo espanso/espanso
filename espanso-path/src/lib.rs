@@ -17,8 +17,9 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use log::{debug, info};
+use log::{debug, info, warn};
 use std::{
+  env,
   fs::create_dir_all,
   path::{Path, PathBuf},
 };
@@ -93,6 +94,12 @@ fn get_config_dir() -> Option<PathBuf> {
     // Portable mode
     debug!("detected portable config directory in {:?}", portable_dir);
     Some(portable_dir)
+  } else if let Some(config_dir) = get_env_var_espanso_dir() {
+    debug!(
+      "detected config directiory set by env var `ESPANSO_CONFIG_DIR` at {:?}",
+      &config_dir
+    );
+    Some(config_dir)
   } else if let Some(config_dir) = get_home_espanso_dir() {
     // $HOME/.espanso
     debug!("detected config directory in $HOME/.espanso");
@@ -126,6 +133,21 @@ fn get_portable_config_dir() -> Option<PathBuf> {
     }
   }
   None
+}
+
+fn get_env_var_espanso_dir() -> Option<PathBuf> {
+  match env::var("ESPANSO_CONFIG_DIR") {
+    Ok(val) => {
+      let path = PathBuf::from(val);
+      if path.exists() {
+        Some(path)
+      } else {
+        warn!("env var `ESPANSO_CONFIG_DIR` was set but the destination does not exist, ignoring.");
+        None
+      }
+    }
+    Err(_) => None,
+  }
 }
 
 fn get_home_espanso_dir() -> Option<PathBuf> {
