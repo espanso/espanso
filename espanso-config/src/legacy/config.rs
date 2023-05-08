@@ -387,16 +387,14 @@ impl LegacyConfig {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Eq)]
+#[derive(Default)]
 pub enum BackendType {
   Inject,
   Clipboard,
+  #[default]
   Auto,
 }
-impl Default for BackendType {
-  fn default() -> Self {
-    BackendType::Auto
-  }
-}
+
 
 impl LegacyConfig {
   fn load_config(path: &Path) -> Result<LegacyConfig, ConfigLoadError> {

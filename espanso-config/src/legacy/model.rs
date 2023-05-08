@@ -46,7 +46,9 @@ pub enum KeyModifier {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Default)]
 pub enum PasteShortcut {
+  #[default]
   Default,     // Default one for the current system
   CtrlV,       // Classic Ctrl+V shortcut
   CtrlShiftV,  // Could be used to paste without formatting in many applications
@@ -55,8 +57,4 @@ pub enum PasteShortcut {
   MetaV,       // Corresponding to Win+V on Windows and Linux, CMD+V on macOS
 }
 
-impl Default for PasteShortcut {
-  fn default() -> Self {
-    PasteShortcut::Default
-  }
-}
+

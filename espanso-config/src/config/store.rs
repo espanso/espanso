@@ -35,7 +35,7 @@ impl ConfigStore for DefaultConfigStore {
     Arc::clone(&self.default)
   }
 
-  fn active<'a>(&'a self, app: &super::AppProperties) -> Arc<dyn super::Config> {
+  fn active(&self, app: &super::AppProperties) -> Arc<dyn super::Config> {
     // Find a custom config that matches or fallback to the default one
     for custom in self.customs.iter() {
       if custom.is_match(app) {
