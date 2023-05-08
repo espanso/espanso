@@ -71,7 +71,7 @@ macro_rules! generate_patchable_config {
           self.base.match_paths()
         }
 
-        fn is_match<'b>(&self, app: &AppProperties<'b>) -> bool {
+        fn is_match(&self, app: &AppProperties) -> bool {
           self.base.is_match(app)
         }
 
