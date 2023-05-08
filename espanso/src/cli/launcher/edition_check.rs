@@ -54,6 +54,6 @@ fn get_session_type() -> Option<String> {
     return None;
   }
 
-  let session_type: Option<&str> = raw_session_type.split('=').into_iter().last();
+  let session_type: Option<&str> = raw_session_type.split('=').last();
   session_type.map(String::from)
 }

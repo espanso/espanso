@@ -127,11 +127,11 @@ pub mod tests {
       create_dir_all(&sub_dir).unwrap();
 
       let base_file = match_dir.join("base.yml");
-      std::fs::write(&base_file, "test").unwrap();
+      std::fs::write(base_file, "test").unwrap();
       let another_file = match_dir.join("another.yml");
-      std::fs::write(&another_file, "test").unwrap();
+      std::fs::write(another_file, "test").unwrap();
       let under_file = match_dir.join("_sub.yml");
-      std::fs::write(&under_file, "test").unwrap();
+      std::fs::write(under_file, "test").unwrap();
       let sub_file = sub_dir.join("sub.yml");
       std::fs::write(&sub_file, "test").unwrap();
 

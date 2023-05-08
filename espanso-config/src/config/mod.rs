@@ -190,6 +190,7 @@ pub trait Config: Send + Sync {
   // in this issue: https://github.com/federico-terzi/espanso/issues/745
   fn win32_keyboard_layout_cache_interval(&self) -> i64;
 
+  #[allow(clippy::needless_lifetimes)]
   fn is_match<'a>(&self, app: &AppProperties<'a>) -> bool;
 
   fn pretty_dump(&self) -> String {
@@ -270,7 +271,7 @@ pub trait Config: Send + Sync {
 
 pub trait ConfigStore: Send {
   fn default(&self) -> Arc<dyn Config>;
-  fn active<'a>(&'a self, app: &AppProperties) -> Arc<dyn Config>;
+  fn active(&self, app: &AppProperties) -> Arc<dyn Config>;
   fn configs(&self) -> Vec<Arc<dyn Config>>;
 
   fn get_all_match_paths(&self) -> HashSet<String>;

@@ -91,7 +91,7 @@ mod tests {
     use_test_directory(|base, match_dir, config_dir| {
       let base_file = match_dir.join("base.yml");
       std::fs::write(
-        &base_file,
+        base_file,
         r#"
       matches:
         - trigger: "hello"
@@ -102,7 +102,7 @@ mod tests {
 
       let another_file = match_dir.join("another.yml");
       std::fs::write(
-        &another_file,
+        another_file,
         r#"
       imports:
         - "_sub.yml"
@@ -116,7 +116,7 @@ mod tests {
 
       let under_file = match_dir.join("_sub.yml");
       std::fs::write(
-        &under_file,
+        under_file,
         r#"
       matches:
         - trigger: "hello3"
@@ -126,11 +126,11 @@ mod tests {
       .unwrap();
 
       let config_file = config_dir.join("default.yml");
-      std::fs::write(&config_file, "").unwrap();
+      std::fs::write(config_file, "").unwrap();
 
       let custom_config_file = config_dir.join("custom.yml");
       std::fs::write(
-        &custom_config_file,
+        custom_config_file,
         r#"
       filter_title: "Chrome"
 
@@ -186,7 +186,7 @@ mod tests {
     use_test_directory(|base, match_dir, config_dir| {
       let base_file = match_dir.join("base.yml");
       std::fs::write(
-        &base_file,
+        base_file,
         r#"
       matches:
         - "invalid"invalid
@@ -196,7 +196,7 @@ mod tests {
 
       let another_file = match_dir.join("another.yml");
       std::fs::write(
-        &another_file,
+        another_file,
         r#"
       imports:
         - "_sub.yml"
@@ -210,7 +210,7 @@ mod tests {
 
       let under_file = match_dir.join("_sub.yml");
       std::fs::write(
-        &under_file,
+        under_file,
         r#"
       matches:
         - trigger: "hello3"
@@ -220,11 +220,11 @@ mod tests {
       .unwrap();
 
       let config_file = config_dir.join("default.yml");
-      std::fs::write(&config_file, r#""#).unwrap();
+      std::fs::write(config_file, r#""#).unwrap();
 
       let custom_config_file = config_dir.join("custom.yml");
       std::fs::write(
-        &custom_config_file,
+        custom_config_file,
         r#"
       filter_title: "Chrome"
       "
@@ -261,7 +261,7 @@ mod tests {
       .unwrap();
 
       let config_file = config_dir.join("default.yml");
-      std::fs::write(&config_file, r#""#).unwrap();
+      std::fs::write(config_file, r#""#).unwrap();
 
       let (config_store, match_store, errors) = load(base).unwrap();
 
@@ -284,7 +284,7 @@ mod tests {
     use_test_directory(|base, match_dir, config_dir| {
       let base_file = match_dir.join("base.yml");
       std::fs::write(
-        &base_file,
+        base_file,
         r#"
       matches:
         - trigger: hello
@@ -295,7 +295,7 @@ mod tests {
 
       let config_file = config_dir.join("default.yml");
       std::fs::write(
-        &config_file,
+        config_file,
         r#"
       invalid
 
