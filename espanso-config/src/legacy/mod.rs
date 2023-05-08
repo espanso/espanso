@@ -475,9 +475,9 @@ mod tests {
     let package_dir = TempDir::new("tempconfig").unwrap();
 
     callback(
-      &dunce::canonicalize(&dir.path()).unwrap(),
+      &dunce::canonicalize(dir.path()).unwrap(),
       &dunce::canonicalize(&user_dir).unwrap(),
-      &dunce::canonicalize(&package_dir.path()).unwrap(),
+      &dunce::canonicalize(package_dir.path()).unwrap(),
     );
   }
 

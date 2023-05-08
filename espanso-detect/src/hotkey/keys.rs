@@ -591,7 +591,7 @@ impl ShortcutKey {
       ShortcutKey::Numpad7 => Some(0xffb7),
       ShortcutKey::Numpad8 => Some(0xffb8),
       ShortcutKey::Numpad9 => Some(0xffb9),
-      ShortcutKey::Raw(code) => Some(*code as u32),
+      ShortcutKey::Raw(code) => Some(*code),
     }
   }
 }

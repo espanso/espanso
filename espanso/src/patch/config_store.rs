@@ -66,7 +66,7 @@ impl ConfigStore for PatchedConfigStore {
     self.config_store.default()
   }
 
-  fn active<'f>(&'f self, app: &espanso_config::config::AppProperties) -> Arc<dyn Config> {
+  fn active(&self, app: &espanso_config::config::AppProperties) -> Arc<dyn Config> {
     let active_config = self.config_store.active(app);
 
     if !active_config.apply_patch() {

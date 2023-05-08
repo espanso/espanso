@@ -314,7 +314,7 @@ mod tests {
 
       let another_file = match_dir.join("_another.yml");
       std::fs::write(
-        &another_file,
+        another_file,
         r#"
       imports:
         - "sub/sub.yml"
@@ -330,7 +330,7 @@ mod tests {
 
       let sub_file = sub_dir.join("sub.yml");
       std::fs::write(
-        &sub_file,
+        sub_file,
         r#"
       imports:
         - "../_another.yml"
@@ -376,7 +376,7 @@ mod tests {
 
       let another_file = match_dir.join("_another.yml");
       std::fs::write(
-        &another_file,
+        another_file,
         r#"
       imports:
         - "sub/sub.yml"
@@ -392,7 +392,7 @@ mod tests {
 
       let sub_file = sub_dir.join("sub.yml");
       std::fs::write(
-        &sub_file,
+        sub_file,
         r#"
       global_vars:
         - name: var2
@@ -470,7 +470,7 @@ mod tests {
 
       let another_file = match_dir.join("_another.yml");
       std::fs::write(
-        &another_file,
+        another_file,
         r#"
       imports:
         - "sub/sub.yml"
@@ -486,7 +486,7 @@ mod tests {
 
       let sub_file = sub_dir.join("sub.yml");
       std::fs::write(
-        &sub_file,
+        sub_file,
         r#"
       imports:
         - "../_another.yml"  # Circular import
@@ -567,7 +567,7 @@ mod tests {
 
       let another_file = match_dir.join("_another.yml");
       std::fs::write(
-        &another_file,
+        another_file,
         r#"
       matches:
         - trigger: "hello"
@@ -663,7 +663,7 @@ mod tests {
 
       let another_file = match_dir.join("_another.yml");
       std::fs::write(
-        &another_file,
+        another_file,
         r#"
       imports:
         - "sub/sub.yml"

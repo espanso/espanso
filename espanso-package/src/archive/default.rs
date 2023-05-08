@@ -328,7 +328,7 @@ matches:
       assert!(package_out_dir.is_dir());
 
       let legacy_package = dest_dir.join("z_legacypackage1");
-      create_dir_all(&legacy_package).unwrap();
+      create_dir_all(legacy_package).unwrap();
 
       let package_list = archiver.list().unwrap();
 
