@@ -35,7 +35,7 @@ pub fn add_espanso_to_path(_: bool) -> Result<()> {
 
   let target_link_path = target_link_dir.join("espanso");
 
-  if let Err(error) = std::os::unix::fs::symlink(&exec_path, &target_link_path) {
+  if let Err(error) = std::os::unix::fs::symlink(exec_path, target_link_path) {
     return Err(PathError::SymlinkError(error).into());
   }
 
