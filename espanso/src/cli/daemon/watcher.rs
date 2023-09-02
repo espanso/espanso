@@ -19,7 +19,11 @@
 
 use std::{path::Path, time::Duration};
 
-use notify::{DebouncedEvent, RecommendedWatcher, RecursiveMode, Watcher};
+use notify_debouncer_mini::{
+  new_debouncer_opt,
+  notify::{Config as NotifyConfig, RecommendedWatcher, RecursiveMode},
+  Config, Debouncer,
+};
 
 use anyhow::Result;
 use crossbeam::{channel::Sender, select};
@@ -51,11 +55,18 @@ pub fn initialize_and_spawn(config_dir: &Path, watcher_notify: Sender<()>) -> Re
 fn watcher_main(config_dir: &Path, debounce_tx: crossbeam::channel::Sender<()>) {
   let (tx, rx) = std::sync::mpsc::channel();
 
-  let mut watcher: RecommendedWatcher =
-    Watcher::new(tx, Duration::from_millis(WATCHER_NOTIFY_DELAY_MS))
-      .expect("unable to create file watcher");
+  let mut watcher: Debouncer<RecommendedWatcher> = new_debouncer_opt(
+    Config::default()
+      .with_timeout(Duration::from_millis(WATCHER_DEBOUNCE_DURATION_MS))
+      .with_notify_config(
+        NotifyConfig::default().with_poll_interval(Duration::from_millis(WATCHER_NOTIFY_DELAY_MS)),
+      ),
+    tx,
+  )
+  .expect("unable to create file watcher");
 
   watcher
+    .watcher()
     .watch(config_dir, RecursiveMode::Recursive)
     .expect("unable to start file watcher");
 
@@ -63,32 +74,19 @@ fn watcher_main(config_dir: &Path, debounce_tx: crossbeam::channel::Sender<()>) 
 
   loop {
     let should_reload = match rx.recv() {
-      Ok(event) => {
-        let path = match event {
-          DebouncedEvent::Create(path) => Some(path),
-          DebouncedEvent::Write(path) => Some(path),
-          DebouncedEvent::Remove(path) => Some(path),
-          DebouncedEvent::Rename(_, path) => Some(path),
-          _ => None,
-        };
+      Ok(Ok(events)) => events.iter().any(|one_event| {
+        let path = &one_event.path; // Changed this line
+        let extension = path
+          .extension()
+          .unwrap_or_default()
+          .to_string_lossy()
+          .to_ascii_lowercase();
 
-        if let Some(path) = path {
-          let extension = path
-            .extension()
-            .unwrap_or_default()
-            .to_string_lossy()
-            .to_ascii_lowercase();
-
-          if ["yml", "yaml"].iter().any(|ext| ext == &extension) {
-            // Only load non-hidden yml files
-            !is_file_hidden(&path)
-          } else {
-            // If there is no extension, it's probably a folder
-            extension.is_empty()
-          }
-        } else {
-          false
-        }
+        ["yml", "yaml"].iter().any(|ext| ext == &extension) && !is_file_hidden(path)
+      }),
+      Ok(Err(e)) => {
+        warn!("error while watching files: {:?}", e);
+        false
       }
       Err(e) => {
         warn!("error while watching files: {:?}", e);

@@ -27,6 +27,9 @@ use thiserror::Error;
 
 use crate::{error_eprintln, info_println, warn_eprintln};
 
+#[cfg(feature = "wayland")]
+const LINUX_SERVICE_NAME: &str = "espanso-wayland";
+#[cfg(not(feature = "wayland"))]
 const LINUX_SERVICE_NAME: &str = "espanso";
 const LINUX_SERVICE_CONTENT: &str = include_str!("../../res/linux/systemd.service");
 #[allow(clippy::transmute_bytes_to_str)]

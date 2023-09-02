@@ -52,7 +52,7 @@ pub fn load(config_dir: &Path) -> Result<HashMap<String, Hash>> {
 
         match entry.path().strip_prefix(config_dir) {
           Ok(relative_path) => {
-            let corrected_path = relative_path.to_slash_lossy();
+            let corrected_path = relative_path.to_slash_lossy().into_owned();
 
             if corrected_path.is_empty() {
               continue;
