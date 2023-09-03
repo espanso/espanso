@@ -31,6 +31,9 @@ If you don't know which one to choose, follow these steps to determine which one
 If compiling on Ubuntu X11:
 * `sudo apt install libx11-dev libxtst-dev libxkbcommon-dev libdbus-1-dev libwxgtk3.0-gtk3-dev`
 
+If compiling on Fedora X11:
+* `sudo dnf install "pkgconfig(xcb)" "pkgconfig(x11)" "pkgconfig(xkbcommon)" "pkgconfig(xtst)" wxBase-devel  wxGTK-devel rust cargo`
+
 ### AppImage
 
 The AppImage is a convenient format to distribute Linux applications, as besides the binary, 
@@ -46,11 +49,35 @@ You will find the resulting AppImage in the `target/linux/AppImage/out` folder.
 
 ### Binary
 
-TODO
+```
+export PATH=${PATH}:$HOME/.cargo/bin
+cargo make --profile release build-binary
+```
+
+You will find the resulting binary in the `target/release/` folder.
 
 ## Compiling on Wayland
 
-TODO
+### AppImage
+
+The AppImage is a convenient format to distribute Linux applications, as besides the binary, 
+it also bundles all the required libraries.
+
+You can create the AppImage by running:
+
+```
+cargo make create-app-image --env NO_X11=true --profile release
+```
+
+You will find the resulting AppImage in the `target/linux/AppImage/out` folder.
+
+### Binary
+```
+export PATH=${PATH}:$HOME/.cargo/bin
+cargo make --env NO_X11=true --profile release build-binary
+```
+
+You will find the resulting binary in the `target/release/` folder.
 
 ## Advanced
 
