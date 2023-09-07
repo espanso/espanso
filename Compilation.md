@@ -72,19 +72,22 @@ This will create the `Espanso.app` bundle in the `target/mac` directory.
 
 # Linux
 
-Espanso on Linux comes in two different flavors: one for X11 and one for Wayland. 
+Espanso on Linux comes in two different flavors: one for X11 and one for Wayland.
 If you don't know which one to choose, follow these steps to determine which one you are running: https://unix.stackexchange.com/a/325972
 
 ## Compiling for X11
 
 ### Necessary packages
 
-If compiling on Ubuntu X11:
+If compiling on a version of Ubuntu X11 before 22.04 (including 22.04):
 * `sudo apt install libx11-dev libxtst-dev libxkbcommon-dev libdbus-1-dev libwxgtk3.0-gtk3-dev`
+
+If compiling on a version of Ubuntu X11 after 22.04:
+* `sudo apt install libx11-dev libxtst-dev libxkbcommon-dev libdbus-1-dev libwxgtk3.2-dev`
 
 ### AppImage
 
-The AppImage is a convenient format to distribute Linux applications, as besides the binary, 
+The AppImage is a convenient format to distribute Linux applications, as besides the binary,
 it also bundles all the required libraries.
 
 You can create the AppImage by running (this will work on X11 systems):
