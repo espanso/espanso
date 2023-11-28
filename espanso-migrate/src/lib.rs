@@ -134,6 +134,7 @@ pub enum MigrationError {
 }
 
 #[cfg(test)]
+#[cfg(feature = "glob")]
 mod tests {
   use std::{collections::HashMap, fs::create_dir_all, path::Path};
 

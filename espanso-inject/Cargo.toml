@@ -30,4 +30,4 @@ itertools = "0.10.0"
 cc = "1.0.73"
 
 [dev-dependencies]
-enum-as-inner = "0.3.3"
+enum-as-inner = "0.6.0"

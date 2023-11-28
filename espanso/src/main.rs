@@ -30,8 +30,11 @@ use cli::{CliAlias, CliModule, CliModuleArgs};
 use log::{error, info, warn};
 use logging::FileProxy;
 use simplelog::{
-  CombinedLogger, ConfigBuilder, LevelFilter, SharedLogger, TermLogger, TerminalMode, WriteLogger,
+  ColorChoice, CombinedLogger, ConfigBuilder, LevelFilter, SharedLogger, TermLogger, TerminalMode,
+  WriteLogger,
 };
+use std::convert::identity;
+use time::macros::format_description;
 
 use crate::{
   cli::{LogMode, PathsOverrides},
@@ -524,12 +527,9 @@ For example, specifying 'email' is equivalent to 'match/email.yml'."#))
     let log_proxy = FileProxy::new();
     if handler.enable_logs {
       let config = ConfigBuilder::new()
-        .set_time_to_local(true)
-        .set_time_format(format!(
-          "%H:%M:%S [{}({})]",
-          handler.subcommand,
-          std::process::id()
-        ))
+        .set_time_offset_to_local()
+        .unwrap_or_else(identity)
+        .set_time_format_custom(format_description!("[hour]:[minute]:[second]]"))
         .set_location_level(LevelFilter::Off)
         .add_filter_ignore_str("html5ever")
         .build();
@@ -541,7 +541,10 @@ For example, specifying 'email' is equivalent to 'match/email.yml'."#))
       )];
 
       if !handler.disable_logs_terminal_output {
-        outputs.insert(0, TermLogger::new(log_level, config, TerminalMode::Mixed));
+        outputs.insert(
+          0,
+          TermLogger::new(log_level, config, TerminalMode::Mixed, ColorChoice::Auto),
+        );
       }
 
       CombinedLogger::init(outputs).expect("unable to initialize logs");
