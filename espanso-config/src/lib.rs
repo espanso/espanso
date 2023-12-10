@@ -53,8 +53,8 @@ pub fn load(
     matches::store::load(&root_paths.into_iter().collect::<Vec<String>>());
 
   let mut non_fatal_errors = Vec::new();
-  non_fatal_errors.extend(non_fatal_config_errors.into_iter());
-  non_fatal_errors.extend(non_fatal_match_errors.into_iter());
+  non_fatal_errors.extend(non_fatal_config_errors);
+  non_fatal_errors.extend(non_fatal_match_errors);
 
   Ok((
     Box::new(config_store),

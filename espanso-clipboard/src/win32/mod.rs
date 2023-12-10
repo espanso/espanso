@@ -108,7 +108,7 @@ fn generate_html_descriptor(html: &str) -> String {
   // https://docs.microsoft.com/en-za/troubleshoot/cpp/add-html-code-clipboard
   let content = format!("<!--StartFragment-->{}<!--EndFragment-->", html);
 
-  let tokens = vec![
+  let tokens = [
     "Version:0.9",
     "StartHTML:<<STR*#>",
     "EndHTML:<<END*#>",
