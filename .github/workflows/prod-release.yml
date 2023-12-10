@@ -7,8 +7,6 @@ on:
   push:
     branches:
       - master
-      # TODO: roll this once testing is done
-      - chore/refactor-deployment-pipelines
 
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
