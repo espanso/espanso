@@ -300,7 +300,13 @@ impl Config for ResolvedConfig {
   }
 
   fn emulate_alt_codes(&self) -> bool {
-    self.parsed.emulate_alt_codes.unwrap_or(false)
+    self.parsed.emulate_alt_codes.unwrap_or_else(|| {
+      if cfg!(target_os = "windows") {
+        true
+      } else {
+        false
+      }
+    })
   }
 
   fn post_form_delay(&self) -> usize {
