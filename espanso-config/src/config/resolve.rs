@@ -300,7 +300,7 @@ impl Config for ResolvedConfig {
   }
 
   fn emulate_alt_codes(&self) -> bool {
-    self.parsed.emulate_alt_codes.unwrap_or_else(|| {
+    self.parsed.emulate_alt_codes.unwrap_or({
       if cfg!(target_os = "windows") {
         true
       } else {
