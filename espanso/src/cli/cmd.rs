@@ -55,7 +55,7 @@ fn cmd_main(args: CliModuleArgs) -> i32 {
   };
 
   if let Err(error) = send_event_to_worker(&paths.runtime, event) {
-    eprintln!("unable to send command, error: {:?}", error);
+    eprintln!("unable to send command, error: {error:?}");
     return 2;
   }
 

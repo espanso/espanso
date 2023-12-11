@@ -412,7 +412,7 @@ impl LegacyConfig {
         Err(e) => Err(ConfigLoadError::InvalidYAML(path.to_owned(), e.to_string())),
       }
     } else {
-      eprintln!("Error: Cannot load file {:?}", path);
+      eprintln!("Error: Cannot load file {path:?}");
       Err(ConfigLoadError::FileNotFound)
     }
   }
@@ -615,7 +615,7 @@ impl LegacyConfigSet {
           }
         }
         Err(e) => {
-          eprintln!("Warning: Unable to read config file: {}", e);
+          eprintln!("Warning: Unable to read config file: {e}");
         }
       }
 
@@ -725,8 +725,7 @@ impl LegacyConfigSet {
       if item.starts_with(previous) {
         has_conflicts = true;
         eprintln!(
-          "Warning: trigger '{}' is conflicting with '{}' and may not behave as intended",
-          item, previous
+          "Warning: trigger '{item}' is conflicting with '{previous}' and may not behave as intended"
         );
       }
     }

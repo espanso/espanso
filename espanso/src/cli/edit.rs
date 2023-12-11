@@ -156,9 +156,9 @@ fn determine_target_path(config_path: &Path, target_file: Option<&str>) -> PathB
       custom => {
         if !custom.ends_with(".yml") && !custom.ends_with(".yaml") {
           if espanso_config::is_legacy_config(config_path) {
-            config_path.join("user").join(format!("{}.yml", custom))
+            config_path.join("user").join(format!("{custom}.yml"))
           } else {
-            config_path.join("match").join(format!("{}.yml", custom))
+            config_path.join("match").join(format!("{custom}.yml"))
           }
         } else {
           config_path.join(custom)

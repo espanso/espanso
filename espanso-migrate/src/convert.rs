@@ -54,10 +54,7 @@ pub fn convert(input_files: HashMap<String, Hash>) -> HashMap<String, ConvertedF
       let should_underscore = !input_path.starts_with("default") && yaml_parent != Some("default");
       let match_output_path = calculate_output_match_path(&input_path, should_underscore);
       if match_output_path.is_none() {
-        eprintln!(
-          "unable to determine output path for {}, skipping...",
-          input_path
-        );
+        eprintln!("unable to determine output path for {input_path}, skipping...");
         continue;
       }
       let match_output_path = match_output_path.unwrap();
@@ -82,7 +79,7 @@ pub fn convert(input_files: HashMap<String, Hash>) -> HashMap<String, ConvertedF
         if let Yaml::Array(out_global_vars) = output_global_vars {
           out_global_vars.extend(patched_global_vars);
         } else {
-          eprintln!("unable to transform global_vars for file: {}", input_path);
+          eprintln!("unable to transform global_vars for file: {input_path}");
         }
       }
 
@@ -97,7 +94,7 @@ pub fn convert(input_files: HashMap<String, Hash>) -> HashMap<String, ConvertedF
         if let Yaml::Array(out_matches) = output_matches {
           out_matches.extend(patched_matches);
         } else {
-          eprintln!("unable to transform matches for file: {}", input_path);
+          eprintln!("unable to transform matches for file: {input_path}");
         }
       }
 
@@ -220,7 +217,7 @@ pub fn convert(input_files: HashMap<String, Hash>) -> HashMap<String, ConvertedF
           "extra_includes"
         };
 
-        let includes = vec![Yaml::String(format!("../{}", match_file_path))];
+        let includes = vec![Yaml::String(format!("../{match_file_path}"))];
 
         output_yaml.insert(Yaml::String(key_name.to_string()), Yaml::Array(includes));
       }
@@ -261,7 +258,7 @@ fn calculate_output_match_path(path: &str, is_underscored: bool) -> Option<Strin
   let file_name = path_buf.file_name()?.to_string_lossy().to_string();
 
   let path = if is_underscored {
-    path.replace(&file_name, &format!("_{}", file_name))
+    path.replace(&file_name, &format!("_{file_name}"))
   } else {
     path.to_string()
   };
@@ -273,7 +270,7 @@ fn calculate_output_match_path(path: &str, is_underscored: bool) -> Option<Strin
   } else if path == "default.yml" {
     "match/base.yml".to_string()
   } else {
-    format!("match/{}", path)
+    format!("match/{path}")
   })
 }
 
@@ -284,7 +281,7 @@ fn calculate_output_config_path(path: &str) -> String {
   } else if path.starts_with("packages/") {
     format!("config/packages/{}", path.trim_start_matches("packages/"))
   } else {
-    format!("config/{}", path)
+    format!("config/{path}")
   }
 }
 
@@ -329,7 +326,7 @@ fn map_field_if_present(
     if let Some(transformed) = transformed {
       output_yaml.insert(Yaml::String(output_field_name.to_string()), transformed);
     } else {
-      eprintln!("could not convert value for field: {}", input_field_name);
+      eprintln!("could not convert value for field: {input_field_name}");
     }
   }
 }
@@ -383,7 +380,7 @@ fn replace_legacy_form_syntax_with_new_one(layout: &str) -> String {
   LEGACY_FIELD_REGEX
     .replace_all(layout, |caps: &Captures| {
       let field_name = caps.name("name").unwrap().as_str();
-      format!("[[{}]]", field_name)
+      format!("[[{field_name}]]")
     })
     .to_string()
 }

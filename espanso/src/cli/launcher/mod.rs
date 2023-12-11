@@ -104,7 +104,7 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
       match util::configure_auto_start(true) {
         Ok(_) => true,
         Err(error) => {
-          eprintln!("Service register returned error: {}", error);
+          eprintln!("Service register returned error: {error}");
           false
         }
       }
@@ -128,7 +128,7 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
   let add_to_path_handler = Box::new(move || match util::add_espanso_to_path() {
     Ok(_) => true,
     Err(error) => {
-      eprintln!("Add to path returned error: {}", error);
+      eprintln!("Add to path returned error: {error}");
       false
     }
   });

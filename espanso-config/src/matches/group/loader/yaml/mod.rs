@@ -210,7 +210,7 @@ pub fn try_convert_into_match(
       for yaml_var in yaml_match.vars.unwrap_or_default() {
         let (var, var_warnings) =
           try_convert_into_variable(yaml_var.clone(), use_compatibility_mode)
-            .with_context(|| format!("failed to load variable: {:?}", yaml_var))?;
+            .with_context(|| format!("failed to load variable: {yaml_var:?}"))?;
         warnings.extend(var_warnings);
         vars.push(var);
       }
@@ -233,13 +233,13 @@ pub fn try_convert_into_match(
           VAR_REGEX
             .replace_all(&form_layout, |caps: &Captures| {
               let var_name = caps.get(1).unwrap().as_str();
-              format!("{{{{form1.{}}}}}", var_name)
+              format!("{{{{form1.{var_name}}}}}")
             })
             .to_string(),
           VAR_REGEX
             .replace_all(&form_layout, |caps: &Captures| {
               let var_name = caps.get(1).unwrap().as_str();
-              format!("[[{}]]", var_name)
+              format!("[[{var_name}]]")
             })
             .to_string(),
         )
@@ -248,7 +248,7 @@ pub fn try_convert_into_match(
           FORM_CONTROL_REGEX
             .replace_all(&form_layout, |caps: &Captures| {
               let var_name = caps.get(1).unwrap().as_str();
-              format!("{{{{form1.{}}}}}", var_name)
+              format!("{{{{form1.{var_name}}}}}")
             })
             .to_string(),
           form_layout,

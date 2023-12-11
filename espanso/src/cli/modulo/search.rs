@@ -59,7 +59,7 @@ pub fn search_main(matches: &ArgMatches, icon_paths: &IconPaths) -> i32 {
   result_map.insert("selected", result);
 
   let output = serde_json::to_string(&result_map).expect("unable to encode values as JSON");
-  println!("{}", output);
+  println!("{output}");
 
   0
 }

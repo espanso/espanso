@@ -81,13 +81,9 @@ pub(crate) fn render_variables(body: &str, scope: &Scope) -> Result<String> {
               results.get(var_subname).map_or("", |value| value)
             }
             None => {
-              error!(
-                "nested name missing from multi-value variable: {}",
-                var_name
-              );
+              error!("nested name missing from multi-value variable: {var_name}");
               replacing_error = Some(RendererError::MissingVariable(format!(
-                "nested name missing from multi-value variable: {}",
-                var_name
+                "nested name missing from multi-value variable: {var_name}"
               )));
               ""
             }
@@ -95,8 +91,7 @@ pub(crate) fn render_variables(body: &str, scope: &Scope) -> Result<String> {
         },
         None => {
           replacing_error = Some(RendererError::MissingVariable(format!(
-            "variable '{}' is missing",
-            var_name
+            "variable '{var_name}' is missing"
           )));
           ""
         }

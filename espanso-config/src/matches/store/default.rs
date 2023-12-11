@@ -85,7 +85,7 @@ fn load_match_groups_recursively(
     if !groups.contains_key(path) {
       let group_path = PathBuf::from(path);
       match MatchGroup::load(&group_path)
-        .with_context(|| format!("unable to load match group {:?}", group_path))
+        .with_context(|| format!("unable to load match group {group_path:?}"))
       {
         Ok((group, non_fatal_error_set)) => {
           let imports = group.imports.clone();

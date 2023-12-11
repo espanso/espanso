@@ -38,10 +38,7 @@ fn build_native() {
   assert!(wx_archive.is_file(), "could not find wxWidgets archive!");
 
   let out_dir = if let Ok(out_path) = std::env::var(WX_WIDGETS_BUILD_OUT_DIR_ENV_NAME) {
-    println!(
-      "detected wxWidgets build output directory override: {}",
-      out_path
-    );
+    println!("detected wxWidgets build output directory override: {out_path}");
     let path = PathBuf::from(out_path);
     std::fs::create_dir_all(&path).expect("unable to create wxWidgets out dir");
     path

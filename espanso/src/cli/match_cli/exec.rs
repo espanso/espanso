@@ -50,10 +50,7 @@ pub fn exec_main(cli_args: &ArgMatches, paths: &Paths) -> Result<()> {
       if let Some((key, value)) = tokens {
         match_args.insert(key.to_string(), value.to_string());
       } else {
-        eprintln!(
-          "invalid format for argument '{}', you should follow the 'name=value' format",
-          arg
-        );
+        eprintln!("invalid format for argument '{arg}', you should follow the 'name=value' format");
       }
     });
   }

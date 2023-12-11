@@ -172,13 +172,12 @@ fn migrate_main(args: CliModuleArgs) -> i32 {
 fn find_available_backup_dir() -> PathBuf {
   for i in 1..20 {
     let num = if i > 1 {
-      format!("-{}", i)
+      format!("-{i}")
     } else {
       "".to_string()
     };
 
-    let target_backup_dir =
-      find_backup_dir_location().join(format!("espanso-migrate-backup{}", num));
+    let target_backup_dir = find_backup_dir_location().join(format!("espanso-migrate-backup{num}"));
 
     if !target_backup_dir.is_dir() {
       return target_backup_dir;
@@ -205,6 +204,6 @@ fn find_backup_dir_location() -> PathBuf {
 }
 
 fn error_print_and_log(msg: &str) {
-  error!("{}", msg);
-  eprintln!("{}", msg);
+  error!("{msg}");
+  eprintln!("{msg}");
 }
