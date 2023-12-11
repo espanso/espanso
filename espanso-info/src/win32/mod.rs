@@ -36,15 +36,15 @@ impl WinAppInfoProvider {
 impl AppInfoProvider for WinAppInfoProvider {
   fn get_info(&self) -> AppInfo {
     AppInfo {
-      title: self.get_title(),
+      title: WinAppInfoProvider::get_title(),
       class: None,
-      exec: self.get_exec(),
+      exec: WinAppInfoProvider::get_exec(),
     }
   }
 }
 
 impl WinAppInfoProvider {
-  fn get_exec(&self) -> Option<String> {
+  fn get_exec() -> Option<String> {
     let mut buffer: [u16; 2048] = [0; 2048];
     if unsafe { info_get_exec(buffer.as_mut_ptr(), (buffer.len() - 1) as i32) } != 0 {
       let string = unsafe { U16CStr::from_ptr_str(buffer.as_ptr()) };
@@ -59,7 +59,7 @@ impl WinAppInfoProvider {
     }
   }
 
-  fn get_title(&self) -> Option<String> {
+  fn get_title() -> Option<String> {
     let mut buffer: [u16; 2048] = [0; 2048];
     if unsafe { info_get_title(buffer.as_mut_ptr(), (buffer.len() - 1) as i32) } > 0 {
       let string = unsafe { U16CStr::from_ptr_str(buffer.as_ptr()) };
