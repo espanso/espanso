@@ -455,13 +455,13 @@ impl ResolvedConfig {
       yaml_includes.iter().for_each(|include| {
         includes.insert(include.to_string());
       })
-    }
+    };
 
     if let Some(extra_includes) = config.extra_includes.as_ref() {
       extra_includes.iter().for_each(|include| {
         includes.insert(include.to_string());
       })
-    }
+    };
 
     includes
   }

@@ -53,9 +53,9 @@ impl HotKey {
       match key {
         Some(key) => {
           if MODIFIERS.contains(&key) {
-            modifiers.push(key)
+            modifiers.push(key);
           } else {
-            main_key = Some(key)
+            main_key = Some(key);
           }
         }
         None => return Err(HotKeyError::InvalidKey(token).into()),

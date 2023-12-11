@@ -220,7 +220,7 @@ impl UIEventLoop for Win32EventLoop {
       if let Some(callback) = unsafe { (*_self)._event_callback.borrow() } {
         let event: Option<UIEvent> = event.into();
         if let Some(event) = event {
-          callback(event)
+          callback(event);
         } else {
           trace!("Unable to convert raw event to input event");
         }

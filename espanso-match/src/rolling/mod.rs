@@ -51,9 +51,9 @@ impl<Id> RollingMatch<Id> {
 
     for c in string.chars() {
       if opt.case_insensitive {
-        items.push(RollingItem::CharInsensitive(c.to_string()))
+        items.push(RollingItem::CharInsensitive(c.to_string()));
       } else {
-        items.push(RollingItem::Char(c.to_string()))
+        items.push(RollingItem::Char(c.to_string()));
       }
     }
 

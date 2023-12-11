@@ -69,7 +69,7 @@ impl<'a> MatchConverter<'a> {
               left_word: cause.left_word,
               right_word: cause.right_word,
             },
-          ))
+          ));
         }
       }
     }
@@ -81,7 +81,7 @@ impl<'a> MatchConverter<'a> {
           m.id,
           trigger,
           &StringMatchOptions::default(),
-        ))
+        ));
       }
     }
 
@@ -95,7 +95,7 @@ impl<'a> MatchConverter<'a> {
 
     for m in match_set.matches {
       if let MatchCause::Regex(cause) = &m.cause {
-        matches.push(RegexMatch::new(m.id, &cause.regex))
+        matches.push(RegexMatch::new(m.id, &cause.regex));
       }
     }
 

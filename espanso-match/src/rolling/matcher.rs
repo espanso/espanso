@@ -177,7 +177,7 @@ impl<Id: Clone> RollingMatcher<Id> {
 
     if self.is_word_separator(event) {
       if let Some(node_ref) = node.word_separators.as_ref() {
-        refs.push((node_ref, true))
+        refs.push((node_ref, true));
       }
     }
 

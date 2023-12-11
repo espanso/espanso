@@ -88,7 +88,7 @@ fn build_form(form: FormConfig, structure: Vec<Vec<Token>>) -> Form {
       }
     };
 
-    fields.push(current_field)
+    fields.push(current_field);
   }
 
   Form {

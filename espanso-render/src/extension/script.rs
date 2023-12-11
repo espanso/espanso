@@ -79,7 +79,7 @@ impl Extension for ScriptExtension {
         if cfg!(target_os = "windows") {
           let path = PathBuf::from(&arg);
           if path.exists() {
-            *arg = path.to_string_lossy().to_string()
+            *arg = path.to_string_lossy().to_string();
           }
         }
       });

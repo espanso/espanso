@@ -151,7 +151,7 @@ pub fn show(options: TroubleshootingOptions) -> Result<()> {
 
   {
     let mut lock = HANDLERS.lock().expect("unable to acquire handlers lock");
-    *lock = Some(options.handlers)
+    *lock = Some(options.handlers);
   }
 
   let troubleshooting_metadata = TroubleshootingMetadata {

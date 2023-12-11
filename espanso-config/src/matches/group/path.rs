@@ -63,13 +63,13 @@ pub fn resolve_imports(
     {
       Ok(canonical_path) => {
         if canonical_path.exists() && canonical_path.is_file() {
-          paths.push(canonical_path)
+          paths.push(canonical_path);
         } else {
           // Best effort imports
           non_fatal_errors.push(ErrorRecord::error(anyhow!(
             "unable to resolve import at path: {:?}",
             canonical_path
-          )))
+          )));
         }
       }
       Err(error) => non_fatal_errors.push(ErrorRecord::error(error)),

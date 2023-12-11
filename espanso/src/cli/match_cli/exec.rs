@@ -55,7 +55,7 @@ pub fn exec_main(cli_args: &ArgMatches, paths: &Paths) -> Result<()> {
           arg
         );
       }
-    })
+    });
   }
 
   client

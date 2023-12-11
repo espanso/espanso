@@ -230,7 +230,7 @@ impl<'a> Renderer<'a> for RendererAdapter<'a> {
               inject_vars: false,
               ..Default::default()
             },
-          )
+          );
         }
         Some(augmented)
       } else {

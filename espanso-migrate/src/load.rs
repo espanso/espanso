@@ -112,7 +112,7 @@ pub fn load(config_dir: &Path) -> Result<HashMap<String, Hash>> {
         }
       }
       Err(err) => {
-        eprintln!("experienced error while reading entry: {}", err)
+        eprintln!("experienced error while reading entry: {}", err);
       }
     }
   }

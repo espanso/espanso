@@ -50,7 +50,7 @@ impl Win32Injector {
     for key in keys.iter() {
       let vk = convert_key_to_vkey(key);
       if let Some(vk) = vk {
-        virtual_keys.push(vk)
+        virtual_keys.push(vk);
       } else {
         return Err(Win32InjectorError::MappingFailure(key.clone()).into());
       }

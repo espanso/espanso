@@ -109,7 +109,7 @@ impl ModuloManager {
                       error!(
                         "modulo exited with non-zero status code: {:?}",
                         child_output.status.code()
-                      )
+                      );
                     }
 
                     if !output.trim().is_empty() {

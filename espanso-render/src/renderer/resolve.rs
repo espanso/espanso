@@ -128,7 +128,7 @@ fn create_node_from_var(var: &Variable) -> Node {
     let mut vars = HashSet::new();
 
     if var.inject_vars {
-      vars.extend(super::util::get_params_variable_names(&var.params))
+      vars.extend(super::util::get_params_variable_names(&var.params));
     }
 
     vars.extend(var.depends_on.iter().map(|s| s.as_str()));
@@ -177,7 +177,7 @@ fn resolve_dependencies<'a>(
 
         match node_map.get(dependency) {
           Some(dependency_node) => {
-            resolve_dependencies(dependency_node, node_map, eval_order, resolved, seen)?
+            resolve_dependencies(dependency_node, node_map, eval_order, resolved, seen)?;
           }
           None => {
             error!("could not resolve variable {:?}", dependency);

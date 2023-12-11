@@ -42,7 +42,7 @@ fn watcher_main(watcher_notify: &Sender<()>) {
   let mut layout = espanso_detect::get_active_layout();
 
   if layout.is_none() {
-    warn!("keyboard layout watcher couldn't determine active layout.")
+    warn!("keyboard layout watcher couldn't determine active layout.");
   }
 
   loop {

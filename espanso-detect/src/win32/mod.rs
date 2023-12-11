@@ -193,7 +193,7 @@ impl Source for Win32Source {
       let event: Option<InputEvent> = event.into();
       if let Some(callback) = unsafe { (*_self).callback.borrow() } {
         if let Some(event) = event {
-          callback(event)
+          callback(event);
         } else {
           trace!("Unable to convert raw event to input event");
         }

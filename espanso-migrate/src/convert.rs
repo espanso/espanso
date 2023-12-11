@@ -349,10 +349,10 @@ fn apply_form_syntax_patch(matches: &mut [Yaml]) {
       if let Some(Yaml::Array(vars)) = fields.get_mut(&Yaml::String("vars".to_string())) {
         vars
           .iter_mut()
-          .for_each(apply_form_syntax_patch_to_variable)
+          .for_each(apply_form_syntax_patch_to_variable);
       }
     }
-  })
+  });
 }
 
 fn apply_form_syntax_patch_to_variable(variable: &mut Yaml) {

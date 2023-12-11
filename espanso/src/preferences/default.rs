@@ -51,7 +51,7 @@ impl<KVSType: KVS> DefaultPreferences<KVSType> {
     self
       .kvs
       .set(key, value)
-      .unwrap_or_else(|_| panic!("unable to write preference for key {}", key))
+      .unwrap_or_else(|_| panic!("unable to write preference for key {}", key));
   }
 }
 
