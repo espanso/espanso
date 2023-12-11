@@ -91,7 +91,7 @@ pub fn show_notification(msg: &str) -> Result<()> {
 fn is_espanso_app_user_model_id_set() -> bool {
   match Command::new("powershell")
     .args(["-c", "get-startapps"])
-    .creation_flags(0x08000000)
+    .creation_flags(0x0800_0000)
     .output()
   {
     Ok(output) => {

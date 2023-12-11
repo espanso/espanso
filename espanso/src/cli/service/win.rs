@@ -97,7 +97,7 @@ pub fn start_service() -> Result<()> {
 
   Command::new(current_path)
     .args(["launcher"])
-    .creation_flags(0x08000008) // CREATE_NO_WINDOW + DETACHED_PROCESS
+    .creation_flags(0x0800_0008) // CREATE_NO_WINDOW + DETACHED_PROCESS
     .spawn()?;
 
   Ok(())
