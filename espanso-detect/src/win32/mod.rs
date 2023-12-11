@@ -168,9 +168,10 @@ impl Source for Win32Source {
   }
 
   fn eventloop(&self, event_callback: SourceCallback) -> Result<()> {
-    if self.handle.is_null() {
-      panic!("Attempt to start Win32Source eventloop without initialization");
-    }
+    assert!(
+      self.handle.is_null(),
+      "Attempt to start Win32Source eventloop without initialization"
+    );
 
     if self.callback.fill(event_callback).is_err() {
       error!("Unable to set Win32Source event callback");

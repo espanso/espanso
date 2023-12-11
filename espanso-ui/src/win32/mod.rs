@@ -199,9 +199,10 @@ impl UIEventLoop for Win32EventLoop {
   fn run(&self, event_callback: UIEventCallback) -> Result<()> {
     // Make sure the run() method is called in the same thread as initialize()
     if let Some(init_id) = self._init_thread_id.borrow() {
-      if init_id != &std::thread::current().id() {
-        panic!("Win32EventLoop run() and initialize() methods should be called in the same thread");
-      }
+      assert!(
+        !(init_id != &std::thread::current().id()),
+        "Win32EventLoop run() and initialize() methods should be called in the same thread"
+      );
     }
 
     let window_handle = self.handle.load(Ordering::Acquire);
