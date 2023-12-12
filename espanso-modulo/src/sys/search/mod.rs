@@ -53,12 +53,12 @@ mod interop {
     hint: CString,
     items: Vec<OwnedSearchItem>,
     pub(crate) interop_items: Vec<SearchItem>,
-    _interop: Box<SearchMetadata>,
+    interop: Box<SearchMetadata>,
   }
 
   impl Interoperable for OwnedSearch {
     fn as_ptr(&self) -> *const c_void {
-      &(*self._interop) as *const SearchMetadata as *const c_void
+      &(*self.interop) as *const SearchMetadata as *const c_void
     }
   }
 
@@ -102,7 +102,7 @@ mod interop {
         std::ptr::null()
       };
 
-      let _interop = Box::new(SearchMetadata {
+      let interop = Box::new(SearchMetadata {
         iconPath: icon_path_ptr,
         windowTitle: title.as_ptr(),
         hintText: hint_ptr,
@@ -114,7 +114,7 @@ mod interop {
         hint,
         items,
         interop_items,
-        _interop,
+        interop,
       }
     }
   }

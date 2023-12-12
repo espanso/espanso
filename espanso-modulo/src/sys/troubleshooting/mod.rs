@@ -45,7 +45,7 @@ mod interop {
   pub(crate) struct OwnedErrorSet {
     file_path: Option<CString>,
     errors: Vec<OwnedErrorMetadata>,
-    pub(crate) _interop_errors: Vec<ErrorMetadata>,
+    pub(crate) interop_errors: Vec<ErrorMetadata>,
   }
 
   impl OwnedErrorSet {
@@ -58,8 +58,8 @@ mod interop {
 
       ErrorSetMetadata {
         file_path: file_path_ptr,
-        errors: self._interop_errors.as_ptr(),
-        errors_count: self._interop_errors.len() as c_int,
+        errors: self.interop_errors.as_ptr(),
+        errors_count: self.interop_errors.len() as c_int,
       }
     }
   }
@@ -73,13 +73,13 @@ mod interop {
 
       let errors: Vec<OwnedErrorMetadata> = error_set.errors.iter().map(Into::into).collect();
 
-      let _interop_errors: Vec<ErrorMetadata> =
+      let interop_errors: Vec<ErrorMetadata> =
         errors.iter().map(|item| item.to_error_metadata()).collect();
 
       Self {
         file_path,
         errors,
-        _interop_errors,
+        interop_errors,
       }
     }
   }

@@ -110,12 +110,12 @@ pub fn load_config_or_troubleshoot_until_config_is_correct_or_abort(
   paths_overrides: &PathsOverrides,
   watcher_receiver: Receiver<()>,
 ) -> Result<(ConfigLoadResult, Option<TroubleshootGuard>)> {
-  let mut _troubleshoot_guard = None;
+  let mut troubleshoot_guard = None;
 
   loop {
     // If the loading process is fatal, we keep showing the troubleshooter until
     // either the config is correct or the user aborts by closing the troubleshooter
-    _troubleshoot_guard = match load_config_or_troubleshoot(paths, paths_overrides) {
+    troubleshoot_guard = match load_config_or_troubleshoot(paths, paths_overrides) {
       LoadResult::Correct(result) => return Ok((result, None)),
       LoadResult::Warning(result, guard) => return Ok((result, guard)),
       LoadResult::Fatal(guard) => Some(guard),
@@ -129,7 +129,7 @@ pub fn load_config_or_troubleshoot_until_config_is_correct_or_abort(
           break
         },
         default(Duration::from_millis(500)) => {
-          if let Some(guard) = &mut _troubleshoot_guard {
+          if let Some(guard) = &mut troubleshoot_guard {
             if let Ok(ended) = guard.try_wait() {
               if ended {
                 bail!("user aborted troubleshooter");

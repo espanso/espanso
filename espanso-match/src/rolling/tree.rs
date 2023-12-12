@@ -149,7 +149,7 @@ fn insert_items_recursively<Id>(id: Id, node: &mut MatcherTreeNode<Id>, items: &
         }
       }
       RollingItem::Char(c) => {
-        if let Some(entry) = node.chars.iter_mut().find(|(_c, _)| _c == c) {
+        if let Some(entry) = node.chars.iter_mut().find(|(char, _)| char == c) {
           if let MatcherTreeRef::Node(next_node) = &mut entry.1 {
             insert_items_recursively(id, next_node, &items[1..]);
           }
@@ -166,7 +166,7 @@ fn insert_items_recursively<Id>(id: Id, node: &mut MatcherTreeNode<Id>, items: &
         if let Some(entry) = node
           .chars_insensitive
           .iter_mut()
-          .find(|(_c, _)| _c == &uni_char)
+          .find(|(c, _)| c == &uni_char)
         {
           if let MatcherTreeRef::Node(next_node) = &mut entry.1 {
             insert_items_recursively(id, next_node, &items[1..]);
