@@ -142,7 +142,7 @@ where
 }
 
 impl<Id: Clone> RegexMatcher<Id> {
-  pub fn new(matches: &[RegexMatch<Id>], opt: &RegexMatcherOptions) -> Self {
+  pub fn new(matches: &[RegexMatch<Id>], opt: RegexMatcherOptions) -> Self {
     let mut ids = Vec::new();
     let mut regexes = Vec::new();
     let mut good_regexes = Vec::new();
@@ -198,7 +198,7 @@ mod tests {
         RegexMatch::new(1, "hello"),
         RegexMatch::new(2, "num\\d{1,3}s"),
       ],
-      &RegexMatcherOptions::default(),
+      RegexMatcherOptions::default(),
     );
     assert_eq!(get_matches_after_str("hi", &matcher), vec![]);
     assert_eq!(
@@ -227,7 +227,7 @@ mod tests {
         RegexMatch::new(1, "hello\\((?P<name>.*?)\\)"),
         RegexMatch::new(2, "multi\\((?P<name1>.*?),(?P<name2>.*?)\\)"),
       ],
-      &RegexMatcherOptions::default(),
+      RegexMatcherOptions::default(),
     );
     assert_eq!(get_matches_after_str("hi", &matcher), vec![]);
     assert_eq!(
@@ -252,7 +252,7 @@ mod tests {
         RegexMatch::new(1, "hello\\((?P<name>.*?)\\)"),
         RegexMatch::new(2, "multi\\((?P<name1>.*?),(?P<name2>.*?)\\)"),
       ],
-      &RegexMatcherOptions {
+      RegexMatcherOptions {
         max_buffer_size: 15,
       },
     );

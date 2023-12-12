@@ -110,7 +110,7 @@ fn daemon_main(args: CliModuleArgs) -> i32 {
     match troubleshoot::load_config_or_troubleshoot_until_config_is_correct_or_abort(
       &paths,
       &paths_overrides,
-      &watcher_signal,
+      watcher_signal.clone(),
     ) {
       Ok((result, guard)) => {
         _current_troubleshoot_guard = guard;

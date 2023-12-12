@@ -26,10 +26,10 @@ pub struct ConvertedFile {
   pub content: Hash,
 }
 
-pub fn convert(input_files: &HashMap<String, Hash>) -> HashMap<String, ConvertedFile> {
+pub fn convert(input_files: HashMap<String, Hash>) -> HashMap<String, ConvertedFile> {
   let mut output_files = HashMap::new();
 
-  let sorted_input_files = sort_input_files(input_files);
+  let sorted_input_files = sort_input_files(&input_files);
 
   for input_path in sorted_input_files {
     let yaml = input_files

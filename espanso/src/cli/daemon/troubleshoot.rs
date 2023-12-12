@@ -108,7 +108,7 @@ pub fn load_config_or_troubleshoot(paths: &Paths, paths_overrides: &PathsOverrid
 pub fn load_config_or_troubleshoot_until_config_is_correct_or_abort(
   paths: &Paths,
   paths_overrides: &PathsOverrides,
-  watcher_receiver: &Receiver<()>,
+  watcher_receiver: Receiver<()>,
 ) -> Result<(ConfigLoadResult, Option<TroubleshootGuard>)> {
   let mut _troubleshoot_guard = None;
 

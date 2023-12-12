@@ -34,7 +34,7 @@ impl RegexMatcherAdapter {
   pub fn new(matches: &[RegexMatch<i32>], options: &RegexMatcherAdapterOptions) -> Self {
     let matcher = RegexMatcher::new(
       matches,
-      &RegexMatcherOptions {
+      RegexMatcherOptions {
         max_buffer_size: options.max_buffer_size,
       },
     );
