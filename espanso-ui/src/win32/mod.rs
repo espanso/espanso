@@ -91,9 +91,7 @@ pub fn create(options: Win32UIOptions) -> Result<(Win32Remote, Win32EventLoop)> 
   let handle: Arc<AtomicPtr<c_void>> = Arc::new(AtomicPtr::new(std::ptr::null_mut()));
 
   // Validate icons
-  if options.icon_paths.len() > MAX_ICON_COUNT {
-    panic!("Win32 UI received too many icon paths, please increase the MAX_ICON_COUNT constant to support more");
-  }
+  assert!(options.icon_paths.len() <= MAX_ICON_COUNT, "Win32 UI received too many icon paths, please increase the MAX_ICON_COUNT constant to support more");
 
   // Convert the icon paths to the internal representation
   let mut icon_indexes: HashMap<TrayIcon, usize> = HashMap::new();
