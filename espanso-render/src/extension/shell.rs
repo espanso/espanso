@@ -123,7 +123,7 @@ impl Shell {
       let mut tokens: Vec<&str> = vec!["CONFIG/p"];
 
       // Add all the previous variables
-      for (key, _) in vars {
+      for key in vars.keys() {
         tokens.push(key);
       }
 
