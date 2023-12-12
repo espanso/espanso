@@ -448,19 +448,19 @@ impl ResolvedConfig {
     if config.use_standard_includes.is_none() || config.use_standard_includes.unwrap() {
       STANDARD_INCLUDES.iter().for_each(|include| {
         includes.insert(include.to_string());
-      })
+      });
     }
 
     if let Some(yaml_includes) = config.includes.as_ref() {
       yaml_includes.iter().for_each(|include| {
         includes.insert(include.to_string());
-      })
+      });
     };
 
     if let Some(extra_includes) = config.extra_includes.as_ref() {
       extra_includes.iter().for_each(|include| {
         includes.insert(include.to_string());
-      })
+      });
     };
 
     includes
@@ -472,13 +472,13 @@ impl ResolvedConfig {
     if let Some(yaml_excludes) = config.excludes.as_ref() {
       yaml_excludes.iter().for_each(|exclude| {
         excludes.insert(exclude.to_string());
-      })
+      });
     }
 
     if let Some(extra_excludes) = config.extra_excludes.as_ref() {
       extra_excludes.iter().for_each(|exclude| {
         excludes.insert(exclude.to_string());
-      })
+      });
     }
 
     excludes
