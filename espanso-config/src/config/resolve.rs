@@ -178,15 +178,15 @@ impl Config for ResolvedConfig {
       Some("ctrl") => Some(ToggleKey::Ctrl),
       Some("alt") => Some(ToggleKey::Alt),
       Some("shift") => Some(ToggleKey::Shift),
-      Some("meta") | Some("cmd") => Some(ToggleKey::Meta),
+      Some("meta" | "cmd") => Some(ToggleKey::Meta),
       Some("right_ctrl") => Some(ToggleKey::RightCtrl),
       Some("right_alt") => Some(ToggleKey::RightAlt),
       Some("right_shift") => Some(ToggleKey::RightShift),
-      Some("right_meta") | Some("right_cmd") => Some(ToggleKey::RightMeta),
+      Some("right_meta" | "right_cmd") => Some(ToggleKey::RightMeta),
       Some("left_ctrl") => Some(ToggleKey::LeftCtrl),
       Some("left_alt") => Some(ToggleKey::LeftAlt),
       Some("left_shift") => Some(ToggleKey::LeftShift),
-      Some("left_meta") | Some("left_cmd") => Some(ToggleKey::LeftMeta),
+      Some("left_meta" | "left_cmd") => Some(ToggleKey::LeftMeta),
       Some("off") => None,
       None => None,
       err => {
@@ -269,7 +269,7 @@ impl Config for ResolvedConfig {
 
   fn search_trigger(&self) -> Option<String> {
     match self.parsed.search_trigger.as_deref() {
-      Some("OFF") | Some("off") => None,
+      Some("OFF" | "off") => None,
       Some(x) => Some(x.to_string()),
       None => None,
     }
@@ -277,7 +277,7 @@ impl Config for ResolvedConfig {
 
   fn search_shortcut(&self) -> Option<String> {
     match self.parsed.search_shortcut.as_deref() {
-      Some("OFF") | Some("off") => None,
+      Some("OFF" | "off") => None,
       Some(x) => Some(x.to_string()),
       None => Some("ALT+SPACE".to_string()),
     }
