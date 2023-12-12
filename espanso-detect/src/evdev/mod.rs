@@ -86,7 +86,7 @@ pub struct EVDEVSource {
 
 #[allow(clippy::new_without_default)]
 impl EVDEVSource {
-  pub fn new(options: SourceCreationOptions) -> EVDEVSource {
+  pub fn new(options: &SourceCreationOptions) -> EVDEVSource {
     let mut modifiers_map = HashMap::new();
     modifiers_map.insert("ctrl".to_string(), KEY_CTRL + EVDEV_OFFSET);
     modifiers_map.insert("shift".to_string(), KEY_SHIFT + EVDEV_OFFSET);
