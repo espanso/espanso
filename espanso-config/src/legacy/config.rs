@@ -44,13 +44,13 @@ fn default_parent() -> String {
   "self".to_owned()
 }
 fn default_filter_title() -> String {
-  "".to_owned()
+  String::new()
 }
 fn default_filter_class() -> String {
-  "".to_owned()
+  String::new()
 }
 fn default_filter_exec() -> String {
-  "".to_owned()
+  String::new()
 }
 fn default_log_level() -> i32 {
   0

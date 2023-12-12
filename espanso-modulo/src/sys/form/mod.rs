@@ -125,7 +125,7 @@ mod interop {
       let icon_path = if let Some(icon_path) = form.icon.as_ref() {
         icon_path.clone()
       } else {
-        "".to_owned()
+        String::new()
       };
 
       let icon_path = CString::new(icon_path).expect("unable to convert form icon to CString");

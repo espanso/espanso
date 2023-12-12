@@ -77,7 +77,7 @@ mod interop {
       let icon_path = if let Some(icon_path) = search.icon.as_ref() {
         icon_path.clone()
       } else {
-        "".to_owned()
+        String::new()
       };
 
       let icon_path = CString::new(icon_path).expect("unable to convert search icon to CString");
@@ -91,7 +91,7 @@ mod interop {
       let hint = if let Some(hint) = search.hint.as_ref() {
         hint.clone()
       } else {
-        "".to_owned()
+        String::new()
       };
 
       let hint = CString::new(hint).expect("unable to convert search icon to CString");

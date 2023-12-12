@@ -77,7 +77,7 @@ pub struct TextFieldConfig {
 impl Default for TextFieldConfig {
   fn default() -> Self {
     Self {
-      default: "".to_owned(),
+      default: String::new(),
       multiline: false,
     }
   }
@@ -93,7 +93,7 @@ impl Default for ChoiceFieldConfig {
   fn default() -> Self {
     Self {
       values: Vec::new(),
-      default: "".to_owned(),
+      default: String::new(),
     }
   }
 }
@@ -108,7 +108,7 @@ impl Default for ListFieldConfig {
   fn default() -> Self {
     Self {
       values: Vec::new(),
-      default: "".to_owned(),
+      default: String::new(),
     }
   }
 }
