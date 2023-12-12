@@ -517,7 +517,7 @@ mod tests {
       ResolvedConfig::aggregate_includes(&ParsedConfig {
         ..Default::default()
       }),
-      vec!["../match/**/[!_]*.yml".to_string(),]
+      ["../match/**/[!_]*.yml".to_string()]
         .iter()
         .cloned()
         .collect::<HashSet<_>>()
@@ -542,7 +542,7 @@ mod tests {
         includes: Some(vec!["custom/*.yml".to_string()]),
         ..Default::default()
       }),
-      vec![
+      [
         "../match/**/[!_]*.yml".to_string(),
         "custom/*.yml".to_string()
       ]
@@ -559,7 +559,7 @@ mod tests {
         extra_includes: Some(vec!["custom/*.yml".to_string()]),
         ..Default::default()
       }),
-      vec![
+      [
         "../match/**/[!_]*.yml".to_string(),
         "custom/*.yml".to_string()
       ]
@@ -577,7 +577,7 @@ mod tests {
         extra_includes: Some(vec!["custom/*.yml".to_string()]),
         ..Default::default()
       }),
-      vec![
+      [
         "../match/**/[!_]*.yml".to_string(),
         "custom/*.yml".to_string(),
         "sub/*.yml".to_string()
@@ -617,7 +617,7 @@ mod tests {
         excludes: Some(vec!["custom/*.yml".to_string()]),
         ..Default::default()
       }),
-      vec!["custom/*.yml".to_string()]
+      ["custom/*.yml".to_string()]
         .iter()
         .cloned()
         .collect::<HashSet<_>>()
@@ -631,7 +631,7 @@ mod tests {
         extra_excludes: Some(vec!["custom/*.yml".to_string()]),
         ..Default::default()
       }),
-      vec!["custom/*.yml".to_string()]
+      ["custom/*.yml".to_string()]
         .iter()
         .cloned()
         .collect::<HashSet<_>>()
@@ -646,7 +646,7 @@ mod tests {
         extra_excludes: Some(vec!["custom/*.yml".to_string()]),
         ..Default::default()
       }),
-      vec!["custom/*.yml".to_string(), "sub/*.yml".to_string()]
+      ["custom/*.yml".to_string(), "sub/*.yml".to_string()]
         .iter()
         .cloned()
         .collect::<HashSet<_>>()
