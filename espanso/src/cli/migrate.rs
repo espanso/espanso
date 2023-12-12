@@ -174,7 +174,7 @@ fn find_available_backup_dir() -> PathBuf {
     let num = if i > 1 {
       format!("-{i}")
     } else {
-      "".to_string()
+      String::new()
     };
 
     let target_backup_dir = find_backup_dir_location().join(format!("espanso-migrate-backup{num}"));

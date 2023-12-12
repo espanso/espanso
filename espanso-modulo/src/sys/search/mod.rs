@@ -144,7 +144,7 @@ mod interop {
       let trigger = if let Some(trigger) = item.trigger.as_deref() {
         CString::new(trigger.to_string()).expect("unable to convert item trigger to CString")
       } else {
-        CString::new("".to_string()).expect("unable to convert item trigger to CString")
+        CString::new(String::new()).expect("unable to convert item trigger to CString")
       };
 
       Self { id, label, trigger }

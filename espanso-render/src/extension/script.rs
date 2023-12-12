@@ -328,7 +328,7 @@ mod tests {
         .calculate(&Default::default(), &Default::default(), &param)
         .into_success()
         .unwrap(),
-      ExtensionOutput::Single("".to_string())
+      ExtensionOutput::Single(String::new())
     );
   }
 }

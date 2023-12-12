@@ -80,7 +80,7 @@ where
     let mut buffer = if let Some(prev_state) = prev_state {
       prev_state.buffer.clone()
     } else {
-      "".to_string()
+      String::new()
     };
 
     if let Event::Key {
