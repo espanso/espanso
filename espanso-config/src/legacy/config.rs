@@ -1019,7 +1019,7 @@ mod tests {
     assert_eq!(
       config_set.unwrap_err(),
       ConfigLoadError::InvalidParameter(user_defined_path)
-    )
+    );
   }
 
   #[test]
@@ -1039,7 +1039,7 @@ mod tests {
     assert_eq!(
       config_set.unwrap().specific[0].name,
       user_defined_path.to_str().unwrap_or_default()
-    )
+    );
   }
 
   #[test]
@@ -1067,7 +1067,7 @@ mod tests {
     assert!(matches!(
       &config_set.unwrap_err(),
       &ConfigLoadError::NameDuplicate(_)
-    ))
+    ));
   }
 
   #[test]

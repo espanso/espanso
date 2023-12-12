@@ -96,7 +96,7 @@ mod tests {
           RollingItem::Char("t".to_string()),
         ]
       }
-    )
+    );
   }
 
   #[test]
@@ -120,7 +120,7 @@ mod tests {
           RollingItem::Char("t".to_string()),
         ]
       }
-    )
+    );
   }
 
   #[test]
@@ -144,7 +144,7 @@ mod tests {
           RollingItem::WordSeparator,
         ]
       }
-    )
+    );
   }
 
   #[test]
@@ -167,6 +167,6 @@ mod tests {
           RollingItem::CharInsensitive("t".to_string()),
         ]
       }
-    )
+    );
   }
 }

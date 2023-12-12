@@ -227,7 +227,7 @@ mod tests {
         ],
         ..Default::default()
       }
-    )
+    );
   }
 
   #[test]
@@ -264,7 +264,7 @@ mod tests {
         ),],
         ..Default::default()
       }
-    )
+    );
   }
 
   #[test]
@@ -351,6 +351,6 @@ mod tests {
         ),],
         ..Default::default()
       }
-    )
+    );
   }
 }

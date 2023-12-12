@@ -820,7 +820,7 @@ mod tests {
 
       let config = ResolvedConfig::load(&config_file, None).unwrap();
 
-      *result_ref = config.is_match(app)
+      *result_ref = config.is_match(app);
     });
     result
   }

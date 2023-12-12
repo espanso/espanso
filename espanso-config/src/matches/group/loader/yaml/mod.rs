@@ -377,7 +377,7 @@ mod tests {
         }),
         ..Default::default()
       }
-    )
+    );
   }
 
   #[test]
@@ -401,7 +401,7 @@ mod tests {
         }),
         ..Default::default()
       }
-    )
+    );
   }
 
   #[test]
@@ -428,7 +428,7 @@ mod tests {
         }),
         ..Default::default()
       }
-    )
+    );
   }
 
   #[test]
@@ -454,7 +454,7 @@ mod tests {
         }),
         ..Default::default()
       }
-    )
+    );
   }
 
   #[test]
@@ -480,7 +480,7 @@ mod tests {
         }),
         ..Default::default()
       }
-    )
+    );
   }
 
   #[test]
@@ -506,7 +506,7 @@ mod tests {
         }),
         ..Default::default()
       }
-    )
+    );
   }
 
   #[test]
@@ -630,7 +630,7 @@ mod tests {
         }),
         ..Default::default()
       }
-    )
+    );
   }
 
   #[test]
@@ -667,7 +667,7 @@ mod tests {
         }),
         ..Default::default()
       }
-    )
+    );
   }
 
   #[test]
@@ -706,7 +706,7 @@ mod tests {
         }),
         ..Default::default()
       }
-    )
+    );
   }
 
   #[test]
@@ -744,7 +744,7 @@ mod tests {
         }),
         ..Default::default()
       }
-    )
+    );
   }
 
   #[test]
@@ -790,7 +790,7 @@ mod tests {
         }),
         ..Default::default()
       }
-    )
+    );
   }
 
   #[test]
@@ -824,7 +824,7 @@ mod tests {
         }),
         ..Default::default()
       }
-    )
+    );
   }
 
   #[test]
@@ -896,7 +896,7 @@ mod tests {
             ..Default::default()
           }],
         }
-      )
+      );
     });
   }
 
@@ -916,6 +916,6 @@ mod tests {
 
       let importer = YAMLImporter::new();
       assert!(importer.load_group(&base_file).is_err());
-    })
+    });
   }
 }
