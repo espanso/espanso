@@ -27,13 +27,20 @@ use widestring::U16CStr;
 use anyhow::Result;
 use thiserror::Error;
 
-use crate::event::{InputEvent, Key, KeyboardEvent, Variant};
-use crate::event::{Key::*, MouseButton, MouseEvent};
-use crate::{event::Status::*, Source, SourceCallback};
-use crate::{
-  event::{HotKeyEvent, Variant::*},
-  hotkey::HotKey,
+use crate::event::{
+  HotKeyEvent, InputEvent,
+  Key::{
+    self, Alt, ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Backspace, CapsLock, Control, End, Enter,
+    Escape, Home, Meta, NumLock, Numpad0, Numpad1, Numpad2, Numpad3, Numpad4, Numpad5, Numpad6,
+    Numpad7, Numpad8, Numpad9, Other, PageDown, PageUp, Shift, Space, Tab, F1, F10, F11, F12, F13,
+    F14, F15, F16, F17, F18, F19, F2, F20, F3, F4, F5, F6, F7, F8, F9,
+  },
+  KeyboardEvent, MouseButton, MouseEvent,
+  Status::{Pressed, Released},
+  Variant::{self, Left, Right},
 };
+use crate::hotkey::HotKey;
+use crate::{Source, SourceCallback};
 
 const INPUT_LEFT_VARIANT: i32 = 1;
 const INPUT_RIGHT_VARIANT: i32 = 2;

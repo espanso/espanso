@@ -19,7 +19,9 @@
 
 use super::config::{FieldConfig, FieldTypeConfig, FormConfig};
 use super::parser::layout::Token;
-use crate::sys::form::types::*;
+use crate::sys::form::types::{
+  ChoiceMetadata, ChoiceType, Field, FieldType, Form, LabelMetadata, RowMetadata, TextMetadata,
+};
 use std::collections::HashMap;
 
 pub fn generate(config: FormConfig) -> Form {
