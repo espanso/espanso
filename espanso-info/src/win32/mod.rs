@@ -49,10 +49,10 @@ impl WinAppInfoProvider {
     if unsafe { info_get_exec(buffer.as_mut_ptr(), (buffer.len() - 1) as i32) } != 0 {
       let string = unsafe { U16CStr::from_ptr_str(buffer.as_ptr()) };
       let string = string.to_string_lossy();
-      if !string.is_empty() {
-        Some(string)
-      } else {
+      if string.is_empty() {
         None
+      } else {
+        Some(string)
       }
     } else {
       None
@@ -64,10 +64,10 @@ impl WinAppInfoProvider {
     if unsafe { info_get_title(buffer.as_mut_ptr(), (buffer.len() - 1) as i32) } > 0 {
       let string = unsafe { U16CStr::from_ptr_str(buffer.as_ptr()) };
       let string = string.to_string_lossy();
-      if !string.is_empty() {
-        Some(string)
-      } else {
+      if string.is_empty() {
         None
+      } else {
+        Some(string)
       }
     } else {
       None

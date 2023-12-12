@@ -184,20 +184,20 @@ impl From<config::LegacyConfig> for LegacyInteropConfig {
       config: config.clone(),
       name: config.name.clone(),
       match_paths: vec![config.name],
-      filter_title: if !config.filter_title.is_empty() {
+      filter_title: if config.filter_title.is_empty() {
+        None
+      } else {
         Regex::new(&config.filter_title).ok()
-      } else {
-        None
       },
-      filter_class: if !config.filter_class.is_empty() {
+      filter_class: if config.filter_class.is_empty() {
+        None
+      } else {
         Regex::new(&config.filter_class).ok()
-      } else {
-        None
       },
-      filter_exec: if !config.filter_exec.is_empty() {
-        Regex::new(&config.filter_exec).ok()
-      } else {
+      filter_exec: if config.filter_exec.is_empty() {
         None
+      } else {
+        Regex::new(&config.filter_exec).ok()
       },
     }
   }
@@ -437,10 +437,10 @@ impl LegacyMatchStore {
 
 impl MatchStore for LegacyMatchStore {
   fn query(&self, paths: &[String]) -> MatchSet {
-    let group = if !paths.is_empty() {
-      self.groups.get(&paths[0])
-    } else {
+    let group = if paths.is_empty() {
       None
+    } else {
+      self.groups.get(&paths[0])
     };
 
     if let Some(group) = group {

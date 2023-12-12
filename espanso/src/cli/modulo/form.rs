@@ -38,10 +38,10 @@ pub fn form_main(matches: &ArgMatches, _icon_paths: &IconPaths) -> i32 {
     std::fs::read_to_string(input_file).expect("unable to read input file")
   };
 
-  let mut config: config::FormConfig = if !as_json {
-    serde_yaml::from_str(&data).expect("unable to parse form configuration")
-  } else {
+  let mut config: config::FormConfig = if as_json {
     serde_json::from_str(&data).expect("unable to parse form configuration")
+  } else {
+    serde_yaml::from_str(&data).expect("unable to parse form configuration")
   };
 
   // Overwrite the icon

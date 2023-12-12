@@ -216,7 +216,9 @@ impl<'a> Renderer<'a> for RendererAdapter<'a> {
       };
 
       // If some trigger vars are specified, augment the template with them
-      let augmented_template = if !trigger_vars.is_empty() {
+      let augmented_template = if trigger_vars.is_empty() {
+        None
+      } else {
         let mut augmented = template.clone();
         for (name, value) in trigger_vars {
           let mut params = espanso_render::Params::new();
@@ -233,8 +235,6 @@ impl<'a> Renderer<'a> for RendererAdapter<'a> {
           );
         }
         Some(augmented)
-      } else {
-        None
       };
 
       let template = if let Some(augmented) = augmented_template.as_ref() {

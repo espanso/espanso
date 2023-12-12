@@ -316,9 +316,9 @@ fn restart_worker(
     std::thread::sleep(std::time::Duration::from_millis(100));
   }
 
-  if !has_timed_out {
-    spawn_worker(paths_overrides, exit_notify, start_reason);
-  } else {
+  if has_timed_out {
     error!("could not restart worker, as the exit process has timed out");
+  } else {
+    spawn_worker(paths_overrides, exit_notify, start_reason);
   }
 }

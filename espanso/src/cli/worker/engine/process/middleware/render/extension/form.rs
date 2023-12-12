@@ -119,10 +119,10 @@ fn extract_values(value: &Value, trim_string_values: Option<&Value>) -> Option<V
         .filter_map(|line| {
           if trim_string_values {
             let trimmed_line = line.trim();
-            if !trimmed_line.is_empty() {
-              Some(trimmed_line)
-            } else {
+            if trimmed_line.is_empty() {
               None
+            } else {
+              Some(trimmed_line)
             }
           } else {
             Some(line)

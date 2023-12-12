@@ -104,10 +104,10 @@ impl Importer for YAMLImporter {
         .context("failed to resolve YAML match group imports")?;
     non_fatal_errors.extend(import_errors);
 
-    let non_fatal_error_set = if !non_fatal_errors.is_empty() {
-      Some(NonFatalErrorSet::new(path, non_fatal_errors))
-    } else {
+    let non_fatal_error_set = if non_fatal_errors.is_empty() {
       None
+    } else {
+      Some(NonFatalErrorSet::new(path, non_fatal_errors))
     };
 
     Ok((
