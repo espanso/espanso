@@ -116,9 +116,9 @@ fn generate_nodes<'a>(
   global_vars_nodes.into_iter().for_each(|node| {
     node_map.insert(node.name, node);
   });
-  local_vars_nodes.into_iter().for_each(|node| {
+  for node in local_vars_nodes.into_iter() {
     node_map.insert(node.name, node);
-  });
+  }
 
   node_map
 }

@@ -422,9 +422,9 @@ impl LegacyConfig {
     // Merge matches
     let mut merged_matches = new_config.matches;
     let mut match_trigger_set = HashSet::new();
-    merged_matches.iter().for_each(|m| {
+    for m in merged_matches.iter() {
       match_trigger_set.extend(triggers_for_match(m));
-    });
+    }
     let parent_matches: Vec<Value> = self
       .matches
       .iter()
@@ -442,9 +442,9 @@ impl LegacyConfig {
     // Merge global variables
     let mut merged_global_vars = new_config.global_vars;
     let mut vars_name_set = HashSet::new();
-    merged_global_vars.iter().for_each(|m| {
+    for m in merged_global_vars.iter() {
       vars_name_set.insert(name_for_global_var(m));
-    });
+    }
     let parent_vars: Vec<Value> = self
       .global_vars
       .iter()

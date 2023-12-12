@@ -64,7 +64,7 @@ impl Extension for ScriptExtension {
       // Replace %HOME% with current user home directory to
       // create cross-platform paths. See issue #265
       // Also replace %CONFIG% and %PACKAGES% path. See issue #380
-      args.iter_mut().for_each(|arg| {
+      for arg in args.iter_mut() {
         if arg.contains("%HOME%") {
           *arg = arg.replace("%HOME%", &self.home_path.to_string_lossy());
         }
@@ -82,7 +82,7 @@ impl Extension for ScriptExtension {
             *arg = path.to_string_lossy().to_string();
           }
         }
-      });
+      }
 
       let mut command = Command::new(&args[0]);
       command.env("CONFIG", self.config_path.to_string_lossy().to_string());
