@@ -66,7 +66,7 @@ pub fn init_and_spawn(
   let key_state_store_clone = key_state_store.clone();
   if let Err(error) = std::thread::Builder::new()
     .name("detect thread".to_string())
-    .spawn(move || match espanso_detect::get_source(source_options) {
+    .spawn(move || match espanso_detect::get_source(&source_options) {
       Ok(mut source) => {
         if source.initialize().is_err() {
           init_tx

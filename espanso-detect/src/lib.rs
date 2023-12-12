@@ -99,7 +99,7 @@ impl Default for SourceCreationOptions {
 }
 
 #[cfg(target_os = "windows")]
-pub fn get_source(options: SourceCreationOptions) -> Result<Box<dyn Source>> {
+pub fn get_source(options: &SourceCreationOptions) -> Result<Box<dyn Source>> {
   info!("using Win32Source");
   Ok(Box::new(win32::Win32Source::new(
     &options.hotkeys,
@@ -109,14 +109,14 @@ pub fn get_source(options: SourceCreationOptions) -> Result<Box<dyn Source>> {
 }
 
 #[cfg(target_os = "macos")]
-pub fn get_source(options: SourceCreationOptions) -> Result<Box<dyn Source>> {
+pub fn get_source(options: &SourceCreationOptions) -> Result<Box<dyn Source>> {
   info!("using CocoaSource");
   Ok(Box::new(mac::CocoaSource::new(&options.hotkeys)))
 }
 
 #[cfg(target_os = "linux")]
 #[cfg(not(feature = "wayland"))]
-pub fn get_source(options: SourceCreationOptions) -> Result<Box<dyn Source>> {
+pub fn get_source(options: &SourceCreationOptions) -> Result<Box<dyn Source>> {
   if options.use_evdev {
     info!("using EVDEVSource");
     Ok(Box::new(evdev::EVDEVSource::new(options)))
@@ -128,7 +128,7 @@ pub fn get_source(options: SourceCreationOptions) -> Result<Box<dyn Source>> {
 
 #[cfg(target_os = "linux")]
 #[cfg(feature = "wayland")]
-pub fn get_source(options: SourceCreationOptions) -> Result<Box<dyn Source>> {
+pub fn get_source(options: &SourceCreationOptions) -> Result<Box<dyn Source>> {
   info!("using EVDEVSource");
   Ok(Box::new(evdev::EVDEVSource::new(options)))
 }

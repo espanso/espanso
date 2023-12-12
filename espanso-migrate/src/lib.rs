@@ -92,7 +92,7 @@ pub fn migrate(config_dir: &Path, packages_dir: &Path, output_dir: &Path) -> Res
 
   // Convert the configurations
   let legacy_files = load::load(working_dir.path())?;
-  let converted_files = convert::convert(legacy_files);
+  let converted_files = convert::convert(&legacy_files);
   let rendered_files = render::render(converted_files)?;
 
   for (file, content) in rendered_files {

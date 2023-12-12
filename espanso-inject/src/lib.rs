@@ -136,20 +136,20 @@ pub trait KeyboardStateProvider {
 }
 
 #[cfg(target_os = "windows")]
-pub fn get_injector(_options: InjectorCreationOptions) -> Result<Box<dyn Injector>> {
+pub fn get_injector(_options: &InjectorCreationOptions) -> Result<Box<dyn Injector>> {
   info!("using Win32Injector");
   Ok(Box::new(win32::Win32Injector::new()))
 }
 
 #[cfg(target_os = "macos")]
-pub fn get_injector(_options: InjectorCreationOptions) -> Result<Box<dyn Injector>> {
+pub fn get_injector(_options: &InjectorCreationOptions) -> Result<Box<dyn Injector>> {
   info!("using MacInjector");
   Ok(Box::new(mac::MacInjector::new()))
 }
 
 #[cfg(target_os = "linux")]
 #[cfg(not(feature = "wayland"))]
-pub fn get_injector(options: InjectorCreationOptions) -> Result<Box<dyn Injector>> {
+pub fn get_injector(options: &InjectorCreationOptions) -> Result<Box<dyn Injector>> {
   if options.use_evdev {
     info!("using EVDEVInjector");
     Ok(Box::new(evdev::EVDEVInjector::new(options)?))

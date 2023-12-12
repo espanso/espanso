@@ -172,7 +172,7 @@ pub fn initialize_and_spawn(
       let selector = MatchSelectorAdapter::new(&modulo_search_ui, &combined_match_cache);
       let multiplexer = MultiplexAdapter::new(&combined_match_cache, &*context);
 
-      let injector = espanso_inject::get_injector(InjectorCreationOptions {
+      let injector = espanso_inject::get_injector(&InjectorCreationOptions {
         use_evdev: use_evdev_backend,
         keyboard_state_provider: key_state_store
           .map(|store| Box::new(store) as Box<dyn KeyboardStateProvider>),
