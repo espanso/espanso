@@ -53,7 +53,7 @@ impl<'a> Middleware for MatchExecRequestMiddleware<'a> {
       };
 
       // Inject the request args into the detected matches
-      for m in matches.iter_mut() {
+      for m in &mut matches {
         for (key, value) in &m_event.args {
           m.args.insert(key.to_string(), value.to_string());
         }

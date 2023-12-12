@@ -56,7 +56,7 @@ pub(crate) fn resolve_evaluation_order<'a>(
   let eval_order_ref = eval_order.borrow();
 
   let mut ordered_variables = Vec::new();
-  for var_name in (*eval_order_ref).iter() {
+  for var_name in &(*eval_order_ref) {
     let node = node_map
       .get(var_name)
       .ok_or_else(|| anyhow!("could not find dependency node for variable: {}", var_name))?;
@@ -116,7 +116,7 @@ fn generate_nodes<'a>(
   global_vars_nodes.into_iter().for_each(|node| {
     node_map.insert(node.name, node);
   });
-  for node in local_vars_nodes.into_iter() {
+  for node in local_vars_nodes {
     node_map.insert(node.name, node);
   }
 
@@ -158,7 +158,7 @@ fn resolve_dependencies<'a>(
   }
 
   if let Some(dependencies) = &node.dependencies {
-    for dependency in dependencies.iter() {
+    for dependency in dependencies {
       let has_been_resolved = {
         let resolved_ref = resolved.borrow();
         resolved_ref.contains(dependency)

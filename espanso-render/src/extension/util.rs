@@ -23,14 +23,14 @@ use std::{collections::HashMap, process::Command};
 pub fn convert_to_env_variables(scope: &Scope) -> HashMap<String, String> {
   let mut output = HashMap::new();
 
-  for (key, result) in scope.iter() {
+  for (key, result) in scope {
     match result {
       ExtensionOutput::Single(value) => {
         let name = format!("ESPANSO_{}", key.to_uppercase());
         output.insert(name, value.clone());
       }
       ExtensionOutput::Multiple(values) => {
-        for (sub_key, sub_value) in values.iter() {
+        for (sub_key, sub_value) in values {
           let name = format!("ESPANSO_{}_{}", key.to_uppercase(), sub_key.to_uppercase());
           output.insert(name, sub_value.clone());
         }

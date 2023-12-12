@@ -75,7 +75,7 @@ impl<'a> DefaultDispatcher<'a> {
 
 impl<'a> Dispatcher for DefaultDispatcher<'a> {
   fn dispatch(&self, event: Event) {
-    for executor in self.executors.iter() {
+    for executor in &self.executors {
       if executor.execute(&event) {
         break;
       }

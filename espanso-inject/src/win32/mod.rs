@@ -47,7 +47,7 @@ impl Win32Injector {
 
   pub fn convert_to_vk_array(keys: &[keys::Key]) -> Result<Vec<i32>> {
     let mut virtual_keys: Vec<i32> = Vec::new();
-    for key in keys.iter() {
+    for key in keys {
       let vk = convert_key_to_vkey(key);
       if let Some(vk) = vk {
         virtual_keys.push(vk);

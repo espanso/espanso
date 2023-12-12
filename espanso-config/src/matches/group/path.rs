@@ -47,7 +47,7 @@ pub fn resolve_imports(
 
   let mut non_fatal_errors = Vec::new();
 
-  for import in imports.iter() {
+  for import in imports {
     let import_path = PathBuf::from(import);
 
     // Absolute or relative import

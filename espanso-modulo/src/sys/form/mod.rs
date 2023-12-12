@@ -362,7 +362,7 @@ pub fn show(form: types::Form) -> HashMap<String, String> {
     let values: &[ValuePair] = unsafe { std::slice::from_raw_parts(values, size as usize) };
     let map = map as *mut HashMap<String, String>;
     let map = unsafe { &mut (*map) };
-    for pair in values.iter() {
+    for pair in values {
       unsafe {
         let id = CStr::from_ptr(pair.id);
         let value = CStr::from_ptr(pair.value);

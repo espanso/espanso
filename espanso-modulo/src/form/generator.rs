@@ -69,7 +69,7 @@ fn build_form(form: FormConfig, structure: Vec<Vec<Token>>) -> Form {
   let field_map = form.fields;
   let mut fields = Vec::new();
 
-  for row in structure.iter() {
+  for row in &structure {
     let current_field = if row.len() == 1 {
       // Single field
       create_field(&row[0], &field_map)

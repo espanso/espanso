@@ -60,7 +60,7 @@ impl<'a> MatchConverter<'a> {
     // First convert configuration (user-defined) matches
     for m in match_set.matches {
       if let MatchCause::Trigger(cause) = &m.cause {
-        for trigger in cause.triggers.iter() {
+        for trigger in &cause.triggers {
           matches.push(RollingMatch::from_string(
             m.id,
             trigger,
@@ -76,7 +76,7 @@ impl<'a> MatchConverter<'a> {
 
     // Then convert built-in ones
     for m in self.builtin_matches {
-      for trigger in m.triggers.iter() {
+      for trigger in &m.triggers {
         matches.push(RollingMatch::from_string(
           m.id,
           trigger,

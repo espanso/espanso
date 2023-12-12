@@ -85,7 +85,7 @@ fn generate_global_vars_map(config_provider: &dyn ConfigProvider) -> HashMap<i32
   let mut global_vars_map = HashMap::new();
 
   for (_, match_set) in config_provider.configs() {
-    for var in match_set.global_vars.iter() {
+    for var in &match_set.global_vars {
       global_vars_map
         .entry(var.id)
         .or_insert_with(|| convert_var((*var).clone()));
@@ -104,13 +104,13 @@ fn generate_context<'a>(
   let mut templates = Vec::new();
   let mut global_vars = Vec::new();
 
-  for m in match_set.matches.iter() {
+  for m in &match_set.matches {
     if let Some(Some(template)) = template_map.get(&m.id) {
       templates.push(template);
     }
   }
 
-  for var in match_set.global_vars.iter() {
+  for var in &match_set.global_vars {
     if let Some(var) = global_vars_map.get(&var.id) {
       global_vars.push(var);
     }

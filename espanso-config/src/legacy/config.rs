@@ -422,7 +422,7 @@ impl LegacyConfig {
     // Merge matches
     let mut merged_matches = new_config.matches;
     let mut match_trigger_set = HashSet::new();
-    for m in merged_matches.iter() {
+    for m in &merged_matches {
       match_trigger_set.extend(triggers_for_match(m));
     }
     let parent_matches: Vec<Value> = self
@@ -442,7 +442,7 @@ impl LegacyConfig {
     // Merge global variables
     let mut merged_global_vars = new_config.global_vars;
     let mut vars_name_set = HashSet::new();
-    for m in merged_global_vars.iter() {
+    for m in &merged_global_vars {
       vars_name_set.insert(name_for_global_var(m));
     }
     let parent_vars: Vec<Value> = self
@@ -654,7 +654,7 @@ impl LegacyConfigSet {
     let mut specific = configs[1..].to_vec();
 
     // Add default entries to specific configs when needed
-    for config in specific.iter_mut() {
+    for config in &mut specific {
       if !config.exclude_default_entries {
         config.merge_no_overwrite(&default);
       }
@@ -704,7 +704,7 @@ impl LegacyConfigSet {
 
     let mut has_conflicts = Self::list_has_conflicts(&sorted_triggers);
 
-    for s in specific.iter() {
+    for s in specific {
       let mut specific_triggers: Vec<String> =
         s.matches.iter().flat_map(triggers_for_match).collect();
       specific_triggers.sort();

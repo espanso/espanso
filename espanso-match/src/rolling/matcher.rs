@@ -76,7 +76,7 @@ where
 
     // First compute the old refs
     if let Some(prev_state) = prev_state {
-      for node_path in prev_state.paths.iter() {
+      for node_path in &prev_state.paths {
         next_refs.extend(
           self
             .find_refs(node_path.node, &event, true)
