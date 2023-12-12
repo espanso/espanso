@@ -41,6 +41,8 @@ pub mod types {
 
 #[allow(dead_code)]
 mod interop {
+  use crate::sys;
+
   use super::super::interop::*;
   use super::types;
   use std::ffi::{c_void, CString};
@@ -65,9 +67,12 @@ mod interop {
       let title =
         CString::new(search.title.clone()).expect("unable to convert search title to CString");
 
-      let items: Vec<OwnedSearchItem> = search.items.iter().map(|item| item.into()).collect();
+      let items: Vec<OwnedSearchItem> = search.items.iter().map(Into::into).collect();
 
-      let interop_items: Vec<SearchItem> = items.iter().map(|item| item.to_search_item()).collect();
+      let interop_items: Vec<SearchItem> = items
+        .iter()
+        .map(sys::search::interop::OwnedSearchItem::to_search_item)
+        .collect();
 
       let icon_path = if let Some(icon_path) = search.icon.as_ref() {
         icon_path.clone()

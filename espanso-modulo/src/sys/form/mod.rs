@@ -89,6 +89,8 @@ pub mod types {
 
 #[allow(dead_code)]
 mod interop {
+  use crate::sys;
+
   use super::super::interop::*;
   use super::types;
   use std::ffi::{c_void, CString};
@@ -113,9 +115,12 @@ mod interop {
   impl From<types::Form> for OwnedForm {
     fn from(form: types::Form) -> Self {
       let title = CString::new(form.title).expect("unable to convert form title to CString");
-      let fields: Vec<OwnedField> = form.fields.into_iter().map(|field| field.into()).collect();
+      let fields: Vec<OwnedField> = form.fields.into_iter().map(Into::into).collect();
 
-      let _metadata: Vec<FieldMetadata> = fields.iter().map(|field| field.metadata()).collect();
+      let _metadata: Vec<FieldMetadata> = fields
+        .iter()
+        .map(sys::form::interop::OwnedField::metadata)
+        .collect();
 
       let icon_path = if let Some(icon_path) = form.icon.as_ref() {
         icon_path.clone()
@@ -323,13 +328,12 @@ mod interop {
 
   impl From<types::RowMetadata> for OwnedRowMetadata {
     fn from(row_metadata: types::RowMetadata) -> Self {
-      let fields: Vec<OwnedField> = row_metadata
-        .fields
-        .into_iter()
-        .map(|field| field.into())
-        .collect();
+      let fields: Vec<OwnedField> = row_metadata.fields.into_iter().map(Into::into).collect();
 
-      let _metadata: Vec<FieldMetadata> = fields.iter().map(|field| field.metadata()).collect();
+      let _metadata: Vec<FieldMetadata> = fields
+        .iter()
+        .map(sys::form::interop::OwnedField::metadata)
+        .collect();
 
       let _interop = Box::new(RowMetadata {
         fields: _metadata.as_ptr(),

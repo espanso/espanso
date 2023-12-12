@@ -130,7 +130,7 @@ impl Config for ResolvedConfig {
       .parsed
       .backend
       .as_deref()
-      .map(|b| b.to_lowercase())
+      .map(str::to_lowercase)
       .as_deref()
     {
       Some("clipboard") => Backend::Clipboard,
@@ -172,7 +172,7 @@ impl Config for ResolvedConfig {
       .parsed
       .toggle_key
       .as_deref()
-      .map(|key| key.to_lowercase())
+      .map(str::to_lowercase)
       .as_deref()
     {
       Some("ctrl") => Some(ToggleKey::Ctrl),

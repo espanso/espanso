@@ -30,6 +30,7 @@ use std::fmt;
 use std::fs::File;
 use std::io::Read;
 use std::path::{Path, PathBuf};
+use std::string::ToString;
 use walkdir::{DirEntry, WalkDir};
 
 pub const DEFAULT_CONFIG_FILE_NAME: &str = "default.yml";
@@ -494,7 +495,7 @@ fn triggers_for_match(m: &Value) -> Vec<String> {
   if let Some(triggers) = m.get("triggers").and_then(|v| v.as_sequence()) {
     triggers
       .iter()
-      .filter_map(|v| v.as_str().map(|s| s.to_string()))
+      .filter_map(|v| v.as_str().map(ToString::to_string))
       .collect()
   } else if let Some(trigger) = m.get("trigger").and_then(|v| v.as_str()) {
     vec![trigger.to_string()]

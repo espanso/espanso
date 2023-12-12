@@ -300,7 +300,7 @@ fn yaml_get_string<'a>(yaml: &'a Hash, name: &str) -> Option<&'a str> {
 fn yaml_get_bool(yaml: &Hash, name: &str) -> Option<bool> {
   yaml
     .get(&Yaml::String(name.to_string()))
-    .and_then(|v| v.as_bool())
+    .and_then(Yaml::as_bool)
 }
 
 fn copy_field_if_present(

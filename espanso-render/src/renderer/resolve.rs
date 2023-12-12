@@ -79,7 +79,7 @@ fn generate_nodes<'a>(
     if var.inject_vars {
       dependencies.extend(super::util::get_params_variable_names(&var.params));
     }
-    dependencies.extend(var.depends_on.iter().map(|v| v.as_str()));
+    dependencies.extend(var.depends_on.iter().map(String::as_str));
 
     // Every local variable depends on the one before it.
     // Needed to guarantee execution order within local vars.
@@ -131,7 +131,7 @@ fn create_node_from_var(var: &Variable) -> Node {
       vars.extend(super::util::get_params_variable_names(&var.params));
     }
 
-    vars.extend(var.depends_on.iter().map(|s| s.as_str()));
+    vars.extend(var.depends_on.iter().map(String::as_str));
 
     Some(vars)
   } else {
