@@ -122,7 +122,7 @@ pub fn get_source(options: SourceCreationOptions) -> Result<Box<dyn Source>> {
     Ok(Box::new(evdev::EVDEVSource::new(options)))
   } else {
     info!("using X11Source");
-    Ok(Box::new(x11::X11Source::new(options.hotkeys)))
+    Ok(Box::new(x11::X11Source::new(&options.hotkeys)))
   }
 }
 
