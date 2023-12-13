@@ -175,6 +175,8 @@ pub enum ScriptExtensionError {
 
 #[cfg(test)]
 mod tests {
+  use std::collections::HashMap;
+
   use super::*;
   #[cfg(not(target_os = "windows"))]
   use crate::Scope;
@@ -279,7 +281,7 @@ mod tests {
     .into_iter()
     .collect::<Params>();
     assert!(matches!(
-      extension.calculate(&Default::default(), &Default::default(), &param),
+      extension.calculate(&crate::Context::default(), &HashMap::default(), &param),
       ExtensionResult::Error(_)
     ));
   }

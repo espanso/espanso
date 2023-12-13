@@ -66,6 +66,8 @@ pub enum EchoExtensionError {
 
 #[cfg(test)]
 mod tests {
+  use std::collections::HashMap;
+
   use super::*;
 
   #[test]
@@ -77,7 +79,7 @@ mod tests {
       .collect::<Params>();
     assert_eq!(
       extension
-        .calculate(&Default::default(), &Default::default(), &param)
+        .calculate(&crate::Context::default(), &HashMap::default(), &param)
         .into_success()
         .unwrap(),
       ExtensionOutput::Single("test".to_string())
@@ -90,7 +92,7 @@ mod tests {
 
     let param = Params::new();
     assert!(matches!(
-      extension.calculate(&Default::default(), &Default::default(), &param),
+      extension.calculate(&crate::Context::default(), &HashMap::default(), &param),
       ExtensionResult::Error(_)
     ));
   }

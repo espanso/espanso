@@ -39,7 +39,7 @@ fn create_field(token: &Token, field_map: &HashMap<String, FieldConfig>) -> Fiel
       let config = if let Some(config) = field_map.get(name) {
         config.clone()
       } else {
-        Default::default()
+        FieldConfig::default()
       };
 
       let field_type = match &config.field_type {

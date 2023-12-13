@@ -422,6 +422,8 @@ impl DefaultLocaleProvider {
 
 #[cfg(test)]
 mod tests {
+  use std::collections::HashMap;
+
   use super::*;
   use chrono::offset::TimeZone;
 
@@ -456,7 +458,7 @@ mod tests {
       .collect::<Params>();
     assert_eq!(
       extension
-        .calculate(&Default::default(), &Default::default(), &param)
+        .calculate(&crate::Context::default(), &HashMap::default(), &param)
         .into_success()
         .unwrap(),
       ExtensionOutput::Single("09:10:11".to_string())
@@ -477,7 +479,7 @@ mod tests {
     .collect::<Params>();
     assert_eq!(
       extension
-        .calculate(&Default::default(), &Default::default(), &param)
+        .calculate(&crate::Context::default(), &HashMap::default(), &param)
         .into_success()
         .unwrap(),
       ExtensionOutput::Single("10:10:11".to_string())
@@ -495,7 +497,7 @@ mod tests {
       .collect::<Params>();
     assert_eq!(
       extension
-        .calculate(&Default::default(), &Default::default(), &param)
+        .calculate(&crate::Context::default(), &HashMap::default(), &param)
         .into_success()
         .unwrap(),
       ExtensionOutput::Single("martedì".to_string())
@@ -513,7 +515,7 @@ mod tests {
       .collect::<Params>();
     assert_eq!(
       extension
-        .calculate(&Default::default(), &Default::default(), &param)
+        .calculate(&crate::Context::default(), &HashMap::default(), &param)
         .into_success()
         .unwrap(),
       ExtensionOutput::Single("Tuesday".to_string())
@@ -534,7 +536,7 @@ mod tests {
     .collect::<Params>();
     assert_eq!(
       extension
-        .calculate(&Default::default(), &Default::default(), &param)
+        .calculate(&crate::Context::default(), &HashMap::default(), &param)
         .into_success()
         .unwrap(),
       ExtensionOutput::Single("martedì".to_string())
