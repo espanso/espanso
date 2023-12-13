@@ -186,9 +186,9 @@ matches:
 
     write(
       package_dir.join("README.md"),
-      r#"
+      r"
     A very dummy package
-    "#,
+    ",
     )
     .unwrap();
 

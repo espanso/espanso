@@ -908,11 +908,11 @@ mod tests {
       let base_file = match_dir.join("base.yml");
       std::fs::write(
         &base_file,
-        r#"
+        r"
       imports:
         - invalid
        - indentation
-      "#,
+      ",
       )
       .unwrap();
 

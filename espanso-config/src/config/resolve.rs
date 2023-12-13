@@ -740,9 +740,9 @@ mod tests {
       let parent_file = config_dir.join("parent.yml");
       std::fs::write(
         &parent_file,
-        r#"
+        r"
       excludes: ['../**/another.yml']
-      "#,
+      ",
       )
       .unwrap();
 
