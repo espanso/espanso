@@ -171,7 +171,8 @@ fn resolve_dependencies<'a>(
       if !has_been_resolved {
         if has_been_seen {
           return Err(
-            RendererError::CircularDependency(node.name.to_string(), dependency.to_string()).into(),
+            RendererError::CircularDependency(node.name.to_string(), (*dependency).to_string())
+              .into(),
           );
         }
 
@@ -186,7 +187,7 @@ fn resolve_dependencies<'a>(
                 super::log_new_form_syntax_tip();
               }
             }
-            return Err(RendererError::MissingVariable(dependency.to_string()).into());
+            return Err(RendererError::MissingVariable((*dependency).to_string()).into());
           }
         }
       }

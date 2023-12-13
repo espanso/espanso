@@ -447,7 +447,7 @@ impl ResolvedConfig {
 
     if config.use_standard_includes.is_none() || config.use_standard_includes.unwrap() {
       for include in STANDARD_INCLUDES {
-        includes.insert(include.to_string());
+        includes.insert((*include).to_string());
       }
     }
 
