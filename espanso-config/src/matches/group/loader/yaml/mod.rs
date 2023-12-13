@@ -871,8 +871,8 @@ mod tests {
       assert_eq!(non_fatal_error_set.unwrap().errors.len(), 1);
 
       // Reset the ids to compare them correctly
-      group.matches.iter_mut().for_each(|mut m| m.id = 0);
-      group.global_vars.iter_mut().for_each(|mut v| v.id = 0);
+      group.matches.iter_mut().for_each(|m| m.id = 0);
+      group.global_vars.iter_mut().for_each(|v| v.id = 0);
 
       let vars = vec![Variable {
         name: "var1".to_string(),
