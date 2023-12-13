@@ -940,7 +940,7 @@ mod tests {
     };
 
     assert!(test_filter_is_match(
-      &format!("filter_os: {}", current),
+      &format!("filter_os: {current}"),
       &AppProperties {
         title: Some("Google Mail"),
         class: Some("Chrome"),
@@ -949,7 +949,7 @@ mod tests {
     ));
 
     assert!(!test_filter_is_match(
-      &format!("filter_os: {}", another),
+      &format!("filter_os: {another}"),
       &AppProperties {
         title: Some("Google Mail"),
         class: Some("Chrome"),
