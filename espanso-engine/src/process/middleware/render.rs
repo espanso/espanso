@@ -85,24 +85,22 @@ impl<'a> Middleware for RenderMiddleware<'a> {
             }),
           );
         }
-        Err(err) => match err.downcast_ref::<RendererError>() {
-          Some(RendererError::Aborted) => {
-            return Event::caused_by(event.source_id, EventType::NOOP)
+        Err(err) => {
+          if let Some(RendererError::Aborted) = err.downcast_ref::<RendererError>() {
+            return Event::caused_by(event.source_id, EventType::NOOP);
           }
-          _ => {
-            error!("error during rendering: {:?}", err);
+          error!("error during rendering: {:?}", err);
 
-            dispatch(Event::caused_by(
-                event.source_id,
-                EventType::TextInject(TextInjectRequest {
-                  text: "[Espanso]: An error occurred during rendering, please examine the logs for more information.".to_string(),
-                  ..Default::default()
-                }),
-              ));
+          dispatch(Event::caused_by(
+                    event.source_id,
+                    EventType::TextInject(TextInjectRequest {
+                      text: "[Espanso]: An error occurred during rendering, please examine the logs for more information.".to_string(),
+                      ..Default::default()
+                    }),
+                  ));
 
-            return Event::caused_by(event.source_id, EventType::RenderingError);
-          }
-        },
+          return Event::caused_by(event.source_id, EventType::RenderingError);
+        }
       }
     }
 

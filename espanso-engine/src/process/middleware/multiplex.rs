@@ -43,12 +43,11 @@ impl<'a> Middleware for MultiplexMiddleware<'a> {
 
   fn next(&self, event: Event, _: &mut dyn FnMut(Event)) -> Event {
     if let EventType::CauseCompensatedMatch(m_event) = event.etype {
-      return match self.multiplexer.convert(m_event.m) {
-        Some(new_event) => Event::caused_by(event.source_id, new_event),
-        None => {
-          error!("match multiplexing failed");
-          Event::caused_by(event.source_id, EventType::NOOP)
-        }
+      return if let Some(new_event) = self.multiplexer.convert(m_event.m) {
+        Event::caused_by(event.source_id, new_event)
+      } else {
+        error!("match multiplexing failed");
+        Event::caused_by(event.source_id, EventType::NOOP)
       };
     }
 
