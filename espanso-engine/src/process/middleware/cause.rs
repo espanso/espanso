@@ -55,9 +55,8 @@ impl Middleware for CauseCompensateMiddleware {
             left_separator: m_event.chosen.left_separator.clone(),
           }),
         );
-      } else {
-        return compensated_event;
       }
+      return compensated_event;
     }
 
     event

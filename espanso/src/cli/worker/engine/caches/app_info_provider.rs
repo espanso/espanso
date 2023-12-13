@@ -28,7 +28,7 @@ pub struct CachedAppInfoProvider<'a> {
   app_info_provider: &'a dyn AppInfoProvider,
   caching_interval: Duration,
 
-  _cached_info: RefCell<Option<(Instant, AppInfo)>>,
+  cached_info: RefCell<Option<(Instant, AppInfo)>>,
 }
 
 impl<'a> CachedAppInfoProvider<'a> {
@@ -36,14 +36,14 @@ impl<'a> CachedAppInfoProvider<'a> {
     Self {
       app_info_provider,
       caching_interval,
-      _cached_info: RefCell::new(None),
+      cached_info: RefCell::new(None),
     }
   }
 }
 
 impl<'a> AppInfoProvider for CachedAppInfoProvider<'a> {
   fn get_info(&self) -> espanso_info::AppInfo {
-    let mut cached_info = self._cached_info.borrow_mut();
+    let mut cached_info = self.cached_info.borrow_mut();
     if let Some((instant, cached_value)) = &*cached_info {
       if instant.elapsed() < self.caching_interval {
         // Return cached config

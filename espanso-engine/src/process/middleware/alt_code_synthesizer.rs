@@ -62,7 +62,7 @@ impl<'a> Middleware for AltCodeSynthesizerMiddleware<'a> {
 
         if keyboard_event.status == Status::Pressed {
           if let Key::Alt = &keyboard_event.key {
-            *code_buffer = Some("".to_owned());
+            *code_buffer = Some(String::new());
           } else if let Some(buffer) = &mut *code_buffer {
             match keyboard_event.key {
               Key::Numpad0 => buffer.push('0'),

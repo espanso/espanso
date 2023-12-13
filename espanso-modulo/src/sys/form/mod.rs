@@ -89,6 +89,8 @@ pub mod types {
 
 #[allow(dead_code)]
 mod interop {
+  use crate::sys;
+
   use super::super::interop::*;
   use super::types;
   use std::ffi::{c_void, CString};
@@ -100,27 +102,30 @@ mod interop {
     icon_path: CString,
     fields: Vec<OwnedField>,
 
-    _metadata: Vec<FieldMetadata>,
-    _interop: Box<FormMetadata>,
+    metadata: Vec<FieldMetadata>,
+    interop: Box<FormMetadata>,
   }
 
   impl Interoperable for OwnedForm {
     fn as_ptr(&self) -> *const c_void {
-      &(*self._interop) as *const FormMetadata as *const c_void
+      &(*self.interop) as *const FormMetadata as *const c_void
     }
   }
 
   impl From<types::Form> for OwnedForm {
     fn from(form: types::Form) -> Self {
       let title = CString::new(form.title).expect("unable to convert form title to CString");
-      let fields: Vec<OwnedField> = form.fields.into_iter().map(|field| field.into()).collect();
+      let fields: Vec<OwnedField> = form.fields.into_iter().map(Into::into).collect();
 
-      let _metadata: Vec<FieldMetadata> = fields.iter().map(|field| field.metadata()).collect();
+      let metadata: Vec<FieldMetadata> = fields
+        .iter()
+        .map(sys::form::interop::OwnedField::metadata)
+        .collect();
 
       let icon_path = if let Some(icon_path) = form.icon.as_ref() {
         icon_path.clone()
       } else {
-        "".to_owned()
+        String::new()
       };
 
       let icon_path = CString::new(icon_path).expect("unable to convert form icon to CString");
@@ -131,10 +136,10 @@ mod interop {
         std::ptr::null()
       };
 
-      let _interop = Box::new(FormMetadata {
+      let interop = Box::new(FormMetadata {
         windowTitle: title.as_ptr(),
         iconPath: icon_path_ptr,
-        fields: _metadata.as_ptr(),
+        fields: metadata.as_ptr(),
         fieldSize: fields.len() as c_int,
       });
 
@@ -142,8 +147,8 @@ mod interop {
         title,
         icon_path,
         fields,
-        _metadata,
-        _interop,
+        metadata,
+        interop,
       }
     }
   }
@@ -215,12 +220,12 @@ mod interop {
 
   struct OwnedLabelMetadata {
     text: CString,
-    _interop: Box<LabelMetadata>,
+    interop: Box<LabelMetadata>,
   }
 
   impl Interoperable for OwnedLabelMetadata {
     fn as_ptr(&self) -> *const c_void {
-      &(*self._interop) as *const LabelMetadata as *const c_void
+      &(*self.interop) as *const LabelMetadata as *const c_void
     }
   }
 
@@ -228,21 +233,21 @@ mod interop {
     fn from(label_metadata: types::LabelMetadata) -> Self {
       let text =
         CString::new(label_metadata.text).expect("unable to convert label text to CString");
-      let _interop = Box::new(LabelMetadata {
+      let interop = Box::new(LabelMetadata {
         text: text.as_ptr(),
       });
-      Self { text, _interop }
+      Self { text, interop }
     }
   }
 
   struct OwnedTextMetadata {
     default_text: CString,
-    _interop: Box<TextMetadata>,
+    interop: Box<TextMetadata>,
   }
 
   impl Interoperable for OwnedTextMetadata {
     fn as_ptr(&self) -> *const c_void {
-      &(*self._interop) as *const TextMetadata as *const c_void
+      &(*self.interop) as *const TextMetadata as *const c_void
     }
   }
 
@@ -250,13 +255,13 @@ mod interop {
     fn from(text_metadata: types::TextMetadata) -> Self {
       let default_text = CString::new(text_metadata.default_text)
         .expect("unable to convert default text to CString");
-      let _interop = Box::new(TextMetadata {
+      let interop = Box::new(TextMetadata {
         defaultText: default_text.as_ptr(),
         multiline: i32::from(text_metadata.multiline),
       });
       Self {
         default_text,
-        _interop,
+        interop,
       }
     }
   }
@@ -265,12 +270,12 @@ mod interop {
     values: Vec<CString>,
     values_ptr_array: Vec<*const c_char>,
     default_value: CString,
-    _interop: Box<ChoiceMetadata>,
+    interop: Box<ChoiceMetadata>,
   }
 
   impl Interoperable for OwnedChoiceMetadata {
     fn as_ptr(&self) -> *const c_void {
-      &(*self._interop) as *const ChoiceMetadata as *const c_void
+      &(*self.interop) as *const ChoiceMetadata as *const c_void
     }
   }
 
@@ -293,7 +298,7 @@ mod interop {
       let default_value =
         CString::new(metadata.default_value).expect("unable to convert default value to CString");
 
-      let _interop = Box::new(ChoiceMetadata {
+      let interop = Box::new(ChoiceMetadata {
         values: values_ptr_array.as_ptr(),
         valueSize: values.len() as c_int,
         choiceType: choice_type,
@@ -303,7 +308,7 @@ mod interop {
         values,
         values_ptr_array,
         default_value,
-        _interop,
+        interop,
       }
     }
   }
@@ -311,35 +316,34 @@ mod interop {
   struct OwnedRowMetadata {
     fields: Vec<OwnedField>,
 
-    _metadata: Vec<FieldMetadata>,
-    _interop: Box<RowMetadata>,
+    metadata: Vec<FieldMetadata>,
+    interop: Box<RowMetadata>,
   }
 
   impl Interoperable for OwnedRowMetadata {
     fn as_ptr(&self) -> *const c_void {
-      &(*self._interop) as *const RowMetadata as *const c_void
+      &(*self.interop) as *const RowMetadata as *const c_void
     }
   }
 
   impl From<types::RowMetadata> for OwnedRowMetadata {
     fn from(row_metadata: types::RowMetadata) -> Self {
-      let fields: Vec<OwnedField> = row_metadata
-        .fields
-        .into_iter()
-        .map(|field| field.into())
+      let fields: Vec<OwnedField> = row_metadata.fields.into_iter().map(Into::into).collect();
+
+      let metadata: Vec<FieldMetadata> = fields
+        .iter()
+        .map(sys::form::interop::OwnedField::metadata)
         .collect();
 
-      let _metadata: Vec<FieldMetadata> = fields.iter().map(|field| field.metadata()).collect();
-
-      let _interop = Box::new(RowMetadata {
-        fields: _metadata.as_ptr(),
-        fieldSize: _metadata.len() as c_int,
+      let interop = Box::new(RowMetadata {
+        fields: metadata.as_ptr(),
+        fieldSize: metadata.len() as c_int,
       });
 
       Self {
         fields,
-        _metadata,
-        _interop,
+        metadata,
+        interop,
       }
     }
   }
@@ -358,7 +362,7 @@ pub fn show(form: types::Form) -> HashMap<String, String> {
     let values: &[ValuePair] = unsafe { std::slice::from_raw_parts(values, size as usize) };
     let map = map as *mut HashMap<String, String>;
     let map = unsafe { &mut (*map) };
-    for pair in values.iter() {
+    for pair in values {
       unsafe {
         let id = CStr::from_ptr(pair.id);
         let value = CStr::from_ptr(pair.value);

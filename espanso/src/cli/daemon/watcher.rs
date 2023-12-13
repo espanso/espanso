@@ -48,7 +48,7 @@ pub fn initialize_and_spawn(config_dir: &Path, watcher_notify: Sender<()>) -> Re
   Ok(())
 }
 
-fn watcher_main(config_dir: &Path, debounce_tx: crossbeam::channel::Sender<()>) {
+fn watcher_main(config_dir: &Path, debounce_tx: Sender<()>) {
   let (tx, rx) = std::sync::mpsc::channel();
 
   let mut watcher: RecommendedWatcher =

@@ -43,7 +43,7 @@ pub fn list_main(
   if cli_args.is_present("json") {
     print_matches_as_json(&match_set.matches)?;
   } else {
-    print_matches_as_plain(&match_set.matches, only_triggers, preserve_newlines)
+    print_matches_as_plain(&match_set.matches, only_triggers, preserve_newlines);
   }
 
   Ok(())
@@ -59,14 +59,14 @@ pub fn print_matches_as_plain(match_list: &[&Match], only_triggers: bool, preser
 
     for trigger in triggers {
       if only_triggers {
-        println!("{}", trigger);
+        println!("{trigger}");
       } else {
         let description = m.description();
 
         if preserve_newlines {
-          println!("{} - {}", trigger, description)
+          println!("{trigger} - {description}");
         } else {
-          println!("{} - {}", trigger, description.replace('\n', " "))
+          println!("{} - {}", trigger, description.replace('\n', " "));
         }
       }
     }
@@ -91,12 +91,12 @@ pub fn print_matches_as_json(match_list: &[&Match]) -> Result<()> {
     entries.push(JsonMatchEntry {
       triggers,
       replace: m.description().to_string(),
-    })
+    });
   }
 
   let json = serde_json::to_string_pretty(&entries)?;
 
-  println!("{}", json);
+  println!("{json}");
 
   Ok(())
 }

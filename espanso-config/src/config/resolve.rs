@@ -130,7 +130,7 @@ impl Config for ResolvedConfig {
       .parsed
       .backend
       .as_deref()
-      .map(|b| b.to_lowercase())
+      .map(str::to_lowercase)
       .as_deref()
     {
       Some("clipboard") => Backend::Clipboard,
@@ -172,21 +172,21 @@ impl Config for ResolvedConfig {
       .parsed
       .toggle_key
       .as_deref()
-      .map(|key| key.to_lowercase())
+      .map(str::to_lowercase)
       .as_deref()
     {
       Some("ctrl") => Some(ToggleKey::Ctrl),
       Some("alt") => Some(ToggleKey::Alt),
       Some("shift") => Some(ToggleKey::Shift),
-      Some("meta") | Some("cmd") => Some(ToggleKey::Meta),
+      Some("meta" | "cmd") => Some(ToggleKey::Meta),
       Some("right_ctrl") => Some(ToggleKey::RightCtrl),
       Some("right_alt") => Some(ToggleKey::RightAlt),
       Some("right_shift") => Some(ToggleKey::RightShift),
-      Some("right_meta") | Some("right_cmd") => Some(ToggleKey::RightMeta),
+      Some("right_meta" | "right_cmd") => Some(ToggleKey::RightMeta),
       Some("left_ctrl") => Some(ToggleKey::LeftCtrl),
       Some("left_alt") => Some(ToggleKey::LeftAlt),
       Some("left_shift") => Some(ToggleKey::LeftShift),
-      Some("left_meta") | Some("left_cmd") => Some(ToggleKey::LeftMeta),
+      Some("left_meta" | "left_cmd") => Some(ToggleKey::LeftMeta),
       Some("off") => None,
       None => None,
       err => {
@@ -269,7 +269,7 @@ impl Config for ResolvedConfig {
 
   fn search_trigger(&self) -> Option<String> {
     match self.parsed.search_trigger.as_deref() {
-      Some("OFF") | Some("off") => None,
+      Some("OFF" | "off") => None,
       Some(x) => Some(x.to_string()),
       None => None,
     }
@@ -277,7 +277,7 @@ impl Config for ResolvedConfig {
 
   fn search_shortcut(&self) -> Option<String> {
     match self.parsed.search_shortcut.as_deref() {
-      Some("OFF") | Some("off") => None,
+      Some("OFF" | "off") => None,
       Some(x) => Some(x.to_string()),
       None => Some("ALT+SPACE".to_string()),
     }
@@ -448,20 +448,20 @@ impl ResolvedConfig {
     if config.use_standard_includes.is_none() || config.use_standard_includes.unwrap() {
       STANDARD_INCLUDES.iter().for_each(|include| {
         includes.insert(include.to_string());
-      })
+      });
     }
 
     if let Some(yaml_includes) = config.includes.as_ref() {
       yaml_includes.iter().for_each(|include| {
         includes.insert(include.to_string());
-      })
-    }
+      });
+    };
 
     if let Some(extra_includes) = config.extra_includes.as_ref() {
       extra_includes.iter().for_each(|include| {
         includes.insert(include.to_string());
-      })
-    }
+      });
+    };
 
     includes
   }
@@ -472,13 +472,13 @@ impl ResolvedConfig {
     if let Some(yaml_excludes) = config.excludes.as_ref() {
       yaml_excludes.iter().for_each(|exclude| {
         excludes.insert(exclude.to_string());
-      })
+      });
     }
 
     if let Some(extra_excludes) = config.extra_excludes.as_ref() {
       extra_excludes.iter().for_each(|exclude| {
         excludes.insert(exclude.to_string());
-      })
+      });
     }
 
     excludes
@@ -517,7 +517,7 @@ mod tests {
       ResolvedConfig::aggregate_includes(&ParsedConfig {
         ..Default::default()
       }),
-      vec!["../match/**/[!_]*.yml".to_string(),]
+      ["../match/**/[!_]*.yml".to_string()]
         .iter()
         .cloned()
         .collect::<HashSet<_>>()
@@ -542,7 +542,7 @@ mod tests {
         includes: Some(vec!["custom/*.yml".to_string()]),
         ..Default::default()
       }),
-      vec![
+      [
         "../match/**/[!_]*.yml".to_string(),
         "custom/*.yml".to_string()
       ]
@@ -559,7 +559,7 @@ mod tests {
         extra_includes: Some(vec!["custom/*.yml".to_string()]),
         ..Default::default()
       }),
-      vec![
+      [
         "../match/**/[!_]*.yml".to_string(),
         "custom/*.yml".to_string()
       ]
@@ -577,7 +577,7 @@ mod tests {
         extra_includes: Some(vec!["custom/*.yml".to_string()]),
         ..Default::default()
       }),
-      vec![
+      [
         "../match/**/[!_]*.yml".to_string(),
         "custom/*.yml".to_string(),
         "sub/*.yml".to_string()
@@ -617,7 +617,7 @@ mod tests {
         excludes: Some(vec!["custom/*.yml".to_string()]),
         ..Default::default()
       }),
-      vec!["custom/*.yml".to_string()]
+      ["custom/*.yml".to_string()]
         .iter()
         .cloned()
         .collect::<HashSet<_>>()
@@ -631,7 +631,7 @@ mod tests {
         extra_excludes: Some(vec!["custom/*.yml".to_string()]),
         ..Default::default()
       }),
-      vec!["custom/*.yml".to_string()]
+      ["custom/*.yml".to_string()]
         .iter()
         .cloned()
         .collect::<HashSet<_>>()
@@ -646,7 +646,7 @@ mod tests {
         extra_excludes: Some(vec!["custom/*.yml".to_string()]),
         ..Default::default()
       }),
-      vec!["custom/*.yml".to_string(), "sub/*.yml".to_string()]
+      ["custom/*.yml".to_string(), "sub/*.yml".to_string()]
         .iter()
         .cloned()
         .collect::<HashSet<_>>()
@@ -820,7 +820,7 @@ mod tests {
 
       let config = ResolvedConfig::load(&config_file, None).unwrap();
 
-      *result_ref = config.is_match(app)
+      *result_ref = config.is_match(app);
     });
     result
   }

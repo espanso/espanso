@@ -37,7 +37,7 @@ pub(crate) fn get_body_variable_names(body: &str) -> HashSet<&str> {
 pub(crate) fn get_params_variable_names(params: &Params) -> HashSet<&str> {
   let mut names = HashSet::new();
 
-  for (_, value) in params.iter() {
+  for value in params.values() {
     let local_names = get_value_variable_names_recursively(value);
     names.extend(local_names);
   }
@@ -81,13 +81,9 @@ pub(crate) fn render_variables(body: &str, scope: &Scope) -> Result<String> {
               results.get(var_subname).map_or("", |value| value)
             }
             None => {
-              error!(
-                "nested name missing from multi-value variable: {}",
-                var_name
-              );
+              error!("nested name missing from multi-value variable: {var_name}");
               replacing_error = Some(RendererError::MissingVariable(format!(
-                "nested name missing from multi-value variable: {}",
-                var_name
+                "nested name missing from multi-value variable: {var_name}"
               )));
               ""
             }
@@ -95,8 +91,7 @@ pub(crate) fn render_variables(body: &str, scope: &Scope) -> Result<String> {
         },
         None => {
           replacing_error = Some(RendererError::MissingVariable(format!(
-            "variable '{}' is missing",
-            var_name
+            "variable '{var_name}' is missing"
           )));
           ""
         }
@@ -119,7 +114,7 @@ pub(crate) fn unescape_variable_inections(body: &str) -> String {
 pub(crate) fn inject_variables_into_params(params: &Params, scope: &Scope) -> Result<Params> {
   let mut params = params.clone();
 
-  for (_, value) in params.iter_mut() {
+  for value in &mut params.values_mut() {
     inject_variables_into_value(value, scope)?;
   }
 

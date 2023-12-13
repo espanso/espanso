@@ -39,10 +39,10 @@ pub fn search_main(matches: &ArgMatches, icon_paths: &IconPaths) -> i32 {
     std::fs::read_to_string(input_file).expect("unable to read input file")
   };
 
-  let mut config: config::SearchConfig = if !as_json {
-    serde_yaml::from_str(&data).expect("unable to parse search configuration")
-  } else {
+  let mut config: config::SearchConfig = if as_json {
     serde_json::from_str(&data).expect("unable to parse search configuration")
+  } else {
+    serde_yaml::from_str(&data).expect("unable to parse search configuration")
   };
 
   // Overwrite the icon
@@ -59,7 +59,7 @@ pub fn search_main(matches: &ArgMatches, icon_paths: &IconPaths) -> i32 {
   result_map.insert("selected", result);
 
   let output = serde_json::to_string(&result_map).expect("unable to encode values as JSON");
-  println!("{}", output);
+  println!("{output}");
 
   0
 }

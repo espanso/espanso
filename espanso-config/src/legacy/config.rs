@@ -30,6 +30,7 @@ use std::fmt;
 use std::fs::File;
 use std::io::Read;
 use std::path::{Path, PathBuf};
+use std::string::ToString;
 use walkdir::{DirEntry, WalkDir};
 
 pub const DEFAULT_CONFIG_FILE_NAME: &str = "default.yml";
@@ -43,13 +44,13 @@ fn default_parent() -> String {
   "self".to_owned()
 }
 fn default_filter_title() -> String {
-  "".to_owned()
+  String::new()
 }
 fn default_filter_class() -> String {
-  "".to_owned()
+  String::new()
 }
 fn default_filter_exec() -> String {
-  "".to_owned()
+  String::new()
 }
 fn default_log_level() -> i32 {
   0
@@ -412,7 +413,7 @@ impl LegacyConfig {
         Err(e) => Err(ConfigLoadError::InvalidYAML(path.to_owned(), e.to_string())),
       }
     } else {
-      eprintln!("Error: Cannot load file {:?}", path);
+      eprintln!("Error: Cannot load file {path:?}");
       Err(ConfigLoadError::FileNotFound)
     }
   }
@@ -421,9 +422,9 @@ impl LegacyConfig {
     // Merge matches
     let mut merged_matches = new_config.matches;
     let mut match_trigger_set = HashSet::new();
-    merged_matches.iter().for_each(|m| {
+    for m in &merged_matches {
       match_trigger_set.extend(triggers_for_match(m));
-    });
+    }
     let parent_matches: Vec<Value> = self
       .matches
       .iter()
@@ -441,9 +442,9 @@ impl LegacyConfig {
     // Merge global variables
     let mut merged_global_vars = new_config.global_vars;
     let mut vars_name_set = HashSet::new();
-    merged_global_vars.iter().for_each(|m| {
+    for m in &merged_global_vars {
       vars_name_set.insert(name_for_global_var(m));
-    });
+    }
     let parent_vars: Vec<Value> = self
       .global_vars
       .iter()
@@ -494,7 +495,7 @@ fn triggers_for_match(m: &Value) -> Vec<String> {
   if let Some(triggers) = m.get("triggers").and_then(|v| v.as_sequence()) {
     triggers
       .iter()
-      .filter_map(|v| v.as_str().map(|s| s.to_string()))
+      .filter_map(|v| v.as_str().map(ToString::to_string))
       .collect()
   } else if let Some(trigger) = m.get("trigger").and_then(|v| v.as_str()) {
     vec![trigger.to_string()]
@@ -615,7 +616,7 @@ impl LegacyConfigSet {
           }
         }
         Err(e) => {
-          eprintln!("Warning: Unable to read config file: {}", e);
+          eprintln!("Warning: Unable to read config file: {e}");
         }
       }
 
@@ -653,7 +654,7 @@ impl LegacyConfigSet {
     let mut specific = configs[1..].to_vec();
 
     // Add default entries to specific configs when needed
-    for config in specific.iter_mut() {
+    for config in &mut specific {
       if !config.exclude_default_entries {
         config.merge_no_overwrite(&default);
       }
@@ -703,7 +704,7 @@ impl LegacyConfigSet {
 
     let mut has_conflicts = Self::list_has_conflicts(&sorted_triggers);
 
-    for s in specific.iter() {
+    for s in specific {
       let mut specific_triggers: Vec<String> =
         s.matches.iter().flat_map(triggers_for_match).collect();
       specific_triggers.sort();
@@ -725,8 +726,7 @@ impl LegacyConfigSet {
       if item.starts_with(previous) {
         has_conflicts = true;
         eprintln!(
-          "Warning: trigger '{}' is conflicting with '{}' and may not behave as intended",
-          item, previous
+          "Warning: trigger '{item}' is conflicting with '{previous}' and may not behave as intended"
         );
       }
     }
@@ -1019,7 +1019,7 @@ mod tests {
     assert_eq!(
       config_set.unwrap_err(),
       ConfigLoadError::InvalidParameter(user_defined_path)
-    )
+    );
   }
 
   #[test]
@@ -1039,7 +1039,7 @@ mod tests {
     assert_eq!(
       config_set.unwrap().specific[0].name,
       user_defined_path.to_str().unwrap_or_default()
-    )
+    );
   }
 
   #[test]
@@ -1067,7 +1067,7 @@ mod tests {
     assert!(matches!(
       &config_set.unwrap_err(),
       &ConfigLoadError::NameDuplicate(_)
-    ))
+    ));
   }
 
   #[test]
