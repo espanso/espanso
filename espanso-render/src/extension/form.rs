@@ -59,9 +59,7 @@ impl<'a> Extension for FormExtension<'a> {
     _: &crate::Scope,
     params: &Params,
   ) -> crate::ExtensionResult {
-    let layout = if let Some(Value::String(layout)) = params.get("layout") {
-      layout
-    } else {
+    let Some(Value::String(layout)) = params.get("layout") else {
       return crate::ExtensionResult::Error(FormExtensionError::MissingLayout.into());
     };
 
