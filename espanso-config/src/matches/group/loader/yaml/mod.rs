@@ -350,9 +350,11 @@ mod tests {
 
   fn create_match(yaml: &str) -> Result<Match> {
     let (m, warnings) = create_match_with_warnings(yaml, false)?;
-    if !warnings.is_empty() {
-      panic!("warnings were detected but not handled: {:?}", warnings);
-    }
+    assert!(
+      warnings.is_empty(),
+      "warnings were detected but not handled: {:?}",
+      warnings
+    );
     Ok(m)
   }
 
