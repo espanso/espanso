@@ -64,8 +64,7 @@ impl<'a> Extension for DateExtension<'a> {
     let locale = params
       .get("locale")
       .and_then(|val| val.as_string())
-      .map(String::from)
-      .unwrap_or_else(|| self.locale_provider.get_system_locale());
+      .map_or_else(|| self.locale_provider.get_system_locale(), String::from);
 
     let date = if let Some(Value::String(format)) = format {
       DateExtension::format_date_with_locale_string(now, format, &locale)
