@@ -19,7 +19,9 @@
 
 use super::config::{FieldConfig, FieldTypeConfig, FormConfig};
 use super::parser::layout::Token;
-use crate::sys::form::types::*;
+use crate::sys::form::types::{
+  ChoiceMetadata, ChoiceType, Field, FieldType, Form, LabelMetadata, RowMetadata, TextMetadata,
+};
 use std::collections::HashMap;
 
 pub fn generate(config: FormConfig) -> Form {
@@ -69,7 +71,7 @@ fn build_form(form: FormConfig, structure: Vec<Vec<Token>>) -> Form {
   let field_map = form.fields;
   let mut fields = Vec::new();
 
-  for row in structure.iter() {
+  for row in &structure {
     let current_field = if row.len() == 1 {
       // Single field
       create_field(&row[0], &field_map)
@@ -88,7 +90,7 @@ fn build_form(form: FormConfig, structure: Vec<Vec<Token>>) -> Form {
       }
     };
 
-    fields.push(current_field)
+    fields.push(current_field);
   }
 
   Form {

@@ -71,7 +71,7 @@ impl<'a> Middleware for RenderMiddleware<'a> {
       ) {
         Ok(body) => {
           let body = if let Some(right_separator) = m_event.right_separator {
-            format!("{}{}", body, right_separator)
+            format!("{body}{right_separator}")
           } else {
             body
           };

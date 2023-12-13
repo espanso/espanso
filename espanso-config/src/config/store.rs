@@ -37,7 +37,7 @@ impl ConfigStore for DefaultConfigStore {
 
   fn active(&self, app: &super::AppProperties) -> Arc<dyn super::Config> {
     // Find a custom config that matches or fallback to the default one
-    for custom in self.customs.iter() {
+    for custom in &self.customs {
       if custom.is_match(app) {
         return Arc::clone(custom);
       }
@@ -48,7 +48,7 @@ impl ConfigStore for DefaultConfigStore {
   fn configs(&self) -> Vec<Arc<dyn Config>> {
     let mut configs = vec![Arc::clone(&self.default)];
 
-    for custom in self.customs.iter() {
+    for custom in &self.customs {
       configs.push(Arc::clone(custom));
     }
 
@@ -60,7 +60,7 @@ impl ConfigStore for DefaultConfigStore {
     let mut paths = HashSet::new();
 
     paths.extend(self.default().match_paths().iter().cloned());
-    for custom in self.customs.iter() {
+    for custom in &self.customs {
       paths.extend(custom.match_paths().iter().cloned());
     }
 

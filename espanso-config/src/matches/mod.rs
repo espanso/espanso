@@ -73,7 +73,7 @@ impl Match {
     self
       .search_terms
       .iter()
-      .map(|term| term.as_str())
+      .map(String::as_str)
       .chain(self.cause.search_terms())
       .collect()
   }
@@ -93,7 +93,7 @@ impl MatchCause {
   // TODO: test
   pub fn description(&self) -> Option<&str> {
     if let MatchCause::Trigger(trigger_cause) = &self {
-      trigger_cause.triggers.first().map(|s| s.as_str())
+      trigger_cause.triggers.first().map(String::as_str)
     } else {
       None
     }
@@ -114,7 +114,7 @@ impl MatchCause {
 
   pub fn search_terms(&self) -> Vec<&str> {
     if let MatchCause::Trigger(trigger_cause) = &self {
-      trigger_cause.triggers.iter().map(|s| s.as_str()).collect()
+      trigger_cause.triggers.iter().map(String::as_str).collect()
     } else {
       vec![]
     }

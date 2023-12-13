@@ -103,10 +103,10 @@ impl<'a, State> Middleware for MatcherMiddleware<'a, State> {
   fn next(&self, event: Event, _: &mut dyn FnMut(Event)) -> Event {
     if is_event_of_interest(&event.etype) {
       let mut matcher_states = self.matcher_states.borrow_mut();
-      let prev_states = if !matcher_states.is_empty() {
-        matcher_states.back()
-      } else {
+      let prev_states = if matcher_states.is_empty() {
         None
+      } else {
+        matcher_states.back()
       };
 
       if let EventType::Keyboard(keyboard_event) = &event.etype {

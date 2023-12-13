@@ -54,11 +54,9 @@ impl Middleware for MarkdownMiddleware {
             html: html.to_owned(),
           }),
         );
-      } else {
-        error!("unable to convert markdown to HTML, is it malformed?");
-
-        return Event::caused_by(event.source_id, EventType::NOOP);
       }
+      error!("unable to convert markdown to HTML, is it malformed?");
+      return Event::caused_by(event.source_id, EventType::NOOP);
     }
 
     event

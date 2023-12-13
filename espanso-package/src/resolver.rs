@@ -137,7 +137,7 @@ mod tests {
           },
           base_dir: base_dir.to_path_buf(),
         },]
-      )
+      );
     });
   }
 
@@ -227,7 +227,7 @@ mod tests {
             base_dir: sub_dir3,
           },
         ]
-      )
+      );
     });
   }
 

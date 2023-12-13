@@ -91,7 +91,7 @@ impl Shell {
     super::util::set_command_flags(&mut command);
 
     // Inject all the previous variables
-    for (key, value) in vars.iter() {
+    for (key, value) in vars {
       command.env(key, value);
     }
 
@@ -123,7 +123,7 @@ impl Shell {
       let mut tokens: Vec<&str> = vec!["CONFIG/p"];
 
       // Add all the previous variables
-      for (key, _) in vars.iter() {
+      for key in vars.keys() {
         tokens.push(key);
       }
 

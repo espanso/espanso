@@ -106,7 +106,7 @@ fn generate_html_descriptor(html: &str) -> String {
   // For more information, look here:
   // https://docs.microsoft.com/en-us/windows/win32/dataxchg/html-clipboard-format
   // https://docs.microsoft.com/en-za/troubleshoot/cpp/add-html-code-clipboard
-  let content = format!("<!--StartFragment-->{}<!--EndFragment-->", html);
+  let content = format!("<!--StartFragment-->{html}<!--EndFragment-->");
 
   let tokens = [
     "Version:0.9",

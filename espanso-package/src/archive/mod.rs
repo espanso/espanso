@@ -93,7 +93,7 @@ impl std::fmt::Display for PackageSource {
         repo_url,
         repo_branch: _,
         use_native_git: _,
-      } => write!(f, "git: {}", repo_url),
+      } => write!(f, "git: {repo_url}"),
     }
   }
 }

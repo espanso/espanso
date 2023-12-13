@@ -91,9 +91,7 @@ pub fn create(options: Win32UIOptions) -> Result<(Win32Remote, Win32EventLoop)> 
   let handle: Arc<AtomicPtr<c_void>> = Arc::new(AtomicPtr::new(std::ptr::null_mut()));
 
   // Validate icons
-  if options.icon_paths.len() > MAX_ICON_COUNT {
-    panic!("Win32 UI received too many icon paths, please increase the MAX_ICON_COUNT constant to support more");
-  }
+  assert!(options.icon_paths.len() <= MAX_ICON_COUNT, "Win32 UI received too many icon paths, please increase the MAX_ICON_COUNT constant to support more");
 
   // Convert the icon paths to the internal representation
   let mut icon_indexes: HashMap<TrayIcon, usize> = HashMap::new();
@@ -120,8 +118,8 @@ pub struct Win32EventLoop {
   icons: Vec<String>,
 
   // Internal
-  _event_callback: LazyCell<UIEventCallback>,
-  _init_thread_id: LazyCell<ThreadId>,
+  event_callback: LazyCell<UIEventCallback>,
+  init_thread_id: LazyCell<ThreadId>,
 }
 
 impl Win32EventLoop {
@@ -130,8 +128,8 @@ impl Win32EventLoop {
       handle,
       icons,
       show_icon,
-      _event_callback: LazyCell::new(),
-      _init_thread_id: LazyCell::new(),
+      event_callback: LazyCell::new(),
+      init_thread_id: LazyCell::new(),
     }
   }
 }
@@ -189,7 +187,7 @@ impl UIEventLoop for Win32EventLoop {
 
     // Make sure the run() method is called in the same thread as initialize()
     self
-      ._init_thread_id
+      .init_thread_id
       .fill(std::thread::current().id())
       .expect("Unable to set initialization thread id");
 
@@ -198,10 +196,11 @@ impl UIEventLoop for Win32EventLoop {
 
   fn run(&self, event_callback: UIEventCallback) -> Result<()> {
     // Make sure the run() method is called in the same thread as initialize()
-    if let Some(init_id) = self._init_thread_id.borrow() {
-      if init_id != &std::thread::current().id() {
-        panic!("Win32EventLoop run() and initialize() methods should be called in the same thread");
-      }
+    if let Some(init_id) = self.init_thread_id.borrow() {
+      assert!(
+        !(init_id != &std::thread::current().id()),
+        "Win32EventLoop run() and initialize() methods should be called in the same thread"
+      );
     }
 
     let window_handle = self.handle.load(Ordering::Acquire);
@@ -210,16 +209,16 @@ impl UIEventLoop for Win32EventLoop {
       return Err(Win32UIError::InvalidHandle().into());
     }
 
-    if self._event_callback.fill(event_callback).is_err() {
+    if self.event_callback.fill(event_callback).is_err() {
       error!("Unable to set Win32EventLoop callback");
       return Err(Win32UIError::InternalError().into());
     }
 
     extern "C" fn callback(_self: *mut Win32EventLoop, event: RawUIEvent) {
-      if let Some(callback) = unsafe { (*_self)._event_callback.borrow() } {
+      if let Some(callback) = unsafe { (*_self).event_callback.borrow() } {
         let event: Option<UIEvent> = event.into();
         if let Some(event) = event {
-          callback(event)
+          callback(event);
         } else {
           trace!("Unable to convert raw event to input event");
         }

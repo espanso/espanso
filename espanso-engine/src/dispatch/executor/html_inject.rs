@@ -45,7 +45,7 @@ impl<'a> Executor for HtmlInjectExecutor<'a> {
       // Render the text fallback for those applications that don't support HTML clipboard
       let decorator = html2text::render::text_renderer::TrivialDecorator::new();
       let fallback_text =
-        html2text::from_read_with_decorator(inject_event.html.as_bytes(), 1000000, decorator);
+        html2text::from_read_with_decorator(inject_event.html.as_bytes(), 1_000_000, decorator);
 
       if let Err(error) = self
         .injector

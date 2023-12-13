@@ -109,7 +109,7 @@ impl Middleware for DisableMiddleware {
         } else {
           EventType::Disabled
         },
-      ))
+      ));
     }
 
     // Block keyboard events when disabled

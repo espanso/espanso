@@ -32,10 +32,8 @@ pub fn read_line<R: std::io::Read>(stream: R) -> Result<Option<String>> {
     if byte == 10 {
       // Newline
       break;
-    } else {
-      buffer.push(byte);
     }
-
+    buffer.push(byte);
     is_eof = false;
   }
 

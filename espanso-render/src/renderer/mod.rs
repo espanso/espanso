@@ -197,7 +197,7 @@ impl<'a> Renderer for DefaultRenderer<'a> {
               let capitalized_word: String = v.into_iter().collect();
               capitalized_word
             } else {
-              "".to_string()
+              String::new()
             }
           })
           .to_string()

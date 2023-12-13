@@ -132,13 +132,13 @@ pub fn show(options: WizardOptions) -> bool {
       .expect("unable to acquire lock in on_completed method");
     let handlers_ref = (*lock).as_ref().expect("unable to unwrap handlers");
     if let Some(handler_ref) = handlers_ref.on_completed.as_ref() {
-      (*handler_ref)()
+      (*handler_ref)();
     }
   }
 
   {
     let mut lock = HANDLERS.lock().expect("unable to acquire handlers lock");
-    *lock = Some(options.handlers)
+    *lock = Some(options.handlers);
   }
 
   let wizard_metadata = WizardMetadata {

@@ -104,10 +104,10 @@ impl Importer for YAMLImporter {
         .context("failed to resolve YAML match group imports")?;
     non_fatal_errors.extend(import_errors);
 
-    let non_fatal_error_set = if !non_fatal_errors.is_empty() {
-      Some(NonFatalErrorSet::new(path, non_fatal_errors))
-    } else {
+    let non_fatal_error_set = if non_fatal_errors.is_empty() {
       None
+    } else {
+      Some(NonFatalErrorSet::new(path, non_fatal_errors))
     };
 
     Ok((
@@ -210,7 +210,7 @@ pub fn try_convert_into_match(
       for yaml_var in yaml_match.vars.unwrap_or_default() {
         let (var, var_warnings) =
           try_convert_into_variable(yaml_var.clone(), use_compatibility_mode)
-            .with_context(|| format!("failed to load variable: {:?}", yaml_var))?;
+            .with_context(|| format!("failed to load variable: {yaml_var:?}"))?;
         warnings.extend(var_warnings);
         vars.push(var);
       }
@@ -233,13 +233,13 @@ pub fn try_convert_into_match(
           VAR_REGEX
             .replace_all(&form_layout, |caps: &Captures| {
               let var_name = caps.get(1).unwrap().as_str();
-              format!("{{{{form1.{}}}}}", var_name)
+              format!("{{{{form1.{var_name}}}}}")
             })
             .to_string(),
           VAR_REGEX
             .replace_all(&form_layout, |caps: &Captures| {
               let var_name = caps.get(1).unwrap().as_str();
-              format!("[[{}]]", var_name)
+              format!("[[{var_name}]]")
             })
             .to_string(),
         )
@@ -248,7 +248,7 @@ pub fn try_convert_into_match(
           FORM_CONTROL_REGEX
             .replace_all(&form_layout, |caps: &Captures| {
               let var_name = caps.get(1).unwrap().as_str();
-              format!("{{{{form1.{}}}}}", var_name)
+              format!("{{{{form1.{var_name}}}}}")
             })
             .to_string(),
           form_layout,
@@ -377,7 +377,7 @@ mod tests {
         }),
         ..Default::default()
       }
-    )
+    );
   }
 
   #[test]
@@ -401,7 +401,7 @@ mod tests {
         }),
         ..Default::default()
       }
-    )
+    );
   }
 
   #[test]
@@ -428,7 +428,7 @@ mod tests {
         }),
         ..Default::default()
       }
-    )
+    );
   }
 
   #[test]
@@ -454,7 +454,7 @@ mod tests {
         }),
         ..Default::default()
       }
-    )
+    );
   }
 
   #[test]
@@ -480,7 +480,7 @@ mod tests {
         }),
         ..Default::default()
       }
-    )
+    );
   }
 
   #[test]
@@ -506,7 +506,7 @@ mod tests {
         }),
         ..Default::default()
       }
-    )
+    );
   }
 
   #[test]
@@ -630,7 +630,7 @@ mod tests {
         }),
         ..Default::default()
       }
-    )
+    );
   }
 
   #[test]
@@ -667,7 +667,7 @@ mod tests {
         }),
         ..Default::default()
       }
-    )
+    );
   }
 
   #[test]
@@ -706,7 +706,7 @@ mod tests {
         }),
         ..Default::default()
       }
-    )
+    );
   }
 
   #[test]
@@ -744,7 +744,7 @@ mod tests {
         }),
         ..Default::default()
       }
-    )
+    );
   }
 
   #[test]
@@ -790,7 +790,7 @@ mod tests {
         }),
         ..Default::default()
       }
-    )
+    );
   }
 
   #[test]
@@ -824,7 +824,7 @@ mod tests {
         }),
         ..Default::default()
       }
-    )
+    );
   }
 
   #[test]
@@ -896,7 +896,7 @@ mod tests {
             ..Default::default()
           }],
         }
-      )
+      );
     });
   }
 
@@ -916,6 +916,6 @@ mod tests {
 
       let importer = YAMLImporter::new();
       assert!(importer.load_group(&base_file).is_err());
-    })
+    });
   }
 }

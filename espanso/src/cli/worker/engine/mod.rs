@@ -282,7 +282,7 @@ pub fn initialize_and_spawn(
           notification_manager.notify_config_reloaded(true);
         }
         Some(flag) if flag == WORKER_START_REASON_KEYBOARD_LAYOUT_CHANGED => {
-          notification_manager.notify_keyboard_layout_reloaded()
+          notification_manager.notify_keyboard_layout_reloaded();
         }
         _ => {
           notification_manager.notify_start();

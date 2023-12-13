@@ -76,7 +76,7 @@ impl<'a> TextInjector for EventInjectorAdapter<'a> {
       if i > 0 {
         self
           .injector
-          .send_keys(&[espanso_inject::keys::Key::Enter], injection_options)?
+          .send_keys(&[espanso_inject::keys::Key::Enter], injection_options)?;
       }
 
       self.injector.send_string(line, injection_options)?;

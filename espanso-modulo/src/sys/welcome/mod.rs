@@ -49,7 +49,7 @@ pub fn show(options: WelcomeOptions) {
 
   {
     let mut lock = HANDLERS.lock().expect("unable to acquire handlers lock");
-    *lock = Some(options.handlers)
+    *lock = Some(options.handlers);
   }
 
   let welcome_metadata = WelcomeMetadata {

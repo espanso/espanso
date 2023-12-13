@@ -78,7 +78,7 @@ fn case_insensitive_keyword(query: &str, items: &[SearchItem]) -> Vec<usize> {
     .iter()
     .enumerate()
     .filter(|(_, item)| {
-      for keyword in keywords.iter() {
+      for keyword in &keywords {
         if !item.label.to_lowercase().contains(keyword)
           && !item
             .trigger
