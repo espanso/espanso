@@ -46,7 +46,9 @@ impl AppInfoProvider for WinAppInfoProvider {
 impl WinAppInfoProvider {
   fn get_exec() -> Option<String> {
     let mut buffer: [u16; 2048] = [0; 2048];
-    if unsafe { info_get_exec(buffer.as_mut_ptr(), (buffer.len() - 1) as i32) } != 0 {
+    if unsafe { info_get_exec(buffer.as_mut_ptr(), (buffer.len() - 1) as i32) } == 0 {
+      None
+    } else {
       let string = unsafe { U16CStr::from_ptr_str(buffer.as_ptr()) };
       let string = string.to_string_lossy();
       if string.is_empty() {
@@ -54,8 +56,6 @@ impl WinAppInfoProvider {
       } else {
         Some(string)
       }
-    } else {
-      None
     }
   }
 
