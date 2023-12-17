@@ -34,7 +34,7 @@ pub struct WinIPCServer {
 
 impl WinIPCServer {
   pub fn new(id: &str) -> Result<Self> {
-    let pipe_name = format!("\\\\.\\pipe\\{}", id);
+    let pipe_name = format!("\\\\.\\pipe\\{id}");
 
     let options = PipeOptions::new(&pipe_name);
     let server = Some(options.single()?);
@@ -105,9 +105,9 @@ pub struct WinIPCClient {
 
 impl WinIPCClient {
   pub fn new(id: &str) -> Result<Self> {
-    let pipe_name = format!("\\\\.\\pipe\\{}", id);
+    let pipe_name = format!("\\\\.\\pipe\\{id}");
 
-    let stream = PipeClient::connect_ms(&pipe_name, DEFAULT_CLIENT_TIMEOUT)?;
+    let stream = PipeClient::connect_ms(pipe_name, DEFAULT_CLIENT_TIMEOUT)?;
     Ok(Self { stream })
   }
 }

@@ -52,7 +52,7 @@ impl Archiver for DefaultArchiver {
     }
 
     // Backup the previous directory if present
-    let backup_dir = self.package_dir.join(&format!("{}.old", package.name()));
+    let backup_dir = self.package_dir.join(format!("{}.old", package.name()));
     let _backup_guard = if target_dir.is_dir() {
       std::fs::rename(&target_dir, &backup_dir)
         .context("unable to backup old package directory")?;
@@ -186,9 +186,9 @@ matches:
 
     write(
       package_dir.join("README.md"),
-      r#"
+      r"
     A very dummy package
-    "#,
+    ",
     )
     .unwrap();
 
@@ -328,7 +328,7 @@ matches:
       assert!(package_out_dir.is_dir());
 
       let legacy_package = dest_dir.join("z_legacypackage1");
-      create_dir_all(&legacy_package).unwrap();
+      create_dir_all(legacy_package).unwrap();
 
       let package_list = archiver.list().unwrap();
 

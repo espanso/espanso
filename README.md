@@ -14,8 +14,9 @@ Visit the [espanso website](https://espanso.org).
 #### What is a Text Expander?
 
 A *text expander* is a program that detects when you type
-a specific **keyword** and replaces it with **something else**. 
+a specific **keyword** and replaces it with **something else**.
 This is useful in many ways:
+
 * **Save a lot of typing**, expanding common sentences.
 * Create **system-wide** code snippets.
 * Execute **custom scripts**
@@ -50,12 +51,10 @@ Visit the [official documentation](https://espanso.org/docs/).
 If you need some help to setup espanso, want to ask a question or simply get involved
 in the community, [Join the official Subreddit](https://www.reddit.com/r/espanso/)! :)
 
-
-
 ## Donations
 
 espanso is a free, open source software developed in my (little) spare time.
-If you liked the project and would like to support further development, 
+If you liked the project and would like to support further development,
 please consider making a small donation, it really helps :)
 
 [![Donate with PayPal](images/donate.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=FHNLR5DRS267E&source=url)
@@ -64,9 +63,7 @@ please consider making a small donation, it really helps :)
 
 Many people helped the project along the way, thank you to all of you!
 
-<a href="https://github.com/federico-terzi/espanso/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=federico-terzi/espanso" />
-</a>
+[![Image](https://contrib.rocks/image?repo=federico-terzi/espanso)](https://github.com/federico-terzi/espanso/graphs/contributors)
 
 ## Remarks
 

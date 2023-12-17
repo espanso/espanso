@@ -68,49 +68,22 @@ pub enum FieldTypeConfig {
   List(ListFieldConfig),
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct TextFieldConfig {
   pub default: String,
   pub multiline: bool,
 }
 
-impl Default for TextFieldConfig {
-  fn default() -> Self {
-    Self {
-      default: "".to_owned(),
-      multiline: false,
-    }
-  }
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct ChoiceFieldConfig {
   pub values: Vec<String>,
   pub default: String,
 }
 
-impl Default for ChoiceFieldConfig {
-  fn default() -> Self {
-    Self {
-      values: Vec::new(),
-      default: "".to_owned(),
-    }
-  }
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct ListFieldConfig {
   pub values: Vec<String>,
   pub default: String,
-}
-
-impl Default for ListFieldConfig {
-  fn default() -> Self {
-    Self {
-      values: Vec::new(),
-      default: "".to_owned(),
-    }
-  }
 }
 
 impl<'de> serde::Deserialize<'de> for FieldConfig {
@@ -127,7 +100,7 @@ impl<'a> From<&'a AutoFieldConfig> for FieldConfig {
   fn from(other: &'a AutoFieldConfig) -> Self {
     let field_type = match other.field_type.as_ref() {
       "text" => {
-        let mut config: TextFieldConfig = Default::default();
+        let mut config = TextFieldConfig::default();
 
         if let Some(default) = &other.default {
           config.default = default.clone();

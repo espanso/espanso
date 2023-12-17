@@ -60,7 +60,7 @@ impl<'a> MatchConverter<'a> {
     // First convert configuration (user-defined) matches
     for m in match_set.matches {
       if let MatchCause::Trigger(cause) = &m.cause {
-        for trigger in cause.triggers.iter() {
+        for trigger in &cause.triggers {
           matches.push(RollingMatch::from_string(
             m.id,
             trigger,
@@ -69,19 +69,19 @@ impl<'a> MatchConverter<'a> {
               left_word: cause.left_word,
               right_word: cause.right_word,
             },
-          ))
+          ));
         }
       }
     }
 
     // Then convert built-in ones
     for m in self.builtin_matches {
-      for trigger in m.triggers.iter() {
+      for trigger in &m.triggers {
         matches.push(RollingMatch::from_string(
           m.id,
           trigger,
           &StringMatchOptions::default(),
-        ))
+        ));
       }
     }
 
@@ -95,7 +95,7 @@ impl<'a> MatchConverter<'a> {
 
     for m in match_set.matches {
       if let MatchCause::Regex(cause) = &m.cause {
-        matches.push(RegexMatch::new(m.id, &cause.regex))
+        matches.push(RegexMatch::new(m.id, &cause.regex));
       }
     }
 

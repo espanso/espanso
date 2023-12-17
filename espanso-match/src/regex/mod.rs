@@ -80,7 +80,7 @@ where
     let mut buffer = if let Some(prev_state) = prev_state {
       prev_state.buffer.clone()
     } else {
-      "".to_string()
+      String::new()
     };
 
     if let Event::Key {
@@ -179,7 +179,7 @@ mod tests {
   fn match_result<Id: Default>(id: Id, trigger: &str, vars: &[(&str, &str)]) -> MatchResult<Id> {
     let vars: HashMap<String, String> = vars
       .iter()
-      .map(|(key, value)| (key.to_string(), value.to_string()))
+      .map(|(key, value)| ((*key).to_string(), (*value).to_string()))
       .collect();
 
     MatchResult {

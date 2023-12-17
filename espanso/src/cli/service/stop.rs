@@ -111,10 +111,10 @@ fn forcefully_terminate_espanso() {
 
       if cfg!(target_os = "windows") {
         let _ = Command::new("taskkill")
-          .args(&["/pid", &str_pid, "/f"])
+          .args(["/pid", &str_pid, "/f"])
           .output();
       } else {
-        let _ = Command::new("kill").args(&["-9", &str_pid]).output();
+        let _ = Command::new("kill").args(["-9", &str_pid]).output();
       }
     }
   }

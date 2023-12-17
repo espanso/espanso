@@ -49,13 +49,13 @@ pub fn show(options: WelcomeOptions) {
 
   {
     let mut lock = HANDLERS.lock().expect("unable to acquire handlers lock");
-    *lock = Some(options.handlers)
+    *lock = Some(options.handlers);
   }
 
   let welcome_metadata = WelcomeMetadata {
     window_icon_path: c_window_icon_path_ptr,
     tray_image_path: c_tray_image_path_ptr,
-    already_running: if options.is_already_running { 1 } else { 0 },
+    already_running: i32::from(options.is_already_running),
     dont_show_again_changed,
   };
 

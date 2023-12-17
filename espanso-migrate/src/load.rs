@@ -66,7 +66,12 @@ pub fn load(config_dir: &Path) -> Result<HashMap<String, Hash>> {
                 } else {
                   match YamlLoader::load_from_str(&content) {
                     Ok(mut yaml) => {
-                      if !yaml.is_empty() {
+                      if yaml.is_empty() {
+                        eprintln!(
+                          "error, found empty document while reading entry: {}",
+                          entry.path().display()
+                        );
+                      } else {
                         let yaml = yaml.remove(0);
                         if let Yaml::Hash(hash) = yaml {
                           input_files.insert(corrected_path, hash);
@@ -76,11 +81,6 @@ pub fn load(config_dir: &Path) -> Result<HashMap<String, Hash>> {
                             entry.path().display()
                           );
                         }
-                      } else {
-                        eprintln!(
-                          "error, found empty document while reading entry: {}",
-                          entry.path().display()
-                        );
                       }
                     }
                     Err(err) => {
@@ -112,7 +112,7 @@ pub fn load(config_dir: &Path) -> Result<HashMap<String, Hash>> {
         }
       }
       Err(err) => {
-        eprintln!("experienced error while reading entry: {}", err)
+        eprintln!("experienced error while reading entry: {err}");
       }
     }
   }

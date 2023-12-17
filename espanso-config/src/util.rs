@@ -46,7 +46,7 @@ pub mod tests {
     create_dir_all(&config_dir).unwrap();
 
     callback(
-      &dunce::canonicalize(&dir.path()).unwrap(),
+      &dunce::canonicalize(dir.path()).unwrap(),
       &dunce::canonicalize(match_dir).unwrap(),
       &dunce::canonicalize(config_dir).unwrap(),
     );

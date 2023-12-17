@@ -77,7 +77,7 @@ impl UInputDevice {
   }
 
   pub fn emit(&self, key_code: u32, pressed: bool) {
-    let pressed = if pressed { 1 } else { 0 };
+    let pressed = i32::from(pressed);
     unsafe {
       uinput_emit(self.fd, key_code, pressed);
     }

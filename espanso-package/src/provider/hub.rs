@@ -109,12 +109,12 @@ impl EspansoHubPackageProvider {
       }
     }
 
-    let new_index = self.download_index()?;
+    let new_index = EspansoHubPackageProvider::download_index()?;
     self.save_index_to_cache(new_index.clone())?;
     Ok(new_index)
   }
 
-  fn download_index(&self) -> Result<PackageIndex> {
+  fn download_index() -> Result<PackageIndex> {
     info_println!("fetching package index...");
     let json_body = read_string_from_url(ESPANSO_HUB_PACKAGE_INDEX_URL)?;
 
@@ -144,7 +144,7 @@ impl EspansoHubPackageProvider {
       index,
     };
     let serialized = serde_json::to_string(&cached_index)?;
-    std::fs::write(&target_file, serialized)?;
+    std::fs::write(target_file, serialized)?;
     Ok(())
   }
 }

@@ -40,7 +40,7 @@ impl SecureInputManager for SecureInputManagerAdapter {
   fn launch_secure_input_autofix(&self) -> anyhow::Result<()> {
     let espanso_path = std::env::current_exe()?;
     let child = std::process::Command::new(espanso_path)
-      .args(&["workaround", "secure-input"])
+      .args(["workaround", "secure-input"])
       .stdout(Stdio::piped())
       .spawn()
       .context("unable to spawn workaround process")?;

@@ -64,7 +64,7 @@ impl Extension for ScriptExtension {
       // Replace %HOME% with current user home directory to
       // create cross-platform paths. See issue #265
       // Also replace %CONFIG% and %PACKAGES% path. See issue #380
-      args.iter_mut().for_each(|arg| {
+      for arg in &mut args {
         if arg.contains("%HOME%") {
           *arg = arg.replace("%HOME%", &self.home_path.to_string_lossy());
         }
@@ -79,10 +79,10 @@ impl Extension for ScriptExtension {
         if cfg!(target_os = "windows") {
           let path = PathBuf::from(&arg);
           if path.exists() {
-            *arg = path.to_string_lossy().to_string()
+            *arg = path.to_string_lossy().to_string();
           }
         }
-      });
+      }
 
       let mut command = Command::new(&args[0]);
       command.env("CONFIG", self.config_path.to_string_lossy().to_string());
@@ -175,6 +175,8 @@ pub enum ScriptExtensionError {
 
 #[cfg(test)]
 mod tests {
+  use std::collections::HashMap;
+
   use super::*;
   #[cfg(not(target_os = "windows"))]
   use crate::Scope;
@@ -279,7 +281,7 @@ mod tests {
     .into_iter()
     .collect::<Params>();
     assert!(matches!(
-      extension.calculate(&Default::default(), &Default::default(), &param),
+      extension.calculate(&crate::Context::default(), &HashMap::default(), &param),
       ExtensionResult::Error(_)
     ));
   }
@@ -328,7 +330,7 @@ mod tests {
         .calculate(&Default::default(), &Default::default(), &param)
         .into_success()
         .unwrap(),
-      ExtensionOutput::Single("".to_string())
+      ExtensionOutput::Single(String::new())
     );
   }
 }

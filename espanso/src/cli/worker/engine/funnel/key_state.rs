@@ -110,7 +110,7 @@ impl KeyStatus {
   }
 
   fn release(&mut self) {
-    self.pressed_at = None
+    self.pressed_at = None;
   }
 
   fn press(&mut self) {

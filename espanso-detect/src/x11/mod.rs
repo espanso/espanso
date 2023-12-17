@@ -239,10 +239,10 @@ fn convert_hotkey_to_raw(hk: &HotKey) -> Option<RawHotKeyRequest> {
   let key_sym = hk.key.to_code()?;
   Some(RawHotKeyRequest {
     key_sym,
-    ctrl: if hk.has_ctrl() { 1 } else { 0 },
-    alt: if hk.has_alt() { 1 } else { 0 },
-    shift: if hk.has_shift() { 1 } else { 0 },
-    meta: if hk.has_meta() { 1 } else { 0 },
+    ctrl: i32::from(hk.has_ctrl()),
+    alt: i32::from(hk.has_alt()),
+    shift: i32::from(hk.has_shift()),
+    meta: i32::from(hk.has_meta()),
   })
 }
 

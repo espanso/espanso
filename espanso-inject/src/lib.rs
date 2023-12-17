@@ -75,6 +75,7 @@ impl Default for InjectionOptions {
     } else if cfg!(target_os = "macos") {
       1
     } else if cfg!(target_os = "linux") {
+      #[allow(clippy::bool_to_int_with_if)]
       if cfg!(feature = "wayland") {
         1
       } else {

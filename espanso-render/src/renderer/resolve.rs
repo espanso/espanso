@@ -56,7 +56,7 @@ pub(crate) fn resolve_evaluation_order<'a>(
   let eval_order_ref = eval_order.borrow();
 
   let mut ordered_variables = Vec::new();
-  for var_name in (*eval_order_ref).iter() {
+  for var_name in &(*eval_order_ref) {
     let node = node_map
       .get(var_name)
       .ok_or_else(|| anyhow!("could not find dependency node for variable: {}", var_name))?;
@@ -79,7 +79,7 @@ fn generate_nodes<'a>(
     if var.inject_vars {
       dependencies.extend(super::util::get_params_variable_names(&var.params));
     }
-    dependencies.extend(var.depends_on.iter().map(|v| v.as_str()));
+    dependencies.extend(var.depends_on.iter().map(String::as_str));
 
     // Every local variable depends on the one before it.
     // Needed to guarantee execution order within local vars.
@@ -97,7 +97,7 @@ fn generate_nodes<'a>(
     });
   }
 
-  let global_vars_nodes = global_vars.iter().map(|var| create_node_from_var(*var));
+  let global_vars_nodes = global_vars.iter().map(|var| create_node_from_var(var));
 
   // The body depends on all local variables + the variables read inside it (which might be global)
   let mut body_dependencies: HashSet<&str> =
@@ -116,9 +116,9 @@ fn generate_nodes<'a>(
   global_vars_nodes.into_iter().for_each(|node| {
     node_map.insert(node.name, node);
   });
-  local_vars_nodes.into_iter().for_each(|node| {
+  for node in local_vars_nodes {
     node_map.insert(node.name, node);
-  });
+  }
 
   node_map
 }
@@ -128,10 +128,10 @@ fn create_node_from_var(var: &Variable) -> Node {
     let mut vars = HashSet::new();
 
     if var.inject_vars {
-      vars.extend(super::util::get_params_variable_names(&var.params))
+      vars.extend(super::util::get_params_variable_names(&var.params));
     }
 
-    vars.extend(var.depends_on.iter().map(|s| s.as_str()));
+    vars.extend(var.depends_on.iter().map(String::as_str));
 
     Some(vars)
   } else {
@@ -158,7 +158,7 @@ fn resolve_dependencies<'a>(
   }
 
   if let Some(dependencies) = &node.dependencies {
-    for dependency in dependencies.iter() {
+    for dependency in dependencies {
       let has_been_resolved = {
         let resolved_ref = resolved.borrow();
         resolved_ref.contains(dependency)
@@ -171,23 +171,21 @@ fn resolve_dependencies<'a>(
       if !has_been_resolved {
         if has_been_seen {
           return Err(
-            RendererError::CircularDependency(node.name.to_string(), dependency.to_string()).into(),
+            RendererError::CircularDependency(node.name.to_string(), (*dependency).to_string())
+              .into(),
           );
         }
 
-        match node_map.get(dependency) {
-          Some(dependency_node) => {
-            resolve_dependencies(dependency_node, node_map, eval_order, resolved, seen)?
-          }
-          None => {
-            error!("could not resolve variable {:?}", dependency);
-            if let Some(variable) = &node.variable {
-              if variable.var_type == "form" {
-                super::log_new_form_syntax_tip();
-              }
+        if let Some(dependency_node) = node_map.get(dependency) {
+          resolve_dependencies(dependency_node, node_map, eval_order, resolved, seen)?;
+        } else {
+          error!("could not resolve variable {:?}", dependency);
+          if let Some(variable) = &node.variable {
+            if variable.var_type == "form" {
+              super::log_new_form_syntax_tip();
             }
-            return Err(RendererError::MissingVariable(dependency.to_string()).into());
           }
+          return Err(RendererError::MissingVariable((*dependency).to_string()).into());
         }
       }
     }

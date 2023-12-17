@@ -34,7 +34,7 @@ pub fn troubleshoot_main(paths: &Paths, icon_paths: &IconPaths) -> i32 {
 
   let open_file_handler = Box::new(move |file_path: &Path| {
     if let Err(err) = opener::open(file_path) {
-      eprintln!("error opening file: {}", err);
+      eprintln!("error opening file: {err}");
     }
   });
 
@@ -67,7 +67,7 @@ pub fn troubleshoot_main(paths: &Paths, icon_paths: &IconPaths) -> i32 {
         (false, error_sets)
       }
       Err(err) => {
-        let message = format!("{:?}", err);
+        let message = format!("{err:?}");
         let file_path = if message.contains("default.yml") {
           let default_file_path = paths.config.join("config").join("default.yml");
           Some(default_file_path)
@@ -81,7 +81,7 @@ pub fn troubleshoot_main(paths: &Paths, icon_paths: &IconPaths) -> i32 {
             file: file_path,
             errors: vec![espanso_modulo::troubleshooting::ErrorRecord {
               level: espanso_modulo::troubleshooting::ErrorLevel::Error,
-              message: format!("{:?}", err),
+              message: format!("{err:?}"),
             }],
           }],
         )

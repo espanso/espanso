@@ -28,8 +28,8 @@ use crate::cli::PathsOverrides;
 
 pub fn launch_daemon(paths_overrides: &PathsOverrides) -> Result<()> {
   let espanso_exe_path = std::env::current_exe()?;
-  let mut command = Command::new(&espanso_exe_path.to_string_lossy().to_string());
-  command.args(&["daemon"]);
+  let mut command = Command::new(espanso_exe_path.to_string_lossy().to_string());
+  command.args(["daemon"]);
   command.with_paths_overrides(paths_overrides);
 
   let result = spawn_and_wait(command)?;

@@ -85,7 +85,7 @@ fn generate_global_vars_map(config_provider: &dyn ConfigProvider) -> HashMap<i32
   let mut global_vars_map = HashMap::new();
 
   for (_, match_set) in config_provider.configs() {
-    for var in match_set.global_vars.iter() {
+    for var in &match_set.global_vars {
       global_vars_map
         .entry(var.id)
         .or_insert_with(|| convert_var((*var).clone()));
@@ -104,13 +104,13 @@ fn generate_context<'a>(
   let mut templates = Vec::new();
   let mut global_vars = Vec::new();
 
-  for m in match_set.matches.iter() {
+  for m in &match_set.matches {
     if let Some(Some(template)) = template_map.get(&m.id) {
       templates.push(template);
     }
   }
 
-  for var in match_set.global_vars.iter() {
+  for var in &match_set.global_vars {
     if let Some(var) = global_vars_map.get(&var.id) {
       global_vars.push(var);
     }
@@ -202,7 +202,7 @@ impl<'a> Renderer<'a> for RendererAdapter<'a> {
         .or_insert_with(|| generate_context(&match_set, &self.template_map, &self.global_vars_map));
 
       let raw_match = self.match_provider.get(match_id);
-      let propagate_case = raw_match.map(is_propagate_case).unwrap_or(false);
+      let propagate_case = raw_match.is_some_and(is_propagate_case);
       let preferred_uppercasing_style = raw_match.and_then(extract_uppercasing_style);
 
       let options = RenderOptions {
@@ -216,7 +216,9 @@ impl<'a> Renderer<'a> for RendererAdapter<'a> {
       };
 
       // If some trigger vars are specified, augment the template with them
-      let augmented_template = if !trigger_vars.is_empty() {
+      let augmented_template = if trigger_vars.is_empty() {
+        None
+      } else {
         let mut augmented = template.clone();
         for (name, value) in trigger_vars {
           let mut params = espanso_render::Params::new();
@@ -230,11 +232,9 @@ impl<'a> Renderer<'a> for RendererAdapter<'a> {
               inject_vars: false,
               ..Default::default()
             },
-          )
+          );
         }
         Some(augmented)
-      } else {
-        None
       };
 
       let template = if let Some(augmented) = augmented_template.as_ref() {

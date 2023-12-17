@@ -96,8 +96,8 @@ pub fn start_service() -> Result<()> {
   let current_path = std::env::current_exe().expect("unable to get exec path");
 
   Command::new(current_path)
-    .args(&["launcher"])
-    .creation_flags(0x08000008) // CREATE_NO_WINDOW + DETACHED_PROCESS
+    .args(["launcher"])
+    .creation_flags(0x0800_0008) // CREATE_NO_WINDOW + DETACHED_PROCESS
     .spawn()?;
 
   Ok(())

@@ -89,8 +89,8 @@ pub struct Variable {
 impl Default for Variable {
   fn default() -> Self {
     Self {
-      name: "".to_string(),
-      var_type: "".to_string(),
+      name: String::new(),
+      var_type: String::new(),
       inject_vars: true,
       params: Params::new(),
       depends_on: Vec::new(),

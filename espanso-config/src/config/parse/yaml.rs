@@ -360,6 +360,6 @@ mod tests {
         filter_os: Some("test7".to_string()),
         filter_title: Some("test8".to_string()),
       }
-    )
+    );
   }
 }

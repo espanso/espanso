@@ -50,39 +50,39 @@ impl Shell {
     let mut command = match self {
       Shell::Cmd => {
         let mut command = Command::new("cmd");
-        command.args(&["/C", cmd]);
+        command.args(["/C", cmd]);
         command
       }
       Shell::Powershell => {
         let mut command = Command::new("powershell");
-        command.args(&["-Command", cmd]);
+        command.args(["-Command", cmd]);
         command
       }
       Shell::WSL => {
         is_wsl = true;
         let mut command = Command::new("bash");
-        command.args(&["-c", cmd]);
+        command.args(["-c", cmd]);
         command
       }
       Shell::WSL2 => {
         is_wsl = true;
         let mut command = Command::new("wsl");
-        command.args(&["bash", "-c", cmd]);
+        command.args(["bash", "-c", cmd]);
         command
       }
       Shell::Bash => {
         let mut command = Command::new("bash");
-        command.args(&["-c", cmd]);
+        command.args(["-c", cmd]);
         command
       }
       Shell::Sh => {
         let mut command = Command::new("sh");
-        command.args(&["-c", cmd]);
+        command.args(["-c", cmd]);
         command
       }
       Shell::Zsh => {
         let mut command = Command::new("zsh");
-        command.args(&["-c", cmd]);
+        command.args(["-c", cmd]);
         command
       }
     };
@@ -91,7 +91,7 @@ impl Shell {
     super::util::set_command_flags(&mut command);
 
     // Inject all the previous variables
-    for (key, value) in vars.iter() {
+    for (key, value) in vars {
       command.env(key, value);
     }
 
@@ -123,7 +123,7 @@ impl Shell {
       let mut tokens: Vec<&str> = vec!["CONFIG/p"];
 
       // Add all the previous variables
-      for (key, _) in vars.iter() {
+      for key in vars.keys() {
         tokens.push(key);
       }
 
@@ -311,7 +311,7 @@ mod tests {
     if cfg!(target_os = "windows") {
       assert_eq!(
         extension
-          .calculate(&Default::default(), &Default::default(), &param)
+          .calculate(&crate::Context::default(), &HashMap::default(), &param)
           .into_success()
           .unwrap(),
         ExtensionOutput::Single("hello world\r\n".to_string())
@@ -319,7 +319,7 @@ mod tests {
     } else {
       assert_eq!(
         extension
-          .calculate(&Default::default(), &Default::default(), &param)
+          .calculate(&crate::Context::default(), &HashMap::default(), &param)
           .into_success()
           .unwrap(),
         ExtensionOutput::Single("hello world\n".to_string())
@@ -340,7 +340,7 @@ mod tests {
 
     assert_eq!(
       extension
-        .calculate(&Default::default(), &Default::default(), &param)
+        .calculate(&crate::Context::default(), &HashMap::default(), &param)
         .into_success()
         .unwrap(),
       ExtensionOutput::Single("hello world".to_string())
@@ -393,7 +393,7 @@ mod tests {
     scope.insert("var1", ExtensionOutput::Single("hello world".to_string()));
     assert_eq!(
       extension
-        .calculate(&Default::default(), &scope, &param)
+        .calculate(&crate::Context::default(), &scope, &param)
         .into_success()
         .unwrap(),
       ExtensionOutput::Single("hello world".to_string())
@@ -411,7 +411,7 @@ mod tests {
     .into_iter()
     .collect::<Params>();
     assert!(matches!(
-      extension.calculate(&Default::default(), &Default::default(), &param),
+      extension.calculate(&crate::Context::default(), &HashMap::default(), &param),
       ExtensionResult::Error(_)
     ));
   }

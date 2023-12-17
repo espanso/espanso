@@ -81,11 +81,11 @@ fn load_match_groups_recursively(
   paths: &[String],
   non_fatal_error_sets: &mut Vec<NonFatalErrorSet>,
 ) {
-  for path in paths.iter() {
+  for path in paths {
     if !groups.contains_key(path) {
       let group_path = PathBuf::from(path);
       match MatchGroup::load(&group_path)
-        .with_context(|| format!("unable to load match group {:?}", group_path))
+        .with_context(|| format!("unable to load match group {group_path:?}"))
       {
         Ok((group, non_fatal_error_set)) => {
           let imports = group.imports.clone();
@@ -114,7 +114,7 @@ fn query_matches_for_paths<'a>(
   global_vars: &mut Vec<&'a Variable>,
   paths: &[String],
 ) {
-  for path in paths.iter() {
+  for path in paths {
     if !visited_paths.contains(path) {
       visited_paths.insert(path.clone());
 
@@ -129,14 +129,14 @@ fn query_matches_for_paths<'a>(
           &group.imports,
         );
 
-        for m in group.matches.iter() {
+        for m in &group.matches {
           if !visited_matches.contains(&m.id) {
             matches.push(m);
             visited_matches.insert(m.id);
           }
         }
 
-        for var in group.global_vars.iter() {
+        for var in &group.global_vars {
           if !visited_global_vars.contains(&var.id) {
             global_vars.push(var);
             visited_global_vars.insert(var.id);
@@ -314,7 +314,7 @@ mod tests {
 
       let another_file = match_dir.join("_another.yml");
       std::fs::write(
-        &another_file,
+        another_file,
         r#"
       imports:
         - "sub/sub.yml"
@@ -330,7 +330,7 @@ mod tests {
 
       let sub_file = sub_dir.join("sub.yml");
       std::fs::write(
-        &sub_file,
+        sub_file,
         r#"
       imports:
         - "../_another.yml"
@@ -376,7 +376,7 @@ mod tests {
 
       let another_file = match_dir.join("_another.yml");
       std::fs::write(
-        &another_file,
+        another_file,
         r#"
       imports:
         - "sub/sub.yml"
@@ -392,7 +392,7 @@ mod tests {
 
       let sub_file = sub_dir.join("sub.yml");
       std::fs::write(
-        &sub_file,
+        sub_file,
         r#"
       global_vars:
         - name: var2
@@ -470,7 +470,7 @@ mod tests {
 
       let another_file = match_dir.join("_another.yml");
       std::fs::write(
-        &another_file,
+        another_file,
         r#"
       imports:
         - "sub/sub.yml"
@@ -486,7 +486,7 @@ mod tests {
 
       let sub_file = sub_dir.join("sub.yml");
       std::fs::write(
-        &sub_file,
+        sub_file,
         r#"
       imports:
         - "../_another.yml"  # Circular import
@@ -567,7 +567,7 @@ mod tests {
 
       let another_file = match_dir.join("_another.yml");
       std::fs::write(
-        &another_file,
+        another_file,
         r#"
       matches:
         - trigger: "hello"
@@ -663,7 +663,7 @@ mod tests {
 
       let another_file = match_dir.join("_another.yml");
       std::fs::write(
-        &another_file,
+        another_file,
         r#"
       imports:
         - "sub/sub.yml"

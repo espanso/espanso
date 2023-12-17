@@ -41,6 +41,8 @@ pub mod types {
 
 #[allow(dead_code)]
 mod interop {
+  use crate::sys;
+
   use super::super::interop::*;
   use super::types;
   use std::ffi::{c_void, CString};
@@ -51,12 +53,12 @@ mod interop {
     hint: CString,
     items: Vec<OwnedSearchItem>,
     pub(crate) interop_items: Vec<SearchItem>,
-    _interop: Box<SearchMetadata>,
+    interop: Box<SearchMetadata>,
   }
 
   impl Interoperable for OwnedSearch {
     fn as_ptr(&self) -> *const c_void {
-      &(*self._interop) as *const SearchMetadata as *const c_void
+      &(*self.interop) as *const SearchMetadata as *const c_void
     }
   }
 
@@ -65,14 +67,17 @@ mod interop {
       let title =
         CString::new(search.title.clone()).expect("unable to convert search title to CString");
 
-      let items: Vec<OwnedSearchItem> = search.items.iter().map(|item| item.into()).collect();
+      let items: Vec<OwnedSearchItem> = search.items.iter().map(Into::into).collect();
 
-      let interop_items: Vec<SearchItem> = items.iter().map(|item| item.to_search_item()).collect();
+      let interop_items: Vec<SearchItem> = items
+        .iter()
+        .map(sys::search::interop::OwnedSearchItem::to_search_item)
+        .collect();
 
       let icon_path = if let Some(icon_path) = search.icon.as_ref() {
         icon_path.clone()
       } else {
-        "".to_owned()
+        String::new()
       };
 
       let icon_path = CString::new(icon_path).expect("unable to convert search icon to CString");
@@ -86,7 +91,7 @@ mod interop {
       let hint = if let Some(hint) = search.hint.as_ref() {
         hint.clone()
       } else {
-        "".to_owned()
+        String::new()
       };
 
       let hint = CString::new(hint).expect("unable to convert search icon to CString");
@@ -97,7 +102,7 @@ mod interop {
         std::ptr::null()
       };
 
-      let _interop = Box::new(SearchMetadata {
+      let interop = Box::new(SearchMetadata {
         iconPath: icon_path_ptr,
         windowTitle: title.as_ptr(),
         hintText: hint_ptr,
@@ -109,7 +114,7 @@ mod interop {
         hint,
         items,
         interop_items,
-        _interop,
+        interop,
       }
     }
   }
@@ -139,7 +144,7 @@ mod interop {
       let trigger = if let Some(trigger) = item.trigger.as_deref() {
         CString::new(trigger.to_string()).expect("unable to convert item trigger to CString")
       } else {
-        CString::new("".to_string()).expect("unable to convert item trigger to CString")
+        CString::new(String::new()).expect("unable to convert item trigger to CString")
       };
 
       Self { id, label, trigger }
