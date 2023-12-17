@@ -53,6 +53,8 @@ You can also generate a portable-mode bundle (a self-contained ZIP archive that 
 ```
 cargo make build-windows-portable --profile release
 ```
+This will generate the executable in the `target/windows/portable` directory.
+There are README instructions inside!.
 
 # MacOS
 
