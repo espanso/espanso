@@ -183,10 +183,7 @@ impl<'a, State> Middleware for MatcherMiddleware<'a, State> {
 fn is_event_of_interest(event_type: &EventType) -> bool {
   match event_type {
     EventType::Keyboard(keyboard_event) => {
-      if keyboard_event.status != Status::Pressed {
-        // Skip non-press events
-        false
-      } else {
+      if keyboard_event.status == Status::Pressed {
         // Skip linux Keyboard (XKB) Extension function and modifier keys
         // In hex, they have the byte 3 = 0xfe
         // See list in "keysymdef.h" file
@@ -203,6 +200,9 @@ fn is_event_of_interest(event_type: &EventType) -> bool {
           keyboard_event.key,
           Key::Alt | Key::Shift | Key::CapsLock | Key::Meta | Key::NumLock | Key::Control
         )
+      } else {
+        // Skip non-press events
+        false
       }
     }
     EventType::Mouse(mouse_event) => mouse_event.status == Status::Pressed,

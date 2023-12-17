@@ -100,7 +100,7 @@ impl<'a> From<&'a AutoFieldConfig> for FieldConfig {
   fn from(other: &'a AutoFieldConfig) -> Self {
     let field_type = match other.field_type.as_ref() {
       "text" => {
-        let mut config: TextFieldConfig = Default::default();
+        let mut config = TextFieldConfig::default();
 
         if let Some(default) = &other.default {
           config.default = default.clone();

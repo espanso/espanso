@@ -178,7 +178,7 @@ impl espanso_engine::process::ModifierStateProvider for ModifierStateStore {
           Modifier::Meta => {
             is_meta_down = true;
           }
-          _ => {}
+          Modifier::Shift => {}
         }
       }
     }

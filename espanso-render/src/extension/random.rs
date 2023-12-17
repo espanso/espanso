@@ -70,6 +70,8 @@ pub enum RandomExtensionError {
 
 #[cfg(test)]
 mod tests {
+  use std::collections::HashMap;
+
   use super::*;
 
   #[test]
@@ -88,7 +90,7 @@ mod tests {
     .collect::<Params>();
     assert!(matches!(
       extension
-        .calculate(&Default::default(), &Default::default(), &param)
+        .calculate(&crate::Context::default(), &HashMap::default(), &param)
         .into_success()
         .unwrap(),
       ExtensionOutput::Single(result) if ["first", "second", "third"].contains(&result.as_str())
@@ -101,7 +103,7 @@ mod tests {
 
     let param = Params::new();
     assert!(matches!(
-      extension.calculate(&Default::default(), &Default::default(), &param),
+      extension.calculate(&crate::Context::default(), &HashMap::default(), &param),
       ExtensionResult::Error(_)
     ));
   }

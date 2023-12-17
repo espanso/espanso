@@ -202,7 +202,7 @@ impl<'a> Renderer<'a> for RendererAdapter<'a> {
         .or_insert_with(|| generate_context(&match_set, &self.template_map, &self.global_vars_map));
 
       let raw_match = self.match_provider.get(match_id);
-      let propagate_case = raw_match.map(is_propagate_case).unwrap_or(false);
+      let propagate_case = raw_match.is_some_and(is_propagate_case);
       let preferred_uppercasing_style = raw_match.and_then(extract_uppercasing_style);
 
       let options = RenderOptions {

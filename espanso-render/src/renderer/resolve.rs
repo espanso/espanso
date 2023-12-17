@@ -171,23 +171,21 @@ fn resolve_dependencies<'a>(
       if !has_been_resolved {
         if has_been_seen {
           return Err(
-            RendererError::CircularDependency(node.name.to_string(), dependency.to_string()).into(),
+            RendererError::CircularDependency(node.name.to_string(), (*dependency).to_string())
+              .into(),
           );
         }
 
-        match node_map.get(dependency) {
-          Some(dependency_node) => {
-            resolve_dependencies(dependency_node, node_map, eval_order, resolved, seen)?;
-          }
-          None => {
-            error!("could not resolve variable {:?}", dependency);
-            if let Some(variable) = &node.variable {
-              if variable.var_type == "form" {
-                super::log_new_form_syntax_tip();
-              }
+        if let Some(dependency_node) = node_map.get(dependency) {
+          resolve_dependencies(dependency_node, node_map, eval_order, resolved, seen)?;
+        } else {
+          error!("could not resolve variable {:?}", dependency);
+          if let Some(variable) = &node.variable {
+            if variable.var_type == "form" {
+              super::log_new_form_syntax_tip();
             }
-            return Err(RendererError::MissingVariable(dependency.to_string()).into());
           }
+          return Err(RendererError::MissingVariable((*dependency).to_string()).into());
         }
       }
     }

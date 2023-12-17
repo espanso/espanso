@@ -21,6 +21,7 @@ use std::thread::JoinHandle;
 
 use anyhow::Result;
 use crossbeam::channel::Receiver;
+use espanso_clipboard::ClipboardOptions;
 use espanso_config::{config::ConfigStore, matches::store::MatchStore};
 use espanso_detect::SourceCreationOptions;
 use espanso_engine::event::{EventType, ExitMode};
@@ -182,7 +183,7 @@ pub fn initialize_and_spawn(
         ..Default::default()
       })
       .expect("failed to initialize injector module"); // TODO: handle the options
-      let clipboard = espanso_clipboard::get_clipboard(Default::default())
+      let clipboard = espanso_clipboard::get_clipboard(ClipboardOptions::default())
         .expect("failed to initialize clipboard module"); // TODO: handle options
 
       let clipboard_adapter = ClipboardAdapter::new(&*clipboard, &config_manager);
