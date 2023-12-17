@@ -198,7 +198,7 @@ impl UIEventLoop for Win32EventLoop {
     // Make sure the run() method is called in the same thread as initialize()
     if let Some(init_id) = self.init_thread_id.borrow() {
       assert!(
-        !(init_id != &std::thread::current().id()),
+        init_id == &std::thread::current().id(),
         "Win32EventLoop run() and initialize() methods should be called in the same thread"
       );
     }
