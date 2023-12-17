@@ -45,18 +45,13 @@ pub enum KeyModifier {
   CAPS_LOCK,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub enum PasteShortcut {
-  Default,     // Default one for the current system
+  #[default]
+  Default, // Default one for the current system
   CtrlV,       // Classic Ctrl+V shortcut
   CtrlShiftV,  // Could be used to paste without formatting in many applications
   ShiftInsert, // Often used in Linux systems
   CtrlAltV,    // Used in some Linux terminals (urxvt)
   MetaV,       // Corresponding to Win+V on Windows and Linux, CMD+V on macOS
-}
-
-impl Default for PasteShortcut {
-  fn default() -> Self {
-    PasteShortcut::Default
-  }
 }

@@ -26,7 +26,7 @@ pub fn set_command_flags(command: &mut Command) {
   use std::os::windows::process::CommandExt;
   // Avoid showing the shell window
   // See: https://github.com/federico-terzi/espanso/issues/249
-  command.creation_flags(0x08000000);
+  command.creation_flags(0x0800_0000);
 }
 
 #[cfg(not(target_os = "windows"))]
@@ -38,7 +38,7 @@ pub fn set_command_flags(_: &mut Command) {
 pub fn attach_console() {
   // When using the windows subsystem we loose the terminal output.
   // Therefore we try to attach to the current console if available.
-  unsafe { winapi::um::wincon::AttachConsole(0xFFFFFFFF) };
+  unsafe { winapi::um::wincon::AttachConsole(0xFFFF_FFFF) };
 }
 
 #[cfg(not(target_os = "windows"))]

@@ -197,7 +197,7 @@ impl<'a> Renderer for DefaultRenderer<'a> {
               let capitalized_word: String = v.into_iter().collect();
               capitalized_word
             } else {
-              "".to_string()
+              String::new()
             }
           })
           .to_string()
@@ -337,8 +337,8 @@ mod tests {
     let renderer = get_renderer();
     let res = renderer.render(
       &template_for_str("plain body"),
-      &Default::default(),
-      &Default::default(),
+      &Context::default(),
+      &RenderOptions::default(),
     );
     assert!(matches!(res, RenderResult::Success(str) if str == "plain body"));
   }
@@ -348,7 +348,7 @@ mod tests {
     let renderer = get_renderer();
     let res = renderer.render(
       &template_for_str("plain body"),
-      &Default::default(),
+      &Context::default(),
       &RenderOptions {
         casing_style: CasingStyle::Capitalize,
       },
@@ -361,7 +361,7 @@ mod tests {
     let renderer = get_renderer();
     let res = renderer.render(
       &template_for_str("ordinary least squares, with other.punctuation !Marks"),
-      &Default::default(),
+      &Context::default(),
       &RenderOptions {
         casing_style: CasingStyle::CapitalizeWords,
       },
@@ -376,7 +376,7 @@ mod tests {
     let renderer = get_renderer();
     let res = renderer.render(
       &template_for_str("plain body"),
-      &Default::default(),
+      &Context::default(),
       &RenderOptions {
         casing_style: CasingStyle::Uppercase,
       },
@@ -388,7 +388,7 @@ mod tests {
   fn basic_variable() {
     let renderer = get_renderer();
     let template = template("hello {{var}}", &[("var", "world")]);
-    let res = renderer.render(&template, &Default::default(), &Default::default());
+    let res = renderer.render(&template, &Context::default(), &RenderOptions::default());
     assert!(matches!(res, RenderResult::Success(str) if str == "hello world"));
   }
 
@@ -410,7 +410,7 @@ mod tests {
       }],
       ..Default::default()
     };
-    let res = renderer.render(&template, &Default::default(), &Default::default());
+    let res = renderer.render(&template, &Context::default(), &RenderOptions::default());
     assert!(matches!(res, RenderResult::Success(str) if str == "hello dict"));
   }
 
@@ -418,7 +418,7 @@ mod tests {
   fn missing_variable() {
     let renderer = get_renderer();
     let template = template_for_str("hello {{var}}");
-    let res = renderer.render(&template, &Default::default(), &Default::default());
+    let res = renderer.render(&template, &Context::default(), &RenderOptions::default());
     assert!(matches!(res, RenderResult::Error(_)));
   }
 
@@ -440,7 +440,7 @@ mod tests {
         }],
         ..Default::default()
       },
-      &Default::default(),
+      &RenderOptions::default(),
     );
     assert!(matches!(res, RenderResult::Success(str) if str == "hello world"));
   }
@@ -465,7 +465,7 @@ mod tests {
         }],
         ..Default::default()
       },
-      &Default::default(),
+      &RenderOptions::default(),
     );
     assert!(matches!(res, RenderResult::Success(str) if str == "hello dict"));
   }
@@ -506,7 +506,7 @@ mod tests {
         }],
         ..Default::default()
       },
-      &Default::default(),
+      &RenderOptions::default(),
     );
     assert!(matches!(res, RenderResult::Success(str) if str == "hello Bob Bob"));
   }
@@ -540,7 +540,7 @@ mod tests {
         ],
         ..Default::default()
       },
-      &Default::default(),
+      &RenderOptions::default(),
     );
     assert!(matches!(res, RenderResult::Success(str) if str == "hello world"));
   }
@@ -583,7 +583,7 @@ mod tests {
         ],
         ..Default::default()
       },
-      &Default::default(),
+      &RenderOptions::default(),
     );
     assert!(matches!(res, RenderResult::Error(_)));
   }
@@ -615,7 +615,7 @@ mod tests {
         ],
         ..Default::default()
       },
-      &Default::default(),
+      &RenderOptions::default(),
     );
     assert!(matches!(res, RenderResult::Aborted));
   }
@@ -647,7 +647,7 @@ mod tests {
         }],
         ..Default::default()
       },
-      &Default::default(),
+      &RenderOptions::default(),
     );
     assert!(matches!(res, RenderResult::Aborted));
   }
@@ -678,7 +678,7 @@ mod tests {
         templates: vec![&nested_template],
         ..Default::default()
       },
-      &Default::default(),
+      &RenderOptions::default(),
     );
     assert!(matches!(res, RenderResult::Success(str) if str == "hello world"));
   }
@@ -703,7 +703,7 @@ mod tests {
       &Context {
         ..Default::default()
       },
-      &Default::default(),
+      &RenderOptions::default(),
     );
     assert!(matches!(res, RenderResult::Error(_)));
   }
@@ -723,7 +723,7 @@ mod tests {
       }],
       ..Default::default()
     };
-    let res = renderer.render(&template, &Default::default(), &Default::default());
+    let res = renderer.render(&template, &Context::default(), &RenderOptions::default());
     assert!(matches!(res, RenderResult::Aborted));
   }
 
@@ -742,7 +742,7 @@ mod tests {
       }],
       ..Default::default()
     };
-    let res = renderer.render(&template, &Default::default(), &Default::default());
+    let res = renderer.render(&template, &Context::default(), &RenderOptions::default());
     assert!(matches!(res, RenderResult::Error(_)));
   }
 
@@ -781,7 +781,7 @@ mod tests {
       },
     ];
 
-    let res = renderer.render(&template, &Default::default(), &Default::default());
+    let res = renderer.render(&template, &Context::default(), &RenderOptions::default());
     assert!(matches!(res, RenderResult::Success(str) if str == "hello John Snow"));
   }
 
@@ -808,7 +808,7 @@ mod tests {
       },
     ];
 
-    let res = renderer.render(&template, &Default::default(), &Default::default());
+    let res = renderer.render(&template, &Context::default(), &RenderOptions::default());
     assert!(matches!(res, RenderResult::Success(str) if str == "hello {{first}} two"));
   }
 
@@ -834,7 +834,7 @@ mod tests {
       },
     ];
 
-    let res = renderer.render(&template, &Default::default(), &Default::default());
+    let res = renderer.render(&template, &Context::default(), &RenderOptions::default());
     assert!(matches!(res, RenderResult::Success(str) if str == "hello {{first}} two"));
   }
 
@@ -852,7 +852,7 @@ mod tests {
       ..Default::default()
     }];
 
-    let res = renderer.render(&template, &Default::default(), &Default::default());
+    let res = renderer.render(&template, &Context::default(), &RenderOptions::default());
     assert!(matches!(res, RenderResult::Error(_)));
   }
 
@@ -891,7 +891,7 @@ mod tests {
         }],
         ..Default::default()
       },
-      &Default::default(),
+      &RenderOptions::default(),
     );
     assert!(matches!(res, RenderResult::Success(str) if str == "hello global"));
   }
@@ -935,7 +935,7 @@ mod tests {
         }],
         ..Default::default()
       },
-      &Default::default(),
+      &RenderOptions::default(),
     );
     assert!(matches!(res, RenderResult::Success(str) if str == "hello local"));
   }
@@ -944,7 +944,7 @@ mod tests {
   fn variable_escape() {
     let renderer = get_renderer();
     let template = template("hello \\{\\{var\\}\\}", &[("var", "world")]);
-    let res = renderer.render(&template, &Default::default(), &Default::default());
+    let res = renderer.render(&template, &Context::default(), &RenderOptions::default());
     assert!(matches!(res, RenderResult::Success(str) if str == "hello {{var}}"));
   }
 }

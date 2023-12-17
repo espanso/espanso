@@ -66,10 +66,10 @@ impl<'a> Extension for ChoiceExtension<'a> {
         .lines()
         .filter_map(|line| {
           let trimmed_line = line.trim();
-          if !trimmed_line.is_empty() {
-            Some(trimmed_line)
-          } else {
+          if trimmed_line.is_empty() {
             None
+          } else {
+            Some(trimmed_line)
           }
         })
         .map(|line| Choice {

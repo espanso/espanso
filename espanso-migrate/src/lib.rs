@@ -188,7 +188,7 @@ mod tests {
 
   fn list_files_in_dir(dir: &Path) -> Vec<String> {
     let prefix = dir.to_string_lossy().to_string();
-    fs_extra::dir::get_dir_content(&dir)
+    fs_extra::dir::get_dir_content(dir)
       .unwrap()
       .files
       .into_iter()

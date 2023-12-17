@@ -46,7 +46,7 @@ impl Clipboard for XClipClipboard {
       return None;
     }
 
-    match Command::new("xclip").args(&["-o", "-sel", "clip"]).output() {
+    match Command::new("xclip").args(["-o", "-sel", "clip"]).output() {
       Ok(output) => {
         if output.status.success() {
           let s = String::from_utf8_lossy(&output.stdout);
@@ -67,7 +67,7 @@ impl Clipboard for XClipClipboard {
     }
 
     let mut child = Command::new("xclip")
-      .args(&["-sel", "clip"])
+      .args(["-sel", "clip"])
       .stdin(Stdio::piped())
       .spawn()?;
 
@@ -107,7 +107,7 @@ impl Clipboard for XClipClipboard {
     let image_path = image_path.to_string_lossy();
 
     Command::new("xclip")
-      .args(&["-selection", "clipboard", "-t", mime, "-i", &image_path])
+      .args(["-selection", "clipboard", "-t", mime, "-i", &image_path])
       .spawn()?;
 
     Ok(())
@@ -124,7 +124,7 @@ impl Clipboard for XClipClipboard {
     }
 
     let mut child = Command::new("xclip")
-      .args(&["-sel", "clip", "-t", "text/html"])
+      .args(["-sel", "clip", "-t", "text/html"])
       .stdin(Stdio::piped())
       .spawn()?;
 

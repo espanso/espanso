@@ -30,6 +30,7 @@ use std::fmt;
 use std::fs::File;
 use std::io::Read;
 use std::path::{Path, PathBuf};
+use std::string::ToString;
 use walkdir::{DirEntry, WalkDir};
 
 pub const DEFAULT_CONFIG_FILE_NAME: &str = "default.yml";
@@ -43,13 +44,13 @@ fn default_parent() -> String {
   "self".to_owned()
 }
 fn default_filter_title() -> String {
-  "".to_owned()
+  String::new()
 }
 fn default_filter_class() -> String {
-  "".to_owned()
+  String::new()
 }
 fn default_filter_exec() -> String {
-  "".to_owned()
+  String::new()
 }
 fn default_log_level() -> i32 {
   0
@@ -386,16 +387,12 @@ impl LegacyConfig {
   }
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Eq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Eq, Default)]
 pub enum BackendType {
   Inject,
   Clipboard,
+  #[default]
   Auto,
-}
-impl Default for BackendType {
-  fn default() -> Self {
-    BackendType::Auto
-  }
 }
 
 impl LegacyConfig {
@@ -416,7 +413,7 @@ impl LegacyConfig {
         Err(e) => Err(ConfigLoadError::InvalidYAML(path.to_owned(), e.to_string())),
       }
     } else {
-      eprintln!("Error: Cannot load file {:?}", path);
+      eprintln!("Error: Cannot load file {path:?}");
       Err(ConfigLoadError::FileNotFound)
     }
   }
@@ -425,9 +422,9 @@ impl LegacyConfig {
     // Merge matches
     let mut merged_matches = new_config.matches;
     let mut match_trigger_set = HashSet::new();
-    merged_matches.iter().for_each(|m| {
+    for m in &merged_matches {
       match_trigger_set.extend(triggers_for_match(m));
-    });
+    }
     let parent_matches: Vec<Value> = self
       .matches
       .iter()
@@ -445,9 +442,9 @@ impl LegacyConfig {
     // Merge global variables
     let mut merged_global_vars = new_config.global_vars;
     let mut vars_name_set = HashSet::new();
-    merged_global_vars.iter().for_each(|m| {
+    for m in &merged_global_vars {
       vars_name_set.insert(name_for_global_var(m));
-    });
+    }
     let parent_vars: Vec<Value> = self
       .global_vars
       .iter()
@@ -498,7 +495,7 @@ fn triggers_for_match(m: &Value) -> Vec<String> {
   if let Some(triggers) = m.get("triggers").and_then(|v| v.as_sequence()) {
     triggers
       .iter()
-      .filter_map(|v| v.as_str().map(|s| s.to_string()))
+      .filter_map(|v| v.as_str().map(ToString::to_string))
       .collect()
   } else if let Some(trigger) = m.get("trigger").and_then(|v| v.as_str()) {
     vec![trigger.to_string()]
@@ -619,7 +616,7 @@ impl LegacyConfigSet {
           }
         }
         Err(e) => {
-          eprintln!("Warning: Unable to read config file: {}", e);
+          eprintln!("Warning: Unable to read config file: {e}");
         }
       }
 
@@ -657,7 +654,7 @@ impl LegacyConfigSet {
     let mut specific = configs[1..].to_vec();
 
     // Add default entries to specific configs when needed
-    for config in specific.iter_mut() {
+    for config in &mut specific {
       if !config.exclude_default_entries {
         config.merge_no_overwrite(&default);
       }
@@ -707,7 +704,7 @@ impl LegacyConfigSet {
 
     let mut has_conflicts = Self::list_has_conflicts(&sorted_triggers);
 
-    for s in specific.iter() {
+    for s in specific {
       let mut specific_triggers: Vec<String> =
         s.matches.iter().flat_map(triggers_for_match).collect();
       specific_triggers.sort();
@@ -729,8 +726,7 @@ impl LegacyConfigSet {
       if item.starts_with(previous) {
         has_conflicts = true;
         eprintln!(
-          "Warning: trigger '{}' is conflicting with '{}' and may not behave as intended",
-          item, previous
+          "Warning: trigger '{item}' is conflicting with '{previous}' and may not behave as intended"
         );
       }
     }
@@ -841,11 +837,11 @@ mod tests {
   #[test]
   fn test_user_defined_config_does_not_have_reserved_fields() {
     let working_config_file = create_tmp_file(
-      r###"
+      r"
 
         backend: Clipboard
 
-        "###,
+        ",
     );
     let config = LegacyConfig::load_config(working_config_file.path());
     assert!(config.unwrap().validate_user_defined_config());
@@ -854,12 +850,12 @@ mod tests {
   #[test]
   fn test_user_defined_config_has_reserved_fields_config_caching_interval() {
     let working_config_file = create_tmp_file(
-      r###"
+      r"
 
         # This should not happen in an app-specific config
         config_caching_interval: 100
 
-        "###,
+        ",
     );
     let config = LegacyConfig::load_config(working_config_file.path());
     assert!(!config.unwrap().validate_user_defined_config());
@@ -868,12 +864,12 @@ mod tests {
   #[test]
   fn test_user_defined_config_has_reserved_fields_toggle_key() {
     let working_config_file = create_tmp_file(
-      r###"
+      r"
 
         # This should not happen in an app-specific config
         toggle_key: CTRL
 
-        "###,
+        ",
     );
     let config = LegacyConfig::load_config(working_config_file.path());
     assert!(!config.unwrap().validate_user_defined_config());
@@ -882,12 +878,12 @@ mod tests {
   #[test]
   fn test_user_defined_config_has_reserved_fields_toggle_interval() {
     let working_config_file = create_tmp_file(
-      r###"
+      r"
 
         # This should not happen in an app-specific config
         toggle_interval: 1000
 
-        "###,
+        ",
     );
     let config = LegacyConfig::load_config(working_config_file.path());
     assert!(!config.unwrap().validate_user_defined_config());
@@ -896,12 +892,12 @@ mod tests {
   #[test]
   fn test_user_defined_config_has_reserved_fields_backspace_limit() {
     let working_config_file = create_tmp_file(
-      r###"
+      r"
 
         # This should not happen in an app-specific config
         backspace_limit: 10
 
-        "###,
+        ",
     );
     let config = LegacyConfig::load_config(working_config_file.path());
     assert!(!config.unwrap().validate_user_defined_config());
@@ -1014,16 +1010,16 @@ mod tests {
     let user_defined_path = create_user_config_file(
       data_dir.path(),
       "specific.yml",
-      r###"
+      r"
         config_caching_interval: 10000
-        "###,
+        ",
     );
     let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path());
     assert!(config_set.is_err());
     assert_eq!(
       config_set.unwrap_err(),
       ConfigLoadError::InvalidParameter(user_defined_path)
-    )
+    );
   }
 
   #[test]
@@ -1033,9 +1029,9 @@ mod tests {
     let user_defined_path = create_user_config_file(
       data_dir.path(),
       "specific.yml",
-      r###"
+      r"
         backend: Clipboard
-        "###,
+        ",
     );
 
     let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path());
@@ -1043,7 +1039,7 @@ mod tests {
     assert_eq!(
       config_set.unwrap().specific[0].name,
       user_defined_path.to_str().unwrap_or_default()
-    )
+    );
   }
 
   #[test]
@@ -1053,17 +1049,17 @@ mod tests {
     create_user_config_file(
       data_dir.path(),
       "specific.yml",
-      r###"
+      r"
         name: specific1
-        "###,
+        ",
     );
 
     create_user_config_file(
       data_dir.path(),
       "specific2.yml",
-      r###"
+      r"
         name: specific1
-        "###,
+        ",
     );
 
     let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path());
@@ -1071,31 +1067,31 @@ mod tests {
     assert!(matches!(
       &config_set.unwrap_err(),
       &ConfigLoadError::NameDuplicate(_)
-    ))
+    ));
   }
 
   #[test]
   fn test_user_defined_config_set_merge_with_parent_matches() {
     let (data_dir, package_dir) = create_temp_espanso_directories_with_default_content(
-      r###"
+      r#"
         matches:
             - trigger: ":lol"
               replace: "LOL"
             - trigger: ":yess"
               replace: "Bob"
-        "###,
+        "#,
     );
 
     create_user_config_file(
       data_dir.path(),
       "specific1.yml",
-      r###"
+      r#"
         name: specific1
 
         matches:
             - trigger: "hello"
               replace: "newstring"
-        "###,
+        "#,
     );
 
     let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
@@ -1119,25 +1115,25 @@ mod tests {
   #[test]
   fn test_user_defined_config_set_merge_with_parent_matches_child_priority() {
     let (data_dir, package_dir) = create_temp_espanso_directories_with_default_content(
-      r###"
+      r#"
         matches:
             - trigger: ":lol"
               replace: "LOL"
             - trigger: ":yess"
               replace: "Bob"
-        "###,
+        "#,
     );
 
     create_user_config_file(
       data_dir.path(),
       "specific2.yml",
-      r###"
+      r#"
         name: specific1
 
         matches:
             - trigger: ":lol"
               replace: "newstring"
-        "###,
+        "#,
     );
 
     let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
@@ -1157,19 +1153,19 @@ mod tests {
   #[test]
   fn test_user_defined_config_set_exclude_merge_with_parent_matches() {
     let (data_dir, package_dir) = create_temp_espanso_directories_with_default_content(
-      r###"
+      r#"
         matches:
             - trigger: ":lol"
               replace: "LOL"
             - trigger: ":yess"
               replace: "Bob"
-        "###,
+        "#,
     );
 
     create_user_config_file(
       data_dir.path(),
       "specific2.yml",
-      r###"
+      r#"
         name: specific1
 
         exclude_default_entries: true
@@ -1177,7 +1173,7 @@ mod tests {
         matches:
             - trigger: "hello"
               replace: "newstring"
-        "###,
+        "#,
     );
 
     let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
@@ -1193,19 +1189,19 @@ mod tests {
   #[test]
   fn test_only_yaml_files_are_loaded_from_config() {
     let (data_dir, package_dir) = create_temp_espanso_directories_with_default_content(
-      r###"
+      r#"
             matches:
                 - trigger: ":lol"
                   replace: "LOL"
                 - trigger: ":yess"
                   replace: "Bob"
-            "###,
+            "#,
     );
 
     create_user_config_file(
       data_dir.path(),
       "specific.zzz",
-      r###"
+      r#"
         name: specific1
 
         exclude_default_entries: true
@@ -1213,7 +1209,7 @@ mod tests {
         matches:
             - trigger: "hello"
               replace: "newstring"
-        "###,
+        "#,
     );
 
     let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
@@ -1223,19 +1219,19 @@ mod tests {
   #[test]
   fn test_hidden_files_are_ignored() {
     let (data_dir, package_dir) = create_temp_espanso_directories_with_default_content(
-      r###"
+      r#"
             matches:
                 - trigger: ":lol"
                   replace: "LOL"
                 - trigger: ":yess"
                   replace: "Bob"
-            "###,
+            "#,
     );
 
     create_user_config_file(
       data_dir.path(),
       ".specific.yml",
-      r###"
+      r#"
         name: specific1
 
         exclude_default_entries: true
@@ -1243,7 +1239,7 @@ mod tests {
         matches:
             - trigger: "hello"
               replace: "newstring"
-        "###,
+        "#,
     );
 
     let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
@@ -1257,17 +1253,17 @@ mod tests {
     create_user_config_file(
       data_dir.path(),
       "specific.yml",
-      r###"
+      r"
         name: specific1
-        "###,
+        ",
     );
 
     create_user_config_file(
       data_dir.path(),
       "specific2.yml",
-      r###"
+      r"
         name: specific2
-        "###,
+        ",
     );
 
     let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
@@ -1277,23 +1273,23 @@ mod tests {
   #[test]
   fn test_config_set_default_parent_works_correctly() {
     let (data_dir, package_dir) = create_temp_espanso_directories_with_default_content(
-      r###"
+      r"
         matches:
             - trigger: hasta
               replace: Hasta la vista
-        "###,
+        ",
     );
 
     create_user_config_file(
       data_dir.path(),
       "specific.yml",
-      r###"
+      r#"
         parent: default
 
         matches:
             - trigger: "hello"
               replace: "world"
-        "###,
+        "#,
     );
 
     let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
@@ -1314,21 +1310,21 @@ mod tests {
   #[test]
   fn test_config_set_no_parent_should_not_merge() {
     let (data_dir, package_dir) = create_temp_espanso_directories_with_default_content(
-      r###"
+      r"
         matches:
             - trigger: hasta
               replace: Hasta la vista
-        "###,
+        ",
     );
 
     create_user_config_file(
       data_dir.path(),
       "specific.yml",
-      r###"
+      r#"
         matches:
             - trigger: "hello"
               replace: "world"
-        "###,
+        "#,
     );
 
     let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
@@ -1353,36 +1349,36 @@ mod tests {
   #[test]
   fn test_config_set_default_nested_parent_works_correctly() {
     let (data_dir, package_dir) = create_temp_espanso_directories_with_default_content(
-      r###"
+      r"
         matches:
             - trigger: hasta
               replace: Hasta la vista
-        "###,
+        ",
     );
 
     create_user_config_file(
       data_dir.path(),
       "specific.yml",
-      r###"
+      r#"
         name: custom1
         parent: default
 
         matches:
             - trigger: "hello"
               replace: "world"
-        "###,
+        "#,
     );
 
     create_user_config_file(
       data_dir.path(),
       "specific2.yml",
-      r###"
+      r#"
         parent: custom1
 
         matches:
             - trigger: "super"
               replace: "mario"
-        "###,
+        "#,
     );
 
     let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
@@ -1408,23 +1404,23 @@ mod tests {
   #[test]
   fn test_config_set_parent_merge_children_priority_should_be_higher() {
     let (data_dir, package_dir) = create_temp_espanso_directories_with_default_content(
-      r###"
+      r"
         matches:
             - trigger: hasta
               replace: Hasta la vista
-        "###,
+        ",
     );
 
     create_user_config_file(
       data_dir.path(),
       "specific.yml",
-      r###"
+      r#"
         parent: default
 
         matches:
             - trigger: "hasta"
               replace: "world"
-        "###,
+        "#,
     );
 
     let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
@@ -1440,24 +1436,24 @@ mod tests {
   #[test]
   fn test_config_set_package_configs_default_merge() {
     let (data_dir, package_dir) = create_temp_espanso_directories_with_default_content(
-      r###"
+      r"
         matches:
             - trigger: hasta
               replace: Hasta la vista
-        "###,
+        ",
     );
 
     create_package_file(
       package_dir.path(),
       "package1",
       "package.yml",
-      r###"
+      r#"
         parent: default
 
         matches:
             - trigger: "harry"
               replace: "potter"
-        "###,
+        "#,
     );
 
     let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
@@ -1478,24 +1474,24 @@ mod tests {
   #[test]
   fn test_config_set_package_configs_lower_priority_than_user() {
     let (data_dir, package_dir) = create_temp_espanso_directories_with_default_content(
-      r###"
+      r"
         matches:
             - trigger: hasta
               replace: Hasta la vista
-        "###,
+        ",
     );
 
     create_package_file(
       package_dir.path(),
       "package1",
       "package.yml",
-      r###"
+      r#"
         parent: default
 
         matches:
             - trigger: "hasta"
               replace: "potter"
-        "###,
+        "#,
     );
 
     let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
@@ -1514,22 +1510,22 @@ mod tests {
   #[test]
   fn test_config_set_package_configs_without_merge() {
     let (data_dir, package_dir) = create_temp_espanso_directories_with_default_content(
-      r###"
+      r"
         matches:
             - trigger: hasta
               replace: Hasta la vista
-        "###,
+        ",
     );
 
     create_package_file(
       package_dir.path(),
       "package1",
       "package.yml",
-      r###"
+      r#"
         matches:
             - trigger: "harry"
               replace: "potter"
-        "###,
+        "#,
     );
 
     let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
@@ -1549,37 +1545,37 @@ mod tests {
   #[test]
   fn test_config_set_package_configs_multiple_files() {
     let (data_dir, package_dir) = create_temp_espanso_directories_with_default_content(
-      r###"
+      r"
         matches:
             - trigger: hasta
               replace: Hasta la vista
-        "###,
+        ",
     );
 
     create_package_file(
       package_dir.path(),
       "package1",
       "package.yml",
-      r###"
+      r#"
         name: package1
 
         matches:
             - trigger: "harry"
               replace: "potter"
-        "###,
+        "#,
     );
 
     create_package_file(
       package_dir.path(),
       "package1",
       "addon.yml",
-      r###"
+      r#"
         parent: package1
 
         matches:
             - trigger: "ron"
               replace: "weasley"
-        "###,
+        "#,
     );
 
     let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
@@ -1618,25 +1614,25 @@ mod tests {
   #[test]
   fn test_has_conflict_no_conflict() {
     let (data_dir, package_dir) = create_temp_espanso_directories_with_default_content(
-      r###"
+      r"
         matches:
             - trigger: ac
               replace: Hasta la vista
             - trigger: bc
               replace: Jon
-        "###,
+        ",
     );
 
     create_user_config_file(
       data_dir.path(),
       "specific.yml",
-      r###"
+      r#"
         name: specific1
 
         matches:
             - trigger: "hello"
               replace: "world"
-        "###,
+        "#,
     );
 
     let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
@@ -1649,7 +1645,7 @@ mod tests {
   #[test]
   fn test_has_conflict_conflict_in_default() {
     let (data_dir, package_dir) = create_temp_espanso_directories_with_default_content(
-      r###"
+      r"
         matches:
             - trigger: ac
               replace: Hasta la vista
@@ -1657,19 +1653,19 @@ mod tests {
               replace: Jon
             - trigger: acb
               replace: Error
-        "###,
+        ",
     );
 
     create_user_config_file(
       data_dir.path(),
       "specific.yml",
-      r###"
+      r#"
         name: specific1
 
         matches:
             - trigger: "hello"
               replace: "world"
-        "###,
+        "#,
     );
 
     let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
@@ -1682,25 +1678,25 @@ mod tests {
   #[test]
   fn test_has_conflict_conflict_in_specific_and_default() {
     let (data_dir, package_dir) = create_temp_espanso_directories_with_default_content(
-      r###"
+      r"
         matches:
             - trigger: ac
               replace: Hasta la vista
             - trigger: bc
               replace: Jon
-        "###,
+        ",
     );
 
     create_user_config_file(
       data_dir.path(),
       "specific.yml",
-      r###"
+      r#"
         name: specific1
 
         matches:
             - trigger: "bcd"
               replace: "Conflict"
-        "###,
+        "#,
     );
 
     let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
@@ -1713,36 +1709,36 @@ mod tests {
   #[test]
   fn test_has_conflict_no_conflict_in_specific_and_specific() {
     let (data_dir, package_dir) = create_temp_espanso_directories_with_default_content(
-      r###"
+      r"
         matches:
             - trigger: ac
               replace: Hasta la vista
             - trigger: bc
               replace: Jon
-        "###,
+        ",
     );
 
     create_user_config_file(
       data_dir.path(),
       "specific.yml",
-      r###"
+      r#"
         name: specific1
 
         matches:
             - trigger: "bad"
               replace: "Conflict"
-        "###,
+        "#,
     );
     create_user_config_file(
       data_dir.path(),
       "specific2.yml",
-      r###"
+      r#"
         name: specific2
 
         matches:
             - trigger: "badass"
               replace: "Conflict"
-        "###,
+        "#,
     );
 
     let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
@@ -1755,25 +1751,25 @@ mod tests {
   #[test]
   fn test_config_set_specific_inherits_default_global_vars() {
     let (data_dir, package_dir) = create_temp_espanso_directories_with_default_content(
-      r###"
+      r#"
         global_vars:
             - name: testvar
               type: date
               params:
                 format: "%m"
-        "###,
+        "#,
     );
 
     create_user_config_file(
       data_dir.path(),
       "specific.yml",
-      r###"
+      r#"
          global_vars:
             - name: specificvar
               type: date
               params:
                 format: "%m"
-        "###,
+        "#,
     );
 
     let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
@@ -1793,26 +1789,26 @@ mod tests {
   #[test]
   fn test_config_set_default_get_variables_from_specific() {
     let (data_dir, package_dir) = create_temp_espanso_directories_with_default_content(
-      r###"
+      r#"
         global_vars:
             - name: testvar
               type: date
               params:
                 format: "%m"
-        "###,
+        "#,
     );
 
     create_user_config_file(
       data_dir.path(),
       "specific.yml",
-      r###"
+      r#"
          parent: default
          global_vars:
             - name: specificvar
               type: date
               params:
                 format: "%m"
-        "###,
+        "#,
     );
 
     let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path()).unwrap();
@@ -1833,19 +1829,19 @@ mod tests {
   #[test]
   fn test_config_set_specific_dont_inherits_default_global_vars_when_exclude_is_on() {
     let (data_dir, package_dir) = create_temp_espanso_directories_with_default_content(
-      r###"
+      r#"
         global_vars:
             - name: testvar
               type: date
               params:
                 format: "%m"
-        "###,
+        "#,
     );
 
     create_user_config_file(
       data_dir.path(),
       "specific.yml",
-      r###"
+      r#"
          exclude_default_entries: true
 
          global_vars:
@@ -1853,7 +1849,7 @@ mod tests {
               type: date
               params:
                 format: "%m"
-        "###,
+        "#,
     );
 
     let config_set = LegacyConfigSet::load(data_dir.path(), package_dir.path()).unwrap();

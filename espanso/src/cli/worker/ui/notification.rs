@@ -63,9 +63,9 @@ impl<'a> espanso_engine::process::NotificationManager for NotificationManager<'a
     }
 
     if enabled {
-      self.notify("Espanso enabled!")
+      self.notify("Espanso enabled!");
     } else {
-      self.notify("Espanso disabled!")
+      self.notify("Espanso disabled!");
     }
   }
 

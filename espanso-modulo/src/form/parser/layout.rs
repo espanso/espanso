@@ -51,7 +51,7 @@ pub fn parse_layout(layout: &str) -> Vec<Vec<Token>> {
       match state {
         SplitState::Unmatched(text) => {
           if !text.is_empty() {
-            row.push(Token::Text(text.to_owned()))
+            row.push(Token::Text(text.to_owned()));
           }
         }
         SplitState::Captured(caps) => {

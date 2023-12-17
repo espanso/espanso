@@ -53,11 +53,11 @@ impl<'a> Middleware for MatchExecRequestMiddleware<'a> {
       };
 
       // Inject the request args into the detected matches
-      matches.iter_mut().for_each(|m| {
+      for m in &mut matches {
         for (key, value) in &m_event.args {
           m.args.insert(key.to_string(), value.to_string());
         }
-      });
+      }
 
       if matches.is_empty() {
         warn!("received match exec request, but no matches have been found for the given query.");

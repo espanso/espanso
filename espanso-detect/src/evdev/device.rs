@@ -61,7 +61,7 @@ impl Device {
     let file = OpenOptions::new()
       .read(true)
       .custom_flags(O_NONBLOCK | O_CLOEXEC | O_RDONLY)
-      .open(&path)?;
+      .open(path)?;
 
     if unsafe { is_keyboard_or_mouse(file.as_raw_fd()) == 0 } {
       return Err(DeviceError::InvalidDevice(path.to_string()).into());

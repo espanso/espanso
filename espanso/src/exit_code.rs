@@ -97,19 +97,16 @@ pub fn configure_custom_panic_hook() {
       },
     };
 
-    match info.location() {
-      Some(location) => {
-        error_eprintln!(
-          "ERROR: '{}' panicked at '{}': {}:{}",
-          thread,
-          msg,
-          location.file(),
-          location.line(),
-        );
-      }
-      None => {
-        error_eprintln!("ERROR: '{}' panicked at '{}'", thread, msg);
-      }
+    if let Some(location) = info.location() {
+      error_eprintln!(
+        "ERROR: '{}' panicked at '{}': {}:{}",
+        thread,
+        msg,
+        location.file(),
+        location.line(),
+      );
+    } else {
+      error_eprintln!("ERROR: '{}' panicked at '{}'", thread, msg);
     }
 
     let exit_code = CURRENT_PANIC_EXIT_CODE.lock().unwrap();
