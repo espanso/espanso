@@ -66,17 +66,21 @@ pub fn print_matches_as_plain(
         println!("{trigger}");
       } else {
         let description = m.description();
-        let label = &m.label.as_deref().unwrap_or_default();
-
-        if preserve_newlines {
-          println!("{} - {} - {}", trigger, description, label)
+        if let Some(label) = &m.label {
+          if preserve_newlines {
+            println!("{trigger} - {description} - {label}");
+          } else {
+            println!(
+              "{} - {} - {}",
+              trigger,
+              description.replace('\n', " "),
+              label
+            )
+          }
+        } else if preserve_newlines {
+          println!("{trigger} - {description}");
         } else {
-          println!(
-            "{} - {} - {}",
-            trigger,
-            description.replace('\n', " "),
-            label
-          )
+          println!("{} - {}", trigger, description.replace('\n', " "))
         }
       }
     }
