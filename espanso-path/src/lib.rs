@@ -55,10 +55,10 @@ pub fn resolve_paths(
     runtime_dir
   } else {
     // Create the runtime directory if not already present
-    let runtime_dir = if !is_portable_mode() {
-      get_default_runtime_path()
-    } else {
+    let runtime_dir = if is_portable_mode() {
       get_portable_runtime_path().expect("unable to obtain runtime directory path")
+    } else {
+      get_default_runtime_path()
     };
     info!("creating runtime directory in {:?}", runtime_dir);
     create_dir_all(&runtime_dir).expect("unable to create runtime directory");

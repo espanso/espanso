@@ -36,8 +36,7 @@ pub fn resolve_imports(
     } else {
       return Err(
         ResolveImportError::Failed(format!(
-          "unable to resolve imports for match group starting from current path: {:?}",
-          group_path
+          "unable to resolve imports for match group starting from current path: {group_path:?}"
         ))
         .into(),
       );
@@ -48,7 +47,7 @@ pub fn resolve_imports(
 
   let mut non_fatal_errors = Vec::new();
 
-  for import in imports.iter() {
+  for import in imports {
     let import_path = PathBuf::from(import);
 
     // Absolute or relative import
@@ -59,17 +58,17 @@ pub fn resolve_imports(
     };
 
     match dunce::canonicalize(&full_path)
-      .with_context(|| format!("unable to canonicalize import path: {:?}", full_path))
+      .with_context(|| format!("unable to canonicalize import path: {full_path:?}"))
     {
       Ok(canonical_path) => {
         if canonical_path.exists() && canonical_path.is_file() {
-          paths.push(canonical_path)
+          paths.push(canonical_path);
         } else {
           // Best effort imports
           non_fatal_errors.push(ErrorRecord::error(anyhow!(
             "unable to resolve import at path: {:?}",
             canonical_path
-          )))
+          )));
         }
       }
       Err(error) => non_fatal_errors.push(ErrorRecord::error(error)),

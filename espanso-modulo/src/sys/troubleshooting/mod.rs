@@ -22,6 +22,7 @@ use std::os::raw::{c_char, c_int};
 use std::path::PathBuf;
 use std::sync::Mutex;
 
+use crate::sys;
 use crate::sys::interop::{ErrorSetMetadata, TroubleshootingMetadata};
 use crate::sys::troubleshooting::interop::OwnedErrorSet;
 use crate::sys::util::convert_to_cstring_or_null;
@@ -44,7 +45,7 @@ mod interop {
   pub(crate) struct OwnedErrorSet {
     file_path: Option<CString>,
     errors: Vec<OwnedErrorMetadata>,
-    pub(crate) _interop_errors: Vec<ErrorMetadata>,
+    pub(crate) interop_errors: Vec<ErrorMetadata>,
   }
 
   impl OwnedErrorSet {
@@ -57,8 +58,8 @@ mod interop {
 
       ErrorSetMetadata {
         file_path: file_path_ptr,
-        errors: self._interop_errors.as_ptr(),
-        errors_count: self._interop_errors.len() as c_int,
+        errors: self.interop_errors.as_ptr(),
+        errors_count: self.interop_errors.len() as c_int,
       }
     }
   }
@@ -70,16 +71,15 @@ mod interop {
           .expect("unable to convert file_path to CString")
       });
 
-      let errors: Vec<OwnedErrorMetadata> =
-        error_set.errors.iter().map(|item| item.into()).collect();
+      let errors: Vec<OwnedErrorMetadata> = error_set.errors.iter().map(Into::into).collect();
 
-      let _interop_errors: Vec<ErrorMetadata> =
+      let interop_errors: Vec<ErrorMetadata> =
         errors.iter().map(|item| item.to_error_metadata()).collect();
 
       Self {
         file_path,
         errors,
-        _interop_errors,
+        interop_errors,
       }
     }
   }
@@ -118,11 +118,10 @@ pub fn show(options: TroubleshootingOptions) -> Result<()> {
   let (_c_window_icon_path, c_window_icon_path_ptr) =
     convert_to_cstring_or_null(options.window_icon_path);
 
-  let owned_error_sets: Vec<OwnedErrorSet> =
-    options.error_sets.iter().map(|set| set.into()).collect();
+  let owned_error_sets: Vec<OwnedErrorSet> = options.error_sets.iter().map(Into::into).collect();
   let error_sets: Vec<ErrorSetMetadata> = owned_error_sets
     .iter()
-    .map(|set| set.to_error_set_metadata())
+    .map(sys::troubleshooting::interop::OwnedErrorSet::to_error_set_metadata)
     .collect();
 
   extern "C" fn dont_show_again_changed(dont_show: c_int) {
@@ -151,7 +150,7 @@ pub fn show(options: TroubleshootingOptions) -> Result<()> {
 
   {
     let mut lock = HANDLERS.lock().expect("unable to acquire handlers lock");
-    *lock = Some(options.handlers)
+    *lock = Some(options.handlers);
   }
 
   let troubleshooting_metadata = TroubleshootingMetadata {

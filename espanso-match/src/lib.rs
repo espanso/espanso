@@ -39,7 +39,7 @@ impl<Id: Default> Default for MatchResult<Id> {
   fn default() -> Self {
     Self {
       id: Id::default(),
-      trigger: "".to_string(),
+      trigger: String::new(),
       left_separator: None,
       right_separator: None,
       vars: HashMap::new(),

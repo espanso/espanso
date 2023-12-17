@@ -132,7 +132,7 @@ impl<'a> DefaultProcessor<'a> {
       };
 
       trace!("--------------- new event -----------------");
-      for middleware in self.middleware.iter() {
+      for middleware in &self.middleware {
         trace!(
           "middleware '{}' received event: {:?}",
           middleware.name(),

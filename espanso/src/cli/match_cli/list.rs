@@ -63,7 +63,7 @@ pub fn print_matches_as_plain(
 
     for trigger in triggers {
       if only_triggers {
-        println!("{}", trigger);
+        println!("{trigger}");
       } else {
         let description = m.description();
         let label = &m.label;
@@ -110,7 +110,7 @@ pub fn print_matches_as_json(match_list: &[&Match]) -> Result<()> {
 
   let json = serde_json::to_string_pretty(&entries)?;
 
-  println!("{}", json);
+  println!("{json}");
 
   Ok(())
 }

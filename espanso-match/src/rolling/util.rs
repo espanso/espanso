@@ -166,7 +166,7 @@ mod tests {
           false
         ),
       ]),
-      ("".to_string(), None, None)
+      (String::new(), None, None)
     );
   }
 

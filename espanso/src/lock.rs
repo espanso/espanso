@@ -36,7 +36,7 @@ impl Lock {
   }
 
   fn acquire(runtime_dir: &Path, name: &str) -> Option<Lock> {
-    let lock_file_path = runtime_dir.join(format!("{}.lock", name));
+    let lock_file_path = runtime_dir.join(format!("{name}.lock"));
     let lock_file = OpenOptions::new()
       .read(true)
       .write(true)

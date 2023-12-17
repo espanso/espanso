@@ -40,12 +40,12 @@ fn match_main(args: CliModuleArgs) -> i32 {
 
   if let Some(sub_args) = cli_args.subcommand_matches("list") {
     if let Err(err) = list::list_main(sub_args, config_store, match_store) {
-      eprintln!("unable to list matches: {:?}", err);
+      eprintln!("unable to list matches: {err:?}");
       return 1;
     }
   } else if let Some(sub_args) = cli_args.subcommand_matches("exec") {
     if let Err(err) = exec::exec_main(sub_args, &paths) {
-      eprintln!("unable to exec match: {:?}", err);
+      eprintln!("unable to exec match: {err:?}");
       return 1;
     }
   } else {

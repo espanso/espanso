@@ -32,7 +32,7 @@ pub(crate) mod tests {
     let mut matches = Vec::new();
 
     for c in string.chars() {
-      let (state, _matches) = matcher.process(
+      let (state, vec_matches) = matcher.process(
         prev_state.as_ref(),
         Event::Key {
           key: Key::Other,
@@ -41,7 +41,7 @@ pub(crate) mod tests {
       );
 
       prev_state = Some(state);
-      matches = _matches;
+      matches = vec_matches;
     }
 
     matches

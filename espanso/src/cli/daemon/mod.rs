@@ -89,6 +89,9 @@ fn daemon_main(args: CliModuleArgs) -> i32 {
   // When a guard is dropped, the troubleshooting GUI is killed
   // so this ensures that there is only one troubleshooter running
   // at a given time.
+  //
+  // it is currently unused
+  // #[allow(unused_variables)]
   let mut _current_troubleshoot_guard = None;
 
   let (watcher_notify, watcher_signal) = unbounded::<()>();
@@ -96,14 +99,14 @@ fn daemon_main(args: CliModuleArgs) -> i32 {
   watcher::initialize_and_spawn(&paths.config, watcher_notify)
     .expect("unable to initialize config watcher thread");
 
-  let (_keyboard_layout_watcher_notify, keyboard_layout_watcher_signal) = unbounded::<()>();
+  let (keyboard_layout_watcher_notify, keyboard_layout_watcher_signal) = unbounded::<()>();
 
   #[allow(clippy::redundant_clone)]
   // IMPORTANT: Here we clone the channel instead of simply passing it to avoid
   // dropping the channel immediately on those platforms that don't support the
   // layout watcher (currently Windows and macOS).
   // Otherwise, the select below would always return an error because the channel is closed.
-  keyboard_layout_watcher::initialize_and_spawn(_keyboard_layout_watcher_notify.clone()) // DON'T REMOVE THE CLONE!
+  keyboard_layout_watcher::initialize_and_spawn(keyboard_layout_watcher_notify.clone()) // DON'T REMOVE THE CLONE!
     .expect("unable to initialize keyboard layout watcher thread");
 
   let config_store =
@@ -316,9 +319,9 @@ fn restart_worker(
     std::thread::sleep(std::time::Duration::from_millis(100));
   }
 
-  if !has_timed_out {
-    spawn_worker(paths_overrides, exit_notify, start_reason);
-  } else {
+  if has_timed_out {
     error!("could not restart worker, as the exit process has timed out");
+  } else {
+    spawn_worker(paths_overrides, exit_notify, start_reason);
   }
 }

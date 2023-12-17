@@ -210,7 +210,7 @@ impl Display for ShortcutKey {
       ShortcutKey::Numpad7 => write!(f, "NUMPAD7"),
       ShortcutKey::Numpad8 => write!(f, "NUMPAD8"),
       ShortcutKey::Numpad9 => write!(f, "NUMPAD9"),
-      ShortcutKey::Raw(code) => write!(f, "RAW({})", code),
+      ShortcutKey::Raw(code) => write!(f, "RAW({code})"),
     }
   }
 }
