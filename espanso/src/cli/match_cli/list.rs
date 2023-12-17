@@ -66,7 +66,7 @@ pub fn print_matches_as_plain(
         println!("{trigger}");
       } else {
         let description = m.description();
-        let label = &m.label;
+        let label = &m.label.as_deref().unwrap_or_default();
 
         if preserve_newlines {
           println!("{} - {} - {}", trigger, description, label)
@@ -89,7 +89,7 @@ pub fn print_matches_as_plain(
 struct JsonMatchEntry {
   triggers: Vec<String>,
   replace: String,
-  label: String,
+  label: Option<String>,
 }
 
 pub fn print_matches_as_json(match_list: &[&Match]) -> Result<()> {
@@ -104,7 +104,7 @@ pub fn print_matches_as_json(match_list: &[&Match]) -> Result<()> {
     entries.push(JsonMatchEntry {
       triggers,
       replace: m.description().to_string(),
-      label: m.label.to_string(),
+      label: m.label.clone(),
     })
   }
 
