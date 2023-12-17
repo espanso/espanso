@@ -43,13 +43,17 @@ pub fn list_main(
   if cli_args.is_present("json") {
     print_matches_as_json(&match_set.matches)?;
   } else {
-    print_matches_as_plain(&match_set.matches, only_triggers, preserve_newlines);
+    print_matches_as_plain(&match_set.matches, only_triggers, preserve_newlines)?;
   }
 
   Ok(())
 }
 
-pub fn print_matches_as_plain(match_list: &[&Match], only_triggers: bool, preserve_newlines: bool) {
+pub fn print_matches_as_plain(
+  match_list: &[&Match],
+  only_triggers: bool,
+  preserve_newlines: bool,
+) -> Result<()> {
   for m in match_list {
     let triggers = match &m.cause {
       MatchCause::None => vec!["(none)".to_string()],
@@ -62,21 +66,34 @@ pub fn print_matches_as_plain(match_list: &[&Match], only_triggers: bool, preser
         println!("{trigger}");
       } else {
         let description = m.description();
-
-        if preserve_newlines {
+        if let Some(label) = &m.label {
+          if preserve_newlines {
+            println!("{trigger} - {description} - {label}");
+          } else {
+            println!(
+              "{} - {} - {}",
+              trigger,
+              description.replace('\n', " "),
+              label
+            )
+          }
+        } else if preserve_newlines {
           println!("{trigger} - {description}");
         } else {
-          println!("{} - {}", trigger, description.replace('\n', " "));
+          println!("{} - {}", trigger, description.replace('\n', " "))
         }
       }
     }
   }
+
+  Ok(())
 }
 
 #[derive(Debug, Serialize)]
 struct JsonMatchEntry {
   triggers: Vec<String>,
   replace: String,
+  label: Option<String>,
 }
 
 pub fn print_matches_as_json(match_list: &[&Match]) -> Result<()> {
@@ -91,7 +108,8 @@ pub fn print_matches_as_json(match_list: &[&Match]) -> Result<()> {
     entries.push(JsonMatchEntry {
       triggers,
       replace: m.description().to_string(),
-    });
+      label: m.label.clone(),
+    })
   }
 
   let json = serde_json::to_string_pretty(&entries)?;
