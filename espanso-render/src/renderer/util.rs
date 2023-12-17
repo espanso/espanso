@@ -72,29 +72,27 @@ pub(crate) fn render_variables(body: &str, scope: &Scope) -> Result<String> {
     .replace_all(body, |caps: &Captures| {
       let var_name = caps.name("name").unwrap().as_str();
       let var_subname = caps.name("subname");
-      match scope.get(var_name) {
-        Some(output) => match output {
+      if let Some(output) = scope.get(var_name) {
+        match output {
           ExtensionOutput::Single(output) => output,
-          ExtensionOutput::Multiple(results) => match var_subname {
-            Some(var_subname) => {
+          ExtensionOutput::Multiple(results) => {
+            if let Some(var_subname) = var_subname {
               let var_subname = var_subname.as_str();
               results.get(var_subname).map_or("", |value| value)
-            }
-            None => {
+            } else {
               error!("nested name missing from multi-value variable: {var_name}");
               replacing_error = Some(RendererError::MissingVariable(format!(
                 "nested name missing from multi-value variable: {var_name}"
               )));
               ""
             }
-          },
-        },
-        None => {
-          replacing_error = Some(RendererError::MissingVariable(format!(
-            "variable '{var_name}' is missing"
-          )));
-          ""
+          }
         }
+      } else {
+        replacing_error = Some(RendererError::MissingVariable(format!(
+          "variable '{var_name}' is missing"
+        )));
+        ""
       }
     })
     .to_string();

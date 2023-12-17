@@ -35,6 +35,7 @@ lazy_static! {
 
 #[allow(dead_code)]
 mod interop {
+  use crate::sys;
   use crate::troubleshooting::{ErrorRecord, ErrorSet};
 
   use super::interop::{ErrorMetadata, ErrorSetMetadata};
@@ -73,8 +74,10 @@ mod interop {
 
       let errors: Vec<OwnedErrorMetadata> = error_set.errors.iter().map(Into::into).collect();
 
-      let interop_errors: Vec<ErrorMetadata> =
-        errors.iter().map(|item| item.to_error_metadata()).collect();
+      let interop_errors: Vec<ErrorMetadata> = errors
+        .iter()
+        .map(sys::troubleshooting::interop::OwnedErrorMetadata::to_error_metadata)
+        .collect();
 
       Self {
         file_path,

@@ -59,7 +59,7 @@ impl ModuloManager {
         Ok(mut child) => {
           if let Some(stdin) = child.stdin.as_mut() {
             match stdin.write_all(body.as_bytes()) {
-              Ok(_) => Ok(()),
+              Ok(()) => Ok(()),
               Err(error) => Err(ModuloError::Error(error).into()),
             }
           } else {
@@ -93,7 +93,7 @@ impl ModuloManager {
         Ok(mut child) => {
           if let Some(stdin) = child.stdin.as_mut() {
             match stdin.write_all(body.as_bytes()) {
-              Ok(_) => {
+              Ok(()) => {
                 // Get the output
                 match child.wait_with_output() {
                   Ok(child_output) => {

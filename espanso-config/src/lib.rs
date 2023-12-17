@@ -220,7 +220,7 @@ mod tests {
       .unwrap();
 
       let config_file = config_dir.join("default.yml");
-      std::fs::write(config_file, r#""#).unwrap();
+      std::fs::write(config_file, r"").unwrap();
 
       let custom_config_file = config_dir.join("custom.yml");
       std::fs::write(
@@ -261,7 +261,7 @@ mod tests {
       .unwrap();
 
       let config_file = config_dir.join("default.yml");
-      std::fs::write(config_file, r#""#).unwrap();
+      std::fs::write(config_file, r"").unwrap();
 
       let (config_store, match_store, errors) = load(base).unwrap();
 
@@ -285,11 +285,11 @@ mod tests {
       let base_file = match_dir.join("base.yml");
       std::fs::write(
         base_file,
-        r#"
+        r"
       matches:
         - trigger: hello
           replace: world
-      "#,
+      ",
       )
       .unwrap();
 

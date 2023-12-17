@@ -86,7 +86,7 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
   let paths_clone = paths.clone();
   let backup_and_migrate_handler =
     Box::new(move || match util::migrate_configuration(&paths_clone) {
-      Ok(_) => MigrationResult::Success,
+      Ok(()) => MigrationResult::Success,
       Err(error) => match error.downcast_ref::<MigrationError>() {
         Some(MigrationError::Dirty) => MigrationResult::DirtyFailure,
         Some(MigrationError::Clean) => MigrationResult::CleanFailure,
@@ -102,7 +102,7 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
 
     if auto_start {
       match util::configure_auto_start(true) {
-        Ok(_) => true,
+        Ok(()) => true,
         Err(error) => {
           eprintln!("Service register returned error: {error}");
           false
@@ -126,7 +126,7 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
       false
     };
   let add_to_path_handler = Box::new(move || match util::add_espanso_to_path() {
-    Ok(_) => true,
+    Ok(()) => true,
     Err(error) => {
       eprintln!("Add to path returned error: {error}");
       false

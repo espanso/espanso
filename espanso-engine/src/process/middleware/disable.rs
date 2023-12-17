@@ -128,8 +128,7 @@ fn is_toggle_key(event: &KeyboardEvent, options: &DisableOptions) -> bool {
   if options
     .toggle_key
     .as_ref()
-    .map(|key| key == &event.key)
-    .unwrap_or(false)
+    .is_some_and(|key| key == &event.key)
   {
     if let (Some(variant), Some(e_variant)) = (&options.toggle_key_variant, &event.variant) {
       variant == e_variant

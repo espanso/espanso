@@ -350,9 +350,11 @@ mod tests {
 
   fn create_match(yaml: &str) -> Result<Match> {
     let (m, warnings) = create_match_with_warnings(yaml, false)?;
-    if !warnings.is_empty() {
-      panic!("warnings were detected but not handled: {:?}", warnings);
-    }
+    assert!(
+      warnings.is_empty(),
+      "warnings were detected but not handled: {:?}",
+      warnings
+    );
     Ok(m)
   }
 
@@ -869,8 +871,8 @@ mod tests {
       assert_eq!(non_fatal_error_set.unwrap().errors.len(), 1);
 
       // Reset the ids to compare them correctly
-      group.matches.iter_mut().for_each(|mut m| m.id = 0);
-      group.global_vars.iter_mut().for_each(|mut v| v.id = 0);
+      group.matches.iter_mut().for_each(|m| m.id = 0);
+      group.global_vars.iter_mut().for_each(|v| v.id = 0);
 
       let vars = vec![Variable {
         name: "var1".to_string(),
@@ -906,11 +908,11 @@ mod tests {
       let base_file = match_dir.join("base.yml");
       std::fs::write(
         &base_file,
-        r#"
+        r"
       imports:
         - invalid
        - indentation
-      "#,
+      ",
       )
       .unwrap();
 

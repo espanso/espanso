@@ -446,21 +446,21 @@ impl ResolvedConfig {
     let mut includes = HashSet::new();
 
     if config.use_standard_includes.is_none() || config.use_standard_includes.unwrap() {
-      STANDARD_INCLUDES.iter().for_each(|include| {
-        includes.insert(include.to_string());
-      });
+      for include in STANDARD_INCLUDES {
+        includes.insert((*include).to_string());
+      }
     }
 
     if let Some(yaml_includes) = config.includes.as_ref() {
-      yaml_includes.iter().for_each(|include| {
+      for include in yaml_includes {
         includes.insert(include.to_string());
-      });
+      }
     };
 
     if let Some(extra_includes) = config.extra_includes.as_ref() {
-      extra_includes.iter().for_each(|include| {
+      for include in extra_includes {
         includes.insert(include.to_string());
-      });
+      }
     };
 
     includes
@@ -470,15 +470,15 @@ impl ResolvedConfig {
     let mut excludes = HashSet::new();
 
     if let Some(yaml_excludes) = config.excludes.as_ref() {
-      yaml_excludes.iter().for_each(|exclude| {
+      for exclude in yaml_excludes {
         excludes.insert(exclude.to_string());
-      });
+      }
     }
 
     if let Some(extra_excludes) = config.extra_excludes.as_ref() {
-      extra_excludes.iter().for_each(|exclude| {
+      for exclude in extra_excludes {
         excludes.insert(exclude.to_string());
-      });
+      }
     }
 
     excludes
@@ -740,9 +740,9 @@ mod tests {
       let parent_file = config_dir.join("parent.yml");
       std::fs::write(
         &parent_file,
-        r#"
+        r"
       excludes: ['../**/another.yml']
-      "#,
+      ",
       )
       .unwrap();
 
@@ -940,7 +940,7 @@ mod tests {
     };
 
     assert!(test_filter_is_match(
-      &format!("filter_os: {}", current),
+      &format!("filter_os: {current}"),
       &AppProperties {
         title: Some("Google Mail"),
         class: Some("Chrome"),
@@ -949,7 +949,7 @@ mod tests {
     ));
 
     assert!(!test_filter_is_match(
-      &format!("filter_os: {}", another),
+      &format!("filter_os: {another}"),
       &AppProperties {
         title: Some("Google Mail"),
         class: Some("Chrome"),

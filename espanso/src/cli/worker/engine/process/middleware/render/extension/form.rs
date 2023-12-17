@@ -85,7 +85,7 @@ fn convert_fields(fields: &Params) -> HashMap<String, FormField> {
           multiline: params
             .get("multiline")
             .and_then(|val| val.as_bool())
-            .cloned()
+            .copied()
             .unwrap_or(false),
         }),
       }
@@ -109,7 +109,7 @@ fn extract_values(value: &Value, trim_string_values: Option<&Value>) -> Option<V
     Value::Array(values) => Some(
       values
         .iter()
-        .flat_map(|choice| choice.as_string())
+        .filter_map(|choice| choice.as_string())
         .cloned()
         .collect(),
     ),

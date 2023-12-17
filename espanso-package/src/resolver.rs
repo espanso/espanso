@@ -113,13 +113,13 @@ mod tests {
     run_with_temp_dir(|base_dir| {
       std::fs::write(
         base_dir.join("_manifest.yml"),
-        r#"
+        r"
       name: package1
       title: Package 1
       author: Federico
       version: 0.1.0
       description: An awesome package 
-      "#,
+      ",
       )
       .unwrap();
 
@@ -150,13 +150,13 @@ mod tests {
 
       std::fs::write(
         version_dir1.join("_manifest.yml"),
-        r#"
+        r"
       name: package1
       title: Package 1
       author: Federico
       version: 0.1.0
       description: An awesome package 
-      "#,
+      ",
       )
       .unwrap();
 
@@ -166,13 +166,13 @@ mod tests {
 
       std::fs::write(
         version_dir2.join("_manifest.yml"),
-        r#"
+        r"
       name: package1
       title: Package 1
       author: Federico
       version: 0.1.1
       description: An awesome package 
-      "#,
+      ",
       )
       .unwrap();
 
@@ -181,13 +181,13 @@ mod tests {
 
       std::fs::write(
         sub_dir3.join("_manifest.yml"),
-        r#"
+        r"
       name: package2
       title: Package 2
       author: Federico
       version: 2.0.0
       description: Another awesome package 
-      "#,
+      ",
       )
       .unwrap();
 
@@ -240,13 +240,13 @@ mod tests {
 
       std::fs::write(
         version_dir1.join("_manifest.yml"),
-        r#"
+        r"
       name: package1
       title: Package 1
       author: Federico
       version: 0.1.0
       description: An awesome package 
-      "#,
+      ",
       )
       .unwrap();
 
@@ -256,13 +256,13 @@ mod tests {
 
       std::fs::write(
         version_dir2.join("_manifest.yml"),
-        r#"
+        r"
       name: package1
       title: Package 1
       author: Federico
       version: 0.1.1
       description: An awesome package 
-      "#,
+      ",
       )
       .unwrap();
 
@@ -271,13 +271,13 @@ mod tests {
 
       std::fs::write(
         sub_dir3.join("_manifest.yml"),
-        r#"
+        r"
       name: package2
       title: Package 2
       author: Federico
       version: 2.0.0
       description: Another awesome package 
-      "#,
+      ",
       )
       .unwrap();
 
@@ -340,11 +340,11 @@ mod tests {
     run_with_temp_dir(|base_dir| {
       std::fs::write(
         base_dir.join("_manifest.yml"),
-        r#"
+        r"
       name: package1
       title: Package 1
       author: Federico
-      "#,
+      ",
       )
       .unwrap();
 

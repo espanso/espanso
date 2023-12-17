@@ -48,7 +48,7 @@ impl Clipboard for Win32Clipboard {
     }
   }
 
-  fn set_text(&self, text: &str, _: &ClipboardOperationOptions) -> anyhow::Result<()> {
+  fn set_text(&self, text: &str, _: &ClipboardOperationOptions) -> Result<()> {
     let string = U16CString::from_str(text)?;
     let native_result = unsafe { ffi::clipboard_set_text(string.as_ptr()) };
     if native_result > 0 {
