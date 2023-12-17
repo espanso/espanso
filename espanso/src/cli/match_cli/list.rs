@@ -49,7 +49,11 @@ pub fn list_main(
   Ok(())
 }
 
-pub fn print_matches_as_plain(match_list: &[&Match], only_triggers: bool, preserve_newlines: bool) -> Result<()> {
+pub fn print_matches_as_plain(
+  match_list: &[&Match],
+  only_triggers: bool,
+  preserve_newlines: bool,
+) -> Result<()> {
   for m in match_list {
     let triggers = match &m.cause {
       MatchCause::None => vec!["(none)".to_string()],
@@ -67,7 +71,12 @@ pub fn print_matches_as_plain(match_list: &[&Match], only_triggers: bool, preser
         if preserve_newlines {
           println!("{} - {} - {}", trigger, description, label)
         } else {
-          println!("{} - {} - {}", trigger, description.replace('\n', " "), label)
+          println!(
+            "{} - {} - {}",
+            trigger,
+            description.replace('\n', " "),
+            label
+          )
         }
       }
     }
