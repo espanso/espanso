@@ -103,63 +103,7 @@ lazy_static! {
   ];
 }
 
-fn main() {
-  util::attach_console();
-
-  let install_subcommand = SubCommand::with_name("install")
-    .about("Install a package")
-    .arg(
-      Arg::with_name("external")
-        .short("e")
-        .long("external")
-        .required(false)
-        .takes_value(false)
-        .help("Allow installing packages from non-verified repositories."),
-    )
-    .arg(Arg::with_name("package_name").help("Package name"))
-    .arg(
-      Arg::with_name("version")
-        .long("version")
-        .required(false)
-        .takes_value(true)
-        .help("Force a particular version to be installed instead of the latest available."),
-    )
-    .arg(
-      Arg::with_name("git")
-        .long("git")
-        .required(false)
-        .takes_value(true)
-        .help("Git repository from which espanso should install the package."),
-    )
-    .arg(
-      Arg::with_name("git-branch")
-        .long("git-branch")
-        .required(false)
-        .takes_value(true)
-        .help("Force espanso to search for the package on a specific git branch"),
-    )
-    .arg(
-      Arg::with_name("force")
-        .long("force")
-        .required(false)
-        .takes_value(false)
-        .help("Overwrite the package if already installed"),
-    )
-    .arg(
-      Arg::with_name("refresh-index")
-        .long("refresh-index")
-        .required(false)
-        .takes_value(false)
-        .help("Request a fresh copy of the Espanso Hub package index instead of using the cached version.")
-    )
-    .arg(
-      Arg::with_name("use-native-git")
-        .long("use-native-git")
-        .required(false)
-        .takes_value(false)
-        .help("If specified, espanso will use the 'git' command instead of trying direct methods."),
-    );
-
+fn app() -> clap::App<'static> {
   let uninstall_subcommand = SubCommand::with_name("uninstall")
     .about("Remove a package")
     .arg(Arg::with_name("package_name").help("Package name"));
@@ -173,22 +117,30 @@ fn main() {
         .takes_value(false)
         .help("Run espanso as an unmanaged service (avoid system manager)"),
     );
-  let restart_subcommand = start_subcommand
-    .clone()
+
+  let restart_subcommand = SubCommand::with_name("restart")
     .about("Restart the espanso service")
-    .name("restart");
+    .arg(
+      Arg::with_name("unmanaged")
+        .long("unmanaged")
+        .required(false)
+        .takes_value(false)
+        .help("Run espanso as an unmanaged service (avoid system manager)"),
+    );
+
   let stop_subcommand = SubCommand::with_name("stop").about("Stop espanso service");
+
   let status_subcommand =
     SubCommand::with_name("status").about("Check if the espanso daemon is running or not.");
 
-  let mut clap_instance = App::new("espanso")
+  App::new("espanso")
     .version(VERSION)
     .author("Federico Terzi")
     .about("A Privacy-first, Cross-platform Text Expander")
     .arg(
       Arg::with_name("v")
-        .short("v")
-        .multiple(true)
+        .short('v')
+        .multiple_occurrences(true)
         .help("Sets the level of verbosity"),
     )
     .arg(
@@ -267,13 +219,13 @@ For example, specifying 'email' is equivalent to 'match/email.yml'."#))
             .about("Display a customizable form")
             .arg(
               Arg::with_name("input_file")
-                .short("i")
+                .short('i')
                 .takes_value(true)
                 .help("Input file or - for stdin"),
             )
             .arg(
               Arg::with_name("json")
-                .short("j")
+                .short('j')
                 .required(false)
                 .takes_value(false)
                 .help("Interpret the input data as JSON"),
@@ -284,13 +236,13 @@ For example, specifying 'email' is equivalent to 'match/email.yml'."#))
             .about("Display a search box")
             .arg(
               Arg::with_name("input_file")
-                .short("i")
+                .short('i')
                 .takes_value(true)
                 .help("Input file or - for stdin"),
             )
             .arg(
               Arg::with_name("json")
-                .short("j")
+                .short('j')
                 .required(false)
                 .takes_value(false)
                 .help("Interpret the input data as JSON"),
@@ -301,7 +253,7 @@ For example, specifying 'email' is equivalent to 'match/email.yml'."#))
             .about("Display a Text View")
             .arg(
               Arg::with_name("input_file")
-                .short("i")
+                .short('i')
                 .takes_value(true)
                 .help("Input file or - for stdin"),
             )
@@ -375,21 +327,21 @@ For example, specifying 'email' is equivalent to 'match/email.yml'."#))
         .subcommand(SubCommand::with_name("list")
             .about("Print matches to standard output")
             .arg(Arg::with_name("json")
-                .short("j")
+                .short('j')
                 .long("json")
                 .help("Output matches to the JSON format")
                 .required(false)
                 .takes_value(false)
             )
             .arg(Arg::with_name("onlytriggers")
-                .short("t")
+                .short('t')
                 .long("only-triggers")
                 .help("Print only triggers without replacement")
                 .required(false)
                 .takes_value(false)
             )
             .arg(Arg::with_name("preservenewlines")
-                .short("n")
+                .short('n')
                 .long("preserve-newlines")
                 .help("Preserve newlines when printing replacements. Does nothing when using JSON format.")
                 .required(false)
@@ -417,7 +369,7 @@ For example, specifying 'email' is equivalent to 'match/email.yml'."#))
         .subcommand(SubCommand::with_name("exec")
             .about("Triggers the expansion of a match")
             .arg(Arg::with_name("trigger")
-                .short("t")
+                .short('t')
                 .long("trigger")
                 .help("The trigger of the match to be expanded")
                 .required(false)
@@ -428,7 +380,7 @@ For example, specifying 'email' is equivalent to 'match/email.yml'."#))
                 .help("Specify also an argument for the expansion, following the --arg 'name=value' format. You can specify multiple ones.")
                 .required(false)
                 .takes_value(true)
-                .multiple(true)
+                .multiple_occurrences(true)
                 .number_of_values(1)
             )
         )
@@ -436,7 +388,60 @@ For example, specifying 'email' is equivalent to 'match/email.yml'."#))
     .subcommand(
       SubCommand::with_name("package")
         .about("package-management commands")
-        .subcommand(install_subcommand.clone())
+        .subcommand(SubCommand::with_name("install")
+    .about("Install a package")
+    .alias("install")
+    .arg(
+      Arg::with_name("external")
+        .short('e')
+        .long("external")
+        .required(false)
+        .takes_value(false)
+        .help("Allow installing packages from non-verified repositories."),
+    )
+    .arg(Arg::with_name("package_name").help("Package name"))
+    .arg(
+      Arg::with_name("version")
+        .long("version")
+        .required(false)
+        .takes_value(true)
+        .help("Force a particular version to be installed instead of the latest available."),
+    )
+    .arg(
+      Arg::with_name("git")
+        .long("git")
+        .required(false)
+        .takes_value(true)
+        .help("Git repository from which espanso should install the package."),
+    )
+    .arg(
+      Arg::with_name("git-branch")
+        .long("git-branch")
+        .required(false)
+        .takes_value(true)
+        .help("Force espanso to search for the package on a specific git branch"),
+    )
+    .arg(
+      Arg::with_name("force")
+        .long("force")
+        .required(false)
+        .takes_value(false)
+        .help("Overwrite the package if already installed"),
+    )
+    .arg(
+      Arg::with_name("refresh-index")
+        .long("refresh-index")
+        .required(false)
+        .takes_value(false)
+        .help("Request a fresh copy of the Espanso Hub package index instead of using the cached version.")
+    )
+    .arg(
+      Arg::with_name("use-native-git")
+        .long("use-native-git")
+        .required(false)
+        .takes_value(false)
+        .help("If specified, espanso will use the 'git' command instead of trying direct methods."),
+    ))
         .subcommand(uninstall_subcommand.clone())
         .subcommand(SubCommand::with_name("update").about(
           "Update a package. If 'all' is passed as package name, attempts to update all packages.",
@@ -469,8 +474,13 @@ For example, specifying 'email' is equivalent to 'match/email.yml'."#))
             .takes_value(false),
         ),
     )
-    .subcommand(install_subcommand)
-    .subcommand(uninstall_subcommand);
+    .subcommand(uninstall_subcommand)
+}
+
+fn main() {
+  util::attach_console();
+
+  let mut clap_instance = app();
 
   // TODO: explain that the register and unregister commands are only meaningful
   // when using the system daemon manager on macOS and Linux
@@ -617,15 +627,6 @@ For example, specifying 'email' is equivalent to 'match/email.yml'."#))
       cli_args.paths = Some(paths);
     }
 
-    // If the current handler is an alias, rather than sending the sub-arguments
-    // we simply forward the current ones
-    // For example, the args for "espanso start" are forwarded to "espanso service start"
-    if alias.is_some() {
-      cli_args.cli_args = Some(matches);
-    } else if let Some(args) = matches.subcommand_matches(&handler.subcommand) {
-      cli_args.cli_args = Some(args.clone());
-    }
-
     let exit_code = (handler.entry)(cli_args);
 
     std::process::exit(exit_code);
@@ -656,5 +657,15 @@ fn get_path_override(matches: &ArgMatches, argument: &str, env_var: &str) -> Opt
     }
   } else {
     None
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn clap_cli_construction() {
+    app().debug_assert();
   }
 }
