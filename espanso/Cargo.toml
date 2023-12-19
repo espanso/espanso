@@ -20,11 +20,20 @@ vendored-tls = ["espanso-package/rustls-tls"]
 
 # If the wayland feature is enabled, all X11 dependencies will be dropped
 # and only methods suitable for Wayland will be used
-wayland = ["espanso-detect/wayland", "espanso-inject/wayland", "espanso-clipboard/wayland", "espanso-info/wayland"]
+wayland = [
+    "espanso-detect/wayland",
+    "espanso-inject/wayland",
+    "espanso-clipboard/wayland",
+    "espanso-info/wayland",
+]
 
 # Compile modulo and all its dependencies (including wxWidgets). If you don't
 # enable it, features like Forms and Search might not be available.
-modulo = ["espanso-modulo", "espanso-clipboard/avoid-gdi", "espanso-ui/avoid-gdi"]
+modulo = [
+    "espanso-modulo",
+    "espanso-clipboard/avoid-gdi",
+    "espanso-ui/avoid-gdi",
+]
 
 [dependencies]
 espanso-detect = { path = "../espanso-detect" }
@@ -41,7 +50,7 @@ espanso-modulo = { path = "../espanso-modulo", optional = true }
 espanso-migrate = { path = "../espanso-migrate" }
 espanso-kvs = { path = "../espanso-kvs" }
 espanso-engine = { path = "../espanso-engine" }
-espanso-package = { path = "../espanso-package"}
+espanso-package = { path = "../espanso-package" }
 maplit = "1.0.2"
 simplelog = "0.9.0"
 log = "0.4.14"
@@ -81,6 +90,9 @@ espanso-mac-utils = { path = "../espanso-mac-utils" }
 caps = "0.5.2"
 const_format = "0.2.14"
 regex = "1.5.5"
+
+[dev-dependencies]
+trycmd = "0.14.19"
 
 [package.metadata.deb]
 maintainer = "Federico Terzi <federicoterzi96@gmail.com>"
