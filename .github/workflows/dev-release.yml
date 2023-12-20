@@ -43,7 +43,7 @@ jobs:
       - name: Install rust-script and cargo-make
         run: |
           cargo install rust-script --version "0.7.0"
-          cargo install --force cargo-make --version 0.34.0
+          cargo install --force cargo-make --version 0.37.5
       - name: Test
         run: cargo make test-binary --profile release
       - name: Build resources
@@ -131,7 +131,7 @@ jobs:
       - name: Install rust-script and cargo-make
         run: |
           cargo install rust-script --version "0.7.0"
-          cargo install --force cargo-make --version 0.34.0
+          cargo install --force cargo-make --version 0.37.5
       - name: Test
         run: cargo make test-binary --profile release
         env:
@@ -168,7 +168,7 @@ jobs:
       - name: Install rust-script and cargo-make
         run: |
           cargo install rust-script --version "0.7.0"
-          cargo install --force cargo-make --version 0.34.0
+          cargo install --force cargo-make --version 0.37.5
       - name: Build
         run: cargo make create-bundle --profile release --env BUILD_ARCH=aarch64-apple-darwin
       - name: Create ZIP archive
