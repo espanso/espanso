@@ -30,7 +30,7 @@ use lazy_static::lazy_static;
 use log::{error, warn};
 use std::os::windows::process::CommandExt;
 use std::process::Command;
-use winrt_notification::{IconCrop, Toast};
+use tauri_winrt_notification::{IconCrop, Toast};
 
 const ESPANSO_APP_USER_MODEL_ID: &str = "{5E3B6C0F-1A4D-45C4-8872-D8174702101A}";
 
