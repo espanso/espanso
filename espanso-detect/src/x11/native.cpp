@@ -40,7 +40,7 @@ We will refer to this extension as RE from now on.
 #include <X11/cursorfont.h>
 #include <X11/keysymdef.h>
 #include <X11/keysym.h>
-// #include <X11/extensions/record.h>
+#include <X11/extensions/record.h>
 #include <X11/extensions/XTest.h>
 #include <X11/XKBlib.h>
 #include <X11/Xatom.h>
