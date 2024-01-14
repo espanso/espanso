@@ -650,7 +650,7 @@ impl LegacyConfigSet {
     }
 
     // Separate default from specific
-    let default = configs.get(0).unwrap().clone();
+    let default = configs.first().unwrap().clone();
     let mut specific = configs[1..].to_vec();
 
     // Add default entries to specific configs when needed
