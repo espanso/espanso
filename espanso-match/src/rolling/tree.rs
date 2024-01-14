@@ -66,7 +66,7 @@ fn insert_items_recursively<Id>(id: Id, node: &mut MatcherTreeNode<Id>, items: &
     return;
   }
 
-  let item = items.get(0).unwrap();
+  let item = items.first().unwrap();
   if items.len() == 1 {
     match item {
       RollingItem::WordSeparator => {
