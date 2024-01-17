@@ -57,7 +57,7 @@ impl<'a> Extension for DateExtension<'a> {
     let offset = params.get("offset");
     if let Some(Value::Number(Number::Integer(offset))) = offset {
       let offset = Duration::seconds(*offset);
-      now += offset;
+      now = now + offset;
     }
 
     let format = params.get("format");
