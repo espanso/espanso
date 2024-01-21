@@ -27,7 +27,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      # - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v1
       - name: Check formatting
         run: |
           rustup component add rustfmt

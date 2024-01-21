@@ -739,7 +739,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "cc",
- "enum-as-inner 0.3.3",
+ "enum-as-inner 0.6.0",
  "itertools",
  "lazy_static",
  "lazycell",
@@ -878,7 +878,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "chrono",
- "enum-as-inner 0.3.3",
+ "enum-as-inner 0.6.0",
  "lazy_static",
  "log",
  "rand 0.8.3",
