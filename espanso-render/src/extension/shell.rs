@@ -31,6 +31,7 @@ use thiserror::Error;
 pub enum Shell {
   Cmd,
   Powershell,
+  Pwsh,
   WSL,
   WSL2,
   Bash,
@@ -55,6 +56,11 @@ impl Shell {
       }
       Shell::Powershell => {
         let mut command = Command::new("powershell");
+        command.args(["-Command", cmd]);
+        command
+      }
+      Shell::Pwsh => {
+        let mut command = Command::new("pwsh");
         command.args(["-Command", cmd]);
         command
       }
@@ -138,6 +144,7 @@ impl Shell {
     match shell {
       "cmd" => Some(Shell::Cmd),
       "powershell" => Some(Shell::Powershell),
+      "pwsh" => Some(Shell::Pwsh),
       "wsl" => Some(Shell::WSL),
       "wsl2" => Some(Shell::WSL2),
       "bash" => Some(Shell::Bash),
