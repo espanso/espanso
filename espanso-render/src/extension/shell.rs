@@ -109,6 +109,7 @@ impl Shell {
     // the PATH after the processing.
     if cfg!(target_os = "macos") && override_path_on_macos {
       let supported_mac_shell = match self {
+        Shell::Pwsh => Some(super::exec_util::MacShell::Pwsh),
         Shell::Bash => Some(super::exec_util::MacShell::Bash),
         Shell::Sh => Some(super::exec_util::MacShell::Sh),
         Shell::Zsh => Some(super::exec_util::MacShell::Zsh),
@@ -166,6 +167,7 @@ impl Default for Shell {
       }
 
       match *DEFAULT_MACOS_SHELL {
+        Some(super::exec_util::MacShell::Pwsh) => Shell::Pwsh,
         Some(super::exec_util::MacShell::Bash) => Shell::Bash,
         Some(super::exec_util::MacShell::Sh) => Shell::Sh,
         Some(super::exec_util::MacShell::Zsh) => Shell::Zsh,
