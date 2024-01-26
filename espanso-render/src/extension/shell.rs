@@ -30,8 +30,8 @@ use thiserror::Error;
 #[allow(clippy::upper_case_acronyms)]
 pub enum Shell {
   Cmd,
-  Powershell,
-  Pwsh,
+  Powershell, // Windows PowerShell (v1.0 - v5.1)
+  Pwsh,       // PowerShell Core (v6.0+)
   WSL,
   WSL2,
   Bash,
