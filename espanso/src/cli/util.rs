@@ -54,7 +54,7 @@ impl CommandExt for Command {
   }
 }
 
-// For context, see also this issue: https://github.com/federico-terzi/espanso/issues/648
+// For context, see also this issue: https://github.com/espanso/espanso/issues/648
 #[cfg(target_os = "macos")]
 pub fn prevent_running_as_root_on_macos() {
   use crate::{error_eprintln, exit_code::UNEXPECTED_RUN_AS_ROOT};
@@ -72,7 +72,7 @@ pub fn prevent_running_as_root_on_macos() {
 
 // This is needed to make sure the app is NOT subject to "App Translocation" on
 // macOS, which would make Espanso misbehave on some circumstances.
-// For more information, see: https://github.com/federico-terzi/espanso/issues/844
+// For more information, see: https://github.com/espanso/espanso/issues/844
 pub fn is_subject_to_app_translocation_on_macos() -> bool {
   if !cfg!(target_os = "macos") {
     return false;

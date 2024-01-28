@@ -31,7 +31,7 @@ setting the `backspace_limit` parameter in the config) and this is needed
 to allow the user to correct wrongly typed triggers by pressing backspace,
 up to 3 characters.
 
-The matching part is implemented with an efficient [data structure](https://github.com/federico-terzi/espanso/blob/master/src/matcher/scrolling.rs) 
+The matching part is implemented with an efficient [data structure](https://github.com/espanso/espanso/blob/master/src/matcher/scrolling.rs) 
 that keeps track of the compatible matches in a "rolling" basis. So that in the worst case scenario,
 the longest sequence of chars kept in memory would be equal to the longest trigger.
 
