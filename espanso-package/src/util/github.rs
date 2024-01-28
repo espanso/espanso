@@ -130,8 +130,6 @@ mod tests {
       }
     );
 
-    assert!(
-      extract_github_url_parts("https://gitlab.com/espanso/espanso-test-package/").is_none()
-    );
+    assert!(extract_github_url_parts("https://gitlab.com/espanso/espanso-test-package/").is_none());
   }
 }
