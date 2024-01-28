@@ -109,7 +109,7 @@ mod tests {
     assert_eq!(
       extract_github_url_parts("https://github.com/espanso/espanso").unwrap(),
       GitHubParts {
-        author: "federico-terzi".to_string(),
+        author: "espanso".to_string(),
         name: "espanso".to_string(),
       }
     );
@@ -117,7 +117,7 @@ mod tests {
     assert_eq!(
       extract_github_url_parts("https://github.com/espanso/espanso.git").unwrap(),
       GitHubParts {
-        author: "federico-terzi".to_string(),
+        author: "espanso".to_string(),
         name: "espanso".to_string(),
       }
     );
@@ -125,13 +125,13 @@ mod tests {
     assert_eq!(
       extract_github_url_parts("git@github.com:espanso/espanso.git").unwrap(),
       GitHubParts {
-        author: "federico-terzi".to_string(),
+        author: "espanso".to_string(),
         name: "espanso".to_string(),
       }
     );
 
     assert!(
-      extract_github_url_parts("https://gitlab.com/federicoterzi/espanso-test-package/").is_none()
+      extract_github_url_parts("https://gitlab.com/espanso/espanso-test-package/").is_none()
     );
   }
 }
