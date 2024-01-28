@@ -30,9 +30,14 @@ pub fn determine_path_env_variable_override(explicit_shell: Option<MacShell>) ->
   let shell: MacShell = explicit_shell.or_else(determine_default_macos_shell)?;
 
   match shell {
-    MacShell::Pwsh => {
-      launch_command_and_get_output("pwsh", &["-Login", "-Command", "if(Test-Path \"$PROFILE\") { . \"$PROFILE\" }; Write-Host $env:PATH"])
-    }
+    MacShell::Pwsh => launch_command_and_get_output(
+      "pwsh",
+      &[
+        "-Login",
+        "-Command",
+        "if(Test-Path \"$PROFILE\") { . \"$PROFILE\" }; Write-Host $env:PATH",
+      ],
+    ),
     MacShell::Bash => {
       launch_command_and_get_output("bash", &["--login", "-c", "source ~/.bashrc; echo $PATH"])
     }
