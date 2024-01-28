@@ -606,10 +606,22 @@ version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7c5f0096a91d210159eceb2ff5e1c4da18388a170e1e3ce948aac9c8fdbbf595"
 dependencies = [
- "heck",
+ "heck 0.3.2",
  "proc-macro2",
  "quote 1.0.35",
  "syn 1.0.67",
+]
+
+[[package]]
+name = "enum-as-inner"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5ffccbb6966c05b32ef8fbac435df276c4ae4d3dc55a8cd0eb9745e6c12f546a"
+dependencies = [
+ "heck 0.4.1",
+ "proc-macro2",
+ "quote 1.0.33",
+ "syn 2.0.41",
 ]
 
 [[package]]
@@ -655,7 +667,7 @@ dependencies = [
  "crossbeam",
  "dialoguer",
  "dirs 3.0.1",
- "enum-as-inner",
+ "enum-as-inner 0.3.3",
  "espanso-clipboard",
  "espanso-config",
  "espanso-detect",
@@ -715,7 +727,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "dunce",
- "enum-as-inner",
+ "enum-as-inner 0.6.0",
  "glob",
  "indoc",
  "lazy_static",
@@ -737,7 +749,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "cc",
- "enum-as-inner",
+ "enum-as-inner 0.6.0",
  "lazy_static",
  "lazycell",
  "libc",
@@ -781,7 +793,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "cc",
- "enum-as-inner",
+ "enum-as-inner 0.6.0",
  "itertools",
  "lazy_static",
  "lazycell",
@@ -920,7 +932,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "chrono",
- "enum-as-inner",
+ "enum-as-inner 0.6.0",
  "lazy_static",
  "log",
  "rand 0.8.3",
@@ -1210,6 +1222,12 @@ checksum = "87cbf45460356b7deeb5e3415b5563308c0a9b057c85e12b06ad551f98d0a6ac"
 dependencies = [
  "unicode-segmentation",
 ]
+
+[[package]]
+name = "heck"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "95505c38b4572b2d910cecb0281560f54b440a19336cbbcb27bf6ce6adc6f5a8"
 
 [[package]]
 name = "hermit-abi"
@@ -2780,7 +2798,7 @@ version = "0.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "339f799d8b549e3744c7ac7feb216383e4005d94bdb22561b3ab8f3b808ae9fb"
 dependencies = [
- "heck",
+ "heck 0.3.2",
  "proc-macro2",
  "quote 1.0.35",
  "syn 1.0.67",
