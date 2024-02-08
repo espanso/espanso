@@ -18,7 +18,7 @@ steps. You can install it by running:
 
 ```
 cargo install rust-script --version "0.7.0"
-cargo install --force cargo-make --version 0.34.0
+cargo install --force cargo-make --version 0.37.5
 ```
 
 # Windows
