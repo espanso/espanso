@@ -2,7 +2,7 @@
 //! [dependencies]
 //! glob = "0.3.0"
 //! envmnt = "*"
-//! fs_extra = "1.2.0"
+//! fs_extra = "1.3.0"
 //! toml = "0.5.8"
 //! dunce = "1.0.2"
 //! ```
