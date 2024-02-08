@@ -31,7 +31,7 @@ RUN set -eux; \
     cargo --version; \
     rustc --version;
 
-RUN mkdir espanso && cargo install rust-script --version "0.7.0" && cargo install --force cargo-make --version 0.34.0
+RUN mkdir espanso && cargo install rust-script --version "0.7.0" && cargo install --force cargo-make --version 0.37.5
 
 COPY . espanso
 
