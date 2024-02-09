@@ -24,6 +24,9 @@ fn main() {
   if wayland {
     println!("Using Wayland feature");
   }
+  else {
+    println!("Using X11 default feature");
+  }
 
   let mut args = Vec::new();
 
