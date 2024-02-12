@@ -49,9 +49,6 @@ fn main() {
     args.push(&override_target_arch);
   }
 
-  args.push("--manifest-path");
-  args.push("espanso/Cargo.toml");
-
   let mut features = Vec::new();
   if wayland {
     features.push("wayland");
