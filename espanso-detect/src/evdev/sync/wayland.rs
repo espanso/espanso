@@ -67,7 +67,10 @@ pub fn get_modifiers_state() -> Result<Option<super::ModifiersState>> {
    * Keyboard initialization
    */
 
-  let mut seats = Vec::<(String, Option<wl_keyboard::WlKeyboard>)>::new();
+  let mut seats = Vec::<(
+    String,
+    Option<(wl_keyboard::WlKeyboard, calloop::RegistrationToken)>,
+  )>::new();
 
   // first process already existing seats
   for seat in env.get_all_seats() {
@@ -86,8 +89,8 @@ pub fn get_modifiers_state() -> Result<Option<super::ModifiersState>> {
           RepeatKind::System,
           move |event, _, _| keyboard_event_handler(event, &result_clone),
         ) {
-          Ok(kbd) => {
-            seats.push((name, Some(kbd)));
+          Ok((kbd, repeat_source)) => {
+            seats.push((name, Some((kbd, repeat_source))));
           }
           Err(e) => {
             error!("Failed to map keyboard on seat {} : {:?}.", name, e);
@@ -124,8 +127,8 @@ pub fn get_modifiers_state() -> Result<Option<super::ModifiersState>> {
           RepeatKind::System,
           move |event, _, _| keyboard_event_handler(event, &result_clone),
         ) {
-          Ok(kbd) => {
-            *opt_kbd = Some(kbd);
+          Ok((kbd, repeat_source)) => {
+            *opt_kbd = Some((kbd, repeat_source));
           }
           Err(e) => {
             eprintln!(
@@ -135,9 +138,10 @@ pub fn get_modifiers_state() -> Result<Option<super::ModifiersState>> {
           }
         }
       }
-    } else if let Some(kbd) = opt_kbd.take() {
+    } else if let Some((kbd, source)) = opt_kbd.take() {
       // the keyboard has been removed, cleanup
       kbd.release();
+      loop_handle.remove(source);
     }
   });
 
