@@ -11,22 +11,22 @@ edition = "2021"
 
 [workspace]
 members = [
+  "crates/espanso-clipboard",
+  "crates/espanso-config",
   "crates/espanso-detect",
-  "crates/espanso-ui",
+  "crates/espanso-engine",
+  "crates/espanso-info",
   "crates/espanso-inject",
   "crates/espanso-ipc",
-  "crates/espanso-config",
-  "crates/espanso-match",
-  "crates/espanso-clipboard",
-  "crates/espanso-render",
-  "crates/espanso-info",
-  "crates/espanso-path",
-  "crates/espanso-modulo",
-  "crates/espanso-migrate",
-  "crates/espanso-mac-utils",
   "crates/espanso-kvs",
-  "crates/espanso-engine",
+  "crates/espanso-mac-utils",
+  "crates/espanso-match",
+  "crates/espanso-migrate",
+  "crates/espanso-modulo",
   "crates/espanso-package",
+  "crates/espanso-path",
+  "crates/espanso-render",
+  "crates/espanso-ui",
 ]
 
 [[bin]]
