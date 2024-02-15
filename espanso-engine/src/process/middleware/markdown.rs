@@ -42,7 +42,7 @@ impl Middleware for MarkdownMiddleware {
       // NOTE: we wrap the `to_html` call between catch_unwind because if the markdown is malformed,
       // the library panics. Ideally, the library would return a Result::Err in that case, but
       // for now it doesn't, so we employ that workaround.
-      // See also: https://github.com/federico-terzi/espanso/issues/759
+      // See also: https://github.com/espanso/espanso/issues/759
       let html = std::panic::catch_unwind(|| markdown::to_html(&m_event.markdown));
       if let Ok(html) = html {
         let html = html.trim();
@@ -68,7 +68,7 @@ impl Middleware for MarkdownMiddleware {
 // is composed of a single paragraph, then it should be inlined.
 // On the other hand, if the snippet is composed of multiple paragraphs, then we
 // avoid removing the paragraph to prevent HTML corruption.
-// See: https://github.com/federico-terzi/espanso/issues/811
+// See: https://github.com/espanso/espanso/issues/811
 fn remove_paragraph_tag_if_single_occurrence(html: &str) -> &str {
   let paragraph_count = html.matches("<p>").count();
   if paragraph_count <= 1 {

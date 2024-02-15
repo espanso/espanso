@@ -37,7 +37,7 @@ pub fn register() -> Result<()> {
   if crate::cli::util::is_subject_to_app_translocation_on_macos() {
     error_eprintln!("Unable to register Espanso as service, please move the Espanso.app bundle inside the /Applications directory to proceed.");
     error_eprintln!(
-      "For more information, please see: https://github.com/federico-terzi/espanso/issues/844"
+      "For more information, please see: https://github.com/espanso/espanso/issues/844"
     );
     bail!("macOS activated app-translocation on Espanso");
   }
@@ -71,7 +71,7 @@ pub fn register() -> Result<()> {
 
     // Copy the user PATH variable and inject it in the Plist file so that
     // it gets loaded by Launchd.
-    // To see why this is necessary: https://github.com/federico-terzi/espanso/issues/233
+    // To see why this is necessary: https://github.com/espanso/espanso/issues/233
     let user_path = std::env::var("PATH").unwrap_or_else(|_| String::new());
     let plist_content = plist_content.replace("{{{PATH}}}", &user_path);
 

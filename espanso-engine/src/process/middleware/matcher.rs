@@ -120,7 +120,7 @@ impl<'a, State> Middleware for MatcherMiddleware<'a, State> {
         // We need to filter out some keyboard events if they are generated
         // while some modifier keys are pressed, otherwise we could have
         // wrong matches being detected.
-        // See: https://github.com/federico-terzi/espanso/issues/725
+        // See: https://github.com/espanso/espanso/issues/725
         if should_skip_key_event_due_to_modifier_press(
           &self.modifier_status_provider.get_modifier_state(),
         ) {

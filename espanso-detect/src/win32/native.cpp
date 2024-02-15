@@ -157,8 +157,8 @@ LRESULT CALLBACK detect_window_procedure(HWND window, unsigned int msg, WPARAM w
       if (GetKeyboardState(lpKeyState.data()))
       {
         // This flag is needed to avoid changing the keyboard state for some layouts.
-        // The 1 << 2 (setting bit 2) part is needed due to this issue: https://github.com/federico-terzi/espanso/issues/86
-        // while the 1 (setting bit 0) part is needed due to this issue: https://github.com/federico-terzi/espanso/issues/552
+        // The 1 << 2 (setting bit 2) part is needed due to this issue: https://github.com/espanso/espanso/issues/86
+        // while the 1 (setting bit 0) part is needed due to this issue: https://github.com/espanso/espanso/issues/552
         UINT flags = 1 << 2 | 1;
 
         int result = ToUnicodeEx(raw->data.keyboard.VKey, raw->data.keyboard.MakeCode, lpKeyState.data(), reinterpret_cast<LPWSTR>(event.buffer), (sizeof(event.buffer)/sizeof(event.buffer[0])) - 1, flags, variables->current_keyboard_layout);
@@ -171,7 +171,7 @@ LRESULT CALLBACK detect_window_procedure(HWND window, unsigned int msg, WPARAM w
           // Filter out the value if the key was pressed while the ALT key was down
           // but not if AltGr is down (which is a shortcut to ALT+CTRL on some keyboards, such 
           // as the italian one).
-          // This is needed in conjunction with the fix for: https://github.com/federico-terzi/espanso/issues/725
+          // This is needed in conjunction with the fix for: https://github.com/espanso/espanso/issues/725
           if ((lpKeyState[VK_MENU] & 0x80) != 0 && (lpKeyState[VK_CONTROL] & 0x80) == 0) {
             memset(event.buffer, 0, sizeof(event.buffer));
             event.buffer_len = 0;

@@ -120,8 +120,8 @@ extern "C" fn native_callback(raw_event: RawInputEvent) {
   // We use this modifier flag information to detect "inconsistent" states to send the corresponding
   // modifier release events, keeping espanso's state in sync.
   // For more info, see:
-  // https://github.com/federico-terzi/espanso/issues/825
-  // https://github.com/federico-terzi/espanso/issues/858
+  // https://github.com/espanso/espanso/issues/825
+  // https://github.com/espanso/espanso/issues/858
   let mut compensating_events = Vec::new();
   if raw_event.event_type == INPUT_EVENT_TYPE_KEYBOARD {
     let (key_code, _) = key_code_to_key(raw_event.key_code);
@@ -332,7 +332,7 @@ impl From<RawInputEvent> for Option<InputEvent> {
 
         // When a global keyboard shortcut is relased, the callback returns an event with keycode 0
         // and status 0.
-        // We need to handle it for this reason: https://github.com/federico-terzi/espanso/issues/791
+        // We need to handle it for this reason: https://github.com/espanso/espanso/issues/791
         if raw.key_code == 0 && raw.status == 0 {
           return Some(InputEvent::AllModifiersReleased);
         }

@@ -31,7 +31,7 @@ pub enum KeyModifier {
   OFF,
 
   // These are specific variants of the ones above. See issue: #117
-  // https://github.com/federico-terzi/espanso/issues/117
+  // https://github.com/espanso/espanso/issues/117
   LEFT_CTRL,
   RIGHT_CTRL,
   LEFT_ALT,

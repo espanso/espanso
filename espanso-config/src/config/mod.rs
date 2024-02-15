@@ -187,7 +187,7 @@ pub trait Config: Send + Sync {
   // The maximum interval (in milliseconds) for which a keyboard layout
   // can be cached. If switching often between different layouts, you
   // could lower this amount to avoid the "lost detection" effect described
-  // in this issue: https://github.com/federico-terzi/espanso/issues/745
+  // in this issue: https://github.com/espanso/espanso/issues/745
   fn win32_keyboard_layout_cache_interval(&self) -> i64;
 
   #[allow(clippy::needless_lifetimes)]
