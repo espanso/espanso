@@ -10,6 +10,7 @@ edition = "2021"
 
 
 [workspace]
+resolver = "2"
 members = [
   "crates/espanso-clipboard",
   "crates/espanso-config",
@@ -52,13 +53,12 @@ wayland = [
   "espanso-info/wayland",
 ]
 
-# Compile modulo and all its dependencies (including wxWidgets). If you don't
-# enable it, features like Forms and Search might not be available.
 modulo = [
   "espanso-modulo",
   "espanso-clipboard/avoid-gdi",
   "espanso-ui/avoid-gdi",
-]
+] # Compile modulo and all its dependencies (including wxWidgets). If you don't
+# enable it, features like Forms and Search might not be available.
 
 [dependencies]
 espanso-detect = { path = "crates/espanso-detect" }
@@ -124,6 +124,7 @@ license-file = ["LICENSE", "1"]
 
 [package.metadata.deb.variants.wayland]
 depends = "libc6 (>= 2.27), libdbus-1-3 (>= 1.9.14), libgcc1 (>= 1:4.2), libnotify-bin, libstdc++6 (>= 5), libwxgtk3.0-gtk3-0v5 (>= 3.0.4+dfsg) | libwxgtk3.2-1, libxkbcommon0 (>= 0.5.0), systemd, wl-clipboard"
+
 # TODO: once this issue [1] is fixed, we should create a variant for
 # wayland to automatically run the setcap script.
 # [1]: https://github.com/mmstick/cargo-deb/issues/151

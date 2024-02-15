@@ -203,7 +203,7 @@ pub fn convert(input_files: HashMap<String, Hash>) -> HashMap<String, ConvertedF
         .is_some()
       {
         eprintln!("WARNING: passive-mode directives were detected, but passive-mode is not supported anymore.");
-        eprintln!("Please follow this issue to discover the alternatives: https://github.com/federico-terzi/espanso/issues/540");
+        eprintln!("Please follow this issue to discover the alternatives: https://github.com/espanso/espanso/issues/540");
       }
 
       // Link any unlisted match file (the ones starting with the _ underscore, which are excluded by the
