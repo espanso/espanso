@@ -445,7 +445,7 @@ fn build_native() {
   // Make sure wxWidgets is installed
   // Depending on the installation package, the 'wx-config' command might also be available as 'wx-config-gtk3',
   // so we need to check for both.
-  // See also: https://github.com/federico-terzi/espanso/issues/840
+  // See also: https://github.com/espanso/espanso/issues/840
   let wx_config_command = if std::process::Command::new("wx-config")
     .arg("--version")
     .output()

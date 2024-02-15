@@ -85,7 +85,7 @@ impl<'a> ClipboardInjectorAdapter<'a> {
     } else if cfg!(target_os = "linux") && cfg!(feature = "wayland") {
       // Because on Wayland we currently don't have app-specific configs (and therefore no patches)
       // we switch to the more supported SHIFT+INSERT combination
-      // See: https://github.com/federico-terzi/espanso/issues/899
+      // See: https://github.com/espanso/espanso/issues/899
       vec![Key::Shift, Key::Insert]
     } else {
       vec![Key::Control, Key::V]

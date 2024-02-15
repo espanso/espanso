@@ -28,7 +28,7 @@ pub enum InputEvent {
 
   // Special event type only used on macOS
   // This is sent after a global keyboard shortcut is released
-  // See https://github.com/federico-terzi/espanso/issues/791
+  // See https://github.com/espanso/espanso/issues/791
   AllModifiersReleased,
 }
 

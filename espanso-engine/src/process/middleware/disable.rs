@@ -80,7 +80,7 @@ impl Middleware for DisableMiddleware {
             }
           } else {
             // If another key is pressed (not the toggle key), we should reset the window
-            // For more information, see: https://github.com/federico-terzi/espanso/issues/815
+            // For more information, see: https://github.com/espanso/espanso/issues/815
             *last_toggle_press = None;
           }
         }

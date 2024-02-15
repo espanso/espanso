@@ -164,7 +164,7 @@ fn get_default_config_path() -> PathBuf {
 // Due to the original behavior of the dirs crate, espanso placed the config
 // directory in the Preferences folder on macOS, but this is not an optimal
 // approach.
-// For more context, see: https://github.com/federico-terzi/espanso/issues/611
+// For more context, see: https://github.com/espanso/espanso/issues/611
 fn get_legacy_mac_dir() -> Option<PathBuf> {
   if cfg!(target_os = "macos") {
     if let Some(preferences_dir) = dirs::preference_dir() {

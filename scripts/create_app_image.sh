@@ -18,7 +18,7 @@ $BASE_DIR/scripts/vendor-app-image/linuxdeploy*.AppImage --appimage-extract-and-
   --output appimage
 chmod +x ./Espanso*.AppImage
 
-# Apply a workaround to fix this issue: https://github.com/federico-terzi/espanso/issues/900
+# Apply a workaround to fix this issue: https://github.com/espanso/espanso/issues/900
 # See: https://github.com/project-slippi/Ishiiruka/issues/323#issuecomment-977415376
 
 echo "Applying patch for libgmodule"
