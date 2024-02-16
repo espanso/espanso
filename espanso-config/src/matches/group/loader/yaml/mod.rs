@@ -352,8 +352,7 @@ mod tests {
     let (m, warnings) = create_match_with_warnings(yaml, false)?;
     assert!(
       warnings.is_empty(),
-      "warnings were detected but not handled: {:?}",
-      warnings
+      "warnings were detected but not handled: {warnings:?}"
     );
     Ok(m)
   }
