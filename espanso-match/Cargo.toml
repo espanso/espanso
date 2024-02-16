@@ -10,3 +10,6 @@ anyhow = "1.0.38"
 thiserror = "1.0.23"
 regex = "1.5.5"
 unicase = "2.6.0"
+
+[lints]
+workspace = true

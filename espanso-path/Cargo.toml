@@ -9,3 +9,6 @@ log = "0.4.14"
 anyhow = "1.0.38"
 thiserror = "1.0.23"
 dirs = "3.0.1"
+
+[lints]
+workspace = true

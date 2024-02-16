@@ -16,6 +16,9 @@ anyhow = "1.0.38"
 thiserror = "1.0.23"
 lazy_static = "1.4.0"
 
+[lints]
+workspace = true
+
 [target.'cfg(windows)'.dependencies]
 widestring = "0.4.3"
 
