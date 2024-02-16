@@ -244,7 +244,6 @@ impl Config for ResolvedConfig {
         "\t".to_string(),
         "\n".to_string(),
         "\x0c".to_string(), // Form Feed
-        (22u8 as char).to_string(),
       ]
     })
   }
