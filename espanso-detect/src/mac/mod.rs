@@ -33,9 +33,23 @@ use anyhow::Result;
 use thiserror::Error;
 
 use crate::event::{HotKeyEvent, InputEvent, Key, KeyboardEvent, Status, Variant};
-use crate::event::{Key::*, MouseButton, MouseEvent};
-use crate::{event::Status::*, Source, SourceCallback};
-use crate::{event::Variant::*, hotkey::HotKey};
+use crate::event::{
+  Key::{
+    Alt, ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Backspace, CapsLock, Control, End, Enter,
+    Escape, Home, Meta, NumLock, Numpad0, Numpad1, Numpad2, Numpad3, Numpad4, Numpad5, Numpad6,
+    Numpad7, Numpad8, Numpad9, Other, PageDown, PageUp, Shift, Space, Tab, F1, F10, F11, F12, F13,
+    F14, F15, F16, F17, F18, F19, F2, F20, F3, F4, F5, F6, F7, F8, F9,
+  },
+  MouseButton, MouseEvent,
+};
+use crate::{
+  event::Status::{Pressed, Released},
+  Source, SourceCallback,
+};
+use crate::{
+  event::Variant::{Left, Right},
+  hotkey::HotKey,
+};
 
 const INPUT_EVENT_TYPE_KEYBOARD: i32 = 1;
 const INPUT_EVENT_TYPE_MOUSE: i32 = 2;
