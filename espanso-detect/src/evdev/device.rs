@@ -206,7 +206,7 @@ impl Device {
 
   pub fn update_modifier_state(
     &mut self,
-    modifiers_state: &ModifiersState,
+    modifiers_state: ModifiersState,
     modifiers_map: &HashMap<String, u32>,
   ) {
     if modifiers_state.alt {

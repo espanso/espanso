@@ -355,7 +355,9 @@ fn get_cpp_flags(wx_config_path: &Path) -> Vec<String> {
   let cpp_flags: Vec<String> = config_libs
     .split(' ')
     .filter_map(|s| {
-      if !s.trim().is_empty() {
+      if s.trim().is_empty() {
+        None
+      } else {
         Some(s.trim().to_owned())
       }
     })
@@ -375,7 +377,9 @@ fn generate_linker_flags(wx_config_path: &Path) {
   let linker_flags: Vec<String> = config_libs
     .split(' ')
     .filter_map(|s| {
-      if !s.trim().is_empty() {
+      if s.trim().is_empty() {
+        None
+      } else {
         Some(s.trim().to_owned())
       }
     })
