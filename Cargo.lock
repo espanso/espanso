@@ -678,7 +678,6 @@ dependencies = [
  "anyhow",
  "cc",
  "lazy_static",
- "lazycell",
  "log",
  "thiserror",
  "wait-timeout",
