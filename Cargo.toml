@@ -45,4 +45,4 @@ wildcard_imports = "allow"
 items_after_statements = "allow"
 struct_field_names = "allow"
 unused_self = "allow"
-pedantic = { level = "deny", priority = -2 }
+pedantic = { level = "warn", priority = -2 }
