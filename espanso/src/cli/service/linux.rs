@@ -19,6 +19,7 @@
 
 use anyhow::Result;
 use const_format::formatcp;
+use lazy_static::lazy_static;
 use regex::Regex;
 use std::fs::create_dir_all;
 use std::path::PathBuf;

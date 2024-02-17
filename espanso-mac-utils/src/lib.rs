@@ -18,11 +18,9 @@
  */
 
 #[cfg(target_os = "macos")]
-use std::{ffi::CStr, os::raw::c_char};
-
-#[macro_use]
+use lazy_static::lazy_static;
 #[cfg(target_os = "macos")]
-extern crate lazy_static;
+use std::{ffi::CStr, os::raw::c_char};
 
 mod ffi;
 
