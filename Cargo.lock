@@ -767,7 +767,6 @@ name = "espanso-ipc"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "crossbeam",
  "log",
  "named_pipe",
  "serde",
