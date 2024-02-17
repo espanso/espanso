@@ -755,7 +755,6 @@ dependencies = [
  "enum-as-inner 0.6.0",
  "itertools",
  "lazy_static",
- "lazycell",
  "libc",
  "log",
  "regex",
