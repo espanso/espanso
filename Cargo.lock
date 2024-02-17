@@ -789,7 +789,6 @@ dependencies = [
 name = "espanso-mac-utils"
 version = "0.1.0"
 dependencies = [
- "anyhow",
  "cc",
  "lazy_static",
  "lazycell",
