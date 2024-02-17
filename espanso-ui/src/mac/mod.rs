@@ -69,7 +69,7 @@ pub struct MacUIOptions<'a> {
 
 pub fn create(options: MacUIOptions) -> Result<(MacRemote, MacEventLoop)> {
   // Validate icons
-  assert!(!(options.icon_paths.len() > MAX_ICON_COUNT), "MacOS UI received too many icon paths, please increase the MAX_ICON_COUNT constant to support more");
+  assert!(options.icon_paths.len() <= MAX_ICON_COUNT, "MacOS UI received too many icon paths, please increase the MAX_ICON_COUNT constant to support more");
   // Convert the icon paths to the internal representation
   let mut icon_indexes: HashMap<TrayIcon, usize> = HashMap::new();
   let mut icons = Vec::new();
