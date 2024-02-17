@@ -12,7 +12,6 @@ wayland = []
 [dependencies]
 log = "0.4.14"
 anyhow = "1.0.38"
-thiserror = "1.0.23"
 
 [target.'cfg(windows)'.dependencies]
 widestring = "0.4.3"

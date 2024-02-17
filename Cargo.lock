@@ -743,7 +743,6 @@ dependencies = [
  "anyhow",
  "cc",
  "log",
- "thiserror",
  "widestring",
 ]
 
