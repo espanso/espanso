@@ -733,7 +733,6 @@ dependencies = [
  "html2text",
  "log",
  "markdown",
- "tempdir",
  "thiserror",
 ]
 
