@@ -10,7 +10,7 @@ TARGET_DIR=target/mac/Espanso.app
 
 rm -Rf $TARGET_DIR
 
-VERSION=$(cat espanso/Cargo.toml | grep version | head -1 | awk -F '"' '{ print $2 }')
+VERSION=$(cat Cargo.toml | grep version | head -1 | awk -F '"' '{ print $2 }')
 
 mkdir -p $TARGET_DIR/Contents
 mkdir -p $TARGET_DIR/Contents/MacOS
