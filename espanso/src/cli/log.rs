@@ -43,7 +43,7 @@ fn log_main(args: CliModuleArgs) -> i32 {
   let log_file = File::open(log_file);
   if let Ok(log_file) = log_file {
     let reader = BufReader::new(log_file);
-    for line in reader.lines().flatten() {
+    for line in reader.lines().map_while(Result::ok) {
       println!("{line}");
     }
   } else {
