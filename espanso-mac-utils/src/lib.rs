@@ -17,16 +17,13 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#[cfg(target_os = "macos")]
 use lazy_static::lazy_static;
-#[cfg(target_os = "macos")]
 use std::{ffi::CStr, os::raw::c_char};
 
 mod ffi;
 
 /// Check whether an application is currently holding the Secure Input.
 /// Return None if no application has claimed SecureInput, its PID otherwise.
-#[cfg(target_os = "macos")]
 pub fn get_secure_input_pid() -> Option<i64> {
   unsafe {
     let mut pid: i64 = -1;
@@ -42,7 +39,6 @@ pub fn get_secure_input_pid() -> Option<i64> {
 
 /// Check whether an application is currently holding the Secure Input.
 /// Return None if no application has claimed SecureInput, Some((AppName, AppPath)) otherwise.
-#[cfg(target_os = "macos")]
 pub fn get_secure_input_application() -> Option<(String, String)> {
   unsafe {
     let pid = get_secure_input_pid();
@@ -75,7 +71,6 @@ pub fn get_secure_input_application() -> Option<(String, String)> {
   }
 }
 
-#[cfg(target_os = "macos")]
 fn get_app_name_from_path(path: &str) -> Option<String> {
   use regex::Regex;
 
@@ -87,38 +82,32 @@ fn get_app_name_from_path(path: &str) -> Option<String> {
   caps.map(|caps| caps.get(1).map_or("", |m| m.as_str()).to_owned())
 }
 
-#[cfg(target_os = "macos")]
 pub fn check_accessibility() -> bool {
   unsafe { ffi::mac_utils_check_accessibility() > 0 }
 }
 
-#[cfg(target_os = "macos")]
 pub fn prompt_accessibility() -> bool {
   unsafe { ffi::mac_utils_prompt_accessibility() > 0 }
 }
 
-#[cfg(target_os = "macos")]
 pub fn convert_to_foreground_app() {
   unsafe {
     ffi::mac_utils_transition_to_foreground_app();
   }
 }
 
-#[cfg(target_os = "macos")]
 pub fn convert_to_background_app() {
   unsafe {
     ffi::mac_utils_transition_to_background_app();
   }
 }
 
-#[cfg(target_os = "macos")]
 pub fn start_headless_eventloop() {
   unsafe {
     ffi::mac_utils_start_headless_eventloop();
   }
 }
 
-#[cfg(target_os = "macos")]
 pub fn exit_headless_eventloop() {
   unsafe {
     ffi::mac_utils_exit_headless_eventloop();
@@ -126,25 +115,24 @@ pub fn exit_headless_eventloop() {
 }
 
 #[cfg(test)]
-#[cfg(target_os = "macos")]
 mod tests {
   use super::*;
 
   #[test]
   fn test_get_app_name_from_path() {
     let app_name = get_app_name_from_path("/Applications/iTerm.app/Contents/MacOS/iTerm2");
-    assert_eq!(app_name.unwrap(), "iTerm")
+    assert_eq!(app_name.unwrap(), "iTerm");
   }
 
   #[test]
   fn test_get_app_name_from_path_no_app_name() {
     let app_name = get_app_name_from_path("/another/directory");
-    assert!(app_name.is_none())
+    assert!(app_name.is_none());
   }
 
   #[test]
   fn test_get_app_name_from_path_security_bundle() {
     let app_name = get_app_name_from_path("/System/Library/Frameworks/Security.framework/Versions/A/MachServices/SecurityAgent.bundle/Contents/MacOS/SecurityAgent");
-    assert_eq!(app_name.unwrap(), "SecurityAgent")
+    assert_eq!(app_name.unwrap(), "SecurityAgent");
   }
 }

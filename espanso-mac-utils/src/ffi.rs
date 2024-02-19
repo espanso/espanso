@@ -17,10 +17,8 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#[cfg(target_os = "macos")]
 use std::os::raw::c_char;
 
-#[cfg(target_os = "macos")]
 #[link(name = "espansomacutils", kind = "static")]
 extern "C" {
   pub fn mac_utils_get_secure_input_process(pid: *mut i64) -> i32;
