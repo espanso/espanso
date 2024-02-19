@@ -798,10 +798,8 @@ dependencies = [
 name = "espanso-match"
 version = "0.1.0"
 dependencies = [
- "anyhow",
  "log",
  "regex",
- "thiserror",
  "unicase",
 ]
 
