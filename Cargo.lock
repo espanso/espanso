@@ -808,17 +808,14 @@ name = "espanso-migrate"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "dunce",
  "fs_extra",
  "glob",
  "include_dir",
  "lazy_static",
- "log",
  "path-slash",
  "pretty_assertions",
  "regex",
  "tempdir",
- "tempfile",
  "test-case",
  "thiserror",
  "walkdir",
