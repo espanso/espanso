@@ -677,7 +677,6 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "cc",
- "lazy_static",
  "log",
  "thiserror",
  "wait-timeout",
@@ -864,10 +863,8 @@ dependencies = [
 name = "espanso-path"
 version = "0.1.0"
 dependencies = [
- "anyhow",
  "dirs 3.0.1",
  "log",
- "thiserror",
 ]
 
 [[package]]
