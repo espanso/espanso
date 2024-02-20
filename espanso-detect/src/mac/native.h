@@ -55,8 +55,8 @@ typedef struct {
 
   // Modifier keys status, this is needed to "correct" missing modifier release events.
   // For more info, see the following issues:
-  // https://github.com/federico-terzi/espanso/issues/825
-  // https://github.com/federico-terzi/espanso/issues/858
+  // https://github.com/espanso/espanso/issues/825
+  // https://github.com/espanso/espanso/issues/858
   int32_t is_caps_lock_pressed;
   int32_t is_shift_pressed;
   int32_t is_control_pressed;

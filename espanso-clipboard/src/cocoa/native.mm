@@ -79,7 +79,8 @@ int32_t clipboard_set_html(char * html, char * fallback_text) {
                                   documentAttributes:nil];
 
   [pasteboard setData:rtf forType:NSRTFPboardType];
-
+  [pasteboard setString:nsHtml forType:NSHTMLPboardType];
+  
   if (fallback_text) {
     NSString *nsText = [NSString stringWithUTF8String:fallback_text];
     [pasteboard setString:nsText forType:NSPasteboardTypeString];

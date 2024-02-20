@@ -30,7 +30,8 @@ use thiserror::Error;
 #[allow(clippy::upper_case_acronyms)]
 pub enum Shell {
   Cmd,
-  Powershell,
+  Powershell, // Windows PowerShell (v1.0 - v5.1)
+  Pwsh,       // PowerShell Core (v6.0+)
   WSL,
   WSL2,
   Bash,
@@ -55,6 +56,11 @@ impl Shell {
       }
       Shell::Powershell => {
         let mut command = Command::new("powershell");
+        command.args(["-Command", cmd]);
+        command
+      }
+      Shell::Pwsh => {
+        let mut command = Command::new("pwsh");
         command.args(["-Command", cmd]);
         command
       }
@@ -103,6 +109,7 @@ impl Shell {
     // the PATH after the processing.
     if cfg!(target_os = "macos") && override_path_on_macos {
       let supported_mac_shell = match self {
+        Shell::Pwsh => Some(super::exec_util::MacShell::Pwsh),
         Shell::Bash => Some(super::exec_util::MacShell::Bash),
         Shell::Sh => Some(super::exec_util::MacShell::Sh),
         Shell::Zsh => Some(super::exec_util::MacShell::Zsh),
@@ -138,6 +145,7 @@ impl Shell {
     match shell {
       "cmd" => Some(Shell::Cmd),
       "powershell" => Some(Shell::Powershell),
+      "pwsh" => Some(Shell::Pwsh),
       "wsl" => Some(Shell::WSL),
       "wsl2" => Some(Shell::WSL2),
       "bash" => Some(Shell::Bash),
@@ -159,6 +167,7 @@ impl Default for Shell {
       }
 
       match *DEFAULT_MACOS_SHELL {
+        Some(super::exec_util::MacShell::Pwsh) => Shell::Pwsh,
         Some(super::exec_util::MacShell::Bash) => Shell::Bash,
         Some(super::exec_util::MacShell::Sh) => Shell::Sh,
         Some(super::exec_util::MacShell::Zsh) => Shell::Zsh,

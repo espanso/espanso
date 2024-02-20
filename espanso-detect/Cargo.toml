@@ -2,8 +2,8 @@
 name = "espanso-detect"
 version = "0.1.0"
 authors = ["Federico Terzi <federico-terzi@users.noreply.github.com>"]
-edition = "2018"
-build="build.rs"
+edition = "2021"
+build = "build.rs"
 
 [features]
 # If the wayland feature is enabled, all X11 dependencies will be dropped
@@ -30,4 +30,4 @@ sctk = { package = "smithay-client-toolkit", version = "0.16.1", optional = true
 cc = "1.0.73"
 
 [dev-dependencies]
-enum-as-inner = "0.3.3"
+enum-as-inner = "0.6.0"

@@ -2,10 +2,10 @@ cask "espanso" do
   version "{{{VERSION}}}"
 
   if Hardware::CPU.intel?
-    url "https://github.com/federico-terzi/espanso/releases/download/v#{version}/Espanso-Mac-Intel.zip"
+    url "https://github.com/espanso/espanso/releases/download/v#{version}/Espanso-Mac-Intel.zip"
     sha256 "{{{INTEL_SHA}}}"
   else
-    url "https://github.com/federico-terzi/espanso/releases/download/v#{version}/Espanso-Mac-M1.zip"
+    url "https://github.com/espanso/espanso/releases/download/v#{version}/Espanso-Mac-M1.zip"
     sha256 "{{{M1_SHA}}}"
   end
 

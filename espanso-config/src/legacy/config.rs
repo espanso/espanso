@@ -650,7 +650,7 @@ impl LegacyConfigSet {
     }
 
     // Separate default from specific
-    let default = configs.get(0).unwrap().clone();
+    let default = configs.first().unwrap().clone();
     let mut specific = configs[1..].to_vec();
 
     // Add default entries to specific configs when needed
@@ -661,7 +661,7 @@ impl LegacyConfigSet {
     }
 
     // Check if some triggers are conflicting with each other
-    // For more information, see: https://github.com/federico-terzi/espanso/issues/135
+    // For more information, see: https://github.com/espanso/espanso/issues/135
     if default.conflict_check {
       let has_conflicts = Self::has_conflicts(&default, &specific);
       if has_conflicts {

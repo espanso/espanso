@@ -1,7 +1,7 @@
 //! ```cargo
 //! [dependencies]
 //! glob = "0.3.0"
-//! fs_extra = "1.2.0"
+//! fs_extra = "1.3.0"
 //! base64 = "0.13.0"
 //! anyhow = "1.0.38"
 //! ```

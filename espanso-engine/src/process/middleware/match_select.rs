@@ -111,7 +111,7 @@ impl<'a> Middleware for MatchSelectMiddleware<'a> {
 
           // We want to prevent espanso from "stacking up" events while the search bar is open,
           // therefore we filter out all events that were generated while the search bar was open.
-          // See also: https://github.com/federico-terzi/espanso/issues/781
+          // See also: https://github.com/espanso/espanso/issues/781
           dispatch(Event::caused_by(
             event.source_id,
             EventType::DiscardBetween(DiscardBetweenEvent {

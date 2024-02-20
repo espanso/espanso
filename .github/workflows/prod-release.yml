@@ -63,11 +63,11 @@ jobs:
       - name: Install rust-script and cargo-make
         run: |
           cargo install rust-script --version "0.7.0"
-          cargo install --force cargo-make --version 0.34.0
+          cargo install --force cargo-make --version 0.37.5
       - name: Test
-        run: cargo make test-binary --profile release
+        run: cargo make --profile release -- test-binary
       - name: Build resources
-        run: cargo make build-windows-resources --profile release
+        run: cargo make --profile release -- build-windows-resources
       - name: Sign resources
         run: cargo make sign-windows-resources
         env:
@@ -75,7 +75,7 @@ jobs:
           CODESIGN_CROSS_SIGNED_B64: ${{ secrets.WIN_CODESIGN_INTERMEDIATE_B64 }}
           CODESIGN_CERTIFICATE_B64: ${{ secrets.WIN_CODESIGN_CERTIFICATE_B64 }}
       - name: Build installer
-        run: cargo make build-windows-installer --profile release --skip-tasks build-windows-resources
+        run: cargo make --profile release --skip-tasks build-windows-resources -- build-windows-installer
       - name: Sign installer
         run: cargo make sign-windows-installer
         env:
@@ -83,7 +83,7 @@ jobs:
           CODESIGN_CROSS_SIGNED_B64: ${{ secrets.WIN_CODESIGN_INTERMEDIATE_B64 }}
           CODESIGN_CERTIFICATE_B64: ${{ secrets.WIN_CODESIGN_CERTIFICATE_B64 }}
       - name: Build portable mode archive 
-        run: cargo make build-windows-portable --profile release --skip-tasks build-windows-resources
+        run: cargo make --profile release --skip-tasks build-windows-resources -- build-windows-portable
       - name: Create portable mode archive
         shell: powershell
         run: |
@@ -178,13 +178,13 @@ jobs:
       - name: Install rust-script and cargo-make
         run: |
           cargo install rust-script --version "0.7.0"
-          cargo install --force cargo-make --version 0.34.0
+          cargo install --force cargo-make --version 0.37.5
       - name: Test
-        run: cargo make test-binary --profile release
+        run: cargo make --profile release -- test-binary
         env:
           MACOSX_DEPLOYMENT_TARGET: "10.13"
       - name: Build
-        run: cargo make create-bundle --profile release
+        run: cargo make --profile release -- create-bundle
         env:
           MACOSX_DEPLOYMENT_TARGET: "10.13"
       - name: Codesign executable
@@ -251,9 +251,9 @@ jobs:
       - name: Install rust-script and cargo-make
         run: |
           cargo install rust-script --version "0.7.0"
-          cargo install --force cargo-make --version 0.34.0
+          cargo install --force cargo-make --version 0.37.5
       - name: Build
-        run: cargo make create-bundle --profile release --env BUILD_ARCH=aarch64-apple-darwin
+        run: cargo make --env BUILD_ARCH=aarch64-apple-darwin --profile release -- create-bundle
       - name: Codesign executable
         env: 
           MACOS_CERTIFICATE: ${{ secrets.PROD_MACOS_CERTIFICATE }}
