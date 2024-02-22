@@ -75,6 +75,7 @@ pub const UNEXPECTED_RUN_AS_ROOT: i32 = 42;
 use std::sync::Mutex;
 
 use crate::error_eprintln;
+use lazy_static::lazy_static;
 
 lazy_static! {
   static ref CURRENT_PANIC_EXIT_CODE: Mutex<i32> = Mutex::new(MIGRATE_UNEXPECTED_FAILURE);
