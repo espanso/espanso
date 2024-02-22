@@ -69,10 +69,7 @@ pub struct MacUIOptions<'a> {
 
 pub fn create(options: MacUIOptions) -> Result<(MacRemote, MacEventLoop)> {
   // Validate icons
-  if options.icon_paths.len() > MAX_ICON_COUNT {
-    panic!("MacOS UI received too many icon paths, please increase the MAX_ICON_COUNT constant to support more");
-  }
-
+  assert!(options.icon_paths.len() <= MAX_ICON_COUNT, "MacOS UI received too many icon paths, please increase the MAX_ICON_COUNT constant to support more");
   // Convert the icon paths to the internal representation
   let mut icon_indexes: HashMap<TrayIcon, usize> = HashMap::new();
   let mut icons = Vec::new();
@@ -140,9 +137,10 @@ impl UIEventLoop for MacEventLoop {
   fn run(&self, event_callback: MacUIEventCallback) -> Result<()> {
     // Make sure the run() method is called in the same thread as initialize()
     if let Some(init_id) = self._init_thread_id.borrow() {
-      if init_id != &std::thread::current().id() {
-        panic!("MacEventLoop run() and initialize() methods should be called in the same thread");
-      }
+      assert!(
+        !(init_id != &std::thread::current().id()),
+        "MacEventLoop run() and initialize() methods should be called in the same thread"
+      );
     }
 
     if self._event_callback.fill(event_callback).is_err() {
@@ -154,7 +152,7 @@ impl UIEventLoop for MacEventLoop {
       if let Some(callback) = unsafe { (*_self)._event_callback.borrow() } {
         let event: Option<UIEvent> = event.into();
         if let Some(event) = event {
-          callback(event)
+          callback(event);
         } else {
           trace!("Unable to convert raw event to input event");
         }

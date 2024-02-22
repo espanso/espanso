@@ -168,7 +168,7 @@ mod tests {
   }
 
   fn to_sorted_list<T>(hash: HashMap<String, T>) -> Vec<(String, T)> {
-    let mut tuples: Vec<(String, T)> = hash.into_iter().map(|(k, v)| (k, v)).collect();
+    let mut tuples: Vec<(String, T)> = hash.into_iter().collect();
     tuples.sort_by_key(|(k, _)| k.clone());
     tuples
   }

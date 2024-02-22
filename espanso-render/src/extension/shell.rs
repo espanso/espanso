@@ -370,7 +370,7 @@ mod tests {
     .collect::<Params>();
     assert_eq!(
       extension
-        .calculate(&Default::default(), &Default::default(), &param)
+        .calculate(&crate::Context::default(), &HashMap::default(), &param)
         .into_success()
         .unwrap(),
       ExtensionOutput::Single("hello world".to_string())
@@ -435,7 +435,7 @@ mod tests {
       .into_iter()
       .collect::<Params>();
     assert!(matches!(
-      extension.calculate(&Default::default(), &Default::default(), &param),
+      extension.calculate(&crate::Context::default(), &HashMap::default(), &param),
       ExtensionResult::Error(_)
     ));
   }

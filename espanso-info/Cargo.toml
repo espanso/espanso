@@ -13,6 +13,9 @@ wayland = []
 log = "0.4.14"
 anyhow = "1.0.38"
 
+[lints]
+workspace = true
+
 [target.'cfg(windows)'.dependencies]
 widestring = "0.4.3"
 

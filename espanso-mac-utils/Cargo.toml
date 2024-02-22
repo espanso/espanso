@@ -11,3 +11,6 @@ regex = "1.5.5"
 
 [build-dependencies]
 cc = "1.0.73"
+
+[lints]
+workspace = true
