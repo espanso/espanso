@@ -31,8 +31,6 @@ mod win;
 #[cfg(target_os = "windows")]
 pub use win::add_espanso_to_path;
 #[cfg(target_os = "windows")]
-pub use win::is_espanso_in_path;
-#[cfg(target_os = "windows")]
 pub use win::remove_espanso_from_path;
 
 #[cfg(target_os = "linux")]

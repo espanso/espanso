@@ -21,10 +21,6 @@ use anyhow::Result;
 use winreg::enums::*;
 use winreg::RegKey;
 
-pub fn is_espanso_in_path() -> bool {
-  read_paths().iter().any(|path| path.contains("espanso"))
-}
-
 pub fn add_espanso_to_path(_: bool) -> Result<()> {
   let mut paths = read_paths();
   let exe_path = std::env::current_exe().expect("unable to obtain exec path");
