@@ -20,24 +20,20 @@
 // This is needed to avoid showing a console window when starting espanso on Windows
 #![windows_subsystem = "windows"]
 
-#[macro_use]
-extern crate lazy_static;
-
-use std::path::PathBuf;
-
-use clap::{App, AppSettings, Arg, ArgMatches, SubCommand};
-use cli::{CliAlias, CliModule, CliModuleArgs};
-use log::{error, info, warn};
-use logging::FileProxy;
-use simplelog::{
-  CombinedLogger, ConfigBuilder, LevelFilter, SharedLogger, TermLogger, TerminalMode, WriteLogger,
-};
-
 use crate::{
   cli::{LogMode, PathsOverrides},
   config::load_config,
   util::log_system_info,
 };
+use clap::{App, AppSettings, Arg, ArgMatches, SubCommand};
+use cli::{CliAlias, CliModule, CliModuleArgs};
+use lazy_static::lazy_static;
+use log::{error, info, warn};
+use logging::FileProxy;
+use simplelog::{
+  CombinedLogger, ConfigBuilder, LevelFilter, SharedLogger, TermLogger, TerminalMode, WriteLogger,
+};
+use std::path::PathBuf;
 
 mod capabilities;
 mod cli;
@@ -91,10 +87,6 @@ lazy_static! {
     CliAlias {
       subcommand: "status".to_owned(),
       forward_into: "service".to_owned(),
-    },
-    CliAlias {
-      subcommand: "install".to_owned(),
-      forward_into: "package".to_owned(),
     },
     CliAlias {
       subcommand: "uninstall".to_owned(),
@@ -312,7 +304,16 @@ For example, specifying 'email' is equivalent to 'match/email.yml'."#))
           SubCommand::with_name("check")
             .about("Check if espanso is registered as a system service"),
         )
-        .subcommand(start_subcommand.clone())
+        .subcommand(SubCommand::with_name("start")
+    .about("Start espanso as a service")
+    .arg(
+      Arg::with_name("unmanaged")
+        .long("unmanaged")
+        .required(false)
+        .takes_value(false)
+        .help("Run espanso as an unmanaged service (avoid system manager)"),
+    )
+)
         .subcommand(restart_subcommand.clone())
         .subcommand(stop_subcommand.clone())
         .subcommand(status_subcommand.clone())
@@ -390,7 +391,7 @@ For example, specifying 'email' is equivalent to 'match/email.yml'."#))
         .about("package-management commands")
         .subcommand(SubCommand::with_name("install")
     .about("Install a package")
-    .alias("install")
+    //.visible_alias("install")
     .arg(
       Arg::with_name("external")
         .short('e')
