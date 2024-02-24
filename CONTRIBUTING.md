@@ -1,5 +1,22 @@
 # Contributing
 
+<details><summary>Show table of contents</summary>
+
+1. [General guidelines and philosophy](#general-guidelines-and-philosophy)
+2. [Building / Compilation](#building--compilation)
+2.1 [Prerequisites](#prerequisites)
+2.2 [Windows](#windows)
+2.3 [MacOS](#macos)
+2.3 [Linux](#linux)
+2.6 [Disabling modulo](#disabling-modulo-gui-features)
+3. [Creating a PR](#creating-a-pr)
+3.1 [Going to the practice](#going-to-the-practice)
+4. [Periodic tasks](#periodic-tasks)
+
+</details>
+
+---
+
 Welcome to Espanso!
 We are very happy to have you and we thank you for considering contributing!
 
@@ -24,13 +41,11 @@ This is a list of things we would like to have and mantain across time. Please d
 
 [`espanso` discord]: https://discord.gg/4QARseMS6k
 
-## Developing
-
-### Building / Compilation
+## Building / Compilation
 
 This chapter explains the various steps needed to build espanso.
 
-#### Prerequisites
+### Prerequisites
 
 These are the basic tools required to build espanso:
 
@@ -49,13 +64,13 @@ cargo install rust-script --version "0.7.0"
 cargo install --force cargo-make --version 0.37.5
 ```
 
-#### Windows
+### Windows
 
 After installing the prerequisites, you are ready to compile Espanso on Windows.
 
 Espanso supports multiple targets on Windows: plain executable, installer and portable mode. The following sections explain how to build Espanso for these configurations.
 
-##### Plain executable
+#### Plain executable
 
 If you only want to build the "plain" Espanso executable, you can do so by running:
 
@@ -86,13 +101,13 @@ cargo make --profile release -- build-windows-portable
 This will generate the executable in the `target/windows/portable` directory.
 There are README instructions inside!.
 
-#### MacOS
+### MacOS
 
 After installing the prerequisites, you are ready to build Espanso on macOS.
 
 Espanso supports two targets on macOS: plain executable and App Bundle. For most cases, the App Bundle format is preferrable.
 
-##### App Bundle
+#### App Bundle
 
 You can build the App Bundle by running:
 
@@ -102,12 +117,12 @@ cargo make --profile release -- create-bundle
 
 This will create the `Espanso.app` bundle in the `target/mac` directory.
 
-#### Linux
+### Linux
 
 Espanso on Linux comes in two different flavors: one for X11 and one for Wayland.
 If you don't know which one to choose, follow [these steps to determine which one you are running](https://unix.stackexchange.com/a/325972).
 
-##### Necessary dependencies
+#### Necessary dependencies
 
 If compiling on a version of Ubuntu X11 before 22.04 (including 22.04):
 
@@ -117,9 +132,9 @@ If compiling on a version of Ubuntu X11 after 22.04:
 
 - `sudo apt install libx11-dev libxtst-dev libxkbcommon-dev libdbus-1-dev libwxgtk3.2-dev`
 
-##### Compiling for X11
+#### Compiling for X11
 
-###### X11 AppImage
+##### X11 AppImage
 
 The AppImage is a convenient format to distribute Linux applications, as besides the binary,
 it also bundles all the required libraries.
@@ -132,7 +147,7 @@ cargo make --profile release -- create-app-image
 
 You will find the resulting AppImage in the `target/linux/AppImage/out` folder.
 
-###### Binary
+##### Binary
 
 You can build the Espanso binary on X11 by running the following command:
 
@@ -142,7 +157,7 @@ cargo make --profile release -- build-binary
 
 You'll then find the `espanso` binary in the `target/release` directory.
 
-##### Compiling on Wayland
+#### Compiling on Wayland
 
 You can build Espanso on Wayland by running:
 
@@ -152,11 +167,7 @@ cargo make --env NO_X11=true --profile release -- build-binary
 
 You'll then find the `espanso` binary in the `target/release` directory.
 
-#### Advanced
-
-Espanso offers a few flags that might be necessary if you want to further tune the resulting binary.
-
-##### Disabling modulo (GUI features)
+### Disabling modulo (GUI features)
 
 Espanso includes a component known as _modulo_, which handles most of the graphical-related parts of the tool.
 For example, the Search bar or Forms are handled by it.
@@ -166,7 +177,7 @@ to remove support for it.
 
 Keep in mind that espanso was designed with modulo as a first class citizen, so the experience might be far from perfect without it.
 
-### Testing
+## Testing
 
 It is good practice to cover your changes with a test. Also, try to think about corner cases and various ways how your changes could break. Cover those in the tests as well.
 
