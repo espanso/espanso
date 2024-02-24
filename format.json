@@ -1,0 +1,6 @@
+{
+    "$schema": "./format.schema.json",
+    "paths": [
+        "."
+    ]
+}
