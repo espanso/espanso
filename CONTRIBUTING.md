@@ -235,6 +235,16 @@ And C / C++ code:
 - we would like to use `clang-format`
 - and we would like to use `clang-tidy`
 
+`clang-format` and `clang-tidy` aren't capable of formatting folders recursively,
+ so that's why we use [run-clang-format](https://github.com/lmapii/run-clang-format) and
+ [run-clang-tidy](https://github.com/lmapii/run-clang-tidy)
+
+To format the code run:
+
+```bash
+run-clang-format format.json
+```
+
 Today our submitted code is yet unformatted and untidy. Work in progress!
 
 ### `git`
