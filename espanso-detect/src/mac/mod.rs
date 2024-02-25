@@ -17,6 +17,10 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use anyhow::Result;
+use lazy_static::lazy_static;
+use lazycell::LazyCell;
+use log::{error, trace, warn};
 use std::{
   convert::TryInto,
   ffi::CStr,
@@ -25,11 +29,6 @@ use std::{
     Arc, Mutex,
   },
 };
-
-use lazycell::LazyCell;
-use log::{error, trace, warn};
-
-use anyhow::Result;
 use thiserror::Error;
 
 use crate::event::{HotKeyEvent, InputEvent, Key, KeyboardEvent, Status, Variant};

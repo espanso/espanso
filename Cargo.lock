@@ -157,9 +157,9 @@ checksum = "c4872d67bab6358e59559027aa3b9157c53d9358c51423c17554809a8858e0f8"
 
 [[package]]
 name = "bzip2"
-version = "0.4.3"
+version = "0.4.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6afcd980b5f3a45017c57e57a2fcccbb351cc43a356ce117ef760ef8052b89b0"
+checksum = "bdb116a6ef3f6c3698828873ad02c3014b3c85cadb88496095628e3ef1e347f8"
 dependencies = [
  "bzip2-sys",
  "libc",
@@ -655,7 +655,6 @@ dependencies = [
  "libc",
  "log",
  "log-panics",
- "maplit",
  "named_pipe",
  "notify",
  "opener",
@@ -678,8 +677,6 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "cc",
- "lazy_static",
- "lazycell",
  "log",
  "thiserror",
  "wait-timeout",
@@ -735,7 +732,6 @@ dependencies = [
  "html2text",
  "log",
  "markdown",
- "tempdir",
  "thiserror",
 ]
 
@@ -745,10 +741,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "cc",
- "lazy_static",
- "lazycell",
  "log",
- "thiserror",
  "widestring",
 ]
 
@@ -758,10 +751,8 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "cc",
- "enum-as-inner 0.6.0",
  "itertools",
  "lazy_static",
- "lazycell",
  "libc",
  "log",
  "regex",
@@ -775,7 +766,6 @@ name = "espanso-ipc"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "crossbeam",
  "log",
  "named_pipe",
  "serde",
@@ -788,7 +778,6 @@ name = "espanso-kvs"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "log",
  "serde",
  "serde_json",
  "tempdir",
@@ -799,23 +788,17 @@ dependencies = [
 name = "espanso-mac-utils"
 version = "0.1.0"
 dependencies = [
- "anyhow",
  "cc",
  "lazy_static",
- "lazycell",
- "log",
  "regex",
- "thiserror",
 ]
 
 [[package]]
 name = "espanso-match"
 version = "0.1.0"
 dependencies = [
- "anyhow",
  "log",
  "regex",
- "thiserror",
  "unicase",
 ]
 
@@ -824,17 +807,14 @@ name = "espanso-migrate"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "dunce",
  "fs_extra",
  "glob",
  "include_dir",
  "lazy_static",
- "log",
  "path-slash",
  "pretty_assertions",
  "regex",
  "tempdir",
- "tempfile",
  "test-case",
  "thiserror",
  "walkdir",
@@ -849,10 +829,8 @@ dependencies = [
  "cc",
  "glob",
  "lazy_static",
- "log",
  "regex",
  "serde",
- "serde_json",
  "thiserror",
  "winres",
  "zip",
@@ -885,10 +863,8 @@ dependencies = [
 name = "espanso-path"
 version = "0.1.0"
 dependencies = [
- "anyhow",
  "dirs 3.0.1",
  "log",
- "thiserror",
 ]
 
 [[package]]
@@ -1554,12 +1530,6 @@ checksum = "62bb907fe88d54d8d9ce32a3cceab4218ed2f6b7d35617cafe9adf84e43919cb"
 dependencies = [
  "libc",
 ]
-
-[[package]]
-name = "maplit"
-version = "1.0.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3e2e65a1a2e43cfcb47a895c4c8b10d1f4a61097f9f254f183aee60cad9c651d"
 
 [[package]]
 name = "markdown"

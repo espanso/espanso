@@ -31,6 +31,7 @@ use crate::{
   },
   wizard::{WizardHandlers, WizardOptions},
 };
+use lazy_static::lazy_static;
 
 lazy_static! {
   static ref HANDLERS: Mutex<Option<WizardHandlers>> = Mutex::new(None);

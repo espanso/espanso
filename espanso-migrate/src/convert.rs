@@ -17,6 +17,7 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use lazy_static::lazy_static;
 use regex::{Captures, Regex};
 use std::{cmp::Ordering, collections::HashMap, path::PathBuf};
 use yaml_rust::{yaml::Hash, Yaml};

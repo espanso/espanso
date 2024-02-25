@@ -27,6 +27,7 @@ use crate::{
   },
 };
 use anyhow::{anyhow, bail, Context, Result};
+use lazy_static::lazy_static;
 use parse::YAMLMatchGroup;
 use regex::{Captures, Regex};
 
