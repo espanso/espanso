@@ -46,8 +46,7 @@ pub fn get_modifiers_state() -> Result<Option<super::ModifiersState>> {
       // Keep last event in priority order : Close > Configure > Refresh
       let replace = matches!(
         (&evt, &*next_action),
-        (_, &None)
-          | (_, &Some(WEvent::Refresh))
+        (_, &None | &Some(WEvent::Refresh))
           | (&WEvent::Configure { .. }, &Some(WEvent::Configure { .. }))
           | (&WEvent::Close, _)
       );
@@ -131,7 +130,7 @@ pub fn get_modifiers_state() -> Result<Option<super::ModifiersState>> {
             eprintln!(
               "Failed to map keyboard on seat {} : {:?}.",
               seat_data.name, e
-            )
+            );
           }
         }
       }
@@ -166,7 +165,7 @@ pub fn get_modifiers_state() -> Result<Option<super::ModifiersState>> {
       }) => {
         if let Some((w, h)) = new_size {
           window.resize(w, h);
-          dimensions = (w, h)
+          dimensions = (w, h);
         }
         window.refresh();
         redraw(&mut pool, window.surface(), dimensions).expect("Failed to draw");
@@ -205,7 +204,7 @@ fn keyboard_event_handler(
       caps_lock: modifiers.caps_lock,
       meta: modifiers.logo,
       num_lock: modifiers.num_lock,
-    })
+    });
   }
 }
 

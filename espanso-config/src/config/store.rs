@@ -127,8 +127,11 @@ impl DefaultConfigStore {
     ))
   }
 
-  pub fn from_configs(default: Arc<dyn Config>, customs: Vec<Arc<dyn Config>>) -> Result<Self> {
-    Ok(Self { default, customs })
+  pub fn from_configs(
+    default: Arc<dyn Config>,
+    customs: Vec<Arc<dyn Config>>,
+  ) -> DefaultConfigStore {
+    Self { default, customs }
   }
 }
 

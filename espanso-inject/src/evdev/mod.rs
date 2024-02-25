@@ -160,11 +160,11 @@ impl EVDEVInjector {
 
     // Cycle through all code/modifiers combinations to populate the reverse lookup tables
     for key_code in 8..256u32 {
-      for modifier_combination in modifier_combinations.iter() {
+      for modifier_combination in &modifier_combinations {
         let state = State::new(keymap)?;
 
         // Apply the modifiers
-        for modifier in modifier_combination.iter() {
+        for modifier in modifier_combination {
           // We need to add the EVDEV offset for xkbcommon to recognize it correctly
           state.update_key(*modifier + EVDEV_OFFSET, true);
         }
@@ -195,7 +195,7 @@ impl EVDEVInjector {
     for sequence_len in 1..=max_modifier_sequence_len {
       let current_combinations = modifiers
         .iter()
-        .cloned()
+        .copied()
         .combinations(sequence_len as usize);
       combinations.extend(current_combinations);
     }
@@ -244,10 +244,9 @@ impl EVDEVInjector {
       }
 
       bail!("timed-out while waiting for key release: {}", code);
-    } else {
-      // Keyboard provider not available,
-      Ok(())
     }
+    // else Keyboard provider not available,
+    Ok(())
   }
 
   fn wait_delay(&self, delay_ms: u32) {
@@ -280,7 +279,7 @@ impl Injector for EVDEVInjector {
     let mut current_modifiers: HashSet<u32> = HashSet::new();
 
     for record in records? {
-      let record_modifiers = record.modifiers.iter().cloned().collect::<HashSet<_>>();
+      let record_modifiers = record.modifiers.iter().copied().collect::<HashSet<_>>();
 
       // Release all the modifiers that are not needed anymore
       for expired_modifier in current_modifiers.difference(&record_modifiers) {
@@ -326,7 +325,7 @@ impl Injector for EVDEVInjector {
 
     for record in records {
       // Press the modifiers
-      for modifier in record.modifiers.iter() {
+      for modifier in &record.modifiers {
         self.send_key(*modifier, true, delay_us);
       }
 
@@ -335,7 +334,7 @@ impl Injector for EVDEVInjector {
       self.send_key(record.code, false, delay_us);
 
       // Release the modifiers
-      for modifier in record.modifiers.iter() {
+      for modifier in &record.modifiers {
         self.send_key(*modifier, false, delay_us);
       }
     }
@@ -351,9 +350,9 @@ impl Injector for EVDEVInjector {
     let delay_us = options.delay as u32 * 1000; // Convert to micro seconds
 
     // First press the keys
-    for record in records.iter() {
+    for record in &records {
       // Press the modifiers
-      for modifier in record.modifiers.iter() {
+      for modifier in &record.modifiers {
         self.send_key(*modifier, true, delay_us);
       }
 
@@ -366,7 +365,7 @@ impl Injector for EVDEVInjector {
       self.send_key(record.code, false, delay_us);
 
       // Release the modifiers
-      for modifier in record.modifiers.iter() {
+      for modifier in &record.modifiers {
         self.send_key(*modifier, false, delay_us);
       }
     }

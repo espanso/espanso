@@ -153,7 +153,13 @@ fn determine_target_path(config_path: &Path, target_file: Option<&str>) -> PathB
         }
       }
       custom => {
-        if !custom.ends_with(".yml") && !custom.ends_with(".yaml") {
+        if !std::path::Path::new(custom)
+          .extension()
+          .map_or(false, |ext| ext.eq_ignore_ascii_case("yml"))
+          && !std::path::Path::new(custom)
+            .extension()
+            .map_or(false, |ext| ext.eq_ignore_ascii_case("yaml"))
+        {
           if espanso_config::is_legacy_config(config_path) {
             config_path.join("user").join(format!("{custom}.yml"))
           } else {

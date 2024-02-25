@@ -115,7 +115,7 @@ impl X11DefaultInjector {
     if input_method.is_null() {
       bail!("could not open input method");
     }
-    let _im_guard = scopeguard::guard((), |_| {
+    let _im_guard = scopeguard::guard((), |()| {
       unsafe { XCloseIM(input_method) };
     });
 
@@ -132,7 +132,7 @@ impl X11DefaultInjector {
     if input_context.is_null() {
       bail!("could not open input context");
     }
-    let _ic_guard = scopeguard::guard((), |_| {
+    let _ic_guard = scopeguard::guard((), |()| {
       unsafe { XDestroyIC(input_context) };
     });
 
@@ -141,7 +141,7 @@ impl X11DefaultInjector {
     // Cycle through all state/code combinations to populate the reverse lookup tables
     for key_code in 0..256u32 {
       for modifier_state in 0..256u32 {
-        for dead_key in deadkeys.iter() {
+        for dead_key in &deadkeys {
           let code_with_offset = key_code + EVDEV_OFFSET;
 
           let preceding_dead_key = if let Some(dead_key) = dead_key {
@@ -311,7 +311,7 @@ impl X11DefaultInjector {
         self
           .sym_map
           .get(sym)
-          .cloned()
+          .copied()
           .ok_or_else(|| X11InjectorError::SymMapping(*sym).into())
       })
       .collect()
@@ -491,7 +491,7 @@ impl Injector for X11DefaultInjector {
         self
           .char_map
           .get(&char)
-          .cloned()
+          .copied()
           .ok_or_else(|| X11InjectorError::CharMapping(char).into())
       })
       .collect();
@@ -564,7 +564,7 @@ impl Injector for X11DefaultInjector {
     let delay_us = options.delay as u32 * 1000; // Convert to micro seconds
 
     // First press the keys
-    for record in records.iter() {
+    for record in &records {
       if options.disable_fast_inject {
         self.xtest_send_key(&record.main, true, delay_us);
       } else {

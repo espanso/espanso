@@ -27,6 +27,7 @@ use crate::{
   },
 };
 use anyhow::{anyhow, bail, Context, Result};
+use lazy_static::lazy_static;
 use parse::YAMLMatchGroup;
 use regex::{Captures, Regex};
 
@@ -352,8 +353,7 @@ mod tests {
     let (m, warnings) = create_match_with_warnings(yaml, false)?;
     assert!(
       warnings.is_empty(),
-      "warnings were detected but not handled: {:?}",
-      warnings
+      "warnings were detected but not handled: {warnings:?}"
     );
     Ok(m)
   }

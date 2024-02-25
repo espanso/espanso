@@ -128,10 +128,10 @@ pub fn convert_key_to_sym(key: &Key) -> Option<u32> {
 
 pub fn convert_to_sym_array(keys: &[Key]) -> Result<Vec<u64>> {
   let mut virtual_keys: Vec<u64> = Vec::new();
-  for key in keys.iter() {
+  for key in keys {
     let vk = convert_key_to_sym(key);
     if let Some(vk) = vk {
-      virtual_keys.push(vk as u64)
+      virtual_keys.push(vk as u64);
     } else {
       return Err(LinuxRawKeyError::MappingFailure(key.clone()).into());
     }

@@ -49,10 +49,10 @@ impl CocoaAppInfoProvider {
     if unsafe { info_get_exec(buffer.as_mut_ptr(), (buffer.len() - 1) as i32) } > 0 {
       let string = unsafe { CStr::from_ptr(buffer.as_ptr()) };
       let string = string.to_string_lossy();
-      if !string.is_empty() {
-        Some(string.to_string())
-      } else {
+      if string.is_empty() {
         None
+      } else {
+        Some(string.to_string())
       }
     } else {
       None
@@ -64,10 +64,10 @@ impl CocoaAppInfoProvider {
     if unsafe { info_get_class(buffer.as_mut_ptr(), (buffer.len() - 1) as i32) } > 0 {
       let string = unsafe { CStr::from_ptr(buffer.as_ptr()) };
       let string = string.to_string_lossy();
-      if !string.is_empty() {
-        Some(string.to_string())
-      } else {
+      if string.is_empty() {
         None
+      } else {
+        Some(string.to_string())
       }
     } else {
       None
@@ -79,10 +79,10 @@ impl CocoaAppInfoProvider {
     if unsafe { info_get_title(buffer.as_mut_ptr(), (buffer.len() - 1) as i32) } > 0 {
       let string = unsafe { CStr::from_ptr(buffer.as_ptr()) };
       let string = string.to_string_lossy();
-      if !string.is_empty() {
-        Some(string.to_string())
-      } else {
+      if string.is_empty() {
         None
+      } else {
+        Some(string.to_string())
       }
     } else {
       None
@@ -95,10 +95,10 @@ impl CocoaAppInfoProvider {
     if unsafe { info_get_title_fallback(buffer.as_mut_ptr(), (buffer.len() - 1) as i32) } > 0 {
       let string = unsafe { CStr::from_ptr(buffer.as_ptr()) };
       let string = string.to_string_lossy();
-      if !string.is_empty() {
-        Some(string.to_string())
-      } else {
+      if string.is_empty() {
         None
+      } else {
+        Some(string.to_string())
       }
     } else {
       None

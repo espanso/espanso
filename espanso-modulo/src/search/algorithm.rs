@@ -28,7 +28,7 @@ pub fn get_algorithm(name: &str, use_command_filter: bool) -> Box<FilterCallback
     "exact" => Box::new(exact_match),
     "iexact" => Box::new(case_insensitive_exact_match),
     "ikey" => Box::new(case_insensitive_keyword),
-    _ => panic!("unknown search algorithm: {}", name),
+    _ => panic!("unknown search algorithm: {name}"),
   };
 
   if use_command_filter {

@@ -147,7 +147,7 @@ pub trait Config: Send + Sync {
   // Note: currently not working on Linux
   fn show_icon(&self) -> bool;
 
-  // If false, avoid showing the SecureInput notification on macOS
+  // If false, avoid showing the `SecureInput`` notification on macOS
   fn secure_input_notification(&self) -> bool;
 
   // The number of milliseconds to wait after a form has been closed.

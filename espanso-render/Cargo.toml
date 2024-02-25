@@ -14,3 +14,6 @@ chrono = { version = "0.4.19", features = ["unstable-locales"] }
 enum-as-inner = "0.6.0"
 rand = "0.8.3"
 sys-locale = "0.1.0"
+
+[lints]
+workspace = true

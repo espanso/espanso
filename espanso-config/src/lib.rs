@@ -23,9 +23,6 @@ use matches::store::MatchStore;
 use std::path::Path;
 use thiserror::Error;
 
-#[macro_use]
-extern crate lazy_static;
-
 pub mod config;
 mod counter;
 pub mod error;
