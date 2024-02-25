@@ -242,10 +242,20 @@ And C / C++ code:
 To format the code run:
 
 ```bash
-run-clang-format format.json
+run-clang-format .clang-format.json
 ```
 
-Today our submitted code is yet unformatted and untidy. Work in progress!
+And it should format all the `*.c`, `*.h`, `*.cpp`, `*.hpp` and `*.mm` files.
+
+With `clang-tidy` the structure is ready to run:
+
+```bash
+run-clang-tidy .clang-tidy.json
+```
+
+But it [is necessary to pass the build args](https://github.com/espanso/espanso/pull/1864#issuecomment-1962998631).
+
+Today our submitted code is yet untidy. Work in progress!
 
 ### `git`
 
