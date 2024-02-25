@@ -1,8 +1,9 @@
 {
-    "$schema": "./format.schema.json",
+    "$schema": "./.clang-tidy.schema.json",
     "paths": [
         "./**/*.[ch]",
         "./**/*.[chpp]",
         "./**/*.mm"
-    ]
+    ],
+    "buildRoot": "TODO!"
 }
