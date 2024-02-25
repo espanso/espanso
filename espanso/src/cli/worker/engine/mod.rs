@@ -42,6 +42,7 @@ use crate::{
       },
       process::middleware::{
         image_resolve::PathProviderAdapter,
+        open_config::ConfigPathProviderAdapter,
         match_select::MatchSelectorAdapter,
         matcher::{
           convert::MatchConverter,
@@ -220,6 +221,7 @@ pub fn initialize_and_spawn(
       ]);
       let renderer_adapter = RendererAdapter::new(&match_cache, &config_manager, &renderer);
       let path_provider = PathProviderAdapter::new(&paths);
+      let config_path_provider = ConfigPathProviderAdapter::new(&paths);
 
       let disable_options =
         process::middleware::disable::extract_disable_options(&*config_manager.default());
@@ -235,7 +237,7 @@ pub fn initialize_and_spawn(
         &match_cache,
         &modifier_state_store,
         &sequencer,
-        &path_provider,
+        &path_provider,&config_path_provider,
         disable_options,
         &config_manager,
         &combined_match_cache,

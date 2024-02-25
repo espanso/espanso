@@ -32,6 +32,8 @@ use super::{
     matcher::MatcherMiddleware,
     multiplex::MultiplexMiddleware,
     render::RenderMiddleware,
+    open_config::ConfigMiddleware,
+    open_config::ConfigPathProvider
   },
   AltCodeSynthEnabledProvider, DisableOptions, EnabledStatusProvider, MatchFilter,
   MatchInfoProvider, MatchProvider, MatchResolver, MatchSelector, Matcher,
@@ -45,7 +47,7 @@ use crate::{
     hotkey::HotKeyMiddleware, icon_status::IconStatusMiddleware,
     image_resolve::ImageResolverMiddleware, match_exec::MatchExecRequestMiddleware,
     notification::NotificationMiddleware, search::SearchMiddleware, suppress::SuppressMiddleware,
-    undo::UndoMiddleware,
+    undo::UndoMiddleware
   },
 };
 use std::collections::VecDeque;
@@ -67,6 +69,7 @@ impl<'a> DefaultProcessor<'a> {
     modifier_status_provider: &'a dyn ModifierStatusProvider,
     event_sequence_provider: &'a dyn EventSequenceProvider,
     path_provider: &'a dyn PathProvider,
+    config_path_provider: &'a dyn ConfigPathProvider,
     disable_options: DisableOptions,
     matcher_options_provider: &'a dyn MatcherMiddlewareConfigProvider,
     match_provider: &'a dyn MatchProvider,
@@ -101,6 +104,7 @@ impl<'a> DefaultProcessor<'a> {
           event_sequence_provider,
         )),
         Box::new(CauseCompensateMiddleware::new()),
+        Box::new(ConfigMiddleware::new(config_path_provider)),
         Box::new(MultiplexMiddleware::new(multiplexer)),
         Box::new(RenderMiddleware::new(renderer)),
         Box::new(ImageResolverMiddleware::new(path_provider)),

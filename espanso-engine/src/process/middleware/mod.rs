@@ -21,6 +21,7 @@ pub mod action;
 pub mod alt_code_synthesizer;
 pub mod cause;
 pub mod context_menu;
+pub mod open_config;
 pub mod cursor_hint;
 pub mod delay_modifiers;
 pub mod disable;
