@@ -25,6 +25,7 @@ use crate::{
   sys::interop::WelcomeMetadata,
   welcome::{WelcomeHandlers, WelcomeOptions},
 };
+use lazy_static::lazy_static;
 
 lazy_static! {
   static ref HANDLERS: Mutex<Option<WelcomeHandlers>> = Mutex::new(None);
