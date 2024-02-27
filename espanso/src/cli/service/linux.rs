@@ -19,6 +19,7 @@
 
 use anyhow::Result;
 use const_format::formatcp;
+use lazy_static::lazy_static;
 use regex::Regex;
 use std::fs::create_dir_all;
 use std::path::PathBuf;
@@ -144,7 +145,9 @@ pub fn is_registered() -> bool {
           let path = caps.get(1).map_or("", |m| m.as_str());
           let espanso_path = get_binary_path().expect("unable to get espanso executable path");
 
-          if espanso_path.to_string_lossy() != path {
+          if espanso_path.to_string_lossy() == path {
+            true
+          } else {
             error_eprintln!("Espanso is registered as a systemd service, but it points to another binary location:");
             error_eprintln!("");
             error_eprintln!("  {}", path);
@@ -156,8 +159,6 @@ pub fn is_registered() -> bool {
             error_eprintln!("");
 
             false
-          } else {
-            true
           }
         } else {
           error_eprintln!("systemctl command returned non-zero exit code");
@@ -176,32 +177,29 @@ pub fn is_registered() -> bool {
 
 pub fn start_service() -> Result<()> {
   // Check if systemd is available in the system
-  match Command::new("systemctl")
+  if let Ok(status) = Command::new("systemctl")
     .args(["--version"])
     .stdin(Stdio::null())
     .stdout(Stdio::null())
     .status()
   {
-    Ok(status) => {
-      if !status.success() {
-        return Err(StartError::SystemctlNonZeroExitCode.into());
-      }
+    if !status.success() {
+      return Err(StartError::SystemctlNonZeroExitCode.into());
     }
-    Err(_) => {
-      error_eprintln!(
-        "Systemd was not found in this system, which means espanso can't run in managed mode"
-      );
-      error_eprintln!("You can run it in unmanaged mode with `espanso service start --unmanaged`");
-      error_eprintln!("");
-      error_eprintln!(
-        "NOTE: unmanaged mode means espanso does not rely on the system service manager"
-      );
-      error_eprintln!(
-        "      to run, but as a result, you are in charge of starting/stopping espanso"
-      );
-      error_eprintln!("      when needed.");
-      return Err(StartError::SystemdNotFound.into());
-    }
+  } else {
+    error_eprintln!(
+      "Systemd was not found in this system, which means espanso can't run in managed mode"
+    );
+    error_eprintln!("You can run it in unmanaged mode with `espanso service start --unmanaged`");
+    error_eprintln!("");
+    error_eprintln!(
+      "NOTE: unmanaged mode means espanso does not rely on the system service manager"
+    );
+    error_eprintln!(
+      "      to run, but as a result, you are in charge of starting/stopping espanso"
+    );
+    error_eprintln!("      when needed.");
+    return Err(StartError::SystemdNotFound.into());
   }
 
   if !is_registered() {

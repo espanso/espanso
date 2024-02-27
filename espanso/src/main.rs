@@ -20,9 +20,6 @@
 // This is needed to avoid showing a console window when starting espanso on Windows
 #![windows_subsystem = "windows"]
 
-#[macro_use]
-extern crate lazy_static;
-
 use std::path::PathBuf;
 
 use clap::{App, AppSettings, Arg, ArgMatches, SubCommand};
@@ -57,6 +54,8 @@ mod util;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 const LOG_FILE_NAME: &str = "espanso.log";
+
+use lazy_static::lazy_static;
 
 lazy_static! {
   static ref CLI_HANDLERS: Vec<CliModule> = vec![

@@ -17,11 +17,11 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::process::Command;
-
+use lazy_static::lazy_static;
 use log::error;
 use regex::Regex;
 use std::path::PathBuf;
+use std::process::Command;
 
 lazy_static! {
   static ref LAYOUT_EXTRACT_REGEX: Regex = Regex::new(r"^\[\('.*?', '(.*?)'\)").unwrap();
