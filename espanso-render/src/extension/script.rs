@@ -201,7 +201,7 @@ mod tests {
     .collect::<Params>();
     assert_eq!(
       extension
-        .calculate(&Default::default(), &Default::default(), &param)
+        .calculate(&crate::Context::default(), &HashMap::default(), &param)
         .into_success()
         .unwrap(),
       ExtensionOutput::Single("hello world".to_string())
@@ -228,7 +228,7 @@ mod tests {
     if cfg!(target_os = "windows") {
       assert_eq!(
         extension
-          .calculate(&Default::default(), &Default::default(), &param)
+          .calculate(&crate::Context::default(), &HashMap::default(), &param)
           .into_success()
           .unwrap(),
         ExtensionOutput::Single("hello world\r\n".to_string())
@@ -236,7 +236,7 @@ mod tests {
     } else {
       assert_eq!(
         extension
-          .calculate(&Default::default(), &Default::default(), &param)
+          .calculate(&crate::Context::default(), &HashMap::default(), &param)
           .into_success()
           .unwrap(),
         ExtensionOutput::Single("hello world\n".to_string())
@@ -263,7 +263,7 @@ mod tests {
     scope.insert("var1", ExtensionOutput::Single("hello world".to_string()));
     assert_eq!(
       extension
-        .calculate(&Default::default(), &scope, &param)
+        .calculate(&crate::Context::default(), &scope, &param)
         .into_success()
         .unwrap(),
       ExtensionOutput::Single("hello world".to_string())
@@ -302,7 +302,7 @@ mod tests {
     .into_iter()
     .collect::<Params>();
     assert!(matches!(
-      extension.calculate(&Default::default(), &Default::default(), &param),
+      extension.calculate(&crate::Context::default(), &HashMap::default(), &param),
       ExtensionResult::Error(_)
     ));
   }
@@ -327,7 +327,7 @@ mod tests {
     .collect::<Params>();
     assert_eq!(
       extension
-        .calculate(&Default::default(), &Default::default(), &param)
+        .calculate(&crate::Context::default(), &HashMap::default(), &param)
         .into_success()
         .unwrap(),
       ExtensionOutput::Single(String::new())

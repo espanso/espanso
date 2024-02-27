@@ -38,9 +38,6 @@ mod linux;
 #[cfg(target_os = "macos")]
 mod mac;
 
-#[macro_use]
-extern crate lazy_static;
-
 pub trait Injector {
   fn send_string(&self, string: &str, options: InjectionOptions) -> Result<()>;
   fn send_keys(&self, keys: &[keys::Key], options: InjectionOptions) -> Result<()>;

@@ -20,6 +20,7 @@
 use std::{collections::HashSet, path::Path};
 
 use glob::glob;
+use lazy_static::lazy_static;
 use log::error;
 use regex::Regex;
 

@@ -77,7 +77,7 @@ pub fn load(
     custom_configs.push(Arc::new(custom_config));
   }
 
-  let config_store = DefaultConfigStore::from_configs(Arc::new(default_config), custom_configs)?;
+  let config_store = DefaultConfigStore::from_configs(Arc::new(default_config), custom_configs);
   let match_store = LegacyMatchStore::new(match_groups);
 
   Ok((Box::new(config_store), Box::new(match_store)))

@@ -18,6 +18,12 @@ thiserror = "1.0.23"
 regex = "1.5.5"
 lazy_static = "1.4.0"
 
+[dev-dependencies]
+enum-as-inner = "0.6.0"
+
+[lints]
+workspace = true
+
 [target.'cfg(windows)'.dependencies]
 widestring = "0.4.3"
 
@@ -28,6 +34,3 @@ sctk = { package = "smithay-client-toolkit", version = "0.16.1", optional = true
 
 [build-dependencies]
 cc = "1.0.73"
-
-[dev-dependencies]
-enum-as-inner = "0.6.0"

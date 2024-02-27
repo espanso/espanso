@@ -55,6 +55,7 @@ pub fn determine_path_env_variable_override(_: Option<MacShell>) -> Option<Strin
 
 #[cfg(target_os = "macos")]
 pub fn determine_default_macos_shell() -> Option<MacShell> {
+  use lazy_static::lazy_static;
   use regex::Regex;
   use std::process::Command;
 

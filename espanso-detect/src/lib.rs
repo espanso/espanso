@@ -38,9 +38,6 @@ pub mod evdev;
 #[cfg(target_os = "macos")]
 pub mod mac;
 
-#[macro_use]
-extern crate lazy_static;
-
 pub type SourceCallback = Box<dyn Fn(event::InputEvent)>;
 
 pub trait Source {

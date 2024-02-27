@@ -22,7 +22,7 @@
 
 #include <stdint.h>
 
-// If a process is currently holding SecureInput, then return 1 and set the pid pointer to the corresponding PID.
+// If a process is currently holding `SecureInput`, then return 1 and set the pid pointer to the corresponding PID.
 extern "C" int32_t mac_utils_get_secure_input_process(int64_t *pid);
 
 // Find the executable path corresponding to the given PID, return 0 if no process was found.

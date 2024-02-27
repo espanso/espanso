@@ -17,9 +17,6 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#[macro_use]
-extern crate lazy_static;
-
 use enum_as_inner::EnumAsInner;
 use std::collections::HashMap;
 
