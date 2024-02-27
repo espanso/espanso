@@ -19,8 +19,8 @@
 
 pub mod disable;
 pub mod image_resolve;
-pub mod open_config;
 pub mod match_select;
 pub mod matcher;
 pub mod multiplex;
+pub mod open_config;
 pub mod render;

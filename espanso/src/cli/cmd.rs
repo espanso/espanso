@@ -49,7 +49,7 @@ fn cmd_main(args: CliModuleArgs) -> i32 {
     IPCEvent::ToggleRequest
   } else if cli_args.subcommand_matches("search").is_some() {
     IPCEvent::OpenSearchBar
-  }  else if cli_args.subcommand_matches("search").is_some() {
+  } else if cli_args.subcommand_matches("search").is_some() {
     IPCEvent::OpenConfigFolder
   } else {
     eprintln!("unknown command, please run `espanso cmd --help` to see a list of valid ones.");

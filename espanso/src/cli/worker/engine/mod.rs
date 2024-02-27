@@ -42,7 +42,6 @@ use crate::{
       },
       process::middleware::{
         image_resolve::PathProviderAdapter,
-        open_config::ConfigPathProviderAdapter,
         match_select::MatchSelectorAdapter,
         matcher::{
           convert::MatchConverter,
@@ -50,6 +49,7 @@ use crate::{
           rolling::{RollingMatcherAdapter, RollingMatcherAdapterOptions},
         },
         multiplex::MultiplexAdapter,
+        open_config::ConfigPathProviderAdapter,
         render::{
           extension::{
             choice::ChoiceSelectorAdapter, clipboard::ClipboardAdapter, form::FormProviderAdapter,
@@ -237,7 +237,8 @@ pub fn initialize_and_spawn(
         &match_cache,
         &modifier_state_store,
         &sequencer,
-        &path_provider,&config_path_provider,
+        &path_provider,
+        &config_path_provider,
         disable_options,
         &config_manager,
         &combined_match_cache,

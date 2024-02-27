@@ -38,7 +38,6 @@ pub use middleware::alt_code_synthesizer::AltCodeSynthEnabledProvider;
 pub use middleware::delay_modifiers::ModifierStatusProvider;
 pub use middleware::disable::DisableOptions;
 pub use middleware::image_resolve::PathProvider;
-pub use middleware::open_config::ConfigPathProvider;
 pub use middleware::match_exec::MatchResolver;
 pub use middleware::match_select::{MatchFilter, MatchSelector};
 pub use middleware::matcher::{
@@ -47,6 +46,7 @@ pub use middleware::matcher::{
 };
 pub use middleware::multiplex::Multiplexer;
 pub use middleware::notification::NotificationManager;
+pub use middleware::open_config::ConfigPathProvider;
 pub use middleware::render::{Renderer, RendererError};
 pub use middleware::search::MatchProvider;
 pub use middleware::suppress::EnabledStatusProvider;

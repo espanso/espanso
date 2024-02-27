@@ -18,18 +18,15 @@
 */
 
 use super::super::Middleware;
-use std::path::Path;
+use crate::event::{Event, EventType};
 use log::error;
-use crate::event::{
-  Event, EventType
-};
-use std::process::Command;
 use std::env;
+use std::path::Path;
+use std::process::Command;
 
 pub trait ConfigPathProvider {
   fn get_config_path(&self) -> &Path;
 }
-
 
 pub struct ConfigMiddleware<'a> {
   provider: &'a dyn ConfigPathProvider,
@@ -40,45 +37,39 @@ impl<'a> ConfigMiddleware<'a> {
     Self { provider }
   }
 }
- 
- 
+
 impl<'a> Middleware for ConfigMiddleware<'a> {
   fn name(&self) -> &'static str {
     "open_config"
   }
- 
+
   fn next(&self, event: Event, _dispatch: &mut dyn FnMut(Event)) -> Event {
-      let config_path = match self.provider.get_config_path().canonicalize() {
-        Ok(path) => path,
-        Err(err) => {
-          error!(
-            "unable to canonicalize the config path into the image resolver: {}",
-            err
-          );
-          self.provider.get_config_path().to_owned()
-        }
-      };
-      if let EventType::ShowConfigFolder = event.etype {
-          let program: &str;
-          if env::consts::OS == "macos" {
-            program = "open";
-          } else if env::consts::OS == "windows" {
-            program = "explorer";
-          } else if env::consts::OS == "linux" {
-            program = "xdg-open";
-          } else {
-            panic!("Unsupported OS")
-          }
-          Command::new(program)
-            .arg(config_path)
-            .spawn()
-            .unwrap();
-          return Event::caused_by(event.source_id, EventType::NOOP);
+    let config_path = match self.provider.get_config_path().canonicalize() {
+      Ok(path) => path,
+      Err(err) => {
+        error!(
+          "unable to canonicalize the config path into the image resolver: {}",
+          err
+        );
+        self.provider.get_config_path().to_owned()
       }
+    };
+    if let EventType::ShowConfigFolder = event.etype {
+      let program: &str;
+      if env::consts::OS == "macos" {
+        program = "open";
+      } else if env::consts::OS == "windows" {
+        program = "explorer";
+      } else if env::consts::OS == "linux" {
+        program = "xdg-open";
+      } else {
+        panic!("Unsupported OS")
+      }
+      Command::new(program).arg(config_path).spawn().unwrap();
+      return Event::caused_by(event.source_id, EventType::NOOP);
+    }
     event
   }
 }
 
 // TODO: test
-
- 

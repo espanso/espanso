@@ -170,7 +170,10 @@ impl Middleware for ContextMenuMiddleware {
             Event::caused_by(event.source_id, EventType::NOOP)
           }
           CONTEXT_ITEM_OPEN_CONFIG_FOLDER => {
-            dispatch(Event::caused_by(event.source_id, EventType::ShowConfigFolder));
+            dispatch(Event::caused_by(
+              event.source_id,
+              EventType::ShowConfigFolder,
+            ));
             Event::caused_by(event.source_id, EventType::NOOP)
           }
           _ => {

@@ -31,9 +31,9 @@ use super::{
     match_select::MatchSelectMiddleware,
     matcher::MatcherMiddleware,
     multiplex::MultiplexMiddleware,
-    render::RenderMiddleware,
     open_config::ConfigMiddleware,
-    open_config::ConfigPathProvider
+    open_config::ConfigPathProvider,
+    render::RenderMiddleware,
   },
   AltCodeSynthEnabledProvider, DisableOptions, EnabledStatusProvider, MatchFilter,
   MatchInfoProvider, MatchProvider, MatchResolver, MatchSelector, Matcher,
@@ -47,7 +47,7 @@ use crate::{
     hotkey::HotKeyMiddleware, icon_status::IconStatusMiddleware,
     image_resolve::ImageResolverMiddleware, match_exec::MatchExecRequestMiddleware,
     notification::NotificationMiddleware, search::SearchMiddleware, suppress::SuppressMiddleware,
-    undo::UndoMiddleware
+    undo::UndoMiddleware,
   },
 };
 use std::collections::VecDeque;
