@@ -7,9 +7,6 @@ alias t := test
 alias r := ready
 alias l := lint
 
-build-binary:
-    echo "building binary"
-
 format:
     cargo fmt --all
 
@@ -25,3 +22,32 @@ ready:
     just lint
     just test
     just build
+
+[windows]
+build-binary:
+    cargo make --profile release -- build-binary
+
+[windows]
+plain-installer:
+    cargo make --profile release -- build-windows-installer
+
+[windows]
+portable:
+    cargo make --profile release -- build-windows-portable
+
+[macos]
+bundle:
+    cargo make --profile release -- create-bundle
+
+[linux]
+x11-appimage:
+    cargo make --profile release -- create-app-image
+
+[linux]
+x11-binary:
+    cargo make --profile release -- build-binary
+
+[linux]
+wayland-binary:
+    cargo make --env NO_X11=true --profile release -- build-binary
+
