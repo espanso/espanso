@@ -26,13 +26,13 @@ pub mod secure_input;
 pub mod text_ui;
 
 pub trait InjectParamsProvider {
-  fn get(&self) -> InjectParams;
+    fn get(&self) -> InjectParams;
 }
 
 pub struct InjectParams {
-  pub inject_delay: Option<usize>,
-  pub key_delay: Option<usize>,
-  pub disable_x11_fast_inject: bool,
-  pub evdev_modifier_delay: Option<usize>,
-  pub x11_use_xdotool_backend: bool,
+    pub inject_delay: Option<usize>,
+    pub key_delay: Option<usize>,
+    pub disable_x11_fast_inject: bool,
+    pub evdev_modifier_delay: Option<usize>,
+    pub x11_use_xdotool_backend: bool,
 }

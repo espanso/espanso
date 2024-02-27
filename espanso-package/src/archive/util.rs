@@ -28,33 +28,33 @@ use super::{PackageSource, PACKAGE_SOURCE_FILE};
 
 // TODO: test
 pub fn copy_dir_without_dot_files(source_dir: &Path, inside_dir: &Path) -> Result<()> {
-  fs_extra::dir::copy(
-    source_dir,
-    inside_dir,
-    &CopyOptions {
-      copy_inside: true,
-      content_only: true,
-      ..Default::default()
-    },
-  )?;
+    fs_extra::dir::copy(
+        source_dir,
+        inside_dir,
+        &CopyOptions {
+            copy_inside: true,
+            content_only: true,
+            ..Default::default()
+        },
+    )?;
 
-  // Remove dot files and dirs (such as .git)
-  let mut to_be_removed = Vec::new();
-  for path in std::fs::read_dir(inside_dir)? {
-    let path = path?.path();
-    if path.starts_with(".") {
-      to_be_removed.push(path);
+    // Remove dot files and dirs (such as .git)
+    let mut to_be_removed = Vec::new();
+    for path in std::fs::read_dir(inside_dir)? {
+        let path = path?.path();
+        if path.starts_with(".") {
+            to_be_removed.push(path);
+        }
     }
-  }
 
-  fs_extra::remove_items(&to_be_removed)?;
+    fs_extra::remove_items(&to_be_removed)?;
 
-  Ok(())
+    Ok(())
 }
 
 pub fn create_package_source_file(specifier: &PackageSpecifier, target_dir: &Path) -> Result<()> {
-  let source: PackageSource = specifier.into();
-  let yaml = serde_yaml::to_string(&source)?;
-  std::fs::write(target_dir.join(PACKAGE_SOURCE_FILE), yaml)?;
-  Ok(())
+    let source: PackageSource = specifier.into();
+    let yaml = serde_yaml::to_string(&source)?;
+    std::fs::write(target_dir.join(PACKAGE_SOURCE_FILE), yaml)?;
+    Ok(())
 }

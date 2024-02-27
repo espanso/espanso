@@ -21,8 +21,8 @@ use std::os::raw::c_char;
 
 #[link(name = "espansoclipboardx11", kind = "static")]
 extern "C" {
-  pub fn clipboard_x11_get_text(buffer: *mut c_char, buffer_size: i32) -> i32;
-  pub fn clipboard_x11_set_text(text: *const c_char) -> i32;
-  pub fn clipboard_x11_set_html(html: *const c_char, fallback_text: *const c_char) -> i32;
-  pub fn clipboard_x11_set_image(buffer: *const u8, buffer_size: i32) -> i32;
+    pub fn clipboard_x11_get_text(buffer: *mut c_char, buffer_size: i32) -> i32;
+    pub fn clipboard_x11_set_text(text: *const c_char) -> i32;
+    pub fn clipboard_x11_set_html(html: *const c_char, fallback_text: *const c_char) -> i32;
+    pub fn clipboard_x11_set_image(buffer: *const u8, buffer_size: i32) -> i32;
 }

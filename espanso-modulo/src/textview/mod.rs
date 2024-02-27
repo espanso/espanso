@@ -20,7 +20,7 @@
 pub use crate::sys::textview::show;
 
 pub struct TextViewOptions {
-  pub window_icon_path: Option<String>,
-  pub title: String,
-  pub content: String,
+    pub window_icon_path: Option<String>,
+    pub title: String,
+    pub content: String,
 }

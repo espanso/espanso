@@ -19,9 +19,9 @@
 
 use anyhow::{Context, Result};
 use espanso_config::{
-  config::ConfigStore,
-  error::{ErrorLevel, NonFatalErrorSet},
-  matches::store::MatchStore,
+    config::ConfigStore,
+    error::{ErrorLevel, NonFatalErrorSet},
+    matches::store::MatchStore,
 };
 use log::{error, info, warn};
 use std::path::Path;
@@ -30,95 +30,95 @@ const DEFAULT_CONFIG_FILE_CONTENT: &str = include_str!("./res/config/default.yml
 const DEFAULT_MATCH_FILE_CONTENT: &str = include_str!("./res/config/base.yml");
 
 pub fn populate_default_config(config_dir: &Path) -> Result<()> {
-  if !config_dir.is_dir() {
-    info!(
-      "generating base configuration directory in: {:?}",
-      config_dir
-    );
-    std::fs::create_dir_all(config_dir)?;
-  }
+    if !config_dir.is_dir() {
+        info!(
+            "generating base configuration directory in: {:?}",
+            config_dir
+        );
+        std::fs::create_dir_all(config_dir)?;
+    }
 
-  let sub_config_dir = config_dir.join("config");
-  let sub_match_dir = config_dir.join("match");
+    let sub_config_dir = config_dir.join("config");
+    let sub_match_dir = config_dir.join("match");
 
-  if !sub_config_dir.is_dir() {
-    info!("generating config directory in: {:?}", sub_config_dir);
-    std::fs::create_dir_all(&sub_config_dir)?;
-  }
-  if !sub_match_dir.is_dir() {
-    info!("generating match directory in: {:?}", sub_match_dir);
-    std::fs::create_dir_all(&sub_match_dir)?;
-  }
+    if !sub_config_dir.is_dir() {
+        info!("generating config directory in: {:?}", sub_config_dir);
+        std::fs::create_dir_all(&sub_config_dir)?;
+    }
+    if !sub_match_dir.is_dir() {
+        info!("generating match directory in: {:?}", sub_match_dir);
+        std::fs::create_dir_all(&sub_match_dir)?;
+    }
 
-  let default_file = sub_config_dir.join("default.yml");
-  let match_file = sub_match_dir.join("base.yml");
+    let default_file = sub_config_dir.join("default.yml");
+    let match_file = sub_match_dir.join("base.yml");
 
-  if !default_file.is_file() {
-    info!(
-      "populating default.yml file with initial content: {:?}",
-      default_file
-    );
-    std::fs::write(default_file, DEFAULT_CONFIG_FILE_CONTENT)?;
-  }
-  if !match_file.is_file() {
-    info!(
-      "populating base.yml file with initial content: {:?}",
-      match_file
-    );
-    std::fs::write(match_file, DEFAULT_MATCH_FILE_CONTENT)?;
-  }
+    if !default_file.is_file() {
+        info!(
+            "populating default.yml file with initial content: {:?}",
+            default_file
+        );
+        std::fs::write(default_file, DEFAULT_CONFIG_FILE_CONTENT)?;
+    }
+    if !match_file.is_file() {
+        info!(
+            "populating base.yml file with initial content: {:?}",
+            match_file
+        );
+        std::fs::write(match_file, DEFAULT_MATCH_FILE_CONTENT)?;
+    }
 
-  Ok(())
+    Ok(())
 }
 
 pub struct ConfigLoadResult {
-  pub config_store: Box<dyn ConfigStore>,
-  pub match_store: Box<dyn MatchStore>,
-  pub is_legacy_config: bool,
-  pub non_fatal_errors: Vec<NonFatalErrorSet>,
+    pub config_store: Box<dyn ConfigStore>,
+    pub match_store: Box<dyn MatchStore>,
+    pub is_legacy_config: bool,
+    pub non_fatal_errors: Vec<NonFatalErrorSet>,
 }
 
 pub fn load_config(config_path: &Path, packages_path: &Path) -> Result<ConfigLoadResult> {
-  if espanso_config::is_legacy_config(config_path) {
-    let (config_store, match_store) = espanso_config::load_legacy(config_path, packages_path)
-      .context("unable to load legacy config")?;
+    if espanso_config::is_legacy_config(config_path) {
+        let (config_store, match_store) = espanso_config::load_legacy(config_path, packages_path)
+            .context("unable to load legacy config")?;
 
-    Ok(ConfigLoadResult {
-      // Apply the built-in patches
-      config_store: crate::patch::patch_store(config_store),
-      match_store,
-      is_legacy_config: true,
-      non_fatal_errors: Vec::new(),
-    })
-  } else {
-    let (config_store, match_store, non_fatal_errors) =
-      espanso_config::load(config_path).context("unable to load config")?;
+        Ok(ConfigLoadResult {
+            // Apply the built-in patches
+            config_store: crate::patch::patch_store(config_store),
+            match_store,
+            is_legacy_config: true,
+            non_fatal_errors: Vec::new(),
+        })
+    } else {
+        let (config_store, match_store, non_fatal_errors) =
+            espanso_config::load(config_path).context("unable to load config")?;
 
-    // TODO: add an option to avoid dumping the errors in the logs
-    if !non_fatal_errors.is_empty() {
-      warn!("------- detected some errors in the configuration: -------");
-      for non_fatal_error_set in &non_fatal_errors {
-        warn!(
-          ">>> {}",
-          non_fatal_error_set.file.to_string_lossy().to_string()
-        );
-        for record in &non_fatal_error_set.errors {
-          if record.level == ErrorLevel::Error {
-            error!("{:?}", record.error);
-          } else {
-            warn!("{:?}", record.error);
-          }
+        // TODO: add an option to avoid dumping the errors in the logs
+        if !non_fatal_errors.is_empty() {
+            warn!("------- detected some errors in the configuration: -------");
+            for non_fatal_error_set in &non_fatal_errors {
+                warn!(
+                    ">>> {}",
+                    non_fatal_error_set.file.to_string_lossy().to_string()
+                );
+                for record in &non_fatal_error_set.errors {
+                    if record.level == ErrorLevel::Error {
+                        error!("{:?}", record.error);
+                    } else {
+                        warn!("{:?}", record.error);
+                    }
+                }
+            }
+            warn!("-----------------------------------------------------------");
         }
-      }
-      warn!("-----------------------------------------------------------");
-    }
 
-    Ok(ConfigLoadResult {
-      // Apply the built-in patches
-      config_store: crate::patch::patch_store(config_store),
-      match_store,
-      is_legacy_config: false,
-      non_fatal_errors,
-    })
-  }
+        Ok(ConfigLoadResult {
+            // Apply the built-in patches
+            config_store: crate::patch::patch_store(config_store),
+            match_store,
+            is_legacy_config: false,
+            non_fatal_errors,
+        })
+    }
 }

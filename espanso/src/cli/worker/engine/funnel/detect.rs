@@ -21,132 +21,132 @@ use crossbeam::channel::{Receiver, Select, SelectedOperation};
 use espanso_detect::event::InputEvent;
 
 use espanso_engine::{
-  event::{
-    input::{HotKeyEvent, Key, KeyboardEvent, MouseButton, MouseEvent, Status, Variant},
-    Event, EventType, SourceId,
-  },
-  funnel,
+    event::{
+        input::{HotKeyEvent, Key, KeyboardEvent, MouseButton, MouseEvent, Status, Variant},
+        Event, EventType, SourceId,
+    },
+    funnel,
 };
 
 pub struct DetectSource {
-  pub receiver: Receiver<(InputEvent, SourceId)>,
+    pub receiver: Receiver<(InputEvent, SourceId)>,
 }
 
 impl<'a> funnel::Source<'a> for DetectSource {
-  fn register(&'a self, select: &mut Select<'a>) -> usize {
-    select.recv(&self.receiver)
-  }
-
-  fn receive(&self, op: SelectedOperation) -> Option<Event> {
-    let (input_event, source_id) = op
-      .recv(&self.receiver)
-      .expect("unable to select data from DetectSource receiver");
-    match input_event {
-      InputEvent::Keyboard(keyboard_event) => Some(Event {
-        source_id,
-        etype: EventType::Keyboard(KeyboardEvent {
-          key: convert_to_engine_key(keyboard_event.key),
-          value: keyboard_event.value,
-          status: convert_to_engine_status(keyboard_event.status),
-          variant: keyboard_event.variant.map(convert_to_engine_variant),
-        }),
-      }),
-      InputEvent::Mouse(mouse_event) => Some(Event {
-        source_id,
-        etype: EventType::Mouse(MouseEvent {
-          status: convert_to_engine_status(mouse_event.status),
-          button: convert_to_engine_mouse_button(mouse_event.button),
-        }),
-      }),
-      InputEvent::HotKey(hotkey_event) => Some(Event {
-        source_id,
-        etype: EventType::HotKey(HotKeyEvent {
-          hotkey_id: hotkey_event.hotkey_id,
-        }),
-      }),
-      InputEvent::AllModifiersReleased => None,
+    fn register(&'a self, select: &mut Select<'a>) -> usize {
+        select.recv(&self.receiver)
     }
-  }
+
+    fn receive(&self, op: SelectedOperation) -> Option<Event> {
+        let (input_event, source_id) = op
+            .recv(&self.receiver)
+            .expect("unable to select data from DetectSource receiver");
+        match input_event {
+            InputEvent::Keyboard(keyboard_event) => Some(Event {
+                source_id,
+                etype: EventType::Keyboard(KeyboardEvent {
+                    key: convert_to_engine_key(keyboard_event.key),
+                    value: keyboard_event.value,
+                    status: convert_to_engine_status(keyboard_event.status),
+                    variant: keyboard_event.variant.map(convert_to_engine_variant),
+                }),
+            }),
+            InputEvent::Mouse(mouse_event) => Some(Event {
+                source_id,
+                etype: EventType::Mouse(MouseEvent {
+                    status: convert_to_engine_status(mouse_event.status),
+                    button: convert_to_engine_mouse_button(mouse_event.button),
+                }),
+            }),
+            InputEvent::HotKey(hotkey_event) => Some(Event {
+                source_id,
+                etype: EventType::HotKey(HotKeyEvent {
+                    hotkey_id: hotkey_event.hotkey_id,
+                }),
+            }),
+            InputEvent::AllModifiersReleased => None,
+        }
+    }
 }
 
 pub fn convert_to_engine_key(key: espanso_detect::event::Key) -> Key {
-  match key {
-    espanso_detect::event::Key::Alt => Key::Alt,
-    espanso_detect::event::Key::CapsLock => Key::CapsLock,
-    espanso_detect::event::Key::Control => Key::Control,
-    espanso_detect::event::Key::Meta => Key::Meta,
-    espanso_detect::event::Key::NumLock => Key::NumLock,
-    espanso_detect::event::Key::Shift => Key::Shift,
-    espanso_detect::event::Key::Enter => Key::Enter,
-    espanso_detect::event::Key::Tab => Key::Tab,
-    espanso_detect::event::Key::Space => Key::Space,
-    espanso_detect::event::Key::ArrowDown => Key::ArrowDown,
-    espanso_detect::event::Key::ArrowLeft => Key::ArrowLeft,
-    espanso_detect::event::Key::ArrowRight => Key::ArrowRight,
-    espanso_detect::event::Key::ArrowUp => Key::ArrowUp,
-    espanso_detect::event::Key::End => Key::End,
-    espanso_detect::event::Key::Home => Key::Home,
-    espanso_detect::event::Key::PageDown => Key::PageDown,
-    espanso_detect::event::Key::PageUp => Key::PageUp,
-    espanso_detect::event::Key::Escape => Key::Escape,
-    espanso_detect::event::Key::Backspace => Key::Backspace,
-    espanso_detect::event::Key::F1 => Key::F1,
-    espanso_detect::event::Key::F2 => Key::F2,
-    espanso_detect::event::Key::F3 => Key::F3,
-    espanso_detect::event::Key::F4 => Key::F4,
-    espanso_detect::event::Key::F5 => Key::F5,
-    espanso_detect::event::Key::F6 => Key::F6,
-    espanso_detect::event::Key::F7 => Key::F7,
-    espanso_detect::event::Key::F8 => Key::F8,
-    espanso_detect::event::Key::F9 => Key::F9,
-    espanso_detect::event::Key::F10 => Key::F10,
-    espanso_detect::event::Key::F11 => Key::F11,
-    espanso_detect::event::Key::F12 => Key::F12,
-    espanso_detect::event::Key::F13 => Key::F13,
-    espanso_detect::event::Key::F14 => Key::F14,
-    espanso_detect::event::Key::F15 => Key::F15,
-    espanso_detect::event::Key::F16 => Key::F16,
-    espanso_detect::event::Key::F17 => Key::F17,
-    espanso_detect::event::Key::F18 => Key::F18,
-    espanso_detect::event::Key::F19 => Key::F19,
-    espanso_detect::event::Key::F20 => Key::F20,
-    espanso_detect::event::Key::Numpad0 => Key::Numpad0,
-    espanso_detect::event::Key::Numpad1 => Key::Numpad1,
-    espanso_detect::event::Key::Numpad2 => Key::Numpad2,
-    espanso_detect::event::Key::Numpad3 => Key::Numpad3,
-    espanso_detect::event::Key::Numpad4 => Key::Numpad4,
-    espanso_detect::event::Key::Numpad5 => Key::Numpad5,
-    espanso_detect::event::Key::Numpad6 => Key::Numpad6,
-    espanso_detect::event::Key::Numpad7 => Key::Numpad7,
-    espanso_detect::event::Key::Numpad8 => Key::Numpad8,
-    espanso_detect::event::Key::Numpad9 => Key::Numpad9,
-    espanso_detect::event::Key::Other(code) => Key::Other(code),
-  }
+    match key {
+        espanso_detect::event::Key::Alt => Key::Alt,
+        espanso_detect::event::Key::CapsLock => Key::CapsLock,
+        espanso_detect::event::Key::Control => Key::Control,
+        espanso_detect::event::Key::Meta => Key::Meta,
+        espanso_detect::event::Key::NumLock => Key::NumLock,
+        espanso_detect::event::Key::Shift => Key::Shift,
+        espanso_detect::event::Key::Enter => Key::Enter,
+        espanso_detect::event::Key::Tab => Key::Tab,
+        espanso_detect::event::Key::Space => Key::Space,
+        espanso_detect::event::Key::ArrowDown => Key::ArrowDown,
+        espanso_detect::event::Key::ArrowLeft => Key::ArrowLeft,
+        espanso_detect::event::Key::ArrowRight => Key::ArrowRight,
+        espanso_detect::event::Key::ArrowUp => Key::ArrowUp,
+        espanso_detect::event::Key::End => Key::End,
+        espanso_detect::event::Key::Home => Key::Home,
+        espanso_detect::event::Key::PageDown => Key::PageDown,
+        espanso_detect::event::Key::PageUp => Key::PageUp,
+        espanso_detect::event::Key::Escape => Key::Escape,
+        espanso_detect::event::Key::Backspace => Key::Backspace,
+        espanso_detect::event::Key::F1 => Key::F1,
+        espanso_detect::event::Key::F2 => Key::F2,
+        espanso_detect::event::Key::F3 => Key::F3,
+        espanso_detect::event::Key::F4 => Key::F4,
+        espanso_detect::event::Key::F5 => Key::F5,
+        espanso_detect::event::Key::F6 => Key::F6,
+        espanso_detect::event::Key::F7 => Key::F7,
+        espanso_detect::event::Key::F8 => Key::F8,
+        espanso_detect::event::Key::F9 => Key::F9,
+        espanso_detect::event::Key::F10 => Key::F10,
+        espanso_detect::event::Key::F11 => Key::F11,
+        espanso_detect::event::Key::F12 => Key::F12,
+        espanso_detect::event::Key::F13 => Key::F13,
+        espanso_detect::event::Key::F14 => Key::F14,
+        espanso_detect::event::Key::F15 => Key::F15,
+        espanso_detect::event::Key::F16 => Key::F16,
+        espanso_detect::event::Key::F17 => Key::F17,
+        espanso_detect::event::Key::F18 => Key::F18,
+        espanso_detect::event::Key::F19 => Key::F19,
+        espanso_detect::event::Key::F20 => Key::F20,
+        espanso_detect::event::Key::Numpad0 => Key::Numpad0,
+        espanso_detect::event::Key::Numpad1 => Key::Numpad1,
+        espanso_detect::event::Key::Numpad2 => Key::Numpad2,
+        espanso_detect::event::Key::Numpad3 => Key::Numpad3,
+        espanso_detect::event::Key::Numpad4 => Key::Numpad4,
+        espanso_detect::event::Key::Numpad5 => Key::Numpad5,
+        espanso_detect::event::Key::Numpad6 => Key::Numpad6,
+        espanso_detect::event::Key::Numpad7 => Key::Numpad7,
+        espanso_detect::event::Key::Numpad8 => Key::Numpad8,
+        espanso_detect::event::Key::Numpad9 => Key::Numpad9,
+        espanso_detect::event::Key::Other(code) => Key::Other(code),
+    }
 }
 
 pub fn convert_to_engine_variant(variant: espanso_detect::event::Variant) -> Variant {
-  match variant {
-    espanso_detect::event::Variant::Left => Variant::Left,
-    espanso_detect::event::Variant::Right => Variant::Right,
-  }
+    match variant {
+        espanso_detect::event::Variant::Left => Variant::Left,
+        espanso_detect::event::Variant::Right => Variant::Right,
+    }
 }
 
 pub fn convert_to_engine_status(status: espanso_detect::event::Status) -> Status {
-  match status {
-    espanso_detect::event::Status::Pressed => Status::Pressed,
-    espanso_detect::event::Status::Released => Status::Released,
-  }
+    match status {
+        espanso_detect::event::Status::Pressed => Status::Pressed,
+        espanso_detect::event::Status::Released => Status::Released,
+    }
 }
 
 pub fn convert_to_engine_mouse_button(button: espanso_detect::event::MouseButton) -> MouseButton {
-  match button {
-    espanso_detect::event::MouseButton::Left => MouseButton::Left,
-    espanso_detect::event::MouseButton::Right => MouseButton::Right,
-    espanso_detect::event::MouseButton::Middle => MouseButton::Middle,
-    espanso_detect::event::MouseButton::Button1 => MouseButton::Button1,
-    espanso_detect::event::MouseButton::Button2 => MouseButton::Button2,
-    espanso_detect::event::MouseButton::Button3 => MouseButton::Button3,
-    espanso_detect::event::MouseButton::Button4 => MouseButton::Button4,
-    espanso_detect::event::MouseButton::Button5 => MouseButton::Button5,
-  }
+    match button {
+        espanso_detect::event::MouseButton::Left => MouseButton::Left,
+        espanso_detect::event::MouseButton::Right => MouseButton::Right,
+        espanso_detect::event::MouseButton::Middle => MouseButton::Middle,
+        espanso_detect::event::MouseButton::Button1 => MouseButton::Button1,
+        espanso_detect::event::MouseButton::Button2 => MouseButton::Button2,
+        espanso_detect::event::MouseButton::Button3 => MouseButton::Button3,
+        espanso_detect::event::MouseButton::Button4 => MouseButton::Button4,
+        espanso_detect::event::MouseButton::Button5 => MouseButton::Button5,
+    }
 }

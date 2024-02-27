@@ -21,90 +21,95 @@ use crate::{Extension, ExtensionOutput, ExtensionResult, Params};
 use thiserror::Error;
 
 pub trait ClipboardProvider {
-  fn get_text(&self) -> Option<String>;
+    fn get_text(&self) -> Option<String>;
 }
 
 pub struct ClipboardExtension<'a> {
-  provider: &'a dyn ClipboardProvider,
+    provider: &'a dyn ClipboardProvider,
 }
 
 #[allow(clippy::new_without_default)]
 impl<'a> ClipboardExtension<'a> {
-  pub fn new(provider: &'a dyn ClipboardProvider) -> Self {
-    Self { provider }
-  }
+    pub fn new(provider: &'a dyn ClipboardProvider) -> Self {
+        Self { provider }
+    }
 }
 
 impl<'a> Extension for ClipboardExtension<'a> {
-  fn name(&self) -> &str {
-    "clipboard"
-  }
-
-  fn calculate(&self, _: &crate::Context, _: &crate::Scope, _: &Params) -> crate::ExtensionResult {
-    if let Some(clipboard) = self.provider.get_text() {
-      ExtensionResult::Success(ExtensionOutput::Single(clipboard))
-    } else {
-      ExtensionResult::Error(ClipboardExtensionError::MissingClipboard.into())
+    fn name(&self) -> &str {
+        "clipboard"
     }
-  }
+
+    fn calculate(
+        &self,
+        _: &crate::Context,
+        _: &crate::Scope,
+        _: &Params,
+    ) -> crate::ExtensionResult {
+        if let Some(clipboard) = self.provider.get_text() {
+            ExtensionResult::Success(ExtensionOutput::Single(clipboard))
+        } else {
+            ExtensionResult::Error(ClipboardExtensionError::MissingClipboard.into())
+        }
+    }
 }
 
 #[derive(Error, Debug)]
 pub enum ClipboardExtensionError {
-  #[error("clipboard provider returned error")]
-  MissingClipboard,
+    #[error("clipboard provider returned error")]
+    MissingClipboard,
 }
 
 #[cfg(test)]
 mod tests {
-  use std::collections::HashMap;
+    use std::collections::HashMap;
 
-  use super::*;
+    use super::*;
 
-  struct MockClipboardProvider {
-    return_none: bool,
-  }
-
-  impl super::ClipboardProvider for MockClipboardProvider {
-    fn get_text(&self) -> Option<String> {
-      if self.return_none {
-        None
-      } else {
-        Some("test".to_string())
-      }
+    struct MockClipboardProvider {
+        return_none: bool,
     }
-  }
 
-  #[test]
-  fn clipboard_works_correctly() {
-    let provider = MockClipboardProvider { return_none: false };
-    let extension = ClipboardExtension::new(&provider);
+    impl super::ClipboardProvider for MockClipboardProvider {
+        fn get_text(&self) -> Option<String> {
+            if self.return_none {
+                None
+            } else {
+                Some("test".to_string())
+            }
+        }
+    }
 
-    assert_eq!(
-      extension
-        .calculate(
-          &crate::Context::default(),
-          &HashMap::default(),
-          &Params::new()
-        )
-        .into_success()
-        .unwrap(),
-      ExtensionOutput::Single("test".to_string())
-    );
-  }
+    #[test]
+    fn clipboard_works_correctly() {
+        let provider = MockClipboardProvider { return_none: false };
+        let extension = ClipboardExtension::new(&provider);
 
-  #[test]
-  fn none_clipboard_produces_error() {
-    let provider = MockClipboardProvider { return_none: true };
-    let extension = ClipboardExtension::new(&provider);
+        assert_eq!(
+            extension
+                .calculate(
+                    &crate::Context::default(),
+                    &HashMap::default(),
+                    &Params::new()
+                )
+                .into_success()
+                .unwrap(),
+            ExtensionOutput::Single("test".to_string())
+        );
+    }
 
-    assert!(matches!(
-      extension.calculate(
-        &crate::Context::default(),
-        &HashMap::default(),
-        &Params::new()
-      ),
-      ExtensionResult::Error(_)
-    ));
-  }
+    #[test]
+    fn none_clipboard_produces_error() {
+        let provider = MockClipboardProvider { return_none: true };
+        let extension = ClipboardExtension::new(&provider);
+
+        assert!(matches!(
+            extension.calculate(
+                &crate::Context::default(),
+                &HashMap::default(),
+                &Params::new()
+            ),
+            ExtensionResult::Error(_)
+        ));
+    }
 }

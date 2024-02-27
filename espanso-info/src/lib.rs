@@ -35,38 +35,38 @@ mod wayland;
 mod cocoa;
 
 pub trait AppInfoProvider {
-  fn get_info(&self) -> AppInfo;
+    fn get_info(&self) -> AppInfo;
 }
 
 #[derive(Debug, Clone)]
 pub struct AppInfo {
-  pub title: Option<String>,
-  pub exec: Option<String>,
-  pub class: Option<String>,
+    pub title: Option<String>,
+    pub exec: Option<String>,
+    pub class: Option<String>,
 }
 
 #[cfg(target_os = "windows")]
 pub fn get_provider() -> Result<Box<dyn AppInfoProvider>> {
-  info!("using Win32AppInfoProvider");
-  Ok(Box::new(win32::WinAppInfoProvider::new()))
+    info!("using Win32AppInfoProvider");
+    Ok(Box::new(win32::WinAppInfoProvider::new()))
 }
 
 #[cfg(target_os = "macos")]
 pub fn get_provider() -> Result<Box<dyn AppInfoProvider>> {
-  info!("using CocoaAppInfoProvider");
-  Ok(Box::new(cocoa::CocoaAppInfoProvider::new()))
+    info!("using CocoaAppInfoProvider");
+    Ok(Box::new(cocoa::CocoaAppInfoProvider::new()))
 }
 
 #[cfg(target_os = "linux")]
 #[cfg(not(feature = "wayland"))]
 pub fn get_provider() -> Result<Box<dyn AppInfoProvider>> {
-  info!("using X11AppInfoProvider");
-  Ok(Box::new(x11::X11AppInfoProvider::new()))
+    info!("using X11AppInfoProvider");
+    Ok(Box::new(x11::X11AppInfoProvider::new()))
 }
 
 #[cfg(target_os = "linux")]
 #[cfg(feature = "wayland")]
 pub fn get_provider() -> Result<Box<dyn AppInfoProvider>> {
-  info!("using WaylandAppInfoProvider");
-  Ok(Box::new(wayland::WaylandAppInfoProvider::new()))
+    info!("using WaylandAppInfoProvider");
+    Ok(Box::new(wayland::WaylandAppInfoProvider::new()))
 }

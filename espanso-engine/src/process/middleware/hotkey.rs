@@ -19,39 +19,39 @@
 
 use super::super::Middleware;
 use crate::event::{
-  internal::{DetectedMatch, MatchesDetectedEvent},
-  Event, EventType,
+    internal::{DetectedMatch, MatchesDetectedEvent},
+    Event, EventType,
 };
 
 pub struct HotKeyMiddleware {}
 
 impl HotKeyMiddleware {
-  pub fn new() -> Self {
-    Self {}
-  }
+    pub fn new() -> Self {
+        Self {}
+    }
 }
 
 impl Middleware for HotKeyMiddleware {
-  fn name(&self) -> &'static str {
-    "hotkey"
-  }
-
-  fn next(&self, event: Event, _: &mut dyn FnMut(Event)) -> Event {
-    if let EventType::HotKey(m_event) = &event.etype {
-      return Event::caused_by(
-        event.source_id,
-        EventType::MatchesDetected(MatchesDetectedEvent {
-          matches: vec![DetectedMatch {
-            id: m_event.hotkey_id,
-            ..Default::default()
-          }],
-          is_search: false,
-        }),
-      );
+    fn name(&self) -> &'static str {
+        "hotkey"
     }
 
-    event
-  }
+    fn next(&self, event: Event, _: &mut dyn FnMut(Event)) -> Event {
+        if let EventType::HotKey(m_event) = &event.etype {
+            return Event::caused_by(
+                event.source_id,
+                EventType::MatchesDetected(MatchesDetectedEvent {
+                    matches: vec![DetectedMatch {
+                        id: m_event.hotkey_id,
+                        ..Default::default()
+                    }],
+                    is_search: false,
+                }),
+            );
+        }
+
+        event
+    }
 }
 
 // TODO: test

@@ -25,27 +25,27 @@ use crate::event::{Event, EventType};
 pub struct ExitMiddleware {}
 
 impl ExitMiddleware {
-  pub fn new() -> Self {
-    Self {}
-  }
+    pub fn new() -> Self {
+        Self {}
+    }
 }
 
 impl Middleware for ExitMiddleware {
-  fn name(&self) -> &'static str {
-    "exit"
-  }
-
-  fn next(&self, event: Event, _: &mut dyn FnMut(Event)) -> Event {
-    if let EventType::ExitRequested(mode) = &event.etype {
-      debug!(
-        "received ExitRequested event with mode: {:?}, dispatching exit",
-        mode
-      );
-      return Event::caused_by(event.source_id, EventType::Exit(mode.clone()));
+    fn name(&self) -> &'static str {
+        "exit"
     }
 
-    event
-  }
+    fn next(&self, event: Event, _: &mut dyn FnMut(Event)) -> Event {
+        if let EventType::ExitRequested(mode) = &event.etype {
+            debug!(
+                "received ExitRequested event with mode: {:?}, dispatching exit",
+                mode
+            );
+            return Event::caused_by(event.source_id, EventType::Exit(mode.clone()));
+        }
+
+        event
+    }
 }
 
 // TODO: test

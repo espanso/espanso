@@ -23,31 +23,31 @@ use anyhow::Result;
 use log::error;
 
 pub trait ContextMenuHandler {
-  fn show_context_menu(&self, items: &[MenuItem]) -> Result<()>;
+    fn show_context_menu(&self, items: &[MenuItem]) -> Result<()>;
 }
 
 pub struct ContextMenuExecutor<'a> {
-  handler: &'a dyn ContextMenuHandler,
+    handler: &'a dyn ContextMenuHandler,
 }
 
 impl<'a> ContextMenuExecutor<'a> {
-  pub fn new(handler: &'a dyn ContextMenuHandler) -> Self {
-    Self { handler }
-  }
+    pub fn new(handler: &'a dyn ContextMenuHandler) -> Self {
+        Self { handler }
+    }
 }
 
 impl<'a> Executor for ContextMenuExecutor<'a> {
-  fn execute(&self, event: &Event) -> bool {
-    if let EventType::ShowContextMenu(context_menu_event) = &event.etype {
-      if let Err(error) = self.handler.show_context_menu(&context_menu_event.items) {
-        error!("context menu handler reported an error: {:?}", error);
-      }
+    fn execute(&self, event: &Event) -> bool {
+        if let EventType::ShowContextMenu(context_menu_event) = &event.etype {
+            if let Err(error) = self.handler.show_context_menu(&context_menu_event.items) {
+                error!("context menu handler reported an error: {:?}", error);
+            }
 
-      return true;
+            return true;
+        }
+
+        false
     }
-
-    false
-  }
 }
 
 // TODO: test

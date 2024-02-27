@@ -20,10 +20,10 @@
 use log::debug;
 
 use self::{
-  dispatch::Dispatcher,
-  event::{Event, EventType, ExitMode},
-  funnel::{Funnel, FunnelResult},
-  process::Processor,
+    dispatch::Dispatcher,
+    event::{Event, EventType, ExitMode},
+    funnel::{Funnel, FunnelResult},
+    process::Processor,
 };
 
 pub mod dispatch;
@@ -32,46 +32,46 @@ pub mod funnel;
 pub mod process;
 
 pub struct Engine<'a> {
-  funnel: &'a dyn Funnel,
-  processor: &'a mut dyn Processor,
-  dispatcher: &'a dyn Dispatcher,
-}
-
-impl<'a> Engine<'a> {
-  pub fn new(
     funnel: &'a dyn Funnel,
     processor: &'a mut dyn Processor,
     dispatcher: &'a dyn Dispatcher,
-  ) -> Self {
-    Self {
-      funnel,
-      processor,
-      dispatcher,
-    }
-  }
+}
 
-  pub fn run(&mut self) -> ExitMode {
-    loop {
-      match self.funnel.receive() {
-        FunnelResult::Event(event) => {
-          let processed_events = self.processor.process(event);
-          for event in processed_events {
-            if let EventType::Exit(mode) = &event.etype {
-              debug!("exit event received with mode {:?}, exiting engine", mode);
-              return mode.clone();
+impl<'a> Engine<'a> {
+    pub fn new(
+        funnel: &'a dyn Funnel,
+        processor: &'a mut dyn Processor,
+        dispatcher: &'a dyn Dispatcher,
+    ) -> Self {
+        Self {
+            funnel,
+            processor,
+            dispatcher,
+        }
+    }
+
+    pub fn run(&mut self) -> ExitMode {
+        loop {
+            match self.funnel.receive() {
+                FunnelResult::Event(event) => {
+                    let processed_events = self.processor.process(event);
+                    for event in processed_events {
+                        if let EventType::Exit(mode) = &event.etype {
+                            debug!("exit event received with mode {:?}, exiting engine", mode);
+                            return mode.clone();
+                        }
+
+                        self.dispatcher.dispatch(event);
+                    }
+                }
+                FunnelResult::EndOfStream => {
+                    debug!("end of stream received");
+                    return ExitMode::Exit;
+                }
+                FunnelResult::Skipped => {
+                    // This event has been skipped, no need to handle it
+                }
             }
-
-            self.dispatcher.dispatch(event);
-          }
         }
-        FunnelResult::EndOfStream => {
-          debug!("end of stream received");
-          return ExitMode::Exit;
-        }
-        FunnelResult::Skipped => {
-          // This event has been skipped, no need to handle it
-        }
-      }
     }
-  }
 }

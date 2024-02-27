@@ -20,13 +20,13 @@
 use anyhow::Result;
 
 pub fn can_use_capabilities() -> bool {
-  false
+    false
 }
 
 pub fn grant_capabilities() -> Result<()> {
-  Ok(())
+    Ok(())
 }
 
 pub fn clear_capabilities() -> Result<()> {
-  Ok(())
+    Ok(())
 }

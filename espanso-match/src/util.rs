@@ -19,31 +19,31 @@
 
 #[cfg(test)]
 pub(crate) mod tests {
-  use crate::{
-    event::{Event, Key},
-    MatchResult, Matcher,
-  };
+    use crate::{
+        event::{Event, Key},
+        MatchResult, Matcher,
+    };
 
-  pub(crate) fn get_matches_after_str<'a, Id: Clone, S, M: Matcher<'a, S, Id>>(
-    string: &str,
-    matcher: &'a M,
-  ) -> Vec<MatchResult<Id>> {
-    let mut prev_state = None;
-    let mut matches = Vec::new();
+    pub(crate) fn get_matches_after_str<'a, Id: Clone, S, M: Matcher<'a, S, Id>>(
+        string: &str,
+        matcher: &'a M,
+    ) -> Vec<MatchResult<Id>> {
+        let mut prev_state = None;
+        let mut matches = Vec::new();
 
-    for c in string.chars() {
-      let (state, vec_matches) = matcher.process(
-        prev_state.as_ref(),
-        Event::Key {
-          key: Key::Other,
-          chars: Some(c.to_string()),
-        },
-      );
+        for c in string.chars() {
+            let (state, vec_matches) = matcher.process(
+                prev_state.as_ref(),
+                Event::Key {
+                    key: Key::Other,
+                    chars: Some(c.to_string()),
+                },
+            );
 
-      prev_state = Some(state);
-      matches = vec_matches;
+            prev_state = Some(state);
+            matches = vec_matches;
+        }
+
+        matches
     }
-
-    matches
-  }
 }

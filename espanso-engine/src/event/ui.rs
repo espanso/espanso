@@ -19,42 +19,42 @@
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct ShowContextMenuEvent {
-  pub items: Vec<MenuItem>,
+    pub items: Vec<MenuItem>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum MenuItem {
-  Simple(SimpleMenuItem),
-  Sub(SubMenuItem),
-  Separator,
+    Simple(SimpleMenuItem),
+    Sub(SubMenuItem),
+    Separator,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SimpleMenuItem {
-  pub id: u32,
-  pub label: String,
+    pub id: u32,
+    pub label: String,
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct SubMenuItem {
-  pub label: String,
-  pub items: Vec<MenuItem>,
+    pub label: String,
+    pub items: Vec<MenuItem>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct IconStatusChangeEvent {
-  pub status: IconStatus,
+    pub status: IconStatus,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum IconStatus {
-  Enabled,
-  Disabled,
-  SecureInputDisabled,
+    Enabled,
+    Disabled,
+    SecureInputDisabled,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ShowTextEvent {
-  pub title: String,
-  pub text: String,
+    pub title: String,
+    pub text: String,
 }

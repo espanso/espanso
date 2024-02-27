@@ -22,45 +22,49 @@ use crate::{package::DefaultPackage, resolver::resolve_package, Package, Package
 use anyhow::Result;
 
 pub struct GitLabPackageProvider {
-  repo_author: String,
-  repo_name: String,
-  repo_branch: String,
+    repo_author: String,
+    repo_name: String,
+    repo_branch: String,
 }
 
 impl GitLabPackageProvider {
-  pub fn new(repo_author: String, repo_name: String, repo_branch: String) -> Self {
-    Self {
-      repo_author,
-      repo_name,
-      repo_branch,
+    pub fn new(repo_author: String, repo_name: String, repo_branch: String) -> Self {
+        Self {
+            repo_author,
+            repo_name,
+            repo_branch,
+        }
     }
-  }
 }
 
 impl PackageProvider for GitLabPackageProvider {
-  fn name(&self) -> String {
-    "gitlab".to_string()
-  }
+    fn name(&self) -> String {
+        "gitlab".to_string()
+    }
 
-  fn download(&self, package: &PackageSpecifier) -> Result<Box<dyn Package>> {
-    let download_url = format!(
-      "https://gitlab.com/{}/{}/-/archive/{}/{}-{}.zip",
-      &self.repo_author, &self.repo_name, &self.repo_branch, &self.repo_name, &self.repo_branch
-    );
+    fn download(&self, package: &PackageSpecifier) -> Result<Box<dyn Package>> {
+        let download_url = format!(
+            "https://gitlab.com/{}/{}/-/archive/{}/{}-{}.zip",
+            &self.repo_author,
+            &self.repo_name,
+            &self.repo_branch,
+            &self.repo_name,
+            &self.repo_branch
+        );
 
-    let temp_dir = tempdir::TempDir::new("espanso-package-download")?;
+        let temp_dir = tempdir::TempDir::new("espanso-package-download")?;
 
-    crate::util::download::download_and_extract_zip(&download_url, temp_dir.path())?;
+        crate::util::download::download_and_extract_zip(&download_url, temp_dir.path())?;
 
-    let resolved_package =
-      resolve_package(temp_dir.path(), &package.name, package.version.as_deref())?;
+        let resolved_package =
+            resolve_package(temp_dir.path(), &package.name, package.version.as_deref())?;
 
-    let package = DefaultPackage::new(
-      resolved_package.manifest,
-      temp_dir,
-      resolved_package.base_dir,
-    );
+        let package = DefaultPackage::new(
+            resolved_package.manifest,
+            temp_dir,
+            resolved_package.base_dir,
+        );
 
-    Ok(Box::new(package))
-  }
+        Ok(Box::new(package))
+    }
 }

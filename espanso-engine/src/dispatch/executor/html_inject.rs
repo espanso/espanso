@@ -21,44 +21,47 @@ use anyhow::Result;
 use log::error;
 
 use crate::{
-  dispatch::Executor,
-  event::{Event, EventType},
+    dispatch::Executor,
+    event::{Event, EventType},
 };
 
 pub trait HtmlInjector {
-  fn inject_html(&self, html: &str, fallback: &str) -> Result<()>;
+    fn inject_html(&self, html: &str, fallback: &str) -> Result<()>;
 }
 
 pub struct HtmlInjectExecutor<'a> {
-  injector: &'a dyn HtmlInjector,
+    injector: &'a dyn HtmlInjector,
 }
 
 impl<'a> HtmlInjectExecutor<'a> {
-  pub fn new(injector: &'a dyn HtmlInjector) -> Self {
-    Self { injector }
-  }
+    pub fn new(injector: &'a dyn HtmlInjector) -> Self {
+        Self { injector }
+    }
 }
 
 impl<'a> Executor for HtmlInjectExecutor<'a> {
-  fn execute(&self, event: &Event) -> bool {
-    if let EventType::HtmlInject(inject_event) = &event.etype {
-      // Render the text fallback for those applications that don't support HTML clipboard
-      let decorator = html2text::render::text_renderer::TrivialDecorator::new();
-      let fallback_text =
-        html2text::from_read_with_decorator(inject_event.html.as_bytes(), 1_000_000, decorator);
+    fn execute(&self, event: &Event) -> bool {
+        if let EventType::HtmlInject(inject_event) = &event.etype {
+            // Render the text fallback for those applications that don't support HTML clipboard
+            let decorator = html2text::render::text_renderer::TrivialDecorator::new();
+            let fallback_text = html2text::from_read_with_decorator(
+                inject_event.html.as_bytes(),
+                1_000_000,
+                decorator,
+            );
 
-      if let Err(error) = self
-        .injector
-        .inject_html(&inject_event.html, &fallback_text)
-      {
-        error!("html injector reported an error: {:?}", error);
-      }
+            if let Err(error) = self
+                .injector
+                .inject_html(&inject_event.html, &fallback_text)
+            {
+                error!("html injector reported an error: {:?}", error);
+            }
 
-      return true;
+            return true;
+        }
+
+        false
     }
-
-    false
-  }
 }
 
 // TODO: test

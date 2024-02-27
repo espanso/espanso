@@ -19,65 +19,65 @@
 
 #[cfg(target_os = "windows")]
 fn cc_config() {
-  println!("cargo:rerun-if-changed=src/win32/native.cpp");
-  println!("cargo:rerun-if-changed=src/win32/native.h");
-  cc::Build::new()
-    .cpp(true)
-    .include("src/win32/native.h")
-    .file("src/win32/native.cpp")
-    .compile("espansoinject");
+    println!("cargo:rerun-if-changed=src/win32/native.cpp");
+    println!("cargo:rerun-if-changed=src/win32/native.h");
+    cc::Build::new()
+        .cpp(true)
+        .include("src/win32/native.h")
+        .file("src/win32/native.cpp")
+        .compile("espansoinject");
 
-  println!("cargo:rustc-link-lib=static=espansoinject");
-  println!("cargo:rustc-link-lib=dylib=user32");
-  #[cfg(target_env = "gnu")]
-  println!("cargo:rustc-link-lib=dylib=stdc++");
+    println!("cargo:rustc-link-lib=static=espansoinject");
+    println!("cargo:rustc-link-lib=dylib=user32");
+    #[cfg(target_env = "gnu")]
+    println!("cargo:rustc-link-lib=dylib=stdc++");
 }
 
 #[cfg(target_os = "linux")]
 fn cc_config() {
-  println!("cargo:rerun-if-changed=src/evdev/native.h");
-  println!("cargo:rerun-if-changed=src/evdev/native.c");
-  println!("cargo:rerun-if-changed=src/x11/xdotool/vendor/xdo.c");
-  println!("cargo:rerun-if-changed=src/x11/xdotool/vendor/xdo.h");
-  println!("cargo:rerun-if-changed=src/x11/xdotool/vendor/xdo_util.h");
-  cc::Build::new()
-    .include("src/evdev")
-    .file("src/evdev/native.c")
-    .compile("espansoinjectev");
-
-  println!("cargo:rustc-link-search=native=/usr/lib/x86_64-linux-gnu/");
-  println!("cargo:rustc-link-lib=static=espansoinjectev");
-  println!("cargo:rustc-link-lib=dylib=xkbcommon");
-
-  if cfg!(not(feature = "wayland")) {
+    println!("cargo:rerun-if-changed=src/evdev/native.h");
+    println!("cargo:rerun-if-changed=src/evdev/native.c");
+    println!("cargo:rerun-if-changed=src/x11/xdotool/vendor/xdo.c");
+    println!("cargo:rerun-if-changed=src/x11/xdotool/vendor/xdo.h");
+    println!("cargo:rerun-if-changed=src/x11/xdotool/vendor/xdo_util.h");
     cc::Build::new()
-      .cpp(false)
-      .include("src/x11/xdotool/vendor/xdo.h")
-      .include("src/x11/xdotool/vendor/xdo_util.h")
-      .file("src/x11/xdotool/vendor/xdo.c")
-      .compile("xdotoolvendor");
+        .include("src/evdev")
+        .file("src/evdev/native.c")
+        .compile("espansoinjectev");
 
-    println!("cargo:rustc-link-lib=static=xdotoolvendor");
-    println!("cargo:rustc-link-lib=dylib=X11");
-    println!("cargo:rustc-link-lib=dylib=Xtst");
-  }
+    println!("cargo:rustc-link-search=native=/usr/lib/x86_64-linux-gnu/");
+    println!("cargo:rustc-link-lib=static=espansoinjectev");
+    println!("cargo:rustc-link-lib=dylib=xkbcommon");
+
+    if cfg!(not(feature = "wayland")) {
+        cc::Build::new()
+            .cpp(false)
+            .include("src/x11/xdotool/vendor/xdo.h")
+            .include("src/x11/xdotool/vendor/xdo_util.h")
+            .file("src/x11/xdotool/vendor/xdo.c")
+            .compile("xdotoolvendor");
+
+        println!("cargo:rustc-link-lib=static=xdotoolvendor");
+        println!("cargo:rustc-link-lib=dylib=X11");
+        println!("cargo:rustc-link-lib=dylib=Xtst");
+    }
 }
 
 #[cfg(target_os = "macos")]
 fn cc_config() {
-  println!("cargo:rerun-if-changed=src/mac/native.mm");
-  println!("cargo:rerun-if-changed=src/mac/native.h");
-  cc::Build::new()
-    .cpp(true)
-    .include("src/mac/native.h")
-    .file("src/mac/native.mm")
-    .compile("espansoinject");
-  println!("cargo:rustc-link-lib=dylib=c++");
-  println!("cargo:rustc-link-lib=static=espansoinject");
-  println!("cargo:rustc-link-lib=framework=Cocoa");
-  println!("cargo:rustc-link-lib=framework=CoreGraphics");
+    println!("cargo:rerun-if-changed=src/mac/native.mm");
+    println!("cargo:rerun-if-changed=src/mac/native.h");
+    cc::Build::new()
+        .cpp(true)
+        .include("src/mac/native.h")
+        .file("src/mac/native.mm")
+        .compile("espansoinject");
+    println!("cargo:rustc-link-lib=dylib=c++");
+    println!("cargo:rustc-link-lib=static=espansoinject");
+    println!("cargo:rustc-link-lib=framework=Cocoa");
+    println!("cargo:rustc-link-lib=framework=CoreGraphics");
 }
 
 fn main() {
-  cc_config();
+    cc_config();
 }
