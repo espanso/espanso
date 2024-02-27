@@ -41,6 +41,12 @@ jobs:
         run: |
           cargo install rust-script --version "0.7.0"
           cargo install cargo-make --version 0.37.5
+      - name: Check clippy
+        run: |
+          rustup component add clippy
+          cargo clippy -- -D warnings
+        env:
+          MACOSX_DEPLOYMENT_TARGET: "10.13"
       # wxWidgets builds (internal to espanso-modulo) are by far the largest bottleneck
       # in the current pipeline, so we cache the results for a faster compilation process
       - name: "Cache wxWidgets builds"
@@ -53,12 +59,6 @@ jobs:
       - name: Build
         run: |
           cargo make build-binary
-      - name: Check clippy
-        run: |
-          rustup component add clippy
-          cargo clippy -- -D warnings
-        env:
-          MACOSX_DEPLOYMENT_TARGET: "10.13"
 
   test:
     strategy:
@@ -95,6 +95,10 @@ jobs:
         run: |
           rustup component add rustfmt
           cargo fmt --all -- --check
+      - name: Check clippy
+        run: |
+          rustup component add clippy
+          cargo clippy -p espanso --features wayland -- -D warnings
       - name: Install Linux dependencies
         run: |
           sudo apt-get update
@@ -105,10 +109,6 @@ jobs:
           cargo install cargo-make --version 0.37.5
       - name: Build
         run: cargo make --env NO_X11=true -- build-binary
-      - name: Check clippy
-        run: |
-          rustup component add clippy
-          cargo clippy -p espanso --features wayland -- -D warnings
   
   test-wayland:
     runs-on: ubuntu-latest
