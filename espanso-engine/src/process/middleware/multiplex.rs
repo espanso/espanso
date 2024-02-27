@@ -23,36 +23,36 @@ use super::super::Middleware;
 use crate::event::{internal::DetectedMatch, Event, EventType};
 
 pub trait Multiplexer {
-  fn convert(&self, m: DetectedMatch) -> Option<EventType>;
+    fn convert(&self, m: DetectedMatch) -> Option<EventType>;
 }
 
 pub struct MultiplexMiddleware<'a> {
-  multiplexer: &'a dyn Multiplexer,
+    multiplexer: &'a dyn Multiplexer,
 }
 
 impl<'a> MultiplexMiddleware<'a> {
-  pub fn new(multiplexer: &'a dyn Multiplexer) -> Self {
-    Self { multiplexer }
-  }
+    pub fn new(multiplexer: &'a dyn Multiplexer) -> Self {
+        Self { multiplexer }
+    }
 }
 
 impl<'a> Middleware for MultiplexMiddleware<'a> {
-  fn name(&self) -> &'static str {
-    "multiplex"
-  }
-
-  fn next(&self, event: Event, _: &mut dyn FnMut(Event)) -> Event {
-    if let EventType::CauseCompensatedMatch(m_event) = event.etype {
-      return if let Some(new_event) = self.multiplexer.convert(m_event.m) {
-        Event::caused_by(event.source_id, new_event)
-      } else {
-        error!("match multiplexing failed");
-        Event::caused_by(event.source_id, EventType::NOOP)
-      };
+    fn name(&self) -> &'static str {
+        "multiplex"
     }
 
-    event
-  }
+    fn next(&self, event: Event, _: &mut dyn FnMut(Event)) -> Event {
+        if let EventType::CauseCompensatedMatch(m_event) = event.etype {
+            return if let Some(new_event) = self.multiplexer.convert(m_event.m) {
+                Event::caused_by(event.source_id, new_event)
+            } else {
+                error!("match multiplexing failed");
+                Event::caused_by(event.source_id, EventType::NOOP)
+            };
+        }
+
+        event
+    }
 }
 
 // TODO: test

@@ -24,109 +24,109 @@ use thiserror::Error;
 use crate::{Extension, ExtensionOutput, ExtensionResult, Params, Value};
 
 pub trait ChoiceSelector {
-  fn show(&self, choices: &[Choice]) -> ChoiceSelectorResult;
+    fn show(&self, choices: &[Choice]) -> ChoiceSelectorResult;
 }
 
 #[derive(Debug, Clone)]
 pub struct Choice<'a> {
-  pub label: &'a str,
-  pub id: &'a str,
+    pub label: &'a str,
+    pub id: &'a str,
 }
 
 pub enum ChoiceSelectorResult {
-  Success(String),
-  Aborted,
-  Error(anyhow::Error),
+    Success(String),
+    Aborted,
+    Error(anyhow::Error),
 }
 
 pub struct ChoiceExtension<'a> {
-  selector: &'a dyn ChoiceSelector,
+    selector: &'a dyn ChoiceSelector,
 }
 
 #[allow(clippy::new_without_default)]
 impl<'a> ChoiceExtension<'a> {
-  pub fn new(selector: &'a dyn ChoiceSelector) -> Self {
-    Self { selector }
-  }
+    pub fn new(selector: &'a dyn ChoiceSelector) -> Self {
+        Self { selector }
+    }
 }
 
 impl<'a> Extension for ChoiceExtension<'a> {
-  fn name(&self) -> &str {
-    "choice"
-  }
-
-  fn calculate(
-    &self,
-    _: &crate::Context,
-    _: &crate::Scope,
-    params: &Params,
-  ) -> crate::ExtensionResult {
-    let choices: Vec<Choice> = if let Some(Value::String(values)) = params.get("values") {
-      values
-        .lines()
-        .filter_map(|line| {
-          let trimmed_line = line.trim();
-          if trimmed_line.is_empty() {
-            None
-          } else {
-            Some(trimmed_line)
-          }
-        })
-        .map(|line| Choice {
-          label: line,
-          id: line,
-        })
-        .collect()
-    } else if let Some(Value::Array(values)) = params.get("values") {
-      let choices: Result<Vec<Choice>> = values
-        .iter()
-        .map(|value| match value {
-          Value::String(string) => Ok(Choice {
-            id: string,
-            label: string,
-          }),
-          Value::Object(fields) => Ok(Choice {
-            id: fields
-              .get("id")
-              .and_then(|val| val.as_string())
-              .ok_or(ChoiceError::InvalidObjectValue)?,
-            label: fields
-              .get("label")
-              .and_then(|val| val.as_string())
-              .ok_or(ChoiceError::InvalidObjectValue)?,
-          }),
-          _ => Err(ChoiceError::InvalidValueType.into()),
-        })
-        .collect();
-
-      match choices {
-        Ok(choices) => choices,
-        Err(err) => {
-          return crate::ExtensionResult::Error(err);
-        }
-      }
-    } else {
-      return crate::ExtensionResult::Error(ChoiceError::MissingValues.into());
-    };
-
-    match self.selector.show(&choices) {
-      ChoiceSelectorResult::Success(choice_id) => {
-        ExtensionResult::Success(ExtensionOutput::Single(choice_id))
-      }
-      ChoiceSelectorResult::Aborted => ExtensionResult::Aborted,
-      ChoiceSelectorResult::Error(error) => ExtensionResult::Error(error),
+    fn name(&self) -> &str {
+        "choice"
     }
-  }
+
+    fn calculate(
+        &self,
+        _: &crate::Context,
+        _: &crate::Scope,
+        params: &Params,
+    ) -> crate::ExtensionResult {
+        let choices: Vec<Choice> = if let Some(Value::String(values)) = params.get("values") {
+            values
+                .lines()
+                .filter_map(|line| {
+                    let trimmed_line = line.trim();
+                    if trimmed_line.is_empty() {
+                        None
+                    } else {
+                        Some(trimmed_line)
+                    }
+                })
+                .map(|line| Choice {
+                    label: line,
+                    id: line,
+                })
+                .collect()
+        } else if let Some(Value::Array(values)) = params.get("values") {
+            let choices: Result<Vec<Choice>> = values
+                .iter()
+                .map(|value| match value {
+                    Value::String(string) => Ok(Choice {
+                        id: string,
+                        label: string,
+                    }),
+                    Value::Object(fields) => Ok(Choice {
+                        id: fields
+                            .get("id")
+                            .and_then(|val| val.as_string())
+                            .ok_or(ChoiceError::InvalidObjectValue)?,
+                        label: fields
+                            .get("label")
+                            .and_then(|val| val.as_string())
+                            .ok_or(ChoiceError::InvalidObjectValue)?,
+                    }),
+                    _ => Err(ChoiceError::InvalidValueType.into()),
+                })
+                .collect();
+
+            match choices {
+                Ok(choices) => choices,
+                Err(err) => {
+                    return crate::ExtensionResult::Error(err);
+                }
+            }
+        } else {
+            return crate::ExtensionResult::Error(ChoiceError::MissingValues.into());
+        };
+
+        match self.selector.show(&choices) {
+            ChoiceSelectorResult::Success(choice_id) => {
+                ExtensionResult::Success(ExtensionOutput::Single(choice_id))
+            }
+            ChoiceSelectorResult::Aborted => ExtensionResult::Aborted,
+            ChoiceSelectorResult::Error(error) => ExtensionResult::Error(error),
+        }
+    }
 }
 
 #[derive(Error, Debug)]
 pub enum ChoiceError {
-  #[error("missing values parameter")]
-  MissingValues,
+    #[error("missing values parameter")]
+    MissingValues,
 
-  #[error("values contain object items, but they are missing either the 'id' or 'label' fields")]
-  InvalidObjectValue,
+    #[error("values contain object items, but they are missing either the 'id' or 'label' fields")]
+    InvalidObjectValue,
 
-  #[error("values contain an invalid item type. items can only be strings or objects")]
-  InvalidValueType,
+    #[error("values contain an invalid item type. items can only be strings or objects")]
+    InvalidValueType,
 }

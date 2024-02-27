@@ -21,39 +21,39 @@ use crate::warn_eprintln;
 use espanso_modulo::wizard::DetectedOS;
 
 pub fn is_wrong_edition() -> (bool, DetectedOS) {
-  if !cfg!(target_os = "linux") {
-    return (false, DetectedOS::Unknown);
-  }
-
-  match get_session_type().as_deref() {
-    Some("x11") if cfg!(feature = "wayland") => return (true, DetectedOS::X11),
-    Some("wayland") if !cfg!(feature = "wayland") => return (true, DetectedOS::Wayland),
-    None => {
-      warn_eprintln!("could not automatically determine the session type (X11/Wayland), so make sure you have the correct espanso version!");
+    if !cfg!(target_os = "linux") {
+        return (false, DetectedOS::Unknown);
     }
-    _ => {}
-  }
 
-  (false, DetectedOS::Unknown)
+    match get_session_type().as_deref() {
+        Some("x11") if cfg!(feature = "wayland") => return (true, DetectedOS::X11),
+        Some("wayland") if !cfg!(feature = "wayland") => return (true, DetectedOS::Wayland),
+        None => {
+            warn_eprintln!("could not automatically determine the session type (X11/Wayland), so make sure you have the correct espanso version!");
+        }
+        _ => {}
+    }
+
+    (false, DetectedOS::Unknown)
 }
 
 fn get_session_type() -> Option<String> {
-  let output = std::process::Command::new("sh")
-    .arg("-c")
-    .arg("loginctl show-session $(loginctl | grep $(whoami) | awk '{print $1}') -p Type")
-    .output()
-    .ok()?;
+    let output = std::process::Command::new("sh")
+        .arg("-c")
+        .arg("loginctl show-session $(loginctl | grep $(whoami) | awk '{print $1}') -p Type")
+        .output()
+        .ok()?;
 
-  if !output.status.success() {
-    return None;
-  }
+    if !output.status.success() {
+        return None;
+    }
 
-  let raw_session_type = String::from_utf8_lossy(&output.stdout);
-  let raw_session_type = raw_session_type.trim();
-  if !raw_session_type.contains("Type=") {
-    return None;
-  }
+    let raw_session_type = String::from_utf8_lossy(&output.stdout);
+    let raw_session_type = raw_session_type.trim();
+    if !raw_session_type.contains("Type=") {
+        return None;
+    }
 
-  let session_type: Option<&str> = raw_session_type.split('=').last();
-  session_type.map(String::from)
+    let session_type: Option<&str> = raw_session_type.split('=').last();
+    session_type.map(String::from)
 }

@@ -25,34 +25,34 @@ use espanso_path::Paths;
 use crate::info_println;
 
 pub fn list_packages(paths: &Paths, _: &ArgMatches) -> Result<()> {
-  let archiver =
-    espanso_package::get_archiver(&paths.packages).context("unable to get package archiver")?;
+    let archiver =
+        espanso_package::get_archiver(&paths.packages).context("unable to get package archiver")?;
 
-  let packages = archiver.list().context("unable to list packages")?;
+    let packages = archiver.list().context("unable to list packages")?;
 
-  if packages.is_empty() {
-    info_println!("No packages found!");
-    return Ok(());
-  }
-
-  info_println!("Installed packages:");
-  info_println!("");
-
-  for package in packages {
-    match package {
-      StoredPackage::Legacy(legacy) => {
-        info_println!("- {} (legacy)", legacy.name);
-      }
-      StoredPackage::Modern(package) => {
-        info_println!(
-          "- {} - version: {} ({})",
-          package.manifest.name,
-          package.manifest.version,
-          package.source
-        );
-      }
+    if packages.is_empty() {
+        info_println!("No packages found!");
+        return Ok(());
     }
-  }
 
-  Ok(())
+    info_println!("Installed packages:");
+    info_println!("");
+
+    for package in packages {
+        match package {
+            StoredPackage::Legacy(legacy) => {
+                info_println!("- {} (legacy)", legacy.name);
+            }
+            StoredPackage::Modern(package) => {
+                info_println!(
+                    "- {} - version: {} ({})",
+                    package.manifest.name,
+                    package.manifest.version,
+                    package.source
+                );
+            }
+        }
+    }
+
+    Ok(())
 }

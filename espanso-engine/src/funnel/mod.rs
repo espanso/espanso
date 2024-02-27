@@ -26,20 +26,20 @@ use crate::event::Event;
 mod default;
 
 pub trait Source<'a> {
-  fn register(&'a self, select: &mut Select<'a>) -> usize;
-  fn receive(&'a self, op: SelectedOperation) -> Option<Event>;
+    fn register(&'a self, select: &mut Select<'a>) -> usize;
+    fn receive(&'a self, op: SelectedOperation) -> Option<Event>;
 }
 
 pub trait Funnel {
-  fn receive(&self) -> FunnelResult;
+    fn receive(&self) -> FunnelResult;
 }
 
 pub enum FunnelResult {
-  Event(Event),
-  Skipped,
-  EndOfStream,
+    Event(Event),
+    Skipped,
+    EndOfStream,
 }
 
 pub fn default<'a>(sources: &'a [&'a dyn Source<'a>]) -> impl Funnel + 'a {
-  DefaultFunnel::new(sources)
+    DefaultFunnel::new(sources)
 }

@@ -23,27 +23,27 @@ use espanso_modulo::welcome::*;
 use espanso_path::Paths;
 
 pub fn welcome_main(matches: &ArgMatches, _: &Paths, icon_paths: &IconPaths) -> i32 {
-  let dont_show_again_handler = Box::new(move |_dont_show: bool| {
-    //preferences.set_should_display_welcome(!dont_show);
-    // TODO: this should probably be deleted if not used?
-  });
+    let dont_show_again_handler = Box::new(move |_dont_show: bool| {
+        //preferences.set_should_display_welcome(!dont_show);
+        // TODO: this should probably be deleted if not used?
+    });
 
-  let is_already_running = matches.is_present("already-running");
+    let is_already_running = matches.is_present("already-running");
 
-  espanso_modulo::welcome::show(WelcomeOptions {
-    window_icon_path: icon_paths
-      .wizard_icon
-      .as_ref()
-      .map(|path| path.to_string_lossy().to_string()),
-    tray_image_path: icon_paths
-      .tray_explain_image
-      .as_ref()
-      .map(|path| path.to_string_lossy().to_string()),
-    is_already_running,
-    handlers: WelcomeHandlers {
-      dont_show_again_changed: Some(dont_show_again_handler),
-    },
-  });
+    espanso_modulo::welcome::show(WelcomeOptions {
+        window_icon_path: icon_paths
+            .wizard_icon
+            .as_ref()
+            .map(|path| path.to_string_lossy().to_string()),
+        tray_image_path: icon_paths
+            .tray_explain_image
+            .as_ref()
+            .map(|path| path.to_string_lossy().to_string()),
+        is_already_running,
+        handlers: WelcomeHandlers {
+            dont_show_again_changed: Some(dont_show_again_handler),
+        },
+    });
 
-  0
+    0
 }

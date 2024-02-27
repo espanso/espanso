@@ -22,36 +22,36 @@ use crossbeam::channel::Select;
 use super::{Funnel, FunnelResult, Source};
 
 pub struct DefaultFunnel<'a> {
-  sources: &'a [&'a dyn Source<'a>],
+    sources: &'a [&'a dyn Source<'a>],
 }
 
 impl<'a> DefaultFunnel<'a> {
-  pub fn new(sources: &'a [&'a dyn Source<'a>]) -> Self {
-    Self { sources }
-  }
+    pub fn new(sources: &'a [&'a dyn Source<'a>]) -> Self {
+        Self { sources }
+    }
 }
 
 impl<'a> Funnel for DefaultFunnel<'a> {
-  fn receive(&self) -> FunnelResult {
-    let mut select = Select::new();
+    fn receive(&self) -> FunnelResult {
+        let mut select = Select::new();
 
-    // First register all the sources to the select operation
-    for source in self.sources {
-      source.register(&mut select);
+        // First register all the sources to the select operation
+        for source in self.sources {
+            source.register(&mut select);
+        }
+
+        // Wait for the first source (blocking operation)
+        let op = select.select();
+        let source = self
+            .sources
+            .get(op.index())
+            .expect("invalid source index returned by select operation");
+
+        // Receive (and convert) the event
+        if let Some(event) = source.receive(op) {
+            FunnelResult::Event(event)
+        } else {
+            FunnelResult::Skipped
+        }
     }
-
-    // Wait for the first source (blocking operation)
-    let op = select.select();
-    let source = self
-      .sources
-      .get(op.index())
-      .expect("invalid source index returned by select operation");
-
-    // Receive (and convert) the event
-    if let Some(event) = source.receive(op) {
-      FunnelResult::Event(event)
-    } else {
-      FunnelResult::Skipped
-    }
-  }
 }

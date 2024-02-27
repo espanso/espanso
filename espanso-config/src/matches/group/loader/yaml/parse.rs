@@ -27,115 +27,115 @@ use crate::util::is_yaml_empty;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct YAMLMatchGroup {
-  #[serde(default)]
-  pub imports: Option<Vec<String>>,
+    #[serde(default)]
+    pub imports: Option<Vec<String>>,
 
-  #[serde(default)]
-  pub global_vars: Option<Vec<YAMLVariable>>,
+    #[serde(default)]
+    pub global_vars: Option<Vec<YAMLVariable>>,
 
-  #[serde(default)]
-  pub matches: Option<Vec<YAMLMatch>>,
+    #[serde(default)]
+    pub matches: Option<Vec<YAMLMatch>>,
 }
 
 impl YAMLMatchGroup {
-  pub fn parse_from_str(yaml: &str) -> Result<Self> {
-    // Because an empty string is not valid YAML but we want to support it anyway
-    if is_yaml_empty(yaml) {
-      return Ok(serde_yaml::from_str(
-        "arbitrary_field_that_will_not_block_the_parser: true",
-      )?);
+    pub fn parse_from_str(yaml: &str) -> Result<Self> {
+        // Because an empty string is not valid YAML but we want to support it anyway
+        if is_yaml_empty(yaml) {
+            return Ok(serde_yaml::from_str(
+                "arbitrary_field_that_will_not_block_the_parser: true",
+            )?);
+        }
+
+        Ok(serde_yaml::from_str(yaml)?)
     }
 
-    Ok(serde_yaml::from_str(yaml)?)
-  }
-
-  // TODO: test
-  pub fn parse_from_file(path: &Path) -> Result<Self> {
-    let content = std::fs::read_to_string(path)?;
-    Self::parse_from_str(&content)
-  }
+    // TODO: test
+    pub fn parse_from_file(path: &Path) -> Result<Self> {
+        let content = std::fs::read_to_string(path)?;
+        Self::parse_from_str(&content)
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct YAMLMatch {
-  #[serde(default)]
-  pub label: Option<String>,
+    #[serde(default)]
+    pub label: Option<String>,
 
-  #[serde(default)]
-  pub trigger: Option<String>,
+    #[serde(default)]
+    pub trigger: Option<String>,
 
-  #[serde(default)]
-  pub triggers: Option<Vec<String>>,
+    #[serde(default)]
+    pub triggers: Option<Vec<String>>,
 
-  #[serde(default)]
-  pub regex: Option<String>,
+    #[serde(default)]
+    pub regex: Option<String>,
 
-  #[serde(default)]
-  pub replace: Option<String>,
+    #[serde(default)]
+    pub replace: Option<String>,
 
-  #[serde(default)]
-  pub image_path: Option<String>,
+    #[serde(default)]
+    pub image_path: Option<String>,
 
-  #[serde(default)]
-  pub form: Option<String>,
+    #[serde(default)]
+    pub form: Option<String>,
 
-  #[serde(default)]
-  pub form_fields: Option<Mapping>,
+    #[serde(default)]
+    pub form_fields: Option<Mapping>,
 
-  #[serde(default)]
-  pub vars: Option<Vec<YAMLVariable>>,
+    #[serde(default)]
+    pub vars: Option<Vec<YAMLVariable>>,
 
-  #[serde(default)]
-  pub word: Option<bool>,
+    #[serde(default)]
+    pub word: Option<bool>,
 
-  #[serde(default)]
-  pub left_word: Option<bool>,
+    #[serde(default)]
+    pub left_word: Option<bool>,
 
-  #[serde(default)]
-  pub right_word: Option<bool>,
+    #[serde(default)]
+    pub right_word: Option<bool>,
 
-  #[serde(default)]
-  pub propagate_case: Option<bool>,
+    #[serde(default)]
+    pub propagate_case: Option<bool>,
 
-  #[serde(default)]
-  pub uppercase_style: Option<String>,
+    #[serde(default)]
+    pub uppercase_style: Option<String>,
 
-  #[serde(default)]
-  pub force_clipboard: Option<bool>,
+    #[serde(default)]
+    pub force_clipboard: Option<bool>,
 
-  #[serde(default)]
-  pub force_mode: Option<String>,
+    #[serde(default)]
+    pub force_mode: Option<String>,
 
-  #[serde(default)]
-  pub markdown: Option<String>,
+    #[serde(default)]
+    pub markdown: Option<String>,
 
-  #[serde(default)]
-  pub paragraph: Option<bool>,
+    #[serde(default)]
+    pub paragraph: Option<bool>,
 
-  #[serde(default)]
-  pub html: Option<String>,
+    #[serde(default)]
+    pub html: Option<String>,
 
-  #[serde(default)]
-  pub search_terms: Option<Vec<String>>,
+    #[serde(default)]
+    pub search_terms: Option<Vec<String>>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
 pub struct YAMLVariable {
-  pub name: String,
+    pub name: String,
 
-  #[serde(rename = "type")]
-  pub var_type: String,
+    #[serde(rename = "type")]
+    pub var_type: String,
 
-  #[serde(default = "default_params")]
-  pub params: Mapping,
+    #[serde(default = "default_params")]
+    pub params: Mapping,
 
-  #[serde(default)]
-  pub inject_vars: Option<bool>,
+    #[serde(default)]
+    pub inject_vars: Option<bool>,
 
-  #[serde(default)]
-  pub depends_on: Vec<String>,
+    #[serde(default)]
+    pub depends_on: Vec<String>,
 }
 
 fn default_params() -> Mapping {
-  Mapping::new()
+    Mapping::new()
 }

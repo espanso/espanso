@@ -19,54 +19,54 @@
 
 #[cfg(target_os = "windows")]
 fn cc_config() {
-  println!("cargo:rerun-if-changed=src/win32/native.cpp");
-  println!("cargo:rerun-if-changed=src/win32/native.h");
-  cc::Build::new()
-    .cpp(true)
-    .include("src/win32/native.h")
-    .file("src/win32/native.cpp")
-    .compile("espansoinfo");
+    println!("cargo:rerun-if-changed=src/win32/native.cpp");
+    println!("cargo:rerun-if-changed=src/win32/native.h");
+    cc::Build::new()
+        .cpp(true)
+        .include("src/win32/native.h")
+        .file("src/win32/native.cpp")
+        .compile("espansoinfo");
 
-  println!("cargo:rustc-link-lib=static=espansoinfo");
-  println!("cargo:rustc-link-lib=dylib=user32");
-  #[cfg(target_env = "gnu")]
-  println!("cargo:rustc-link-lib=dylib=stdc++");
+    println!("cargo:rustc-link-lib=static=espansoinfo");
+    println!("cargo:rustc-link-lib=dylib=user32");
+    #[cfg(target_env = "gnu")]
+    println!("cargo:rustc-link-lib=dylib=stdc++");
 }
 
 #[cfg(target_os = "linux")]
 fn cc_config() {
-  if cfg!(not(feature = "wayland")) {
-    println!("cargo:rerun-if-changed=src/x11/native.h");
-    println!("cargo:rerun-if-changed=src/x11/native.c");
-    cc::Build::new()
-      .cpp(true)
-      .include("src/x11")
-      .file("src/x11/native.cpp")
-      .compile("espansoinfo");
+    if cfg!(not(feature = "wayland")) {
+        println!("cargo:rerun-if-changed=src/x11/native.h");
+        println!("cargo:rerun-if-changed=src/x11/native.c");
+        cc::Build::new()
+            .cpp(true)
+            .include("src/x11")
+            .file("src/x11/native.cpp")
+            .compile("espansoinfo");
 
-    println!("cargo:rustc-link-search=native=/usr/lib/x86_64-linux-gnu/");
-    println!("cargo:rustc-link-lib=static=espansoinfo");
-    println!("cargo:rustc-link-lib=dylib=stdc++");
-    println!("cargo:rustc-link-lib=dylib=X11");
-  } else {
-    // Nothing to compile on wayland
-  }
+        println!("cargo:rustc-link-search=native=/usr/lib/x86_64-linux-gnu/");
+        println!("cargo:rustc-link-lib=static=espansoinfo");
+        println!("cargo:rustc-link-lib=dylib=stdc++");
+        println!("cargo:rustc-link-lib=dylib=X11");
+    } else {
+        // Nothing to compile on wayland
+    }
 }
 
 #[cfg(target_os = "macos")]
 fn cc_config() {
-  println!("cargo:rerun-if-changed=src/cocoa/native.mm");
-  println!("cargo:rerun-if-changed=src/cocoa/native.h");
-  cc::Build::new()
-    .cpp(true)
-    .include("src/cocoa/native.h")
-    .file("src/cocoa/native.mm")
-    .compile("espansoinfo");
-  println!("cargo:rustc-link-lib=dylib=c++");
-  println!("cargo:rustc-link-lib=static=espansoinfo");
-  println!("cargo:rustc-link-lib=framework=Cocoa");
+    println!("cargo:rerun-if-changed=src/cocoa/native.mm");
+    println!("cargo:rerun-if-changed=src/cocoa/native.h");
+    cc::Build::new()
+        .cpp(true)
+        .include("src/cocoa/native.h")
+        .file("src/cocoa/native.mm")
+        .compile("espansoinfo");
+    println!("cargo:rustc-link-lib=dylib=c++");
+    println!("cargo:rustc-link-lib=static=espansoinfo");
+    println!("cargo:rustc-link-lib=framework=Cocoa");
 }
 
 fn main() {
-  cc_config();
+    cc_config();
 }

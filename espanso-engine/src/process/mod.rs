@@ -23,12 +23,12 @@ mod default;
 mod middleware;
 
 pub trait Middleware {
-  fn name(&self) -> &'static str;
-  fn next(&self, event: Event, dispatch: &mut dyn FnMut(Event)) -> Event;
+    fn name(&self) -> &'static str;
+    fn next(&self, event: Event, dispatch: &mut dyn FnMut(Event)) -> Event;
 }
 
 pub trait Processor {
-  fn process(&mut self, event: Event) -> Vec<Event>;
+    fn process(&mut self, event: Event) -> Vec<Event>;
 }
 
 // Dependency inversion entities
@@ -41,8 +41,8 @@ pub use middleware::image_resolve::PathProvider;
 pub use middleware::match_exec::MatchResolver;
 pub use middleware::match_select::{MatchFilter, MatchSelector};
 pub use middleware::matcher::{
-  MatchResult, Matcher, MatcherEvent, MatcherMiddlewareConfigProvider, ModifierState,
-  ModifierStateProvider,
+    MatchResult, Matcher, MatcherEvent, MatcherMiddlewareConfigProvider, ModifierState,
+    ModifierStateProvider,
 };
 pub use middleware::multiplex::Multiplexer;
 pub use middleware::notification::NotificationManager;
@@ -53,43 +53,43 @@ pub use middleware::undo::UndoEnabledProvider;
 
 #[allow(clippy::too_many_arguments)]
 pub fn default<'a, MatcherState>(
-  matchers: &'a [&'a dyn Matcher<'a, MatcherState>],
-  match_filter: &'a dyn MatchFilter,
-  match_selector: &'a dyn MatchSelector,
-  multiplexer: &'a dyn Multiplexer,
-  renderer: &'a dyn Renderer<'a>,
-  match_info_provider: &'a dyn MatchInfoProvider,
-  modifier_status_provider: &'a dyn ModifierStatusProvider,
-  event_sequence_provider: &'a dyn EventSequenceProvider,
-  path_provider: &'a dyn PathProvider,
-  disable_options: DisableOptions,
-  matcher_options_provider: &'a dyn MatcherMiddlewareConfigProvider,
-  match_provider: &'a dyn MatchProvider,
-  undo_enabled_provider: &'a dyn UndoEnabledProvider,
-  enabled_status_provider: &'a dyn EnabledStatusProvider,
-  modifier_state_provider: &'a dyn ModifierStateProvider,
-  match_resolver: &'a dyn MatchResolver,
-  notification_manager: &'a dyn NotificationManager,
-  alt_code_synth_enabled_provider: &'a dyn AltCodeSynthEnabledProvider,
+    matchers: &'a [&'a dyn Matcher<'a, MatcherState>],
+    match_filter: &'a dyn MatchFilter,
+    match_selector: &'a dyn MatchSelector,
+    multiplexer: &'a dyn Multiplexer,
+    renderer: &'a dyn Renderer<'a>,
+    match_info_provider: &'a dyn MatchInfoProvider,
+    modifier_status_provider: &'a dyn ModifierStatusProvider,
+    event_sequence_provider: &'a dyn EventSequenceProvider,
+    path_provider: &'a dyn PathProvider,
+    disable_options: DisableOptions,
+    matcher_options_provider: &'a dyn MatcherMiddlewareConfigProvider,
+    match_provider: &'a dyn MatchProvider,
+    undo_enabled_provider: &'a dyn UndoEnabledProvider,
+    enabled_status_provider: &'a dyn EnabledStatusProvider,
+    modifier_state_provider: &'a dyn ModifierStateProvider,
+    match_resolver: &'a dyn MatchResolver,
+    notification_manager: &'a dyn NotificationManager,
+    alt_code_synth_enabled_provider: &'a dyn AltCodeSynthEnabledProvider,
 ) -> impl Processor + 'a {
-  default::DefaultProcessor::new(
-    matchers,
-    match_filter,
-    match_selector,
-    multiplexer,
-    renderer,
-    match_info_provider,
-    modifier_status_provider,
-    event_sequence_provider,
-    path_provider,
-    disable_options,
-    matcher_options_provider,
-    match_provider,
-    undo_enabled_provider,
-    enabled_status_provider,
-    modifier_state_provider,
-    match_resolver,
-    notification_manager,
-    alt_code_synth_enabled_provider,
-  )
+    default::DefaultProcessor::new(
+        matchers,
+        match_filter,
+        match_selector,
+        multiplexer,
+        renderer,
+        match_info_provider,
+        modifier_status_provider,
+        event_sequence_provider,
+        path_provider,
+        disable_options,
+        matcher_options_provider,
+        match_provider,
+        undo_enabled_provider,
+        enabled_status_provider,
+        modifier_state_provider,
+        match_resolver,
+        notification_manager,
+        alt_code_synth_enabled_provider,
+    )
 }

@@ -22,25 +22,25 @@ use espanso_ui::{icons::TrayIcon, UIRemote};
 use espanso_engine::{dispatch::IconHandler, event::ui::IconStatus};
 
 pub struct IconHandlerAdapter<'a> {
-  remote: &'a dyn UIRemote,
+    remote: &'a dyn UIRemote,
 }
 
 impl<'a> IconHandlerAdapter<'a> {
-  pub fn new(remote: &'a dyn UIRemote) -> Self {
-    Self { remote }
-  }
+    pub fn new(remote: &'a dyn UIRemote) -> Self {
+        Self { remote }
+    }
 }
 
 impl<'a> IconHandler for IconHandlerAdapter<'a> {
-  fn update_icon(&self, status: &IconStatus) -> anyhow::Result<()> {
-    let icon = match status {
-      IconStatus::Enabled => TrayIcon::Normal,
-      IconStatus::Disabled => TrayIcon::Disabled,
-      IconStatus::SecureInputDisabled => TrayIcon::SystemDisabled,
-    };
+    fn update_icon(&self, status: &IconStatus) -> anyhow::Result<()> {
+        let icon = match status {
+            IconStatus::Enabled => TrayIcon::Normal,
+            IconStatus::Disabled => TrayIcon::Disabled,
+            IconStatus::SecureInputDisabled => TrayIcon::SystemDisabled,
+        };
 
-    self.remote.update_tray_icon(icon);
+        self.remote.update_tray_icon(icon);
 
-    Ok(())
-  }
+        Ok(())
+    }
 }

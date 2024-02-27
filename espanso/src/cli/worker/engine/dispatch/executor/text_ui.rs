@@ -23,26 +23,25 @@ use espanso_path::Paths;
 use crate::gui::TextUI;
 
 pub struct TextUIHandlerAdapter<'a> {
-  text_ui: &'a dyn TextUI,
-  paths: &'a Paths,
+    text_ui: &'a dyn TextUI,
+    paths: &'a Paths,
 }
 
 impl<'a> TextUIHandlerAdapter<'a> {
-  pub fn new(text_ui: &'a dyn TextUI, paths: &'a Paths) -> Self {
-    Self { text_ui, paths }
-  }
+    pub fn new(text_ui: &'a dyn TextUI, paths: &'a Paths) -> Self {
+        Self { text_ui, paths }
+    }
 }
 
 impl<'a> TextUIHandler for TextUIHandlerAdapter<'a> {
-  fn show_text(&self, title: &str, text: &str) -> anyhow::Result<()> {
-    self.text_ui.show_text(title, text)?;
-    Ok(())
-  }
+    fn show_text(&self, title: &str, text: &str) -> anyhow::Result<()> {
+        self.text_ui.show_text(title, text)?;
+        Ok(())
+    }
 
-  fn show_logs(&self) -> anyhow::Result<()> {
-    self
-      .text_ui
-      .show_file("Espanso Logs", &self.paths.runtime.join("espanso.log"))?;
-    Ok(())
-  }
+    fn show_logs(&self) -> anyhow::Result<()> {
+        self.text_ui
+            .show_file("Espanso Logs", &self.paths.runtime.join("espanso.log"))?;
+        Ok(())
+    }
 }

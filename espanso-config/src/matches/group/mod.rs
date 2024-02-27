@@ -29,14 +29,14 @@ mod path;
 
 #[derive(Debug, Clone, PartialEq, Default)]
 pub(crate) struct MatchGroup {
-  pub imports: Vec<String>,
-  pub global_vars: Vec<Variable>,
-  pub matches: Vec<Match>,
+    pub imports: Vec<String>,
+    pub global_vars: Vec<Variable>,
+    pub matches: Vec<Match>,
 }
 
 impl MatchGroup {
-  // TODO: test
-  pub fn load(group_path: &Path) -> Result<(Self, Option<NonFatalErrorSet>)> {
-    loader::load_match_group(group_path)
-  }
+    // TODO: test
+    pub fn load(group_path: &Path) -> Result<(Self, Option<NonFatalErrorSet>)> {
+        loader::load_match_group(group_path)
+    }
 }

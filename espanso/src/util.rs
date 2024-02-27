@@ -23,35 +23,35 @@ use sysinfo::{System, SystemExt};
 
 #[cfg(target_os = "windows")]
 pub fn set_command_flags(command: &mut Command) {
-  use std::os::windows::process::CommandExt;
-  // Avoid showing the shell window
-  // See: https://github.com/espanso/espanso/issues/249
-  command.creation_flags(0x0800_0000);
+    use std::os::windows::process::CommandExt;
+    // Avoid showing the shell window
+    // See: https://github.com/espanso/espanso/issues/249
+    command.creation_flags(0x0800_0000);
 }
 
 #[cfg(not(target_os = "windows"))]
 pub fn set_command_flags(_: &mut Command) {
-  // NOOP on Linux and macOS
+    // NOOP on Linux and macOS
 }
 
 #[cfg(target_os = "windows")]
 pub fn attach_console() {
-  // When using the windows subsystem we loose the terminal output.
-  // Therefore we try to attach to the current console if available.
-  unsafe { winapi::um::wincon::AttachConsole(0xFFFF_FFFF) };
+    // When using the windows subsystem we loose the terminal output.
+    // Therefore we try to attach to the current console if available.
+    unsafe { winapi::um::wincon::AttachConsole(0xFFFF_FFFF) };
 }
 
 #[cfg(not(target_os = "windows"))]
 pub fn attach_console() {
-  // Not necessary on Linux and macOS
+    // Not necessary on Linux and macOS
 }
 
 pub fn log_system_info() {
-  let sys = System::new();
-  info!(
-    "system info: {} v{} - kernel: {}",
-    sys.name().unwrap_or_default(),
-    sys.os_version().unwrap_or_default(),
-    sys.kernel_version().unwrap_or_default()
-  );
+    let sys = System::new();
+    info!(
+        "system info: {} v{} - kernel: {}",
+        sys.name().unwrap_or_default(),
+        sys.os_version().unwrap_or_default(),
+        sys.kernel_version().unwrap_or_default()
+    );
 }

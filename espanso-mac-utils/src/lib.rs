@@ -28,123 +28,124 @@ mod ffi;
 /// Return None if no application has claimed `SecureInput`, its PID otherwise.
 #[cfg(target_os = "macos")]
 pub fn get_secure_input_pid() -> Option<i64> {
-  unsafe {
-    let mut pid: i64 = -1;
-    let res = ffi::mac_utils_get_secure_input_process(&mut pid as *mut i64);
+    unsafe {
+        let mut pid: i64 = -1;
+        let res = ffi::mac_utils_get_secure_input_process(&mut pid as *mut i64);
 
-    if res > 0 {
-      Some(pid)
-    } else {
-      None
+        if res > 0 {
+            Some(pid)
+        } else {
+            None
+        }
     }
-  }
 }
 
 /// Check whether an application is currently holding the Secure Input.
 /// Return None if no application has claimed `SecureInput`, `Some((AppName, AppPath))` otherwise.
 #[cfg(target_os = "macos")]
 pub fn get_secure_input_application() -> Option<(String, String)> {
-  unsafe {
-    let pid = get_secure_input_pid();
+    unsafe {
+        let pid = get_secure_input_pid();
 
-    if let Some(pid) = pid {
-      // Size of the buffer is ruled by the PROC_PIDPATHINFO_MAXSIZE constant.
-      // the underlying proc_pidpath REQUIRES a buffer of that dimension, otherwise it fail silently.
-      let mut buffer: [c_char; 4096] = [0; 4096];
-      let res = ffi::mac_utils_get_path_from_pid(pid, buffer.as_mut_ptr(), buffer.len() as i32);
+        if let Some(pid) = pid {
+            // Size of the buffer is ruled by the PROC_PIDPATHINFO_MAXSIZE constant.
+            // the underlying proc_pidpath REQUIRES a buffer of that dimension, otherwise it fail silently.
+            let mut buffer: [c_char; 4096] = [0; 4096];
+            let res =
+                ffi::mac_utils_get_path_from_pid(pid, buffer.as_mut_ptr(), buffer.len() as i32);
 
-      if res > 0 {
-        let c_string = CStr::from_ptr(buffer.as_ptr());
-        let string = c_string.to_str();
-        if let Ok(path) = string {
-          if !path.trim().is_empty() {
-            let process = path.trim().to_string();
-            let app_name = if let Some(name) = get_app_name_from_path(&process) {
-              name
-            } else {
-              process.clone()
-            };
+            if res > 0 {
+                let c_string = CStr::from_ptr(buffer.as_ptr());
+                let string = c_string.to_str();
+                if let Ok(path) = string {
+                    if !path.trim().is_empty() {
+                        let process = path.trim().to_string();
+                        let app_name = if let Some(name) = get_app_name_from_path(&process) {
+                            name
+                        } else {
+                            process.clone()
+                        };
 
-            return Some((app_name, process));
-          }
+                        return Some((app_name, process));
+                    }
+                }
+            }
         }
-      }
-    }
 
-    None
-  }
+        None
+    }
 }
 
 #[cfg(target_os = "macos")]
 fn get_app_name_from_path(path: &str) -> Option<String> {
-  use regex::Regex;
+    use regex::Regex;
 
-  lazy_static! {
-    static ref APP_REGEX: Regex = Regex::new("/([^/]+).(app|bundle)/").unwrap();
-  };
+    lazy_static! {
+        static ref APP_REGEX: Regex = Regex::new("/([^/]+).(app|bundle)/").unwrap();
+    };
 
-  let caps = APP_REGEX.captures(path);
-  caps.map(|caps| caps.get(1).map_or("", |m| m.as_str()).to_owned())
+    let caps = APP_REGEX.captures(path);
+    caps.map(|caps| caps.get(1).map_or("", |m| m.as_str()).to_owned())
 }
 
 #[cfg(target_os = "macos")]
 pub fn check_accessibility() -> bool {
-  unsafe { ffi::mac_utils_check_accessibility() > 0 }
+    unsafe { ffi::mac_utils_check_accessibility() > 0 }
 }
 
 #[cfg(target_os = "macos")]
 pub fn prompt_accessibility() -> bool {
-  unsafe { ffi::mac_utils_prompt_accessibility() > 0 }
+    unsafe { ffi::mac_utils_prompt_accessibility() > 0 }
 }
 
 #[cfg(target_os = "macos")]
 pub fn convert_to_foreground_app() {
-  unsafe {
-    ffi::mac_utils_transition_to_foreground_app();
-  }
+    unsafe {
+        ffi::mac_utils_transition_to_foreground_app();
+    }
 }
 
 #[cfg(target_os = "macos")]
 pub fn convert_to_background_app() {
-  unsafe {
-    ffi::mac_utils_transition_to_background_app();
-  }
+    unsafe {
+        ffi::mac_utils_transition_to_background_app();
+    }
 }
 
 #[cfg(target_os = "macos")]
 pub fn start_headless_eventloop() {
-  unsafe {
-    ffi::mac_utils_start_headless_eventloop();
-  }
+    unsafe {
+        ffi::mac_utils_start_headless_eventloop();
+    }
 }
 
 #[cfg(target_os = "macos")]
 pub fn exit_headless_eventloop() {
-  unsafe {
-    ffi::mac_utils_exit_headless_eventloop();
-  }
+    unsafe {
+        ffi::mac_utils_exit_headless_eventloop();
+    }
 }
 
 #[cfg(test)]
 #[cfg(target_os = "macos")]
 mod tests {
-  use super::*;
+    use super::*;
 
-  #[test]
-  fn test_get_app_name_from_path() {
-    let app_name = get_app_name_from_path("/Applications/iTerm.app/Contents/MacOS/iTerm2");
-    assert_eq!(app_name.unwrap(), "iTerm")
-  }
+    #[test]
+    fn test_get_app_name_from_path() {
+        let app_name = get_app_name_from_path("/Applications/iTerm.app/Contents/MacOS/iTerm2");
+        assert_eq!(app_name.unwrap(), "iTerm")
+    }
 
-  #[test]
-  fn test_get_app_name_from_path_no_app_name() {
-    let app_name = get_app_name_from_path("/another/directory");
-    assert!(app_name.is_none())
-  }
+    #[test]
+    fn test_get_app_name_from_path_no_app_name() {
+        let app_name = get_app_name_from_path("/another/directory");
+        assert!(app_name.is_none())
+    }
 
-  #[test]
-  fn test_get_app_name_from_path_security_bundle() {
-    let app_name = get_app_name_from_path("/System/Library/Frameworks/Security.framework/Versions/A/MachServices/SecurityAgent.bundle/Contents/MacOS/SecurityAgent");
-    assert_eq!(app_name.unwrap(), "SecurityAgent")
-  }
+    #[test]
+    fn test_get_app_name_from_path_security_bundle() {
+        let app_name = get_app_name_from_path("/System/Library/Frameworks/Security.framework/Versions/A/MachServices/SecurityAgent.bundle/Contents/MacOS/SecurityAgent");
+        assert_eq!(app_name.unwrap(), "SecurityAgent")
+    }
 }
