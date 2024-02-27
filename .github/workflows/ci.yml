@@ -32,6 +32,12 @@ jobs:
         run: |
           rustup component add rustfmt
           cargo fmt --all -- --check
+      - name: Check clippy
+        run: |
+          rustup component add clippy
+          cargo clippy -- -D warnings
+        env:
+          MACOSX_DEPLOYMENT_TARGET: "10.13"
       - name: Install Linux dependencies
         if: ${{ runner.os == 'Linux' }}
         run: |
@@ -41,12 +47,6 @@ jobs:
         run: |
           cargo install rust-script --version "0.7.0"
           cargo install cargo-make --version 0.37.5
-      - name: Check clippy
-        run: |
-          rustup component add clippy
-          cargo clippy -- -D warnings
-        env:
-          MACOSX_DEPLOYMENT_TARGET: "10.13"
       # wxWidgets builds (internal to espanso-modulo) are by far the largest bottleneck
       # in the current pipeline, so we cache the results for a faster compilation process
       - name: "Cache wxWidgets builds"
