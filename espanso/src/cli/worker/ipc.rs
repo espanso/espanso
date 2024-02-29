@@ -63,6 +63,7 @@ pub fn initialize_and_spawn(
           IPCEvent::EnableRequest => send_event(&event_notify, EventType::EnableRequest),
           IPCEvent::ToggleRequest => send_event(&event_notify, EventType::ToggleRequest),
           IPCEvent::OpenSearchBar => send_event(&event_notify, EventType::ShowSearchBar),
+          IPCEvent::OpenConfigFolder => send_event(&event_notify, EventType::ShowConfigFolder),
           IPCEvent::RequestMatchExpansion(payload) => send_event(
             &event_notify,
             EventType::MatchExecRequest(MatchExecRequestEvent {

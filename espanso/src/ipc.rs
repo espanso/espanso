@@ -31,6 +31,7 @@ pub enum IPCEvent {
   DisableRequest,
   ToggleRequest,
   OpenSearchBar,
+  OpenConfigFolder,
 
   RequestMatchExpansion(RequestMatchExpansionPayload),
 }
