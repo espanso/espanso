@@ -27,30 +27,30 @@ use crate::cli::util::CommandExt;
 use crate::cli::PathsOverrides;
 
 pub fn launch_daemon(paths_overrides: &PathsOverrides) -> Result<()> {
-    let espanso_exe_path = std::env::current_exe()?;
-    let mut command = Command::new(espanso_exe_path.to_string_lossy().to_string());
-    command.args(["daemon"]);
-    command.with_paths_overrides(paths_overrides);
+  let espanso_exe_path = std::env::current_exe()?;
+  let mut command = Command::new(espanso_exe_path.to_string_lossy().to_string());
+  command.args(["daemon"]);
+  command.with_paths_overrides(paths_overrides);
 
-    let result = spawn_and_wait(command)?;
+  let result = spawn_and_wait(command)?;
 
-    if result.success() {
-        Ok(())
-    } else {
-        Err(DaemonError::NonZeroExitCode.into())
-    }
+  if result.success() {
+    Ok(())
+  } else {
+    Err(DaemonError::NonZeroExitCode.into())
+  }
 }
 
 #[derive(Error, Debug)]
 pub enum DaemonError {
-    #[error("unexpected error, 'espanso daemon' returned a non-zero exit code.")]
-    NonZeroExitCode,
+  #[error("unexpected error, 'espanso daemon' returned a non-zero exit code.")]
+  NonZeroExitCode,
 }
 
 #[cfg(not(target_os = "macos"))]
 fn spawn_and_wait(mut command: Command) -> Result<ExitStatus> {
-    let mut child = command.spawn()?;
-    Ok(child.wait()?)
+  let mut child = command.spawn()?;
+  Ok(child.wait()?)
 }
 
 // On macOS, if we simply wait for the daemon process to terminate, the application will
@@ -59,20 +59,20 @@ fn spawn_and_wait(mut command: Command) -> Result<ExitStatus> {
 // launcher looks "alive", while waiting for the daemon
 #[cfg(target_os = "macos")]
 fn spawn_and_wait(mut command: Command) -> Result<ExitStatus> {
-    let mut child = command.spawn()?;
+  let mut child = command.spawn()?;
 
-    let result = std::thread::Builder::new()
-        .name("daemon-monitor-thread".to_owned())
-        .spawn(move || {
-            let results = child.wait();
+  let result = std::thread::Builder::new()
+    .name("daemon-monitor-thread".to_owned())
+    .spawn(move || {
+      let results = child.wait();
 
-            espanso_mac_utils::exit_headless_eventloop();
+      espanso_mac_utils::exit_headless_eventloop();
 
-            results
-        })?;
+      results
+    })?;
 
-    espanso_mac_utils::start_headless_eventloop();
+  espanso_mac_utils::start_headless_eventloop();
 
-    let thread_result = result.join().expect("unable to join daemon-monitor-thread");
-    Ok(thread_result?)
+  let thread_result = result.join().expect("unable to join daemon-monitor-thread");
+  Ok(thread_result?)
 }

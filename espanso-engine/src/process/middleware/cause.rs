@@ -19,48 +19,48 @@
 
 use super::super::Middleware;
 use crate::event::{
-    effect::TriggerCompensationEvent, internal::CauseCompensatedMatchEvent, Event, EventType,
+  effect::TriggerCompensationEvent, internal::CauseCompensatedMatchEvent, Event, EventType,
 };
 
 pub struct CauseCompensateMiddleware {}
 
 impl CauseCompensateMiddleware {
-    pub fn new() -> Self {
-        Self {}
-    }
+  pub fn new() -> Self {
+    Self {}
+  }
 }
 
 impl Middleware for CauseCompensateMiddleware {
-    fn name(&self) -> &'static str {
-        "cause_compensate"
+  fn name(&self) -> &'static str {
+    "cause_compensate"
+  }
+
+  fn next(&self, event: Event, dispatch: &mut dyn FnMut(Event)) -> Event {
+    if let EventType::MatchSelected(m_event) = &event.etype {
+      let compensated_event = Event::caused_by(
+        event.source_id,
+        EventType::CauseCompensatedMatch(CauseCompensatedMatchEvent {
+          m: m_event.chosen.clone(),
+        }),
+      );
+
+      if let Some(trigger) = &m_event.chosen.trigger {
+        dispatch(compensated_event);
+
+        // Before the event, place a trigger compensation
+        return Event::caused_by(
+          event.source_id,
+          EventType::TriggerCompensation(TriggerCompensationEvent {
+            trigger: trigger.clone(),
+            left_separator: m_event.chosen.left_separator.clone(),
+          }),
+        );
+      }
+      return compensated_event;
     }
 
-    fn next(&self, event: Event, dispatch: &mut dyn FnMut(Event)) -> Event {
-        if let EventType::MatchSelected(m_event) = &event.etype {
-            let compensated_event = Event::caused_by(
-                event.source_id,
-                EventType::CauseCompensatedMatch(CauseCompensatedMatchEvent {
-                    m: m_event.chosen.clone(),
-                }),
-            );
-
-            if let Some(trigger) = &m_event.chosen.trigger {
-                dispatch(compensated_event);
-
-                // Before the event, place a trigger compensation
-                return Event::caused_by(
-                    event.source_id,
-                    EventType::TriggerCompensation(TriggerCompensationEvent {
-                        trigger: trigger.clone(),
-                        left_separator: m_event.chosen.left_separator.clone(),
-                    }),
-                );
-            }
-            return compensated_event;
-        }
-
-        event
-    }
+    event
+  }
 }
 
 // TODO: test

@@ -26,23 +26,23 @@ use crate::{manifest::Manifest, ArchivedPackage};
 use super::{PackageSource, PACKAGE_SOURCE_FILE};
 
 pub fn read_archived_package(containing_dir: &Path) -> Result<ArchivedPackage> {
-    let manifest_path = containing_dir.join("_manifest.yml");
-    if !manifest_path.is_file() {
-        bail!("missing _manifest.yml file");
-    }
+  let manifest_path = containing_dir.join("_manifest.yml");
+  if !manifest_path.is_file() {
+    bail!("missing _manifest.yml file");
+  }
 
-    let source_path = containing_dir.join(PACKAGE_SOURCE_FILE);
-    let source = if source_path.is_file() {
-        let yaml = std::fs::read_to_string(&source_path)?;
-        let source: PackageSource =
-            serde_yaml::from_str(&yaml).context("unable to parse package source file.")?;
-        source
-    } else {
-        // Fallback to hub installation
-        PackageSource::Hub
-    };
+  let source_path = containing_dir.join(PACKAGE_SOURCE_FILE);
+  let source = if source_path.is_file() {
+    let yaml = std::fs::read_to_string(&source_path)?;
+    let source: PackageSource =
+      serde_yaml::from_str(&yaml).context("unable to parse package source file.")?;
+    source
+  } else {
+    // Fallback to hub installation
+    PackageSource::Hub
+  };
 
-    let manifest = Manifest::parse(&manifest_path).context("unable to parse manifest file")?;
+  let manifest = Manifest::parse(&manifest_path).context("unable to parse manifest file")?;
 
-    Ok(ArchivedPackage { manifest, source })
+  Ok(ArchivedPackage { manifest, source })
 }

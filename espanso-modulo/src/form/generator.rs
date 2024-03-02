@@ -20,82 +20,82 @@
 use super::config::{FieldConfig, FieldTypeConfig, FormConfig};
 use super::parser::layout::Token;
 use crate::sys::form::types::{
-    ChoiceMetadata, ChoiceType, Field, FieldType, Form, LabelMetadata, RowMetadata, TextMetadata,
+  ChoiceMetadata, ChoiceType, Field, FieldType, Form, LabelMetadata, RowMetadata, TextMetadata,
 };
 use std::collections::HashMap;
 
 pub fn generate(config: FormConfig) -> Form {
-    let structure = super::parser::layout::parse_layout(&config.layout);
-    build_form(config, structure)
+  let structure = super::parser::layout::parse_layout(&config.layout);
+  build_form(config, structure)
 }
 
 fn create_field(token: &Token, field_map: &HashMap<String, FieldConfig>) -> Field {
-    match token {
-        Token::Text(text) => Field {
-            field_type: FieldType::Label(LabelMetadata { text: text.clone() }),
-            ..Default::default()
-        },
-        Token::Field(name) => {
-            let config = if let Some(config) = field_map.get(name) {
-                config.clone()
-            } else {
-                FieldConfig::default()
-            };
+  match token {
+    Token::Text(text) => Field {
+      field_type: FieldType::Label(LabelMetadata { text: text.clone() }),
+      ..Default::default()
+    },
+    Token::Field(name) => {
+      let config = if let Some(config) = field_map.get(name) {
+        config.clone()
+      } else {
+        FieldConfig::default()
+      };
 
-            let field_type = match &config.field_type {
-                FieldTypeConfig::Text(config) => FieldType::Text(TextMetadata {
-                    default_text: config.default.clone(),
-                    multiline: config.multiline,
-                }),
-                FieldTypeConfig::Choice(config) => FieldType::Choice(ChoiceMetadata {
-                    values: config.values.clone(),
-                    choice_type: ChoiceType::Dropdown,
-                    default_value: config.default.clone(),
-                }),
-                FieldTypeConfig::List(config) => FieldType::Choice(ChoiceMetadata {
-                    values: config.values.clone(),
-                    choice_type: ChoiceType::List,
-                    default_value: config.default.clone(),
-                }),
-            };
+      let field_type = match &config.field_type {
+        FieldTypeConfig::Text(config) => FieldType::Text(TextMetadata {
+          default_text: config.default.clone(),
+          multiline: config.multiline,
+        }),
+        FieldTypeConfig::Choice(config) => FieldType::Choice(ChoiceMetadata {
+          values: config.values.clone(),
+          choice_type: ChoiceType::Dropdown,
+          default_value: config.default.clone(),
+        }),
+        FieldTypeConfig::List(config) => FieldType::Choice(ChoiceMetadata {
+          values: config.values.clone(),
+          choice_type: ChoiceType::List,
+          default_value: config.default.clone(),
+        }),
+      };
 
-            Field {
-                id: Some(name.clone()),
-                field_type,
-            }
-        }
+      Field {
+        id: Some(name.clone()),
+        field_type,
+      }
     }
+  }
 }
 
 fn build_form(form: FormConfig, structure: Vec<Vec<Token>>) -> Form {
-    let field_map = form.fields;
-    let mut fields = Vec::new();
+  let field_map = form.fields;
+  let mut fields = Vec::new();
 
-    for row in &structure {
-        let current_field = if row.len() == 1 {
-            // Single field
-            create_field(&row[0], &field_map)
-        } else {
-            // Row field
-            let inner_fields = row
-                .iter()
-                .map(|token| create_field(token, &field_map))
-                .collect();
+  for row in &structure {
+    let current_field = if row.len() == 1 {
+      // Single field
+      create_field(&row[0], &field_map)
+    } else {
+      // Row field
+      let inner_fields = row
+        .iter()
+        .map(|token| create_field(token, &field_map))
+        .collect();
 
-            Field {
-                field_type: FieldType::Row(RowMetadata {
-                    fields: inner_fields,
-                }),
-                ..Default::default()
-            }
-        };
+      Field {
+        field_type: FieldType::Row(RowMetadata {
+          fields: inner_fields,
+        }),
+        ..Default::default()
+      }
+    };
 
-        fields.push(current_field);
-    }
+    fields.push(current_field);
+  }
 
-    Form {
-        title: form.title,
-        icon: form.icon,
-        fields,
-    }
+  Form {
+    title: form.title,
+    icon: form.icon,
+    fields,
+  }
 }

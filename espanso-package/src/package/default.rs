@@ -25,46 +25,46 @@ use crate::{manifest::Manifest, Package};
 
 #[allow(dead_code)]
 pub struct DefaultPackage {
-    manifest: Manifest,
+  manifest: Manifest,
 
-    temp_dir: TempDir,
+  temp_dir: TempDir,
 
-    // Sub-directory inside the temp_dir
-    location: PathBuf,
+  // Sub-directory inside the temp_dir
+  location: PathBuf,
 }
 
 impl DefaultPackage {
-    pub fn new(manifest: Manifest, temp_dir: TempDir, location: PathBuf) -> Self {
-        Self {
-            manifest,
-            temp_dir,
-            location,
-        }
+  pub fn new(manifest: Manifest, temp_dir: TempDir, location: PathBuf) -> Self {
+    Self {
+      manifest,
+      temp_dir,
+      location,
     }
+  }
 }
 
 impl Package for DefaultPackage {
-    fn name(&self) -> &str {
-        self.manifest.name.as_str()
-    }
+  fn name(&self) -> &str {
+    self.manifest.name.as_str()
+  }
 
-    fn title(&self) -> &str {
-        self.manifest.title.as_str()
-    }
+  fn title(&self) -> &str {
+    self.manifest.title.as_str()
+  }
 
-    fn description(&self) -> &str {
-        self.manifest.description.as_str()
-    }
+  fn description(&self) -> &str {
+    self.manifest.description.as_str()
+  }
 
-    fn version(&self) -> &str {
-        self.manifest.version.as_str()
-    }
+  fn version(&self) -> &str {
+    self.manifest.version.as_str()
+  }
 
-    fn author(&self) -> &str {
-        self.manifest.author.as_str()
-    }
+  fn author(&self) -> &str {
+    self.manifest.author.as_str()
+  }
 
-    fn location(&self) -> &std::path::Path {
-        self.location.as_path()
-    }
+  fn location(&self) -> &std::path::Path {
+    self.location.as_path()
+  }
 }

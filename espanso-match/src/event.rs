@@ -19,63 +19,63 @@
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Event {
-    Key { key: Key, chars: Option<String> },
-    VirtualSeparator,
+  Key { key: Key, chars: Option<String> },
+  VirtualSeparator,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Key {
-    // Modifiers
-    Alt,
-    CapsLock,
-    Control,
-    Meta,
-    NumLock,
-    Shift,
+  // Modifiers
+  Alt,
+  CapsLock,
+  Control,
+  Meta,
+  NumLock,
+  Shift,
 
-    // Whitespace
-    Enter,
-    Tab,
-    Space,
+  // Whitespace
+  Enter,
+  Tab,
+  Space,
 
-    // Navigation
-    ArrowDown,
-    ArrowLeft,
-    ArrowRight,
-    ArrowUp,
-    End,
-    Home,
-    PageDown,
-    PageUp,
+  // Navigation
+  ArrowDown,
+  ArrowLeft,
+  ArrowRight,
+  ArrowUp,
+  End,
+  Home,
+  PageDown,
+  PageUp,
 
-    // UI
-    Escape,
+  // UI
+  Escape,
 
-    // Editing keys
-    Backspace,
+  // Editing keys
+  Backspace,
 
-    // Function keys
-    F1,
-    F2,
-    F3,
-    F4,
-    F5,
-    F6,
-    F7,
-    F8,
-    F9,
-    F10,
-    F11,
-    F12,
-    F13,
-    F14,
-    F15,
-    F16,
-    F17,
-    F18,
-    F19,
-    F20,
+  // Function keys
+  F1,
+  F2,
+  F3,
+  F4,
+  F5,
+  F6,
+  F7,
+  F8,
+  F9,
+  F10,
+  F11,
+  F12,
+  F13,
+  F14,
+  F15,
+  F16,
+  F17,
+  F18,
+  F19,
+  F20,
 
-    // Others
-    Other,
+  // Others
+  Other,
 }

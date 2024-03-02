@@ -21,11 +21,11 @@ use std::ffi::CString;
 use std::os::raw::c_char;
 
 pub fn convert_to_cstring_or_null(str: Option<String>) -> (Option<CString>, *const c_char) {
-    let c_string =
-        str.map(|str| CString::new(str).expect("unable to convert Option<String> to CString"));
-    let c_ptr = c_string
-        .as_ref()
-        .map_or(std::ptr::null(), |path| path.as_ptr());
+  let c_string =
+    str.map(|str| CString::new(str).expect("unable to convert Option<String> to CString"));
+  let c_ptr = c_string
+    .as_ref()
+    .map_or(std::ptr::null(), |path| path.as_ptr());
 
-    (c_string, c_ptr)
+  (c_string, c_ptr)
 }
