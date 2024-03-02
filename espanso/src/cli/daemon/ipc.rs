@@ -27,34 +27,34 @@ use log::{error, warn};
 use crate::{exit_code::DAEMON_SUCCESS, ipc::IPCEvent};
 
 pub fn initialize_and_spawn(runtime_dir: &Path, exit_notify: Sender<i32>) -> Result<()> {
-    let server = crate::ipc::create_daemon_ipc_server(runtime_dir)?;
+  let server = crate::ipc::create_daemon_ipc_server(runtime_dir)?;
 
-    std::thread::Builder::new()
-        .name("daemon-ipc-handler".to_string())
-        .spawn(move || {
-            server
-                .run(Box::new(move |event| match event {
-                    IPCEvent::Exit => {
-                        if let Err(err) = exit_notify.send(DAEMON_SUCCESS) {
-                            error!(
+  std::thread::Builder::new()
+    .name("daemon-ipc-handler".to_string())
+    .spawn(move || {
+      server
+        .run(Box::new(move |event| match event {
+          IPCEvent::Exit => {
+            if let Err(err) = exit_notify.send(DAEMON_SUCCESS) {
+              error!(
                 "experienced error while sending exit signal from daemon ipc handler: {}",
                 err
               );
-                        }
+            }
 
-                        EventHandlerResponse::NoResponse
-                    }
-                    unexpected_event => {
-                        warn!(
-                            "received unexpected event in daemon ipc handler: {:?}",
-                            unexpected_event
-                        );
+            EventHandlerResponse::NoResponse
+          }
+          unexpected_event => {
+            warn!(
+              "received unexpected event in daemon ipc handler: {:?}",
+              unexpected_event
+            );
 
-                        EventHandlerResponse::NoResponse
-                    }
-                }))
-                .expect("unable to start IPC handler");
-        })?;
+            EventHandlerResponse::NoResponse
+          }
+        }))
+        .expect("unable to start IPC handler");
+    })?;
 
-    Ok(())
+  Ok(())
 }

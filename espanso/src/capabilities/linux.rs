@@ -21,22 +21,22 @@ use caps::{CapSet, Capability};
 use log::error;
 
 pub fn can_use_capabilities() -> bool {
-    match caps::has_cap(None, CapSet::Permitted, Capability::CAP_DAC_OVERRIDE) {
-        Ok(has_cap) => has_cap,
-        Err(err) => {
-            error!("error while checking if capabilities are enabled: {}", err);
-            false
-        }
+  match caps::has_cap(None, CapSet::Permitted, Capability::CAP_DAC_OVERRIDE) {
+    Ok(has_cap) => has_cap,
+    Err(err) => {
+      error!("error while checking if capabilities are enabled: {}", err);
+      false
     }
+  }
 }
 
 pub fn grant_capabilities() -> Result<()> {
-    caps::raise(None, CapSet::Effective, Capability::CAP_DAC_OVERRIDE)?;
-    Ok(())
+  caps::raise(None, CapSet::Effective, Capability::CAP_DAC_OVERRIDE)?;
+  Ok(())
 }
 
 pub fn clear_capabilities() -> Result<()> {
-    caps::clear(None, CapSet::Effective)?;
-    caps::clear(None, CapSet::Permitted)?;
-    Ok(())
+  caps::clear(None, CapSet::Effective)?;
+  caps::clear(None, CapSet::Permitted)?;
+  Ok(())
 }

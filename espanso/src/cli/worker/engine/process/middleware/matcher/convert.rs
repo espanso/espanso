@@ -18,113 +18,114 @@
  */
 
 use espanso_config::{
-    config::ConfigStore,
-    matches::{
-        store::{MatchSet, MatchStore},
-        MatchCause,
-    },
+  config::ConfigStore,
+  matches::{
+    store::{MatchSet, MatchStore},
+    MatchCause,
+  },
 };
 use espanso_detect::hotkey::HotKey;
 use espanso_match::{
-    regex::RegexMatch,
-    rolling::{RollingMatch, StringMatchOptions},
+  regex::RegexMatch,
+  rolling::{RollingMatch, StringMatchOptions},
 };
 use log::error;
 
 use crate::cli::worker::builtin::BuiltInMatch;
 
 pub struct MatchConverter<'a> {
-    config_store: &'a dyn ConfigStore,
-    match_store: &'a dyn MatchStore,
-    builtin_matches: &'a [BuiltInMatch],
+  config_store: &'a dyn ConfigStore,
+  match_store: &'a dyn MatchStore,
+  builtin_matches: &'a [BuiltInMatch],
 }
 
 impl<'a> MatchConverter<'a> {
-    pub fn new(
-        config_store: &'a dyn ConfigStore,
-        match_store: &'a dyn MatchStore,
-        builtin_matches: &'a [BuiltInMatch],
-    ) -> Self {
-        Self {
-            config_store,
-            match_store,
-            builtin_matches,
+  pub fn new(
+    config_store: &'a dyn ConfigStore,
+    match_store: &'a dyn MatchStore,
+    builtin_matches: &'a [BuiltInMatch],
+  ) -> Self {
+    Self {
+      config_store,
+      match_store,
+      builtin_matches,
+    }
+  }
+
+  // TODO: test (might need to move the conversion logic into a separate function)
+  pub fn get_rolling_matches(&self) -> Vec<RollingMatch<i32>> {
+    let match_set = self.global_match_set();
+    let mut matches = Vec::new();
+
+    // First convert configuration (user-defined) matches
+    for m in match_set.matches {
+      if let MatchCause::Trigger(cause) = &m.cause {
+        for trigger in &cause.triggers {
+          matches.push(RollingMatch::from_string(
+            m.id,
+            trigger,
+            &StringMatchOptions {
+              case_insensitive: cause.propagate_case,
+              left_word: cause.left_word,
+              right_word: cause.right_word,
+            },
+          ));
         }
+      }
     }
 
-    // TODO: test (might need to move the conversion logic into a separate function)
-    pub fn get_rolling_matches(&self) -> Vec<RollingMatch<i32>> {
-        let match_set = self.global_match_set();
-        let mut matches = Vec::new();
-
-        // First convert configuration (user-defined) matches
-        for m in match_set.matches {
-            if let MatchCause::Trigger(cause) = &m.cause {
-                for trigger in &cause.triggers {
-                    matches.push(RollingMatch::from_string(
-                        m.id,
-                        trigger,
-                        &StringMatchOptions {
-                            case_insensitive: cause.propagate_case,
-                            left_word: cause.left_word,
-                            right_word: cause.right_word,
-                        },
-                    ));
-                }
-            }
-        }
-
-        // Then convert built-in ones
-        for m in self.builtin_matches {
-            for trigger in &m.triggers {
-                matches.push(RollingMatch::from_string(
-                    m.id,
-                    trigger,
-                    &StringMatchOptions::default(),
-                ));
-            }
-        }
-
-        matches
+    // Then convert built-in ones
+    for m in self.builtin_matches {
+      for trigger in &m.triggers {
+        matches.push(RollingMatch::from_string(
+          m.id,
+          trigger,
+          &StringMatchOptions::default(),
+        ));
+      }
     }
 
-    // TODO: test (might need to move the conversion logic into a separate function)
-    pub fn get_regex_matches(&self) -> Vec<RegexMatch<i32>> {
-        let match_set = self.global_match_set();
-        let mut matches = Vec::new();
+    matches
+  }
 
-        for m in match_set.matches {
-            if let MatchCause::Regex(cause) = &m.cause {
-                matches.push(RegexMatch::new(m.id, &cause.regex));
-            }
+  // TODO: test (might need to move the conversion logic into a separate function)
+  pub fn get_regex_matches(&self) -> Vec<RegexMatch<i32>> {
+    let match_set = self.global_match_set();
+    let mut matches = Vec::new();
+
+    for m in match_set.matches {
+      if let MatchCause::Regex(cause) = &m.cause {
+        matches.push(RegexMatch::new(m.id, &cause.regex));
+      }
+    }
+
+    matches
+  }
+
+  pub fn get_hotkeys(&self) -> Vec<HotKey> {
+    let mut hotkeys = Vec::new();
+
+    // TODO: read user-defined matches
+
+    // Then convert built-in ones
+    for m in self.builtin_matches {
+      if let Some(hotkey) = &m.hotkey {
+        match HotKey::new(m.id, hotkey) {
+          Ok(hotkey) => hotkeys.push(hotkey),
+          Err(err) => {
+            error!("unable to register hotkey: {}, with error: {}", hotkey, err);
+          }
         }
-
-        matches
+      }
     }
 
-    pub fn get_hotkeys(&self) -> Vec<HotKey> {
-        let mut hotkeys = Vec::new();
+    hotkeys
+  }
 
-        // TODO: read user-defined matches
-
-        // Then convert built-in ones
-        for m in self.builtin_matches {
-            if let Some(hotkey) = &m.hotkey {
-                match HotKey::new(m.id, hotkey) {
-                    Ok(hotkey) => hotkeys.push(hotkey),
-                    Err(err) => {
-                        error!("unable to register hotkey: {}, with error: {}", hotkey, err);
-                    }
-                }
-            }
-        }
-
-        hotkeys
-    }
-
-    fn global_match_set(&self) -> MatchSet {
-        let paths = self.config_store.get_all_match_paths();
-        self.match_store
-            .query(&paths.into_iter().collect::<Vec<_>>())
-    }
+  fn global_match_set(&self) -> MatchSet {
+    let paths = self.config_store.get_all_match_paths();
+    self
+      .match_store
+      .query(&paths.into_iter().collect::<Vec<_>>())
+  }
 }

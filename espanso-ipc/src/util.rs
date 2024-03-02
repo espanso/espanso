@@ -22,24 +22,24 @@ use anyhow::Result;
 // Unbuffered version, necessary to concurrently write
 // to the buffer if necessary (when receiving sync messages)
 pub fn read_line<R: std::io::Read>(stream: R) -> Result<Option<String>> {
-    let mut buffer = Vec::new();
+  let mut buffer = Vec::new();
 
-    let mut is_eof = true;
+  let mut is_eof = true;
 
-    for byte_res in stream.bytes() {
-        let byte = byte_res?;
+  for byte_res in stream.bytes() {
+    let byte = byte_res?;
 
-        if byte == 10 {
-            // Newline
-            break;
-        }
-        buffer.push(byte);
-        is_eof = false;
+    if byte == 10 {
+      // Newline
+      break;
     }
+    buffer.push(byte);
+    is_eof = false;
+  }
 
-    if is_eof {
-        Ok(None)
-    } else {
-        Ok(Some(String::from_utf8(buffer)?))
-    }
+  if is_eof {
+    Ok(None)
+  } else {
+    Ok(Some(String::from_utf8(buffer)?))
+  }
 }

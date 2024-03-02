@@ -18,9 +18,9 @@
  */
 
 use std::{
-    collections::HashMap,
-    sync::{Arc, Mutex},
-    time::{Duration, Instant},
+  collections::HashMap,
+  sync::{Arc, Mutex},
+  time::{Duration, Instant},
 };
 
 use espanso_inject::KeyboardStateProvider;
@@ -34,92 +34,92 @@ const KEY_PRESS_EVENT_INVALIDATION_TIMEOUT: Duration = Duration::from_secs(3);
 
 #[derive(Clone)]
 pub struct KeyStateStore {
-    state: Arc<Mutex<KeyState>>,
+  state: Arc<Mutex<KeyState>>,
 }
 
 impl KeyStateStore {
-    pub fn new() -> Self {
-        Self {
-            state: Arc::new(Mutex::new(KeyState::default())),
-        }
+  pub fn new() -> Self {
+    Self {
+      state: Arc::new(Mutex::new(KeyState::default())),
     }
+  }
 
-    pub fn is_key_pressed(&self, key_code: u32) -> bool {
-        let mut state = self.state.lock().expect("unable to obtain modifier state");
+  pub fn is_key_pressed(&self, key_code: u32) -> bool {
+    let mut state = self.state.lock().expect("unable to obtain modifier state");
 
-        if let Some(status) = state.keys.get_mut(&key_code) {
-            if status.is_outdated() {
-                warn!(
-                    "detected outdated key records for {:?}, releasing the state",
-                    key_code
-                );
-                status.release();
-            }
+    if let Some(status) = state.keys.get_mut(&key_code) {
+      if status.is_outdated() {
+        warn!(
+          "detected outdated key records for {:?}, releasing the state",
+          key_code
+        );
+        status.release();
+      }
 
-            status.is_pressed()
-        } else {
-            false
-        }
+      status.is_pressed()
+    } else {
+      false
     }
+  }
 
-    pub fn update_state(&self, key_code: u32, is_pressed: bool) {
-        let mut state = self.state.lock().expect("unable to obtain key state");
-        if let Some(status) = state.keys.get_mut(&key_code) {
-            if is_pressed {
-                status.press();
-            } else {
-                status.release();
-            }
-        } else {
-            state.keys.insert(key_code, KeyStatus::new(is_pressed));
-        }
+  pub fn update_state(&self, key_code: u32, is_pressed: bool) {
+    let mut state = self.state.lock().expect("unable to obtain key state");
+    if let Some(status) = state.keys.get_mut(&key_code) {
+      if is_pressed {
+        status.press();
+      } else {
+        status.release();
+      }
+    } else {
+      state.keys.insert(key_code, KeyStatus::new(is_pressed));
     }
+  }
 }
 
 #[derive(Default)]
 struct KeyState {
-    keys: HashMap<u32, KeyStatus>,
+  keys: HashMap<u32, KeyStatus>,
 }
 
 struct KeyStatus {
-    pressed_at: Option<Instant>,
+  pressed_at: Option<Instant>,
 }
 
 impl KeyStatus {
-    fn new(is_pressed: bool) -> Self {
-        Self {
-            pressed_at: if is_pressed {
-                Some(Instant::now())
-            } else {
-                None
-            },
-        }
+  fn new(is_pressed: bool) -> Self {
+    Self {
+      pressed_at: if is_pressed {
+        Some(Instant::now())
+      } else {
+        None
+      },
     }
+  }
 
-    fn is_pressed(&self) -> bool {
-        self.pressed_at.is_some()
-    }
+  fn is_pressed(&self) -> bool {
+    self.pressed_at.is_some()
+  }
 
-    fn is_outdated(&self) -> bool {
-        let now = Instant::now();
-        if let Some(pressed_at) = self.pressed_at {
-            now.duration_since(pressed_at) > KEY_PRESS_EVENT_INVALIDATION_TIMEOUT
-        } else {
-            false
-        }
+  fn is_outdated(&self) -> bool {
+    let now = Instant::now();
+    if let Some(pressed_at) = self.pressed_at {
+      now.duration_since(pressed_at) > KEY_PRESS_EVENT_INVALIDATION_TIMEOUT
+    } else {
+      false
     }
+  }
 
-    fn release(&mut self) {
-        self.pressed_at = None;
-    }
+  fn release(&mut self) {
+    self.pressed_at = None;
+  }
 
-    fn press(&mut self) {
-        self.pressed_at = Some(Instant::now());
-    }
+  fn press(&mut self) {
+    self.pressed_at = Some(Instant::now());
+  }
 }
 
 impl KeyboardStateProvider for KeyStateStore {
-    fn is_key_pressed(&self, code: u32) -> bool {
-        self.is_key_pressed(code)
-    }
+  fn is_key_pressed(&self, code: u32) -> bool {
+    self.is_key_pressed(code)
+  }
 }

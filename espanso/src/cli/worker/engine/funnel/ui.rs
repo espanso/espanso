@@ -21,45 +21,45 @@ use crossbeam::channel::{Receiver, Select, SelectedOperation};
 use espanso_ui::event::UIEvent;
 
 use espanso_engine::{
-    event::{input::ContextMenuClickedEvent, Event, EventType},
-    funnel,
+  event::{input::ContextMenuClickedEvent, Event, EventType},
+  funnel,
 };
 
 use super::sequencer::Sequencer;
 
 pub struct UISource<'a> {
-    pub ui_receiver: Receiver<UIEvent>,
-    pub sequencer: &'a Sequencer,
+  pub ui_receiver: Receiver<UIEvent>,
+  pub sequencer: &'a Sequencer,
 }
 
 impl<'a> UISource<'a> {
-    pub fn new(ui_receiver: Receiver<UIEvent>, sequencer: &'a Sequencer) -> Self {
-        UISource {
-            ui_receiver,
-            sequencer,
-        }
+  pub fn new(ui_receiver: Receiver<UIEvent>, sequencer: &'a Sequencer) -> Self {
+    UISource {
+      ui_receiver,
+      sequencer,
     }
+  }
 }
 
 impl<'a> funnel::Source<'a> for UISource<'a> {
-    fn register(&'a self, select: &mut Select<'a>) -> usize {
-        select.recv(&self.ui_receiver)
-    }
+  fn register(&'a self, select: &mut Select<'a>) -> usize {
+    select.recv(&self.ui_receiver)
+  }
 
-    fn receive(&self, op: SelectedOperation) -> Option<Event> {
-        let ui_event = op
-            .recv(&self.ui_receiver)
-            .expect("unable to select data from UISource receiver");
+  fn receive(&self, op: SelectedOperation) -> Option<Event> {
+    let ui_event = op
+      .recv(&self.ui_receiver)
+      .expect("unable to select data from UISource receiver");
 
-        Some(Event {
-            source_id: self.sequencer.next_id(),
-            etype: match ui_event {
-                UIEvent::TrayIconClick => EventType::TrayIconClicked,
-                UIEvent::ContextMenuClick(context_item_id) => {
-                    EventType::ContextMenuClicked(ContextMenuClickedEvent { context_item_id })
-                }
-                UIEvent::Heartbeat => EventType::Heartbeat,
-            },
-        })
-    }
+    Some(Event {
+      source_id: self.sequencer.next_id(),
+      etype: match ui_event {
+        UIEvent::TrayIconClick => EventType::TrayIconClicked,
+        UIEvent::ContextMenuClick(context_item_id) => {
+          EventType::ContextMenuClicked(ContextMenuClickedEvent { context_item_id })
+        }
+        UIEvent::Heartbeat => EventType::Heartbeat,
+      },
+    })
+  }
 }

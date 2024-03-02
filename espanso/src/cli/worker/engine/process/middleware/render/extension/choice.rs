@@ -22,35 +22,35 @@ use espanso_render::extension::choice::{ChoiceSelector, ChoiceSelectorResult};
 use crate::gui::{SearchItem, SearchUI};
 
 pub struct ChoiceSelectorAdapter<'a> {
-    search_ui: &'a dyn SearchUI,
+  search_ui: &'a dyn SearchUI,
 }
 
 impl<'a> ChoiceSelectorAdapter<'a> {
-    pub fn new(search_ui: &'a dyn SearchUI) -> Self {
-        Self { search_ui }
-    }
+  pub fn new(search_ui: &'a dyn SearchUI) -> Self {
+    Self { search_ui }
+  }
 }
 
 impl<'a> ChoiceSelector for ChoiceSelectorAdapter<'a> {
-    fn show(&self, choices: &[espanso_render::extension::choice::Choice]) -> ChoiceSelectorResult {
-        let items = convert_items(choices);
-        match self.search_ui.show(&items, None) {
-            Ok(Some(choice)) => ChoiceSelectorResult::Success(choice),
-            Ok(None) => ChoiceSelectorResult::Aborted,
-            Err(err) => ChoiceSelectorResult::Error(err),
-        }
+  fn show(&self, choices: &[espanso_render::extension::choice::Choice]) -> ChoiceSelectorResult {
+    let items = convert_items(choices);
+    match self.search_ui.show(&items, None) {
+      Ok(Some(choice)) => ChoiceSelectorResult::Success(choice),
+      Ok(None) => ChoiceSelectorResult::Aborted,
+      Err(err) => ChoiceSelectorResult::Error(err),
     }
+  }
 }
 
 fn convert_items(choices: &[espanso_render::extension::choice::Choice]) -> Vec<SearchItem> {
-    choices
-        .iter()
-        .map(|choice| SearchItem {
-            id: choice.id.to_string(),
-            label: choice.label.to_string(),
-            tag: None,
-            additional_search_terms: vec![],
-            is_builtin: false,
-        })
-        .collect()
+  choices
+    .iter()
+    .map(|choice| SearchItem {
+      id: choice.id.to_string(),
+      label: choice.label.to_string(),
+      tag: None,
+      additional_search_terms: vec![],
+      is_builtin: false,
+    })
+    .collect()
 }

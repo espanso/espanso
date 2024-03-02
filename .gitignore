@@ -39,6 +39,3 @@ venv/
 
 .vscode/
 *.profraw
-
-# debian packages builds
-*.deb

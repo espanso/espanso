@@ -23,11 +23,11 @@ mod default;
 mod executor;
 
 pub trait Executor {
-    fn execute(&self, event: &Event) -> bool;
+  fn execute(&self, event: &Event) -> bool;
 }
 
 pub trait Dispatcher {
-    fn dispatch(&self, event: Event);
+  fn dispatch(&self, event: Event);
 }
 
 // Re-export dependency injection entities
@@ -42,27 +42,27 @@ pub use executor::text_ui::{TextUIExecutor, TextUIHandler};
 
 #[allow(clippy::too_many_arguments)]
 pub fn default<'a>(
-    event_injector: &'a dyn TextInjector,
-    clipboard_injector: &'a dyn TextInjector,
-    mode_provider: &'a dyn ModeProvider,
-    key_injector: &'a dyn KeyInjector,
-    html_injector: &'a dyn HtmlInjector,
-    image_injector: &'a dyn ImageInjector,
-    context_menu_handler: &'a dyn ContextMenuHandler,
-    icon_handler: &'a dyn IconHandler,
-    secure_input_manager: &'a dyn SecureInputManager,
-    text_ui_handler: &'a dyn TextUIHandler,
+  event_injector: &'a dyn TextInjector,
+  clipboard_injector: &'a dyn TextInjector,
+  mode_provider: &'a dyn ModeProvider,
+  key_injector: &'a dyn KeyInjector,
+  html_injector: &'a dyn HtmlInjector,
+  image_injector: &'a dyn ImageInjector,
+  context_menu_handler: &'a dyn ContextMenuHandler,
+  icon_handler: &'a dyn IconHandler,
+  secure_input_manager: &'a dyn SecureInputManager,
+  text_ui_handler: &'a dyn TextUIHandler,
 ) -> impl Dispatcher + 'a {
-    default::DefaultDispatcher::new(
-        event_injector,
-        clipboard_injector,
-        mode_provider,
-        key_injector,
-        html_injector,
-        image_injector,
-        context_menu_handler,
-        icon_handler,
-        secure_input_manager,
-        text_ui_handler,
-    )
+  default::DefaultDispatcher::new(
+    event_injector,
+    clipboard_injector,
+    mode_provider,
+    key_injector,
+    html_injector,
+    image_injector,
+    context_menu_handler,
+    icon_handler,
+    secure_input_manager,
+    text_ui_handler,
+  )
 }

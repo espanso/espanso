@@ -23,19 +23,19 @@ use crate::patch::patches::{PatchedConfig, Patches};
 use crate::patch::PatchDefinition;
 
 pub fn patch() -> PatchDefinition {
-    PatchDefinition {
-        name: module_path!().split(':').last().unwrap_or("unknown"),
-        is_enabled: || cfg!(target_os = "windows"),
-        should_patch: |app| app.title.unwrap_or_default().contains("OneNote"),
-        apply: |base, name| {
-            Arc::new(PatchedConfig::patch(
-                base,
-                name,
-                Patches {
-                    key_delay: Some(Some(10)),
-                    ..Default::default()
-                },
-            ))
+  PatchDefinition {
+    name: module_path!().split(':').last().unwrap_or("unknown"),
+    is_enabled: || cfg!(target_os = "windows"),
+    should_patch: |app| app.title.unwrap_or_default().contains("OneNote"),
+    apply: |base, name| {
+      Arc::new(PatchedConfig::patch(
+        base,
+        name,
+        Patches {
+          key_delay: Some(Some(10)),
+          ..Default::default()
         },
-    }
+      ))
+    },
+  }
 }

@@ -24,8 +24,8 @@ use std::{collections::HashMap, path::Path};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum IPCEvent {
-    Exit,
-    ExitAllProcesses,
+  Exit,
+  ExitAllProcesses,
 
   EnableRequest,
   DisableRequest,
@@ -33,32 +33,32 @@ pub enum IPCEvent {
   OpenSearchBar,
   OpenConfigFolder,
 
-    RequestMatchExpansion(RequestMatchExpansionPayload),
+  RequestMatchExpansion(RequestMatchExpansionPayload),
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct RequestMatchExpansionPayload {
-    pub trigger: Option<String>,
-    pub args: HashMap<String, String>,
+  pub trigger: Option<String>,
+  pub args: HashMap<String, String>,
 }
 
 pub fn create_daemon_ipc_server(runtime_dir: &Path) -> Result<impl IPCServer<IPCEvent>> {
-    create_ipc_server(runtime_dir, "daemonv2")
+  create_ipc_server(runtime_dir, "daemonv2")
 }
 
 pub fn create_worker_ipc_server(runtime_dir: &Path) -> Result<impl IPCServer<IPCEvent>> {
-    create_ipc_server(runtime_dir, "workerv2")
+  create_ipc_server(runtime_dir, "workerv2")
 }
 
 pub fn create_ipc_client_to_worker(runtime_dir: &Path) -> Result<impl IPCClient<IPCEvent>> {
-    create_ipc_client(runtime_dir, "workerv2")
+  create_ipc_client(runtime_dir, "workerv2")
 }
 
 fn create_ipc_server(runtime_dir: &Path, name: &str) -> Result<impl IPCServer<IPCEvent>> {
-    espanso_ipc::server(&format!("espanso{name}"), runtime_dir)
+  espanso_ipc::server(&format!("espanso{name}"), runtime_dir)
 }
 
 fn create_ipc_client(runtime_dir: &Path, target_process: &str) -> Result<impl IPCClient<IPCEvent>> {
-    let client = espanso_ipc::client(&format!("espanso{target_process}"), runtime_dir)?;
-    Ok(client)
+  let client = espanso_ipc::client(&format!("espanso{target_process}"), runtime_dir)?;
+  Ok(client)
 }

@@ -18,8 +18,8 @@
  */
 
 use std::{
-    cell::RefCell,
-    collections::{HashMap, HashSet},
+  cell::RefCell,
+  collections::{HashMap, HashSet},
 };
 
 use anyhow::{anyhow, Result};
@@ -30,174 +30,173 @@ use crate::Variable;
 use super::RendererError;
 
 struct Node<'a> {
-    name: &'a str,
-    variable: Option<&'a Variable>,
-    dependencies: Option<HashSet<&'a str>>,
+  name: &'a str,
+  variable: Option<&'a Variable>,
+  dependencies: Option<HashSet<&'a str>>,
 }
 
 pub(crate) fn resolve_evaluation_order<'a>(
-    body: &'a str,
-    local_vars: &'a [&'a Variable],
-    global_vars: &'a [&'a Variable],
+  body: &'a str,
+  local_vars: &'a [&'a Variable],
+  global_vars: &'a [&'a Variable],
 ) -> Result<Vec<&'a Variable>> {
-    let node_map = generate_nodes(body, local_vars, global_vars);
+  let node_map = generate_nodes(body, local_vars, global_vars);
 
-    let body_node = node_map
-        .get("__match_body")
-        .ok_or_else(|| anyhow!("missing body node"))?;
+  let body_node = node_map
+    .get("__match_body")
+    .ok_or_else(|| anyhow!("missing body node"))?;
 
-    let eval_order = RefCell::new(Vec::new());
-    let resolved = RefCell::new(HashSet::new());
-    let seen = RefCell::new(HashSet::new());
-    {
-        resolve_dependencies(body_node, &node_map, &eval_order, &resolved, &seen)?;
+  let eval_order = RefCell::new(Vec::new());
+  let resolved = RefCell::new(HashSet::new());
+  let seen = RefCell::new(HashSet::new());
+  {
+    resolve_dependencies(body_node, &node_map, &eval_order, &resolved, &seen)?;
+  }
+
+  let eval_order_ref = eval_order.borrow();
+
+  let mut ordered_variables = Vec::new();
+  for var_name in &(*eval_order_ref) {
+    let node = node_map
+      .get(var_name)
+      .ok_or_else(|| anyhow!("could not find dependency node for variable: {}", var_name))?;
+    if let Some(var) = node.variable {
+      ordered_variables.push(var);
     }
+  }
 
-    let eval_order_ref = eval_order.borrow();
-
-    let mut ordered_variables = Vec::new();
-    for var_name in &(*eval_order_ref) {
-        let node = node_map
-            .get(var_name)
-            .ok_or_else(|| anyhow!("could not find dependency node for variable: {}", var_name))?;
-        if let Some(var) = node.variable {
-            ordered_variables.push(var);
-        }
-    }
-
-    Ok(ordered_variables)
+  Ok(ordered_variables)
 }
 
 fn generate_nodes<'a>(
-    body: &'a str,
-    local_vars: &'a [&'a Variable],
-    global_vars: &'a [&'a Variable],
+  body: &'a str,
+  local_vars: &'a [&'a Variable],
+  global_vars: &'a [&'a Variable],
 ) -> HashMap<&'a str, Node<'a>> {
-    let mut local_vars_nodes = Vec::new();
-    for (index, var) in local_vars.iter().enumerate() {
-        let mut dependencies = HashSet::new();
-        if var.inject_vars {
-            dependencies.extend(super::util::get_params_variable_names(&var.params));
-        }
-        dependencies.extend(var.depends_on.iter().map(String::as_str));
+  let mut local_vars_nodes = Vec::new();
+  for (index, var) in local_vars.iter().enumerate() {
+    let mut dependencies = HashSet::new();
+    if var.inject_vars {
+      dependencies.extend(super::util::get_params_variable_names(&var.params));
+    }
+    dependencies.extend(var.depends_on.iter().map(String::as_str));
 
-        // Every local variable depends on the one before it.
-        // Needed to guarantee execution order within local vars.
-        if index > 0 {
-            let previous_var = local_vars.get(index - 1);
-            if let Some(previous_var) = previous_var {
-                dependencies.insert(&previous_var.name);
-            }
-        }
-
-        local_vars_nodes.push(Node {
-            name: &var.name,
-            variable: Some(var),
-            dependencies: Some(dependencies),
-        });
+    // Every local variable depends on the one before it.
+    // Needed to guarantee execution order within local vars.
+    if index > 0 {
+      let previous_var = local_vars.get(index - 1);
+      if let Some(previous_var) = previous_var {
+        dependencies.insert(&previous_var.name);
+      }
     }
 
-    let global_vars_nodes = global_vars.iter().map(|var| create_node_from_var(var));
-
-    // The body depends on all local variables + the variables read inside it (which might be global)
-    let mut body_dependencies: HashSet<&str> =
-        local_vars_nodes.iter().map(|node| node.name).collect();
-    body_dependencies.extend(super::util::get_body_variable_names(body));
-
-    let body_node = Node {
-        name: "__match_body",
-        variable: None,
-        dependencies: Some(body_dependencies),
-    };
-
-    let mut node_map = HashMap::new();
-
-    node_map.insert(body_node.name, body_node);
-    global_vars_nodes.into_iter().for_each(|node| {
-        node_map.insert(node.name, node);
+    local_vars_nodes.push(Node {
+      name: &var.name,
+      variable: Some(var),
+      dependencies: Some(dependencies),
     });
-    for node in local_vars_nodes {
-        node_map.insert(node.name, node);
-    }
+  }
 
-    node_map
+  let global_vars_nodes = global_vars.iter().map(|var| create_node_from_var(var));
+
+  // The body depends on all local variables + the variables read inside it (which might be global)
+  let mut body_dependencies: HashSet<&str> =
+    local_vars_nodes.iter().map(|node| node.name).collect();
+  body_dependencies.extend(super::util::get_body_variable_names(body));
+
+  let body_node = Node {
+    name: "__match_body",
+    variable: None,
+    dependencies: Some(body_dependencies),
+  };
+
+  let mut node_map = HashMap::new();
+
+  node_map.insert(body_node.name, body_node);
+  global_vars_nodes.into_iter().for_each(|node| {
+    node_map.insert(node.name, node);
+  });
+  for node in local_vars_nodes {
+    node_map.insert(node.name, node);
+  }
+
+  node_map
 }
 
 fn create_node_from_var(var: &Variable) -> Node {
-    let dependencies = if var.inject_vars || !var.depends_on.is_empty() {
-        let mut vars = HashSet::new();
+  let dependencies = if var.inject_vars || !var.depends_on.is_empty() {
+    let mut vars = HashSet::new();
 
-        if var.inject_vars {
-            vars.extend(super::util::get_params_variable_names(&var.params));
-        }
-
-        vars.extend(var.depends_on.iter().map(String::as_str));
-
-        Some(vars)
-    } else {
-        None
-    };
-
-    Node {
-        name: &var.name,
-        variable: Some(var),
-        dependencies,
+    if var.inject_vars {
+      vars.extend(super::util::get_params_variable_names(&var.params));
     }
+
+    vars.extend(var.depends_on.iter().map(String::as_str));
+
+    Some(vars)
+  } else {
+    None
+  };
+
+  Node {
+    name: &var.name,
+    variable: Some(var),
+    dependencies,
+  }
 }
 
 fn resolve_dependencies<'a>(
-    node: &'a Node,
-    node_map: &'a HashMap<&'a str, Node<'a>>,
-    eval_order: &'a RefCell<Vec<&'a str>>,
-    resolved: &'a RefCell<HashSet<&'a str>>,
-    seen: &'a RefCell<HashSet<&'a str>>,
+  node: &'a Node,
+  node_map: &'a HashMap<&'a str, Node<'a>>,
+  eval_order: &'a RefCell<Vec<&'a str>>,
+  resolved: &'a RefCell<HashSet<&'a str>>,
+  seen: &'a RefCell<HashSet<&'a str>>,
 ) -> Result<()> {
-    {
-        let mut seen_ref = seen.borrow_mut();
-        seen_ref.insert(node.name);
-    }
+  {
+    let mut seen_ref = seen.borrow_mut();
+    seen_ref.insert(node.name);
+  }
 
-    if let Some(dependencies) = &node.dependencies {
-        for dependency in dependencies {
-            let has_been_resolved = {
-                let resolved_ref = resolved.borrow();
-                resolved_ref.contains(dependency)
-            };
-            let has_been_seen = {
-                let seen_ref = seen.borrow();
-                seen_ref.contains(dependency)
-            };
+  if let Some(dependencies) = &node.dependencies {
+    for dependency in dependencies {
+      let has_been_resolved = {
+        let resolved_ref = resolved.borrow();
+        resolved_ref.contains(dependency)
+      };
+      let has_been_seen = {
+        let seen_ref = seen.borrow();
+        seen_ref.contains(dependency)
+      };
 
-            if !has_been_resolved {
-                if has_been_seen {
-                    return Err(RendererError::CircularDependency(
-                        node.name.to_string(),
-                        (*dependency).to_string(),
-                    )
-                    .into());
-                }
-
-                if let Some(dependency_node) = node_map.get(dependency) {
-                    resolve_dependencies(dependency_node, node_map, eval_order, resolved, seen)?;
-                } else {
-                    error!("could not resolve variable {:?}", dependency);
-                    if let Some(variable) = &node.variable {
-                        if variable.var_type == "form" {
-                            super::log_new_form_syntax_tip();
-                        }
-                    }
-                    return Err(RendererError::MissingVariable((*dependency).to_string()).into());
-                }
-            }
+      if !has_been_resolved {
+        if has_been_seen {
+          return Err(
+            RendererError::CircularDependency(node.name.to_string(), (*dependency).to_string())
+              .into(),
+          );
         }
-    }
 
-    {
-        let mut eval_order_ref = eval_order.borrow_mut();
-        eval_order_ref.push(node.name);
-        let mut resolved_ref = resolved.borrow_mut();
-        resolved_ref.insert(node.name);
+        if let Some(dependency_node) = node_map.get(dependency) {
+          resolve_dependencies(dependency_node, node_map, eval_order, resolved, seen)?;
+        } else {
+          error!("could not resolve variable {:?}", dependency);
+          if let Some(variable) = &node.variable {
+            if variable.var_type == "form" {
+              super::log_new_form_syntax_tip();
+            }
+          }
+          return Err(RendererError::MissingVariable((*dependency).to_string()).into());
+        }
+      }
     }
+  }
 
-    Ok(())
+  {
+    let mut eval_order_ref = eval_order.borrow_mut();
+    eval_order_ref.push(node.name);
+    let mut resolved_ref = resolved.borrow_mut();
+    resolved_ref.insert(node.name);
+  }
+
+  Ok(())
 }

@@ -20,10 +20,8 @@
 use self::util::MigrationError;
 use crate::preferences::Preferences;
 use crate::{
-    exit_code::{
-        LAUNCHER_ALREADY_RUNNING, LAUNCHER_CONFIG_DIR_POPULATION_FAILURE, LAUNCHER_SUCCESS,
-    },
-    lock::acquire_daemon_lock,
+  exit_code::{LAUNCHER_ALREADY_RUNNING, LAUNCHER_CONFIG_DIR_POPULATION_FAILURE, LAUNCHER_SUCCESS},
+  lock::acquire_daemon_lock,
 };
 use log::error;
 
@@ -38,189 +36,188 @@ mod util;
 // TODO: test also with modulo feature disabled
 
 pub fn new() -> CliModule {
-    #[allow(clippy::needless_update)]
-    CliModule {
-        requires_paths: true,
-        enable_logs: false,
-        subcommand: "launcher".to_string(),
-        show_in_dock: true,
-        entry: launcher_main,
-        ..Default::default()
-    }
+  #[allow(clippy::needless_update)]
+  CliModule {
+    requires_paths: true,
+    enable_logs: false,
+    subcommand: "launcher".to_string(),
+    show_in_dock: true,
+    entry: launcher_main,
+    ..Default::default()
+  }
 }
 
 #[cfg(feature = "modulo")]
 fn launcher_main(args: CliModuleArgs) -> i32 {
-    use espanso_modulo::wizard::{MigrationResult, WizardHandlers, WizardOptions};
-    let paths = args.paths.expect("missing paths in launcher main");
+  use espanso_modulo::wizard::{MigrationResult, WizardHandlers, WizardOptions};
+  let paths = args.paths.expect("missing paths in launcher main");
 
-    // TODO: should we create a non-gui wizard? We can also use it for the non-modulo versions of espanso
+  // TODO: should we create a non-gui wizard? We can also use it for the non-modulo versions of espanso
 
-    // If espanso is already running, show a warning
-    let lock_file = acquire_daemon_lock(&paths.runtime);
-    if lock_file.is_none() {
-        util::show_already_running_warning().expect("unable to show already running warning");
-        return LAUNCHER_ALREADY_RUNNING;
-    }
-    drop(lock_file);
+  // If espanso is already running, show a warning
+  let lock_file = acquire_daemon_lock(&paths.runtime);
+  if lock_file.is_none() {
+    util::show_already_running_warning().expect("unable to show already running warning");
+    return LAUNCHER_ALREADY_RUNNING;
+  }
+  drop(lock_file);
 
-    let paths_overrides = args
-        .paths_overrides
-        .expect("missing paths overrides in launcher main");
-    let icon_paths =
-        crate::icon::load_icon_paths(&paths.runtime).expect("unable to load icon paths");
+  let paths_overrides = args
+    .paths_overrides
+    .expect("missing paths overrides in launcher main");
+  let icon_paths = crate::icon::load_icon_paths(&paths.runtime).expect("unable to load icon paths");
 
-    let preferences =
-        crate::preferences::get_default(&paths.runtime).expect("unable to initialize preferences");
+  let preferences =
+    crate::preferences::get_default(&paths.runtime).expect("unable to initialize preferences");
 
-    let is_welcome_page_enabled = !preferences.has_completed_wizard();
+  let is_welcome_page_enabled = !preferences.has_completed_wizard();
 
-    let is_move_bundle_page_enabled = crate::cli::util::is_subject_to_app_translocation_on_macos();
+  let is_move_bundle_page_enabled = crate::cli::util::is_subject_to_app_translocation_on_macos();
 
-    let is_legacy_version_page_enabled = util::is_legacy_version_running(&paths.runtime);
-    let runtime_dir_clone = paths.runtime.clone();
-    let is_legacy_version_running_handler =
-        Box::new(move || util::is_legacy_version_running(&runtime_dir_clone));
+  let is_legacy_version_page_enabled = util::is_legacy_version_running(&paths.runtime);
+  let runtime_dir_clone = paths.runtime.clone();
+  let is_legacy_version_running_handler =
+    Box::new(move || util::is_legacy_version_running(&runtime_dir_clone));
 
-    let (is_wrong_edition_page_enabled, wrong_edition_detected_os) =
-        edition_check::is_wrong_edition();
+  let (is_wrong_edition_page_enabled, wrong_edition_detected_os) =
+    edition_check::is_wrong_edition();
 
-    let is_migrate_page_enabled = espanso_config::is_legacy_config(&paths.config);
-    let paths_clone = paths.clone();
-    let backup_and_migrate_handler =
-        Box::new(move || match util::migrate_configuration(&paths_clone) {
-            Ok(()) => MigrationResult::Success,
-            Err(error) => match error.downcast_ref::<MigrationError>() {
-                Some(MigrationError::Dirty) => MigrationResult::DirtyFailure,
-                Some(MigrationError::Clean) => MigrationResult::CleanFailure,
-                _ => MigrationResult::UnknownFailure,
-            },
-        });
-
-    let is_auto_start_page_enabled =
-        !preferences.has_selected_auto_start_option() && !cfg!(target_os = "linux");
-    let preferences_clone = preferences.clone();
-    let auto_start_handler = Box::new(move |auto_start| {
-        preferences_clone.set_has_selected_auto_start_option(true);
-
-        if auto_start {
-            match util::configure_auto_start(true) {
-                Ok(()) => true,
-                Err(error) => {
-                    eprintln!("Service register returned error: {error}");
-                    false
-                }
-            }
-        } else {
-            true
-        }
+  let is_migrate_page_enabled = espanso_config::is_legacy_config(&paths.config);
+  let paths_clone = paths.clone();
+  let backup_and_migrate_handler =
+    Box::new(move || match util::migrate_configuration(&paths_clone) {
+      Ok(()) => MigrationResult::Success,
+      Err(error) => match error.downcast_ref::<MigrationError>() {
+        Some(MigrationError::Dirty) => MigrationResult::DirtyFailure,
+        Some(MigrationError::Clean) => MigrationResult::CleanFailure,
+        _ => MigrationResult::UnknownFailure,
+      },
     });
 
-    let is_add_path_page_enabled =
-        if cfg!(not(target_os = "linux")) && !preferences.has_completed_wizard() {
-            if cfg!(target_os = "macos") {
-                !crate::path::is_espanso_in_path()
-            } else if paths.is_portable_mode {
-                false
-            } else {
-                !crate::path::is_espanso_in_path()
-            }
-        } else {
-            false
-        };
-    let add_to_path_handler = Box::new(move || match util::add_espanso_to_path() {
+  let is_auto_start_page_enabled =
+    !preferences.has_selected_auto_start_option() && !cfg!(target_os = "linux");
+  let preferences_clone = preferences.clone();
+  let auto_start_handler = Box::new(move |auto_start| {
+    preferences_clone.set_has_selected_auto_start_option(true);
+
+    if auto_start {
+      match util::configure_auto_start(true) {
         Ok(()) => true,
         Err(error) => {
-            eprintln!("Add to path returned error: {error}");
-            false
+          eprintln!("Service register returned error: {error}");
+          false
         }
-    });
-
-    let is_accessibility_page_enabled = if cfg!(target_os = "macos") {
-        !accessibility::is_accessibility_enabled()
+      }
     } else {
+      true
+    }
+  });
+
+  let is_add_path_page_enabled =
+    if cfg!(not(target_os = "linux")) && !preferences.has_completed_wizard() {
+      if cfg!(target_os = "macos") {
+        !crate::path::is_espanso_in_path()
+      } else if paths.is_portable_mode {
         false
-    };
-    let is_accessibility_enabled_handler = Box::new(accessibility::is_accessibility_enabled);
-    let enable_accessibility_handler = Box::new(move || {
-        accessibility::prompt_enable_accessibility();
-    });
-
-    let on_completed_handler = Box::new(move || {
-        preferences.set_completed_wizard(true);
-    });
-
-    // Only show the wizard if a panel should be displayed
-    let should_launch_daemon = if is_welcome_page_enabled
-        || is_move_bundle_page_enabled
-        || is_legacy_version_page_enabled
-        || is_migrate_page_enabled
-        || is_auto_start_page_enabled
-        || is_add_path_page_enabled
-        || is_accessibility_page_enabled
-        || is_wrong_edition_page_enabled
-    {
-        espanso_modulo::wizard::show(WizardOptions {
-            version: crate::VERSION.to_string(),
-            is_welcome_page_enabled,
-            is_move_bundle_page_enabled,
-            is_legacy_version_page_enabled,
-            is_wrong_edition_page_enabled,
-            is_migrate_page_enabled,
-            is_auto_start_page_enabled,
-            is_add_path_page_enabled,
-            is_accessibility_page_enabled,
-            window_icon_path: icon_paths
-                .wizard_icon
-                .map(|path| path.to_string_lossy().to_string()),
-            welcome_image_path: icon_paths
-                .logo_no_background
-                .map(|path| path.to_string_lossy().to_string()),
-            accessibility_image_1_path: icon_paths
-                .accessibility_image_1
-                .map(|path| path.to_string_lossy().to_string()),
-            accessibility_image_2_path: icon_paths
-                .accessibility_image_2
-                .map(|path| path.to_string_lossy().to_string()),
-            detected_os: wrong_edition_detected_os,
-            handlers: WizardHandlers {
-                is_legacy_version_running: Some(is_legacy_version_running_handler),
-                backup_and_migrate: Some(backup_and_migrate_handler),
-                auto_start: Some(auto_start_handler),
-                add_to_path: Some(add_to_path_handler),
-                enable_accessibility: Some(enable_accessibility_handler),
-                is_accessibility_enabled: Some(is_accessibility_enabled_handler),
-                on_completed: Some(on_completed_handler),
-            },
-        })
+      } else {
+        !crate::path::is_espanso_in_path()
+      }
     } else {
-        true
+      false
     };
+  let add_to_path_handler = Box::new(move || match util::add_espanso_to_path() {
+    Ok(()) => true,
+    Err(error) => {
+      eprintln!("Add to path returned error: {error}");
+      false
+    }
+  });
 
-    if !espanso_config::is_legacy_config(&paths.config) {
-        if let Err(err) = crate::config::populate_default_config(&paths.config) {
-            error!("Error populating the config directory: {:?}", err);
+  let is_accessibility_page_enabled = if cfg!(target_os = "macos") {
+    !accessibility::is_accessibility_enabled()
+  } else {
+    false
+  };
+  let is_accessibility_enabled_handler = Box::new(accessibility::is_accessibility_enabled);
+  let enable_accessibility_handler = Box::new(move || {
+    accessibility::prompt_enable_accessibility();
+  });
 
-            // TODO: show an error message with GUI
-            return LAUNCHER_CONFIG_DIR_POPULATION_FAILURE;
-        }
+  let on_completed_handler = Box::new(move || {
+    preferences.set_completed_wizard(true);
+  });
+
+  // Only show the wizard if a panel should be displayed
+  let should_launch_daemon = if is_welcome_page_enabled
+    || is_move_bundle_page_enabled
+    || is_legacy_version_page_enabled
+    || is_migrate_page_enabled
+    || is_auto_start_page_enabled
+    || is_add_path_page_enabled
+    || is_accessibility_page_enabled
+    || is_wrong_edition_page_enabled
+  {
+    espanso_modulo::wizard::show(WizardOptions {
+      version: crate::VERSION.to_string(),
+      is_welcome_page_enabled,
+      is_move_bundle_page_enabled,
+      is_legacy_version_page_enabled,
+      is_wrong_edition_page_enabled,
+      is_migrate_page_enabled,
+      is_auto_start_page_enabled,
+      is_add_path_page_enabled,
+      is_accessibility_page_enabled,
+      window_icon_path: icon_paths
+        .wizard_icon
+        .map(|path| path.to_string_lossy().to_string()),
+      welcome_image_path: icon_paths
+        .logo_no_background
+        .map(|path| path.to_string_lossy().to_string()),
+      accessibility_image_1_path: icon_paths
+        .accessibility_image_1
+        .map(|path| path.to_string_lossy().to_string()),
+      accessibility_image_2_path: icon_paths
+        .accessibility_image_2
+        .map(|path| path.to_string_lossy().to_string()),
+      detected_os: wrong_edition_detected_os,
+      handlers: WizardHandlers {
+        is_legacy_version_running: Some(is_legacy_version_running_handler),
+        backup_and_migrate: Some(backup_and_migrate_handler),
+        auto_start: Some(auto_start_handler),
+        add_to_path: Some(add_to_path_handler),
+        enable_accessibility: Some(enable_accessibility_handler),
+        is_accessibility_enabled: Some(is_accessibility_enabled_handler),
+        on_completed: Some(on_completed_handler),
+      },
+    })
+  } else {
+    true
+  };
+
+  if !espanso_config::is_legacy_config(&paths.config) {
+    if let Err(err) = crate::config::populate_default_config(&paths.config) {
+      error!("Error populating the config directory: {:?}", err);
+
+      // TODO: show an error message with GUI
+      return LAUNCHER_CONFIG_DIR_POPULATION_FAILURE;
+    }
+  }
+
+  if should_launch_daemon {
+    // We hide the dock icon on macOS to avoid having it around when the daemon is running
+    #[cfg(target_os = "macos")]
+    {
+      espanso_mac_utils::convert_to_background_app();
     }
 
-    if should_launch_daemon {
-        // We hide the dock icon on macOS to avoid having it around when the daemon is running
-        #[cfg(target_os = "macos")]
-        {
-            espanso_mac_utils::convert_to_background_app();
-        }
+    daemon::launch_daemon(&paths_overrides).expect("failed to launch daemon");
+  }
 
-        daemon::launch_daemon(&paths_overrides).expect("failed to launch daemon");
-    }
-
-    LAUNCHER_SUCCESS
+  LAUNCHER_SUCCESS
 }
 
 #[cfg(not(feature = "modulo"))]
 fn launcher_main(_: CliModuleArgs) -> i32 {
-    // TODO: handle what happens here
-    unimplemented!();
+  // TODO: handle what happens here
+  unimplemented!();
 }

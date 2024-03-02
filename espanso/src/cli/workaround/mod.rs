@@ -24,31 +24,31 @@ use crate::{error_eprintln, exit_code::WORKAROUND_SUCCESS};
 mod secure_input;
 
 pub fn new() -> CliModule {
-    CliModule {
-        subcommand: "workaround".to_string(),
-        entry: workaround_main,
-        ..Default::default()
-    }
+  CliModule {
+    subcommand: "workaround".to_string(),
+    entry: workaround_main,
+    ..Default::default()
+  }
 }
 
 fn workaround_main(args: CliModuleArgs) -> i32 {
-    let cli_args = args.cli_args.expect("missing cli_args");
+  let cli_args = args.cli_args.expect("missing cli_args");
 
-    if cli_args.subcommand_matches("secure-input").is_some() {
-        #[cfg(target_os = "macos")]
-        {
-            use crate::exit_code::WORKAROUND_FAILURE;
-            if let Err(err) = secure_input::run_secure_input_workaround() {
-                error_eprintln!("secure-input workaround reported error: {}", err);
-                return WORKAROUND_FAILURE;
-            }
-        }
-        #[cfg(not(target_os = "macos"))]
-        {
-            error_eprintln!("secure-input workaround is only available on macOS");
-            return crate::exit_code::WORKAROUND_NOT_AVAILABLE;
-        }
+  if cli_args.subcommand_matches("secure-input").is_some() {
+    #[cfg(target_os = "macos")]
+    {
+      use crate::exit_code::WORKAROUND_FAILURE;
+      if let Err(err) = secure_input::run_secure_input_workaround() {
+        error_eprintln!("secure-input workaround reported error: {}", err);
+        return WORKAROUND_FAILURE;
+      }
     }
+    #[cfg(not(target_os = "macos"))]
+    {
+      error_eprintln!("secure-input workaround is only available on macOS");
+      return crate::exit_code::WORKAROUND_NOT_AVAILABLE;
+    }
+  }
 
-    WORKAROUND_SUCCESS
+  WORKAROUND_SUCCESS
 }

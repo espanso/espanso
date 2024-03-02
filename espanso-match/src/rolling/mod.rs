@@ -25,148 +25,148 @@ mod util;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum RollingItem {
-    WordSeparator,
-    Key(Key),
-    Char(String),
-    CharInsensitive(String),
+  WordSeparator,
+  Key(Key),
+  Char(String),
+  CharInsensitive(String),
 }
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct RollingMatch<Id> {
-    pub id: Id,
-    pub items: Vec<RollingItem>,
+  pub id: Id,
+  pub items: Vec<RollingItem>,
 }
 
 impl<Id> RollingMatch<Id> {
-    pub fn new(id: Id, items: Vec<RollingItem>) -> Self {
-        Self { id, items }
+  pub fn new(id: Id, items: Vec<RollingItem>) -> Self {
+    Self { id, items }
+  }
+
+  pub fn from_string(id: Id, string: &str, opt: &StringMatchOptions) -> Self {
+    let mut items = Vec::new();
+
+    if opt.left_word {
+      items.push(RollingItem::WordSeparator);
     }
 
-    pub fn from_string(id: Id, string: &str, opt: &StringMatchOptions) -> Self {
-        let mut items = Vec::new();
-
-        if opt.left_word {
-            items.push(RollingItem::WordSeparator);
-        }
-
-        for c in string.chars() {
-            if opt.case_insensitive {
-                items.push(RollingItem::CharInsensitive(c.to_string()));
-            } else {
-                items.push(RollingItem::Char(c.to_string()));
-            }
-        }
-
-        if opt.right_word {
-            items.push(RollingItem::WordSeparator);
-        }
-
-        Self { id, items }
+    for c in string.chars() {
+      if opt.case_insensitive {
+        items.push(RollingItem::CharInsensitive(c.to_string()));
+      } else {
+        items.push(RollingItem::Char(c.to_string()));
+      }
     }
 
-    pub fn from_items(id: Id, items: &[RollingItem]) -> Self {
-        Self {
-            id,
-            items: items.to_vec(),
-        }
+    if opt.right_word {
+      items.push(RollingItem::WordSeparator);
     }
+
+    Self { id, items }
+  }
+
+  pub fn from_items(id: Id, items: &[RollingItem]) -> Self {
+    Self {
+      id,
+      items: items.to_vec(),
+    }
+  }
 }
 
 #[derive(Default)]
 pub struct StringMatchOptions {
-    pub case_insensitive: bool,
-    pub left_word: bool,
-    pub right_word: bool,
+  pub case_insensitive: bool,
+  pub left_word: bool,
+  pub right_word: bool,
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+  use super::*;
 
-    #[test]
-    fn test_match_from_string_base_case() {
-        assert_eq!(
-            RollingMatch::from_string(1, "test", &StringMatchOptions::default()),
-            RollingMatch {
-                id: 1,
-                items: vec![
-                    RollingItem::Char("t".to_string()),
-                    RollingItem::Char("e".to_string()),
-                    RollingItem::Char("s".to_string()),
-                    RollingItem::Char("t".to_string()),
-                ]
-            }
-        );
-    }
+  #[test]
+  fn test_match_from_string_base_case() {
+    assert_eq!(
+      RollingMatch::from_string(1, "test", &StringMatchOptions::default()),
+      RollingMatch {
+        id: 1,
+        items: vec![
+          RollingItem::Char("t".to_string()),
+          RollingItem::Char("e".to_string()),
+          RollingItem::Char("s".to_string()),
+          RollingItem::Char("t".to_string()),
+        ]
+      }
+    );
+  }
 
-    #[test]
-    fn test_match_from_string_left_word() {
-        assert_eq!(
-            RollingMatch::from_string(
-                1,
-                "test",
-                &StringMatchOptions {
-                    left_word: true,
-                    ..Default::default()
-                }
-            ),
-            RollingMatch {
-                id: 1,
-                items: vec![
-                    RollingItem::WordSeparator,
-                    RollingItem::Char("t".to_string()),
-                    RollingItem::Char("e".to_string()),
-                    RollingItem::Char("s".to_string()),
-                    RollingItem::Char("t".to_string()),
-                ]
-            }
-        );
-    }
+  #[test]
+  fn test_match_from_string_left_word() {
+    assert_eq!(
+      RollingMatch::from_string(
+        1,
+        "test",
+        &StringMatchOptions {
+          left_word: true,
+          ..Default::default()
+        }
+      ),
+      RollingMatch {
+        id: 1,
+        items: vec![
+          RollingItem::WordSeparator,
+          RollingItem::Char("t".to_string()),
+          RollingItem::Char("e".to_string()),
+          RollingItem::Char("s".to_string()),
+          RollingItem::Char("t".to_string()),
+        ]
+      }
+    );
+  }
 
-    #[test]
-    fn test_match_from_string_right_word() {
-        assert_eq!(
-            RollingMatch::from_string(
-                1,
-                "test",
-                &StringMatchOptions {
-                    right_word: true,
-                    ..Default::default()
-                }
-            ),
-            RollingMatch {
-                id: 1,
-                items: vec![
-                    RollingItem::Char("t".to_string()),
-                    RollingItem::Char("e".to_string()),
-                    RollingItem::Char("s".to_string()),
-                    RollingItem::Char("t".to_string()),
-                    RollingItem::WordSeparator,
-                ]
-            }
-        );
-    }
+  #[test]
+  fn test_match_from_string_right_word() {
+    assert_eq!(
+      RollingMatch::from_string(
+        1,
+        "test",
+        &StringMatchOptions {
+          right_word: true,
+          ..Default::default()
+        }
+      ),
+      RollingMatch {
+        id: 1,
+        items: vec![
+          RollingItem::Char("t".to_string()),
+          RollingItem::Char("e".to_string()),
+          RollingItem::Char("s".to_string()),
+          RollingItem::Char("t".to_string()),
+          RollingItem::WordSeparator,
+        ]
+      }
+    );
+  }
 
-    #[test]
-    fn test_match_from_string_case_insensitive() {
-        assert_eq!(
-            RollingMatch::from_string(
-                1,
-                "test",
-                &StringMatchOptions {
-                    case_insensitive: true,
-                    ..Default::default()
-                }
-            ),
-            RollingMatch {
-                id: 1,
-                items: vec![
-                    RollingItem::CharInsensitive("t".to_string()),
-                    RollingItem::CharInsensitive("e".to_string()),
-                    RollingItem::CharInsensitive("s".to_string()),
-                    RollingItem::CharInsensitive("t".to_string()),
-                ]
-            }
-        );
-    }
+  #[test]
+  fn test_match_from_string_case_insensitive() {
+    assert_eq!(
+      RollingMatch::from_string(
+        1,
+        "test",
+        &StringMatchOptions {
+          case_insensitive: true,
+          ..Default::default()
+        }
+      ),
+      RollingMatch {
+        id: 1,
+        items: vec![
+          RollingItem::CharInsensitive("t".to_string()),
+          RollingItem::CharInsensitive("e".to_string()),
+          RollingItem::CharInsensitive("s".to_string()),
+          RollingItem::CharInsensitive("t".to_string()),
+        ]
+      }
+    );
+  }
 }

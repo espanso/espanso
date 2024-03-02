@@ -18,126 +18,126 @@
  */
 
 use std::{
-    cell::RefCell,
-    time::{Duration, Instant},
+  cell::RefCell,
+  time::{Duration, Instant},
 };
 
 use log::info;
 
 use super::super::Middleware;
 use crate::event::{
-    input::{Key, KeyboardEvent, Status, Variant},
-    Event, EventType,
+  input::{Key, KeyboardEvent, Status, Variant},
+  Event, EventType,
 };
 
 pub struct DisableOptions {
-    pub toggle_key: Option<Key>,
-    pub toggle_key_variant: Option<Variant>,
-    pub toggle_key_maximum_window: Duration,
-    // TODO: toggle shortcut?
+  pub toggle_key: Option<Key>,
+  pub toggle_key_variant: Option<Variant>,
+  pub toggle_key_maximum_window: Duration,
+  // TODO: toggle shortcut?
 }
 
 pub struct DisableMiddleware {
-    enabled: RefCell<bool>,
-    last_toggle_press: RefCell<Option<Instant>>,
-    options: DisableOptions,
+  enabled: RefCell<bool>,
+  last_toggle_press: RefCell<Option<Instant>>,
+  options: DisableOptions,
 }
 
 impl DisableMiddleware {
-    pub fn new(options: DisableOptions) -> Self {
-        Self {
-            enabled: RefCell::new(true),
-            last_toggle_press: RefCell::new(None),
-            options,
-        }
+  pub fn new(options: DisableOptions) -> Self {
+    Self {
+      enabled: RefCell::new(true),
+      last_toggle_press: RefCell::new(None),
+      options,
     }
+  }
 }
 
 impl Middleware for DisableMiddleware {
-    fn name(&self) -> &'static str {
-        "disable"
-    }
+  fn name(&self) -> &'static str {
+    "disable"
+  }
 
-    fn next(&self, event: Event, dispatch: &mut dyn FnMut(Event)) -> Event {
-        let mut has_status_changed = false;
-        let mut enabled = self.enabled.borrow_mut();
+  fn next(&self, event: Event, dispatch: &mut dyn FnMut(Event)) -> Event {
+    let mut has_status_changed = false;
+    let mut enabled = self.enabled.borrow_mut();
 
-        match &event.etype {
-            EventType::Keyboard(m_event) => {
-                if m_event.status == Status::Released {
-                    let mut last_toggle_press = self.last_toggle_press.borrow_mut();
-                    if is_toggle_key(m_event, &self.options) {
-                        if let Some(previous_press) = *last_toggle_press {
-                            if previous_press.elapsed() < self.options.toggle_key_maximum_window {
-                                *enabled = !*enabled;
-                                *last_toggle_press = None;
-                                has_status_changed = true;
-                            } else {
-                                *last_toggle_press = Some(Instant::now());
-                            }
-                        } else {
-                            *last_toggle_press = Some(Instant::now());
-                        }
-                    } else {
-                        // If another key is pressed (not the toggle key), we should reset the window
-                        // For more information, see: https://github.com/espanso/espanso/issues/815
-                        *last_toggle_press = None;
-                    }
-                }
-            }
-            EventType::EnableRequest => {
-                *enabled = true;
-                has_status_changed = true;
-            }
-            EventType::DisableRequest => {
-                *enabled = false;
-                has_status_changed = true;
-            }
-            EventType::ToggleRequest => {
+    match &event.etype {
+      EventType::Keyboard(m_event) => {
+        if m_event.status == Status::Released {
+          let mut last_toggle_press = self.last_toggle_press.borrow_mut();
+          if is_toggle_key(m_event, &self.options) {
+            if let Some(previous_press) = *last_toggle_press {
+              if previous_press.elapsed() < self.options.toggle_key_maximum_window {
                 *enabled = !*enabled;
+                *last_toggle_press = None;
                 has_status_changed = true;
+              } else {
+                *last_toggle_press = Some(Instant::now());
+              }
+            } else {
+              *last_toggle_press = Some(Instant::now());
             }
-            _ => {}
+          } else {
+            // If another key is pressed (not the toggle key), we should reset the window
+            // For more information, see: https://github.com/espanso/espanso/issues/815
+            *last_toggle_press = None;
+          }
         }
-
-        if has_status_changed {
-            info!("toggled enabled state, is_enabled = {}", *enabled);
-            dispatch(Event::caused_by(
-                event.source_id,
-                if *enabled {
-                    EventType::Enabled
-                } else {
-                    EventType::Disabled
-                },
-            ));
-        }
-
-        // Block keyboard events when disabled
-        if let EventType::Keyboard(_) = &event.etype {
-            if !*enabled {
-                return Event::caused_by(event.source_id, EventType::NOOP);
-            }
-        }
-        // TODO: also ignore hotkey and mouse events
-
-        event
+      }
+      EventType::EnableRequest => {
+        *enabled = true;
+        has_status_changed = true;
+      }
+      EventType::DisableRequest => {
+        *enabled = false;
+        has_status_changed = true;
+      }
+      EventType::ToggleRequest => {
+        *enabled = !*enabled;
+        has_status_changed = true;
+      }
+      _ => {}
     }
+
+    if has_status_changed {
+      info!("toggled enabled state, is_enabled = {}", *enabled);
+      dispatch(Event::caused_by(
+        event.source_id,
+        if *enabled {
+          EventType::Enabled
+        } else {
+          EventType::Disabled
+        },
+      ));
+    }
+
+    // Block keyboard events when disabled
+    if let EventType::Keyboard(_) = &event.etype {
+      if !*enabled {
+        return Event::caused_by(event.source_id, EventType::NOOP);
+      }
+    }
+    // TODO: also ignore hotkey and mouse events
+
+    event
+  }
 }
 
 fn is_toggle_key(event: &KeyboardEvent, options: &DisableOptions) -> bool {
-    if options
-        .toggle_key
-        .as_ref()
-        .is_some_and(|key| key == &event.key)
-    {
-        if let (Some(variant), Some(e_variant)) = (&options.toggle_key_variant, &event.variant) {
-            variant == e_variant
-        } else {
-            true
-        }
+  if options
+    .toggle_key
+    .as_ref()
+    .is_some_and(|key| key == &event.key)
+  {
+    if let (Some(variant), Some(e_variant)) = (&options.toggle_key_variant, &event.variant) {
+      variant == e_variant
     } else {
-        false
+      true
     }
+  } else {
+    false
+  }
 }
 
 // TODO: test

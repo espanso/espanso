@@ -32,48 +32,48 @@ mod search;
 const MIN_BUILTIN_MATCH_ID: i32 = 1_000_000_000;
 
 pub struct BuiltInMatch {
-    pub id: i32,
-    pub label: &'static str,
-    pub triggers: Vec<String>,
-    pub hotkey: Option<String>,
-    pub action: fn(context: &dyn Context) -> EventType,
+  pub id: i32,
+  pub label: &'static str,
+  pub triggers: Vec<String>,
+  pub hotkey: Option<String>,
+  pub action: fn(context: &dyn Context) -> EventType,
 }
 
 impl Default for BuiltInMatch {
-    fn default() -> Self {
-        Self {
-            id: 0,
-            label: "",
-            triggers: Vec::new(),
-            hotkey: None,
-            action: |_| EventType::NOOP,
-        }
+  fn default() -> Self {
+    Self {
+      id: 0,
+      label: "",
+      triggers: Vec::new(),
+      hotkey: None,
+      action: |_| EventType::NOOP,
     }
+  }
 }
 
 pub fn get_builtin_matches(config: &dyn Config) -> Vec<BuiltInMatch> {
-    let mut matches = vec![
-        debug::create_match_paste_active_config_info(),
-        debug::create_match_paste_active_app_info(),
-        debug::create_match_show_active_config_info(),
-        debug::create_match_show_active_app_info(),
-        debug::create_match_show_logs(),
-        process::create_match_exit(),
-        process::create_match_restart(),
-    ];
+  let mut matches = vec![
+    debug::create_match_paste_active_config_info(),
+    debug::create_match_paste_active_app_info(),
+    debug::create_match_show_active_config_info(),
+    debug::create_match_show_active_app_info(),
+    debug::create_match_show_logs(),
+    process::create_match_exit(),
+    process::create_match_restart(),
+  ];
 
-    if config.search_trigger().is_some() || config.search_shortcut().is_some() {
-        matches.push(search::create_match_trigger_search_bar(
-            config.search_trigger(),
-            config.search_shortcut(),
-        ));
-    }
+  if config.search_trigger().is_some() || config.search_shortcut().is_some() {
+    matches.push(search::create_match_trigger_search_bar(
+      config.search_trigger(),
+      config.search_shortcut(),
+    ));
+  }
 
-    matches
+  matches
 }
 
 pub fn is_builtin_match(id: i32) -> bool {
-    id >= MIN_BUILTIN_MATCH_ID
+  id >= MIN_BUILTIN_MATCH_ID
 }
 
 thread_local! {
@@ -81,9 +81,9 @@ thread_local! {
 }
 
 fn generate_next_builtin_id() -> i32 {
-    CURRENT_BUILTIN_MATCH_ID.with(|value| {
-        let current = value.get();
-        value.set(current + 1);
-        current
-    })
+  CURRENT_BUILTIN_MATCH_ID.with(|value| {
+    let current = value.get();
+    value.set(current + 1);
+    current
+  })
 }

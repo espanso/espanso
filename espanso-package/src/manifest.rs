@@ -24,24 +24,24 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, PartialEq, Serialize, Deserialize, Eq)]
 pub struct Manifest {
-    pub name: String,
-    pub title: String,
-    pub description: String,
-    pub version: String,
-    pub author: String,
+  pub name: String,
+  pub title: String,
+  pub description: String,
+  pub version: String,
+  pub author: String,
 }
 
 impl Manifest {
-    pub fn parse(manifest_path: &Path) -> Result<Self> {
-        let manifest_str = std::fs::read_to_string(manifest_path)?;
+  pub fn parse(manifest_path: &Path) -> Result<Self> {
+    let manifest_str = std::fs::read_to_string(manifest_path)?;
 
-        serde_yaml::from_str(&manifest_str).with_context(|| {
-            format!(
-                "Failed manifest parsing for path: {}",
-                manifest_path.display()
-            )
-        })
-    }
+    serde_yaml::from_str(&manifest_str).with_context(|| {
+      format!(
+        "Failed manifest parsing for path: {}",
+        manifest_path.display()
+      )
+    })
+  }
 }
 
 // TODO: test

@@ -20,47 +20,47 @@
 pub use crate::sys::wizard::show;
 
 pub struct WizardOptions {
-    pub version: String,
+  pub version: String,
 
-    pub is_welcome_page_enabled: bool,
-    pub is_move_bundle_page_enabled: bool,
-    pub is_legacy_version_page_enabled: bool,
-    pub is_wrong_edition_page_enabled: bool,
-    pub is_migrate_page_enabled: bool,
-    pub is_auto_start_page_enabled: bool,
-    pub is_add_path_page_enabled: bool,
-    pub is_accessibility_page_enabled: bool,
+  pub is_welcome_page_enabled: bool,
+  pub is_move_bundle_page_enabled: bool,
+  pub is_legacy_version_page_enabled: bool,
+  pub is_wrong_edition_page_enabled: bool,
+  pub is_migrate_page_enabled: bool,
+  pub is_auto_start_page_enabled: bool,
+  pub is_add_path_page_enabled: bool,
+  pub is_accessibility_page_enabled: bool,
 
-    pub window_icon_path: Option<String>,
-    pub welcome_image_path: Option<String>,
-    pub accessibility_image_1_path: Option<String>,
-    pub accessibility_image_2_path: Option<String>,
-    pub detected_os: DetectedOS,
+  pub window_icon_path: Option<String>,
+  pub welcome_image_path: Option<String>,
+  pub accessibility_image_1_path: Option<String>,
+  pub accessibility_image_2_path: Option<String>,
+  pub detected_os: DetectedOS,
 
-    pub handlers: WizardHandlers,
+  pub handlers: WizardHandlers,
 }
 
 pub struct WizardHandlers {
-    pub is_legacy_version_running: Option<Box<dyn Fn() -> bool + Send>>,
-    pub backup_and_migrate: Option<Box<dyn Fn() -> MigrationResult + Send>>,
-    pub auto_start: Option<Box<dyn Fn(bool) -> bool + Send>>,
-    pub add_to_path: Option<Box<dyn Fn() -> bool + Send>>,
-    pub enable_accessibility: Option<Box<dyn Fn() + Send>>,
-    pub is_accessibility_enabled: Option<Box<dyn Fn() -> bool + Send>>,
-    pub on_completed: Option<Box<dyn Fn() + Send>>,
+  pub is_legacy_version_running: Option<Box<dyn Fn() -> bool + Send>>,
+  pub backup_and_migrate: Option<Box<dyn Fn() -> MigrationResult + Send>>,
+  pub auto_start: Option<Box<dyn Fn(bool) -> bool + Send>>,
+  pub add_to_path: Option<Box<dyn Fn() -> bool + Send>>,
+  pub enable_accessibility: Option<Box<dyn Fn() + Send>>,
+  pub is_accessibility_enabled: Option<Box<dyn Fn() -> bool + Send>>,
+  pub on_completed: Option<Box<dyn Fn() + Send>>,
 }
 
 #[derive(Debug)]
 pub enum MigrationResult {
-    Success,
-    CleanFailure,
-    DirtyFailure,
-    UnknownFailure,
+  Success,
+  CleanFailure,
+  DirtyFailure,
+  UnknownFailure,
 }
 
 #[derive(Debug)]
 pub enum DetectedOS {
-    Unknown,
-    X11,
-    Wayland,
+  Unknown,
+  X11,
+  Wayland,
 }

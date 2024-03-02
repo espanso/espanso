@@ -25,75 +25,75 @@ use std::{path::Path, process::Command};
 pub struct GitPackageProvider {}
 
 impl GitPackageProvider {
-    pub fn new() -> Self {
-        Self {}
+  pub fn new() -> Self {
+    Self {}
+  }
+
+  fn is_git_installed() -> bool {
+    if let Ok(output) = Command::new("git").arg("--version").output() {
+      if output.status.success() {
+        return true;
+      }
     }
 
-    fn is_git_installed() -> bool {
-        if let Ok(output) = Command::new("git").arg("--version").output() {
-            if output.status.success() {
-                return true;
-            }
-        }
+    false
+  }
 
-        false
+  fn clone_repo(dest_dir: &Path, repo_url: &str, repo_branch: Option<&str>) -> Result<()> {
+    let mut args = vec!["clone"];
+
+    if let Some(branch) = repo_branch {
+      args.push("-b");
+      args.push(branch);
     }
 
-    fn clone_repo(dest_dir: &Path, repo_url: &str, repo_branch: Option<&str>) -> Result<()> {
-        let mut args = vec!["clone"];
+    args.push(repo_url);
 
-        if let Some(branch) = repo_branch {
-            args.push("-b");
-            args.push(branch);
-        }
+    let dest_dir_str = dest_dir.to_string_lossy().to_string();
+    args.push(&dest_dir_str);
 
-        args.push(repo_url);
+    let output = Command::new("git")
+      .args(&args)
+      .output()
+      .context("git command reported error")?;
 
-        let dest_dir_str = dest_dir.to_string_lossy().to_string();
-        args.push(&dest_dir_str);
-
-        let output = Command::new("git")
-            .args(&args)
-            .output()
-            .context("git command reported error")?;
-
-        if !output.status.success() {
-            let stderr = String::from_utf8_lossy(&output.stderr);
-            bail!("git command exited with non-zero status: {}", stderr);
-        }
-        Ok(())
+    if !output.status.success() {
+      let stderr = String::from_utf8_lossy(&output.stderr);
+      bail!("git command exited with non-zero status: {}", stderr);
     }
+    Ok(())
+  }
 }
 
 impl PackageProvider for GitPackageProvider {
-    fn name(&self) -> String {
-        "git".to_string()
+  fn name(&self) -> String {
+    "git".to_string()
+  }
+
+  fn download(&self, package: &PackageSpecifier) -> Result<Box<dyn Package>> {
+    if !Self::is_git_installed() {
+      bail!("unable to invoke 'git' command, please make sure it is installed and visible in PATH");
     }
 
-    fn download(&self, package: &PackageSpecifier) -> Result<Box<dyn Package>> {
-        if !Self::is_git_installed() {
-            bail!("unable to invoke 'git' command, please make sure it is installed and visible in PATH");
-        }
+    let repo_url = package
+      .git_repo_url
+      .as_deref()
+      .ok_or_else(|| anyhow!("missing git repository url"))?;
+    let repo_branch = package.git_branch.as_deref();
 
-        let repo_url = package
-            .git_repo_url
-            .as_deref()
-            .ok_or_else(|| anyhow!("missing git repository url"))?;
-        let repo_branch = package.git_branch.as_deref();
+    let temp_dir = tempdir::TempDir::new("espanso-package-download")?;
 
-        let temp_dir = tempdir::TempDir::new("espanso-package-download")?;
+    Self::clone_repo(temp_dir.path(), repo_url, repo_branch)?;
 
-        Self::clone_repo(temp_dir.path(), repo_url, repo_branch)?;
+    let resolved_package =
+      resolve_package(temp_dir.path(), &package.name, package.version.as_deref())?;
 
-        let resolved_package =
-            resolve_package(temp_dir.path(), &package.name, package.version.as_deref())?;
+    let package = DefaultPackage::new(
+      resolved_package.manifest,
+      temp_dir,
+      resolved_package.base_dir,
+    );
 
-        let package = DefaultPackage::new(
-            resolved_package.manifest,
-            temp_dir,
-            resolved_package.base_dir,
-        );
-
-        Ok(Box::new(package))
-    }
+    Ok(Box::new(package))
+  }
 }

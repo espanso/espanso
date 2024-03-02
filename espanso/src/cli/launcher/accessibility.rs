@@ -19,20 +19,20 @@
 
 #[cfg(not(target_os = "macos"))]
 pub fn is_accessibility_enabled() -> bool {
-    true
+  true
 }
 
 #[cfg(not(target_os = "macos"))]
 pub fn prompt_enable_accessibility() -> bool {
-    true
+  true
 }
 
 #[cfg(target_os = "macos")]
 pub fn is_accessibility_enabled() -> bool {
-    espanso_mac_utils::check_accessibility()
+  espanso_mac_utils::check_accessibility()
 }
 
 #[cfg(target_os = "macos")]
 pub fn prompt_enable_accessibility() -> bool {
-    espanso_mac_utils::prompt_accessibility()
+  espanso_mac_utils::prompt_accessibility()
 }

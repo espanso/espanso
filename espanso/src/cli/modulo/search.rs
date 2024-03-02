@@ -23,43 +23,43 @@ use espanso_modulo::search::*;
 use std::collections::HashMap;
 
 pub fn search_main(matches: &ArgMatches, icon_paths: &IconPaths) -> i32 {
-    let as_json: bool = matches.is_present("json");
+  let as_json: bool = matches.is_present("json");
 
-    let input_file = matches
-        .value_of("input_file")
-        .expect("missing input, please specify the -i option");
-    let data = if input_file == "-" {
-        use std::io::Read;
-        let mut buffer = String::new();
-        std::io::stdin()
-            .read_to_string(&mut buffer)
-            .expect("unable to obtain input from stdin");
-        buffer
-    } else {
-        std::fs::read_to_string(input_file).expect("unable to read input file")
-    };
+  let input_file = matches
+    .value_of("input_file")
+    .expect("missing input, please specify the -i option");
+  let data = if input_file == "-" {
+    use std::io::Read;
+    let mut buffer = String::new();
+    std::io::stdin()
+      .read_to_string(&mut buffer)
+      .expect("unable to obtain input from stdin");
+    buffer
+  } else {
+    std::fs::read_to_string(input_file).expect("unable to read input file")
+  };
 
-    let mut config: config::SearchConfig = if as_json {
-        serde_json::from_str(&data).expect("unable to parse search configuration")
-    } else {
-        serde_yaml::from_str(&data).expect("unable to parse search configuration")
-    };
+  let mut config: config::SearchConfig = if as_json {
+    serde_json::from_str(&data).expect("unable to parse search configuration")
+  } else {
+    serde_yaml::from_str(&data).expect("unable to parse search configuration")
+  };
 
-    // Overwrite the icon
-    config.icon = icon_paths
-        .logo
-        .as_deref()
-        .map(|path| path.to_string_lossy().to_string());
+  // Overwrite the icon
+  config.icon = icon_paths
+    .logo
+    .as_deref()
+    .map(|path| path.to_string_lossy().to_string());
 
-    let algorithm = algorithm::get_algorithm(&config.algorithm, true);
+  let algorithm = algorithm::get_algorithm(&config.algorithm, true);
 
-    let search = generator::generate(config);
-    let result = show(search, algorithm);
-    let mut result_map = HashMap::new();
-    result_map.insert("selected", result);
+  let search = generator::generate(config);
+  let result = show(search, algorithm);
+  let mut result_map = HashMap::new();
+  result_map.insert("selected", result);
 
-    let output = serde_json::to_string(&result_map).expect("unable to encode values as JSON");
-    println!("{output}");
+  let output = serde_json::to_string(&result_map).expect("unable to encode values as JSON");
+  println!("{output}");
 
-    0
+  0
 }

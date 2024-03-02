@@ -21,57 +21,56 @@ use espanso_config::config::Config;
 use espanso_ui::UIRemote;
 
 pub struct NotificationManager<'a> {
-    ui_remote: &'a dyn UIRemote,
-    config: &'a dyn Config,
+  ui_remote: &'a dyn UIRemote,
+  config: &'a dyn Config,
 }
 
 impl<'a> NotificationManager<'a> {
-    pub fn new(ui_remote: &'a dyn UIRemote, config: &'a dyn Config) -> Self {
-        NotificationManager { ui_remote, config }
-    }
+  pub fn new(ui_remote: &'a dyn UIRemote, config: &'a dyn Config) -> Self {
+    NotificationManager { ui_remote, config }
+  }
 
-    fn notify(&self, text: &str) {
-        if self.config.show_notifications() {
-            self.ui_remote.show_notification(text);
-        }
+  fn notify(&self, text: &str) {
+    if self.config.show_notifications() {
+      self.ui_remote.show_notification(text);
     }
+  }
 
-    pub fn notify_start(&self) {
-        self.notify("Espanso is running!");
-    }
+  pub fn notify_start(&self) {
+    self.notify("Espanso is running!");
+  }
 
-    pub fn notify_config_reloaded(&self, is_manual_restart: bool) {
-        if is_manual_restart {
-            self.notify("Configuration reloaded!");
-        } else {
-            self.notify(
+  pub fn notify_config_reloaded(&self, is_manual_restart: bool) {
+    if is_manual_restart {
+      self.notify("Configuration reloaded!");
+    } else {
+      self.notify(
         "Configuration reloaded! Espanso automatically loads new changes as soon as you save them.",
       );
-        }
     }
+  }
 
-    pub fn notify_keyboard_layout_reloaded(&self) {
-        self.notify("Updated keyboard layout!");
-    }
+  pub fn notify_keyboard_layout_reloaded(&self) {
+    self.notify("Updated keyboard layout!");
+  }
 }
 
 impl<'a> espanso_engine::process::NotificationManager for NotificationManager<'a> {
-    fn notify_status_change(&self, enabled: bool) {
-        // Don't notify the status change outside Linux for now
-        if !cfg!(target_os = "linux") {
-            return;
-        }
-
-        if enabled {
-            self.notify("Espanso enabled!");
-        } else {
-            self.notify("Espanso disabled!");
-        }
+  fn notify_status_change(&self, enabled: bool) {
+    // Don't notify the status change outside Linux for now
+    if !cfg!(target_os = "linux") {
+      return;
     }
 
-    fn notify_rendering_error(&self) {
-        self.notify(
-            "An error occurred during rendering, please examine the logs for more information.",
-        );
+    if enabled {
+      self.notify("Espanso enabled!");
+    } else {
+      self.notify("Espanso disabled!");
     }
+  }
+
+  fn notify_rendering_error(&self) {
+    self
+      .notify("An error occurred during rendering, please examine the logs for more information.");
+  }
 }

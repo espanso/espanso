@@ -41,20 +41,20 @@ use super::{
   NotificationManager, PathProvider, Processor, Renderer, UndoEnabledProvider,
 };
 use crate::{
-    event::{Event, EventType},
-    process::middleware::{
-        context_menu::ContextMenuMiddleware, disable::DisableMiddleware, exit::ExitMiddleware,
-        hotkey::HotKeyMiddleware, icon_status::IconStatusMiddleware,
-        image_resolve::ImageResolverMiddleware, match_exec::MatchExecRequestMiddleware,
-        notification::NotificationMiddleware, search::SearchMiddleware,
-        suppress::SuppressMiddleware, undo::UndoMiddleware,
-    },
+  event::{Event, EventType},
+  process::middleware::{
+    context_menu::ContextMenuMiddleware, disable::DisableMiddleware, exit::ExitMiddleware,
+    hotkey::HotKeyMiddleware, icon_status::IconStatusMiddleware,
+    image_resolve::ImageResolverMiddleware, match_exec::MatchExecRequestMiddleware,
+    notification::NotificationMiddleware, search::SearchMiddleware, suppress::SuppressMiddleware,
+    undo::UndoMiddleware,
+  },
 };
 use std::collections::VecDeque;
 
 pub struct DefaultProcessor<'a> {
-    event_queue: VecDeque<Event>,
-    middleware: Vec<Box<dyn Middleware + 'a>>,
+  event_queue: VecDeque<Event>,
+  middleware: Vec<Box<dyn Middleware + 'a>>,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -155,63 +155,31 @@ impl<'a> DefaultProcessor<'a> {
           trace!("interrupting chain as the event is NOOP");
           break;
         }
+      }
+
+      while let Some(event) = current_queue.pop_back() {
+        self.event_queue.push_front(event);
+      }
+
+      Some(current_event)
+    } else {
+      None
     }
-
-    fn process_one(&mut self) -> Option<Event> {
-        if let Some(event) = self.event_queue.pop_back() {
-            let mut current_event = event;
-
-            let mut current_queue = VecDeque::new();
-            let mut dispatch = |event: Event| {
-                trace!("dispatched event: {:?}", event);
-                current_queue.push_front(event);
-            };
-
-            trace!("--------------- new event -----------------");
-            for middleware in &self.middleware {
-                trace!(
-                    "middleware '{}' received event: {:?}",
-                    middleware.name(),
-                    current_event
-                );
-
-                current_event = middleware.next(current_event, &mut dispatch);
-
-                trace!(
-                    "middleware '{}' produced event: {:?}",
-                    middleware.name(),
-                    current_event
-                );
-
-                if let EventType::NOOP = current_event.etype {
-                    trace!("interrupting chain as the event is NOOP");
-                    break;
-                }
-            }
-
-            while let Some(event) = current_queue.pop_back() {
-                self.event_queue.push_front(event);
-            }
-
-            Some(current_event)
-        } else {
-            None
-        }
-    }
+  }
 }
 
 impl<'a> Processor for DefaultProcessor<'a> {
-    fn process(&mut self, event: Event) -> Vec<Event> {
-        self.event_queue.push_front(event);
+  fn process(&mut self, event: Event) -> Vec<Event> {
+    self.event_queue.push_front(event);
 
-        let mut processed_events = Vec::new();
+    let mut processed_events = Vec::new();
 
-        while !self.event_queue.is_empty() {
-            if let Some(event) = self.process_one() {
-                processed_events.push(event);
-            }
-        }
-
-        processed_events
+    while !self.event_queue.is_empty() {
+      if let Some(event) = self.process_one() {
+        processed_events.push(event);
+      }
     }
+
+    processed_events
+  }
 }

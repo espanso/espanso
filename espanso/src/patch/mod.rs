@@ -25,45 +25,45 @@ mod config_store;
 mod patches;
 
 pub fn patch_store(store: Box<dyn ConfigStore>) -> Box<dyn ConfigStore> {
-    Box::new(config_store::PatchedConfigStore::from_store(store))
+  Box::new(config_store::PatchedConfigStore::from_store(store))
 }
 
 fn get_builtin_patches() -> Vec<PatchDefinition> {
-    #[cfg(target_os = "windows")]
-    return vec![
-        patches::win::brave::patch(),
-        patches::win::onenote_for_windows_10::patch(),
-        patches::win::vscode_win::patch(),
-    ];
+  #[cfg(target_os = "windows")]
+  return vec![
+    patches::win::brave::patch(),
+    patches::win::onenote_for_windows_10::patch(),
+    patches::win::vscode_win::patch(),
+  ];
 
-    #[cfg(target_os = "macos")]
-    return vec![];
+  #[cfg(target_os = "macos")]
+  return vec![];
 
-    #[cfg(target_os = "linux")]
-    return vec![
-        patches::linux::alacritty_terminal_x11::patch(),
-        patches::linux::emacs_x11::patch(),
-        patches::linux::gedit_x11::patch(),
-        patches::linux::generic_terminal_x11::patch(),
-        patches::linux::kitty_terminal_x11::patch(),
-        patches::linux::konsole_terminal_x11::patch(),
-        patches::linux::libreoffice_writer_x11::patch(),
-        patches::linux::simple_terminal_x11::patch(),
-        patches::linux::simple_terminal_2_x11::patch(),
-        patches::linux::terminator_terminal_x11::patch(),
-        patches::linux::termite_terminal_x11::patch(),
-        patches::linux::thunderbird_x11::patch(),
-        patches::linux::tilix_terminal_x11::patch(),
-        patches::linux::urxvt_terminal_x11::patch(),
-        patches::linux::xterm_terminal_x11::patch(),
-        patches::linux::yakuake_terminal_x11::patch(),
-        patches::linux::virtualbox_x11::patch(),
-    ];
+  #[cfg(target_os = "linux")]
+  return vec![
+    patches::linux::alacritty_terminal_x11::patch(),
+    patches::linux::emacs_x11::patch(),
+    patches::linux::gedit_x11::patch(),
+    patches::linux::generic_terminal_x11::patch(),
+    patches::linux::kitty_terminal_x11::patch(),
+    patches::linux::konsole_terminal_x11::patch(),
+    patches::linux::libreoffice_writer_x11::patch(),
+    patches::linux::simple_terminal_x11::patch(),
+    patches::linux::simple_terminal_2_x11::patch(),
+    patches::linux::terminator_terminal_x11::patch(),
+    patches::linux::termite_terminal_x11::patch(),
+    patches::linux::thunderbird_x11::patch(),
+    patches::linux::tilix_terminal_x11::patch(),
+    patches::linux::urxvt_terminal_x11::patch(),
+    patches::linux::xterm_terminal_x11::patch(),
+    patches::linux::yakuake_terminal_x11::patch(),
+    patches::linux::virtualbox_x11::patch(),
+  ];
 }
 
 pub struct PatchDefinition {
-    pub name: &'static str,
-    pub is_enabled: fn() -> bool,
-    pub should_patch: fn(app: &AppProperties) -> bool,
-    pub apply: fn(config: Arc<dyn Config>, name: &str) -> Arc<dyn Config>,
+  pub name: &'static str,
+  pub is_enabled: fn() -> bool,
+  pub should_patch: fn(app: &AppProperties) -> bool,
+  pub apply: fn(config: Arc<dyn Config>, name: &str) -> Arc<dyn Config>,
 }

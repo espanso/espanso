@@ -40,58 +40,58 @@ pub mod workaround;
 pub mod worker;
 
 pub struct CliModule {
-    pub enable_logs: bool,
-    pub disable_logs_terminal_output: bool,
-    pub log_mode: LogMode,
-    pub requires_paths: bool,
-    pub requires_config: bool,
-    pub subcommand: String,
-    pub show_in_dock: bool,
-    pub requires_linux_capabilities: bool,
-    pub entry: fn(CliModuleArgs) -> i32,
+  pub enable_logs: bool,
+  pub disable_logs_terminal_output: bool,
+  pub log_mode: LogMode,
+  pub requires_paths: bool,
+  pub requires_config: bool,
+  pub subcommand: String,
+  pub show_in_dock: bool,
+  pub requires_linux_capabilities: bool,
+  pub entry: fn(CliModuleArgs) -> i32,
 }
 
 impl Default for CliModule {
-    fn default() -> Self {
-        Self {
-            enable_logs: false,
-            log_mode: LogMode::Read,
-            disable_logs_terminal_output: false,
-            requires_paths: false,
-            requires_config: false,
-            subcommand: String::new(),
-            show_in_dock: false,
-            requires_linux_capabilities: false,
-            entry: |_| 0,
-        }
+  fn default() -> Self {
+    Self {
+      enable_logs: false,
+      log_mode: LogMode::Read,
+      disable_logs_terminal_output: false,
+      requires_paths: false,
+      requires_config: false,
+      subcommand: String::new(),
+      show_in_dock: false,
+      requires_linux_capabilities: false,
+      entry: |_| 0,
     }
+  }
 }
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum LogMode {
-    Read,
-    AppendOnly,
-    CleanAndAppend,
+  Read,
+  AppendOnly,
+  CleanAndAppend,
 }
 
 #[derive(Default)]
 pub struct CliModuleArgs {
-    pub config_store: Option<Box<dyn ConfigStore>>,
-    pub match_store: Option<Box<dyn MatchStore>>,
-    pub is_legacy_config: bool,
-    pub non_fatal_errors: Vec<NonFatalErrorSet>,
-    pub paths: Option<Paths>,
-    pub paths_overrides: Option<PathsOverrides>,
-    pub cli_args: Option<ArgMatches<'static>>,
+  pub config_store: Option<Box<dyn ConfigStore>>,
+  pub match_store: Option<Box<dyn MatchStore>>,
+  pub is_legacy_config: bool,
+  pub non_fatal_errors: Vec<NonFatalErrorSet>,
+  pub paths: Option<Paths>,
+  pub paths_overrides: Option<PathsOverrides>,
+  pub cli_args: Option<ArgMatches<'static>>,
 }
 
 pub struct PathsOverrides {
-    pub config: Option<PathBuf>,
-    pub runtime: Option<PathBuf>,
-    pub packages: Option<PathBuf>,
+  pub config: Option<PathBuf>,
+  pub runtime: Option<PathBuf>,
+  pub packages: Option<PathBuf>,
 }
 
 pub struct CliAlias {
-    pub subcommand: String,
-    pub forward_into: String,
+  pub subcommand: String,
+  pub forward_into: String,
 }

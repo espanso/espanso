@@ -78,46 +78,46 @@ use std::sync::Mutex;
 use crate::error_eprintln;
 
 lazy_static! {
-    static ref CURRENT_PANIC_EXIT_CODE: Mutex<i32> = Mutex::new(MIGRATE_UNEXPECTED_FAILURE);
+  static ref CURRENT_PANIC_EXIT_CODE: Mutex<i32> = Mutex::new(MIGRATE_UNEXPECTED_FAILURE);
 }
 
 pub fn configure_custom_panic_hook() {
-    let previous_hook = std::panic::take_hook();
-    std::panic::set_hook(Box::new(move |info| {
-        (*previous_hook)(info);
+  let previous_hook = std::panic::take_hook();
+  std::panic::set_hook(Box::new(move |info| {
+    (*previous_hook)(info);
 
-        // Part of this code is taken from the "rust-log-panics" crate
-        let thread = std::thread::current();
-        let thread = thread.name().unwrap_or("<unnamed>");
+    // Part of this code is taken from the "rust-log-panics" crate
+    let thread = std::thread::current();
+    let thread = thread.name().unwrap_or("<unnamed>");
 
-        let msg = match info.payload().downcast_ref::<&'static str>() {
-            Some(s) => *s,
-            None => match info.payload().downcast_ref::<String>() {
-                Some(s) => &**s,
-                None => "Box<Any>",
-            },
-        };
+    let msg = match info.payload().downcast_ref::<&'static str>() {
+      Some(s) => *s,
+      None => match info.payload().downcast_ref::<String>() {
+        Some(s) => &**s,
+        None => "Box<Any>",
+      },
+    };
 
-        if let Some(location) = info.location() {
-            error_eprintln!(
-                "ERROR: '{}' panicked at '{}': {}:{}",
-                thread,
-                msg,
-                location.file(),
-                location.line(),
-            );
-        } else {
-            error_eprintln!("ERROR: '{}' panicked at '{}'", thread, msg);
-        }
+    if let Some(location) = info.location() {
+      error_eprintln!(
+        "ERROR: '{}' panicked at '{}': {}:{}",
+        thread,
+        msg,
+        location.file(),
+        location.line(),
+      );
+    } else {
+      error_eprintln!("ERROR: '{}' panicked at '{}'", thread, msg);
+    }
 
-        let exit_code = CURRENT_PANIC_EXIT_CODE.lock().unwrap();
-        std::process::exit(*exit_code);
-    }));
+    let exit_code = CURRENT_PANIC_EXIT_CODE.lock().unwrap();
+    std::process::exit(*exit_code);
+  }));
 }
 
 pub fn update_panic_exit_code(exit_code: i32) {
-    let mut lock = CURRENT_PANIC_EXIT_CODE
-        .lock()
-        .expect("unable to update panic exit code");
-    *lock = exit_code;
+  let mut lock = CURRENT_PANIC_EXIT_CODE
+    .lock()
+    .expect("unable to update panic exit code");
+  *lock = exit_code;
 }

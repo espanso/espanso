@@ -20,8 +20,8 @@
 use std::path::Path;
 
 use crate::{
-    ipc::{create_ipc_client_to_worker, IPCEvent},
-    lock::acquire_worker_lock,
+  ipc::{create_ipc_client_to_worker, IPCEvent},
+  lock::acquire_worker_lock,
 };
 
 use super::{CliModule, CliModuleArgs};
@@ -29,17 +29,17 @@ use anyhow::{bail, Result};
 use espanso_ipc::IPCClient;
 
 pub fn new() -> CliModule {
-    CliModule {
-        requires_paths: true,
-        subcommand: "cmd".to_string(),
-        entry: cmd_main,
-        ..Default::default()
-    }
+  CliModule {
+    requires_paths: true,
+    subcommand: "cmd".to_string(),
+    entry: cmd_main,
+    ..Default::default()
+  }
 }
 
 fn cmd_main(args: CliModuleArgs) -> i32 {
-    let cli_args = args.cli_args.expect("missing cli_args");
-    let paths = args.paths.expect("missing paths");
+  let cli_args = args.cli_args.expect("missing cli_args");
+  let paths = args.paths.expect("missing paths");
 
   let event = if cli_args.subcommand_matches("enable").is_some() {
     IPCEvent::EnableRequest
@@ -56,19 +56,19 @@ fn cmd_main(args: CliModuleArgs) -> i32 {
     return 1;
   };
 
-    if let Err(error) = send_event_to_worker(&paths.runtime, event) {
-        eprintln!("unable to send command, error: {error:?}");
-        return 2;
-    }
+  if let Err(error) = send_event_to_worker(&paths.runtime, event) {
+    eprintln!("unable to send command, error: {error:?}");
+    return 2;
+  }
 
-    0
+  0
 }
 
 fn send_event_to_worker(runtime_path: &Path, event: IPCEvent) -> Result<()> {
-    if acquire_worker_lock(runtime_path).is_some() {
-        bail!("Worker process is not running, please start Espanso first.")
-    }
+  if acquire_worker_lock(runtime_path).is_some() {
+    bail!("Worker process is not running, please start Espanso first.")
+  }
 
-    let mut client = create_ipc_client_to_worker(runtime_path)?;
-    client.send_async(event)
+  let mut client = create_ipc_client_to_worker(runtime_path)?;
+  client.send_async(event)
 }

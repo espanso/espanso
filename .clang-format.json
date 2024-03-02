@@ -1,8 +1,0 @@
-{
-    "$schema": "./.clang-format.schema.json",
-    "paths": [
-        "./**/*.[ch]",
-        "./**/*.[chpp]",
-        "./**/*.mm"
-    ]
-}

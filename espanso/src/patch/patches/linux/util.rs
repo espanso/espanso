@@ -18,5 +18,5 @@
  */
 
 pub fn is_wayland() -> bool {
-    cfg!(feature = "wayland")
+  cfg!(feature = "wayland")
 }

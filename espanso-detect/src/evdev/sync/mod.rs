@@ -19,12 +19,12 @@
 
 #[derive(Debug, Clone, Copy)]
 pub struct ModifiersState {
-    pub ctrl: bool,
-    pub alt: bool,
-    pub shift: bool,
-    pub caps_lock: bool,
-    pub meta: bool,
-    pub num_lock: bool,
+  pub ctrl: bool,
+  pub alt: bool,
+  pub shift: bool,
+  pub caps_lock: bool,
+  pub meta: bool,
+  pub num_lock: bool,
 }
 
 #[cfg(feature = "wayland")]
@@ -34,6 +34,6 @@ pub use wayland::get_modifiers_state;
 
 #[cfg(not(feature = "wayland"))]
 pub fn get_modifiers_state() -> anyhow::Result<Option<ModifiersState>> {
-    // Fallback for non-wayland systems
-    Ok(None)
+  // Fallback for non-wayland systems
+  Ok(None)
 }

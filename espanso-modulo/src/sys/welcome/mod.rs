@@ -22,45 +22,45 @@ use std::sync::Mutex;
 
 use crate::sys::util::convert_to_cstring_or_null;
 use crate::{
-    sys::interop::WelcomeMetadata,
-    welcome::{WelcomeHandlers, WelcomeOptions},
+  sys::interop::WelcomeMetadata,
+  welcome::{WelcomeHandlers, WelcomeOptions},
 };
 use lazy_static::lazy_static;
 
 lazy_static! {
-    static ref HANDLERS: Mutex<Option<WelcomeHandlers>> = Mutex::new(None);
+  static ref HANDLERS: Mutex<Option<WelcomeHandlers>> = Mutex::new(None);
 }
 
 pub fn show(options: WelcomeOptions) {
-    let (_c_window_icon_path, c_window_icon_path_ptr) =
-        convert_to_cstring_or_null(options.window_icon_path);
-    let (_c_tray_image_path, c_tray_image_path_ptr) =
-        convert_to_cstring_or_null(options.tray_image_path);
+  let (_c_window_icon_path, c_window_icon_path_ptr) =
+    convert_to_cstring_or_null(options.window_icon_path);
+  let (_c_tray_image_path, c_tray_image_path_ptr) =
+    convert_to_cstring_or_null(options.tray_image_path);
 
-    extern "C" fn dont_show_again_changed(dont_show: c_int) {
-        let lock = HANDLERS
-            .lock()
-            .expect("unable to acquire lock in dont_show_again_changed method");
-        let handlers_ref = (*lock).as_ref().expect("unable to unwrap handlers");
-        if let Some(handler_ref) = handlers_ref.dont_show_again_changed.as_ref() {
-            let value = dont_show == 1;
-            (*handler_ref)(value);
-        }
+  extern "C" fn dont_show_again_changed(dont_show: c_int) {
+    let lock = HANDLERS
+      .lock()
+      .expect("unable to acquire lock in dont_show_again_changed method");
+    let handlers_ref = (*lock).as_ref().expect("unable to unwrap handlers");
+    if let Some(handler_ref) = handlers_ref.dont_show_again_changed.as_ref() {
+      let value = dont_show == 1;
+      (*handler_ref)(value);
     }
+  }
 
-    {
-        let mut lock = HANDLERS.lock().expect("unable to acquire handlers lock");
-        *lock = Some(options.handlers);
-    }
+  {
+    let mut lock = HANDLERS.lock().expect("unable to acquire handlers lock");
+    *lock = Some(options.handlers);
+  }
 
-    let welcome_metadata = WelcomeMetadata {
-        window_icon_path: c_window_icon_path_ptr,
-        tray_image_path: c_tray_image_path_ptr,
-        already_running: i32::from(options.is_already_running),
-        dont_show_again_changed,
-    };
+  let welcome_metadata = WelcomeMetadata {
+    window_icon_path: c_window_icon_path_ptr,
+    tray_image_path: c_tray_image_path_ptr,
+    already_running: i32::from(options.is_already_running),
+    dont_show_again_changed,
+  };
 
-    unsafe {
-        super::interop::interop_show_welcome(&welcome_metadata);
-    }
+  unsafe {
+    super::interop::interop_show_welcome(&welcome_metadata);
+  }
 }

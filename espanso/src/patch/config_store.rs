@@ -25,69 +25,69 @@ use log::debug;
 use super::PatchDefinition;
 
 pub struct PatchedConfigStore {
-    config_store: Box<dyn ConfigStore>,
-    patches: Vec<PatchDefinition>,
+  config_store: Box<dyn ConfigStore>,
+  patches: Vec<PatchDefinition>,
 }
 
 impl PatchedConfigStore {
-    pub fn from_store(config_store: Box<dyn ConfigStore>) -> Self {
-        Self::from_store_with_patches(config_store, super::get_builtin_patches())
-    }
+  pub fn from_store(config_store: Box<dyn ConfigStore>) -> Self {
+    Self::from_store_with_patches(config_store, super::get_builtin_patches())
+  }
 
-    pub fn from_store_with_patches(
-        config_store: Box<dyn ConfigStore>,
-        patches: Vec<PatchDefinition>,
-    ) -> Self {
-        // Only keep the patches that should be active in the current system
-        let active_patches = patches
-            .into_iter()
-            .filter(|patch| {
-                let is_enabled = (patch.is_enabled)();
+  pub fn from_store_with_patches(
+    config_store: Box<dyn ConfigStore>,
+    patches: Vec<PatchDefinition>,
+  ) -> Self {
+    // Only keep the patches that should be active in the current system
+    let active_patches = patches
+      .into_iter()
+      .filter(|patch| {
+        let is_enabled = (patch.is_enabled)();
 
-                if is_enabled {
-                    debug!("enabled '{}' patch", patch.name);
-                } else {
-                    debug!("skipping '{}' patch", patch.name);
-                }
-
-                is_enabled
-            })
-            .collect();
-
-        Self {
-            config_store,
-            patches: active_patches,
+        if is_enabled {
+          debug!("enabled '{}' patch", patch.name);
+        } else {
+          debug!("skipping '{}' patch", patch.name);
         }
+
+        is_enabled
+      })
+      .collect();
+
+    Self {
+      config_store,
+      patches: active_patches,
     }
+  }
 }
 
 impl ConfigStore for PatchedConfigStore {
-    fn default(&self) -> Arc<dyn Config> {
-        self.config_store.default()
+  fn default(&self) -> Arc<dyn Config> {
+    self.config_store.default()
+  }
+
+  fn active(&self, app: &espanso_config::config::AppProperties) -> Arc<dyn Config> {
+    let active_config = self.config_store.active(app);
+
+    if !active_config.apply_patch() {
+      return active_config;
     }
 
-    fn active(&self, app: &espanso_config::config::AppProperties) -> Arc<dyn Config> {
-        let active_config = self.config_store.active(app);
-
-        if !active_config.apply_patch() {
-            return active_config;
-        }
-
-        // Check if a patch should be applied
-        if let Some(patch) = self.patches.iter().find(|patch| (patch.should_patch)(app)) {
-            (patch.apply)(active_config, patch.name)
-        } else {
-            active_config
-        }
+    // Check if a patch should be applied
+    if let Some(patch) = self.patches.iter().find(|patch| (patch.should_patch)(app)) {
+      (patch.apply)(active_config, patch.name)
+    } else {
+      active_config
     }
+  }
 
-    fn configs(&self) -> Vec<Arc<dyn Config>> {
-        self.config_store.configs()
-    }
+  fn configs(&self) -> Vec<Arc<dyn Config>> {
+    self.config_store.configs()
+  }
 
-    fn get_all_match_paths(&self) -> std::collections::HashSet<String> {
-        self.config_store.get_all_match_paths()
-    }
+  fn get_all_match_paths(&self) -> std::collections::HashSet<String> {
+    self.config_store.get_all_match_paths()
+  }
 }
 
 // TODO: test

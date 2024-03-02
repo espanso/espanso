@@ -21,60 +21,60 @@ use log::warn;
 
 use super::super::Middleware;
 use crate::event::{
-    internal::{DetectedMatch, MatchesDetectedEvent},
-    Event, EventType,
+  internal::{DetectedMatch, MatchesDetectedEvent},
+  Event, EventType,
 };
 
 pub trait MatchResolver {
-    fn find_matches_from_trigger(&self, trigger: &str) -> Vec<DetectedMatch>;
+  fn find_matches_from_trigger(&self, trigger: &str) -> Vec<DetectedMatch>;
 }
 
 pub struct MatchExecRequestMiddleware<'a> {
-    match_resolver: &'a dyn MatchResolver,
+  match_resolver: &'a dyn MatchResolver,
 }
 
 impl<'a> MatchExecRequestMiddleware<'a> {
-    pub fn new(match_resolver: &'a dyn MatchResolver) -> Self {
-        Self { match_resolver }
-    }
+  pub fn new(match_resolver: &'a dyn MatchResolver) -> Self {
+    Self { match_resolver }
+  }
 }
 
 impl<'a> Middleware for MatchExecRequestMiddleware<'a> {
-    fn name(&self) -> &'static str {
-        "match_exec_request"
-    }
+  fn name(&self) -> &'static str {
+    "match_exec_request"
+  }
 
-    fn next(&self, event: Event, _: &mut dyn FnMut(Event)) -> Event {
-        if let EventType::MatchExecRequest(m_event) = &event.etype {
-            let mut matches = if let Some(trigger) = &m_event.trigger {
-                self.match_resolver.find_matches_from_trigger(trigger)
-            } else {
-                Vec::new()
-            };
+  fn next(&self, event: Event, _: &mut dyn FnMut(Event)) -> Event {
+    if let EventType::MatchExecRequest(m_event) = &event.etype {
+      let mut matches = if let Some(trigger) = &m_event.trigger {
+        self.match_resolver.find_matches_from_trigger(trigger)
+      } else {
+        Vec::new()
+      };
 
-            // Inject the request args into the detected matches
-            for m in &mut matches {
-                for (key, value) in &m_event.args {
-                    m.args.insert(key.to_string(), value.to_string());
-                }
-            }
-
-            if matches.is_empty() {
-                warn!("received match exec request, but no matches have been found for the given query.");
-                return Event::caused_by(event.source_id, EventType::NOOP);
-            }
-
-            return Event::caused_by(
-                event.source_id,
-                EventType::MatchesDetected(MatchesDetectedEvent {
-                    matches,
-                    is_search: false,
-                }),
-            );
+      // Inject the request args into the detected matches
+      for m in &mut matches {
+        for (key, value) in &m_event.args {
+          m.args.insert(key.to_string(), value.to_string());
         }
+      }
 
-        event
+      if matches.is_empty() {
+        warn!("received match exec request, but no matches have been found for the given query.");
+        return Event::caused_by(event.source_id, EventType::NOOP);
+      }
+
+      return Event::caused_by(
+        event.source_id,
+        EventType::MatchesDetected(MatchesDetectedEvent {
+          matches,
+          is_search: false,
+        }),
+      );
     }
+
+    event
+  }
 }
 
 // TODO: test
