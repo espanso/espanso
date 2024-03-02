@@ -238,9 +238,16 @@ impl Config for ResolvedConfig {
         ".".to_string(),
         "?".to_string(),
         "!".to_string(),
+        ")".to_string(),
+        "}".to_string(),
+        "]".to_string(),
+        ">".to_string(),
+        "\'".to_string(),
+        "\"".to_string(),
         "\r".to_string(),
+        "\t".to_string(),
         "\n".to_string(),
-        (22u8 as char).to_string(),
+        "\x0c".to_string(), // Form Feed
       ]
     })
   }
