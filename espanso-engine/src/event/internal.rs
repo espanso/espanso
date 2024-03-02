@@ -21,87 +21,87 @@ use std::collections::HashMap;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MatchesDetectedEvent {
-  pub matches: Vec<DetectedMatch>,
-  pub is_search: bool,
+    pub matches: Vec<DetectedMatch>,
+    pub is_search: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Default, Eq)]
 pub struct DetectedMatch {
-  pub id: i32,
-  pub trigger: Option<String>,
-  pub left_separator: Option<String>,
-  pub right_separator: Option<String>,
-  pub args: HashMap<String, String>,
+    pub id: i32,
+    pub trigger: Option<String>,
+    pub left_separator: Option<String>,
+    pub right_separator: Option<String>,
+    pub args: HashMap<String, String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MatchSelectedEvent {
-  pub chosen: DetectedMatch,
+    pub chosen: DetectedMatch,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CauseCompensatedMatchEvent {
-  pub m: DetectedMatch,
+    pub m: DetectedMatch,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RenderingRequestedEvent {
-  pub match_id: i32,
-  pub trigger: Option<String>,
-  pub left_separator: Option<String>,
-  pub right_separator: Option<String>,
-  pub trigger_args: HashMap<String, String>,
-  pub format: TextFormat,
+    pub match_id: i32,
+    pub trigger: Option<String>,
+    pub left_separator: Option<String>,
+    pub right_separator: Option<String>,
+    pub trigger_args: HashMap<String, String>,
+    pub format: TextFormat,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TextFormat {
-  Plain,
-  Markdown,
-  Html,
+    Plain,
+    Markdown,
+    Html,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ImageRequestedEvent {
-  pub match_id: i32,
-  pub image_path: String,
+    pub match_id: i32,
+    pub image_path: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ImageResolvedEvent {
-  pub image_path: String,
+    pub image_path: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RenderedEvent {
-  pub match_id: i32,
-  pub body: String,
-  pub format: TextFormat,
+    pub match_id: i32,
+    pub body: String,
+    pub format: TextFormat,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DiscardPreviousEvent {
-  // All Events with a source_id smaller than this one will be discarded
-  pub minimum_source_id: u32,
+    // All Events with a source_id smaller than this one will be discarded
+    pub minimum_source_id: u32,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DiscardBetweenEvent {
-  // All Events with a source_id between start_id (included) and end_id (excluded)
-  // will be discarded
-  pub start_id: u32,
-  pub end_id: u32,
+    // All Events with a source_id between start_id (included) and end_id (excluded)
+    // will be discarded
+    pub start_id: u32,
+    pub end_id: u32,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SecureInputEnabledEvent {
-  pub app_name: String,
-  pub app_path: String,
+    pub app_name: String,
+    pub app_path: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct UndoEvent {
-  pub match_id: i32,
-  pub trigger: String,
-  pub replace: String,
+    pub match_id: i32,
+    pub trigger: String,
+    pub replace: String,
 }

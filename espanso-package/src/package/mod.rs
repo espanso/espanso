@@ -22,30 +22,30 @@ use std::path::Path;
 pub mod default;
 
 pub trait Package {
-  // Manifest
-  fn name(&self) -> &str;
-  fn title(&self) -> &str;
-  fn description(&self) -> &str;
-  fn version(&self) -> &str;
-  fn author(&self) -> &str;
+    // Manifest
+    fn name(&self) -> &str;
+    fn title(&self) -> &str;
+    fn description(&self) -> &str;
+    fn version(&self) -> &str;
+    fn author(&self) -> &str;
 
-  // Directory containing the package files
-  fn location(&self) -> &Path;
+    // Directory containing the package files
+    fn location(&self) -> &Path;
 }
 
 impl std::fmt::Debug for dyn Package {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    writeln!(
-      f,
-      "name: {}\nversion: {}\ntitle: {}\ndescription: {}\nauthor: {}\nlocation: {:?}",
-      self.name(),
-      self.version(),
-      self.title(),
-      self.description(),
-      self.author(),
-      self.location()
-    )
-  }
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(
+            f,
+            "name: {}\nversion: {}\ntitle: {}\ndescription: {}\nauthor: {}\nlocation: {:?}",
+            self.name(),
+            self.version(),
+            self.title(),
+            self.description(),
+            self.author(),
+            self.location()
+        )
+    }
 }
 
 pub use default::DefaultPackage;

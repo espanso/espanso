@@ -21,36 +21,36 @@ use anyhow::Result;
 use log::error;
 
 use crate::{
-  dispatch::Executor,
-  event::{Event, EventType},
+    dispatch::Executor,
+    event::{Event, EventType},
 };
 
 pub trait ImageInjector {
-  fn inject_image(&self, path: &str) -> Result<()>;
+    fn inject_image(&self, path: &str) -> Result<()>;
 }
 
 pub struct ImageInjectExecutor<'a> {
-  injector: &'a dyn ImageInjector,
+    injector: &'a dyn ImageInjector,
 }
 
 impl<'a> ImageInjectExecutor<'a> {
-  pub fn new(injector: &'a dyn ImageInjector) -> Self {
-    Self { injector }
-  }
+    pub fn new(injector: &'a dyn ImageInjector) -> Self {
+        Self { injector }
+    }
 }
 
 impl<'a> Executor for ImageInjectExecutor<'a> {
-  fn execute(&self, event: &Event) -> bool {
-    if let EventType::ImageInject(inject_event) = &event.etype {
-      if let Err(error) = self.injector.inject_image(&inject_event.image_path) {
-        error!("image injector reported an error: {:?}", error);
-      }
+    fn execute(&self, event: &Event) -> bool {
+        if let EventType::ImageInject(inject_event) = &event.etype {
+            if let Err(error) = self.injector.inject_image(&inject_event.image_path) {
+                error!("image injector reported an error: {:?}", error);
+            }
 
-      return true;
+            return true;
+        }
+
+        false
     }
-
-    false
-  }
 }
 
 // TODO: test

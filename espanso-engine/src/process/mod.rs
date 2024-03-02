@@ -23,12 +23,12 @@ mod default;
 mod middleware;
 
 pub trait Middleware {
-  fn name(&self) -> &'static str;
-  fn next(&self, event: Event, dispatch: &mut dyn FnMut(Event)) -> Event;
+    fn name(&self) -> &'static str;
+    fn next(&self, event: Event, dispatch: &mut dyn FnMut(Event)) -> Event;
 }
 
 pub trait Processor {
-  fn process(&mut self, event: Event) -> Vec<Event>;
+    fn process(&mut self, event: Event) -> Vec<Event>;
 }
 
 // Dependency inversion entities
@@ -41,8 +41,8 @@ pub use middleware::image_resolve::PathProvider;
 pub use middleware::match_exec::MatchResolver;
 pub use middleware::match_select::{MatchFilter, MatchSelector};
 pub use middleware::matcher::{
-  MatchResult, Matcher, MatcherEvent, MatcherMiddlewareConfigProvider, ModifierState,
-  ModifierStateProvider,
+    MatchResult, Matcher, MatcherEvent, MatcherMiddlewareConfigProvider, ModifierState,
+    ModifierStateProvider,
 };
 pub use middleware::multiplex::Multiplexer;
 pub use middleware::notification::NotificationManager;

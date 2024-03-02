@@ -18,35 +18,35 @@
  */
 
 use crate::{
-  dispatch::Executor,
-  event::{input::Key, Event, EventType},
+    dispatch::Executor,
+    event::{input::Key, Event, EventType},
 };
 use anyhow::Result;
 use log::error;
 
 pub trait KeyInjector {
-  fn inject_sequence(&self, keys: &[Key]) -> Result<()>;
+    fn inject_sequence(&self, keys: &[Key]) -> Result<()>;
 }
 
 pub struct KeyInjectExecutor<'a> {
-  injector: &'a dyn KeyInjector,
+    injector: &'a dyn KeyInjector,
 }
 
 impl<'a> KeyInjectExecutor<'a> {
-  pub fn new(injector: &'a dyn KeyInjector) -> Self {
-    Self { injector }
-  }
+    pub fn new(injector: &'a dyn KeyInjector) -> Self {
+        Self { injector }
+    }
 }
 
 impl<'a> Executor for KeyInjectExecutor<'a> {
-  fn execute(&self, event: &Event) -> bool {
-    if let EventType::KeySequenceInject(inject_event) = &event.etype {
-      if let Err(error) = self.injector.inject_sequence(&inject_event.keys) {
-        error!("key injector reported an error: {}", error);
-      }
-      return true;
-    }
+    fn execute(&self, event: &Event) -> bool {
+        if let EventType::KeySequenceInject(inject_event) = &event.etype {
+            if let Err(error) = self.injector.inject_sequence(&inject_event.keys) {
+                error!("key injector reported an error: {}", error);
+            }
+            return true;
+        }
 
-    false
-  }
+        false
+    }
 }

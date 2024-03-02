@@ -21,36 +21,36 @@ use anyhow::Result;
 use log::error;
 
 use crate::{
-  dispatch::Executor,
-  event::{ui::IconStatus, Event, EventType},
+    dispatch::Executor,
+    event::{ui::IconStatus, Event, EventType},
 };
 
 pub trait IconHandler {
-  fn update_icon(&self, status: &IconStatus) -> Result<()>;
+    fn update_icon(&self, status: &IconStatus) -> Result<()>;
 }
 
 pub struct IconUpdateExecutor<'a> {
-  handler: &'a dyn IconHandler,
+    handler: &'a dyn IconHandler,
 }
 
 impl<'a> IconUpdateExecutor<'a> {
-  pub fn new(handler: &'a dyn IconHandler) -> Self {
-    Self { handler }
-  }
+    pub fn new(handler: &'a dyn IconHandler) -> Self {
+        Self { handler }
+    }
 }
 
 impl<'a> Executor for IconUpdateExecutor<'a> {
-  fn execute(&self, event: &Event) -> bool {
-    if let EventType::IconStatusChange(m_event) = &event.etype {
-      if let Err(error) = self.handler.update_icon(&m_event.status) {
-        error!("icon handler reported an error: {:?}", error);
-      }
+    fn execute(&self, event: &Event) -> bool {
+        if let EventType::IconStatusChange(m_event) = &event.etype {
+            if let Err(error) = self.handler.update_icon(&m_event.status) {
+                error!("icon handler reported an error: {:?}", error);
+            }
 
-      return true;
+            return true;
+        }
+
+        false
     }
-
-    false
-  }
 }
 
 // TODO: test

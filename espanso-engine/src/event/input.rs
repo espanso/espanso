@@ -19,117 +19,117 @@
 
 #[derive(Debug, PartialEq, Clone, Eq)]
 pub enum Status {
-  Pressed,
-  Released,
+    Pressed,
+    Released,
 }
 
 #[derive(Debug, PartialEq, Clone, Eq)]
 pub enum Variant {
-  Left,
-  Right,
+    Left,
+    Right,
 }
 
 #[derive(Debug, PartialEq, Clone, Eq)]
 pub struct KeyboardEvent {
-  pub key: Key,
-  pub value: Option<String>,
-  pub status: Status,
-  pub variant: Option<Variant>,
+    pub key: Key,
+    pub value: Option<String>,
+    pub status: Status,
+    pub variant: Option<Variant>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum MouseButton {
-  Left,
-  Right,
-  Middle,
-  Button1,
-  Button2,
-  Button3,
-  Button4,
-  Button5,
+    Left,
+    Right,
+    Middle,
+    Button1,
+    Button2,
+    Button3,
+    Button4,
+    Button5,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MouseEvent {
-  pub button: MouseButton,
-  pub status: Status,
+    pub button: MouseButton,
+    pub status: Status,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Key {
-  // Modifiers
-  Alt,
-  CapsLock,
-  Control,
-  Meta,
-  NumLock,
-  Shift,
+    // Modifiers
+    Alt,
+    CapsLock,
+    Control,
+    Meta,
+    NumLock,
+    Shift,
 
-  // Whitespace
-  Enter,
-  Tab,
-  Space,
+    // Whitespace
+    Enter,
+    Tab,
+    Space,
 
-  // Navigation
-  ArrowDown,
-  ArrowLeft,
-  ArrowRight,
-  ArrowUp,
-  End,
-  Home,
-  PageDown,
-  PageUp,
+    // Navigation
+    ArrowDown,
+    ArrowLeft,
+    ArrowRight,
+    ArrowUp,
+    End,
+    Home,
+    PageDown,
+    PageUp,
 
-  // UI
-  Escape,
+    // UI
+    Escape,
 
-  // Editing keys
-  Backspace,
+    // Editing keys
+    Backspace,
 
-  // Function keys
-  F1,
-  F2,
-  F3,
-  F4,
-  F5,
-  F6,
-  F7,
-  F8,
-  F9,
-  F10,
-  F11,
-  F12,
-  F13,
-  F14,
-  F15,
-  F16,
-  F17,
-  F18,
-  F19,
-  F20,
+    // Function keys
+    F1,
+    F2,
+    F3,
+    F4,
+    F5,
+    F6,
+    F7,
+    F8,
+    F9,
+    F10,
+    F11,
+    F12,
+    F13,
+    F14,
+    F15,
+    F16,
+    F17,
+    F18,
+    F19,
+    F20,
 
-  // Numpad keys
-  Numpad0,
-  Numpad1,
-  Numpad2,
-  Numpad3,
-  Numpad4,
-  Numpad5,
-  Numpad6,
-  Numpad7,
-  Numpad8,
-  Numpad9,
+    // Numpad keys
+    Numpad0,
+    Numpad1,
+    Numpad2,
+    Numpad3,
+    Numpad4,
+    Numpad5,
+    Numpad6,
+    Numpad7,
+    Numpad8,
+    Numpad9,
 
-  // Other keys, includes the raw code provided by the operating system
-  Other(i32),
+    // Other keys, includes the raw code provided by the operating system
+    Other(i32),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ContextMenuClickedEvent {
-  pub context_item_id: u32,
+    pub context_item_id: u32,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct HotKeyEvent {
-  pub hotkey_id: i32,
+    pub hotkey_id: i32,
 }

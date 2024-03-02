@@ -24,111 +24,115 @@ pub mod extension;
 mod renderer;
 
 pub trait Renderer {
-  fn render(&self, template: &Template, context: &Context, options: &RenderOptions)
-    -> RenderResult;
+    fn render(
+        &self,
+        template: &Template,
+        context: &Context,
+        options: &RenderOptions,
+    ) -> RenderResult;
 }
 
 pub fn create(extensions: Vec<&dyn Extension>) -> impl Renderer + '_ {
-  renderer::DefaultRenderer::new(extensions)
+    renderer::DefaultRenderer::new(extensions)
 }
 
 #[derive(Debug)]
 pub enum RenderResult {
-  Success(String),
-  Aborted,
-  Error(anyhow::Error),
+    Success(String),
+    Aborted,
+    Error(anyhow::Error),
 }
 
 #[derive(Default)]
 pub struct Context<'a> {
-  pub global_vars: Vec<&'a Variable>,
-  pub templates: Vec<&'a Template>,
+    pub global_vars: Vec<&'a Variable>,
+    pub templates: Vec<&'a Template>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RenderOptions {
-  pub casing_style: CasingStyle,
+    pub casing_style: CasingStyle,
 }
 
 impl Default for RenderOptions {
-  fn default() -> Self {
-    Self {
-      casing_style: CasingStyle::None,
+    fn default() -> Self {
+        Self {
+            casing_style: CasingStyle::None,
+        }
     }
-  }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CasingStyle {
-  None,
-  Capitalize,
-  CapitalizeWords,
-  Uppercase,
+    None,
+    Capitalize,
+    CapitalizeWords,
+    Uppercase,
 }
 
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct Template {
-  pub ids: Vec<String>,
-  pub body: String,
-  pub vars: Vec<Variable>,
+    pub ids: Vec<String>,
+    pub body: String,
+    pub vars: Vec<Variable>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Variable {
-  pub name: String,
-  pub var_type: String,
-  pub inject_vars: bool,
-  pub params: Params,
-  // Name of the variables this variable depends on
-  pub depends_on: Vec<String>,
+    pub name: String,
+    pub var_type: String,
+    pub inject_vars: bool,
+    pub params: Params,
+    // Name of the variables this variable depends on
+    pub depends_on: Vec<String>,
 }
 
 impl Default for Variable {
-  fn default() -> Self {
-    Self {
-      name: String::new(),
-      var_type: String::new(),
-      inject_vars: true,
-      params: Params::new(),
-      depends_on: Vec::new(),
+    fn default() -> Self {
+        Self {
+            name: String::new(),
+            var_type: String::new(),
+            inject_vars: true,
+            params: Params::new(),
+            depends_on: Vec::new(),
+        }
     }
-  }
 }
 
 pub type Params = HashMap<String, Value>;
 
 #[derive(Debug, Clone, PartialEq, EnumAsInner)]
 pub enum Value {
-  Null,
-  Bool(bool),
-  Number(Number),
-  String(String),
-  Array(Vec<Value>),
-  Object(HashMap<String, Value>),
+    Null,
+    Bool(bool),
+    Number(Number),
+    String(String),
+    Array(Vec<Value>),
+    Object(HashMap<String, Value>),
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Number {
-  Integer(i64),
-  Float(f64),
+    Integer(i64),
+    Float(f64),
 }
 
 pub trait Extension {
-  fn name(&self) -> &str;
-  fn calculate(&self, context: &Context, scope: &Scope, params: &Params) -> ExtensionResult;
+    fn name(&self) -> &str;
+    fn calculate(&self, context: &Context, scope: &Scope, params: &Params) -> ExtensionResult;
 }
 
 pub type Scope<'a> = HashMap<&'a str, ExtensionOutput>;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum ExtensionOutput {
-  Single(String),
-  Multiple(HashMap<String, String>),
+    Single(String),
+    Multiple(HashMap<String, String>),
 }
 
 #[derive(Debug, EnumAsInner)]
 pub enum ExtensionResult {
-  Success(ExtensionOutput),
-  Aborted,
-  Error(anyhow::Error),
+    Success(ExtensionOutput),
+    Aborted,
+    Error(anyhow::Error),
 }

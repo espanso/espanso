@@ -22,71 +22,71 @@ use winreg::enums::*;
 use winreg::RegKey;
 
 pub fn is_espanso_in_path() -> bool {
-  read_paths().iter().any(|path| path.contains("espanso"))
+    read_paths().iter().any(|path| path.contains("espanso"))
 }
 
 pub fn add_espanso_to_path(_: bool) -> Result<()> {
-  let mut paths = read_paths();
-  let exe_path = std::env::current_exe().expect("unable to obtain exec path");
-  let parent_path = exe_path.parent().expect("unable to obtain parent path");
+    let mut paths = read_paths();
+    let exe_path = std::env::current_exe().expect("unable to obtain exec path");
+    let parent_path = exe_path.parent().expect("unable to obtain parent path");
 
-  // Add espanso to path list
-  paths.push(parent_path.to_string_lossy().to_string());
+    // Add espanso to path list
+    paths.push(parent_path.to_string_lossy().to_string());
 
-  let path = paths.join(";");
-  write_user_path_value(path)?;
+    let path = paths.join(";");
+    write_user_path_value(path)?;
 
-  // Send broadcast to let other applications know that the env variables have changed
-  send_change_broadcast();
+    // Send broadcast to let other applications know that the env variables have changed
+    send_change_broadcast();
 
-  Ok(())
+    Ok(())
 }
 
 pub fn remove_espanso_from_path(_: bool) -> Result<()> {
-  let paths = read_paths();
-  let paths_without_espanso: Vec<String> = paths
-    .into_iter()
-    .filter(|path| !path.contains("espanso"))
-    .collect();
-  let path = paths_without_espanso.join(";");
-  write_user_path_value(path)
+    let paths = read_paths();
+    let paths_without_espanso: Vec<String> = paths
+        .into_iter()
+        .filter(|path| !path.contains("espanso"))
+        .collect();
+    let path = paths_without_espanso.join(";");
+    write_user_path_value(path)
 }
 
 fn read_user_path_value() -> Result<String> {
-  let hkcu = RegKey::predef(HKEY_CURRENT_USER);
-  let env = hkcu.open_subkey("Environment")?;
-  let path: String = env.get_value("Path")?;
-  Ok(path)
+    let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+    let env = hkcu.open_subkey("Environment")?;
+    let path: String = env.get_value("Path")?;
+    Ok(path)
 }
 
 fn read_paths() -> Vec<String> {
-  let path_value = read_user_path_value().unwrap_or_default();
-  let paths = path_value.split(';');
-  paths.map(String::from).collect()
+    let path_value = read_user_path_value().unwrap_or_default();
+    let paths = path_value.split(';');
+    paths.map(String::from).collect()
 }
 
 fn write_user_path_value(value: String) -> Result<()> {
-  let hkcu = RegKey::predef(HKEY_CURRENT_USER);
-  let env = hkcu.open_subkey_with_flags("Environment", KEY_ALL_ACCESS)?;
-  env.set_value("Path", &value)?;
-  Ok(())
+    let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+    let env = hkcu.open_subkey_with_flags("Environment", KEY_ALL_ACCESS)?;
+    env.set_value("Path", &value)?;
+    Ok(())
 }
 
 fn send_change_broadcast() {
-  use winapi::um::winuser::{SendMessageTimeoutW, HWND_BROADCAST, WM_SETTINGCHANGE};
+    use winapi::um::winuser::{SendMessageTimeoutW, HWND_BROADCAST, WM_SETTINGCHANGE};
 
-  let wide_string = widestring::WideString::from("Environment".to_string());
+    let wide_string = widestring::WideString::from("Environment".to_string());
 
-  unsafe {
-    let mut res: usize = 0;
-    SendMessageTimeoutW(
-      HWND_BROADCAST,
-      WM_SETTINGCHANGE,
-      0,
-      wide_string.as_ptr() as isize,
-      2,
-      50,
-      &mut res,
-    );
-  }
+    unsafe {
+        let mut res: usize = 0;
+        SendMessageTimeoutW(
+            HWND_BROADCAST,
+            WM_SETTINGCHANGE,
+            0,
+            wide_string.as_ptr() as isize,
+            2,
+            50,
+            &mut res,
+        );
+    }
 }

@@ -22,30 +22,28 @@ use crate::gui::TextUI;
 use super::manager::ModuloManager;
 
 pub struct ModuloTextUI<'a> {
-  manager: &'a ModuloManager,
+    manager: &'a ModuloManager,
 }
 
 impl<'a> ModuloTextUI<'a> {
-  pub fn new(manager: &'a ModuloManager) -> Self {
-    Self { manager }
-  }
+    pub fn new(manager: &'a ModuloManager) -> Self {
+        Self { manager }
+    }
 }
 
 impl<'a> TextUI for ModuloTextUI<'a> {
-  fn show_text(&self, title: &str, text: &str) -> anyhow::Result<()> {
-    self
-      .manager
-      .spawn(&["textview", "--title", title, "-i", "-"], text)?;
+    fn show_text(&self, title: &str, text: &str) -> anyhow::Result<()> {
+        self.manager
+            .spawn(&["textview", "--title", title, "-i", "-"], text)?;
 
-    Ok(())
-  }
+        Ok(())
+    }
 
-  fn show_file(&self, title: &str, path: &std::path::Path) -> anyhow::Result<()> {
-    let path_str = path.to_string_lossy().to_string();
-    self
-      .manager
-      .spawn(&["textview", "--title", title, "-i", &path_str], "")?;
+    fn show_file(&self, title: &str, path: &std::path::Path) -> anyhow::Result<()> {
+        let path_str = path.to_string_lossy().to_string();
+        self.manager
+            .spawn(&["textview", "--title", title, "-i", &path_str], "")?;
 
-    Ok(())
-  }
+        Ok(())
+    }
 }

@@ -25,81 +25,81 @@ use crate::gui::{SearchItem, SearchUI};
 const MAX_LABEL_LEN: usize = 100;
 
 pub trait MatchProvider<'a> {
-  fn get_matches(&self, ids: &[i32]) -> Vec<MatchSummary<'a>>;
+    fn get_matches(&self, ids: &[i32]) -> Vec<MatchSummary<'a>>;
 }
 
 pub struct MatchSummary<'a> {
-  pub id: i32,
-  pub label: &'a str,
-  pub tag: Option<&'a str>,
-  pub additional_search_terms: Vec<&'a str>,
-  pub is_builtin: bool,
+    pub id: i32,
+    pub label: &'a str,
+    pub tag: Option<&'a str>,
+    pub additional_search_terms: Vec<&'a str>,
+    pub is_builtin: bool,
 }
 
 pub struct MatchSelectorAdapter<'a> {
-  search_ui: &'a dyn SearchUI,
-  match_provider: &'a dyn MatchProvider<'a>,
+    search_ui: &'a dyn SearchUI,
+    match_provider: &'a dyn MatchProvider<'a>,
 }
 
 impl<'a> MatchSelectorAdapter<'a> {
-  pub fn new(search_ui: &'a dyn SearchUI, match_provider: &'a dyn MatchProvider<'a>) -> Self {
-    Self {
-      search_ui,
-      match_provider,
+    pub fn new(search_ui: &'a dyn SearchUI, match_provider: &'a dyn MatchProvider<'a>) -> Self {
+        Self {
+            search_ui,
+            match_provider,
+        }
     }
-  }
 }
 
 impl<'a> MatchSelector for MatchSelectorAdapter<'a> {
-  fn select(&self, matches_ids: &[i32], is_search: bool) -> Option<i32> {
-    let matches = self.match_provider.get_matches(matches_ids);
-    let search_items: Vec<SearchItem> = matches
-      .into_iter()
-      .map(|m| {
-        let clipped_label: String = m
-          .label
-          .chars()
-          .take(std::cmp::min(m.label.len(), MAX_LABEL_LEN))
-          .collect();
-
-        SearchItem {
-          id: m.id.to_string(),
-          label: clipped_label,
-          tag: m.tag.map(String::from),
-          additional_search_terms: m
-            .additional_search_terms
+    fn select(&self, matches_ids: &[i32], is_search: bool) -> Option<i32> {
+        let matches = self.match_provider.get_matches(matches_ids);
+        let search_items: Vec<SearchItem> = matches
             .into_iter()
-            .map(String::from)
-            .collect(),
-          is_builtin: m.is_builtin,
-        }
-      })
-      .collect();
+            .map(|m| {
+                let clipped_label: String = m
+                    .label
+                    .chars()
+                    .take(std::cmp::min(m.label.len(), MAX_LABEL_LEN))
+                    .collect();
 
-    let hint = if is_search {
-      Some("Search matches by content or trigger (or type > to see commands)")
-    } else {
-      None
-    };
+                SearchItem {
+                    id: m.id.to_string(),
+                    label: clipped_label,
+                    tag: m.tag.map(String::from),
+                    additional_search_terms: m
+                        .additional_search_terms
+                        .into_iter()
+                        .map(String::from)
+                        .collect(),
+                    is_builtin: m.is_builtin,
+                }
+            })
+            .collect();
 
-    match self.search_ui.show(&search_items, hint) {
-      Ok(Some(selected_id)) => match selected_id.parse::<i32>() {
-        Ok(id) => Some(id),
-        Err(err) => {
-          error!(
-            "match selector received an invalid id from SearchUI: {}",
-            err
-          );
-          None
+        let hint = if is_search {
+            Some("Search matches by content or trigger (or type > to see commands)")
+        } else {
+            None
+        };
+
+        match self.search_ui.show(&search_items, hint) {
+            Ok(Some(selected_id)) => match selected_id.parse::<i32>() {
+                Ok(id) => Some(id),
+                Err(err) => {
+                    error!(
+                        "match selector received an invalid id from SearchUI: {}",
+                        err
+                    );
+                    None
+                }
+            },
+            Ok(None) => None,
+            Err(err) => {
+                error!("SearchUI reported an error: {}", err);
+                None
+            }
         }
-      },
-      Ok(None) => None,
-      Err(err) => {
-        error!("SearchUI reported an error: {}", err);
-        None
-      }
     }
-  }
 }
 
 // TODO: test
