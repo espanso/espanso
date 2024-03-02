@@ -22,68 +22,68 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug)]
 pub struct Menu {
-    pub items: Vec<MenuItem>,
+  pub items: Vec<MenuItem>,
 }
 
 impl Menu {
-    pub fn to_json(&self) -> Result<String> {
-        Ok(serde_json::to_string(&self.items)?)
-    }
+  pub fn to_json(&self) -> Result<String> {
+    Ok(serde_json::to_string(&self.items)?)
+  }
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(tag = "type")]
 #[serde(rename_all = "snake_case")]
 pub enum MenuItem {
-    Simple(SimpleMenuItem),
-    Sub(SubMenuItem),
-    Separator,
+  Simple(SimpleMenuItem),
+  Sub(SubMenuItem),
+  Separator,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SimpleMenuItem {
-    pub id: u32,
-    pub label: String,
+  pub id: u32,
+  pub label: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SubMenuItem {
-    pub label: String,
-    pub items: Vec<MenuItem>,
+  pub label: String,
+  pub items: Vec<MenuItem>,
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+  use super::*;
 
-    #[test]
-    fn test_context_menu_serializes_correctly() {
-        let menu = Menu {
-            items: vec![
-                MenuItem::Simple(SimpleMenuItem {
-                    id: 0,
-                    label: "Open".to_string(),
-                }),
-                MenuItem::Separator,
-                MenuItem::Sub(SubMenuItem {
-                    label: "Sub".to_string(),
-                    items: vec![
-                        MenuItem::Simple(SimpleMenuItem {
-                            label: "Sub 1".to_string(),
-                            id: 1,
-                        }),
-                        MenuItem::Simple(SimpleMenuItem {
-                            label: "Sub 2".to_string(),
-                            id: 2,
-                        }),
-                    ],
-                }),
-            ],
-        };
+  #[test]
+  fn test_context_menu_serializes_correctly() {
+    let menu = Menu {
+      items: vec![
+        MenuItem::Simple(SimpleMenuItem {
+          id: 0,
+          label: "Open".to_string(),
+        }),
+        MenuItem::Separator,
+        MenuItem::Sub(SubMenuItem {
+          label: "Sub".to_string(),
+          items: vec![
+            MenuItem::Simple(SimpleMenuItem {
+              label: "Sub 1".to_string(),
+              id: 1,
+            }),
+            MenuItem::Simple(SimpleMenuItem {
+              label: "Sub 2".to_string(),
+              id: 2,
+            }),
+          ],
+        }),
+      ],
+    };
 
-        assert_eq!(
-            menu.to_json().unwrap(),
-            r#"[{"type":"simple","id":0,"label":"Open"},{"type":"separator"},{"type":"sub","label":"Sub","items":[{"type":"simple","id":1,"label":"Sub 1"},{"type":"simple","id":2,"label":"Sub 2"}]}]"#
-        );
-    }
+    assert_eq!(
+      menu.to_json().unwrap(),
+      r#"[{"type":"simple","id":0,"label":"Open"},{"type":"separator"},{"type":"sub","label":"Sub","items":[{"type":"simple","id":1,"label":"Sub 1"},{"type":"simple","id":2,"label":"Sub 2"}]}]"#
+    );
+  }
 }

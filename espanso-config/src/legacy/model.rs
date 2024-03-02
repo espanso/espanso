@@ -23,35 +23,35 @@ use serde::{Deserialize, Serialize};
 #[allow(clippy::upper_case_acronyms)]
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Eq)]
 pub enum KeyModifier {
-    CTRL,
-    SHIFT,
-    ALT,
-    META,
-    BACKSPACE,
-    OFF,
+  CTRL,
+  SHIFT,
+  ALT,
+  META,
+  BACKSPACE,
+  OFF,
 
-    // These are specific variants of the ones above. See issue: #117
-    // https://github.com/espanso/espanso/issues/117
-    LEFT_CTRL,
-    RIGHT_CTRL,
-    LEFT_ALT,
-    RIGHT_ALT,
-    LEFT_META,
-    RIGHT_META,
-    LEFT_SHIFT,
-    RIGHT_SHIFT,
+  // These are specific variants of the ones above. See issue: #117
+  // https://github.com/espanso/espanso/issues/117
+  LEFT_CTRL,
+  RIGHT_CTRL,
+  LEFT_ALT,
+  RIGHT_ALT,
+  LEFT_META,
+  RIGHT_META,
+  LEFT_SHIFT,
+  RIGHT_SHIFT,
 
-    // Special cases, should not be used in config
-    CAPS_LOCK,
+  // Special cases, should not be used in config
+  CAPS_LOCK,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub enum PasteShortcut {
-    #[default]
-    Default, // Default one for the current system
-    CtrlV,       // Classic Ctrl+V shortcut
-    CtrlShiftV,  // Could be used to paste without formatting in many applications
-    ShiftInsert, // Often used in Linux systems
-    CtrlAltV,    // Used in some Linux terminals (urxvt)
-    MetaV,       // Corresponding to Win+V on Windows and Linux, CMD+V on macOS
+  #[default]
+  Default, // Default one for the current system
+  CtrlV,       // Classic Ctrl+V shortcut
+  CtrlShiftV,  // Could be used to paste without formatting in many applications
+  ShiftInsert, // Often used in Linux systems
+  CtrlAltV,    // Used in some Linux terminals (urxvt)
+  MetaV,       // Corresponding to Win+V on Windows and Linux, CMD+V on macOS
 }

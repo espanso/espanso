@@ -28,49 +28,49 @@ mod ffi;
 pub struct WinAppInfoProvider {}
 
 impl WinAppInfoProvider {
-    pub fn new() -> Self {
-        Self {}
-    }
+  pub fn new() -> Self {
+    Self {}
+  }
 }
 
 impl AppInfoProvider for WinAppInfoProvider {
-    fn get_info(&self) -> AppInfo {
-        AppInfo {
-            title: WinAppInfoProvider::get_title(),
-            class: None,
-            exec: WinAppInfoProvider::get_exec(),
-        }
+  fn get_info(&self) -> AppInfo {
+    AppInfo {
+      title: WinAppInfoProvider::get_title(),
+      class: None,
+      exec: WinAppInfoProvider::get_exec(),
     }
+  }
 }
 
 impl WinAppInfoProvider {
-    fn get_exec() -> Option<String> {
-        let mut buffer: [u16; 2048] = [0; 2048];
-        if unsafe { info_get_exec(buffer.as_mut_ptr(), (buffer.len() - 1) as i32) } == 0 {
-            None
-        } else {
-            let string = unsafe { U16CStr::from_ptr_str(buffer.as_ptr()) };
-            let string = string.to_string_lossy();
-            if string.is_empty() {
-                None
-            } else {
-                Some(string)
-            }
-        }
+  fn get_exec() -> Option<String> {
+    let mut buffer: [u16; 2048] = [0; 2048];
+    if unsafe { info_get_exec(buffer.as_mut_ptr(), (buffer.len() - 1) as i32) } == 0 {
+      None
+    } else {
+      let string = unsafe { U16CStr::from_ptr_str(buffer.as_ptr()) };
+      let string = string.to_string_lossy();
+      if string.is_empty() {
+        None
+      } else {
+        Some(string)
+      }
     }
+  }
 
-    fn get_title() -> Option<String> {
-        let mut buffer: [u16; 2048] = [0; 2048];
-        if unsafe { info_get_title(buffer.as_mut_ptr(), (buffer.len() - 1) as i32) } > 0 {
-            let string = unsafe { U16CStr::from_ptr_str(buffer.as_ptr()) };
-            let string = string.to_string_lossy();
-            if string.is_empty() {
-                None
-            } else {
-                Some(string)
-            }
-        } else {
-            None
-        }
+  fn get_title() -> Option<String> {
+    let mut buffer: [u16; 2048] = [0; 2048];
+    if unsafe { info_get_title(buffer.as_mut_ptr(), (buffer.len() - 1) as i32) } > 0 {
+      let string = unsafe { U16CStr::from_ptr_str(buffer.as_ptr()) };
+      let string = string.to_string_lossy();
+      if string.is_empty() {
+        None
+      } else {
+        Some(string)
+      }
+    } else {
+      None
     }
+  }
 }

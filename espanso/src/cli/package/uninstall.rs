@@ -24,18 +24,18 @@ use espanso_path::Paths;
 use crate::info_println;
 
 pub fn uninstall_package(paths: &Paths, matches: &ArgMatches) -> Result<()> {
-    let package_name = matches
-        .value_of("package_name")
-        .ok_or_else(|| anyhow!("missing package name"))?;
+  let package_name = matches
+    .value_of("package_name")
+    .ok_or_else(|| anyhow!("missing package name"))?;
 
-    let archiver =
-        espanso_package::get_archiver(&paths.packages).context("unable to get package archiver")?;
+  let archiver =
+    espanso_package::get_archiver(&paths.packages).context("unable to get package archiver")?;
 
-    archiver
-        .delete(package_name)
-        .context("unable to delete package")?;
+  archiver
+    .delete(package_name)
+    .context("unable to delete package")?;
 
-    info_println!("package '{}' uninstalled!", package_name);
+  info_println!("package '{}' uninstalled!", package_name);
 
-    Ok(())
+  Ok(())
 }

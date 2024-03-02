@@ -21,37 +21,37 @@ use super::super::Middleware;
 use crate::event::{Event, EventType};
 
 pub trait NotificationManager {
-    fn notify_status_change(&self, enabled: bool);
-    fn notify_rendering_error(&self);
+  fn notify_status_change(&self, enabled: bool);
+  fn notify_rendering_error(&self);
 }
 
 pub struct NotificationMiddleware<'a> {
-    notification_manager: &'a dyn NotificationManager,
+  notification_manager: &'a dyn NotificationManager,
 }
 
 impl<'a> NotificationMiddleware<'a> {
-    pub fn new(notification_manager: &'a dyn NotificationManager) -> Self {
-        Self {
-            notification_manager,
-        }
+  pub fn new(notification_manager: &'a dyn NotificationManager) -> Self {
+    Self {
+      notification_manager,
     }
+  }
 }
 
 impl<'a> Middleware for NotificationMiddleware<'a> {
-    fn name(&self) -> &'static str {
-        "notification"
+  fn name(&self) -> &'static str {
+    "notification"
+  }
+
+  fn next(&self, event: Event, _: &mut dyn FnMut(Event)) -> Event {
+    match &event.etype {
+      EventType::Enabled => self.notification_manager.notify_status_change(true),
+      EventType::Disabled => self.notification_manager.notify_status_change(false),
+      EventType::RenderingError => self.notification_manager.notify_rendering_error(),
+      _ => {}
     }
 
-    fn next(&self, event: Event, _: &mut dyn FnMut(Event)) -> Event {
-        match &event.etype {
-            EventType::Enabled => self.notification_manager.notify_status_change(true),
-            EventType::Disabled => self.notification_manager.notify_status_change(false),
-            EventType::RenderingError => self.notification_manager.notify_rendering_error(),
-            _ => {}
-        }
-
-        event
-    }
+    event
+  }
 }
 
 // TODO: test

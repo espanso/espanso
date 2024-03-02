@@ -19,14 +19,14 @@
 
 #[cfg(feature = "modulo")]
 pub fn show_welcome_screen() {
-    let espanso_exe_path = std::env::current_exe().expect("unable to determine executable path");
-    let mut command = std::process::Command::new(espanso_exe_path.to_string_lossy().to_string());
-    command.args(["modulo", "welcome"]);
+  let espanso_exe_path = std::env::current_exe().expect("unable to determine executable path");
+  let mut command = std::process::Command::new(espanso_exe_path.to_string_lossy().to_string());
+  command.args(["modulo", "welcome"]);
 
-    command.spawn().expect("unable to show welcome screen");
+  command.spawn().expect("unable to show welcome screen");
 }
 
 #[cfg(not(feature = "modulo"))]
 pub fn show_welcome_screen() {
-    // NOOP
+  // NOOP
 }

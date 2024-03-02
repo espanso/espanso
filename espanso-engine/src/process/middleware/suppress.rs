@@ -23,32 +23,32 @@ use super::super::Middleware;
 use crate::event::{Event, EventType};
 
 pub trait EnabledStatusProvider {
-    fn is_config_enabled(&self) -> bool;
+  fn is_config_enabled(&self) -> bool;
 }
 
 pub struct SuppressMiddleware<'a> {
-    provider: &'a dyn EnabledStatusProvider,
+  provider: &'a dyn EnabledStatusProvider,
 }
 
 impl<'a> SuppressMiddleware<'a> {
-    pub fn new(provider: &'a dyn EnabledStatusProvider) -> Self {
-        Self { provider }
-    }
+  pub fn new(provider: &'a dyn EnabledStatusProvider) -> Self {
+    Self { provider }
+  }
 }
 
 impl<'a> Middleware for SuppressMiddleware<'a> {
-    fn name(&self) -> &'static str {
-        "suppress"
+  fn name(&self) -> &'static str {
+    "suppress"
+  }
+
+  fn next(&self, event: Event, _: &mut dyn FnMut(Event)) -> Event {
+    if let EventType::MatchesDetected(_) = event.etype {
+      if !self.provider.is_config_enabled() {
+        trace!("suppressing match detected event as active config has enable=false");
+        return Event::caused_by(event.source_id, EventType::NOOP);
+      }
     }
 
-    fn next(&self, event: Event, _: &mut dyn FnMut(Event)) -> Event {
-        if let EventType::MatchesDetected(_) = event.etype {
-            if !self.provider.is_config_enabled() {
-                trace!("suppressing match detected event as active config has enable=false");
-                return Event::caused_by(event.source_id, EventType::NOOP);
-            }
-        }
-
-        event
-    }
+    event
+  }
 }

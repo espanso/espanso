@@ -21,6 +21,6 @@ use std::collections::HashMap;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MatchExecRequestEvent {
-    pub trigger: Option<String>,
-    pub args: HashMap<String, String>,
+  pub trigger: Option<String>,
+  pub args: HashMap<String, String>,
 }

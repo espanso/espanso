@@ -25,27 +25,27 @@ use espanso_ipc::IPCClient;
 use espanso_path::Paths;
 
 use crate::{
-    ipc::{create_ipc_client_to_worker, IPCEvent, RequestMatchExpansionPayload},
-    lock::acquire_worker_lock,
+  ipc::{create_ipc_client_to_worker, IPCEvent, RequestMatchExpansionPayload},
+  lock::acquire_worker_lock,
 };
 
 pub fn exec_main(cli_args: &ArgMatches, paths: &Paths) -> Result<()> {
-    let trigger = cli_args.value_of("trigger");
-    let args = cli_args.values_of("arg");
+  let trigger = cli_args.value_of("trigger");
+  let args = cli_args.values_of("arg");
 
-    if trigger.is_none() || trigger.is_some_and(str::is_empty) {
-        bail!("You need to specify the --trigger 'trigger' option. Run `espanso match exec --help` for more information.");
-    }
+  if trigger.is_none() || trigger.is_some_and(str::is_empty) {
+    bail!("You need to specify the --trigger 'trigger' option. Run `espanso match exec --help` for more information.");
+  }
 
-    if acquire_worker_lock(&paths.runtime).is_some() {
-        bail!("Worker process is not running, please start Espanso first.")
-    }
+  if acquire_worker_lock(&paths.runtime).is_some() {
+    bail!("Worker process is not running, please start Espanso first.")
+  }
 
-    let mut client = create_ipc_client_to_worker(&paths.runtime)?;
+  let mut client = create_ipc_client_to_worker(&paths.runtime)?;
 
-    let mut match_args = HashMap::new();
-    if let Some(args) = args {
-        args.for_each(|arg| {
+  let mut match_args = HashMap::new();
+  if let Some(args) = args {
+    args.for_each(|arg| {
       let tokens = arg.split_once('=');
       if let Some((key, value)) = tokens {
         match_args.insert(key.to_string(), value.to_string());
@@ -53,16 +53,16 @@ pub fn exec_main(cli_args: &ArgMatches, paths: &Paths) -> Result<()> {
         eprintln!("invalid format for argument '{arg}', you should follow the 'name=value' format");
       }
     });
-    }
+  }
 
-    client
-        .send_async(IPCEvent::RequestMatchExpansion(
-            RequestMatchExpansionPayload {
-                trigger: trigger.map(String::from),
-                args: match_args,
-            },
-        ))
-        .context("unable to send payload to worker process")?;
+  client
+    .send_async(IPCEvent::RequestMatchExpansion(
+      RequestMatchExpansionPayload {
+        trigger: trigger.map(String::from),
+        args: match_args,
+      },
+    ))
+    .context("unable to send payload to worker process")?;
 
-    Ok(())
+  Ok(())
 }

@@ -21,8 +21,8 @@ use std::cell::RefCell;
 
 use super::super::Middleware;
 use crate::event::{
-    ui::{MenuItem, ShowContextMenuEvent, SimpleMenuItem},
-    Event, EventType, ExitMode,
+  ui::{MenuItem, ShowContextMenuEvent, SimpleMenuItem},
+  Event, EventType, ExitMode,
 };
 
 const CONTEXT_ITEM_EXIT: u32 = 0;
@@ -36,32 +36,32 @@ const CONTEXT_ITEM_SHOW_LOGS: u32 = 7;
 const CONTEXT_ITEM_OPEN_CONFIG_FOLDER: u32 = 8;
 
 pub struct ContextMenuMiddleware {
-    is_enabled: RefCell<bool>,
-    is_secure_input_enabled: RefCell<bool>,
+  is_enabled: RefCell<bool>,
+  is_secure_input_enabled: RefCell<bool>,
 }
 
 impl ContextMenuMiddleware {
-    pub fn new() -> Self {
-        Self {
-            is_enabled: RefCell::new(true),
-            is_secure_input_enabled: RefCell::new(false),
-        }
+  pub fn new() -> Self {
+    Self {
+      is_enabled: RefCell::new(true),
+      is_secure_input_enabled: RefCell::new(false),
     }
+  }
 }
 
 #[allow(clippy::needless_return)]
 impl Middleware for ContextMenuMiddleware {
-    fn name(&self) -> &'static str {
-        "context_menu"
-    }
+  fn name(&self) -> &'static str {
+    "context_menu"
+  }
 
-    fn next(&self, event: Event, dispatch: &mut dyn FnMut(Event)) -> Event {
-        let mut is_enabled = self.is_enabled.borrow_mut();
-        let mut is_secure_input_enabled = self.is_secure_input_enabled.borrow_mut();
+  fn next(&self, event: Event, dispatch: &mut dyn FnMut(Event)) -> Event {
+    let mut is_enabled = self.is_enabled.borrow_mut();
+    let mut is_secure_input_enabled = self.is_secure_input_enabled.borrow_mut();
 
-        match &event.etype {
-            EventType::TrayIconClicked => {
-                // TODO: fetch top matches for the active config to be added
+    match &event.etype {
+      EventType::TrayIconClicked => {
+        // TODO: fetch top matches for the active config to be added
 
         let mut items = vec![
           MenuItem::Simple(if *is_enabled {
@@ -99,23 +99,23 @@ impl Middleware for ContextMenuMiddleware {
           }),
         ];
 
-                if *is_secure_input_enabled {
-                    items.insert(
-                        0,
-                        MenuItem::Simple(SimpleMenuItem {
-                            id: CONTEXT_ITEM_SECURE_INPUT_EXPLAIN,
-                            label: "Why is Espanso not working?".to_string(),
-                        }),
-                    );
-                    items.insert(
-                        1,
-                        MenuItem::Simple(SimpleMenuItem {
-                            id: CONTEXT_ITEM_SECURE_INPUT_TRIGGER_WORKAROUND,
-                            label: "Launch SecureInput auto-fix".to_string(),
-                        }),
-                    );
-                    items.insert(2, MenuItem::Separator);
-                }
+        if *is_secure_input_enabled {
+          items.insert(
+            0,
+            MenuItem::Simple(SimpleMenuItem {
+              id: CONTEXT_ITEM_SECURE_INPUT_EXPLAIN,
+              label: "Why is Espanso not working?".to_string(),
+            }),
+          );
+          items.insert(
+            1,
+            MenuItem::Simple(SimpleMenuItem {
+              id: CONTEXT_ITEM_SECURE_INPUT_TRIGGER_WORKAROUND,
+              label: "Launch SecureInput auto-fix".to_string(),
+            }),
+          );
+          items.insert(2, MenuItem::Separator);
+        }
 
         // TODO: my idea is to use a set of reserved u32 ids for built-in
         // actions such as Exit, Open Editor etc
@@ -181,7 +181,26 @@ impl Middleware for ContextMenuMiddleware {
             todo!()
           }
         }
+      }
+      EventType::Disabled => {
+        *is_enabled = false;
+        event
+      }
+      EventType::Enabled => {
+        *is_enabled = true;
+        event
+      }
+      EventType::SecureInputEnabled(_) => {
+        *is_secure_input_enabled = true;
+        event
+      }
+      EventType::SecureInputDisabled => {
+        *is_secure_input_enabled = false;
+        event
+      }
+      _ => event,
     }
+  }
 }
 
 // TODO: test

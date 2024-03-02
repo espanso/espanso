@@ -19,24 +19,24 @@
 
 #[cfg(not(target_os = "macos"))]
 fn cc_config() {
-    // Do nothing on Linux and Windows
+  // Do nothing on Linux and Windows
 }
 
 #[cfg(target_os = "macos")]
 fn cc_config() {
-    println!("cargo:rerun-if-changed=src/native.mm");
-    println!("cargo:rerun-if-changed=src/native.h");
-    cc::Build::new()
-        .cpp(true)
-        .include("src/native.h")
-        .file("src/native.mm")
-        .compile("espansomacutils");
-    println!("cargo:rustc-link-lib=dylib=c++");
-    println!("cargo:rustc-link-lib=static=espansomacutils");
-    println!("cargo:rustc-link-lib=framework=Cocoa");
-    println!("cargo:rustc-link-lib=framework=Carbon");
+  println!("cargo:rerun-if-changed=src/native.mm");
+  println!("cargo:rerun-if-changed=src/native.h");
+  cc::Build::new()
+    .cpp(true)
+    .include("src/native.h")
+    .file("src/native.mm")
+    .compile("espansomacutils");
+  println!("cargo:rustc-link-lib=dylib=c++");
+  println!("cargo:rustc-link-lib=static=espansomacutils");
+  println!("cargo:rustc-link-lib=framework=Cocoa");
+  println!("cargo:rustc-link-lib=framework=Carbon");
 }
 
 fn main() {
-    cc_config();
+  cc_config();
 }

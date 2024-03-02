@@ -28,29 +28,28 @@ mod util;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MatchResult<Id> {
-    pub id: Id,
-    pub trigger: String,
-    pub left_separator: Option<String>,
-    pub right_separator: Option<String>,
-    pub vars: HashMap<String, String>,
+  pub id: Id,
+  pub trigger: String,
+  pub left_separator: Option<String>,
+  pub right_separator: Option<String>,
+  pub vars: HashMap<String, String>,
 }
 
 impl<Id: Default> Default for MatchResult<Id> {
-    fn default() -> Self {
-        Self {
-            id: Id::default(),
-            trigger: String::new(),
-            left_separator: None,
-            right_separator: None,
-            vars: HashMap::new(),
-        }
+  fn default() -> Self {
+    Self {
+      id: Id::default(),
+      trigger: String::new(),
+      left_separator: None,
+      right_separator: None,
+      vars: HashMap::new(),
     }
+  }
 }
 
 pub trait Matcher<'a, State, Id>
 where
-    Id: Clone,
+  Id: Clone,
 {
-    fn process(&'a self, prev_state: Option<&State>, event: Event)
-        -> (State, Vec<MatchResult<Id>>);
+  fn process(&'a self, prev_state: Option<&State>, event: Event) -> (State, Vec<MatchResult<Id>>);
 }
