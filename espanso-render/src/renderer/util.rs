@@ -26,183 +26,183 @@ use super::VAR_REGEX;
 use std::collections::HashSet;
 
 pub(crate) fn get_body_variable_names(body: &str) -> HashSet<&str> {
-    let mut variables = HashSet::new();
-    for caps in VAR_REGEX.captures_iter(body) {
-        let var_name = caps.name("name").unwrap().as_str();
-        variables.insert(var_name);
-    }
-    variables
+  let mut variables = HashSet::new();
+  for caps in VAR_REGEX.captures_iter(body) {
+    let var_name = caps.name("name").unwrap().as_str();
+    variables.insert(var_name);
+  }
+  variables
 }
 
 pub(crate) fn get_params_variable_names(params: &Params) -> HashSet<&str> {
-    let mut names = HashSet::new();
+  let mut names = HashSet::new();
 
-    for value in params.values() {
-        let local_names = get_value_variable_names_recursively(value);
-        names.extend(local_names);
-    }
+  for value in params.values() {
+    let local_names = get_value_variable_names_recursively(value);
+    names.extend(local_names);
+  }
 
-    names
+  names
 }
 
 fn get_value_variable_names_recursively(value: &Value) -> HashSet<&str> {
-    match value {
-        Value::String(s_value) => get_body_variable_names(s_value),
-        Value::Array(values) => {
-            let mut local_names: HashSet<&str> = HashSet::new();
-            for value in values {
-                local_names.extend(get_value_variable_names_recursively(value));
-            }
-            local_names
-        }
-        Value::Object(fields) => {
-            let mut local_names: HashSet<&str> = HashSet::new();
-            for value in fields.values() {
-                local_names.extend(get_value_variable_names_recursively(value));
-            }
-            local_names
-        }
-        _ => HashSet::new(),
+  match value {
+    Value::String(s_value) => get_body_variable_names(s_value),
+    Value::Array(values) => {
+      let mut local_names: HashSet<&str> = HashSet::new();
+      for value in values {
+        local_names.extend(get_value_variable_names_recursively(value));
+      }
+      local_names
     }
+    Value::Object(fields) => {
+      let mut local_names: HashSet<&str> = HashSet::new();
+      for value in fields.values() {
+        local_names.extend(get_value_variable_names_recursively(value));
+      }
+      local_names
+    }
+    _ => HashSet::new(),
+  }
 }
 
 pub(crate) fn render_variables(body: &str, scope: &Scope) -> Result<String> {
-    let mut replacing_error = None;
-    let output = VAR_REGEX
-        .replace_all(body, |caps: &Captures| {
-            let var_name = caps.name("name").unwrap().as_str();
-            let var_subname = caps.name("subname");
-            if let Some(output) = scope.get(var_name) {
-                match output {
-                    ExtensionOutput::Single(output) => output,
-                    ExtensionOutput::Multiple(results) => {
-                        if let Some(var_subname) = var_subname {
-                            let var_subname = var_subname.as_str();
-                            results.get(var_subname).map_or("", |value| value)
-                        } else {
-                            error!("nested name missing from multi-value variable: {var_name}");
-                            replacing_error = Some(RendererError::MissingVariable(format!(
-                                "nested name missing from multi-value variable: {var_name}"
-                            )));
-                            ""
-                        }
-                    }
-                }
+  let mut replacing_error = None;
+  let output = VAR_REGEX
+    .replace_all(body, |caps: &Captures| {
+      let var_name = caps.name("name").unwrap().as_str();
+      let var_subname = caps.name("subname");
+      if let Some(output) = scope.get(var_name) {
+        match output {
+          ExtensionOutput::Single(output) => output,
+          ExtensionOutput::Multiple(results) => {
+            if let Some(var_subname) = var_subname {
+              let var_subname = var_subname.as_str();
+              results.get(var_subname).map_or("", |value| value)
             } else {
-                replacing_error = Some(RendererError::MissingVariable(format!(
-                    "variable '{var_name}' is missing"
-                )));
-                ""
+              error!("nested name missing from multi-value variable: {var_name}");
+              replacing_error = Some(RendererError::MissingVariable(format!(
+                "nested name missing from multi-value variable: {var_name}"
+              )));
+              ""
             }
-        })
-        .to_string();
+          }
+        }
+      } else {
+        replacing_error = Some(RendererError::MissingVariable(format!(
+          "variable '{var_name}' is missing"
+        )));
+        ""
+      }
+    })
+    .to_string();
 
-    if let Some(error) = replacing_error {
-        return Err(error.into());
-    }
+  if let Some(error) = replacing_error {
+    return Err(error.into());
+  }
 
-    let unescaped_output = unescape_variable_inections(&output);
-    Ok(unescaped_output)
+  let unescaped_output = unescape_variable_inections(&output);
+  Ok(unescaped_output)
 }
 
 pub(crate) fn unescape_variable_inections(body: &str) -> String {
-    body.replace("\\{\\{", "{{").replace("\\}\\}", "}}")
+  body.replace("\\{\\{", "{{").replace("\\}\\}", "}}")
 }
 
 pub(crate) fn inject_variables_into_params(params: &Params, scope: &Scope) -> Result<Params> {
-    let mut params = params.clone();
+  let mut params = params.clone();
 
-    for value in &mut params.values_mut() {
-        inject_variables_into_value(value, scope)?;
-    }
+  for value in &mut params.values_mut() {
+    inject_variables_into_value(value, scope)?;
+  }
 
-    Ok(params)
+  Ok(params)
 }
 
 fn inject_variables_into_value(value: &mut Value, scope: &Scope) -> Result<()> {
-    match value {
-        Value::String(s_value) => {
-            let new_value = render_variables(s_value, scope)?;
+  match value {
+    Value::String(s_value) => {
+      let new_value = render_variables(s_value, scope)?;
 
-            if &new_value != s_value {
-                s_value.clear();
-                s_value.push_str(&new_value);
-            }
-        }
-        Value::Array(values) => {
-            for value in values {
-                inject_variables_into_value(value, scope)?;
-            }
-        }
-        Value::Object(fields) => {
-            for value in fields.values_mut() {
-                inject_variables_into_value(value, scope)?;
-            }
-        }
-        _ => {}
+      if &new_value != s_value {
+        s_value.clear();
+        s_value.push_str(&new_value);
+      }
     }
+    Value::Array(values) => {
+      for value in values {
+        inject_variables_into_value(value, scope)?;
+      }
+    }
+    Value::Object(fields) => {
+      for value in fields.values_mut() {
+        inject_variables_into_value(value, scope)?;
+      }
+    }
+    _ => {}
+  }
 
-    Ok(())
+  Ok(())
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use std::{collections::HashMap, iter::FromIterator};
+  use super::*;
+  use std::{collections::HashMap, iter::FromIterator};
 
-    #[test]
-    fn get_body_variable_names_no_vars() {
-        assert_eq!(
-            get_body_variable_names("no variables"),
-            HashSet::from_iter(vec![]),
-        );
-    }
+  #[test]
+  fn get_body_variable_names_no_vars() {
+    assert_eq!(
+      get_body_variable_names("no variables"),
+      HashSet::from_iter(vec![]),
+    );
+  }
 
-    #[test]
-    fn get_body_variable_names_multiple_vars() {
-        assert_eq!(
-            get_body_variable_names("hello {{world}} name {{greet}}"),
-            HashSet::from_iter(vec!["world", "greet"]),
-        );
-    }
+  #[test]
+  fn get_body_variable_names_multiple_vars() {
+    assert_eq!(
+      get_body_variable_names("hello {{world}} name {{greet}}"),
+      HashSet::from_iter(vec!["world", "greet"]),
+    );
+  }
 
-    #[test]
-    fn test_inject_variables_into_params() {
-        let mut params = Params::new();
-        params.insert(
-            "field1".to_string(),
-            Value::String("this contains {{first}}".to_string()),
-        );
-        params.insert("field2".to_string(), Value::Bool(true));
-        params.insert(
-            "field3".to_string(),
-            Value::Array(vec![Value::String("this contains {{first}}".to_string())]),
-        );
+  #[test]
+  fn test_inject_variables_into_params() {
+    let mut params = Params::new();
+    params.insert(
+      "field1".to_string(),
+      Value::String("this contains {{first}}".to_string()),
+    );
+    params.insert("field2".to_string(), Value::Bool(true));
+    params.insert(
+      "field3".to_string(),
+      Value::Array(vec![Value::String("this contains {{first}}".to_string())]),
+    );
 
-        let mut nested = HashMap::new();
-        nested.insert(
-            "subfield1".to_string(),
-            Value::String("also contains {{first}}".to_string()),
-        );
-        params.insert("field4".to_string(), Value::Object(nested));
+    let mut nested = HashMap::new();
+    nested.insert(
+      "subfield1".to_string(),
+      Value::String("also contains {{first}}".to_string()),
+    );
+    params.insert("field4".to_string(), Value::Object(nested));
 
-        let mut scope = Scope::new();
-        scope.insert("first", ExtensionOutput::Single("one".to_string()));
+    let mut scope = Scope::new();
+    scope.insert("first", ExtensionOutput::Single("one".to_string()));
 
-        let result = inject_variables_into_params(&params, &scope).unwrap();
+    let result = inject_variables_into_params(&params, &scope).unwrap();
 
-        assert_eq!(result.len(), 4);
-        assert_eq!(
-            result.get("field1").unwrap(),
-            &Value::String("this contains one".to_string())
-        );
-        assert_eq!(result.get("field2").unwrap(), &Value::Bool(true));
-        assert_eq!(
-            result.get("field3").unwrap(),
-            &Value::Array(vec![Value::String("this contains one".to_string())])
-        );
-        assert!(
-            matches!(result.get("field4").unwrap(), Value::Object(fields) if fields.get("subfield1").unwrap() == &Value::String("also contains one".to_string()))
-        );
-    }
+    assert_eq!(result.len(), 4);
+    assert_eq!(
+      result.get("field1").unwrap(),
+      &Value::String("this contains one".to_string())
+    );
+    assert_eq!(result.get("field2").unwrap(), &Value::Bool(true));
+    assert_eq!(
+      result.get("field3").unwrap(),
+      &Value::Array(vec![Value::String("this contains one".to_string())])
+    );
+    assert!(
+      matches!(result.get("field4").unwrap(), Value::Object(fields) if fields.get("subfield1").unwrap() == &Value::String("also contains one".to_string()))
+    );
+  }
 }

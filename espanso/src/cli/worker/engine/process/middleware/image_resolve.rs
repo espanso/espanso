@@ -22,17 +22,17 @@ use espanso_path::Paths;
 use espanso_engine::process::PathProvider;
 
 pub struct PathProviderAdapter<'a> {
-    paths: &'a Paths,
+  paths: &'a Paths,
 }
 
 impl<'a> PathProviderAdapter<'a> {
-    pub fn new(paths: &'a Paths) -> Self {
-        Self { paths }
-    }
+  pub fn new(paths: &'a Paths) -> Self {
+    Self { paths }
+  }
 }
 
 impl<'a> PathProvider for PathProviderAdapter<'a> {
-    fn get_config_path(&self) -> &std::path::Path {
-        &self.paths.config
-    }
+  fn get_config_path(&self) -> &std::path::Path {
+    &self.paths.config
+  }
 }

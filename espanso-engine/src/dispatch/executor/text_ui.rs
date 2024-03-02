@@ -23,41 +23,41 @@ use anyhow::Result;
 use log::error;
 
 pub trait TextUIHandler {
-    fn show_text(&self, title: &str, text: &str) -> Result<()>;
-    fn show_logs(&self) -> Result<()>;
+  fn show_text(&self, title: &str, text: &str) -> Result<()>;
+  fn show_logs(&self) -> Result<()>;
 }
 
 pub struct TextUIExecutor<'a> {
-    handler: &'a dyn TextUIHandler,
+  handler: &'a dyn TextUIHandler,
 }
 
 impl<'a> TextUIExecutor<'a> {
-    pub fn new(handler: &'a dyn TextUIHandler) -> Self {
-        Self { handler }
-    }
+  pub fn new(handler: &'a dyn TextUIHandler) -> Self {
+    Self { handler }
+  }
 }
 
 impl<'a> Executor for TextUIExecutor<'a> {
-    fn execute(&self, event: &Event) -> bool {
-        if let EventType::ShowText(show_text_event) = &event.etype {
-            if let Err(error) = self
-                .handler
-                .show_text(&show_text_event.title, &show_text_event.text)
-            {
-                error!("text UI handler reported an error: {:?}", error);
-            }
+  fn execute(&self, event: &Event) -> bool {
+    if let EventType::ShowText(show_text_event) = &event.etype {
+      if let Err(error) = self
+        .handler
+        .show_text(&show_text_event.title, &show_text_event.text)
+      {
+        error!("text UI handler reported an error: {:?}", error);
+      }
 
-            return true;
-        } else if let EventType::ShowLogs = &event.etype {
-            if let Err(error) = self.handler.show_logs() {
-                error!("text UI handler reported an error: {:?}", error);
-            }
+      return true;
+    } else if let EventType::ShowLogs = &event.etype {
+      if let Err(error) = self.handler.show_logs() {
+        error!("text UI handler reported an error: {:?}", error);
+      }
 
-            return true;
-        }
-
-        false
+      return true;
     }
+
+    false
+  }
 }
 
 // TODO: test

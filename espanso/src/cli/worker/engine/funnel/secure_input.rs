@@ -21,44 +21,44 @@ use crossbeam::channel::{Receiver, Select, SelectedOperation};
 
 use crate::cli::worker::secure_input::SecureInputEvent;
 use espanso_engine::{
-    event::{internal::SecureInputEnabledEvent, Event, EventType},
-    funnel,
+  event::{internal::SecureInputEnabledEvent, Event, EventType},
+  funnel,
 };
 
 use super::sequencer::Sequencer;
 
 pub struct SecureInputSource<'a> {
-    pub receiver: Receiver<SecureInputEvent>,
-    pub sequencer: &'a Sequencer,
+  pub receiver: Receiver<SecureInputEvent>,
+  pub sequencer: &'a Sequencer,
 }
 
 impl<'a> SecureInputSource<'a> {
-    pub fn new(receiver: Receiver<SecureInputEvent>, sequencer: &'a Sequencer) -> Self {
-        SecureInputSource {
-            receiver,
-            sequencer,
-        }
+  pub fn new(receiver: Receiver<SecureInputEvent>, sequencer: &'a Sequencer) -> Self {
+    SecureInputSource {
+      receiver,
+      sequencer,
     }
+  }
 }
 
 impl<'a> funnel::Source<'a> for SecureInputSource<'a> {
-    fn register(&'a self, select: &mut Select<'a>) -> usize {
-        select.recv(&self.receiver)
-    }
+  fn register(&'a self, select: &mut Select<'a>) -> usize {
+    select.recv(&self.receiver)
+  }
 
-    fn receive(&self, op: SelectedOperation) -> Option<Event> {
-        let si_event = op
-            .recv(&self.receiver)
-            .expect("unable to select data from SecureInputSource receiver");
+  fn receive(&self, op: SelectedOperation) -> Option<Event> {
+    let si_event = op
+      .recv(&self.receiver)
+      .expect("unable to select data from SecureInputSource receiver");
 
-        Some(Event {
-            source_id: self.sequencer.next_id(),
-            etype: match si_event {
-                SecureInputEvent::Disabled => EventType::SecureInputDisabled,
-                SecureInputEvent::Enabled { app_name, app_path } => {
-                    EventType::SecureInputEnabled(SecureInputEnabledEvent { app_name, app_path })
-                }
-            },
-        })
-    }
+    Some(Event {
+      source_id: self.sequencer.next_id(),
+      etype: match si_event {
+        SecureInputEvent::Disabled => EventType::SecureInputDisabled,
+        SecureInputEvent::Enabled { app_name, app_path } => {
+          EventType::SecureInputEnabled(SecureInputEnabledEvent { app_name, app_path })
+        }
+      },
+    })
+  }
 }

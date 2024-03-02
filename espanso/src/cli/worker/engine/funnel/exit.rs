@@ -20,38 +20,38 @@
 use crossbeam::channel::{Receiver, Select, SelectedOperation};
 
 use espanso_engine::{
-    event::{Event, EventType, ExitMode},
-    funnel,
+  event::{Event, EventType, ExitMode},
+  funnel,
 };
 
 use super::sequencer::Sequencer;
 
 pub struct ExitSource<'a> {
-    pub exit_signal: Receiver<ExitMode>,
-    pub sequencer: &'a Sequencer,
+  pub exit_signal: Receiver<ExitMode>,
+  pub sequencer: &'a Sequencer,
 }
 
 impl<'a> ExitSource<'a> {
-    pub fn new(exit_signal: Receiver<ExitMode>, sequencer: &'a Sequencer) -> Self {
-        ExitSource {
-            exit_signal,
-            sequencer,
-        }
+  pub fn new(exit_signal: Receiver<ExitMode>, sequencer: &'a Sequencer) -> Self {
+    ExitSource {
+      exit_signal,
+      sequencer,
     }
+  }
 }
 
 impl<'a> funnel::Source<'a> for ExitSource<'a> {
-    fn register(&'a self, select: &mut Select<'a>) -> usize {
-        select.recv(&self.exit_signal)
-    }
+  fn register(&'a self, select: &mut Select<'a>) -> usize {
+    select.recv(&self.exit_signal)
+  }
 
-    fn receive(&self, op: SelectedOperation) -> Option<Event> {
-        let mode = op
-            .recv(&self.exit_signal)
-            .expect("unable to select data from ExitSource receiver");
-        Some(Event {
-            source_id: self.sequencer.next_id(),
-            etype: EventType::ExitRequested(mode),
-        })
-    }
+  fn receive(&self, op: SelectedOperation) -> Option<Event> {
+    let mode = op
+      .recv(&self.exit_signal)
+      .expect("unable to select data from ExitSource receiver");
+    Some(Event {
+      source_id: self.sequencer.next_id(),
+      etype: EventType::ExitRequested(mode),
+    })
+  }
 }

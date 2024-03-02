@@ -21,43 +21,43 @@ use super::input::Key;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TriggerCompensationEvent {
-    pub trigger: String,
-    pub left_separator: Option<String>,
+  pub trigger: String,
+  pub left_separator: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CursorHintCompensationEvent {
-    pub cursor_hint_back_count: usize,
+  pub cursor_hint_back_count: usize,
 }
 
 #[derive(Debug, Clone, Default)]
 pub struct TextInjectRequest {
-    pub text: String,
-    pub force_mode: Option<TextInjectMode>,
+  pub text: String,
+  pub force_mode: Option<TextInjectMode>,
 }
 
 #[derive(Debug, Clone)]
 pub struct MarkdownInjectRequest {
-    pub markdown: String,
+  pub markdown: String,
 }
 
 #[derive(Debug, Clone)]
 pub struct HtmlInjectRequest {
-    pub html: String,
+  pub html: String,
 }
 
 #[derive(Debug, PartialEq, Clone, Eq)]
 pub enum TextInjectMode {
-    Keys,
-    Clipboard,
+  Keys,
+  Clipboard,
 }
 
 #[derive(Debug, Clone)]
 pub struct KeySequenceInjectRequest {
-    pub keys: Vec<Key>,
+  pub keys: Vec<Key>,
 }
 
 #[derive(Debug, Clone)]
 pub struct ImageInjectRequest {
-    pub image_path: String,
+  pub image_path: String,
 }

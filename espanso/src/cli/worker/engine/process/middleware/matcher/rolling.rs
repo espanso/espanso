@@ -18,8 +18,8 @@
  */
 
 use espanso_match::rolling::{
-    matcher::{RollingMatcher, RollingMatcherOptions},
-    RollingMatch,
+  matcher::{RollingMatcher, RollingMatcherOptions},
+  RollingMatch,
 };
 
 use espanso_engine::process::{MatchResult, Matcher, MatcherEvent};
@@ -27,49 +27,49 @@ use espanso_engine::process::{MatchResult, Matcher, MatcherEvent};
 use super::{convert_to_engine_result, convert_to_match_event, MatcherState};
 
 pub struct RollingMatcherAdapterOptions {
-    pub char_word_separators: Vec<String>,
+  pub char_word_separators: Vec<String>,
 }
 
 pub struct RollingMatcherAdapter {
-    matcher: RollingMatcher<i32>,
+  matcher: RollingMatcher<i32>,
 }
 
 impl RollingMatcherAdapter {
-    pub fn new(matches: &[RollingMatch<i32>], options: RollingMatcherAdapterOptions) -> Self {
-        let matcher = RollingMatcher::new(
-            matches,
-            RollingMatcherOptions {
-                char_word_separators: options.char_word_separators,
-                key_word_separators: vec![], // TODO?
-            },
-        );
+  pub fn new(matches: &[RollingMatch<i32>], options: RollingMatcherAdapterOptions) -> Self {
+    let matcher = RollingMatcher::new(
+      matches,
+      RollingMatcherOptions {
+        char_word_separators: options.char_word_separators,
+        key_word_separators: vec![], // TODO?
+      },
+    );
 
-        Self { matcher }
-    }
+    Self { matcher }
+  }
 }
 
 impl<'a> Matcher<'a, MatcherState<'a>> for RollingMatcherAdapter {
-    fn process(
-        &'a self,
-        prev_state: Option<&MatcherState<'a>>,
-        event: &MatcherEvent,
-    ) -> (MatcherState<'a>, Vec<MatchResult>) {
-        use espanso_match::Matcher;
+  fn process(
+    &'a self,
+    prev_state: Option<&MatcherState<'a>>,
+    event: &MatcherEvent,
+  ) -> (MatcherState<'a>, Vec<MatchResult>) {
+    use espanso_match::Matcher;
 
-        let prev_state = prev_state.map(|state| {
-            if let Some(state) = state.as_rolling() {
-                state
-            } else {
-                panic!("invalid state type received in RollingMatcherAdapter")
-            }
-        });
-        let event = convert_to_match_event(event);
+    let prev_state = prev_state.map(|state| {
+      if let Some(state) = state.as_rolling() {
+        state
+      } else {
+        panic!("invalid state type received in RollingMatcherAdapter")
+      }
+    });
+    let event = convert_to_match_event(event);
 
-        let (state, results) = self.matcher.process(prev_state, event);
+    let (state, results) = self.matcher.process(prev_state, event);
 
-        let enum_state = MatcherState::Rolling(state);
-        let results: Vec<MatchResult> = results.into_iter().map(convert_to_engine_result).collect();
+    let enum_state = MatcherState::Rolling(state);
+    let results: Vec<MatchResult> = results.into_iter().map(convert_to_engine_result).collect();
 
-        (enum_state, results)
-    }
+    (enum_state, results)
+  }
 }

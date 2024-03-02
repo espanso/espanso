@@ -22,30 +22,30 @@ use clap::ArgMatches;
 use espanso_modulo::textview::TextViewOptions;
 
 pub fn textview_main(matches: &ArgMatches, icon_paths: &IconPaths) -> i32 {
-    let title = matches.value_of("title").unwrap_or("Espanso");
+  let title = matches.value_of("title").unwrap_or("Espanso");
 
-    let input_file = matches
-        .value_of("input_file")
-        .expect("missing input, please specify the -i option");
-    let data = if input_file == "-" {
-        use std::io::Read;
-        let mut buffer = String::new();
-        std::io::stdin()
-            .read_to_string(&mut buffer)
-            .expect("unable to obtain input from stdin");
-        buffer
-    } else {
-        std::fs::read_to_string(input_file).expect("unable to read input file")
-    };
+  let input_file = matches
+    .value_of("input_file")
+    .expect("missing input, please specify the -i option");
+  let data = if input_file == "-" {
+    use std::io::Read;
+    let mut buffer = String::new();
+    std::io::stdin()
+      .read_to_string(&mut buffer)
+      .expect("unable to obtain input from stdin");
+    buffer
+  } else {
+    std::fs::read_to_string(input_file).expect("unable to read input file")
+  };
 
-    espanso_modulo::textview::show(TextViewOptions {
-        window_icon_path: icon_paths
-            .wizard_icon
-            .as_ref()
-            .map(|path| path.to_string_lossy().to_string()),
-        title: title.to_string(),
-        content: data,
-    });
+  espanso_modulo::textview::show(TextViewOptions {
+    window_icon_path: icon_paths
+      .wizard_icon
+      .as_ref()
+      .map(|path| path.to_string_lossy().to_string()),
+    title: title.to_string(),
+    content: data,
+  });
 
-    0
+  0
 }

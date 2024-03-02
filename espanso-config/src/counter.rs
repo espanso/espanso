@@ -30,5 +30,5 @@ pub type StructId = i32;
 /// In order to generate it, we use an atomic static variable
 /// that is incremented for each struct.
 pub fn next_id() -> StructId {
-    STRUCT_COUNTER.with(|count| count.fetch_add(1, Ordering::SeqCst))
+  STRUCT_COUNTER.with(|count| count.fetch_add(1, Ordering::SeqCst))
 }

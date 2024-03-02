@@ -29,35 +29,35 @@ use crate::lock::acquire_daemon_lock;
 const DAEMON_STATUS_CHECK_INTERVAL: u64 = 1000;
 
 pub fn initialize_and_spawn(runtime_dir: &Path, exit_notify: Sender<ExitMode>) -> Result<()> {
-    let runtime_dir_clone = runtime_dir.to_path_buf();
-    std::thread::Builder::new()
-        .name("daemon-monitor".to_string())
-        .spawn(move || {
-            daemon_monitor_main(&runtime_dir_clone, exit_notify.clone());
-        })?;
+  let runtime_dir_clone = runtime_dir.to_path_buf();
+  std::thread::Builder::new()
+    .name("daemon-monitor".to_string())
+    .spawn(move || {
+      daemon_monitor_main(&runtime_dir_clone, exit_notify.clone());
+    })?;
 
-    Ok(())
+  Ok(())
 }
 
 fn daemon_monitor_main(runtime_dir: &Path, exit_notify: Sender<ExitMode>) {
-    info!("monitoring the status of the daemon process");
+  info!("monitoring the status of the daemon process");
 
-    loop {
-        let is_daemon_lock_free = {
-            let lock = acquire_daemon_lock(runtime_dir);
-            lock.is_some()
-        };
+  loop {
+    let is_daemon_lock_free = {
+      let lock = acquire_daemon_lock(runtime_dir);
+      lock.is_some()
+    };
 
-        if is_daemon_lock_free {
-            warn!("detected unexpected daemon termination, sending exit signal to the engine");
-            if let Err(error) = exit_notify.send(ExitMode::Exit) {
-                error!("unable to send daemon exit signal: {}", error);
-            }
-            break;
-        }
-
-        std::thread::sleep(std::time::Duration::from_millis(
-            DAEMON_STATUS_CHECK_INTERVAL,
-        ));
+    if is_daemon_lock_free {
+      warn!("detected unexpected daemon termination, sending exit signal to the engine");
+      if let Err(error) = exit_notify.send(ExitMode::Exit) {
+        error!("unable to send daemon exit signal: {}", error);
+      }
+      break;
     }
+
+    std::thread::sleep(std::time::Duration::from_millis(
+      DAEMON_STATUS_CHECK_INTERVAL,
+    ));
+  }
 }

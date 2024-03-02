@@ -19,64 +19,64 @@
 
 use super::super::Middleware;
 use crate::event::{
-    effect::CursorHintCompensationEvent, internal::RenderedEvent, Event, EventType,
+  effect::CursorHintCompensationEvent, internal::RenderedEvent, Event, EventType,
 };
 
 pub struct CursorHintMiddleware {}
 
 impl CursorHintMiddleware {
-    pub fn new() -> Self {
-        Self {}
-    }
+  pub fn new() -> Self {
+    Self {}
+  }
 }
 
 impl Middleware for CursorHintMiddleware {
-    fn name(&self) -> &'static str {
-        "cursor_hint"
+  fn name(&self) -> &'static str {
+    "cursor_hint"
+  }
+
+  fn next(&self, event: Event, dispatch: &mut dyn FnMut(Event)) -> Event {
+    if let EventType::Rendered(m_event) = event.etype {
+      let (body, cursor_hint_back_count) = process_cursor_hint(m_event.body);
+
+      if let Some(cursor_hint_back_count) = cursor_hint_back_count {
+        dispatch(Event::caused_by(
+          event.source_id,
+          EventType::CursorHintCompensation(CursorHintCompensationEvent {
+            cursor_hint_back_count,
+          }),
+        ));
+      }
+
+      // Alter the rendered event to remove the cursor hint from the body
+      return Event::caused_by(
+        event.source_id,
+        EventType::Rendered(RenderedEvent { body, ..m_event }),
+      );
     }
 
-    fn next(&self, event: Event, dispatch: &mut dyn FnMut(Event)) -> Event {
-        if let EventType::Rendered(m_event) = event.etype {
-            let (body, cursor_hint_back_count) = process_cursor_hint(m_event.body);
-
-            if let Some(cursor_hint_back_count) = cursor_hint_back_count {
-                dispatch(Event::caused_by(
-                    event.source_id,
-                    EventType::CursorHintCompensation(CursorHintCompensationEvent {
-                        cursor_hint_back_count,
-                    }),
-                ));
-            }
-
-            // Alter the rendered event to remove the cursor hint from the body
-            return Event::caused_by(
-                event.source_id,
-                EventType::Rendered(RenderedEvent { body, ..m_event }),
-            );
-        }
-
-        event
-    }
+    event
+  }
 }
 
 // TODO: test
 fn process_cursor_hint(body: String) -> (String, Option<usize>) {
-    if let Some(index) = body.find("$|$") {
-        // Convert the byte index to a char index
-        let char_str = &body[0..index];
-        let char_index = char_str.chars().count();
-        let total_size = body.chars().count();
+  if let Some(index) = body.find("$|$") {
+    // Convert the byte index to a char index
+    let char_str = &body[0..index];
+    let char_index = char_str.chars().count();
+    let total_size = body.chars().count();
 
-        // Remove the $|$ placeholder
-        let body = body.replace("$|$", "");
+    // Remove the $|$ placeholder
+    let body = body.replace("$|$", "");
 
-        // Calculate the amount of rewind moves needed (LEFT ARROW).
-        // Subtract also 3, equal to the number of chars of the placeholder "$|$"
-        let moves = total_size - char_index - 3;
-        (body, Some(moves))
-    } else {
-        (body, None)
-    }
+    // Calculate the amount of rewind moves needed (LEFT ARROW).
+    // Subtract also 3, equal to the number of chars of the placeholder "$|$"
+    let moves = total_size - char_index - 3;
+    (body, Some(moves))
+  } else {
+    (body, None)
+  }
 }
 
 // TODO: test

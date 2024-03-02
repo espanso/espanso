@@ -21,61 +21,61 @@ use std::cell::RefCell;
 
 use super::super::Middleware;
 use crate::event::{
-    ui::{IconStatus, IconStatusChangeEvent},
-    Event, EventType,
+  ui::{IconStatus, IconStatusChangeEvent},
+  Event, EventType,
 };
 
 pub struct IconStatusMiddleware {
-    enabled: RefCell<bool>,
-    secure_input_enabled: RefCell<bool>,
+  enabled: RefCell<bool>,
+  secure_input_enabled: RefCell<bool>,
 }
 
 impl IconStatusMiddleware {
-    pub fn new() -> Self {
-        Self {
-            enabled: RefCell::new(true),
-            secure_input_enabled: RefCell::new(false),
-        }
+  pub fn new() -> Self {
+    Self {
+      enabled: RefCell::new(true),
+      secure_input_enabled: RefCell::new(false),
     }
+  }
 }
 
 impl Middleware for IconStatusMiddleware {
-    fn name(&self) -> &'static str {
-        "icon_status"
+  fn name(&self) -> &'static str {
+    "icon_status"
+  }
+
+  fn next(&self, event: Event, dispatch: &mut dyn FnMut(Event)) -> Event {
+    let mut enabled = self.enabled.borrow_mut();
+    let mut secure_input_enabled = self.secure_input_enabled.borrow_mut();
+
+    let mut did_update = true;
+    match &event.etype {
+      EventType::Enabled => *enabled = true,
+      EventType::Disabled => *enabled = false,
+      EventType::SecureInputEnabled(_) => *secure_input_enabled = true,
+      EventType::SecureInputDisabled => *secure_input_enabled = false,
+      _ => did_update = false,
     }
 
-    fn next(&self, event: Event, dispatch: &mut dyn FnMut(Event)) -> Event {
-        let mut enabled = self.enabled.borrow_mut();
-        let mut secure_input_enabled = self.secure_input_enabled.borrow_mut();
-
-        let mut did_update = true;
-        match &event.etype {
-            EventType::Enabled => *enabled = true,
-            EventType::Disabled => *enabled = false,
-            EventType::SecureInputEnabled(_) => *secure_input_enabled = true,
-            EventType::SecureInputDisabled => *secure_input_enabled = false,
-            _ => did_update = false,
+    if did_update {
+      let status = if *enabled {
+        if *secure_input_enabled {
+          IconStatus::SecureInputDisabled
+        } else {
+          IconStatus::Enabled
         }
+      } else {
+        IconStatus::Disabled
+      };
 
-        if did_update {
-            let status = if *enabled {
-                if *secure_input_enabled {
-                    IconStatus::SecureInputDisabled
-                } else {
-                    IconStatus::Enabled
-                }
-            } else {
-                IconStatus::Disabled
-            };
-
-            dispatch(Event::caused_by(
-                event.source_id,
-                EventType::IconStatusChange(IconStatusChangeEvent { status }),
-            ));
-        }
-
-        event
+      dispatch(Event::caused_by(
+        event.source_id,
+        EventType::IconStatusChange(IconStatusChangeEvent { status }),
+      ));
     }
+
+    event
+  }
 }
 
 // TODO: test

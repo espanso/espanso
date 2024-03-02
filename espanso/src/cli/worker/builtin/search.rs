@@ -24,14 +24,14 @@ use crate::cli::worker::builtin::generate_next_builtin_id;
 use super::BuiltInMatch;
 
 pub fn create_match_trigger_search_bar(
-    trigger: Option<String>,
-    hotkey: Option<String>,
+  trigger: Option<String>,
+  hotkey: Option<String>,
 ) -> BuiltInMatch {
-    BuiltInMatch {
-        id: generate_next_builtin_id(),
-        label: "Open search bar",
-        triggers: trigger.map(|trigger| vec![trigger]).unwrap_or_default(),
-        hotkey,
-        action: |_| EventType::ShowSearchBar,
-    }
+  BuiltInMatch {
+    id: generate_next_builtin_id(),
+    label: "Open search bar",
+    triggers: trigger.map(|trigger| vec![trigger]).unwrap_or_default(),
+    hotkey,
+    action: |_| EventType::ShowSearchBar,
+  }
 }
