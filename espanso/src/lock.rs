@@ -20,54 +20,55 @@
 use anyhow::Result;
 use fs2::FileExt;
 use std::{
-  fs::{File, OpenOptions},
-  path::Path,
+    fs::{File, OpenOptions},
+    path::Path,
 };
 
 pub struct Lock {
-  lock_file: File,
+    lock_file: File,
 }
 
 impl Lock {
-  #[allow(dead_code)]
-  pub fn release(self) -> Result<()> {
-    self.lock_file.unlock()?;
-    Ok(())
-  }
-
-  fn acquire(runtime_dir: &Path, name: &str) -> Option<Lock> {
-    let lock_file_path = runtime_dir.join(format!("{name}.lock"));
-    let lock_file = OpenOptions::new()
-      .read(true)
-      .write(true)
-      .create(true)
-      .open(&lock_file_path)
-      .unwrap_or_else(|_| panic!("unable to create reference to lock file: {lock_file_path:?}"));
-    if lock_file.try_lock_exclusive().is_ok() {
-      Some(Lock { lock_file })
-    } else {
-      None
+    #[allow(dead_code)]
+    pub fn release(self) -> Result<()> {
+        self.lock_file.unlock()?;
+        Ok(())
     }
-  }
+
+    fn acquire(runtime_dir: &Path, name: &str) -> Option<Lock> {
+        let lock_file_path = runtime_dir.join(format!("{name}.lock"));
+        let lock_file = OpenOptions::new()
+            .read(true)
+            .write(true)
+            .create(true)
+            .open(&lock_file_path)
+            .unwrap_or_else(|_| {
+                panic!("unable to create reference to lock file: {lock_file_path:?}")
+            });
+        if lock_file.try_lock_exclusive().is_ok() {
+            Some(Lock { lock_file })
+        } else {
+            None
+        }
+    }
 }
 
 impl Drop for Lock {
-  fn drop(&mut self) {
-    self
-      .lock_file
-      .unlock()
-      .unwrap_or_else(|_| panic!("unable to unlock lock_file: {:?}", self.lock_file));
-  }
+    fn drop(&mut self) {
+        self.lock_file
+            .unlock()
+            .unwrap_or_else(|_| panic!("unable to unlock lock_file: {:?}", self.lock_file));
+    }
 }
 
 pub fn acquire_daemon_lock(runtime_dir: &Path) -> Option<Lock> {
-  Lock::acquire(runtime_dir, "espanso-daemon")
+    Lock::acquire(runtime_dir, "espanso-daemon")
 }
 
 pub fn acquire_worker_lock(runtime_dir: &Path) -> Option<Lock> {
-  Lock::acquire(runtime_dir, "espanso-worker")
+    Lock::acquire(runtime_dir, "espanso-worker")
 }
 
 pub fn acquire_legacy_lock(runtime_dir: &Path) -> Option<Lock> {
-  Lock::acquire(runtime_dir, "espanso")
+    Lock::acquire(runtime_dir, "espanso")
 }

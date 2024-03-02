@@ -35,78 +35,80 @@ pub use package::Package;
 pub use provider::{PackageProvider, PackageSpecifier, ProviderOptions};
 
 pub fn get_provider(
-  package: &PackageSpecifier,
-  runtime_dir: &Path,
-  options: &ProviderOptions,
+    package: &PackageSpecifier,
+    runtime_dir: &Path,
+    options: &ProviderOptions,
 ) -> Result<Box<dyn PackageProvider>> {
-  if let Some(git_repo_url) = package.git_repo_url.as_deref() {
-    if !package.use_native_git {
-      let matches_known_hosts =
-        if let Some(github_parts) = util::github::extract_github_url_parts(git_repo_url) {
-          if let Some(repo_scheme) =
-            util::github::resolve_repo_scheme(github_parts, package.git_branch.as_deref())?
-          {
-            return Ok(Box::new(provider::github::GitHubPackageProvider::new(
-              repo_scheme.author,
-              repo_scheme.name,
-              repo_scheme.branch,
-            )));
-          }
+    if let Some(git_repo_url) = package.git_repo_url.as_deref() {
+        if !package.use_native_git {
+            let matches_known_hosts = if let Some(github_parts) =
+                util::github::extract_github_url_parts(git_repo_url)
+            {
+                if let Some(repo_scheme) =
+                    util::github::resolve_repo_scheme(github_parts, package.git_branch.as_deref())?
+                {
+                    return Ok(Box::new(provider::github::GitHubPackageProvider::new(
+                        repo_scheme.author,
+                        repo_scheme.name,
+                        repo_scheme.branch,
+                    )));
+                }
 
-          true
-        } else if let Some(gitlab_parts) = util::gitlab::extract_gitlab_url_parts(git_repo_url) {
-          if let Some(repo_scheme) =
-            util::gitlab::resolve_repo_scheme(gitlab_parts, package.git_branch.as_deref())?
-          {
-            return Ok(Box::new(provider::gitlab::GitLabPackageProvider::new(
-              repo_scheme.author,
-              repo_scheme.name,
-              repo_scheme.branch,
-            )));
-          }
+                true
+            } else if let Some(gitlab_parts) = util::gitlab::extract_gitlab_url_parts(git_repo_url)
+            {
+                if let Some(repo_scheme) =
+                    util::gitlab::resolve_repo_scheme(gitlab_parts, package.git_branch.as_deref())?
+                {
+                    return Ok(Box::new(provider::gitlab::GitLabPackageProvider::new(
+                        repo_scheme.author,
+                        repo_scheme.name,
+                        repo_scheme.branch,
+                    )));
+                }
 
-          true
-        } else {
-          false
-        };
+                true
+            } else {
+                false
+            };
 
-      // Git repository seems to be in one of the known hosts, but the direct methods
-      // couldn't retrieve its content. This might happen with private repos (as they are not
-      // available to non-authenticated requests), so we check if a "git ls-remote" command
-      // is able to access it.
-      if matches_known_hosts && !util::git::is_private_repo(git_repo_url) {
-        bail!("could not access repository: {}, make sure it exists and that you have the necessary access rights.", git_repo_url);
-      }
+            // Git repository seems to be in one of the known hosts, but the direct methods
+            // couldn't retrieve its content. This might happen with private repos (as they are not
+            // available to non-authenticated requests), so we check if a "git ls-remote" command
+            // is able to access it.
+            if matches_known_hosts && !util::git::is_private_repo(git_repo_url) {
+                bail!("could not access repository: {}, make sure it exists and that you have the necessary access rights.", git_repo_url);
+            }
+        }
+
+        // Git repository is neither on Github or Gitlab
+        // OR it's a private repository, which means we can't use the direct method
+        // (because it's not authenticated)
+        Ok(Box::new(provider::git::GitPackageProvider::new()))
+    } else {
+        // Download from the official espanso hub
+        Ok(Box::new(provider::hub::EspansoHubPackageProvider::new(
+            runtime_dir,
+            options.force_index_update,
+        )))
     }
-
-    // Git repository is neither on Github or Gitlab
-    // OR it's a private repository, which means we can't use the direct method
-    // (because it's not authenticated)
-    Ok(Box::new(provider::git::GitPackageProvider::new()))
-  } else {
-    // Download from the official espanso hub
-    Ok(Box::new(provider::hub::EspansoHubPackageProvider::new(
-      runtime_dir,
-      options.force_index_update,
-    )))
-  }
 }
 
 pub fn get_archiver(package_dir: &Path) -> Result<Box<dyn Archiver>> {
-  Ok(Box::new(archive::default::DefaultArchiver::new(
-    package_dir,
-  )))
+    Ok(Box::new(archive::default::DefaultArchiver::new(
+        package_dir,
+    )))
 }
 
 #[cfg(test)]
 pub(crate) mod tests {
-  use super::*;
-  use tempdir::TempDir;
+    use super::*;
+    use tempdir::TempDir;
 
-  pub(crate) fn run_with_temp_dir(action: impl FnOnce(&Path)) {
-    let tmp_dir = TempDir::new("espanso-package").unwrap();
-    let tmp_path = tmp_dir.path();
+    pub(crate) fn run_with_temp_dir(action: impl FnOnce(&Path)) {
+        let tmp_dir = TempDir::new("espanso-package").unwrap();
+        let tmp_path = tmp_dir.path();
 
-    action(tmp_path);
-  }
+        action(tmp_path);
+    }
 }

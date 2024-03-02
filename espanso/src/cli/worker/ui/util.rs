@@ -23,22 +23,22 @@ use crate::icon::IconPaths;
 
 // TODO: test
 pub fn convert_icon_paths_to_tray_vec(icon_paths: &IconPaths) -> Vec<(TrayIcon, String)> {
-  let mut paths = Vec::new();
+    let mut paths = Vec::new();
 
-  if let Some(normal) = &icon_paths.tray_icon_normal {
-    paths.push((TrayIcon::Normal, normal.to_string_lossy().to_string()));
-  }
+    if let Some(normal) = &icon_paths.tray_icon_normal {
+        paths.push((TrayIcon::Normal, normal.to_string_lossy().to_string()));
+    }
 
-  if let Some(disabled) = &icon_paths.tray_icon_disabled {
-    paths.push((TrayIcon::Disabled, disabled.to_string_lossy().to_string()));
-  }
+    if let Some(disabled) = &icon_paths.tray_icon_disabled {
+        paths.push((TrayIcon::Disabled, disabled.to_string_lossy().to_string()));
+    }
 
-  if let Some(system_disabled) = &icon_paths.tray_icon_system_disabled {
-    paths.push((
-      TrayIcon::SystemDisabled,
-      system_disabled.to_string_lossy().to_string(),
-    ));
-  }
+    if let Some(system_disabled) = &icon_paths.tray_icon_system_disabled {
+        paths.push((
+            TrayIcon::SystemDisabled,
+            system_disabled.to_string_lossy().to_string(),
+        ));
+    }
 
-  paths
+    paths
 }

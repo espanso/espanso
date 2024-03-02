@@ -23,18 +23,18 @@ use crate::sys::util::convert_to_cstring_or_null;
 use crate::{sys::interop::TextViewMetadata, textview::TextViewOptions};
 
 pub fn show(options: TextViewOptions) {
-  let (_c_window_icon_path, c_window_icon_path_ptr) =
-    convert_to_cstring_or_null(options.window_icon_path);
-  let c_title = CString::new(options.title).expect("unable to convert title to CString");
-  let c_content = CString::new(options.content).expect("unable to convert content to CString");
+    let (_c_window_icon_path, c_window_icon_path_ptr) =
+        convert_to_cstring_or_null(options.window_icon_path);
+    let c_title = CString::new(options.title).expect("unable to convert title to CString");
+    let c_content = CString::new(options.content).expect("unable to convert content to CString");
 
-  let textview_metadata = TextViewMetadata {
-    window_icon_path: c_window_icon_path_ptr,
-    title: c_title.as_ptr(),
-    content: c_content.as_ptr(),
-  };
+    let textview_metadata = TextViewMetadata {
+        window_icon_path: c_window_icon_path_ptr,
+        title: c_title.as_ptr(),
+        content: c_content.as_ptr(),
+    };
 
-  unsafe {
-    super::interop::interop_show_text_view(&textview_metadata);
-  }
+    unsafe {
+        super::interop::interop_show_text_view(&textview_metadata);
+    }
 }

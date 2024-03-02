@@ -22,31 +22,31 @@ use std::path::{Path, PathBuf};
 pub use crate::sys::troubleshooting::show;
 
 pub struct TroubleshootingOptions {
-  pub window_icon_path: Option<String>,
-  pub error_sets: Vec<ErrorSet>,
-  pub is_fatal_error: bool,
+    pub window_icon_path: Option<String>,
+    pub error_sets: Vec<ErrorSet>,
+    pub is_fatal_error: bool,
 
-  pub handlers: TroubleshootingHandlers,
+    pub handlers: TroubleshootingHandlers,
 }
 
 pub struct ErrorSet {
-  pub file: Option<PathBuf>,
-  pub errors: Vec<ErrorRecord>,
+    pub file: Option<PathBuf>,
+    pub errors: Vec<ErrorRecord>,
 }
 
 pub struct ErrorRecord {
-  pub level: ErrorLevel,
-  pub message: String,
+    pub level: ErrorLevel,
+    pub message: String,
 }
 
 pub enum ErrorLevel {
-  Error,
-  Warning,
+    Error,
+    Warning,
 }
 
 type OpenFileCallback = dyn Fn(&Path) + Send;
 
 pub struct TroubleshootingHandlers {
-  pub dont_show_again_changed: Option<Box<dyn Fn(bool) + Send>>,
-  pub open_file: Option<Box<OpenFileCallback>>,
+    pub dont_show_again_changed: Option<Box<dyn Fn(bool) + Send>>,
+    pub open_file: Option<Box<OpenFileCallback>>,
 }

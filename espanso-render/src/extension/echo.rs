@@ -21,88 +21,88 @@ use crate::{Extension, ExtensionOutput, ExtensionResult, Params, Value};
 use thiserror::Error;
 
 pub struct EchoExtension {
-  alias: String,
+    alias: String,
 }
 
 #[allow(clippy::new_without_default)]
 impl EchoExtension {
-  pub fn new() -> Self {
-    Self {
-      alias: "echo".to_string(),
+    pub fn new() -> Self {
+        Self {
+            alias: "echo".to_string(),
+        }
     }
-  }
 
-  pub fn new_with_alias(alias: &str) -> Self {
-    Self {
-      alias: alias.to_string(),
+    pub fn new_with_alias(alias: &str) -> Self {
+        Self {
+            alias: alias.to_string(),
+        }
     }
-  }
 }
 
 impl Extension for EchoExtension {
-  fn name(&self) -> &str {
-    self.alias.as_str()
-  }
-
-  fn calculate(
-    &self,
-    _: &crate::Context,
-    _: &crate::Scope,
-    params: &Params,
-  ) -> crate::ExtensionResult {
-    if let Some(Value::String(echo)) = params.get("echo") {
-      ExtensionResult::Success(ExtensionOutput::Single(echo.clone()))
-    } else {
-      ExtensionResult::Error(EchoExtensionError::MissingEchoParameter.into())
+    fn name(&self) -> &str {
+        self.alias.as_str()
     }
-  }
+
+    fn calculate(
+        &self,
+        _: &crate::Context,
+        _: &crate::Scope,
+        params: &Params,
+    ) -> crate::ExtensionResult {
+        if let Some(Value::String(echo)) = params.get("echo") {
+            ExtensionResult::Success(ExtensionOutput::Single(echo.clone()))
+        } else {
+            ExtensionResult::Error(EchoExtensionError::MissingEchoParameter.into())
+        }
+    }
 }
 
 #[derive(Error, Debug)]
 pub enum EchoExtensionError {
-  #[error("missing 'echo' parameter")]
-  MissingEchoParameter,
+    #[error("missing 'echo' parameter")]
+    MissingEchoParameter,
 }
 
 #[cfg(test)]
 mod tests {
-  use std::collections::HashMap;
+    use std::collections::HashMap;
 
-  use super::*;
+    use super::*;
 
-  #[test]
-  fn echo_works_correctly() {
-    let extension = EchoExtension::new();
+    #[test]
+    fn echo_works_correctly() {
+        let extension = EchoExtension::new();
 
-    let param = vec![("echo".to_string(), Value::String("test".to_string()))]
-      .into_iter()
-      .collect::<Params>();
-    assert_eq!(
-      extension
-        .calculate(&crate::Context::default(), &HashMap::default(), &param)
-        .into_success()
-        .unwrap(),
-      ExtensionOutput::Single("test".to_string())
-    );
-  }
+        let param = vec![("echo".to_string(), Value::String("test".to_string()))]
+            .into_iter()
+            .collect::<Params>();
+        assert_eq!(
+            extension
+                .calculate(&crate::Context::default(), &HashMap::default(), &param)
+                .into_success()
+                .unwrap(),
+            ExtensionOutput::Single("test".to_string())
+        );
+    }
 
-  #[test]
-  fn missing_echo_parameter() {
-    let extension = EchoExtension::new();
+    #[test]
+    fn missing_echo_parameter() {
+        let extension = EchoExtension::new();
 
-    let param = Params::new();
-    assert!(matches!(
-      extension.calculate(&crate::Context::default(), &HashMap::default(), &param),
-      ExtensionResult::Error(_)
-    ));
-  }
+        let param = Params::new();
+        assert!(matches!(
+            extension.calculate(&crate::Context::default(), &HashMap::default(), &param),
+            ExtensionResult::Error(_)
+        ));
+    }
 
-  #[test]
-  fn alias() {
-    let extension_with_alias = EchoExtension::new_with_alias("dummy");
-    let extension = EchoExtension::new();
+    #[test]
+    fn alias() {
+        let extension_with_alias = EchoExtension::new_with_alias("dummy");
+        let extension = EchoExtension::new();
 
-    assert_eq!(extension.name(), "echo");
-    assert_eq!(extension_with_alias.name(), "dummy");
-  }
+        assert_eq!(extension.name(), "echo");
+        assert_eq!(extension_with_alias.name(), "dummy");
+    }
 }

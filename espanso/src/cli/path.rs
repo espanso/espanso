@@ -20,58 +20,58 @@
 use super::{CliModule, CliModuleArgs};
 
 pub fn new() -> CliModule {
-  CliModule {
-    requires_paths: true,
-    requires_config: true,
-    subcommand: "path".to_string(),
-    entry: path_main,
-    ..Default::default()
-  }
+    CliModule {
+        requires_paths: true,
+        requires_config: true,
+        subcommand: "path".to_string(),
+        entry: path_main,
+        ..Default::default()
+    }
 }
 
 fn path_main(args: CliModuleArgs) -> i32 {
-  let paths = args.paths.expect("missing paths argument");
-  let cli_args = args.cli_args.expect("missing cli_args argument");
+    let paths = args.paths.expect("missing paths argument");
+    let cli_args = args.cli_args.expect("missing cli_args argument");
 
-  if cli_args.subcommand_matches("config").is_some() {
-    println!("{}", paths.config.to_string_lossy());
-  } else if cli_args.subcommand_matches("packages").is_some() {
-    println!("{}", paths.packages.to_string_lossy());
-  } else if cli_args.subcommand_matches("data").is_some()
-    || cli_args.subcommand_matches("runtime").is_some()
-  {
-    println!("{}", paths.runtime.to_string_lossy());
-  } else if cli_args.subcommand_matches("default").is_some() {
-    if args.is_legacy_config {
-      println!("{}", paths.config.join("default.yml").to_string_lossy());
+    if cli_args.subcommand_matches("config").is_some() {
+        println!("{}", paths.config.to_string_lossy());
+    } else if cli_args.subcommand_matches("packages").is_some() {
+        println!("{}", paths.packages.to_string_lossy());
+    } else if cli_args.subcommand_matches("data").is_some()
+        || cli_args.subcommand_matches("runtime").is_some()
+    {
+        println!("{}", paths.runtime.to_string_lossy());
+    } else if cli_args.subcommand_matches("default").is_some() {
+        if args.is_legacy_config {
+            println!("{}", paths.config.join("default.yml").to_string_lossy());
+        } else {
+            println!(
+                "{}",
+                paths
+                    .config
+                    .join("config")
+                    .join("default.yml")
+                    .to_string_lossy()
+            );
+        }
+    } else if cli_args.subcommand_matches("base").is_some() {
+        if args.is_legacy_config {
+            eprintln!("base config not available when using legacy configuration format");
+        } else {
+            println!(
+                "{}",
+                paths
+                    .config
+                    .join("match")
+                    .join("base.yml")
+                    .to_string_lossy()
+            );
+        }
     } else {
-      println!(
-        "{}",
-        paths
-          .config
-          .join("config")
-          .join("default.yml")
-          .to_string_lossy()
-      );
+        println!("Config: {}", paths.config.to_string_lossy());
+        println!("Packages: {}", paths.packages.to_string_lossy());
+        println!("Runtime: {}", paths.runtime.to_string_lossy());
     }
-  } else if cli_args.subcommand_matches("base").is_some() {
-    if args.is_legacy_config {
-      eprintln!("base config not available when using legacy configuration format");
-    } else {
-      println!(
-        "{}",
-        paths
-          .config
-          .join("match")
-          .join("base.yml")
-          .to_string_lossy()
-      );
-    }
-  } else {
-    println!("Config: {}", paths.config.to_string_lossy());
-    println!("Packages: {}", paths.packages.to_string_lossy());
-    println!("Runtime: {}", paths.runtime.to_string_lossy());
-  }
 
-  0
+    0
 }

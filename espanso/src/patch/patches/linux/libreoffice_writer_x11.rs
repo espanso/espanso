@@ -23,19 +23,19 @@ use crate::patch::patches::{PatchedConfig, Patches};
 use crate::patch::PatchDefinition;
 
 pub fn patch() -> PatchDefinition {
-  PatchDefinition {
-    name: module_path!().split(':').last().unwrap_or("unknown"),
-    is_enabled: || cfg!(target_os = "linux") && !super::util::is_wayland(),
-    should_patch: |app| app.class.unwrap_or_default().contains("libreoffice-writer"),
-    apply: |base, name| {
-      Arc::new(PatchedConfig::patch(
-        base,
-        name,
-        Patches {
-          key_delay: Some(Some(2)),
-          ..Default::default()
+    PatchDefinition {
+        name: module_path!().split(':').last().unwrap_or("unknown"),
+        is_enabled: || cfg!(target_os = "linux") && !super::util::is_wayland(),
+        should_patch: |app| app.class.unwrap_or_default().contains("libreoffice-writer"),
+        apply: |base, name| {
+            Arc::new(PatchedConfig::patch(
+                base,
+                name,
+                Patches {
+                    key_delay: Some(Some(2)),
+                    ..Default::default()
+                },
+            ))
         },
-      ))
-    },
-  }
+    }
 }
