@@ -52,7 +52,7 @@ pub fn get_modifiers_state() -> Result<Option<super::ModifiersState>> {
     .dispatch(Duration::from_millis(1000), &mut state)
     .unwrap();
 
-  return Ok(state.modifiers);
+  Ok(state.modifiers);
 }
 
 impl SeatHandler for SyncToolState {
@@ -123,7 +123,7 @@ impl KeyboardHandler for SyncToolState {
     _: &Connection,
     _: &QueueHandle<Self>,
     _: &wl_keyboard::WlKeyboard,
-    surface: &wl_surface::WlSurface,
+    _surface: &wl_surface::WlSurface,
     _: u32,
     _: &[u32],
     keysyms: &[Keysym],
@@ -135,7 +135,7 @@ impl KeyboardHandler for SyncToolState {
     _: &Connection,
     _: &QueueHandle<Self>,
     _: &wl_keyboard::WlKeyboard,
-    surface: &wl_surface::WlSurface,
+    _surface: &wl_surface::WlSurface,
     _: u32,
   ) {
   }
