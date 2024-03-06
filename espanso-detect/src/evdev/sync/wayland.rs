@@ -55,7 +55,7 @@ pub fn get_modifiers_state() -> Result<Option<super::ModifiersState>> {
     .dispatch(Duration::from_millis(1000), &mut state)
     .unwrap();
 
-  Ok(state.modifiers);
+  Ok(state.modifiers)
 }
 
 impl SeatHandler for SyncToolState {
