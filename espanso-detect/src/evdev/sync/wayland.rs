@@ -1,4 +1,4 @@
-// Updated from the the example at 
+// Updated from the the example at
 // https://github.com/Smithay/client-toolkit/blob/master/examples/simple_window.rs
 
 use anyhow::Result;
