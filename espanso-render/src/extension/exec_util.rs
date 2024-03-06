@@ -18,6 +18,7 @@
  */
 
 pub enum MacShell {
+  Pwsh,
   Bash,
   Sh,
   Zsh,
@@ -29,6 +30,14 @@ pub fn determine_path_env_variable_override(explicit_shell: Option<MacShell>) ->
   let shell: MacShell = explicit_shell.or_else(determine_default_macos_shell)?;
 
   match shell {
+    MacShell::Pwsh => launch_command_and_get_output(
+      "pwsh",
+      &[
+        "-Login",
+        "-Command",
+        "if(Test-Path \"$PROFILE\") { . \"$PROFILE\" }; Write-Host $env:PATH",
+      ],
+    ),
     MacShell::Bash => {
       launch_command_and_get_output("bash", &["--login", "-c", "source ~/.bashrc; echo $PATH"])
     }
@@ -46,6 +55,7 @@ pub fn determine_path_env_variable_override(_: Option<MacShell>) -> Option<Strin
 
 #[cfg(target_os = "macos")]
 pub fn determine_default_macos_shell() -> Option<MacShell> {
+  use lazy_static::lazy_static;
   use regex::Regex;
   use std::process::Command;
 
@@ -68,7 +78,9 @@ pub fn determine_default_macos_shell() -> Option<MacShell> {
 
   let shell = captures.get(1)?.as_str().trim();
 
-  if shell.ends_with("/bash") {
+  if shell.ends_with("/pwsh") {
+    Some(MacShell::Pwsh)
+  } else if shell.ends_with("/bash") {
     Some(MacShell::Bash)
   } else if shell.ends_with("/zsh") {
     Some(MacShell::Zsh)

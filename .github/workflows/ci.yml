@@ -27,7 +27,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v2
       - name: Check formatting
         run: |
           rustup component add rustfmt
@@ -40,7 +40,7 @@ jobs:
       - name: Install rust-script and cargo-make
         run: |
           cargo install rust-script --version "0.7.0"
-          cargo install cargo-make --version 0.34.0
+          cargo install cargo-make --version 0.37.5
       # wxWidgets builds (internal to espanso-modulo) are by far the largest bottleneck
       # in the current pipeline, so we cache the results for a faster compilation process
       - name: "Cache wxWidgets builds"
@@ -69,7 +69,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v2
       - name: Check formatting
         run: |
           rustup component add rustfmt
@@ -82,7 +82,7 @@ jobs:
       - name: Install rust-script and cargo-make
         run: |
           cargo install rust-script --version "0.7.0"
-          cargo install cargo-make --version 0.34.0
+          cargo install cargo-make --version 0.37.5
       - name: Run test suite
         run: cargo make test-binary
   
@@ -90,7 +90,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v2
       - name: Check formatting
         run: |
           rustup component add rustfmt
@@ -102,9 +102,9 @@ jobs:
       - name: Install rust-script and cargo-make
         run: |
           cargo install rust-script --version "0.7.0"
-          cargo install cargo-make --version 0.34.0
+          cargo install cargo-make --version 0.37.5
       - name: Build
-        run: cargo make build-binary --env NO_X11=true
+        run: cargo make --env NO_X11=true -- build-binary
       - name: Check clippy
         run: |
           rustup component add clippy
@@ -114,7 +114,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v2
       - name: Check formatting
         run: |
           rustup component add rustfmt
@@ -126,9 +126,9 @@ jobs:
       - name: Install rust-script and cargo-make
         run: |
           cargo install rust-script --version "0.7.0"
-          cargo install cargo-make --version 0.34.0
+          cargo install cargo-make --version 0.37.5
       - name: Run test suite
-        run: cargo make test-binary --env NO_X11=true
+        run: cargo make --env NO_X11=true -- test-binary
   
   build-macos-arm:
     runs-on: macos-11
@@ -138,11 +138,11 @@ jobs:
       - uses: actions/checkout@v2
       - name: Install target
         run: rustup update && rustup target add aarch64-apple-darwin
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v2
       - name: Install rust-script and cargo-make
         run: |
           cargo install rust-script --version "0.7.0"
-          cargo install cargo-make --version 0.34.0
+          cargo install cargo-make --version 0.37.5
       - name: "Cache wxWidgets builds"
         if: ${{ runner.os != 'Linux' }}
         uses: actions/cache@v3

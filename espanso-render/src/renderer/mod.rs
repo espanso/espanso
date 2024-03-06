@@ -23,6 +23,7 @@ use crate::{
   CasingStyle, Context, Extension, ExtensionOutput, ExtensionResult, RenderOptions, RenderResult,
   Renderer, Scope, Template, Value, Variable,
 };
+use lazy_static::lazy_static;
 use log::{error, warn};
 use regex::{Captures, Regex};
 use thiserror::Error;

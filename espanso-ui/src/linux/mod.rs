@@ -108,7 +108,7 @@ impl UIEventLoop for LinuxEventLoop {
           // We don't run an event loop on Linux as there is no tray icon or application window needed.
           // Thad said, we still need a way to block this method, and thus we use a channel
           match result {
-            Ok(_) => {
+            Ok(()) => {
               // remote.exit() called
               return Ok(());
             }

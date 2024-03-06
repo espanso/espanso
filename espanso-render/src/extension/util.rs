@@ -45,7 +45,7 @@ pub fn convert_to_env_variables(scope: &Scope) -> HashMap<String, String> {
 pub fn set_command_flags(command: &mut Command) {
   use std::os::windows::process::CommandExt;
   // Avoid showing the shell window
-  // See: https://github.com/federico-terzi/espanso/issues/249
+  // See: https://github.com/espanso/espanso/issues/249
   command.creation_flags(0x0800_0000);
 }
 

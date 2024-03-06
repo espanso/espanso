@@ -63,9 +63,9 @@ fn secure_input_main(
     let pid = espanso_mac_utils::get_secure_input_pid();
 
     if let Some(pid) = pid {
-      // Some application is currently on SecureInput
+      // Some application is currently on `SecureInput`
       let should_notify = if let Some(old_pid) = last_secure_input_pid {
-        // We already detected a SecureInput app
+        // We already detected a `SecureInput` app
         #[allow(clippy::needless_bool)]
         if old_pid != pid {
           // The old app is different from the current one, we should take action
@@ -75,7 +75,7 @@ fn secure_input_main(
           false
         }
       } else {
-        // First time we see this SecureInput app, we should take action
+        // First time we see this `SecureInput` app, we should take action
         true
       };
 
@@ -97,9 +97,9 @@ fn secure_input_main(
 
       last_secure_input_pid = Some(pid);
     } else {
-      // No app is currently keeping SecureInput
+      // No app is currently keeping `SecureInput`
 
-      // If there was an app with SecureInput, notify that is now free
+      // If there was an app with `SecureInput`, notify that is now free
       if last_secure_input_pid.is_some() {
         info!("secure input has been disabled");
 

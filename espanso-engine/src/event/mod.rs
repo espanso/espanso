@@ -100,6 +100,7 @@ pub enum EventType {
   ShowContextMenu(ui::ShowContextMenuEvent),
   IconStatusChange(ui::IconStatusChangeEvent),
   DisplaySecureInputTroubleshoot,
+  ShowConfigFolder,
   ShowSearchBar,
   ShowText(ui::ShowTextEvent),
   ShowLogs,

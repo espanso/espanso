@@ -5,8 +5,8 @@ authors = ["Federico Terzi <federicoterzi96@gmail.com>"]
 license = "GPL-3.0"
 description = "Cross-platform Text Expander written in Rust"
 readme = "README.md"
-homepage = "https://github.com/federico-terzi/espanso"
-edition = "2018"
+homepage = "https://github.com/espanso/espanso"
+edition = "2021"
 
 [features]
 default = ["modulo", "native-tls"]
@@ -20,11 +20,20 @@ vendored-tls = ["espanso-package/rustls-tls"]
 
 # If the wayland feature is enabled, all X11 dependencies will be dropped
 # and only methods suitable for Wayland will be used
-wayland = ["espanso-detect/wayland", "espanso-inject/wayland", "espanso-clipboard/wayland", "espanso-info/wayland"]
+wayland = [
+    "espanso-detect/wayland",
+    "espanso-inject/wayland",
+    "espanso-clipboard/wayland",
+    "espanso-info/wayland",
+]
 
 # Compile modulo and all its dependencies (including wxWidgets). If you don't
 # enable it, features like Forms and Search might not be available.
-modulo = ["espanso-modulo", "espanso-clipboard/avoid-gdi", "espanso-ui/avoid-gdi"]
+modulo = [
+    "espanso-modulo",
+    "espanso-clipboard/avoid-gdi",
+    "espanso-ui/avoid-gdi",
+]
 
 [dependencies]
 espanso-detect = { path = "../espanso-detect" }
@@ -41,8 +50,7 @@ espanso-modulo = { path = "../espanso-modulo", optional = true }
 espanso-migrate = { path = "../espanso-migrate" }
 espanso-kvs = { path = "../espanso-kvs" }
 espanso-engine = { path = "../espanso-engine" }
-espanso-package = { path = "../espanso-package"}
-maplit = "1.0.2"
+espanso-package = { path = "../espanso-package" }
 simplelog = "0.9.0"
 log = "0.4.14"
 anyhow = "1.0.38"
@@ -57,7 +65,7 @@ serde_json = "1.0.62"
 log-panics = "2.0.0"
 fs2 = "0.4.3"
 serde_yaml = "0.8.17"
-fs_extra = "1.2.0"
+fs_extra = "1.3.0"
 dialoguer = "0.8.0"
 colored = "2.0.0"
 tempdir = "0.3.7"

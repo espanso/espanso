@@ -23,11 +23,15 @@ fn main() {
   let wayland = envmnt::get_or("NO_X11", "false") == "true";
   if wayland {
     println!("Using Wayland feature");
+  } else {
+    println!("Using X11 default feature");
   }
 
   let avoid_modulo = envmnt::get_or("NO_MODULO", "false") == "true";
   if avoid_modulo {
     println!("Skipping modulo feature");
+  } else {
+    println!("Building with default modulo");
   }
 
   let mut args = Vec::new();

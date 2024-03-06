@@ -2,8 +2,8 @@
 name = "espanso-ui"
 version = "0.1.0"
 authors = ["Federico Terzi <federico-terzi@users.noreply.github.com>"]
-edition = "2018"
-build="build.rs"
+edition = "2021"
+build = "build.rs"
 
 [features]
 # If enabled, avoid linking with the gdiplus library on Windows, which
@@ -32,3 +32,6 @@ crossbeam = "0.8.0"
 
 [build-dependencies]
 cc = "1.0.73"
+
+[lints]
+workspace = true

@@ -2,11 +2,12 @@
 name = "espanso-match"
 version = "0.1.0"
 authors = ["Federico Terzi <federico-terzi@users.noreply.github.com>"]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 log = "0.4.14"
-anyhow = "1.0.38"
-thiserror = "1.0.23"
 regex = "1.5.5"
 unicase = "2.6.0"
+
+[lints]
+workspace = true

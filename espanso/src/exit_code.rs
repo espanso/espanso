@@ -72,6 +72,7 @@ pub const PACKAGE_UPDATE_PARTIAL_FAILURE: i32 = 6;
 #[allow(dead_code)]
 pub const UNEXPECTED_RUN_AS_ROOT: i32 = 42;
 
+use lazy_static::lazy_static;
 use std::sync::Mutex;
 
 use crate::error_eprintln;

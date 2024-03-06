@@ -661,7 +661,7 @@ impl LegacyConfigSet {
     }
 
     // Check if some triggers are conflicting with each other
-    // For more information, see: https://github.com/federico-terzi/espanso/issues/135
+    // For more information, see: https://github.com/espanso/espanso/issues/135
     if default.conflict_check {
       let has_conflicts = Self::has_conflicts(&default, &specific);
       if has_conflicts {

@@ -2,15 +2,16 @@
 name = "espanso-kvs"
 version = "0.1.0"
 authors = ["Federico Terzi <federico-terzi@users.noreply.github.com>"]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
-log = "0.4.14"
 anyhow = "1.0.38"
 thiserror = "1.0.23"
 serde = { version = "1.0.123", features = ["derive"] }
 serde_json = "1.0.62"
 
-
 [dev-dependencies]
 tempdir = "0.3.7"
+
+[lints]
+workspace = true

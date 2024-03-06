@@ -49,6 +49,7 @@ use crate::{
           rolling::{RollingMatcherAdapter, RollingMatcherAdapterOptions},
         },
         multiplex::MultiplexAdapter,
+        open_config::ConfigPathProviderAdapter,
         render::{
           extension::{
             choice::ChoiceSelectorAdapter, clipboard::ClipboardAdapter, form::FormProviderAdapter,
@@ -220,6 +221,7 @@ pub fn initialize_and_spawn(
       ]);
       let renderer_adapter = RendererAdapter::new(&match_cache, &config_manager, &renderer);
       let path_provider = PathProviderAdapter::new(&paths);
+      let config_path_provider = ConfigPathProviderAdapter::new(&paths);
 
       let disable_options =
         process::middleware::disable::extract_disable_options(&*config_manager.default());
@@ -236,6 +238,7 @@ pub fn initialize_and_spawn(
         &modifier_state_store,
         &sequencer,
         &path_provider,
+        &config_path_provider,
         disable_options,
         &config_manager,
         &combined_match_cache,
