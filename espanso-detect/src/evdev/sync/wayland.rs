@@ -93,7 +93,7 @@ pub fn get_modifiers_state() -> Result<Option<super::ModifiersState>> {
         surface: Some(window.wl_surface().clone()),
         app_id: Some(String::from("Espanso.SyncTool")),
       },
-    )
+    );
   }
 
   // We don't know how large the window will be yet, so lets assume the minimum size we suggested for the
@@ -235,8 +235,8 @@ impl WindowHandler for SimpleWindow {
     debug!("Window configured to: {:?}", configure);
 
     self.buffer = None;
-    self.width = configure.new_size.0.map(|v| v.get()).unwrap_or(256);
-    self.height = configure.new_size.1.map(|v| v.get()).unwrap_or(256);
+    self.width = configure.new_size.0.map_or(256, std::num::NonZeroU32::get);
+    self.height = configure.new_size.1.map_or(256, std::num::NonZeroU32::get);
 
     // Initiate the first draw.
     if self.first_configure {
@@ -379,6 +379,7 @@ impl ShmHandler for SimpleWindow {
 }
 
 #[allow(clippy::many_single_char_names)]
+#[allow(clippy::single_match_else)]
 impl SimpleWindow {
   pub fn draw(&mut self, _conn: &Connection, qh: &QueueHandle<Self>) {
     let width = self.width;
