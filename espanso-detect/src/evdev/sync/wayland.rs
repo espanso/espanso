@@ -378,6 +378,7 @@ impl ShmHandler for SimpleWindow {
   }
 }
 
+#[allow(clippy::many_single_char_names)]
 impl SimpleWindow {
   pub fn draw(&mut self, _conn: &Connection, qh: &QueueHandle<Self>) {
     let width = self.width;
