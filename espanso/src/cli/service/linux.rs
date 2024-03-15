@@ -28,7 +28,7 @@ use thiserror::Error;
 
 use crate::{error_eprintln, info_println, warn_eprintln};
 
-const LINUX_SERVICE_NAME: &str = "espanso";
+const LINUX_SERVICE_NAME: &str = "espanso.service";
 const LINUX_SERVICE_CONTENT: &str = include_str!("../../res/linux/systemd.service");
 #[allow(clippy::transmute_bytes_to_str)]
 const LINUX_SERVICE_FILENAME: &str = formatcp!("{}.service", LINUX_SERVICE_NAME);
@@ -36,17 +36,22 @@ const LINUX_SERVICE_FILENAME: &str = formatcp!("{}.service", LINUX_SERVICE_NAME)
 pub fn register() -> Result<()> {
   let service_file = get_service_file_path()?;
 
-  if service_file.exists() {
-    warn_eprintln!("service file already exists, this operation will overwrite it");
+  if !service_file.exists() && is_present() {
+    // probably installed by system package
+    info_println!("skipping installation of already provided service");
+  } else {
+    if service_file.exists() {
+      warn_eprintln!("service file already exists, this operation will overwrite it");
+    }
+
+    info_println!("creating service file in {:?}", service_file);
+    let espanso_path = get_binary_path().expect("unable to get espanso executable path");
+
+    let service_content = String::from(LINUX_SERVICE_CONTENT)
+      .replace("{{{espanso_path}}}", &espanso_path.to_string_lossy());
+
+    std::fs::write(service_file, service_content)?;
   }
-
-  info_println!("creating service file in {:?}", service_file);
-  let espanso_path = get_binary_path().expect("unable to get espanso executable path");
-
-  let service_content = String::from(LINUX_SERVICE_CONTENT)
-    .replace("{{{espanso_path}}}", &espanso_path.to_string_lossy());
-
-  std::fs::write(service_file, service_content)?;
 
   info_println!("enabling systemd service");
 
@@ -117,6 +122,17 @@ pub enum UnregisterError {
 
   #[error("systemctl command failed `{0}`")]
   SystemdCallFailed(anyhow::Error),
+}
+
+pub fn is_present() -> bool {
+  let res = Command::new("systemctl")
+    .args(&["--user", "cat", LINUX_SERVICE_NAME])
+    .output();
+  if let Ok(output) = res {
+    output.status.success()
+  } else {
+    false
+  }
 }
 
 pub fn is_registered() -> bool {
