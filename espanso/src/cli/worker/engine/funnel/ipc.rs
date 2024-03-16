@@ -72,6 +72,7 @@ fn is_event_type_allowed(event: &EventType) -> bool {
     event,
     EventType::MatchExecRequest(_)
       | EventType::ShowSearchBar
+      | EventType::ShowConfigFolder
       | EventType::DisableRequest
       | EventType::EnableRequest
       | EventType::ToggleRequest
