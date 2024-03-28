@@ -41,6 +41,7 @@ fn cmd_main(args: CliModuleArgs) -> i32 {
   let cli_args = args.cli_args.expect("missing cli_args");
   let paths = args.paths.expect("missing paths");
 
+  #[allow(unused_variables)]
   let event = if cli_args.subcommand_matches("enable").is_some() {
     IPCEvent::EnableRequest
   } else if cli_args.subcommand_matches("disable").is_some() {
@@ -49,7 +50,7 @@ fn cmd_main(args: CliModuleArgs) -> i32 {
     IPCEvent::ToggleRequest
   } else if cli_args.subcommand_matches("search").is_some() {
     IPCEvent::OpenSearchBar
-  } else if cli_args.subcommand_matches("search").is_some() {
+  } else if let Some(subcommand_matches) = cli_args.subcommand_matches("search") {
     IPCEvent::OpenConfigFolder
   } else {
     eprintln!("unknown command, please run `espanso cmd --help` to see a list of valid ones.");
