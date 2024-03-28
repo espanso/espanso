@@ -961,7 +961,6 @@ dependencies = [
  "libc",
  "log",
  "log-panics",
- "maplit",
  "named_pipe",
  "notify",
  "opener",
@@ -985,8 +984,6 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "cc",
- "lazy_static",
- "lazycell",
  "log",
  "thiserror",
  "wait-timeout",
@@ -1042,7 +1039,6 @@ dependencies = [
  "html2text",
  "log",
  "markdown",
- "tempdir",
  "thiserror",
 ]
 
@@ -1052,10 +1048,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "cc",
- "lazy_static",
- "lazycell",
  "log",
- "thiserror",
  "widestring",
 ]
 
@@ -1065,10 +1058,8 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "cc",
- "enum-as-inner 0.6.0",
  "itertools",
  "lazy_static",
- "lazycell",
  "libc",
  "log",
  "regex",
@@ -1082,7 +1073,6 @@ name = "espanso-ipc"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "crossbeam",
  "log",
  "named_pipe",
  "serde",
@@ -1095,7 +1085,6 @@ name = "espanso-kvs"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "log",
  "serde",
  "serde_json",
  "tempdir",
@@ -1106,23 +1095,17 @@ dependencies = [
 name = "espanso-mac-utils"
 version = "0.1.0"
 dependencies = [
- "anyhow",
  "cc",
  "lazy_static",
- "lazycell",
- "log",
  "regex",
- "thiserror",
 ]
 
 [[package]]
 name = "espanso-match"
 version = "0.1.0"
 dependencies = [
- "anyhow",
  "log",
  "regex",
- "thiserror",
  "unicase",
 ]
 
@@ -1131,17 +1114,14 @@ name = "espanso-migrate"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "dunce",
  "fs_extra",
  "glob",
  "include_dir",
  "lazy_static",
- "log",
  "path-slash",
  "pretty_assertions",
  "regex",
  "tempdir",
- "tempfile",
  "test-case",
  "thiserror",
  "walkdir",
@@ -1156,10 +1136,8 @@ dependencies = [
  "cc",
  "glob",
  "lazy_static",
- "log",
  "regex",
  "serde",
- "serde_json",
  "thiserror",
  "winres",
  "zip",
@@ -1192,10 +1170,8 @@ dependencies = [
 name = "espanso-path"
 version = "0.1.0"
 dependencies = [
- "anyhow",
- "dirs",
+ "dirs 3.0.1",
  "log",
- "thiserror",
 ]
 
 [[package]]
@@ -2035,12 +2011,6 @@ checksum = "62bb907fe88d54d8d9ce32a3cceab4218ed2f6b7d35617cafe9adf84e43919cb"
 dependencies = [
  "libc",
 ]
-
-[[package]]
-name = "maplit"
-version = "1.0.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3e2e65a1a2e43cfcb47a895c4c8b10d1f4a61097f9f254f183aee60cad9c651d"
 
 [[package]]
 name = "markdown"

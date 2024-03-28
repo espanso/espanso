@@ -32,3 +32,6 @@ crossbeam = "0.8.0"
 
 [build-dependencies]
 cc = "1.0.73"
+
+[lints]
+workspace = true

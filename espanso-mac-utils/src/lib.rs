@@ -18,16 +18,14 @@
  */
 
 #[cfg(target_os = "macos")]
-use std::{ffi::CStr, os::raw::c_char};
-
-#[macro_use]
+use lazy_static::lazy_static;
 #[cfg(target_os = "macos")]
-extern crate lazy_static;
+use std::{ffi::CStr, os::raw::c_char};
 
 mod ffi;
 
 /// Check whether an application is currently holding the Secure Input.
-/// Return None if no application has claimed SecureInput, its PID otherwise.
+/// Return None if no application has claimed `SecureInput`, its PID otherwise.
 #[cfg(target_os = "macos")]
 pub fn get_secure_input_pid() -> Option<i64> {
   unsafe {
@@ -43,7 +41,7 @@ pub fn get_secure_input_pid() -> Option<i64> {
 }
 
 /// Check whether an application is currently holding the Secure Input.
-/// Return None if no application has claimed SecureInput, Some((AppName, AppPath)) otherwise.
+/// Return None if no application has claimed `SecureInput`, `Some((AppName, AppPath))` otherwise.
 #[cfg(target_os = "macos")]
 pub fn get_secure_input_application() -> Option<(String, String)> {
   unsafe {
@@ -64,7 +62,7 @@ pub fn get_secure_input_application() -> Option<(String, String)> {
             let app_name = if let Some(name) = get_app_name_from_path(&process) {
               name
             } else {
-              process.to_owned()
+              process.clone()
             };
 
             return Some((app_name, process));

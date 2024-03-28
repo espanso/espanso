@@ -35,6 +35,7 @@ pub mod match_select;
 pub mod matcher;
 pub mod multiplex;
 pub mod notification;
+pub mod open_config;
 pub mod render;
 pub mod search;
 pub mod suppress;
