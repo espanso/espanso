@@ -35,16 +35,6 @@ use crate::{
   config::load_config,
   util::log_system_info,
 };
-use clap::{App, AppSettings, Arg, ArgMatches, SubCommand};
-use cli::{CliAlias, CliModule, CliModuleArgs};
-use lazy_static::lazy_static;
-use log::{error, info, warn};
-use logging::FileProxy;
-use simplelog::{
-  CombinedLogger, ConfigBuilder, LevelFilter, SharedLogger, TermLogger, TerminalMode, WriteLogger,
-};
-use std::path::PathBuf;
-
 mod capabilities;
 mod cli;
 mod common_flags;
