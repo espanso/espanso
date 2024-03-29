@@ -201,6 +201,15 @@
                   },
                   "name": {
                     "type": "string"
+                  },
+                  "param": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "echo": {
+                        "type": "string"
+                      }
+                    }
                   }
                 }
               },
