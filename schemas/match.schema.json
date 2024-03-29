@@ -54,6 +54,11 @@
       "required": [
         "replace"
       ],
+      "dependencies": {
+        "uppercase_style": [
+          "propagate_case"
+        ]
+      },
       "properties": {
         "trigger": {
           "type": "string"
@@ -72,6 +77,17 @@
         },
         "regex": {
           "type": "string"
+        },
+        "propagate_case": {
+          "type": "boolean"
+        },
+        "uppercase_style": {
+          "type": "string",
+          "enum": [
+            "capitalize",
+            "capitalize_words",
+            "uppercase"
+          ]
         },
         "vars": {
           "type": "array",
