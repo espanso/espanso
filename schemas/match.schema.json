@@ -287,6 +287,31 @@
                     }
                   }
                 }
+              },
+              {
+                "$comment": "Nested match",
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "match"
+                    ]
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "params": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "trigger": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
               }
             ]
           }
