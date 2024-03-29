@@ -60,14 +60,12 @@
         ]
       },
       "properties": {
-        "trigger": {
-          "type": "string"
-        },
-        "triggers": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
+        "force_mode": {
+          "type": "string",
+          "enum": [
+            "clipboard",
+            "keys"
+          ]
         },
         "label": {
           "type": "string"
@@ -88,6 +86,15 @@
         },
         "replace": {
           "type": "string"
+        },
+        "trigger": {
+          "type": "string"
+        },
+        "triggers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         },
         "vars": {
           "type": "array",
