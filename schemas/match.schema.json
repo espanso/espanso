@@ -44,17 +44,17 @@
         },
         {
           "required": [
+            "form"
+          ]
+        },
+        {
+          "required": [
             "html"
           ]
         },
         {
           "required": [
             "image_path"
-          ]
-        },
-        {
-          "required": [
-            "label"
           ]
         },
         {
@@ -73,6 +73,59 @@
             "clipboard",
             "keys"
           ]
+        },
+        "form": {
+          "type": "string"
+        },
+        "form_fields": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "text": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "multiline": {
+                  "type": "boolean"
+                },
+                "default": {
+                  "type": "string",
+                  "default": ""
+                }
+              }
+            },
+            "choices": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "choice",
+                    "list"
+                  ]
+                },
+                "values": {
+                  "type": [
+                    "array",
+                    "string"
+                  ],
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "default": {
+                  "type": "string",
+                  "default": ""
+                },
+                "trim_string_values": {
+                  "type": "boolean",
+                  "description": "If you pass the values as a multiline string and this option is true, Espanso will trim the values and remove empty ones.",
+                  "default": false
+                }
+              }
+            }
+          }
         },
         "html": {
           "type": "string"
@@ -316,7 +369,6 @@
                 },
                 "fields": {
                   "type": "object",
-                  "additionalProperties": false,
                   "patternProperties": {
                     "^.*$": {
                       "anyOf": [
