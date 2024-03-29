@@ -2,9 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema",
   "description": "a schema to validate base.yaml",
   "additionalProperties": false,
-  "required": [
-    "matches"
-  ],
+  "required": [],
   "properties": {
     "$schema": {
       "type": "string"
@@ -60,6 +58,9 @@
         ]
       },
       "properties": {
+        "force_clipboard": {
+          "type": "boolean"
+        },
         "force_mode": {
           "type": "string",
           "enum": [
