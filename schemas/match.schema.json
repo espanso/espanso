@@ -72,12 +72,6 @@
         "label": {
           "type": "string"
         },
-        "replace": {
-          "type": "string"
-        },
-        "regex": {
-          "type": "string"
-        },
         "propagate_case": {
           "type": "boolean"
         },
@@ -88,6 +82,12 @@
             "capitalize_words",
             "uppercase"
           ]
+        },
+        "regex": {
+          "type": "string"
+        },
+        "replace": {
+          "type": "string"
         },
         "vars": {
           "type": "array",
@@ -331,6 +331,9 @@
               }
             ]
           }
+        },
+        "word": {
+          "type": "boolean"
         }
       }
     }
