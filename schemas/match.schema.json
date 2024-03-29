@@ -202,7 +202,7 @@
                   "name": {
                     "type": "string"
                   },
-                  "param": {
+                  "params": {
                     "type": "object",
                     "additionalProperties": false,
                     "properties": {
