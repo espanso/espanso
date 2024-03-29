@@ -36,6 +36,33 @@
           "propagate_case"
         ]
       },
+      "oneOf": [
+        {
+          "required": [
+            "replace"
+          ]
+        },
+        {
+          "required": [
+            "html"
+          ]
+        },
+        {
+          "required": [
+            "image_path"
+          ]
+        },
+        {
+          "required": [
+            "label"
+          ]
+        },
+        {
+          "required": [
+            "markdown"
+          ]
+        }
+      ],
       "properties": {
         "force_clipboard": {
           "type": "boolean"
