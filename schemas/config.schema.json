@@ -138,7 +138,10 @@
         },
         "word_separators": {
             "description": "Chars that when pressed mark the start and end of a word. Examples of this are . or ,",
-            "type": "string"
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
         },
         "undo_backspace": {
             "description": "When enabled, espanso automatically \"reverts\" an expansion if the user presses the Backspace key afterwards. This is not available on some platform/configurations.",
