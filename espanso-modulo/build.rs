@@ -440,24 +440,24 @@ fn macos_link_search_path() -> Option<String> {
 #[cfg(target_os = "linux")]
 fn build_native() {
   // Make sure wxWidgets is installed
-  // Depending on the installation package, the 'wx-config' command might also be available as 'wx-config-gtk3',
-  // so we need to check for both.
+  // Depending on the installation package, the 'wx-config' command might be available under
+  // different names, so we need to check them all.
   // See also: https://github.com/espanso/espanso/issues/840
-  let wx_config_command = if std::process::Command::new("wx-config")
-    .arg("--version")
-    .output()
-    .is_ok()
-  {
-    "wx-config"
-  } else if std::process::Command::new("wx-config-gtk3")
-    .arg("--version")
-    .output()
-    .is_ok()
-  {
-    "wx-config-gtk3"
-  } else {
-    panic!("wxWidgets is not installed, as `wx-config` cannot be executed")
-  };
+  let possible_wx_config_names = ["wx-config", "wx-config-gtk3", "wx-config-qt"];
+  let wx_config_command = possible_wx_config_names
+    .iter()
+    .find(|&name| {
+      std::process::Command::new(name)
+        .arg("--version")
+        .output()
+        .is_ok()
+    })
+    .unwrap_or_else(|| {
+      panic!(
+        "wxWidgets is not installed, cannot execute {}",
+        possible_wx_config_names.join(" or ")
+      )
+    });
 
   let config_path = PathBuf::from(wx_config_command);
   let cpp_flags = get_cpp_flags(&config_path);
