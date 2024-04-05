@@ -56,7 +56,7 @@ impl<'a> Extension for DateExtension<'a> {
     // Compute the given offset
     let offset = params.get("offset");
     if let Some(Value::Number(Number::Integer(offset))) = offset {
-      let offset = Duration::seconds(*offset);
+      let offset = Duration::try_seconds(*offset);
       now += offset;
     }
 
@@ -451,7 +451,7 @@ mod tests {
   fn date_formatted_correctly() {
     let locale_provider = MockLocaleProvider::new();
     let mut extension = DateExtension::new(&locale_provider);
-    extension.fixed_date = Some(Local.ymd(2014, 7, 8).and_hms(9, 10, 11));
+    extension.fixed_date = Some(Local.with_ymd_and_hms(2014, 7, 8,9, 10, 11));
 
     let param = vec![("format".to_string(), Value::String("%H:%M:%S".to_string()))]
       .into_iter()
