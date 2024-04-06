@@ -2,11 +2,9 @@
 name: Feature request
 about: Suggest an idea to make Espanso better
 title: ''
-labels: ''
+labels: 'enhancement'
 assignees: ''
 
 ---
 
-Feature requests have been moved to discussions, please open it there :)
-
-https://github.com/espanso/espanso/discussions/categories/feature-requests-and-ideas
+Thank you for submitting an issue! Please check out the [Contributing guide](https://github.com/espanso/espanso/blob/dev/CONTRIBUTING.md) to see if you are in the correct step :smile:
