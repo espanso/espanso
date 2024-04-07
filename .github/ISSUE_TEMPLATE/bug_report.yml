@@ -1,6 +1,6 @@
 name: 🐛 Bug Report
 description: Let us know about a bug in Espanso
-labels: [bug, 'status: needs triage']
+labels: [bug, "status: needs triage"]
 body:
   - type: textarea
     attributes:
@@ -17,8 +17,6 @@ body:
         1. Step 1...
         2. Step 2...
         3. Step 3...
-    validations:
-      required: true
 
   - type: textarea
     attributes:
@@ -26,8 +24,6 @@ body:
       description: |
         A clear and concise description of what you expected to happen. It's fine if you're not sure your understanding is correct.
       placeholder: Write what you thought would happen.
-    validations:
-      required: true
 
   - type: textarea
     attributes:
@@ -50,8 +46,6 @@ body:
         - Environment name and version (e.g., Rust 1.59.0):
         - Operating system and version (e.g., Ubuntu 20.04.2 LTS):
         - Espanso version (e.g., 2.1.4-beta):
-    validations:
-      required: true
 
   - type: checkboxes
     attributes:

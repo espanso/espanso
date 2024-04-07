@@ -13,15 +13,11 @@ body:
     attributes:
       label: Motivation
       description: Please outline the motivation for the proposal and why it should be implemented.
-    validations:
-      required: true
 
   - type: textarea
     attributes:
       label: Alternatives
       description: A clear and concise description of any alternative solutions or features you've considered.
-    validations:
-      required: true
 
   - type: checkboxes
     attributes:
