@@ -32,7 +32,7 @@ static MODIFIERS: &[ShortcutKey; 4] = &[
   ShortcutKey::Meta,
 ];
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Eq)]
 pub struct HotKey {
   pub id: i32,
   pub key: ShortcutKey,
@@ -53,9 +53,9 @@ impl HotKey {
       match key {
         Some(key) => {
           if MODIFIERS.contains(&key) {
-            modifiers.push(key)
+            modifiers.push(key);
           } else {
-            main_key = Some(key)
+            main_key = Some(key);
           }
         }
         None => return Err(HotKeyError::InvalidKey(token).into()),
@@ -96,7 +96,7 @@ impl HotKey {
 
 impl Display for HotKey {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    let str_modifiers: Vec<String> = self.modifiers.iter().map(|m| m.to_string()).collect();
+    let str_modifiers: Vec<String> = self.modifiers.iter().map(ToString::to_string).collect();
     let modifiers = str_modifiers.join("+");
     write!(f, "{}+{}", &modifiers, &self.key)
   }

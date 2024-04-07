@@ -18,6 +18,7 @@
  */
 
 use super::split::*;
+use lazy_static::lazy_static;
 use regex::Regex;
 
 lazy_static! {
@@ -25,7 +26,7 @@ lazy_static! {
   static ref FIELD_REGEX: Regex = Regex::new(r"\{\{(.*?)\}\}|\[\[(.*?)\]\]").unwrap();
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Token {
   Text(String),  // Text
   Field(String), // id: String
@@ -51,7 +52,7 @@ pub fn parse_layout(layout: &str) -> Vec<Vec<Token>> {
       match state {
         SplitState::Unmatched(text) => {
           if !text.is_empty() {
-            row.push(Token::Text(text.to_owned()))
+            row.push(Token::Text(text.to_owned()));
           }
         }
         SplitState::Captured(caps) => {

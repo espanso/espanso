@@ -21,6 +21,7 @@ use std::thread::JoinHandle;
 
 use anyhow::Result;
 use crossbeam::channel::Receiver;
+use espanso_clipboard::ClipboardOptions;
 use espanso_config::{config::ConfigStore, matches::store::MatchStore};
 use espanso_detect::SourceCreationOptions;
 use espanso_engine::event::{EventType, ExitMode};
@@ -48,6 +49,7 @@ use crate::{
           rolling::{RollingMatcherAdapter, RollingMatcherAdapterOptions},
         },
         multiplex::MultiplexAdapter,
+        open_config::ConfigPathProviderAdapter,
         render::{
           extension::{
             choice::ChoiceSelectorAdapter, clipboard::ClipboardAdapter, form::FormProviderAdapter,
@@ -182,7 +184,7 @@ pub fn initialize_and_spawn(
         ..Default::default()
       })
       .expect("failed to initialize injector module"); // TODO: handle the options
-      let clipboard = espanso_clipboard::get_clipboard(Default::default())
+      let clipboard = espanso_clipboard::get_clipboard(ClipboardOptions::default())
         .expect("failed to initialize clipboard module"); // TODO: handle options
 
       let clipboard_adapter = ClipboardAdapter::new(&*clipboard, &config_manager);
@@ -219,6 +221,7 @@ pub fn initialize_and_spawn(
       ]);
       let renderer_adapter = RendererAdapter::new(&match_cache, &config_manager, &renderer);
       let path_provider = PathProviderAdapter::new(&paths);
+      let config_path_provider = ConfigPathProviderAdapter::new(&paths);
 
       let disable_options =
         process::middleware::disable::extract_disable_options(&*config_manager.default());
@@ -235,6 +238,7 @@ pub fn initialize_and_spawn(
         &modifier_state_store,
         &sequencer,
         &path_provider,
+        &config_path_provider,
         disable_options,
         &config_manager,
         &combined_match_cache,
@@ -243,6 +247,7 @@ pub fn initialize_and_spawn(
         &modifier_state_store,
         &combined_match_cache,
         &notification_manager,
+        &config_manager,
       );
 
       let event_injector = EventInjectorAdapter::new(&*injector, &config_manager);
@@ -281,7 +286,7 @@ pub fn initialize_and_spawn(
           notification_manager.notify_config_reloaded(true);
         }
         Some(flag) if flag == WORKER_START_REASON_KEYBOARD_LAYOUT_CHANGED => {
-          notification_manager.notify_keyboard_layout_reloaded()
+          notification_manager.notify_keyboard_layout_reloaded();
         }
         _ => {
           notification_manager.notify_start();

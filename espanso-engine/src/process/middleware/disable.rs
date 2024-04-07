@@ -80,7 +80,7 @@ impl Middleware for DisableMiddleware {
             }
           } else {
             // If another key is pressed (not the toggle key), we should reset the window
-            // For more information, see: https://github.com/federico-terzi/espanso/issues/815
+            // For more information, see: https://github.com/espanso/espanso/issues/815
             *last_toggle_press = None;
           }
         }
@@ -109,7 +109,7 @@ impl Middleware for DisableMiddleware {
         } else {
           EventType::Disabled
         },
-      ))
+      ));
     }
 
     // Block keyboard events when disabled
@@ -128,8 +128,7 @@ fn is_toggle_key(event: &KeyboardEvent, options: &DisableOptions) -> bool {
   if options
     .toggle_key
     .as_ref()
-    .map(|key| key == &event.key)
-    .unwrap_or(false)
+    .is_some_and(|key| key == &event.key)
   {
     if let (Some(variant), Some(e_variant)) = (&options.toggle_key_variant, &event.variant) {
       variant == e_variant

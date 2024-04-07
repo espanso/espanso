@@ -44,7 +44,7 @@ pub enum MatcherEvent {
   VirtualSeparator,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MatchResult {
   pub id: i32,
   pub trigger: String,
@@ -103,10 +103,10 @@ impl<'a, State> Middleware for MatcherMiddleware<'a, State> {
   fn next(&self, event: Event, _: &mut dyn FnMut(Event)) -> Event {
     if is_event_of_interest(&event.etype) {
       let mut matcher_states = self.matcher_states.borrow_mut();
-      let prev_states = if !matcher_states.is_empty() {
-        matcher_states.get(matcher_states.len() - 1)
-      } else {
+      let prev_states = if matcher_states.is_empty() {
         None
+      } else {
+        matcher_states.back()
       };
 
       if let EventType::Keyboard(keyboard_event) = &event.etype {
@@ -120,7 +120,7 @@ impl<'a, State> Middleware for MatcherMiddleware<'a, State> {
         // We need to filter out some keyboard events if they are generated
         // while some modifier keys are pressed, otherwise we could have
         // wrong matches being detected.
-        // See: https://github.com/federico-terzi/espanso/issues/725
+        // See: https://github.com/espanso/espanso/issues/725
         if should_skip_key_event_due_to_modifier_press(
           &self.modifier_status_provider.get_modifier_state(),
         ) {
@@ -183,10 +183,7 @@ impl<'a, State> Middleware for MatcherMiddleware<'a, State> {
 fn is_event_of_interest(event_type: &EventType) -> bool {
   match event_type {
     EventType::Keyboard(keyboard_event) => {
-      if keyboard_event.status != Status::Pressed {
-        // Skip non-press events
-        false
-      } else {
+      if keyboard_event.status == Status::Pressed {
         // Skip linux Keyboard (XKB) Extension function and modifier keys
         // In hex, they have the byte 3 = 0xfe
         // See list in "keysymdef.h" file
@@ -203,6 +200,9 @@ fn is_event_of_interest(event_type: &EventType) -> bool {
           keyboard_event.key,
           Key::Alt | Key::Shift | Key::CapsLock | Key::Meta | Key::NumLock | Key::Control
         )
+      } else {
+        // Skip non-press events
+        false
       }
     }
     EventType::Mouse(mouse_event) => mouse_event.status == Status::Pressed,

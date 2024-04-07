@@ -29,10 +29,25 @@ use log::{debug, error, trace, warn};
 use anyhow::Result;
 use thiserror::Error;
 
-use crate::event::{HotKeyEvent, Key::*, MouseButton, MouseEvent};
+use crate::event::{
+  HotKeyEvent,
+  Key::{
+    Alt, ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Backspace, CapsLock, Control, End, Enter,
+    Escape, Home, Meta, NumLock, Numpad0, Numpad1, Numpad2, Numpad3, Numpad4, Numpad5, Numpad6,
+    Numpad7, Numpad8, Numpad9, Other, PageDown, PageUp, Shift, Space, Tab, F1, F10, F11, F12, F13,
+    F14, F15, F16, F17, F18, F19, F2, F20, F3, F4, F5, F6, F7, F8, F9,
+  },
+  MouseButton, MouseEvent,
+};
 use crate::event::{InputEvent, Key, KeyboardEvent, Variant};
-use crate::{event::Status::*, Source, SourceCallback};
-use crate::{event::Variant::*, hotkey::HotKey};
+use crate::{
+  event::Status::{Pressed, Released},
+  Source, SourceCallback,
+};
+use crate::{
+  event::Variant::{Left, Right},
+  hotkey::HotKey,
+};
 
 const INPUT_EVENT_TYPE_KEYBOARD: i32 = 1;
 const INPUT_EVENT_TYPE_MOUSE: i32 = 2;
@@ -202,7 +217,7 @@ impl Source for X11Source {
       );
       if let Some(callback) = source_self.callback.borrow() {
         if let Some(event) = event {
-          callback(event)
+          callback(event);
         } else {
           trace!("Unable to convert raw event to input event");
         }
@@ -239,10 +254,10 @@ fn convert_hotkey_to_raw(hk: &HotKey) -> Option<RawHotKeyRequest> {
   let key_sym = hk.key.to_code()?;
   Some(RawHotKeyRequest {
     key_sym,
-    ctrl: if hk.has_ctrl() { 1 } else { 0 },
-    alt: if hk.has_alt() { 1 } else { 0 },
-    shift: if hk.has_shift() { 1 } else { 0 },
-    meta: if hk.has_meta() { 1 } else { 0 },
+    ctrl: i32::from(hk.has_ctrl()),
+    alt: i32::from(hk.has_alt()),
+    shift: i32::from(hk.has_shift()),
+    meta: i32::from(hk.has_meta()),
   })
 }
 
@@ -396,6 +411,18 @@ fn key_sym_to_key(key_sym: i32) -> (Key, Option<Variant>) {
     0xFFD0 => (F19, None),
     0xFFD1 => (F20, None),
 
+    // Numpad
+    0xFFB0 => (Numpad0, None),
+    0xFFB1 => (Numpad1, None),
+    0xFFB2 => (Numpad2, None),
+    0xFFB3 => (Numpad3, None),
+    0xFFB4 => (Numpad4, None),
+    0xFFB5 => (Numpad5, None),
+    0xFFB6 => (Numpad6, None),
+    0xFFB7 => (Numpad7, None),
+    0xFFB8 => (Numpad8, None),
+    0xFFB9 => (Numpad9, None),
+
     // Other keys, includes the raw code provided by the operating system
     _ => (Other(key_sym), None),
   }
@@ -479,7 +506,7 @@ mod tests {
   fn raw_to_input_event_hotkey_works_correctly() {
     let mut raw = default_raw_input_event();
     raw.event_type = INPUT_EVENT_TYPE_HOTKEY;
-    raw.state = 0b00000011;
+    raw.state = 0b0000_0011;
     raw.key_code = 10;
 
     let mut raw_hotkey_mapping = HashMap::new();

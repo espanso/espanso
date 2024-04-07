@@ -44,9 +44,24 @@ use log::{debug, error, info, trace, warn};
 use thiserror::Error;
 
 use crate::event::{InputEvent, Key, KeyboardEvent, Variant};
-use crate::event::{Key::*, MouseButton, MouseEvent};
-use crate::{event::HotKeyEvent, event::Variant::*, hotkey::HotKey};
-use crate::{event::Status::*, KeyboardConfig, Source, SourceCallback, SourceCreationOptions};
+use crate::event::{
+  Key::{
+    Alt, ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Backspace, CapsLock, Control, End, Enter,
+    Escape, Home, Meta, NumLock, Numpad0, Numpad1, Numpad2, Numpad3, Numpad4, Numpad5, Numpad6,
+    Numpad7, Numpad8, Numpad9, Other, PageDown, PageUp, Shift, Space, Tab, F1, F10, F11, F12, F13,
+    F14, F15, F16, F17, F18, F19, F2, F20, F3, F4, F5, F6, F7, F8, F9,
+  },
+  MouseButton, MouseEvent,
+};
+use crate::{
+  event::HotKeyEvent,
+  event::Variant::{Left, Right},
+  hotkey::HotKey,
+};
+use crate::{
+  event::Status::{Pressed, Released},
+  KeyboardConfig, Source, SourceCallback, SourceCreationOptions,
+};
 
 use self::{
   device::{DeviceError, RawInputEvent, KEY_STATE_PRESS, KEY_STATE_RELEASE},
@@ -138,7 +153,7 @@ impl Source for EVDEVSource {
       debug!("Updating device modifier state: {:?}", modifiers_state);
 
       for device in &mut self.devices {
-        device.update_modifier_state(&modifiers_state, &self._modifiers_map);
+        device.update_modifier_state(modifiers_state, &self._modifiers_map);
       }
     }
 
@@ -199,10 +214,9 @@ impl Source for EVDEVSource {
       if ret < 0 {
         if unsafe { *errno_ptr } == EINTR {
           continue;
-        } else {
-          error!("Could not poll for events, {}", unsafe { *errno_ptr });
-          return Err(EVDEVSourceError::Internal().into());
         }
+        error!("Could not poll for events, {}", unsafe { *errno_ptr });
+        return Err(EVDEVSourceError::Internal().into());
       }
 
       #[allow(clippy::needless_range_loop)]
@@ -212,13 +226,13 @@ impl Source for EVDEVSource {
         match device.read() {
           Ok(events) if !events.is_empty() => {
             // Convert raw events to the common format and invoke the callback
-            events.into_iter().for_each(|raw_event| {
+            for raw_event in events {
               let event: Option<InputEvent> = raw_event.into();
               if let Some(event) = event {
                 // On Wayland we need to detect the global shortcuts manually
                 if let InputEvent::Keyboard(key_event) = &event {
                   if let Some(hotkey) = (*hotkey_filter).process_event(key_event) {
-                    event_callback(InputEvent::HotKey(HotKeyEvent { hotkey_id: hotkey }))
+                    event_callback(InputEvent::HotKey(HotKeyEvent { hotkey_id: hotkey }));
                   }
                 }
 
@@ -226,7 +240,7 @@ impl Source for EVDEVSource {
               } else {
                 trace!("unable to convert raw event to input event");
               }
-            });
+            }
           }
           Ok(_) => { /* SKIP EMPTY */ }
           Err(err) => {
@@ -250,7 +264,7 @@ impl Source for EVDEVSource {
                 return Err(EVDEVSourceError::Internal().into());
               }
             } else {
-              error!("Can't read from device {}: {}", device.get_path(), err)
+              error!("Can't read from device {}: {}", device.get_path(), err);
             }
           }
         }
@@ -378,6 +392,18 @@ fn key_sym_to_key(key_sym: i32) -> (Key, Option<Variant>) {
     0xFFCF => (F18, None),
     0xFFD0 => (F19, None),
     0xFFD1 => (F20, None),
+
+    // Numpad
+    0xFFB0 => (Numpad0, None),
+    0xFFB1 => (Numpad1, None),
+    0xFFB2 => (Numpad2, None),
+    0xFFB3 => (Numpad3, None),
+    0xFFB4 => (Numpad4, None),
+    0xFFB5 => (Numpad5, None),
+    0xFFB6 => (Numpad6, None),
+    0xFFB7 => (Numpad7, None),
+    0xFFB8 => (Numpad8, None),
+    0xFFB9 => (Numpad9, None),
 
     // Other keys, includes the raw code provided by the operating system
     _ => (Other(key_sym), None),

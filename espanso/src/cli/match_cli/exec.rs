@@ -33,7 +33,7 @@ pub fn exec_main(cli_args: &ArgMatches, paths: &Paths) -> Result<()> {
   let trigger = cli_args.value_of("trigger");
   let args = cli_args.values_of("arg");
 
-  if trigger.is_none() || trigger.map(str::is_empty).unwrap_or(false) {
+  if trigger.is_none() || trigger.is_some_and(str::is_empty) {
     bail!("You need to specify the --trigger 'trigger' option. Run `espanso match exec --help` for more information.");
   }
 
@@ -50,12 +50,9 @@ pub fn exec_main(cli_args: &ArgMatches, paths: &Paths) -> Result<()> {
       if let Some((key, value)) = tokens {
         match_args.insert(key.to_string(), value.to_string());
       } else {
-        eprintln!(
-          "invalid format for argument '{}', you should follow the 'name=value' format",
-          arg
-        );
+        eprintln!("invalid format for argument '{arg}', you should follow the 'name=value' format");
       }
-    })
+    });
   }
 
   client

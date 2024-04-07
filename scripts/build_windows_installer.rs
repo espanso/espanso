@@ -2,7 +2,7 @@
 //! [dependencies]
 //! glob = "0.3.0"
 //! envmnt = "*"
-//! fs_extra = "1.2.0"
+//! fs_extra = "1.3.0"
 //! toml = "0.5.8"
 //! dunce = "1.0.2"
 //! ```
@@ -61,7 +61,7 @@ fn main() {
   let espanso_toml = espanso_toml_str
     .parse::<Value>()
     .expect("unable to parse Cargo.toml");
-  
+
   let arch = envmnt::get_or_panic("BUILD_ARCH");
   let arch = if arch == "current" {
     std::env::consts::ARCH
@@ -111,13 +111,10 @@ fn main() {
       .to_string_lossy()
       .to_string(),
   );
-  iss_setup = iss_setup.replace(
-    "{{{output_name}}}",
-    &format!("{}-{}", INSTALLER_NAME, arch),
-  );
+  iss_setup = iss_setup.replace("{{{output_name}}}", &format!("{}-{}", INSTALLER_NAME, arch));
   iss_setup = iss_setup.replace(
     "{{{executable_path}}}",
-    &dunce::canonicalize(&format!("{}.exe", envmnt::get_or_panic("EXEC_PATH")))
+    &dunce::canonicalize(&resources_dir.join("espansod.exe"))
       .unwrap()
       .to_string_lossy()
       .to_string(),

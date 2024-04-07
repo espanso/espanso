@@ -3,15 +3,15 @@
 set -e
 
 echo "Installing cargo-deb"
-cargo install cargo-deb --version 1.34.0
+cargo install cargo-deb --version 1.44.1
 
 cd espanso
 
 echo "Building X11 deb package"
-cargo deb -p espanso
+cargo deb -p espanso -- --no-default-features --features "modulo vendored-tls"
 
 echo "Building Wayland deb package"
-cargo deb -p espanso --variant wayland -- --features wayland
+cargo deb -p espanso --variant wayland -- --no-default-features --features "modulo wayland vendored-tls"
 
 cd ..
 cp espanso/target/debian/espanso_*.deb espanso-debian-x11-amd64.deb

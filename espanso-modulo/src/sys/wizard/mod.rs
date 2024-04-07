@@ -31,6 +31,7 @@ use crate::{
   },
   wizard::{WizardHandlers, WizardOptions},
 };
+use lazy_static::lazy_static;
 
 lazy_static! {
   static ref HANDLERS: Mutex<Option<WizardHandlers>> = Mutex::new(None);
@@ -54,11 +55,7 @@ pub fn show(options: WizardOptions) -> bool {
       .expect("unable to acquire lock in is_legacy_version_running method");
     let handlers_ref = (*lock).as_ref().expect("unable to unwrap handlers");
     if let Some(handler_ref) = handlers_ref.is_legacy_version_running.as_ref() {
-      if (*handler_ref)() {
-        1
-      } else {
-        0
-      }
+      i32::from((*handler_ref)())
     } else {
       -1
     }
@@ -87,11 +84,7 @@ pub fn show(options: WizardOptions) -> bool {
       .expect("unable to acquire lock in auto_start method");
     let handlers_ref = (*lock).as_ref().expect("unable to unwrap handlers");
     if let Some(handler_ref) = handlers_ref.auto_start.as_ref() {
-      if (*handler_ref)(auto_start != 0) {
-        1
-      } else {
-        0
-      }
+      i32::from((*handler_ref)(auto_start != 0))
     } else {
       -1
     }
@@ -103,11 +96,7 @@ pub fn show(options: WizardOptions) -> bool {
       .expect("unable to acquire lock in add_to_path method");
     let handlers_ref = (*lock).as_ref().expect("unable to unwrap handlers");
     if let Some(handler_ref) = handlers_ref.add_to_path.as_ref() {
-      if (*handler_ref)() {
-        1
-      } else {
-        0
-      }
+      i32::from((*handler_ref)())
     } else {
       -1
     }
@@ -132,11 +121,7 @@ pub fn show(options: WizardOptions) -> bool {
       .expect("unable to acquire lock in is_accessibility_enabled method");
     let handlers_ref = (*lock).as_ref().expect("unable to unwrap handlers");
     if let Some(handler_ref) = handlers_ref.is_accessibility_enabled.as_ref() {
-      if (*handler_ref)() {
-        1
-      } else {
-        0
-      }
+      i32::from((*handler_ref)())
     } else {
       -1
     }
@@ -148,58 +133,26 @@ pub fn show(options: WizardOptions) -> bool {
       .expect("unable to acquire lock in on_completed method");
     let handlers_ref = (*lock).as_ref().expect("unable to unwrap handlers");
     if let Some(handler_ref) = handlers_ref.on_completed.as_ref() {
-      (*handler_ref)()
+      (*handler_ref)();
     }
   }
 
   {
     let mut lock = HANDLERS.lock().expect("unable to acquire handlers lock");
-    *lock = Some(options.handlers)
+    *lock = Some(options.handlers);
   }
 
   let wizard_metadata = WizardMetadata {
     version: c_version.as_ptr(),
 
-    is_welcome_page_enabled: if options.is_welcome_page_enabled {
-      1
-    } else {
-      0
-    },
-    is_move_bundle_page_enabled: if options.is_move_bundle_page_enabled {
-      1
-    } else {
-      0
-    },
-    is_legacy_version_page_enabled: if options.is_legacy_version_page_enabled {
-      1
-    } else {
-      0
-    },
-    is_wrong_edition_page_enabled: if options.is_wrong_edition_page_enabled {
-      1
-    } else {
-      0
-    },
-    is_migrate_page_enabled: if options.is_migrate_page_enabled {
-      1
-    } else {
-      0
-    },
-    is_auto_start_page_enabled: if options.is_auto_start_page_enabled {
-      1
-    } else {
-      0
-    },
-    is_add_path_page_enabled: if options.is_add_path_page_enabled {
-      1
-    } else {
-      0
-    },
-    is_accessibility_page_enabled: if options.is_accessibility_page_enabled {
-      1
-    } else {
-      0
-    },
+    is_welcome_page_enabled: i32::from(options.is_welcome_page_enabled),
+    is_move_bundle_page_enabled: i32::from(options.is_move_bundle_page_enabled),
+    is_legacy_version_page_enabled: i32::from(options.is_legacy_version_page_enabled),
+    is_wrong_edition_page_enabled: i32::from(options.is_wrong_edition_page_enabled),
+    is_migrate_page_enabled: i32::from(options.is_migrate_page_enabled),
+    is_auto_start_page_enabled: i32::from(options.is_auto_start_page_enabled),
+    is_add_path_page_enabled: i32::from(options.is_add_path_page_enabled),
+    is_accessibility_page_enabled: i32::from(options.is_accessibility_page_enabled),
 
     window_icon_path: c_window_icon_path_ptr,
     welcome_image_path: c_welcome_image_path_ptr,

@@ -26,7 +26,7 @@ pub mod regex;
 pub mod rolling;
 mod util;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MatchResult<Id> {
   pub id: Id,
   pub trigger: String,
@@ -39,7 +39,7 @@ impl<Id: Default> Default for MatchResult<Id> {
   fn default() -> Self {
     Self {
       id: Id::default(),
-      trigger: "".to_string(),
+      trigger: String::new(),
       left_separator: None,
       right_separator: None,
       vars: HashMap::new(),

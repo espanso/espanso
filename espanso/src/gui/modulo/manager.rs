@@ -59,7 +59,7 @@ impl ModuloManager {
         Ok(mut child) => {
           if let Some(stdin) = child.stdin.as_mut() {
             match stdin.write_all(body.as_bytes()) {
-              Ok(_) => Ok(()),
+              Ok(()) => Ok(()),
               Err(error) => Err(ModuloError::Error(error).into()),
             }
           } else {
@@ -93,7 +93,7 @@ impl ModuloManager {
         Ok(mut child) => {
           if let Some(stdin) = child.stdin.as_mut() {
             match stdin.write_all(body.as_bytes()) {
-              Ok(_) => {
+              Ok(()) => {
                 // Get the output
                 match child.wait_with_output() {
                   Ok(child_output) => {
@@ -109,13 +109,13 @@ impl ModuloManager {
                       error!(
                         "modulo exited with non-zero status code: {:?}",
                         child_output.status.code()
-                      )
+                      );
                     }
 
-                    if !output.trim().is_empty() {
-                      Ok(output.to_string())
-                    } else {
+                    if output.trim().is_empty() {
                       Err(ModuloError::EmptyOutput.into())
+                    } else {
+                      Ok(output.to_string())
                     }
                   }
                   Err(error) => Err(ModuloError::Error(error).into()),

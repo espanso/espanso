@@ -20,9 +20,6 @@
 // This is needed to avoid showing a console window when starting espanso on Windows
 #![windows_subsystem = "windows"]
 
-#[macro_use]
-extern crate lazy_static;
-
 use std::path::PathBuf;
 
 use clap::{App, AppSettings, Arg, ArgMatches, SubCommand};
@@ -36,6 +33,7 @@ use simplelog::{
 use crate::{
   cli::{LogMode, PathsOverrides},
   config::load_config,
+  util::log_system_info,
 };
 
 mod capabilities;
@@ -56,6 +54,8 @@ mod util;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 const LOG_FILE_NAME: &str = "espanso.log";
+
+use lazy_static::lazy_static;
 
 lazy_static! {
   static ref CLI_HANDLERS: Vec<CliModule> = vec![
@@ -194,18 +194,21 @@ fn main() {
       Arg::with_name("config_dir")
         .long("config_dir")
         .takes_value(true)
+        .hidden(true)
         .help("Specify a custom path from which espanso should read the configuration"),
     )
     .arg(
       Arg::with_name("package_dir")
         .long("package_dir")
         .takes_value(true)
+        .hidden(true)
         .help("Specify a custom path for the espanso package directory"),
     )
     .arg(
       Arg::with_name("runtime_dir")
         .long("runtime_dir")
         .takes_value(true)
+        .hidden(true)
         .help("Specify a custom path for the espanso runtime directory"),
     )
     .subcommand(
@@ -583,6 +586,7 @@ For example, specifying 'email' is equivalent to 'match/email.yml'."#))
       info!("reading configs from: {:?}", paths.config);
       info!("reading packages from: {:?}", paths.packages);
       info!("using runtime dir: {:?}", paths.runtime);
+      log_system_info();
 
       if handler.requires_config {
         let config_result =

@@ -2,7 +2,7 @@
 name = "espanso-engine"
 version = "0.1.0"
 authors = ["Federico Terzi <federico-terzi@users.noreply.github.com>"]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 log = "0.4.14"
@@ -10,8 +10,7 @@ anyhow = "1.0.38"
 thiserror = "1.0.23"
 crossbeam = "0.8.0"
 markdown = "0.3.0"
-html2text = "0.2.1"
+html2text = "0.12.0"
 
-
-[dev-dependencies]
-tempdir = "0.3.7"
+[lints]
+workspace = true

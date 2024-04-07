@@ -136,7 +136,7 @@ impl ModifierStatus {
   }
 
   fn release(&mut self) {
-    self.pressed_at = None
+    self.pressed_at = None;
   }
 
   fn press(&mut self) {
@@ -178,7 +178,7 @@ impl espanso_engine::process::ModifierStateProvider for ModifierStateStore {
           Modifier::Meta => {
             is_meta_down = true;
           }
-          _ => {}
+          Modifier::Shift => {}
         }
       }
     }

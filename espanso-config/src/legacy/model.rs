@@ -21,7 +21,7 @@ use serde::{Deserialize, Serialize};
 
 #[allow(non_camel_case_types)]
 #[allow(clippy::upper_case_acronyms)]
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Eq)]
 pub enum KeyModifier {
   CTRL,
   SHIFT,
@@ -31,7 +31,7 @@ pub enum KeyModifier {
   OFF,
 
   // These are specific variants of the ones above. See issue: #117
-  // https://github.com/federico-terzi/espanso/issues/117
+  // https://github.com/espanso/espanso/issues/117
   LEFT_CTRL,
   RIGHT_CTRL,
   LEFT_ALT,
@@ -45,18 +45,13 @@ pub enum KeyModifier {
   CAPS_LOCK,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub enum PasteShortcut {
-  Default,     // Default one for the current system
+  #[default]
+  Default, // Default one for the current system
   CtrlV,       // Classic Ctrl+V shortcut
   CtrlShiftV,  // Could be used to paste without formatting in many applications
   ShiftInsert, // Often used in Linux systems
   CtrlAltV,    // Used in some Linux terminals (urxvt)
   MetaV,       // Corresponding to Win+V on Windows and Linux, CMD+V on macOS
-}
-
-impl Default for PasteShortcut {
-  fn default() -> Self {
-    PasteShortcut::Default
-  }
 }

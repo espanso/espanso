@@ -17,6 +17,10 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use anyhow::Result;
+use lazy_static::lazy_static;
+use lazycell::LazyCell;
+use log::{error, trace, warn};
 use std::{
   convert::TryInto,
   ffi::CStr,
@@ -25,17 +29,26 @@ use std::{
     Arc, Mutex,
   },
 };
-
-use lazycell::LazyCell;
-use log::{error, trace, warn};
-
-use anyhow::Result;
 use thiserror::Error;
 
 use crate::event::{HotKeyEvent, InputEvent, Key, KeyboardEvent, Status, Variant};
-use crate::event::{Key::*, MouseButton, MouseEvent};
-use crate::{event::Status::*, Source, SourceCallback};
-use crate::{event::Variant::*, hotkey::HotKey};
+use crate::event::{
+  Key::{
+    Alt, ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Backspace, CapsLock, Control, End, Enter,
+    Escape, Home, Meta, Numpad0, Numpad1, Numpad2, Numpad3, Numpad4, Numpad5, Numpad6, Numpad7,
+    Numpad8, Numpad9, Other, PageDown, PageUp, Shift, Space, Tab, F1, F10, F11, F12, F13, F14, F15,
+    F16, F17, F18, F19, F2, F20, F3, F4, F5, F6, F7, F8, F9,
+  },
+  MouseButton, MouseEvent,
+};
+use crate::{
+  event::Status::{Pressed, Released},
+  Source, SourceCallback,
+};
+use crate::{
+  event::Variant::{Left, Right},
+  hotkey::HotKey,
+};
 
 const INPUT_EVENT_TYPE_KEYBOARD: i32 = 1;
 const INPUT_EVENT_TYPE_MOUSE: i32 = 2;
@@ -120,8 +133,8 @@ extern "C" fn native_callback(raw_event: RawInputEvent) {
   // We use this modifier flag information to detect "inconsistent" states to send the corresponding
   // modifier release events, keeping espanso's state in sync.
   // For more info, see:
-  // https://github.com/federico-terzi/espanso/issues/825
-  // https://github.com/federico-terzi/espanso/issues/858
+  // https://github.com/espanso/espanso/issues/825
+  // https://github.com/espanso/espanso/issues/858
   let mut compensating_events = Vec::new();
   if raw_event.event_type == INPUT_EVENT_TYPE_KEYBOARD {
     let (key_code, _) = key_code_to_key(raw_event.key_code);
@@ -332,7 +345,7 @@ impl From<RawInputEvent> for Option<InputEvent> {
 
         // When a global keyboard shortcut is relased, the callback returns an event with keycode 0
         // and status 0.
-        // We need to handle it for this reason: https://github.com/federico-terzi/espanso/issues/791
+        // We need to handle it for this reason: https://github.com/espanso/espanso/issues/791
         if raw.key_code == 0 && raw.status == 0 {
           return Some(InputEvent::AllModifiersReleased);
         }
@@ -447,6 +460,18 @@ fn key_code_to_key(key_code: i32) -> (Key, Option<Variant>) {
     0x4F => (F18, None),
     0x50 => (F19, None),
     0x5A => (F20, None),
+
+    // Numpad
+    0x52 => (Numpad0, None),
+    0x53 => (Numpad1, None),
+    0x54 => (Numpad2, None),
+    0x55 => (Numpad3, None),
+    0x56 => (Numpad4, None),
+    0x57 => (Numpad5, None),
+    0x58 => (Numpad6, None),
+    0x59 => (Numpad7, None),
+    0x5B => (Numpad8, None),
+    0x5C => (Numpad9, None),
 
     // Other keys, includes the raw code provided by the operating system
     _ => (Other(key_code), None),

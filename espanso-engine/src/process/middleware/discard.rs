@@ -24,7 +24,7 @@ use log::trace;
 use super::super::Middleware;
 use crate::event::{Event, EventType, SourceId};
 
-/// This middleware discards all events that have a source_id between
+/// This middleware discards all events that have a `source_id` between
 /// the given maximum and minimum.
 /// This useful to discard past events that might have been stuck in the
 /// event queue for too long, or events generated while the search bar was open.

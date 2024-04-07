@@ -25,6 +25,9 @@ use std::path::Path;
 #[cfg(not(target_os = "linux"))]
 const WX_WIDGETS_ARCHIVE_NAME: &str = "wxWidgets-3.1.5.zip";
 
+#[cfg(not(target_os = "linux"))]
+const WX_WIDGETS_BUILD_OUT_DIR_ENV_NAME: &str = "WX_WIDGETS_BUILD_OUT_DIR";
+
 #[cfg(target_os = "windows")]
 fn build_native() {
   use std::process::Command;
@@ -32,11 +35,16 @@ fn build_native() {
   let project_dir =
     PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").expect("missing CARGO_MANIFEST_DIR"));
   let wx_archive = project_dir.join("vendor").join(WX_WIDGETS_ARCHIVE_NAME);
-  if !wx_archive.is_file() {
-    panic!("could not find wxWidgets archive!");
-  }
+  assert!(wx_archive.is_file(), "could not find wxWidgets archive!");
 
-  let out_dir = PathBuf::from(std::env::var("OUT_DIR").expect("missing OUT_DIR"));
+  let out_dir = if let Ok(out_path) = std::env::var(WX_WIDGETS_BUILD_OUT_DIR_ENV_NAME) {
+    println!("detected wxWidgets build output directory override: {out_path}");
+    let path = PathBuf::from(out_path);
+    std::fs::create_dir_all(&path).expect("unable to create wxWidgets out dir");
+    path
+  } else {
+    PathBuf::from(std::env::var("OUT_DIR").expect("missing OUT_DIR"))
+  };
   let out_wx_dir = out_dir.join("wx");
 
   if !out_wx_dir.is_dir() {
@@ -75,9 +83,9 @@ fn build_native() {
           .to_string_lossy()
           .to_string(),
       )
-      .args(&[
+      .args([
         "/k",
-        &vcvars_path.to_string_lossy().to_string(),
+        &vcvars_path.to_string_lossy(),
         "&",
         "nmake",
         "/f",
@@ -150,12 +158,18 @@ fn build_native() {
   let project_dir =
     PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").expect("missing CARGO_MANIFEST_DIR"));
   let wx_archive = project_dir.join("vendor").join(WX_WIDGETS_ARCHIVE_NAME);
-  if !wx_archive.is_file() {
-    panic!("could not find wxWidgets archive!");
-  }
+  assert!(wx_archive.is_file(), "could not find wxWidgets archive!");
 
-  let out_dir = PathBuf::from(std::env::var("OUT_DIR").expect("missing OUT_DIR"));
+  let out_dir = if let Ok(out_path) = std::env::var(WX_WIDGETS_BUILD_OUT_DIR_ENV_NAME) {
+    println!("detected wxWidgets build output directory override: {out_path}");
+    let path = PathBuf::from(out_path);
+    std::fs::create_dir_all(&path).expect("unable to create wxWidgets out dir");
+    path
+  } else {
+    PathBuf::from(std::env::var("OUT_DIR").expect("missing OUT_DIR"))
+  };
   let out_wx_dir = out_dir.join("wx");
+  println!("wxWidgets will be compiled into: {}", out_wx_dir.display());
 
   let target_arch = match std::env::var("CARGO_CFG_TARGET_ARCH")
     .expect("unable to read target arch")
@@ -163,7 +177,7 @@ fn build_native() {
   {
     "x86_64" => "x86_64",
     "aarch64" => "arm64",
-    arch => panic!("unsupported arch {}", arch),
+    arch => panic!("unsupported arch {arch}"),
   };
 
   let should_use_ci_m1_workaround =
@@ -188,7 +202,7 @@ fn build_native() {
       // See: https://github.com/actions/virtual-environments/issues/3288#issuecomment-830207746
       Command::new(out_wx_dir.join("configure"))
         .current_dir(build_dir.to_string_lossy().to_string())
-        .args(&[
+        .args([
           "--disable-shared",
           "--without-libtiff",
           "--without-liblzma",
@@ -201,13 +215,13 @@ fn build_native() {
     } else {
       Command::new(out_wx_dir.join("configure"))
         .current_dir(build_dir.to_string_lossy().to_string())
-        .args(&[
+        .args([
           "--disable-shared",
           "--without-libtiff",
           "--without-liblzma",
           "--with-libjpeg=builtin",
           "--with-libpng=builtin",
-          &format!("--enable-macosx_arch={}", target_arch),
+          &format!("--enable-macosx_arch={target_arch}"),
         ])
         .spawn()
         .expect("failed to execute configure")
@@ -223,7 +237,7 @@ fn build_native() {
 
     let mut handle = Command::new("make")
       .current_dir(build_dir.to_string_lossy().to_string())
-      .args(&["-j8"])
+      .args(["-j8"])
       .spawn()
       .expect("failed to execute make");
     if !handle
@@ -236,9 +250,10 @@ fn build_native() {
   }
 
   // Make sure wxWidgets is compiled
-  if !out_wx_dir.join("build-cocoa").is_dir() {
-    panic!("wxWidgets is not compiled correctly, missing 'build-cocoa/' directory")
-  }
+  assert!(
+    out_wx_dir.join("build-cocoa").is_dir(),
+    "wxWidgets is not compiled correctly, missing 'build-cocoa/' directory"
+  );
 
   // If using the M1 CI workaround, convert all the universal libraries to arm64 ones
   // This is needed until https://github.com/rust-lang/rust/issues/55235 is fixed
@@ -283,7 +298,7 @@ fn build_native() {
   // More details at https://github.com/alexcrichton/curl-rust/issues/279.
   if let Some(path) = macos_link_search_path() {
     println!("cargo:rustc-link-lib=clang_rt.osx");
-    println!("cargo:rustc-link-search={}", path);
+    println!("cargo:rustc-link-search={path}");
   }
 }
 
@@ -296,7 +311,7 @@ fn convert_fat_libraries_to_arm(lib_dir: &Path) {
 
     // Make sure it's a fat library
     let lipo_output = std::process::Command::new("lipo")
-      .args(&["-detailed_info", &path.to_string_lossy().to_string()])
+      .args(["-detailed_info", &path.to_string_lossy()])
       .output()
       .expect("unable to check if library is fat");
     let lipo_output = String::from_utf8_lossy(&lipo_output.stdout);
@@ -312,25 +327,26 @@ fn convert_fat_libraries_to_arm(lib_dir: &Path) {
     println!("converting {} to arm", path.to_string_lossy(),);
 
     let result = std::process::Command::new("lipo")
-      .args(&[
+      .args([
         "-thin",
         "arm64",
-        &path.to_string_lossy().to_string(),
+        &path.to_string_lossy(),
         "-output",
-        &path.to_string_lossy().to_string(),
+        &path.to_string_lossy(),
       ])
       .output()
       .expect("unable to extract arm64 slice from library");
 
-    if !result.status.success() {
-      panic!("unable to convert fat library to arm64 version");
-    }
+    assert!(
+      result.status.success(),
+      "unable to convert fat library to arm64 version"
+    );
   }
 }
 
 #[cfg(not(target_os = "windows"))]
 fn get_cpp_flags(wx_config_path: &Path) -> Vec<String> {
-  let config_output = std::process::Command::new(&wx_config_path)
+  let config_output = std::process::Command::new(wx_config_path)
     .arg("--cxxflags")
     .output()
     .expect("unable to execute wx-config");
@@ -339,10 +355,10 @@ fn get_cpp_flags(wx_config_path: &Path) -> Vec<String> {
   let cpp_flags: Vec<String> = config_libs
     .split(' ')
     .filter_map(|s| {
-      if !s.trim().is_empty() {
-        Some(s.trim().to_owned())
-      } else {
+      if s.trim().is_empty() {
         None
+      } else {
+        Some(s.trim().to_owned())
       }
     })
     .collect();
@@ -352,7 +368,7 @@ fn get_cpp_flags(wx_config_path: &Path) -> Vec<String> {
 #[cfg(not(target_os = "windows"))]
 fn generate_linker_flags(wx_config_path: &Path) {
   use regex::Regex;
-  let config_output = std::process::Command::new(&wx_config_path)
+  let config_output = std::process::Command::new(wx_config_path)
     .arg("--libs")
     .output()
     .expect("unable to execute wx-config libs");
@@ -361,10 +377,10 @@ fn generate_linker_flags(wx_config_path: &Path) {
   let linker_flags: Vec<String> = config_libs
     .split(' ')
     .filter_map(|s| {
-      if !s.trim().is_empty() {
-        Some(s.trim().to_owned())
-      } else {
+      if s.trim().is_empty() {
         None
+      } else {
+        Some(s.trim().to_owned())
       }
     })
     .collect();
@@ -376,7 +392,7 @@ fn generate_linker_flags(wx_config_path: &Path) {
   for (i, flag) in linker_flags.iter().enumerate() {
     if flag.starts_with("-L") {
       let path = flag.trim_start_matches("-L");
-      println!("cargo:rustc-link-search=native={}", path);
+      println!("cargo:rustc-link-search=native={path}");
     } else if flag.starts_with("-framework") {
       println!("cargo:rustc-link-lib=framework={}", linker_flags[i + 1]);
     } else if flag.starts_with('/') {
@@ -387,7 +403,7 @@ fn generate_linker_flags(wx_config_path: &Path) {
       println!("cargo:rustc-link-lib=static={}", libname.as_str());
     } else if flag.starts_with("-l") {
       let libname = flag.trim_start_matches("-l");
-      println!("cargo:rustc-link-lib=dylib={}", libname);
+      println!("cargo:rustc-link-lib=dylib={libname}");
     }
   }
 }
@@ -408,7 +424,7 @@ fn macos_link_search_path() -> Option<String> {
   for line in stdout.lines() {
     if line.contains("libraries: =") {
       let path = line.split('=').nth(1)?;
-      return Some(format!("{}/lib/darwin", path));
+      return Some(format!("{path}/lib/darwin"));
     }
   }
 
@@ -424,24 +440,24 @@ fn macos_link_search_path() -> Option<String> {
 #[cfg(target_os = "linux")]
 fn build_native() {
   // Make sure wxWidgets is installed
-  // Depending on the installation package, the 'wx-config' command might also be available as 'wx-config-gtk3',
-  // so we need to check for both.
-  // See also: https://github.com/federico-terzi/espanso/issues/840
-  let wx_config_command = if std::process::Command::new("wx-config")
-    .arg("--version")
-    .output()
-    .is_ok()
-  {
-    "wx-config"
-  } else if std::process::Command::new("wx-config-gtk3")
-    .arg("--version")
-    .output()
-    .is_ok()
-  {
-    "wx-config-gtk3"
-  } else {
-    panic!("wxWidgets is not installed, as `wx-config` cannot be executed")
-  };
+  // Depending on the installation package, the 'wx-config' command might be available under
+  // different names, so we need to check them all.
+  // See also: https://github.com/espanso/espanso/issues/840
+  let possible_wx_config_names = ["wx-config", "wx-config-gtk3", "wx-config-qt"];
+  let wx_config_command = possible_wx_config_names
+    .iter()
+    .find(|&name| {
+      std::process::Command::new(name)
+        .arg("--version")
+        .output()
+        .is_ok()
+    })
+    .unwrap_or_else(|| {
+      panic!(
+        "wxWidgets is not installed, cannot execute {}",
+        possible_wx_config_names.join(" or ")
+      )
+    });
 
   let config_path = PathBuf::from(wx_config_command);
   let cpp_flags = get_cpp_flags(&config_path);

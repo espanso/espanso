@@ -76,7 +76,7 @@ where
 
     // First compute the old refs
     if let Some(prev_state) = prev_state {
-      for node_path in prev_state.paths.iter() {
+      for node_path in &prev_state.paths {
         next_refs.extend(
           self
             .find_refs(node_path.node, &event, true)
@@ -153,13 +153,13 @@ impl<Id: Clone> RollingMatcher<Id> {
 
     if let Event::Key { key, chars } = event {
       // Key matching
-      if let Some((_, node_ref)) = node.keys.iter().find(|(_key, _)| _key == key) {
+      if let Some((_, node_ref)) = node.keys.iter().find(|(k, _)| k == key) {
         refs.push((node_ref, false));
       }
 
       if let Some(char) = chars {
         // Char matching
-        if let Some((_, node_ref)) = node.chars.iter().find(|(_char, _)| _char == char) {
+        if let Some((_, node_ref)) = node.chars.iter().find(|(c, _)| c == char) {
           refs.push((node_ref, false));
         }
 
@@ -168,7 +168,7 @@ impl<Id: Clone> RollingMatcher<Id> {
         if let Some((_, node_ref)) = node
           .chars_insensitive
           .iter()
-          .find(|(_char, _)| *_char == insensitive_char)
+          .find(|(c, _)| *c == insensitive_char)
         {
           refs.push((node_ref, false));
         }
@@ -177,7 +177,7 @@ impl<Id: Clone> RollingMatcher<Id> {
 
     if self.is_word_separator(event) {
       if let Some(node_ref) = node.word_separators.as_ref() {
-        refs.push((node_ref, true))
+        refs.push((node_ref, true));
       }
     }
 
@@ -185,7 +185,7 @@ impl<Id: Clone> RollingMatcher<Id> {
     // in the state.
     if !has_previous_state {
       if let Some(MatcherTreeRef::Node(node)) = node.word_separators.as_ref() {
-        refs.extend(self.find_refs(&*node, event, true));
+        refs.extend(self.find_refs(node, event, true));
       }
     }
 

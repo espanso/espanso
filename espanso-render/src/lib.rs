@@ -17,9 +17,6 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#[macro_use]
-extern crate lazy_static;
-
 use enum_as_inner::EnumAsInner;
 use std::collections::HashMap;
 
@@ -48,7 +45,7 @@ pub struct Context<'a> {
   pub templates: Vec<&'a Template>,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RenderOptions {
   pub casing_style: CasingStyle,
 }
@@ -61,7 +58,7 @@ impl Default for RenderOptions {
   }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CasingStyle {
   None,
   Capitalize,
@@ -89,8 +86,8 @@ pub struct Variable {
 impl Default for Variable {
   fn default() -> Self {
     Self {
-      name: "".to_string(),
-      var_type: "".to_string(),
+      name: String::new(),
+      var_type: String::new(),
       inject_vars: true,
       params: Params::new(),
       depends_on: Vec::new(),
@@ -123,7 +120,7 @@ pub trait Extension {
 
 pub type Scope<'a> = HashMap<&'a str, ExtensionOutput>;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum ExtensionOutput {
   Single(String),
   Multiple(HashMap<String, String>),

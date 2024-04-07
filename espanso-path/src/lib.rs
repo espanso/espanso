@@ -55,10 +55,10 @@ pub fn resolve_paths(
     runtime_dir
   } else {
     // Create the runtime directory if not already present
-    let runtime_dir = if !is_portable_mode() {
-      get_default_runtime_path()
-    } else {
+    let runtime_dir = if is_portable_mode() {
       get_portable_runtime_path().expect("unable to obtain runtime directory path")
+    } else {
+      get_default_runtime_path()
     };
     info!("creating runtime directory in {:?}", runtime_dir);
     create_dir_all(&runtime_dir).expect("unable to create runtime directory");
@@ -164,7 +164,7 @@ fn get_default_config_path() -> PathBuf {
 // Due to the original behavior of the dirs crate, espanso placed the config
 // directory in the Preferences folder on macOS, but this is not an optimal
 // approach.
-// For more context, see: https://github.com/federico-terzi/espanso/issues/611
+// For more context, see: https://github.com/espanso/espanso/issues/611
 fn get_legacy_mac_dir() -> Option<PathBuf> {
   if cfg!(target_os = "macos") {
     if let Some(preferences_dir) = dirs::preference_dir() {

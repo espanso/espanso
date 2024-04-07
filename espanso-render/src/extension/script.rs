@@ -64,28 +64,25 @@ impl Extension for ScriptExtension {
       // Replace %HOME% with current user home directory to
       // create cross-platform paths. See issue #265
       // Also replace %CONFIG% and %PACKAGES% path. See issue #380
-      args.iter_mut().for_each(|arg| {
+      for arg in &mut args {
         if arg.contains("%HOME%") {
-          *arg = arg.replace("%HOME%", &self.home_path.to_string_lossy().to_string());
+          *arg = arg.replace("%HOME%", &self.home_path.to_string_lossy());
         }
         if arg.contains("%CONFIG%") {
-          *arg = arg.replace("%CONFIG%", &self.config_path.to_string_lossy().to_string());
+          *arg = arg.replace("%CONFIG%", &self.config_path.to_string_lossy());
         }
         if arg.contains("%PACKAGES%") {
-          *arg = arg.replace(
-            "%PACKAGES%",
-            &self.packages_path.to_string_lossy().to_string(),
-          );
+          *arg = arg.replace("%PACKAGES%", &self.packages_path.to_string_lossy());
         }
 
         // On Windows, correct paths separators
         if cfg!(target_os = "windows") {
           let path = PathBuf::from(&arg);
           if path.exists() {
-            *arg = path.to_string_lossy().to_string()
+            *arg = path.to_string_lossy().to_string();
           }
         }
-      });
+      }
 
       let mut command = Command::new(&args[0]);
       command.env("CONFIG", self.config_path.to_string_lossy().to_string());
@@ -178,6 +175,8 @@ pub enum ScriptExtensionError {
 
 #[cfg(test)]
 mod tests {
+  use std::collections::HashMap;
+
   use super::*;
   #[cfg(not(target_os = "windows"))]
   use crate::Scope;
@@ -202,7 +201,7 @@ mod tests {
     .collect::<Params>();
     assert_eq!(
       extension
-        .calculate(&Default::default(), &Default::default(), &param)
+        .calculate(&crate::Context::default(), &HashMap::default(), &param)
         .into_success()
         .unwrap(),
       ExtensionOutput::Single("hello world".to_string())
@@ -229,7 +228,7 @@ mod tests {
     if cfg!(target_os = "windows") {
       assert_eq!(
         extension
-          .calculate(&Default::default(), &Default::default(), &param)
+          .calculate(&crate::Context::default(), &HashMap::default(), &param)
           .into_success()
           .unwrap(),
         ExtensionOutput::Single("hello world\r\n".to_string())
@@ -237,7 +236,7 @@ mod tests {
     } else {
       assert_eq!(
         extension
-          .calculate(&Default::default(), &Default::default(), &param)
+          .calculate(&crate::Context::default(), &HashMap::default(), &param)
           .into_success()
           .unwrap(),
         ExtensionOutput::Single("hello world\n".to_string())
@@ -264,7 +263,7 @@ mod tests {
     scope.insert("var1", ExtensionOutput::Single("hello world".to_string()));
     assert_eq!(
       extension
-        .calculate(&Default::default(), &scope, &param)
+        .calculate(&crate::Context::default(), &scope, &param)
         .into_success()
         .unwrap(),
       ExtensionOutput::Single("hello world".to_string())
@@ -282,7 +281,7 @@ mod tests {
     .into_iter()
     .collect::<Params>();
     assert!(matches!(
-      extension.calculate(&Default::default(), &Default::default(), &param),
+      extension.calculate(&crate::Context::default(), &HashMap::default(), &param),
       ExtensionResult::Error(_)
     ));
   }
@@ -303,7 +302,7 @@ mod tests {
     .into_iter()
     .collect::<Params>();
     assert!(matches!(
-      extension.calculate(&Default::default(), &Default::default(), &param),
+      extension.calculate(&crate::Context::default(), &HashMap::default(), &param),
       ExtensionResult::Error(_)
     ));
   }
@@ -328,10 +327,10 @@ mod tests {
     .collect::<Params>();
     assert_eq!(
       extension
-        .calculate(&Default::default(), &Default::default(), &param)
+        .calculate(&crate::Context::default(), &HashMap::default(), &param)
         .into_success()
         .unwrap(),
-      ExtensionOutput::Single("".to_string())
+      ExtensionOutput::Single(String::new())
     );
   }
 }

@@ -36,19 +36,14 @@ impl Lock {
   }
 
   fn acquire(runtime_dir: &Path, name: &str) -> Option<Lock> {
-    let lock_file_path = runtime_dir.join(format!("{}.lock", name));
+    let lock_file_path = runtime_dir.join(format!("{name}.lock"));
     let lock_file = OpenOptions::new()
       .read(true)
       .write(true)
       .create(true)
+      .truncate(true)
       .open(&lock_file_path)
-      .unwrap_or_else(|_| {
-        panic!(
-          "unable to create reference to lock file: {:?}",
-          lock_file_path
-        )
-      });
-
+      .unwrap_or_else(|_| panic!("unable to create reference to lock file: {lock_file_path:?}"));
     if lock_file.try_lock_exclusive().is_ok() {
       Some(Lock { lock_file })
     } else {

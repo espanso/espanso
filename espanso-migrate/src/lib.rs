@@ -19,10 +19,6 @@
 
 #[allow(unused_imports)]
 #[macro_use]
-extern crate lazy_static;
-
-#[allow(unused_imports)]
-#[macro_use]
 #[cfg(test)]
 extern crate include_dir;
 
@@ -172,7 +168,7 @@ mod tests {
   }
 
   fn to_sorted_list<T>(hash: HashMap<String, T>) -> Vec<(String, T)> {
-    let mut tuples: Vec<(String, T)> = hash.into_iter().map(|(k, v)| (k, v)).collect();
+    let mut tuples: Vec<(String, T)> = hash.into_iter().collect();
     tuples.sort_by_key(|(k, _)| k.clone());
     tuples
   }
@@ -188,7 +184,7 @@ mod tests {
 
   fn list_files_in_dir(dir: &Path) -> Vec<String> {
     let prefix = dir.to_string_lossy().to_string();
-    fs_extra::dir::get_dir_content(&dir)
+    fs_extra::dir::get_dir_content(dir)
       .unwrap()
       .files
       .into_iter()

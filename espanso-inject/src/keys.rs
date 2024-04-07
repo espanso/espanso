@@ -19,6 +19,7 @@
 
 use std::fmt::Display;
 
+use lazy_static::lazy_static;
 use regex::Regex;
 
 lazy_static! {
@@ -226,7 +227,7 @@ impl Display for Key {
       Key::Numpad7 => write!(f, "NUMPAD7"),
       Key::Numpad8 => write!(f, "NUMPAD8"),
       Key::Numpad9 => write!(f, "NUMPAD9"),
-      Key::Raw(code) => write!(f, "RAW({})", code),
+      Key::Raw(code) => write!(f, "RAW({code})"),
     }
   }
 }

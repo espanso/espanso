@@ -67,6 +67,7 @@ impl<'a> TextInjector for EventInjectorAdapter<'a> {
         })
         .try_into()
         .unwrap(),
+      x11_use_xdotool_fallback: params.x11_use_xdotool_backend,
     };
 
     // We don't use the lines() method because it skips emtpy lines, which is not what we want.
@@ -75,7 +76,7 @@ impl<'a> TextInjector for EventInjectorAdapter<'a> {
       if i > 0 {
         self
           .injector
-          .send_keys(&[espanso_inject::keys::Key::Enter], injection_options)?
+          .send_keys(&[espanso_inject::keys::Key::Enter], injection_options)?;
       }
 
       self.injector.send_string(line, injection_options)?;

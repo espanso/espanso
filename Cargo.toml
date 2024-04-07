@@ -1,4 +1,5 @@
 [workspace]
+resolver = "2"
 
 members = [
   "espanso",
@@ -19,3 +20,29 @@ members = [
   "espanso-engine",
   "espanso-package",
 ]
+
+[workspace.lints.clippy]
+too_many_lines = "allow"
+needless_pass_by_value = "allow"
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+cast_possible_wrap = "allow"
+module_name_repetitions = "allow"
+match_same_arms = "allow"
+unnecessary_wraps = "allow"
+cast_possible_truncation = "allow"
+cast_sign_loss = "allow"
+cast_lossless = "allow"
+ptr_as_ptr = "allow"
+as_conversions = "allow"
+used_underscore_binding = "allow"
+no_effect_underscore_binding = "allow"
+borrow_as_ptr = "allow"
+must_use_candidate = "allow"
+similar_names = "allow"
+struct_excessive_bools = "allow"
+wildcard_imports = "allow"
+items_after_statements = "allow"
+struct_field_names = "allow"
+unused_self = "allow"
+pedantic = { level = "warn", priority = -2 }

@@ -130,7 +130,7 @@ impl Config for ResolvedConfig {
       .parsed
       .backend
       .as_deref()
-      .map(|b| b.to_lowercase())
+      .map(str::to_lowercase)
       .as_deref()
     {
       Some("clipboard") => Backend::Clipboard,
@@ -172,21 +172,21 @@ impl Config for ResolvedConfig {
       .parsed
       .toggle_key
       .as_deref()
-      .map(|key| key.to_lowercase())
+      .map(str::to_lowercase)
       .as_deref()
     {
       Some("ctrl") => Some(ToggleKey::Ctrl),
       Some("alt") => Some(ToggleKey::Alt),
       Some("shift") => Some(ToggleKey::Shift),
-      Some("meta") | Some("cmd") => Some(ToggleKey::Meta),
+      Some("meta" | "cmd") => Some(ToggleKey::Meta),
       Some("right_ctrl") => Some(ToggleKey::RightCtrl),
       Some("right_alt") => Some(ToggleKey::RightAlt),
       Some("right_shift") => Some(ToggleKey::RightShift),
-      Some("right_meta") | Some("right_cmd") => Some(ToggleKey::RightMeta),
+      Some("right_meta" | "right_cmd") => Some(ToggleKey::RightMeta),
       Some("left_ctrl") => Some(ToggleKey::LeftCtrl),
       Some("left_alt") => Some(ToggleKey::LeftAlt),
       Some("left_shift") => Some(ToggleKey::LeftShift),
-      Some("left_meta") | Some("left_cmd") => Some(ToggleKey::LeftMeta),
+      Some("left_meta" | "left_cmd") => Some(ToggleKey::LeftMeta),
       Some("off") => None,
       None => None,
       err => {
@@ -238,9 +238,16 @@ impl Config for ResolvedConfig {
         ".".to_string(),
         "?".to_string(),
         "!".to_string(),
+        ")".to_string(),
+        "}".to_string(),
+        "]".to_string(),
+        ">".to_string(),
+        "\'".to_string(),
+        "\"".to_string(),
         "\r".to_string(),
+        "\t".to_string(),
         "\n".to_string(),
-        (22u8 as char).to_string(),
+        "\x0c".to_string(), // Form Feed
       ]
     })
   }
@@ -269,7 +276,7 @@ impl Config for ResolvedConfig {
 
   fn search_trigger(&self) -> Option<String> {
     match self.parsed.search_trigger.as_deref() {
-      Some("OFF") | Some("off") => None,
+      Some("OFF" | "off") => None,
       Some(x) => Some(x.to_string()),
       None => None,
     }
@@ -277,7 +284,7 @@ impl Config for ResolvedConfig {
 
   fn search_shortcut(&self) -> Option<String> {
     match self.parsed.search_shortcut.as_deref() {
-      Some("OFF") | Some("off") => None,
+      Some("OFF" | "off") => None,
       Some(x) => Some(x.to_string()),
       None => Some("ALT+SPACE".to_string()),
     }
@@ -297,6 +304,13 @@ impl Config for ResolvedConfig {
 
   fn secure_input_notification(&self) -> bool {
     self.parsed.secure_input_notification.unwrap_or(true)
+  }
+
+  fn emulate_alt_codes(&self) -> bool {
+    self
+      .parsed
+      .emulate_alt_codes
+      .unwrap_or(cfg!(target_os = "windows"))
   }
 
   fn post_form_delay(&self) -> usize {
@@ -330,6 +344,10 @@ impl Config for ResolvedConfig {
 
   fn x11_use_xclip_backend(&self) -> bool {
     self.parsed.x11_use_xclip_backend.unwrap_or(false)
+  }
+
+  fn x11_use_xdotool_backend(&self) -> bool {
+    self.parsed.x11_use_xdotool_backend.unwrap_or(false)
   }
 }
 
@@ -412,11 +430,13 @@ impl ResolvedConfig {
       show_icon,
       show_notifications,
       secure_input_notification,
+      emulate_alt_codes,
       post_form_delay,
       post_search_delay,
       win32_exclude_orphan_events,
       win32_keyboard_layout_cache_interval,
       x11_use_xclip_backend,
+      x11_use_xdotool_backend,
       includes,
       excludes,
       extra_includes,
@@ -433,22 +453,22 @@ impl ResolvedConfig {
     let mut includes = HashSet::new();
 
     if config.use_standard_includes.is_none() || config.use_standard_includes.unwrap() {
-      STANDARD_INCLUDES.iter().for_each(|include| {
-        includes.insert(include.to_string());
-      })
+      for include in STANDARD_INCLUDES {
+        includes.insert((*include).to_string());
+      }
     }
 
     if let Some(yaml_includes) = config.includes.as_ref() {
-      yaml_includes.iter().for_each(|include| {
+      for include in yaml_includes {
         includes.insert(include.to_string());
-      })
-    }
+      }
+    };
 
     if let Some(extra_includes) = config.extra_includes.as_ref() {
-      extra_includes.iter().for_each(|include| {
+      for include in extra_includes {
         includes.insert(include.to_string());
-      })
-    }
+      }
+    };
 
     includes
   }
@@ -457,15 +477,15 @@ impl ResolvedConfig {
     let mut excludes = HashSet::new();
 
     if let Some(yaml_excludes) = config.excludes.as_ref() {
-      yaml_excludes.iter().for_each(|exclude| {
+      for exclude in yaml_excludes {
         excludes.insert(exclude.to_string());
-      })
+      }
     }
 
     if let Some(extra_excludes) = config.extra_excludes.as_ref() {
-      extra_excludes.iter().for_each(|exclude| {
+      for exclude in extra_excludes {
         excludes.insert(exclude.to_string());
-      })
+      }
     }
 
     excludes
@@ -504,7 +524,7 @@ mod tests {
       ResolvedConfig::aggregate_includes(&ParsedConfig {
         ..Default::default()
       }),
-      vec!["../match/**/[!_]*.yml".to_string(),]
+      ["../match/**/[!_]*.yml".to_string()]
         .iter()
         .cloned()
         .collect::<HashSet<_>>()
@@ -529,7 +549,7 @@ mod tests {
         includes: Some(vec!["custom/*.yml".to_string()]),
         ..Default::default()
       }),
-      vec![
+      [
         "../match/**/[!_]*.yml".to_string(),
         "custom/*.yml".to_string()
       ]
@@ -546,7 +566,7 @@ mod tests {
         extra_includes: Some(vec!["custom/*.yml".to_string()]),
         ..Default::default()
       }),
-      vec![
+      [
         "../match/**/[!_]*.yml".to_string(),
         "custom/*.yml".to_string()
       ]
@@ -564,7 +584,7 @@ mod tests {
         extra_includes: Some(vec!["custom/*.yml".to_string()]),
         ..Default::default()
       }),
-      vec![
+      [
         "../match/**/[!_]*.yml".to_string(),
         "custom/*.yml".to_string(),
         "sub/*.yml".to_string()
@@ -604,7 +624,7 @@ mod tests {
         excludes: Some(vec!["custom/*.yml".to_string()]),
         ..Default::default()
       }),
-      vec!["custom/*.yml".to_string()]
+      ["custom/*.yml".to_string()]
         .iter()
         .cloned()
         .collect::<HashSet<_>>()
@@ -618,7 +638,7 @@ mod tests {
         extra_excludes: Some(vec!["custom/*.yml".to_string()]),
         ..Default::default()
       }),
-      vec!["custom/*.yml".to_string()]
+      ["custom/*.yml".to_string()]
         .iter()
         .cloned()
         .collect::<HashSet<_>>()
@@ -633,7 +653,7 @@ mod tests {
         extra_excludes: Some(vec!["custom/*.yml".to_string()]),
         ..Default::default()
       }),
-      vec!["custom/*.yml".to_string(), "sub/*.yml".to_string()]
+      ["custom/*.yml".to_string(), "sub/*.yml".to_string()]
         .iter()
         .cloned()
         .collect::<HashSet<_>>()
@@ -682,7 +702,7 @@ mod tests {
       let another_file = match_dir.join("another.yml");
       std::fs::write(&another_file, "test").unwrap();
       let under_file = match_dir.join("_sub.yml");
-      std::fs::write(&under_file, "test").unwrap();
+      std::fs::write(under_file, "test").unwrap();
       let sub_file = sub_dir.join("sub.yml");
       std::fs::write(&sub_file, "test").unwrap();
 
@@ -714,9 +734,9 @@ mod tests {
       let base_file = match_dir.join("base.yml");
       std::fs::write(&base_file, "test").unwrap();
       let another_file = match_dir.join("another.yml");
-      std::fs::write(&another_file, "test").unwrap();
+      std::fs::write(another_file, "test").unwrap();
       let under_file = match_dir.join("_sub.yml");
-      std::fs::write(&under_file, "test").unwrap();
+      std::fs::write(under_file, "test").unwrap();
       let sub_file = sub_dir.join("another.yml");
       std::fs::write(&sub_file, "test").unwrap();
       let sub_under_file = sub_dir.join("_sub.yml");
@@ -727,9 +747,9 @@ mod tests {
       let parent_file = config_dir.join("parent.yml");
       std::fs::write(
         &parent_file,
-        r#"
+        r"
       excludes: ['../**/another.yml']
-      "#,
+      ",
       )
       .unwrap();
 
@@ -807,7 +827,7 @@ mod tests {
 
       let config = ResolvedConfig::load(&config_file, None).unwrap();
 
-      *result_ref = config.is_match(app)
+      *result_ref = config.is_match(app);
     });
     result
   }
@@ -927,7 +947,7 @@ mod tests {
     };
 
     assert!(test_filter_is_match(
-      &format!("filter_os: {}", current),
+      &format!("filter_os: {current}"),
       &AppProperties {
         title: Some("Google Mail"),
         class: Some("Chrome"),
@@ -936,7 +956,7 @@ mod tests {
     ));
 
     assert!(!test_filter_is_match(
-      &format!("filter_os: {}", another),
+      &format!("filter_os: {another}"),
       &AppProperties {
         title: Some("Google Mail"),
         class: Some("Chrome"),

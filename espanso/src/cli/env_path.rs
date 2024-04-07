@@ -41,16 +41,14 @@ fn env_path_main(args: CliModuleArgs) -> i32 {
   if cli_args.subcommand_matches("register").is_some() {
     if let Err(error) = crate::path::add_espanso_to_path(elevated_priviledge_prompt) {
       error_print_and_log(&format!(
-        "Unable to add 'espanso' command to PATH: {:?}",
-        error
+        "Unable to add 'espanso' command to PATH: {error:?}"
       ));
       return ADD_TO_PATH_FAILURE;
     }
   } else if cli_args.subcommand_matches("unregister").is_some() {
     if let Err(error) = crate::path::remove_espanso_from_path(elevated_priviledge_prompt) {
       error_print_and_log(&format!(
-        "Unable to remove 'espanso' command from PATH: {:?}",
-        error
+        "Unable to remove 'espanso' command from PATH: {error:?}"
       ));
       return ADD_TO_PATH_FAILURE;
     }
@@ -63,6 +61,6 @@ fn env_path_main(args: CliModuleArgs) -> i32 {
 }
 
 fn error_print_and_log(msg: &str) {
-  error!("{}", msg);
-  eprintln!("{}", msg);
+  error!("{msg}");
+  eprintln!("{msg}");
 }

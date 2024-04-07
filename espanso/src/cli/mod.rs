@@ -59,7 +59,7 @@ impl Default for CliModule {
       disable_logs_terminal_output: false,
       requires_paths: false,
       requires_config: false,
-      subcommand: "".to_string(),
+      subcommand: String::new(),
       show_in_dock: false,
       requires_linux_capabilities: false,
       entry: |_| 0,
@@ -67,7 +67,7 @@ impl Default for CliModule {
   }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum LogMode {
   Read,
   AppendOnly,

@@ -2,8 +2,8 @@
 name = "espanso-clipboard"
 version = "0.1.0"
 authors = ["Federico Terzi <federico-terzi@users.noreply.github.com>"]
-edition = "2018"
-build="build.rs"
+edition = "2021"
+build = "build.rs"
 
 [features]
 # If the wayland feature is enabled, all X11 dependencies will be dropped
@@ -16,10 +16,11 @@ avoid-gdi = []
 
 [dependencies]
 log = "0.4.14"
-lazycell = "1.3.0"
 anyhow = "1.0.38"
 thiserror = "1.0.23"
-lazy_static = "1.4.0"
+
+[lints]
+workspace = true
 
 [target.'cfg(windows)'.dependencies]
 widestring = "0.4.3"

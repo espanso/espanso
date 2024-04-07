@@ -38,9 +38,6 @@ mod linux;
 #[cfg(target_os = "macos")]
 mod mac;
 
-#[macro_use]
-extern crate lazy_static;
-
 pub trait Injector {
   fn send_string(&self, string: &str, options: InjectionOptions) -> Result<()>;
   fn send_keys(&self, keys: &[keys::Key], options: InjectionOptions) -> Result<()>;
@@ -61,6 +58,10 @@ pub struct InjectionOptions {
   // Used to set a modifier-specific delay.
   // NOTE: Only relevant on Wayland systems.
   pub evdev_modifier_delay: u32,
+
+  // If true, use the xdotool fallback to perform the expansions.
+  // NOTE: Only relevant on Linux-X11 systems.
+  pub x11_use_xdotool_fallback: bool,
 }
 
 impl Default for InjectionOptions {
@@ -71,6 +72,7 @@ impl Default for InjectionOptions {
     } else if cfg!(target_os = "macos") {
       1
     } else if cfg!(target_os = "linux") {
+      #[allow(clippy::bool_to_int_with_if)]
       if cfg!(feature = "wayland") {
         1
       } else {
@@ -84,6 +86,7 @@ impl Default for InjectionOptions {
       delay: default_delay,
       disable_fast_inject: false,
       evdev_modifier_delay: 10,
+      x11_use_xdotool_fallback: false,
     }
   }
 }
@@ -148,8 +151,8 @@ pub fn get_injector(options: InjectorCreationOptions) -> Result<Box<dyn Injector
     info!("using EVDEVInjector");
     Ok(Box::new(evdev::EVDEVInjector::new(options)?))
   } else {
-    info!("using X11Injector");
-    Ok(Box::new(x11::X11Injector::new()?))
+    info!("using X11ProxyInjector");
+    Ok(Box::new(x11::X11ProxyInjector::new()?))
   }
 }
 

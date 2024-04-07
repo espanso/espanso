@@ -17,6 +17,7 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use lazy_static::lazy_static;
 use log::error;
 use std::collections::HashMap;
 use thiserror::Error;
@@ -59,9 +60,7 @@ impl<'a> Extension for FormExtension<'a> {
     _: &crate::Scope,
     params: &Params,
   ) -> crate::ExtensionResult {
-    let layout = if let Some(Value::String(layout)) = params.get("layout") {
-      layout
-    } else {
+    let Some(Value::String(layout)) = params.get("layout") else {
       return crate::ExtensionResult::Error(FormExtensionError::MissingLayout.into());
     };
 

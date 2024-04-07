@@ -24,6 +24,9 @@ fn main() {
   if wayland {
     println!("Using Wayland feature");
   }
+  else {
+    println!("Using X11 default feature");
+  }
 
   let mut args = Vec::new();
 
@@ -47,6 +50,13 @@ fn main() {
   let mut features = Vec::new();
   if wayland {
     features.push("wayland");
+  }
+  // On linux, we don't want to rely on OpenSSL to avoid dependency issues
+  // https://github.com/espanso/espanso/issues/1056
+  if cfg!(target_os = "linux") {
+    features.push("vendored-tls")
+  } else {
+    features.push("native-tls")
   }
 
   let features_flag = features.join(" ");

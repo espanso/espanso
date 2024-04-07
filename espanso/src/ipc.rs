@@ -31,6 +31,7 @@ pub enum IPCEvent {
   DisableRequest,
   ToggleRequest,
   OpenSearchBar,
+  OpenConfigFolder,
 
   RequestMatchExpansion(RequestMatchExpansionPayload),
 }
@@ -54,10 +55,10 @@ pub fn create_ipc_client_to_worker(runtime_dir: &Path) -> Result<impl IPCClient<
 }
 
 fn create_ipc_server(runtime_dir: &Path, name: &str) -> Result<impl IPCServer<IPCEvent>> {
-  espanso_ipc::server(&format!("espanso{}", name), runtime_dir)
+  espanso_ipc::server(&format!("espanso{name}"), runtime_dir)
 }
 
 fn create_ipc_client(runtime_dir: &Path, target_process: &str) -> Result<impl IPCClient<IPCEvent>> {
-  let client = espanso_ipc::client(&format!("espanso{}", target_process), runtime_dir)?;
+  let client = espanso_ipc::client(&format!("espanso{target_process}"), runtime_dir)?;
   Ok(client)
 }

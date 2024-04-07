@@ -34,6 +34,7 @@ pub trait Processor {
 // Dependency inversion entities
 
 pub use middleware::action::{EventSequenceProvider, MatchInfoProvider};
+pub use middleware::alt_code_synthesizer::AltCodeSynthEnabledProvider;
 pub use middleware::delay_modifiers::ModifierStatusProvider;
 pub use middleware::disable::DisableOptions;
 pub use middleware::image_resolve::PathProvider;
@@ -45,6 +46,7 @@ pub use middleware::matcher::{
 };
 pub use middleware::multiplex::Multiplexer;
 pub use middleware::notification::NotificationManager;
+pub use middleware::open_config::ConfigPathProvider;
 pub use middleware::render::{Renderer, RendererError};
 pub use middleware::search::MatchProvider;
 pub use middleware::suppress::EnabledStatusProvider;
@@ -61,6 +63,7 @@ pub fn default<'a, MatcherState>(
   modifier_status_provider: &'a dyn ModifierStatusProvider,
   event_sequence_provider: &'a dyn EventSequenceProvider,
   path_provider: &'a dyn PathProvider,
+  config_path_provider: &'a dyn ConfigPathProvider,
   disable_options: DisableOptions,
   matcher_options_provider: &'a dyn MatcherMiddlewareConfigProvider,
   match_provider: &'a dyn MatchProvider,
@@ -69,6 +72,7 @@ pub fn default<'a, MatcherState>(
   modifier_state_provider: &'a dyn ModifierStateProvider,
   match_resolver: &'a dyn MatchResolver,
   notification_manager: &'a dyn NotificationManager,
+  alt_code_synth_enabled_provider: &'a dyn AltCodeSynthEnabledProvider,
 ) -> impl Processor + 'a {
   default::DefaultProcessor::new(
     matchers,
@@ -80,6 +84,7 @@ pub fn default<'a, MatcherState>(
     modifier_status_provider,
     event_sequence_provider,
     path_provider,
+    config_path_provider,
     disable_options,
     matcher_options_provider,
     match_provider,
@@ -88,5 +93,6 @@ pub fn default<'a, MatcherState>(
     modifier_state_provider,
     match_resolver,
     notification_manager,
+    alt_code_synth_enabled_provider,
   )
 }

@@ -18,6 +18,7 @@
  */
 
 pub mod action;
+pub mod alt_code_synthesizer;
 pub mod cause;
 pub mod context_menu;
 pub mod cursor_hint;
@@ -34,6 +35,7 @@ pub mod match_select;
 pub mod matcher;
 pub mod multiplex;
 pub mod notification;
+pub mod open_config;
 pub mod render;
 pub mod search;
 pub mod suppress;

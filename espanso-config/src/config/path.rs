@@ -20,6 +20,7 @@
 use std::{collections::HashSet, path::Path};
 
 use glob::glob;
+use lazy_static::lazy_static;
 use log::error;
 use regex::Regex;
 
@@ -101,7 +102,7 @@ pub mod tests {
 
       let result = calculate_paths(
         base,
-        vec![
+        [
           "**/*.yml".to_string(),
           "match/sub/*.yml".to_string(),
           // Invalid path
@@ -127,15 +128,15 @@ pub mod tests {
       create_dir_all(&sub_dir).unwrap();
 
       let base_file = match_dir.join("base.yml");
-      std::fs::write(&base_file, "test").unwrap();
+      std::fs::write(base_file, "test").unwrap();
       let another_file = match_dir.join("another.yml");
-      std::fs::write(&another_file, "test").unwrap();
+      std::fs::write(another_file, "test").unwrap();
       let under_file = match_dir.join("_sub.yml");
-      std::fs::write(&under_file, "test").unwrap();
+      std::fs::write(under_file, "test").unwrap();
       let sub_file = sub_dir.join("sub.yml");
       std::fs::write(&sub_file, "test").unwrap();
 
-      let result = calculate_paths(base, vec!["match/sub/../sub/*.yml".to_string()].iter());
+      let result = calculate_paths(base, ["match/sub/../sub/*.yml".to_string()].iter());
 
       let mut expected = HashSet::new();
       expected.insert(sub_file.to_string_lossy().to_string());
@@ -161,7 +162,7 @@ pub mod tests {
 
       let result = calculate_paths(
         base,
-        vec![
+        [
           format!("{}/**/*.yml", base.to_string_lossy()),
           format!("{}/match/sub/*.yml", base.to_string_lossy()),
           // Invalid path

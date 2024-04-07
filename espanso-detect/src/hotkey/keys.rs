@@ -19,13 +19,14 @@
 
 use std::fmt::Display;
 
+use lazy_static::lazy_static;
 use regex::Regex;
 
 lazy_static! {
   static ref RAW_PARSER: Regex = Regex::new(r"^RAW\((\d+)\)$").unwrap();
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Eq)]
 pub enum ShortcutKey {
   Alt,
   Control,
@@ -210,7 +211,7 @@ impl Display for ShortcutKey {
       ShortcutKey::Numpad7 => write!(f, "NUMPAD7"),
       ShortcutKey::Numpad8 => write!(f, "NUMPAD8"),
       ShortcutKey::Numpad9 => write!(f, "NUMPAD9"),
-      ShortcutKey::Raw(code) => write!(f, "RAW({})", code),
+      ShortcutKey::Raw(code) => write!(f, "RAW({code})"),
     }
   }
 }
@@ -591,7 +592,7 @@ impl ShortcutKey {
       ShortcutKey::Numpad7 => Some(0xffb7),
       ShortcutKey::Numpad8 => Some(0xffb8),
       ShortcutKey::Numpad9 => Some(0xffb9),
-      ShortcutKey::Raw(code) => Some(*code as u32),
+      ShortcutKey::Raw(code) => Some(*code),
     }
   }
 }

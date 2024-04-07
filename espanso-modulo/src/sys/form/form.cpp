@@ -221,7 +221,7 @@ void FormFrame::AddComponent(wxPanel *parent, wxBoxSizer *sizer, FieldMetadata m
                 // ListBoxes prevent the global CHAR_HOOK handler from handling the Return key
                 // correctly, so we need to handle the double click event too (which is triggered
                 // when the enter key is pressed).
-                // See: https://github.com/federico-terzi/espanso/issues/857
+                // See: https://github.com/espanso/espanso/issues/857
                 ((wxListBox*)choice)->Bind(wxEVT_LISTBOX_DCLICK, &FormFrame::OnListBoxEvent, this, wxID_ANY);
                 
                 // Create the field wrapper

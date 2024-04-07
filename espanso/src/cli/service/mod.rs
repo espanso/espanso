@@ -76,16 +76,14 @@ fn service_main(args: CliModuleArgs) -> i32 {
     if let Err(err) = register() {
       error_eprintln!("unable to register service: {}", err);
       return SERVICE_FAILURE;
-    } else {
-      info_println!("service registered correctly!");
     }
+    info_println!("service registered correctly!");
   } else if cli_args.subcommand_matches("unregister").is_some() {
     if let Err(err) = unregister() {
       error_eprintln!("unable to unregister service: {}", err);
       return SERVICE_FAILURE;
-    } else {
-      info_println!("service unregistered correctly!");
     }
+    info_println!("service unregistered correctly!");
   } else if cli_args.subcommand_matches("check").is_some() {
     if is_registered() {
       info_println!("registered as a service");
@@ -152,6 +150,14 @@ fn start_main(paths: &Paths, _paths_overrides: &PathsOverrides, args: &ArgMatche
   }
 
   error_eprintln!("unable to start service: timed out");
+
+  error_eprintln!(
+    "Hint: sometimes this happens because another Espanso process is left running for some reason."
+  );
+  error_eprintln!(
+    "      Please try running 'espanso restart' or manually killing all Espanso processes, then try again."
+  );
+
   SERVICE_TIMED_OUT
 }
 

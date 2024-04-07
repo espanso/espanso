@@ -40,6 +40,7 @@ pub struct ClipboardParams {
   pub restore_clipboard: bool,
   pub restore_clipboard_delay: usize,
   pub x11_use_xclip_backend: bool,
+  pub x11_use_xdotool_backend: bool,
 }
 
 pub struct ClipboardInjectorAdapter<'a> {
@@ -84,7 +85,7 @@ impl<'a> ClipboardInjectorAdapter<'a> {
     } else if cfg!(target_os = "linux") && cfg!(feature = "wayland") {
       // Because on Wayland we currently don't have app-specific configs (and therefore no patches)
       // we switch to the more supported SHIFT+INSERT combination
-      // See: https://github.com/federico-terzi/espanso/issues/899
+      // See: https://github.com/espanso/espanso/issues/899
       vec![Key::Shift, Key::Insert]
     } else {
       vec![Key::Control, Key::V]
@@ -95,6 +96,7 @@ impl<'a> ClipboardInjectorAdapter<'a> {
       InjectionOptions {
         delay: params.paste_shortcut_event_delay as i32,
         disable_fast_inject: params.disable_x11_fast_inject,
+        x11_use_xdotool_fallback: params.x11_use_xdotool_backend,
         ..Default::default()
       },
     )?;

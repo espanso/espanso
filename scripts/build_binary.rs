@@ -23,11 +23,15 @@ fn main() {
   let wayland = envmnt::get_or("NO_X11", "false") == "true";
   if wayland {
     println!("Using Wayland feature");
+  } else {
+    println!("Using X11 default feature");
   }
 
   let avoid_modulo = envmnt::get_or("NO_MODULO", "false") == "true";
   if avoid_modulo {
     println!("Skipping modulo feature");
+  } else {
+    println!("Building with default modulo");
   }
 
   let mut args = Vec::new();
@@ -52,6 +56,13 @@ fn main() {
   }
   if !avoid_modulo {
     features.push("modulo");
+  }
+  // On linux, we don't want to rely on OpenSSL to avoid dependency issues
+  // https://github.com/espanso/espanso/issues/1056
+  if cfg!(target_os = "linux") {
+    features.push("vendored-tls")
+  } else {
+    features.push("native-tls")
   }
 
   let features_flag = features.join(" ");

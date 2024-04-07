@@ -23,7 +23,7 @@ pub mod matcher;
 mod tree;
 mod util;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum RollingItem {
   WordSeparator,
   Key(Key),
@@ -31,7 +31,7 @@ pub enum RollingItem {
   CharInsensitive(String),
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct RollingMatch<Id> {
   pub id: Id,
   pub items: Vec<RollingItem>,
@@ -51,9 +51,9 @@ impl<Id> RollingMatch<Id> {
 
     for c in string.chars() {
       if opt.case_insensitive {
-        items.push(RollingItem::CharInsensitive(c.to_string()))
+        items.push(RollingItem::CharInsensitive(c.to_string()));
       } else {
-        items.push(RollingItem::Char(c.to_string()))
+        items.push(RollingItem::Char(c.to_string()));
       }
     }
 
@@ -96,7 +96,7 @@ mod tests {
           RollingItem::Char("t".to_string()),
         ]
       }
-    )
+    );
   }
 
   #[test]
@@ -120,7 +120,7 @@ mod tests {
           RollingItem::Char("t".to_string()),
         ]
       }
-    )
+    );
   }
 
   #[test]
@@ -144,7 +144,7 @@ mod tests {
           RollingItem::WordSeparator,
         ]
       }
-    )
+    );
   }
 
   #[test]
@@ -167,6 +167,6 @@ mod tests {
           RollingItem::CharInsensitive("t".to_string()),
         ]
       }
-    )
+    );
   }
 }

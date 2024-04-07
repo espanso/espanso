@@ -1,41 +1,56 @@
 [package]
 name = "espanso"
-version = "2.1.4-beta"
+version = "2.2.1"
 authors = ["Federico Terzi <federicoterzi96@gmail.com>"]
 license = "GPL-3.0"
 description = "Cross-platform Text Expander written in Rust"
 readme = "README.md"
-homepage = "https://github.com/federico-terzi/espanso"
-edition = "2018"
+homepage = "https://github.com/espanso/espanso"
+edition = "2021"
 
 [features]
-default = ["modulo"]
+default = ["modulo", "native-tls"]
+
+# These features control whether Espanso will use the native TLS functionality
+# or not. On some platforms (currently Linux) we prefer vendoring the SSL
+# logic used by the packages to avoid dependency issues.
+# https://github.com/espanso/espanso/issues/1056
+native-tls = ["espanso-package/default-tls"]
+vendored-tls = ["espanso-package/rustls-tls"]
 
 # If the wayland feature is enabled, all X11 dependencies will be dropped
 # and only methods suitable for Wayland will be used
-wayland = ["espanso-detect/wayland", "espanso-inject/wayland", "espanso-clipboard/wayland", "espanso-info/wayland"]
+wayland = [
+    "espanso-detect/wayland",
+    "espanso-inject/wayland",
+    "espanso-clipboard/wayland",
+    "espanso-info/wayland",
+]
 
 # Compile modulo and all its dependencies (including wxWidgets). If you don't
 # enable it, features like Forms and Search might not be available.
-modulo = ["espanso-modulo", "espanso-clipboard/avoid-gdi", "espanso-ui/avoid-gdi"]
+modulo = [
+    "espanso-modulo",
+    "espanso-clipboard/avoid-gdi",
+    "espanso-ui/avoid-gdi",
+]
 
 [dependencies]
-espanso-detect = { path = "../espanso-detect" } 
-espanso-ui = { path = "../espanso-ui" } 
-espanso-inject = { path = "../espanso-inject" } 
-espanso-config = { path = "../espanso-config" } 
-espanso-match = { path = "../espanso-match" } 
-espanso-clipboard = { path = "../espanso-clipboard" } 
-espanso-info = { path = "../espanso-info" } 
-espanso-render = { path = "../espanso-render" } 
-espanso-path = { path = "../espanso-path" } 
-espanso-ipc = { path = "../espanso-ipc" } 
+espanso-detect = { path = "../espanso-detect" }
+espanso-ui = { path = "../espanso-ui" }
+espanso-inject = { path = "../espanso-inject" }
+espanso-config = { path = "../espanso-config" }
+espanso-match = { path = "../espanso-match" }
+espanso-clipboard = { path = "../espanso-clipboard" }
+espanso-info = { path = "../espanso-info" }
+espanso-render = { path = "../espanso-render" }
+espanso-path = { path = "../espanso-path" }
+espanso-ipc = { path = "../espanso-ipc" }
 espanso-modulo = { path = "../espanso-modulo", optional = true }
-espanso-migrate = { path = "../espanso-migrate" } 
-espanso-kvs = { path = "../espanso-kvs" } 
-espanso-engine = { path = "../espanso-engine" } 
-espanso-package = { path = "../espanso-package"}
-maplit = "1.0.2"
+espanso-migrate = { path = "../espanso-migrate" }
+espanso-kvs = { path = "../espanso-kvs" }
+espanso-engine = { path = "../espanso-engine" }
+espanso-package = { path = "../espanso-package" }
 simplelog = "0.9.0"
 log = "0.4.14"
 anyhow = "1.0.38"
@@ -50,12 +65,13 @@ serde_json = "1.0.62"
 log-panics = "2.0.0"
 fs2 = "0.4.3"
 serde_yaml = "0.8.17"
-fs_extra = "1.2.0"
+fs_extra = "1.3.0"
 dialoguer = "0.8.0"
 colored = "2.0.0"
 tempdir = "0.3.7"
 notify = "4.0.17"
 opener = "0.5.0"
+sysinfo = "0.28.4"
 
 [target.'cfg(windows)'.dependencies]
 named_pipe = "0.4.1"
@@ -67,21 +83,21 @@ widestring = "0.4.3"
 libc = "0.2.98"
 
 [target.'cfg(target_os="macos")'.dependencies]
-espanso-mac-utils = { path = "../espanso-mac-utils" } 
+espanso-mac-utils = { path = "../espanso-mac-utils" }
 
 [target.'cfg(target_os="linux")'.dependencies]
 caps = "0.5.2"
 const_format = "0.2.14"
-regex = "1.4.3"
+regex = "1.5.5"
 
 [package.metadata.deb]
 maintainer = "Federico Terzi <federicoterzi96@gmail.com>"
-depends = "$auto, systemd, libxtst6, xclip, libnotify-bin, libxkbcommon0, libwxgtk3.0-gtk3-0v5"
+depends = "libc6 (>= 2.27), libdbus-1-3 (>= 1.9.14), libgcc1 (>= 1:4.2), libnotify-bin, libstdc++6 (>=6), libwxgtk3.0-gtk3-0v5 (>= 3.0.4+dfsg) | libwxgtk3.2-1, libx11-6, libxcb1, libxkbcommon0 (>= 0.5.0), libxtst6, systemd, xclip"
 section = "utility"
 license-file = ["../LICENSE", "1"]
 
 [package.metadata.deb.variants.wayland]
-depends = "$auto, systemd, libnotify-bin, libxkbcommon0, libwxgtk3.0-gtk3-0v5, wl-clipboard"
-# TODO: once this issue [1] is fixed, we should create a variant for 
+depends = "libc6 (>= 2.27), libdbus-1-3 (>= 1.9.14), libgcc1 (>= 1:4.2), libnotify-bin, libstdc++6 (>= 5), libwxgtk3.0-gtk3-0v5 (>= 3.0.4+dfsg) | libwxgtk3.2-1, libxkbcommon0 (>= 0.5.0), systemd, wl-clipboard"
+# TODO: once this issue [1] is fixed, we should create a variant for
 # wayland to automatically run the setcap script.
 # [1]: https://github.com/mmstick/cargo-deb/issues/151

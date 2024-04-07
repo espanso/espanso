@@ -30,7 +30,7 @@ mod util;
 
 pub const PACKAGE_SOURCE_FILE: &str = "_pkgsource.yml";
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct ArchivedPackage {
   // Metadata
   pub manifest: Manifest,
@@ -39,12 +39,12 @@ pub struct ArchivedPackage {
   pub source: PackageSource,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct LegacyPackage {
   pub name: String,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum StoredPackage {
   Legacy(LegacyPackage),
   Modern(ArchivedPackage),
@@ -67,7 +67,7 @@ pub struct SaveOptions {
   pub overwrite_existing: bool,
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum PackageSource {
   Hub,
@@ -93,7 +93,7 @@ impl std::fmt::Display for PackageSource {
         repo_url,
         repo_branch: _,
         use_native_git: _,
-      } => write!(f, "git: {}", repo_url),
+      } => write!(f, "git: {repo_url}"),
     }
   }
 }

@@ -22,6 +22,7 @@ use log::trace;
 use super::{
   middleware::{
     action::{ActionMiddleware, EventSequenceProvider},
+    alt_code_synthesizer::AltCodeSynthesizerMiddleware,
     cause::CauseCompensateMiddleware,
     cursor_hint::CursorHintMiddleware,
     delay_modifiers::{DelayForModifierReleaseMiddleware, ModifierStatusProvider},
@@ -30,12 +31,14 @@ use super::{
     match_select::MatchSelectMiddleware,
     matcher::MatcherMiddleware,
     multiplex::MultiplexMiddleware,
+    open_config::ConfigMiddleware,
+    open_config::ConfigPathProvider,
     render::RenderMiddleware,
   },
-  DisableOptions, EnabledStatusProvider, MatchFilter, MatchInfoProvider, MatchProvider,
-  MatchResolver, MatchSelector, Matcher, MatcherMiddlewareConfigProvider, Middleware,
-  ModifierStateProvider, Multiplexer, NotificationManager, PathProvider, Processor, Renderer,
-  UndoEnabledProvider,
+  AltCodeSynthEnabledProvider, DisableOptions, EnabledStatusProvider, MatchFilter,
+  MatchInfoProvider, MatchProvider, MatchResolver, MatchSelector, Matcher,
+  MatcherMiddlewareConfigProvider, Middleware, ModifierStateProvider, Multiplexer,
+  NotificationManager, PathProvider, Processor, Renderer, UndoEnabledProvider,
 };
 use crate::{
   event::{Event, EventType},
@@ -66,6 +69,7 @@ impl<'a> DefaultProcessor<'a> {
     modifier_status_provider: &'a dyn ModifierStatusProvider,
     event_sequence_provider: &'a dyn EventSequenceProvider,
     path_provider: &'a dyn PathProvider,
+    config_path_provider: &'a dyn ConfigPathProvider,
     disable_options: DisableOptions,
     matcher_options_provider: &'a dyn MatcherMiddlewareConfigProvider,
     match_provider: &'a dyn MatchProvider,
@@ -74,6 +78,7 @@ impl<'a> DefaultProcessor<'a> {
     modifier_state_provider: &'a dyn ModifierStateProvider,
     match_resolver: &'a dyn MatchResolver,
     notification_manager: &'a dyn NotificationManager,
+    alt_code_synth_enabled_provider: &'a dyn AltCodeSynthEnabledProvider,
   ) -> DefaultProcessor<'a> {
     Self {
       event_queue: VecDeque::new(),
@@ -81,6 +86,9 @@ impl<'a> DefaultProcessor<'a> {
         Box::new(EventsDiscardMiddleware::new()),
         Box::new(DisableMiddleware::new(disable_options)),
         Box::new(IconStatusMiddleware::new()),
+        Box::new(AltCodeSynthesizerMiddleware::new(
+          alt_code_synth_enabled_provider,
+        )),
         Box::new(MatcherMiddleware::new(
           matchers,
           matcher_options_provider,
@@ -96,6 +104,7 @@ impl<'a> DefaultProcessor<'a> {
           event_sequence_provider,
         )),
         Box::new(CauseCompensateMiddleware::new()),
+        Box::new(ConfigMiddleware::new(config_path_provider)),
         Box::new(MultiplexMiddleware::new(multiplexer)),
         Box::new(RenderMiddleware::new(renderer)),
         Box::new(ImageResolverMiddleware::new(path_provider)),
@@ -127,7 +136,7 @@ impl<'a> DefaultProcessor<'a> {
       };
 
       trace!("--------------- new event -----------------");
-      for middleware in self.middleware.iter() {
+      for middleware in &self.middleware {
         trace!(
           "middleware '{}' received event: {:?}",
           middleware.name(),

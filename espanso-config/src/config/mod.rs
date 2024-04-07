@@ -147,7 +147,7 @@ pub trait Config: Send + Sync {
   // Note: currently not working on Linux
   fn show_icon(&self) -> bool;
 
-  // If false, avoid showing the SecureInput notification on macOS
+  // If false, avoid showing the `SecureInput`` notification on macOS
   fn secure_input_notification(&self) -> bool;
 
   // The number of milliseconds to wait after a form has been closed.
@@ -162,9 +162,21 @@ pub trait Config: Send + Sync {
   // not be targeted to the right application.
   fn post_search_delay(&self) -> usize;
 
+  // If enabled, Espanso emulates the Alt Code feature available on Windows
+  // (keeping ALT pressed and then typing a char code with the numpad).
+  // This feature is necessary on Windows because the mechanism used by Espanso
+  // to intercept keystrokes disables the Windows' native Alt code functionality
+  // as a side effect.
+  // Because many users relied on this feature, we try to bring it back by emulating it.
+  fn emulate_alt_codes(&self) -> bool;
+
   // If true, use the `xclip` command to implement the clipboard instead of
   // the built-in native module on X11.
   fn x11_use_xclip_backend(&self) -> bool;
+
+  // If true, use an alternative injection backend based on the `xdotool` library.
+  // This might improve the situation for certain locales/layouts on X11.
+  fn x11_use_xdotool_backend(&self) -> bool;
 
   // If true, filter out keyboard events without an explicit HID device source on Windows.
   // This is needed to filter out the software-generated events, including
@@ -175,9 +187,10 @@ pub trait Config: Send + Sync {
   // The maximum interval (in milliseconds) for which a keyboard layout
   // can be cached. If switching often between different layouts, you
   // could lower this amount to avoid the "lost detection" effect described
-  // in this issue: https://github.com/federico-terzi/espanso/issues/745
+  // in this issue: https://github.com/espanso/espanso/issues/745
   fn win32_keyboard_layout_cache_interval(&self) -> i64;
 
+  #[allow(clippy::needless_lifetimes)]
   fn is_match<'a>(&self, app: &AppProperties<'a>) -> bool;
 
   fn pretty_dump(&self) -> String {
@@ -212,6 +225,7 @@ pub trait Config: Send + Sync {
         secure_input_notification: {:?}
 
         x11_use_xclip_backend: {:?}
+        x11_use_xdotool_backend: {:?}
         win32_exclude_orphan_events: {:?}
         win32_keyboard_layout_cache_interval: {:?}
 
@@ -246,6 +260,7 @@ pub trait Config: Send + Sync {
       self.secure_input_notification(),
 
       self.x11_use_xclip_backend(),
+      self.x11_use_xdotool_backend(),
       self.win32_exclude_orphan_events(),
       self.win32_keyboard_layout_cache_interval(),
 
@@ -256,7 +271,7 @@ pub trait Config: Send + Sync {
 
 pub trait ConfigStore: Send {
   fn default(&self) -> Arc<dyn Config>;
-  fn active<'a>(&'a self, app: &AppProperties) -> Arc<dyn Config>;
+  fn active(&self, app: &AppProperties) -> Arc<dyn Config>;
   fn configs(&self) -> Vec<Arc<dyn Config>>;
 
   fn get_all_match_paths(&self) -> HashSet<String>;
