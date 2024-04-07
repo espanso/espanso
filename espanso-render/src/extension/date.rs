@@ -451,7 +451,7 @@ mod tests {
   fn date_formatted_correctly() {
     let locale_provider = MockLocaleProvider::new();
     let mut extension = DateExtension::new(&locale_provider);
-    extension.fixed_date = Some(Local.with_ymd_and_hms(2014, 7, 8,9, 10, 11));
+    extension.fixed_date = Some(Local.with_ymd_and_hms(2014, 7, 8, 9, 10, 11));
 
     let param = vec![("format".to_string(), Value::String("%H:%M:%S".to_string()))]
       .into_iter()
