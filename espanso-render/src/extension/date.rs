@@ -56,8 +56,8 @@ impl<'a> Extension for DateExtension<'a> {
     // Compute the given offset
     let offset = params.get("offset");
     if let Some(Value::Number(Number::Integer(offset))) = offset {
-      let offset = Duration::try_seconds(*offset);
-      now += offset;
+      let offset = Duration::try_seconds(*offset).unwrap();
+      now = now.checked_add_signed(offset);
     }
 
     let format = params.get("format");
