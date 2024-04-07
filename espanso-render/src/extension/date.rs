@@ -57,7 +57,9 @@ impl<'a> Extension for DateExtension<'a> {
     let offset = params.get("offset");
     if let Some(Value::Number(Number::Integer(offset))) = offset {
       let offset = Duration::try_seconds(*offset).unwrap();
-      now = now.checked_add_signed(offset);
+      now = now
+        .checked_add_signed(offset)
+        .expect("could not add the offset to the now DateTime");
     }
 
     let format = params.get("format");
