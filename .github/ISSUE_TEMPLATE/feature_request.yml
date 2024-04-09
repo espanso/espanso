@@ -1,0 +1,28 @@
+name: 🚀 Feature Request / RFC
+description: Suggest an idea to make Espanso better
+labels: [feature, "status: needs triage"]
+body:
+  - type: textarea
+    attributes:
+      label: Description
+      description: A clear and concise description of what the feature is. Feel free to include any screenshots, API design, or other contextual information.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Motivation
+      description: Please outline the motivation for the proposal and why it should be implemented.
+
+  - type: textarea
+    attributes:
+      label: Alternatives
+      description: A clear and concise description of any alternative solutions or features you've considered.
+
+  - type: checkboxes
+    attributes:
+      label: Have you tried building it? Or would you like it?
+      description: |
+        If you feel like you could contribute directly to Espanso, please check the box below. This would tell us and other people looking for contributions that someone's working on it.
+      options:
+        - label: I'd be willing to contribute this feature to Espanso myself.

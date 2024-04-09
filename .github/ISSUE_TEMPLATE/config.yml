@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📖 Espanso Documentation
+    url: https://espanso.org/docs/
+    about: Our Espanso documentation shows you how to configure matches, use packages and much more.
+  - name: 💬 Discord
+    url: https://discord.gg/DFcCNDg7bB
+    about: Our official Discord where you can connect with our community.
+  - name: ❓ Reddit
+    url: https://www.reddit.com/r/espanso/
+    about: Our official Reddit community in which you can ask questions and receive updates on Espanso.
