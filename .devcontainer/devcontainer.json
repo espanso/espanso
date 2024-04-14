@@ -9,7 +9,8 @@
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	"features": {		
 		"./features/rust-dependencies": {},
-		"./features/x11-dependencies": {}
+		"./features/x11-dependencies": {},
+		"ghcr.io/devcontainers/features/desktop-lite:1": {}
 	},
 
 	// Use a mount to make the cargo cache persistent in a Docker Volume.
@@ -19,5 +20,17 @@
 			"target": "/usr/local/cargo",
 			"type": "volume"
 		}
-	]
+	],
+
+	"forwardPorts": [5901, 6080],
+	"portsAttributes": {
+		"5901": {
+			"label": "vnc"
+		},
+
+		"6080": {
+			"label": "vnc-web",
+			"protocol": "http"
+		}
+	}
 }
