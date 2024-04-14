@@ -27,6 +27,7 @@ use crate::{
   },
 };
 use anyhow::{anyhow, bail, Context, Result};
+use lazy_static::lazy_static;
 use parse::YAMLMatchGroup;
 use regex::{Captures, Regex};
 
@@ -73,7 +74,7 @@ impl Importer for YAMLImporter {
     let mut non_fatal_errors = Vec::new();
 
     let mut global_vars = Vec::new();
-    for yaml_global_var in yaml_group.global_vars.as_ref().cloned().unwrap_or_default() {
+    for yaml_global_var in yaml_group.global_vars.clone().unwrap_or_default() {
       match try_convert_into_variable(yaml_global_var, false) {
         Ok((var, warnings)) => {
           global_vars.push(var);
@@ -86,7 +87,7 @@ impl Importer for YAMLImporter {
     }
 
     let mut matches = Vec::new();
-    for yaml_match in yaml_group.matches.as_ref().cloned().unwrap_or_default() {
+    for yaml_match in yaml_group.matches.clone().unwrap_or_default() {
       match try_convert_into_match(yaml_match, false) {
         Ok((m, warnings)) => {
           matches.push(m);
@@ -352,8 +353,7 @@ mod tests {
     let (m, warnings) = create_match_with_warnings(yaml, false)?;
     assert!(
       warnings.is_empty(),
-      "warnings were detected but not handled: {:?}",
-      warnings
+      "warnings were detected but not handled: {warnings:?}"
     );
     Ok(m)
   }

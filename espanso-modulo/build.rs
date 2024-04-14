@@ -158,15 +158,10 @@ fn build_native() {
   let project_dir =
     PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").expect("missing CARGO_MANIFEST_DIR"));
   let wx_archive = project_dir.join("vendor").join(WX_WIDGETS_ARCHIVE_NAME);
-  if !wx_archive.is_file() {
-    panic!("could not find wxWidgets archive!");
-  }
+  assert!(wx_archive.is_file(), "could not find wxWidgets archive!");
 
   let out_dir = if let Ok(out_path) = std::env::var(WX_WIDGETS_BUILD_OUT_DIR_ENV_NAME) {
-    println!(
-      "detected wxWidgets build output directory override: {}",
-      out_path
-    );
+    println!("detected wxWidgets build output directory override: {out_path}");
     let path = PathBuf::from(out_path);
     std::fs::create_dir_all(&path).expect("unable to create wxWidgets out dir");
     path
@@ -182,7 +177,7 @@ fn build_native() {
   {
     "x86_64" => "x86_64",
     "aarch64" => "arm64",
-    arch => panic!("unsupported arch {}", arch),
+    arch => panic!("unsupported arch {arch}"),
   };
 
   let should_use_ci_m1_workaround =
@@ -226,7 +221,7 @@ fn build_native() {
           "--without-liblzma",
           "--with-libjpeg=builtin",
           "--with-libpng=builtin",
-          &format!("--enable-macosx_arch={}", target_arch),
+          &format!("--enable-macosx_arch={target_arch}"),
         ])
         .spawn()
         .expect("failed to execute configure")
@@ -255,9 +250,10 @@ fn build_native() {
   }
 
   // Make sure wxWidgets is compiled
-  if !out_wx_dir.join("build-cocoa").is_dir() {
-    panic!("wxWidgets is not compiled correctly, missing 'build-cocoa/' directory")
-  }
+  assert!(
+    out_wx_dir.join("build-cocoa").is_dir(),
+    "wxWidgets is not compiled correctly, missing 'build-cocoa/' directory"
+  );
 
   // If using the M1 CI workaround, convert all the universal libraries to arm64 ones
   // This is needed until https://github.com/rust-lang/rust/issues/55235 is fixed
@@ -302,7 +298,7 @@ fn build_native() {
   // More details at https://github.com/alexcrichton/curl-rust/issues/279.
   if let Some(path) = macos_link_search_path() {
     println!("cargo:rustc-link-lib=clang_rt.osx");
-    println!("cargo:rustc-link-search={}", path);
+    println!("cargo:rustc-link-search={path}");
   }
 }
 
@@ -341,9 +337,10 @@ fn convert_fat_libraries_to_arm(lib_dir: &Path) {
       .output()
       .expect("unable to extract arm64 slice from library");
 
-    if !result.status.success() {
-      panic!("unable to convert fat library to arm64 version");
-    }
+    assert!(
+      result.status.success(),
+      "unable to convert fat library to arm64 version"
+    );
   }
 }
 
@@ -358,10 +355,10 @@ fn get_cpp_flags(wx_config_path: &Path) -> Vec<String> {
   let cpp_flags: Vec<String> = config_libs
     .split(' ')
     .filter_map(|s| {
-      if !s.trim().is_empty() {
-        Some(s.trim().to_owned())
-      } else {
+      if s.trim().is_empty() {
         None
+      } else {
+        Some(s.trim().to_owned())
       }
     })
     .collect();
@@ -380,10 +377,10 @@ fn generate_linker_flags(wx_config_path: &Path) {
   let linker_flags: Vec<String> = config_libs
     .split(' ')
     .filter_map(|s| {
-      if !s.trim().is_empty() {
-        Some(s.trim().to_owned())
-      } else {
+      if s.trim().is_empty() {
         None
+      } else {
+        Some(s.trim().to_owned())
       }
     })
     .collect();
@@ -395,7 +392,7 @@ fn generate_linker_flags(wx_config_path: &Path) {
   for (i, flag) in linker_flags.iter().enumerate() {
     if flag.starts_with("-L") {
       let path = flag.trim_start_matches("-L");
-      println!("cargo:rustc-link-search=native={}", path);
+      println!("cargo:rustc-link-search=native={path}");
     } else if flag.starts_with("-framework") {
       println!("cargo:rustc-link-lib=framework={}", linker_flags[i + 1]);
     } else if flag.starts_with('/') {
@@ -406,7 +403,7 @@ fn generate_linker_flags(wx_config_path: &Path) {
       println!("cargo:rustc-link-lib=static={}", libname.as_str());
     } else if flag.starts_with("-l") {
       let libname = flag.trim_start_matches("-l");
-      println!("cargo:rustc-link-lib=dylib={}", libname);
+      println!("cargo:rustc-link-lib=dylib={libname}");
     }
   }
 }
@@ -427,7 +424,7 @@ fn macos_link_search_path() -> Option<String> {
   for line in stdout.lines() {
     if line.contains("libraries: =") {
       let path = line.split('=').nth(1)?;
-      return Some(format!("{}/lib/darwin", path));
+      return Some(format!("{path}/lib/darwin"));
     }
   }
 
@@ -443,24 +440,24 @@ fn macos_link_search_path() -> Option<String> {
 #[cfg(target_os = "linux")]
 fn build_native() {
   // Make sure wxWidgets is installed
-  // Depending on the installation package, the 'wx-config' command might also be available as 'wx-config-gtk3',
-  // so we need to check for both.
+  // Depending on the installation package, the 'wx-config' command might be available under
+  // different names, so we need to check them all.
   // See also: https://github.com/espanso/espanso/issues/840
-  let wx_config_command = if std::process::Command::new("wx-config")
-    .arg("--version")
-    .output()
-    .is_ok()
-  {
-    "wx-config"
-  } else if std::process::Command::new("wx-config-gtk3")
-    .arg("--version")
-    .output()
-    .is_ok()
-  {
-    "wx-config-gtk3"
-  } else {
-    panic!("wxWidgets is not installed, as `wx-config` cannot be executed")
-  };
+  let possible_wx_config_names = ["wx-config", "wx-config-gtk3", "wx-config-qt"];
+  let wx_config_command = possible_wx_config_names
+    .iter()
+    .find(|&name| {
+      std::process::Command::new(name)
+        .arg("--version")
+        .output()
+        .is_ok()
+    })
+    .unwrap_or_else(|| {
+      panic!(
+        "wxWidgets is not installed, cannot execute {}",
+        possible_wx_config_names.join(" or ")
+      )
+    });
 
   let config_path = PathBuf::from(wx_config_command);
   let cpp_flags = get_cpp_flags(&config_path);

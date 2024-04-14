@@ -22,6 +22,6 @@ pub enum TrayIcon {
   Normal,
   Disabled,
 
-  // For example, when macOS activates SecureInput
+  // For example, when macOS activates `SecureInput`
   SystemDisabled,
 }
