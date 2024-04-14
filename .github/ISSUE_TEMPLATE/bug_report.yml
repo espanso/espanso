@@ -1,0 +1,56 @@
+name: 🐛 Bug Report
+description: Let us know about a bug in Espanso
+labels: [bug, "status: needs triage"]
+body:
+  - type: textarea
+    attributes:
+      label: Description
+      description: A clear and concise description of what the bug is.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Steps to reproduce
+      description: Write down the steps to reproduce the bug.
+      placeholder: |
+        1. Step 1...
+        2. Step 2...
+        3. Step 3...
+
+  - type: textarea
+    attributes:
+      label: Expected behavior
+      description: |
+        A clear and concise description of what you expected to happen. It's fine if you're not sure your understanding is correct.
+      placeholder: Write what you thought would happen.
+
+  - type: textarea
+    attributes:
+      label: Screenshots
+      description: |
+        If applicable, add screenshots or screen recordings to help explain your problem.
+
+  - type: textarea
+    attributes:
+      label: Logs
+      description: |
+        If possible, run `espanso log` in a terminal after the bug has occurred, then post the output here so that we can better diagnose the problem
+
+  - type: textarea
+    attributes:
+      label: Your environment
+      description: Tell us about your enviornment and which version of Espanso you are running (you can find out by running `espanso --version` inside a terminal).
+      value: |
+        - Public source code:
+        - Environment name and version (e.g., Rust 1.59.0):
+        - Operating system and version (e.g., Ubuntu 20.04.2 LTS):
+        - Espanso version (e.g., 2.1.4-beta):
+
+  - type: checkboxes
+    attributes:
+      label: Self-service
+      description: |
+        If you feel like you could contribute to this issue, please check the box below. This would tell us and other people looking for contributions that someone's working on it.
+      options:
+        - label: I'd be willing to fix this bug myself.
