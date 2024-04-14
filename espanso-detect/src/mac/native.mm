@@ -137,6 +137,7 @@ void * detect_initialize(EventCallback callback, InitializeOptions options) {
         }
     }];
   });
+  return nullptr;
 }
 
 OSStatus hotkey_event_handler(EventHandlerCallRef _next, EventRef evt, void *userData)
