@@ -1,0 +1,432 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "description": "a schema to validate base.yaml",
+  "additionalProperties": false,
+  "required": [],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "matches": {
+      "type": "array",
+      "description": "Array of matches",
+      "additionalItems": false,
+      "items": {
+        "type": "object",
+        "$ref": "#/definitions/match"
+      },
+      "required": []
+    },
+    "global_vars": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "$ref": "#/definitions/var"
+      }
+    }
+  },
+  "definitions": {
+    "match": {
+      "description": "Single match",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [],
+      "dependencies": {
+        "uppercase_style": [
+          "propagate_case"
+        ]
+      },
+      "oneOf": [
+        {
+          "required": [
+            "replace"
+          ]
+        },
+        {
+          "required": [
+            "form"
+          ]
+        },
+        {
+          "required": [
+            "html"
+          ]
+        },
+        {
+          "required": [
+            "image_path"
+          ]
+        },
+        {
+          "required": [
+            "markdown"
+          ]
+        }
+      ],
+      "properties": {
+        "force_clipboard": {
+          "type": "boolean"
+        },
+        "force_mode": {
+          "type": "string",
+          "enum": [
+            "clipboard",
+            "keys"
+          ]
+        },
+        "form": {
+          "type": "string"
+        },
+        "form_fields": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "text": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "multiline": {
+                  "type": "boolean"
+                },
+                "default": {
+                  "type": "string",
+                  "default": ""
+                }
+              }
+            },
+            "choices": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "choice",
+                    "list"
+                  ]
+                },
+                "values": {
+                  "type": [
+                    "array",
+                    "string"
+                  ],
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "default": {
+                  "type": "string",
+                  "default": ""
+                },
+                "trim_string_values": {
+                  "type": "boolean",
+                  "description": "If you pass the values as a multiline string and this option is true, Espanso will trim the values and remove empty ones.",
+                  "default": false
+                }
+              }
+            }
+          }
+        },
+        "html": {
+          "type": "string"
+        },
+        "image_path": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "markdown": {
+          "type": "string"
+        },
+        "paragraph": {
+          "description": "The `paragraph: true` option may be added to markdown replacements to avoid injecting a new-line and new paragraph.",
+          "type": "boolean"
+        },
+        "propagate_case": {
+          "type": "boolean"
+        },
+        "uppercase_style": {
+          "type": "string",
+          "enum": [
+            "capitalize",
+            "capitalize_words",
+            "uppercase"
+          ]
+        },
+        "regex": {
+          "type": "string"
+        },
+        "replace": {
+          "type": "string"
+        },
+        "trigger": {
+          "type": "string"
+        },
+        "triggers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "vars": {
+          "type": "array",
+          "additionalItems": false,
+          "items": {
+            "$ref": "#/definitions/var"
+          }
+        },
+        "word": {
+          "type": "boolean"
+        }
+      }
+    },
+    "var": {
+      "oneOf": [
+        {
+          "$comment": "shell var",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "shell"
+              ]
+            },
+            "name": {
+              "type": "string"
+            },
+            "params": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "shell": {
+                  "type": "string",
+                  "enum": [
+                    "bash",
+                    "cmd"
+                  ]
+                },
+                "cmd": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        {
+          "$comment": "script var",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "script"
+              ]
+            },
+            "name": {
+              "type": "string"
+            },
+            "params": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "args": {
+                  "type": "array",
+                  "additionalItems": false,
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "$comment": "date var",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "date"
+              ]
+            },
+            "name": {
+              "type": "string"
+            },
+            "params": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "format": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        {
+          "$comment": "echo var",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "echo"
+              ]
+            },
+            "name": {
+              "type": "string"
+            },
+            "params": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "echo": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        {
+          "$comment": "clipboard var",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "clipboard"
+              ]
+            },
+            "name": {
+              "type": "string"
+            }
+          }
+        },
+        {
+          "$comment": "choice var",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "choice"
+              ]
+            },
+            "name": {
+              "type": "string"
+            },
+            "params": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "values": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "id": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "$comment": "form var",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "form"
+              ]
+            },
+            "name": {
+              "type": "string"
+            },
+            "params": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "layout": {
+                  "type": "string"
+                },
+                "fields": {
+                  "type": "object",
+                  "patternProperties": {
+                    "^.*$": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "properties": {
+                            "type": {
+                              "type": "string"
+                            },
+                            "default": {
+                              "type": "string"
+                            },
+                            "values": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "multiline": {
+                              "type": "boolean"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "$comment": "Nested match",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "match"
+              ]
+            },
+            "name": {
+              "type": "string"
+            },
+            "params": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "trigger": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

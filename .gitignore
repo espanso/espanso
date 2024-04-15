@@ -39,3 +39,4 @@ venv/
 
 .vscode/
 *.profraw
+**/*.code-workspace
