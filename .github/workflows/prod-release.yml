@@ -94,7 +94,7 @@ jobs:
         run: |
           Get-FileHash target/windows/Espanso-Win-Portable-x86_64.zip -Algorithm SHA256 | select-object -ExpandProperty Hash > target/windows/Espanso-Win-Portable-x86_64.zip.sha256.txt
           Get-FileHash target/windows/installer/Espanso-Win-Installer-x86_64.exe -Algorithm SHA256 | select-object -ExpandProperty Hash > target/windows/installer/Espanso-Win-Installer-x86_64.exe.sha256.txt
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v4
         name: "Upload artifacts"
         with:
           name: Windows Artifacts
@@ -124,7 +124,7 @@ jobs:
       - name: Build AppImage
         run: |
           sudo docker run --rm -v "$(pwd):/shared" espanso-ubuntu espanso/.github/scripts/ubuntu/build_appimage.sh
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v4
         name: "Upload artifacts"
         with:
           name: Linux X11 Artifacts
@@ -152,7 +152,7 @@ jobs:
       - name: Build Deb packages
         run: |
           sudo docker run --rm -v "$(pwd):/shared" espanso-ubuntu espanso/.github/scripts/ubuntu/build_deb.sh
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v4
         name: "Upload artifacts"
         with:
           name: Ubuntu-Debian Artifacts
@@ -224,7 +224,7 @@ jobs:
       - name: Calculate hashes
         run: |
           shasum -a 256 Espanso-Mac-Intel.zip > Espanso-Mac-Intel.zip.sha256.txt
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v4
         name: "Upload artifacts"
         with:
           name: Mac Intel Artifacts
@@ -291,7 +291,7 @@ jobs:
       - name: Calculate hashes
         run: |
           shasum -a 256 Espanso-Mac-M1.zip > Espanso-Mac-M1.zip.sha256.txt
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v4
         name: "Upload artifacts"
         with:
           name: Mac M1 Artifacts
