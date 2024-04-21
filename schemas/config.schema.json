@@ -1,0 +1,241 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "description": "a schema to validate base.yaml",
+    "required": [],
+    "properties": {
+        "$schema": {
+            "type": "string"
+        },
+        "filter_title": {
+            "description": "Filter based on the current window title.",
+            "type": "string"
+        },
+        "filter_exec": {
+            "description": "Filter based on the current application's executable path. For example, C:\\Programs\\Telegram.exe",
+            "type": "string"
+        },
+        "filter_class": {
+            "description": "Filter based on the current window class. This is mostly relevant on Linux",
+            "type": "string"
+        },
+        "filter_os": {
+            "description": "OS specific filter",
+            "type": "string",
+            "enum": [
+                "linux",
+                "macos",
+                "windows"
+            ]
+        },
+        "extra_includes": {
+            "type": "array",
+            "description": "extend the defaults with these files",
+            "items": {
+                "type": "string"
+            }
+        },
+        "includes": {
+            "type": "array",
+            "description": "redefine includes without extending them",
+            "items": {
+                "type": "string"
+            }
+        },
+        "extra_excludes": {
+            "type": "array",
+            "description": "extend the defaults with these files",
+            "items": {
+                "type": "string"
+            }
+        },
+        "excludes": {
+            "type": "array",
+            "description": "redefine includes without extending them",
+            "items": {
+                "type": "string"
+            }
+        },
+        "auto_restart": {
+            "description": "If true, instructs the daemon process to restart the worker (and refresh the configuration) after a configuration file change is detected on disk. Default true",
+            "default": true,
+            "type": "boolean"
+        },
+        "backspace_limit": {
+            "description": "How many backspace espanso tracks to correct misspelled keywordsMaximum number of backspace presses espanso keeps track of. For example, this is needed to correctly expand even if typos are typed. Default 5",
+            "default": 5,
+            "type": "number"
+        },
+        "keyboard_layout": {
+            "type": "object",
+            "description": "On Wayland, overrides the auto-detected keyboard configuration (RMLVO) which is used both for the detection and injection process.",
+            "properties": {
+                "rules": {
+                    "type": "string"
+                },
+                "model": {
+                    "type": "string"
+                },
+                "layout": {
+                    "type": "string"
+                },
+                "variant": {
+                    "type": "string"
+                },
+                "options": {
+                    "type": "string"
+                }
+            }
+        },
+        "preserve_keyboard": {
+            "description": "If true, Espanso will attempt to preserve the previous clipboard content after an expansion has taken place.",
+            "default": true,
+            "type": "boolean"
+        },
+        "search_shortcut": {
+            "description": "Hotkey used to show the Search UI.",
+            "type": "string"
+        },
+        "search_trigger": {
+            "description": "Trigger used to show the Search UI.",
+            "type": "string"
+        },
+        "show_icon": {
+            "description": "Hide the Espanso status icon on the macOS menu bar or the Windows system tray",
+            "type": "boolean"
+        },
+        "show_notifications": {
+            "description": "If false, disable all notifications.",
+            "type": "boolean"
+        },
+        "toggle_key": {
+            "description": "Defines the key that disables/enables espanso when double pressed.",
+            "type": "string",
+            "enum": [
+                "OFF",
+                "CTRL",
+                "ALT",
+                "SHIFT",
+                "META",
+                "LEFT_CTRL",
+                "LEFT_ALT",
+                "LEFT_SHIFT",
+                "LEFT_META",
+                "RIGHT_CTRL",
+                "RIGHT_ALT",
+                "RIGHT_SHIFT",
+                "RIGHT_META"
+            ]
+        },
+        "win32_exclude_orphan_events": {
+            "description": "If true, filter out keyboard events without an explicit HID device source on Windows. This is needed to filter out the software-generated events, including those from Espanso, but might need to be disabled when using some software-level keyboards. Disabling this option might conflict with the undo feature.",
+            "default": true,
+            "type": "boolean"
+        },
+        "win32_keyboard_layout_cache_interval": {
+            "description": "The maximum interval (in milliseconds) for which a keyboard layout can be cached. If switching often between different layouts, you could lower this amount to avoid the \"lost detection\" effect described in this issue: https://github.com/federico-terzi/espanso/issues/745.",
+            "type": "number",
+            "default": 2000
+        },
+        "word_separators": {
+            "description": "Chars that when pressed mark the start and end of a word. Examples of this are . or ,",
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "undo_backspace": {
+            "description": "When enabled, espanso automatically \"reverts\" an expansion if the user presses the Backspace key afterwards. This is not available on some platform/configurations.",
+            "type": "boolean",
+            "default": true
+        },
+        "apply_patch": {
+            "type": "boolean",
+            "default": true,
+            "description": "If false, avoid applying the built-in patches to the current config."
+        },
+        "backend": {
+            "type": "string",
+            "enum": [
+                "clipboard",
+                "inject",
+                "auto"
+            ],
+            "default": "auto",
+            "description": "The mechanism used to perform the injection. Espanso can either inject text by simulating keypresses (Inject backend) or by using the clipboard (Clipboard backend). Both of them have pros and cons, so the Auto backend is used by default to automatically choose the most appropriate one based on the situation. If for whatever reason the Auto backend is not appropriate, you can change this option to override it."
+        },
+        "clipboard_threshold": {
+            "type": "number",
+            "default": 100,
+            "description": "Number of chars after which a match is injected with the clipboard backend instead of the default one. This is done for efficiency reasons, as injecting a long match through separate events becomes slow for long strings. This is only relevant if the backend is set to Auto."
+        },
+        "disable_x11_fast_inject": {
+            "type": "boolean",
+            "default": false,
+            "description": "NOTE: This is only relevant on Linux under X11 environments. Switch to a slower (but sometimes more supported) way of injecting key events based on XTestFakeKeyEvent instead of XSendEvent. From my experiements, disabling fast inject becomes particularly slow when using the Gnome desktop environment."
+        },
+        "emulate_alt_codes": {
+            "type": "boolean",
+            "default": "false",
+            "description": "Restores ALT-code functionality to Windows."
+        },
+        "enable": {
+            "description": "If false, Espanso will be disabled for the current configuration. This option can be used to selectively disable espanso when using a specific application (by creating an app-specific config).",
+            "type": "boolean",
+            "default": "false"
+        },
+        "evdev_modifier_delay": {
+            "description": "Extra delay to apply when injecting modifiers under the EVDEV backend (Wayland). This is useful on Wayland if espanso is injecting seemingly random cased letters, for example\"Hi theRE1\" instead of \"Hi there!\". Increase if necessary, decrease to speed up the injection.",
+            "type": "number",
+            "default": 10
+        },
+        "inject_delay": {
+            "description": "Number of milliseconds between text injection events. Increase if the target application is missing some characters.",
+            "type": "number"
+        },
+        "key_delay": {
+            "type": "number",
+            "description": "Number of milliseconds between key injection events. Increase if the target application is missing some key events. For example, increasing might help if the trigger is not deleted completely."
+        },
+        "paste_shortcut_event_delay": {
+            "type": "number",
+            "description": "Number of milliseconds between keystrokes when simulating the Paste shortcut. For example: CTRL + (wait 5ms) + V + (wait 5ms) + release V + (wait 5ms) + release CTRL. This is needed as sometimes (for example on macOS), without a delay some keystrokes were not registered correctly.",
+            "default": 10
+        },
+        "paste_shortcut": {
+            "type": "string",
+            "description": "Customize the keyboard shortcut used to paste an expansion. This should follow this format: CTRL+SHIFT+V."
+        },
+        "post_form_delay": {
+            "type": "number",
+            "default": 200,
+            "description": "Delay (in ms) returning text after closing a form, to allow the target application regain focus."
+        },
+        "post_search_delay": {
+            "type": "number",
+            "default": 200,
+            "description": "Delay (in ms) returning text after the search bar has closed, to allow the target application regain focus."
+        },
+        "pre_paste_delay": {
+            "type": "number",
+            "default": 300,
+            "description": "Delay (in ms) that espanso should wait to trigger the paste shortcut after copying the content in the clipboard. This is needed because if we trigger a \"paste\" shortcut before the content is actually copied in the clipboard, the operation will fail. If you see previous contents of the clipboard being inserted instead of the correct replacement, increase this value."
+        },
+        "restore_clipboard_delay": {
+            "type": "number",
+            "default": 300,
+            "description": "The number of milliseconds to wait before restoring the previous clipboard content after an expansion. This is needed as without this delay, sometimes the target application detects the previous clipboard content instead of the expansion content."
+        },
+        "x11_use_xclip_backend": {
+            "type": "boolean",
+            "default": "false",
+            "description": "If true, use the xclip command to implement the clipboard instead of the built-in native module on X11. You'll need to install the xclip command. Enable if the clipboard \"get stuck\" for some applications on Linux."
+        },
+        "x11_use_xdotool_backend": {
+            "type": "boolean",
+            "description": "If true, use the xdotool command to implement the clipboard.",
+            "default": "false"
+        }
+    },
+    "additionalProperties": false,
+    "type": "object"
+}
