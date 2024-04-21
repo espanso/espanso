@@ -8,7 +8,7 @@
 # Matches are substitution rules: when you type the "trigger" string
 # it gets replaced by the "replace" string.
 
-# yaml-language-server: https://github.com/espanso/espanso/blob/dev/schemas/match.schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/espanso/espanso/dev/schemas/match.schema.json
 
 matches:
   # Simple text replacement

@@ -1,6 +1,6 @@
 # espanso configuration file
 
-# yaml-language-server: https://github.com/espanso/espanso/blob/dev/schemas/config.schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/espanso/espanso/dev/schemas/config.schema.json
 
 # For a complete introduction, visit the official docs at: https://espanso.org/docs/
 
