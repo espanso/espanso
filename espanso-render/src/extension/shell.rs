@@ -24,19 +24,21 @@ use std::{
   process::{Command, Output},
 };
 
+use super::exec_util::{determine_default_macos_shell, MacShell};
 use crate::{Extension, ExtensionOutput, ExtensionResult, Params, Value};
 use log::{debug, error, info};
 use thiserror::Error;
 
 #[allow(clippy::upper_case_acronyms)]
 pub enum Shell {
+  Bash,
   Cmd,
+  Nu,
   Powershell, // Windows PowerShell (v1.0 - v5.1)
   Pwsh,       // PowerShell Core (v6.0+)
+  Sh,
   WSL,
   WSL2,
-  Bash,
-  Sh,
   Zsh,
 }
 
@@ -50,9 +52,19 @@ impl Shell {
     let mut is_wsl = false;
 
     let mut command = match self {
+      Shell::Bash => {
+        let mut command = Command::new("bash");
+        command.args(["-c", cmd]);
+        command
+      }
       Shell::Cmd => {
         let mut command = Command::new("cmd");
         command.args(["/C", cmd]);
+        command
+      }
+      Shell::Nu => {
+        let mut command = Command::new("nu");
+        command.args(["--commands", cmd]);
         command
       }
       Shell::Powershell => {
@@ -65,6 +77,11 @@ impl Shell {
         command.args(["-Command", cmd]);
         command
       }
+      Shell::Sh => {
+        let mut command = Command::new("sh");
+        command.args(["-c", cmd]);
+        command
+      }
       Shell::WSL => {
         is_wsl = true;
         let mut command = Command::new("bash");
@@ -75,16 +92,6 @@ impl Shell {
         is_wsl = true;
         let mut command = Command::new("wsl");
         command.args(["bash", "-c", cmd]);
-        command
-      }
-      Shell::Bash => {
-        let mut command = Command::new("bash");
-        command.args(["-c", cmd]);
-        command
-      }
-      Shell::Sh => {
-        let mut command = Command::new("sh");
-        command.args(["-c", cmd]);
         command
       }
       Shell::Zsh => {
@@ -102,18 +109,20 @@ impl Shell {
       command.env(key, value);
     }
 
-    // If Espanso is executed as an app bundle on macOS, it doesn't inherit the PATH
-    // environment variables that are available inside a terminal, and this can be confusing for users.
-    // For example, one might use "jq" inside the terminal but then it throws an error with "command not found"
-    // if launched through the Espanso shell extension.
-    // For this reason, Espanso tries to obtain the same PATH value by spawning a login shell and extracting
-    // the PATH after the processing.
+    // If Espanso is executed as an app bundle on macOS, it doesn't inherit the
+    // PATH environment variables that are available inside a terminal, and this
+    // can be confusing for users.
+    // For example, one might use "jq" inside the terminal but then it throws an
+    // error with "command not found" if launched through the Espanso shell
+    // extension. For this reason, Espanso tries to obtain the same PATH value by
+    // spawning a login shell and extracting the PATH after the processing.
     if cfg!(target_os = "macos") && override_path_on_macos {
       let supported_mac_shell = match self {
-        Shell::Pwsh => Some(super::exec_util::MacShell::Pwsh),
-        Shell::Bash => Some(super::exec_util::MacShell::Bash),
-        Shell::Sh => Some(super::exec_util::MacShell::Sh),
-        Shell::Zsh => Some(super::exec_util::MacShell::Zsh),
+        Shell::Bash => Some(MacShell::Bash),
+        Shell::Nu => Some(MacShell::Nu),
+        Shell::Pwsh => Some(MacShell::Pwsh),
+        Shell::Sh => Some(MacShell::Sh),
+        Shell::Zsh => Some(MacShell::Zsh),
         _ => None,
       };
       if let Some(path_env_override) =
@@ -124,9 +133,9 @@ impl Shell {
       }
     }
 
-    // In WSL environment, we have to specify which ENV variables
-    // should be passed to linux.
-    // For more information: https://devblogs.microsoft.com/commandline/share-environment-vars-between-wsl-and-windows/
+    // In WSL environment, we have to specify which ENV variables should be
+    // passed to linux. For more information:
+    // https://devblogs.microsoft.com/commandline/share-environment-vars-between-wsl-and-windows/
     if is_wsl {
       let mut tokens: Vec<&str> = vec!["CONFIG/p"];
 
@@ -144,13 +153,14 @@ impl Shell {
 
   fn from_string(shell: &str) -> Option<Shell> {
     match shell {
+      "bash" => Some(Shell::Bash),
       "cmd" => Some(Shell::Cmd),
+      "nu" => Some(Shell::Nu),
       "powershell" => Some(Shell::Powershell),
       "pwsh" => Some(Shell::Pwsh),
+      "sh" => Some(Shell::Sh),
       "wsl" => Some(Shell::WSL),
       "wsl2" => Some(Shell::WSL2),
-      "bash" => Some(Shell::Bash),
-      "sh" => Some(Shell::Sh),
       "zsh" => Some(Shell::Zsh),
       _ => None,
     }
@@ -163,15 +173,15 @@ impl Default for Shell {
       Shell::Powershell
     } else if cfg!(target_os = "macos") {
       lazy_static! {
-        static ref DEFAULT_MACOS_SHELL: Option<super::exec_util::MacShell> =
-          super::exec_util::determine_default_macos_shell();
+        static ref DEFAULT_MACOS_SHELL: Option<MacShell> = determine_default_macos_shell();
       }
 
       match *DEFAULT_MACOS_SHELL {
-        Some(super::exec_util::MacShell::Pwsh) => Shell::Pwsh,
-        Some(super::exec_util::MacShell::Bash) => Shell::Bash,
-        Some(super::exec_util::MacShell::Sh) => Shell::Sh,
-        Some(super::exec_util::MacShell::Zsh) => Shell::Zsh,
+        Some(MacShell::Bash) => Shell::Bash,
+        Some(MacShell::Nu) => Shell::Nu,
+        Some(MacShell::Pwsh) => Shell::Pwsh,
+        Some(MacShell::Sh) => Shell::Sh,
+        Some(MacShell::Zsh) => Shell::Zsh,
         None => Shell::Sh,
       }
     } else if cfg!(target_os = "linux") {
