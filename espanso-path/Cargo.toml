@@ -5,7 +5,7 @@ authors = ["Federico Terzi <federico-terzi@users.noreply.github.com>"]
 edition = "2021"
 
 [dependencies]
-log = "0.4.14"
+log.workspace = true
 dirs = "3.0.1"
 
 [lints]
