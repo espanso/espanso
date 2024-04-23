@@ -14,8 +14,8 @@ glob.workspace = true
 regex.workspace = true
 lazy_static.workspace = true
 dunce = "1.0.1"
-walkdir = "2.3.1"
-enum-as-inner = "0.6.0"
+walkdir.workspace = true
+enum-as-inner.workspace = true
 ordered-float = "2.0"
 indoc = "1.0.3"
 

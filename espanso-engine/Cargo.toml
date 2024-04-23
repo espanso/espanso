@@ -8,7 +8,7 @@ edition = "2021"
 log.workspace = true
 anyhow.workspace = true
 thiserror.workspace = true
-crossbeam = "0.8.0"
+crossbeam.workspace = true
 markdown = "0.3.0"
 html2text = "0.12.0"
 

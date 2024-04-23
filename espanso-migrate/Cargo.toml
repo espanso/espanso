@@ -10,11 +10,11 @@ thiserror.workspace = true
 glob.workspace = true
 regex.workspace = true
 lazy_static.workspace = true
-walkdir = "2.3.1"
+walkdir.workspace = true
 yaml-rust = { version = "0.4.6", git = "https://github.com/federico-terzi/yaml-rust" }
 path-slash = "0.1.4"
 tempdir.workspace = true
-fs_extra = "1.3.0"
+fs_extra.workspace = true
 
 [dev-dependencies]
 include_dir = { version = "0.6.0", features = ["search"] }

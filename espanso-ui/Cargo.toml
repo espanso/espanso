@@ -12,7 +12,7 @@ avoid-gdi = []
 
 [dependencies]
 log.workspace = true
-serde_json = "1.0.61"
+serde_json.workspace = true
 serde.workspace = true
 anyhow.workspace = true
 thiserror.workspace = true
@@ -28,7 +28,7 @@ lazycell.workspace = true
 
 [target.'cfg(target_os="linux")'.dependencies]
 notify-rust = "4.2.2"
-crossbeam = "0.8.0"
+crossbeam.workspace = true
 
 [build-dependencies]
 cc.workspace = true

@@ -18,7 +18,7 @@ lazy_static.workspace = true
 regex.workspace = true
 
 [dev-dependencies]
-enum-as-inner = "0.6.0"
+enum-as-inner.workspace = true
 
 [lints]
 workspace = true

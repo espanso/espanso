@@ -6,7 +6,7 @@ edition = "2021"
 
 [dependencies]
 log.workspace = true
-dirs = "3.0.1"
+dirs.workspace = true
 
 [lints]
 workspace = true
