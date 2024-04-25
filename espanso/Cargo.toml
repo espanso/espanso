@@ -52,23 +52,23 @@ espanso-kvs = { path = "../espanso-kvs" }
 espanso-engine = { path = "../espanso-engine" }
 espanso-package = { path = "../espanso-package" }
 simplelog = "0.9.0"
-log = "0.4.14"
-anyhow = "1.0.38"
-thiserror = "1.0.23"
+log.workspace = true
+anyhow.workspace = true
+thiserror.workspace = true
 clap = "2.33.3"
-lazy_static = "1.4.0"
-crossbeam = "0.8.0"
+lazy_static.workspace = true
+crossbeam.workspace = true
 enum-as-inner = "0.3.3"
-dirs = "3.0.1"
-serde = { version = "1.0.123", features = ["derive"] }
-serde_json = "1.0.62"
+dirs.workspace = true
+serde.workspace = true
+serde_json.workspace = true
 log-panics = "2.0.0"
 fs2 = "0.4.3"
-serde_yaml = "0.8.17"
-fs_extra = "1.3.0"
+serde_yaml.workspace = true
+fs_extra.workspace = true
 dialoguer = "0.8.0"
 colored = "2.0.0"
-tempdir = "0.3.7"
+tempdir.workspace = true
 notify = "4.0.17"
 opener = "0.5.0"
 sysinfo = "0.28.4"
@@ -77,7 +77,7 @@ sysinfo = "0.28.4"
 named_pipe = "0.4.1"
 winapi = { version = "0.3.9", features = ["wincon"] }
 winreg = "0.9.0"
-widestring = "0.4.3"
+widestring.workspace = true
 
 [target.'cfg(unix)'.dependencies]
 libc = "0.2.98"
@@ -88,7 +88,7 @@ espanso-mac-utils = { path = "../espanso-mac-utils" }
 [target.'cfg(target_os="linux")'.dependencies]
 caps = "0.5.2"
 const_format = "0.2.14"
-regex = "1.5.5"
+regex.workspace = true
 
 [package.metadata.deb]
 maintainer = "Federico Terzi <federicoterzi96@gmail.com>"

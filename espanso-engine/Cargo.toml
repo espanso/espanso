@@ -5,10 +5,10 @@ authors = ["Federico Terzi <federico-terzi@users.noreply.github.com>"]
 edition = "2021"
 
 [dependencies]
-log = "0.4.14"
-anyhow = "1.0.38"
-thiserror = "1.0.23"
-crossbeam = "0.8.0"
+log.workspace = true
+anyhow.workspace = true
+thiserror.workspace = true
+crossbeam.workspace = true
 markdown = "0.3.0"
 html2text = "0.12.0"
 

@@ -11,20 +11,20 @@ build = "build.rs"
 wayland = []
 
 [dependencies]
-log = "0.4.14"
-anyhow = "1.0.38"
-thiserror = "1.0.23"
-lazy_static = "1.4.0"
-regex = "1.5.5"
+log.workspace = true
+anyhow.workspace = true
+thiserror.workspace = true
+lazy_static.workspace = true
+regex.workspace = true
 
 [dev-dependencies]
-enum-as-inner = "0.6.0"
+enum-as-inner.workspace = true
 
 [lints]
 workspace = true
 
 [target.'cfg(windows)'.dependencies]
-widestring = "0.4.3"
+widestring.workspace = true
 
 [target.'cfg(target_os="linux")'.dependencies]
 libc = "0.2.85"
@@ -32,4 +32,4 @@ scopeguard = "1.1.0"
 itertools = "0.10.0"
 
 [build-dependencies]
-cc = "1.0.73"
+cc.workspace = true

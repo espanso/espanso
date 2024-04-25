@@ -5,22 +5,22 @@ authors = ["Federico Terzi <federico-terzi@users.noreply.github.com>"]
 edition = "2021"
 
 [dependencies]
-log = "0.4.14"
-anyhow = "1.0.38"
-thiserror = "1.0.23"
-serde = { version = "1.0.123", features = ["derive"] }
-serde_yaml = "0.8.17"
-glob = "0.3.0"
-regex = "1.5.5"
-lazy_static = "1.4.0"
+log.workspace = true
+anyhow.workspace = true
+thiserror.workspace = true
+serde.workspace = true
+serde_yaml.workspace = true
+glob.workspace = true
+regex.workspace = true
+lazy_static.workspace = true
 dunce = "1.0.1"
-walkdir = "2.3.1"
-enum-as-inner = "0.6.0"
+walkdir.workspace = true
+enum-as-inner.workspace = true
 ordered-float = "2.0"
 indoc = "1.0.3"
 
 [dev-dependencies]
-tempdir = "0.3.7"
+tempdir.workspace = true
 tempfile = "3.2.0"
 mockall = "0.9.1"
 
