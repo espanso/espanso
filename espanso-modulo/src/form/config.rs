@@ -103,7 +103,7 @@ impl<'a> From<&'a AutoFieldConfig> for FieldConfig {
         let mut config = TextFieldConfig::default();
 
         if let Some(default) = &other.default {
-          config.default = default.clone();
+          config.default.clone_from(default);
         }
 
         config.multiline = other.multiline;
@@ -117,7 +117,7 @@ impl<'a> From<&'a AutoFieldConfig> for FieldConfig {
         };
 
         if let Some(default) = &other.default {
-          config.default = default.clone();
+          config.default.clone_from(default);
         }
 
         FieldTypeConfig::Choice(config)
@@ -129,7 +129,7 @@ impl<'a> From<&'a AutoFieldConfig> for FieldConfig {
         };
 
         if let Some(default) = &other.default {
-          config.default = default.clone();
+          config.default.clone_from(default);
         }
 
         FieldTypeConfig::List(config)
