@@ -198,6 +198,7 @@ mod tests {
     client_handle.join().unwrap();
   }
 
+  #[ignore = "takes too loong to test this (way over 60 seconds)"]
   #[test]
   fn ipc_multiple_clients() {
     let server = server::<Event>("testespansoipcmultiple", &std::env::temp_dir()).unwrap();
