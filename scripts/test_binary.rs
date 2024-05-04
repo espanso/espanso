@@ -23,8 +23,7 @@ fn main() {
   let wayland = envmnt::get_or("NO_X11", "false") == "true";
   if wayland {
     println!("Using Wayland feature");
-  }
-  else {
+  } else {
     println!("Using X11 default feature");
   }
 
@@ -32,10 +31,6 @@ fn main() {
 
   args.push("test");
   args.push("--workspace");
-  args.push("--exclude");
-  args.push("espanso-modulo");
-  args.push("--exclude");
-  args.push("espanso-ipc");
 
   if profile == Profile::Release {
     args.push("--release");
