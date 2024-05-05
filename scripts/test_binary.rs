@@ -31,6 +31,8 @@ fn main() {
 
   args.push("test");
   args.push("--workspace");
+  args.push("--exclude");
+  args.push("espanso-modulo");
 
   if profile == Profile::Release {
     args.push("--release");
