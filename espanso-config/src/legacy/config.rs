@@ -597,7 +597,10 @@ impl LegacyConfigSet {
 
           // No name specified, defaulting to the path name
           if config.name == "default" {
-            config.name = path.to_str().unwrap_or_default().to_owned();
+            path
+              .to_str()
+              .unwrap_or_default()
+              .clone_into(&mut config.name);
           }
 
           if name_set.contains(&config.name) {

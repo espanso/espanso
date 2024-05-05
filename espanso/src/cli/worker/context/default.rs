@@ -42,9 +42,9 @@ impl<'a> DefaultContext<'a> {
 impl<'a> Context for DefaultContext<'a> {}
 
 impl<'a> ConfigContext for DefaultContext<'a> {
-  fn get_default_config(&self) -> Arc<dyn Config> {
-    self.config_manager.default()
-  }
+  // fn get_default_config(&self) -> Arc<dyn Config> {
+  //   self.config_manager.default()
+  // }
 
   fn get_active_config(&self) -> Arc<dyn Config> {
     self.config_manager.active()
