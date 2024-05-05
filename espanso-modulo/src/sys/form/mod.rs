@@ -108,7 +108,7 @@ mod interop {
 
   impl Interoperable for OwnedForm {
     fn as_ptr(&self) -> *const c_void {
-      &(*self.interop) as *const FormMetadata as *const c_void
+      std::ptr::from_ref::<FormMetadata>(&(*self.interop)) as *const c_void
     }
   }
 
@@ -225,7 +225,7 @@ mod interop {
 
   impl Interoperable for OwnedLabelMetadata {
     fn as_ptr(&self) -> *const c_void {
-      &(*self.interop) as *const LabelMetadata as *const c_void
+      std::ptr::from_ref::<LabelMetadata>(&(*self.interop)) as *const c_void
     }
   }
 
@@ -247,7 +247,7 @@ mod interop {
 
   impl Interoperable for OwnedTextMetadata {
     fn as_ptr(&self) -> *const c_void {
-      &(*self.interop) as *const TextMetadata as *const c_void
+      std::ptr::from_ref::<TextMetadata>(&(*self.interop)) as *const c_void
     }
   }
 
@@ -275,7 +275,7 @@ mod interop {
 
   impl Interoperable for OwnedChoiceMetadata {
     fn as_ptr(&self) -> *const c_void {
-      &(*self.interop) as *const ChoiceMetadata as *const c_void
+      std::ptr::from_ref::<ChoiceMetadata>(&(*self.interop)) as *const c_void
     }
   }
 
@@ -322,7 +322,7 @@ mod interop {
 
   impl Interoperable for OwnedRowMetadata {
     fn as_ptr(&self) -> *const c_void {
-      &(*self.interop) as *const RowMetadata as *const c_void
+      std::ptr::from_ref::<RowMetadata>(&(*self.interop)) as *const c_void
     }
   }
 
@@ -379,7 +379,7 @@ pub fn show(form: types::Form) -> HashMap<String, String> {
     interop_show_form(
       metadata,
       callback,
-      &mut value_map as *mut HashMap<String, String> as *mut c_void,
+      std::ptr::from_mut::<HashMap<String, String>>(&mut value_map) as *mut c_void,
     );
   }
 
