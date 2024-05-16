@@ -17,7 +17,6 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::env::consts::ARCH;
 use std::path::PathBuf;
 
 #[cfg(not(target_os = "windows"))]
@@ -31,6 +30,7 @@ const WX_WIDGETS_BUILD_OUT_DIR_ENV_NAME: &str = "WX_WIDGETS_BUILD_OUT_DIR";
 
 #[cfg(target_os = "windows")]
 fn build_native() {
+  use std::env::consts::ARCH;
   use std::process::Command;
 
   let project_dir =
