@@ -17,6 +17,7 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use std::env::consts::ARCH;
 use std::path::PathBuf;
 
 #[cfg(not(target_os = "windows"))]
@@ -57,7 +58,8 @@ fn build_native() {
       .expect("unable to extract wxWidgets source dir");
 
     // Compile wxWidgets
-    let tool = cc::windows_registry::find_tool("msvc", "devenv")
+    let msvc_target = format!("{}-pc-windows-msvc", ARCH);
+    let tool = cc::windows_registry::find_tool(msvc_target, "devenv")
       .expect("unable to locate MSVC compiler, did you install Visual Studio?");
     let mut vcvars_path = None;
     let mut current_root = tool.path();
