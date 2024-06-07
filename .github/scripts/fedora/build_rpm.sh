@@ -19,4 +19,4 @@ sha256sum espanso-fedora-wayland-amd64.rpm > espanso-fedora-wayland-amd64-sha256
 ls -la
 
 echo "Copying to mounted volume"
-cp espanso-debian-* /shared
+cp espanso-fedora-* /shared
