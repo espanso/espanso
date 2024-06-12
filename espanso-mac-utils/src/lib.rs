@@ -30,7 +30,7 @@ mod ffi;
 pub fn get_secure_input_pid() -> Option<i64> {
   unsafe {
     let mut pid: i64 = -1;
-    let res = ffi::mac_utils_get_secure_input_process(&mut pid as *mut i64);
+    let res = ffi::mac_utils_get_secure_input_process(std::ptr::from_mut::<i64>(&mut pid));
 
     if res > 0 {
       Some(pid)
