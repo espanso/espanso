@@ -18,6 +18,7 @@
  */
 
 use std::{
+  array::from_ref,
   cmp::min,
   collections::HashMap,
   ffi::{c_void, CString},
@@ -158,7 +159,13 @@ impl UIEventLoop for Win32EventLoop {
     };
 
     let mut error_code = 0;
-    let handle = unsafe { ui_initialize(self as *const Win32EventLoop, options, &mut error_code) };
+    let handle = unsafe {
+      ui_initialize(
+        std::ptr::from_ref::<Win32EventLoop>(self),
+        options,
+        &mut error_code,
+      )
+    };
 
     if handle.is_null() {
       return match error_code {
