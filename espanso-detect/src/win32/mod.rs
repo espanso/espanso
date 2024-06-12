@@ -143,8 +143,13 @@ impl Source for Win32Source {
     };
 
     let mut error_code = 0;
-    let handle =
-      unsafe { detect_initialize(self as *const Win32Source, &options, &mut error_code) };
+    let handle = unsafe {
+      detect_initialize(
+        std::ptr::from_ref::<Win32Source>(self),
+        &options,
+        &mut error_code,
+      )
+    };
 
     if handle.is_null() {
       let error = match error_code {
