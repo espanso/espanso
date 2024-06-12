@@ -123,7 +123,7 @@ impl UIEventLoop for MacEventLoop {
       icon_paths_count: self.icons.len() as i32,
     };
 
-    unsafe { ui_initialize(self as *const MacEventLoop, options) };
+    unsafe { ui_initialize(std::ptr::from_ref::<MacEventLoop>(self), options) };
 
     // Make sure the run() method is called in the same thread as initialize()
     self
