@@ -18,7 +18,6 @@
  */
 
 use std::{
-  array::from_ref,
   cmp::min,
   collections::HashMap,
   ffi::{c_void, CString},
