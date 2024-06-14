@@ -131,7 +131,7 @@ jobs:
         run: cargo make --env NO_X11=true -- test-binary
   
   build-macos-arm:
-    runs-on: macos-11
+    runs-on: macos-latest
     env:
       WX_WIDGETS_BUILD_OUT_DIR: "${{github.workspace}}/wx-widgets-build"
     steps:
