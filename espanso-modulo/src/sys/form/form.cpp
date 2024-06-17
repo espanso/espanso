@@ -108,7 +108,13 @@ enum
 
 bool FormApp::OnInit()
 {
-    FormFrame *frame = new FormFrame(wxString::FromUTF8(formMetadata->windowTitle), wxPoint(50, 50), wxSize(450, 340) );
+    const wxSize& maxFormSize = wxSize(formMetadata->maxWindowWidth, formMetadata->maxWindowHeight);
+    FormFrame *frame = new FormFrame(
+        wxString::FromUTF8(formMetadata->windowTitle),
+        wxPoint(50, 50),
+        maxFormSize
+    );
+    frame->SetMaxSize(maxFormSize);
     setFrameIcon(wxString::FromUTF8(formMetadata->iconPath), frame);
     frame->Show( true );
 
@@ -154,7 +160,9 @@ void FormFrame::AddComponent(wxPanel *parent, wxBoxSizer *sizer, FieldMetadata m
         case FieldType::LABEL:
         {
             const LabelMetadata *labelMeta = static_cast<const LabelMetadata*>(meta.specific);
-            auto label = new wxStaticText(parent, wxID_ANY, wxString::FromUTF8(labelMeta->text), wxDefaultPosition, wxDefaultSize);
+            const long style = wxST_ELLIPSIZE_END;
+            auto label = new wxStaticText(parent, wxID_ANY, wxString::FromUTF8(labelMeta->text), wxDefaultPosition, wxDefaultSize, style);
+
             label->Wrap(this->GetClientSize().GetWidth());
             control = label;
             fields.push_back(label);

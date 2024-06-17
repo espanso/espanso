@@ -97,5 +97,7 @@ fn build_form(form: FormConfig, structure: Vec<Vec<Token>>) -> Form {
     title: form.title,
     icon: form.icon,
     fields,
+    max_form_width: form.max_form_width,
+    max_form_height: form.max_form_height,
   }
 }
