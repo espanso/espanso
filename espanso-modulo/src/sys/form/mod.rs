@@ -29,6 +29,8 @@ pub mod types {
     pub title: String,
     pub icon: Option<String>,
     pub fields: Vec<Field>,
+    pub max_form_width: i32,
+    pub max_form_height: i32,
   }
 
   #[derive(Debug)]
@@ -136,11 +138,16 @@ mod interop {
         std::ptr::null()
       };
 
+      let max_form_width = form.max_form_width;
+      let max_form_height = form.max_form_height;
+
       let interop = Box::new(FormMetadata {
         windowTitle: title.as_ptr(),
         iconPath: icon_path_ptr,
         fields: metadata.as_ptr(),
         fieldSize: fields.len() as c_int,
+        maxWindowWidth: max_form_width,
+        maxWindowHeight: max_form_height,
       });
 
       Self {
