@@ -76,6 +76,8 @@ pub struct FormMetadata {
   pub iconPath: *const ::std::os::raw::c_char,
   pub fields: *const FieldMetadata,
   pub fieldSize: ::std::os::raw::c_int,
+  pub maxWindowWidth: ::std::os::raw::c_int,
+  pub maxWindowHeight: ::std::os::raw::c_int,
 }
 
 #[repr(C)]

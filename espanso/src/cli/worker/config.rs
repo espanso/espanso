@@ -204,6 +204,14 @@ impl<'a> crate::gui::modulo::form::ModuloFormUIOptionProvider for ConfigManager<
   fn get_post_form_delay(&self) -> usize {
     self.active().post_form_delay()
   }
+
+  fn get_max_form_width(&self) -> usize {
+    self.active().max_form_width()
+  }
+
+  fn get_max_form_height(&self) -> usize {
+    self.active().max_form_height()
+  }
 }
 
 impl<'a> crate::gui::modulo::search::ModuloSearchUIOptionProvider for ConfigManager<'a> {

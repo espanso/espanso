@@ -64,6 +64,8 @@ typedef struct FormMetadata {
   const char *iconPath;
   const FieldMetadata *fields;
   const int fieldSize;
+  const int maxWindowWidth;
+  const int maxWindowHeight;
 } FormMetadata;
 
 typedef struct ValuePair {
@@ -104,14 +106,14 @@ const int DETECTED_OS_WAYLAND = 2;
 typedef struct WizardMetadata {
   const char *version;
 
-  const int is_welcome_page_enabled; 
-  const int is_move_bundle_page_enabled; 
-  const int is_legacy_version_page_enabled; 
-  const int is_wrong_edition_page_enabled; 
-  const int is_migrate_page_enabled; 
-  const int is_auto_start_page_enabled; 
-  const int is_add_path_page_enabled; 
-  const int is_accessibility_page_enabled; 
+  const int is_welcome_page_enabled;
+  const int is_move_bundle_page_enabled;
+  const int is_legacy_version_page_enabled;
+  const int is_wrong_edition_page_enabled;
+  const int is_migrate_page_enabled;
+  const int is_auto_start_page_enabled;
+  const int is_add_path_page_enabled;
+  const int is_accessibility_page_enabled;
 
   const char *window_icon_path;
   const char *welcome_image_path;

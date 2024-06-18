@@ -108,10 +108,16 @@ enum
 
 bool FormApp::OnInit()
 {
-    FormFrame *frame = new FormFrame(wxString::FromUTF8(formMetadata->windowTitle), wxPoint(50, 50), wxSize(450, 340) );
+    const wxSize& maxFormSize = wxSize(formMetadata->maxWindowWidth, formMetadata->maxWindowHeight);
+    FormFrame *frame = new FormFrame(
+        wxString::FromUTF8(formMetadata->windowTitle),
+        wxPoint(50, 50),
+        maxFormSize
+    );
+    frame->SetMaxSize(maxFormSize);
     setFrameIcon(wxString::FromUTF8(formMetadata->iconPath), frame);
     frame->Show( true );
-    
+
     Activate(frame);
 
     return true;
@@ -154,7 +160,10 @@ void FormFrame::AddComponent(wxPanel *parent, wxBoxSizer *sizer, FieldMetadata m
         case FieldType::LABEL:
         {
             const LabelMetadata *labelMeta = static_cast<const LabelMetadata*>(meta.specific);
-            auto label = new wxStaticText(parent, wxID_ANY, wxString::FromUTF8(labelMeta->text), wxDefaultPosition, wxDefaultSize);
+            const long style = wxST_ELLIPSIZE_END;
+            auto label = new wxStaticText(parent, wxID_ANY, wxString::FromUTF8(labelMeta->text), wxDefaultPosition, wxDefaultSize, style);
+
+            label->Wrap(this->GetClientSize().GetWidth());
             control = label;
             fields.push_back(label);
             break;
@@ -168,7 +177,7 @@ void FormFrame::AddComponent(wxPanel *parent, wxBoxSizer *sizer, FieldMetadata m
             }
 
             auto textControl = new wxTextCtrl(parent, NewControlId(), wxString::FromUTF8(textMeta->defaultText), wxDefaultPosition, wxDefaultSize, style);
-            
+
             if (textMeta->multiline) {
                 textControl->SetMinSize(wxSize(MULTILINE_MIN_WIDTH, MULTILINE_MIN_HEIGHT));
                 textControl->Bind(wxEVT_SET_FOCUS, &FormFrame::HandleMultilineFocus, this, wxID_ANY);
@@ -212,7 +221,7 @@ void FormFrame::AddComponent(wxPanel *parent, wxBoxSizer *sizer, FieldMetadata m
                 idMap[meta.id] = std::move(field);
             }else {
                 choice = (void*) new wxListBox(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, choices);
-                
+
                 if (selectedItem >= 0) {
                     ((wxListBox*)choice)->SetSelection(selectedItem);
                 }
@@ -223,12 +232,12 @@ void FormFrame::AddComponent(wxPanel *parent, wxBoxSizer *sizer, FieldMetadata m
                 // when the enter key is pressed).
                 // See: https://github.com/espanso/espanso/issues/857
                 ((wxListBox*)choice)->Bind(wxEVT_LISTBOX_DCLICK, &FormFrame::OnListBoxEvent, this, wxID_ANY);
-                
+
                 // Create the field wrapper
                 std::unique_ptr<FieldWrapper> field((FieldWrapper*) new ListFieldWrapper((wxListBox*) choice));
                 idMap[meta.id] = std::move(field);
             }
-            
+
             control = choice;
             fields.push_back(choice);
             break;
@@ -325,7 +334,7 @@ extern "C" void interop_show_form(FormMetadata * _metadata, void (*callback)(Val
     #ifdef __WXMSW__
         SetProcessDPIAware();
     #endif
-    
+
     formMetadata = _metadata;
 
     wxApp::SetInstance(new FormApp());
