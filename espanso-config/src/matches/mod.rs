@@ -94,7 +94,7 @@ impl MatchCause {
     match &self {
       MatchCause::Trigger(trigger_cause) => trigger_cause.triggers.first().map(String::as_str),
       MatchCause::Regex(trigger_cause) => Some(trigger_cause.regex.as_str()),
-      _ => None,
+      MatchCause::None => None,
     }
     // TODO: insert rendering for hotkey/shortcut
   }
@@ -103,7 +103,7 @@ impl MatchCause {
     match &self {
       MatchCause::Trigger(trigger_cause) => format!("triggers: {:?}", trigger_cause.triggers),
       MatchCause::Regex(trigger_cause) => format!("regex: {:?}", trigger_cause.regex),
-      _ => "No description available".to_owned(),
+      MatchCause::None => "No description available".to_owned(),
     }
     // TODO: insert rendering for hotkey/shortcut
   }
