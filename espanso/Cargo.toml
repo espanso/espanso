@@ -101,3 +101,9 @@ depends = "libc6 (>= 2.27), libdbus-1-3 (>= 1.9.14), libgcc1 (>= 1:4.2), libnoti
 # TODO: once this issue [1] is fixed, we should create a variant for
 # wayland to automatically run the setcap script.
 # [1]: https://github.com/mmstick/cargo-deb/issues/151
+
+[package.metadata.generate-rpm]
+assets = [
+    { source = "target/release/espanso", dest = "/usr/local/bin/espanso", mode = "755" }
+]
+post_install_script = "setcap 'cap_dac_override+p' /usr/local/bin/espanso"
