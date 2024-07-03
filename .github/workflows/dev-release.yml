@@ -118,9 +118,8 @@ jobs:
             espanso-debian-x11-amd64.deb
             espanso-debian-wayland-amd64.deb
   linux-rpm:
-    needs: ["extract-version", "create-release"]
+    needs: ["extract-version"]
     runs-on: fedora-latest
-    environment: production
 
     steps:
       - uses: actions/checkout@v2
