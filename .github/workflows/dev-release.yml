@@ -117,6 +117,28 @@ jobs:
           path: |
             espanso-debian-x11-amd64.deb
             espanso-debian-wayland-amd64.deb
+  linux-rpm:
+    needs: ["extract-version", "create-release"]
+    runs-on: fedora-latest
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Print target version
+        run: |
+          echo Using version ${{ needs.extract-version.outputs.espanso_version }}
+      - name: Build docker image
+        run: |
+          sudo docker build -t espanso-fedora . -f .github/scripts/fedora/Dockerfile
+      - name: Build rpm packages
+        run: |
+          sudo docker run --rm -v "$(pwd):/shared" espanso-fedora espanso/.github/scripts/fedora/build_rpm.sh
+      - uses: actions/upload-artifact@v4
+        name: "Upload artifacts"
+        with:
+          name: Fedora Artifacts
+          path: |
+            espanso-fedora-wayland-amd64.deb
 
 
   macos-intel:
