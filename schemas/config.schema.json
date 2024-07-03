@@ -210,6 +210,16 @@
             "default": 200,
             "description": "Delay (in ms) returning text after closing a form, to allow the target application regain focus."
         },
+        "max_form_width": {
+            "type": "number",
+            "default": 700,
+            "description": "Maximum width of a form window."
+        },
+        "max_form_height": {
+            "type": "number",
+            "default": 500,
+            "description": "Maximum height of a form window."
+        },
         "post_search_delay": {
             "type": "number",
             "default": 200,

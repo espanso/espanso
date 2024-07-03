@@ -28,6 +28,8 @@ use super::manager::ModuloManager;
 
 pub trait ModuloFormUIOptionProvider {
   fn get_post_form_delay(&self) -> usize;
+  fn get_max_form_width(&self) -> usize;
+  fn get_max_form_height(&self) -> usize;
 }
 
 pub struct ModuloFormUI<'a> {
@@ -57,6 +59,8 @@ impl<'a> FormUI for ModuloFormUI<'a> {
       title: "espanso",
       layout,
       fields: convert_fields_into_object(fields),
+      max_form_width: self.option_provider.get_max_form_width(),
+      max_form_height: self.option_provider.get_max_form_height(),
     };
 
     let json_config = serde_json::to_string(&modulo_form_config)?;
@@ -91,6 +95,8 @@ struct ModuloFormConfig<'a> {
   title: &'a str,
   layout: &'a str,
   fields: Map<String, Value>,
+  max_form_width: usize,
+  max_form_height: usize,
 }
 
 // TODO: test

@@ -32,6 +32,14 @@ fn default_fields() -> HashMap<String, FieldConfig> {
   HashMap::new()
 }
 
+fn default_max_form_width() -> i32 {
+  700
+}
+
+fn default_max_form_height() -> i32 {
+  500
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct FormConfig {
   #[serde(default = "default_title")]
@@ -44,6 +52,12 @@ pub struct FormConfig {
 
   #[serde(default = "default_fields")]
   pub fields: HashMap<String, FieldConfig>,
+
+  #[serde(default = "default_max_form_width")]
+  pub max_form_width: i32,
+
+  #[serde(default = "default_max_form_height")]
+  pub max_form_height: i32,
 }
 
 #[derive(Debug, Serialize, Clone)]

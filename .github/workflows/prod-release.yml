@@ -194,7 +194,7 @@ jobs:
 
   macos-intel:
     needs: ["extract-version", "create-release"]
-    runs-on: macos-11
+    runs-on: macos-latest
     environment: production
 
     steps:
@@ -265,7 +265,7 @@ jobs:
   
   macos-m1:
     needs: ["extract-version", "create-release"]
-    runs-on: macos-11
+    runs-on: macos-latest
     environment: production
 
     steps:
@@ -332,7 +332,7 @@ jobs:
 
   macos-publish-homebrew:
     needs: ["extract-version", "create-release", "macos-m1", "macos-intel"]
-    runs-on: macos-11
+    runs-on: macos-latest
     environment: production
 
     steps:
