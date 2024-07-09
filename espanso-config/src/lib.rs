@@ -30,14 +30,13 @@ mod legacy;
 pub mod matches;
 mod util;
 
-#[allow(clippy::type_complexity)]
-pub fn load(
-  base_path: &Path,
-) -> Result<(
+type LoadableConfig = (
   Box<dyn ConfigStore>,
   Box<dyn MatchStore>,
   Vec<error::NonFatalErrorSet>,
-)> {
+);
+
+pub fn load(base_path: &Path) -> Result<LoadableConfig> {
   let config_dir = base_path.join("config");
   if !config_dir.exists() || !config_dir.is_dir() {
     return Err(ConfigError::MissingConfigDir().into());
