@@ -30,6 +30,7 @@ const WX_WIDGETS_BUILD_OUT_DIR_ENV_NAME: &str = "WX_WIDGETS_BUILD_OUT_DIR";
 
 #[cfg(target_os = "windows")]
 fn build_native() {
+  use std::env::consts::ARCH;
   use std::process::Command;
 
   let project_dir =
@@ -57,7 +58,8 @@ fn build_native() {
       .expect("unable to extract wxWidgets source dir");
 
     // Compile wxWidgets
-    let tool = cc::windows_registry::find_tool("msvc", "devenv")
+    let msvc_target = format!("{}-pc-windows-msvc", ARCH);
+    let tool = cc::windows_registry::find_tool(&msvc_target, "devenv")
       .expect("unable to locate MSVC compiler, did you install Visual Studio?");
     let mut vcvars_path = None;
     let mut current_root = tool.path();
