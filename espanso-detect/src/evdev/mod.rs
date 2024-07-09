@@ -99,7 +99,6 @@ pub struct EVDEVSource {
   _modifiers_map: HashMap<String, u32>,
 }
 
-#[allow(clippy::new_without_default)]
 impl EVDEVSource {
   pub fn new(options: SourceCreationOptions) -> EVDEVSource {
     let mut modifiers_map = HashMap::new();
@@ -219,9 +218,7 @@ impl Source for EVDEVSource {
         return Err(EVDEVSourceError::Internal().into());
       }
 
-      #[allow(clippy::needless_range_loop)]
-      for i in 0usize..(ret as usize) {
-        let ev = evs[i];
+      for ev in evs.iter().take(ret as usize) {
         let device = &self.devices[ev.u64 as usize];
         match device.read() {
           Ok(events) if !events.is_empty() => {

@@ -108,8 +108,7 @@ impl HotKeyFilter {
 
     // Remove duplicates and revert
     if !to_be_removed.is_empty() {
-      #[allow(clippy::stable_sort_primitive)]
-      to_be_removed.sort();
+      to_be_removed.sort_unstable();
       to_be_removed.dedup();
       to_be_removed.reverse();
       for index in to_be_removed {

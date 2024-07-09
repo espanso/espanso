@@ -134,7 +134,6 @@ pub struct X11Source {
   valid_modifiers_mask: u32,
 }
 
-#[allow(clippy::new_without_default)]
 impl X11Source {
   pub fn new(hotkeys: &[HotKey]) -> X11Source {
     Self {

@@ -66,7 +66,7 @@ pub struct InjectionOptions {
 
 impl Default for InjectionOptions {
   fn default() -> Self {
-    #[allow(clippy::if_same_then_else)]
+    // #[allow(clippy::if_same_then_else)]
     let default_delay = if cfg!(target_os = "windows") {
       0
     } else if cfg!(target_os = "macos") {

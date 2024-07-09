@@ -211,7 +211,6 @@ pub struct CocoaSource {
   hotkeys: Vec<HotKey>,
 }
 
-#[allow(clippy::new_without_default)]
 impl CocoaSource {
   pub fn new(hotkeys: &[HotKey]) -> CocoaSource {
     Self {

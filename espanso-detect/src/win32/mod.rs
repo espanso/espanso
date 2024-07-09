@@ -119,7 +119,6 @@ pub struct Win32Source {
   keyboard_layout_cache_interval: i64,
 }
 
-#[allow(clippy::new_without_default)]
 impl Win32Source {
   pub fn new(
     hotkeys: &[HotKey],

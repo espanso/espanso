@@ -49,7 +49,6 @@ impl ContextMenuMiddleware {
   }
 }
 
-#[allow(clippy::needless_return)]
 impl Middleware for ContextMenuMiddleware {
   fn name(&self) -> &'static str {
     "context_menu"
@@ -121,13 +120,13 @@ impl Middleware for ContextMenuMiddleware {
         // actions such as Exit, Open Editor etc
         // then we need some u32 for the matches, so we need to create
         // a mapping structure match_id <-> context-menu-id
-        return Event::caused_by(
+        Event::caused_by(
           event.source_id,
           EventType::ShowContextMenu(ShowContextMenuEvent {
             // TODO: add actual entries
             items,
           }),
-        );
+        )
       }
       EventType::ContextMenuClicked(context_click_event) => {
         match context_click_event.context_item_id {
