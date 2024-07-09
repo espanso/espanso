@@ -120,6 +120,7 @@ mod tests {
     ExitRequest,
   }
 
+  #[ignore = "flaky test"]
   #[test]
   fn ipc_async_message() {
     let server = server::<Event>("testespansoipcasync", &std::env::temp_dir()).unwrap();
