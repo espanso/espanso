@@ -504,14 +504,6 @@ fn triggers_for_match(m: &Value) -> Vec<String> {
   }
 }
 
-#[allow(dead_code)]
-fn replace_for_match(m: &Value) -> String {
-  m.get("replace")
-    .and_then(|v| v.as_str())
-    .expect("match is missing replace field")
-    .to_string()
-}
-
 fn name_for_global_var(v: &Value) -> String {
   v.get("name")
     .and_then(|v| v.as_str())
@@ -597,7 +589,10 @@ impl LegacyConfigSet {
 
           // No name specified, defaulting to the path name
           if config.name == "default" {
-            config.name = path.to_str().unwrap_or_default().to_owned();
+            path
+              .to_str()
+              .unwrap_or_default()
+              .clone_into(&mut config.name);
           }
 
           if name_set.contains(&config.name) {
@@ -736,9 +731,10 @@ impl LegacyConfigSet {
 }
 
 // Error handling
-#[derive(Debug, PartialEq, Eq)]
 #[allow(dead_code)]
-pub enum ConfigLoadError {
+// `UnableToCreateDefaultConfig` error is constructed when we need to implemented
+#[derive(Debug, PartialEq, Eq)]
+pub(crate) enum ConfigLoadError {
   FileNotFound,
   UnableToReadFile,
   InvalidYAML(PathBuf, String),
@@ -793,6 +789,13 @@ mod tests {
   const TEST_CONFIG_FILE_WITH_BAD_YAML: &str = include_str!("res/test/config_with_bad_yaml.yml");
 
   // Test Configs
+
+  fn replace_for_match(m: &Value) -> String {
+    m.get("replace")
+      .and_then(|v| v.as_str())
+      .expect("match is missing replace field")
+      .to_string()
+  }
 
   fn create_tmp_file(string: &str) -> NamedTempFile {
     let file = NamedTempFile::new().unwrap();

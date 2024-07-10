@@ -73,8 +73,8 @@ void * detect_initialize(EventCallback callback, InitializeOptions options) {
           inputEvent.key_code = event.keyCode;
 
           const char *chars = [event.characters UTF8String];
-          strncpy(inputEvent.buffer, chars, 23);
-          inputEvent.buffer_len = event.characters.length;
+          strncpy(inputEvent.buffer, chars, 23);  // always preserves NUL terminator at inputEvent.buffer[23]
+          inputEvent.buffer_len = strlen(inputEvent.buffer);  // measure length in bytes, not in Unicode characters/codepoints
 
           // We also send the modifier key status to "correct" missing modifier release events
           if (([event modifierFlags] & NSEventModifierFlagShift) != 0) {
@@ -137,6 +137,7 @@ void * detect_initialize(EventCallback callback, InitializeOptions options) {
         }
     }];
   });
+  return nullptr;
 }
 
 OSStatus hotkey_event_handler(EventHandlerCallRef _next, EventRef evt, void *userData)

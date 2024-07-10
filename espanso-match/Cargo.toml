@@ -5,8 +5,8 @@ authors = ["Federico Terzi <federico-terzi@users.noreply.github.com>"]
 edition = "2021"
 
 [dependencies]
-log = "0.4.14"
-regex = "1.5.5"
+log.workspace = true
+regex.workspace = true
 unicase = "2.6.0"
 
 [lints]

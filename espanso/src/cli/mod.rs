@@ -39,6 +39,7 @@ pub mod util;
 pub mod workaround;
 pub mod worker;
 
+#[allow(dead_code)]
 pub struct CliModule {
   pub enable_logs: bool,
   pub disable_logs_terminal_output: bool,
