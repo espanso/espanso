@@ -107,6 +107,12 @@ pub(crate) struct YAMLConfig {
   pub post_form_delay: Option<usize>,
 
   #[serde(default)]
+  pub max_form_width: Option<usize>,
+
+  #[serde(default)]
+  pub max_form_height: Option<usize>,
+
+  #[serde(default)]
   pub post_search_delay: Option<usize>,
 
   #[serde(default)]
@@ -214,6 +220,8 @@ impl TryFrom<YAMLConfig> for ParsedConfig {
       restore_clipboard_delay: yaml_config.restore_clipboard_delay,
       paste_shortcut_event_delay: yaml_config.paste_shortcut_event_delay,
       post_form_delay: yaml_config.post_form_delay,
+      max_form_width: yaml_config.max_form_width,
+      max_form_height: yaml_config.max_form_height,
       post_search_delay: yaml_config.post_search_delay,
 
       emulate_alt_codes: yaml_config.emulate_alt_codes,
@@ -278,19 +286,21 @@ mod tests {
     show_notifications: false
     secure_input_notification: false
     post_form_delay: 300
+    max_form_width: 700
+    max_form_height: 500
     post_search_delay: 400
     emulate_alt_codes: true
     win32_exclude_orphan_events: false
     win32_keyboard_layout_cache_interval: 300
     x11_use_xclip_backend: true
     x11_use_xdotool_backend: true
-      
+
     use_standard_includes: true
     includes: ["test1"]
     extra_includes: ["test2"]
     excludes: ["test3"]
     extra_excludes: ["test4"]
-    
+
     filter_class: "test5"
     filter_exec: "test6"
     filter_os: "test7"
@@ -337,6 +347,8 @@ mod tests {
         secure_input_notification: Some(false),
         emulate_alt_codes: Some(true),
         post_form_delay: Some(300),
+        max_form_width: Some(700),
+        max_form_height: Some(500),
         post_search_delay: Some(400),
         win32_exclude_orphan_events: Some(false),
         win32_keyboard_layout_cache_interval: Some(300),

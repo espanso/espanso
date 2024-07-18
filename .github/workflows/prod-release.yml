@@ -164,10 +164,37 @@ jobs:
         run: |
           gh release upload ${{ needs.extract-version.outputs.espanso_version }} espanso-debian-x11-amd64.deb espanso-debian-wayland-amd64.deb espanso-debian-x11-amd64-sha256.txt espanso-debian-wayland-amd64-sha256.txt 
 
+  # linux-rpm:
+  #   needs: ["extract-version", "create-release"]
+  #   runs-on: fedora-latest
+  #   environment: production
+  #
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - name: Print target version
+  #       run: |
+  #         echo Using version ${{ needs.extract-version.outputs.espanso_version }}
+  #     - name: Build docker image
+  #       run: |
+  #         sudo docker build -t espanso-fedora . -f .github/scripts/fedora/Dockerfile
+  #     - name: Build rpm packages
+  #       run: |
+  #         sudo docker run --rm -v "$(pwd):/shared" espanso-fedora espanso/.github/scripts/fedora/build_rpm.sh
+  #     - uses: actions/upload-artifact@v4
+  #       name: "Upload artifacts"
+  #       with:
+  #         name: Fedora Artifacts
+  #         path: |
+  #           espanso-fedora-wayland-amd64.deb
+  #     - name: Upload artifacts to Github Releases (if master)
+  #       if: ${{ github.ref == 'refs/heads/master' }}
+  #       run: |
+  #         gh release upload ${{ needs.extract-version.outputs.espanso_version }} espanso-fedora-wayland-amd64.deb espanso-fedora-wayland-amd64-sha256.txt 
+  #
 
   macos-intel:
     needs: ["extract-version", "create-release"]
-    runs-on: macos-11
+    runs-on: macos-latest
     environment: production
 
     steps:
@@ -238,7 +265,7 @@ jobs:
   
   macos-m1:
     needs: ["extract-version", "create-release"]
-    runs-on: macos-11
+    runs-on: macos-latest
     environment: production
 
     steps:
@@ -305,7 +332,7 @@ jobs:
 
   macos-publish-homebrew:
     needs: ["extract-version", "create-release", "macos-m1", "macos-intel"]
-    runs-on: macos-11
+    runs-on: macos-latest
     environment: production
 
     steps:

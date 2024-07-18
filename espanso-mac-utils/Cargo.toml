@@ -6,11 +6,11 @@ edition = "2021"
 build = "build.rs"
 
 [dependencies]
-lazy_static = "1.4.0"
-regex = "1.5.5"
+lazy_static.workspace = true
+regex.workspace = true
 
 [build-dependencies]
-cc = "1.0.73"
+cc.workspace = true
 
 [lints]
 workspace = true

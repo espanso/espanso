@@ -239,15 +239,11 @@ pub fn convert(input_files: HashMap<String, Hash>) -> HashMap<String, ConvertedF
 fn sort_input_files(input_files: &HashMap<String, Hash>) -> Vec<String> {
   let mut files: Vec<String> = input_files.iter().map(|(key, _)| key.clone()).collect();
   files.sort_by(|f1, f2| {
-    let f1_slashes = f1.matches('/').count();
-    let f2_slashes = f2.matches('/').count();
-    #[allow(clippy::comparison_chain)]
-    if f1_slashes > f2_slashes {
-      Ordering::Greater
-    } else if f1_slashes < f2_slashes {
-      Ordering::Less
-    } else {
-      f1.cmp(f2)
+    // count how many `/` are there in f1 and compare it with f2
+    match f1.matches('/').count().cmp(&f2.matches('/').count()) {
+      Ordering::Greater => Ordering::Greater,
+      Ordering::Less => Ordering::Less,
+      Ordering::Equal => f1.cmp(f2),
     }
   });
   files
