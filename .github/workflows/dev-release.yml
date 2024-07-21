@@ -86,7 +86,7 @@ jobs:
           sudo docker build -t espanso-ubuntu . -f .github/scripts/Dockerfile
       - name: Build AppImage
         run: |
-          sudo docker run --rm -v "$(pwd):/shared" espanso-ubuntu espanso/.github/scripts/build_appimage.sh
+          sudo docker run --rm -v "$(pwd):/shared" espanso-ubuntu espanso/.github/scripts/ubuntu/build_appimage.sh
       - uses: actions/upload-artifact@v4
         name: "Upload artifacts"
         with:
@@ -109,7 +109,7 @@ jobs:
           sudo docker build -t espanso-ubuntu . -f .github/scripts/Dockerfile
       - name: Build Deb packages
         run: |
-          sudo docker run --rm -v "$(pwd):/shared" espanso-ubuntu espanso/.github/scripts/build_deb.sh
+          sudo docker run --rm -v "$(pwd):/shared" espanso-ubuntu espanso/.github/scripts/ubuntu/build_deb.sh
       - uses: actions/upload-artifact@v4
         name: "Upload artifacts"
         with:
