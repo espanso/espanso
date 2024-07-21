@@ -1,9 +1,10 @@
-FROM ubuntu:18.04
+FROM ubuntu:24.04
 
 RUN apt-get update \
-    && apt-get install -y libssl-dev \
-    libxdo-dev libxtst-dev libx11-dev \
-    libxkbcommon-dev libwxgtk3.0-gtk3-dev libdbus-1-dev \
+    && apt-get install -y \
+    libx11-dev libxtst-dev libxkbcommon-dev libdbus-1-dev libwxgtk3.2-dev \
+    libssl-dev \
+    libxdo-dev \
     wget git file build-essential pkg-config
 
 ENV RUSTUP_HOME=/usr/local/rustup \
