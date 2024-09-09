@@ -83,11 +83,15 @@ If you don't know which one to choose, follow [these steps to determine which on
 
 If compiling on a version of Ubuntu X11 before 22.04 (including 22.04):
 
-* `sudo apt install libx11-dev libxtst-dev libxkbcommon-dev libdbus-1-dev libwxgtk3.0-gtk3-dev`
+```bash
+sudo apt install libx11-dev libxtst-dev libxkbcommon-dev libdbus-1-dev libwxgtk3.0-gtk3-dev
+```
 
 If compiling on a version of Ubuntu X11 after 22.04:
 
-* `sudo apt install libx11-dev libxtst-dev libxkbcommon-dev libdbus-1-dev libwxgtk3.2-dev`
+```bash
+sudo apt install libx11-dev libxtst-dev libxkbcommon-dev libdbus-1-dev libwxgtk3.2-dev
+```
 
 ### Compiling for X11
 
