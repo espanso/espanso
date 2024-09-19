@@ -54,20 +54,13 @@ void inject_string(char *string, int32_t delay)
       usleep(udelay);
     }
 
-    // Because of a bug ( or undocumented limit ) of the CGEventKeyboardSetUnicodeString method
-    // the string gets truncated after 20 characters, so we need to send multiple events.
-
-    int i = 0;
-    while (i < buffer.size()) {
-      int chunk_size = 20;
-      if ((i+chunk_size) >  buffer.size()) {
-        chunk_size = buffer.size() - i;
-      }
-
+    // Issue a single char per call, like the other platforms
+    for (int i = 0 ; i < buffer.size(); i++)
+    {
       UniChar * offset_buffer = buffer.data() + i;
       CGEventRef e = CGEventCreateKeyboardEvent(NULL, 0x31, true);
       CGEventSetLocation(e, ESPANSO_POINT_MARKER);
-      CGEventKeyboardSetUnicodeString(e, chunk_size, offset_buffer);
+      CGEventKeyboardSetUnicodeString(e, 1, offset_buffer);
       CGEventPost(kCGHIDEventTap, e);
       CFRelease(e);
 
@@ -81,8 +74,6 @@ void inject_string(char *string, int32_t delay)
       CFRelease(e2);
 
       usleep(udelay);
-
-      i += chunk_size;
     }
   });
 }
