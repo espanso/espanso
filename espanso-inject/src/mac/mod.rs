@@ -32,7 +32,7 @@ use crate::{keys, InjectionOptions, Injector};
 #[allow(improper_ctypes)]
 #[link(name = "espansoinject", kind = "static")]
 extern "C" {
-  pub fn inject_string(string: *const c_char, delay: i32);
+  pub fn inject_string(string: *const c_char, default_delay: i32, delay: i32);
   pub fn inject_separate_vkeys(vkey_array: *const i32, vkey_count: i32, delay: i32);
   pub fn inject_vkeys_combination(vkey_array: *const i32, vkey_count: i32, delay: i32);
 }
@@ -63,7 +63,7 @@ impl Injector for MacInjector {
   fn send_string(&self, string: &str, options: InjectionOptions) -> Result<()> {
     let c_string = CString::new(string)?;
     unsafe {
-      inject_string(c_string.as_ptr(), options.delay);
+      inject_string(c_string.as_ptr(), InjectionOptions::default().delay, options.delay);
     }
     Ok(())
   }
