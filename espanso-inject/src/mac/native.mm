@@ -54,7 +54,6 @@ void inject_string(char *string, int32_t default_delay, int32_t delay)
       usleep(udelay);
     }
 
-
     // Because of a bug ( or undocumented limit ) of the CGEventKeyboardSetUnicodeString method
     // the string gets truncated after 20 characters, so we need to send multiple events.
 
