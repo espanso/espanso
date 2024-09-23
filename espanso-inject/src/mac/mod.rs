@@ -63,7 +63,11 @@ impl Injector for MacInjector {
   fn send_string(&self, string: &str, options: InjectionOptions) -> Result<()> {
     let c_string = CString::new(string)?;
     unsafe {
-      inject_string(c_string.as_ptr(), InjectionOptions::default().delay, options.delay);
+      inject_string(
+        c_string.as_ptr(),
+        InjectionOptions::default().delay,
+        options.delay,
+      );
     }
     Ok(())
   }
