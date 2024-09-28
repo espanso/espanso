@@ -27,7 +27,7 @@
 // so that we can later skip them in the detect module.
 CGPoint ESPANSO_POINT_MARKER = CGPointMake(-27469, 0);
 
-void inject_string(char *string, int32_t delay)
+void inject_string(char *string, int32_t default_delay, int32_t delay)
 {
   long udelay = delay * 1000;
 
@@ -58,8 +58,10 @@ void inject_string(char *string, int32_t delay)
     // the string gets truncated after 20 characters, so we need to send multiple events.
 
     int i = 0;
+    // If delay is equal to the default one, then issue in chunks,
+    // otherwise, inject a keystroke at a time and respect the delay between keystrokes.
+    int chunk_size = delay == default_delay ? 20 : 1;
     while (i < buffer.size()) {
-      int chunk_size = 20;
       if ((i+chunk_size) >  buffer.size()) {
         chunk_size = buffer.size() - i;
       }
