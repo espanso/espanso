@@ -21,6 +21,7 @@ use std::os::raw::c_char;
 
 #[link(name = "espansoclipboard", kind = "static")]
 extern "C" {
+  pub fn clipboard_get_length() -> i32;
   pub fn clipboard_get_text(buffer: *mut c_char, buffer_size: i32) -> i32;
   pub fn clipboard_set_text(text: *const c_char) -> i32;
   pub fn clipboard_set_image(image_path: *const c_char) -> i32;
