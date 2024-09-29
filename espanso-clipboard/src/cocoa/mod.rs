@@ -45,7 +45,7 @@ impl Clipboard for CocoaClipboard {
       return None;
     }
     // allocate the buffer
-    let mut buffer: Vec<i8> = vec![0; length as usize];
+    let mut buffer: Vec<i8> = vec![0; length as usize + 1];
     let native_result =
       unsafe { ffi::clipboard_get_text(buffer.as_mut_ptr(), (buffer.len() - 1) as i32) };
     if native_result > 0 {
