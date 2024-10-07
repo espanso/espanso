@@ -1,6 +1,6 @@
 name: 🐛 Bug Report
 description: Let us know about a bug in Espanso
-labels: [bug, "status: needs triage"]
+labels: [bug, "needs-triage"]
 body:
   - type: textarea
     attributes:
