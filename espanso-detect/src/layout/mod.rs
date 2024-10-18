@@ -17,6 +17,8 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use log::info;
+
 #[cfg(target_os = "linux")]
 #[cfg(not(feature = "wayland"))]
 mod x11;
@@ -24,6 +26,7 @@ mod x11;
 #[cfg(target_os = "linux")]
 #[cfg(feature = "wayland")]
 mod gnome;
+mod wayland;
 
 #[cfg(target_os = "linux")]
 #[cfg(not(feature = "wayland"))]
@@ -37,6 +40,10 @@ pub fn get_active_layout() -> Option<String> {
   if gnome::is_gnome() {
     gnome::get_active_layout()
   } else {
+    info!(
+      "Wayland compositor detected: {}",
+      wayland::get_compositor_name()
+    );
     None
   }
 }
