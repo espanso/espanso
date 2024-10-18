@@ -391,6 +391,14 @@ impl Config for LegacyInteropConfig {
     crate::config::default::DEFAULT_POST_FORM_DELAY
   }
 
+  fn max_form_width(&self) -> usize {
+    700
+  }
+
+  fn max_form_height(&self) -> usize {
+    500
+  }
+
   fn post_search_delay(&self) -> usize {
     crate::config::default::DEFAULT_POST_SEARCH_DELAY
   }
@@ -604,7 +612,7 @@ mod tests {
       matches:
         - trigger: "hello"
           replace: "world"
-        
+
         - trigger: "withvars"
           replace: "{{output}}"
           vars:
@@ -687,7 +695,7 @@ mod tests {
       std::fs::write(
         packages.join("test-package").join("package.yml"),
         r#"
-      name: test-package 
+      name: test-package
       parent: default
 
       matches:

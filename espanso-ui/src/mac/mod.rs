@@ -123,7 +123,7 @@ impl UIEventLoop for MacEventLoop {
       icon_paths_count: self.icons.len() as i32,
     };
 
-    unsafe { ui_initialize(self as *const MacEventLoop, options) };
+    unsafe { ui_initialize(std::ptr::from_ref::<MacEventLoop>(self), options) };
 
     // Make sure the run() method is called in the same thread as initialize()
     self
@@ -223,7 +223,6 @@ impl UIRemote for MacRemote {
   }
 }
 
-#[allow(clippy::single_match)] // TODO: remove after another match is used
 impl From<RawUIEvent> for Option<UIEvent> {
   fn from(raw: RawUIEvent) -> Option<UIEvent> {
     match raw.event_type {

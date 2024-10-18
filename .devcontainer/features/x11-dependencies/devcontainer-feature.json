@@ -1,0 +1,10 @@
+{
+    "name": "Espanso - X11 dependencies",
+    "id": "espanso_x11",
+    "version": "1.0.0",
+    "description": "A feature to install the required X11 packages for Espanso",
+
+    "installsAfter": [
+        "ghcr.io/devcontainers/features/common-utils"
+    ]
+}

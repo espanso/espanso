@@ -62,7 +62,7 @@ jobs:
         run: |
           Get-FileHash target/windows/Espanso-Win-Portable-x86_64.zip -Algorithm SHA256 | select-object -ExpandProperty Hash > target/windows/Espanso-Win-Portable-x86_64.zip.sha256.txt
           Get-FileHash target/windows/installer/Espanso-Win-Installer-x86_64.exe -Algorithm SHA256 | select-object -ExpandProperty Hash > target/windows/installer/Espanso-Win-Installer-x86_64.exe.sha256.txt
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v4
         name: "Upload artifacts"
         with:
           name: Windows Artifacts
@@ -83,11 +83,11 @@ jobs:
           echo Using version ${{ needs.extract-version.outputs.espanso_version }}
       - name: Build docker image
         run: |
-          sudo docker build -t espanso-ubuntu . -f .github/scripts/ubuntu/Dockerfile
+          sudo docker build -t espanso-ubuntu . -f .github/scripts/Dockerfile
       - name: Build AppImage
         run: |
           sudo docker run --rm -v "$(pwd):/shared" espanso-ubuntu espanso/.github/scripts/ubuntu/build_appimage.sh
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v4
         name: "Upload artifacts"
         with:
           name: Linux X11 Artifacts
@@ -106,11 +106,11 @@ jobs:
           echo Using version ${{ needs.extract-version.outputs.espanso_version }}
       - name: Build docker image
         run: |
-          sudo docker build -t espanso-ubuntu . -f .github/scripts/ubuntu/Dockerfile
+          sudo docker build -t espanso-ubuntu . -f .github/scripts/Dockerfile
       - name: Build Deb packages
         run: |
           sudo docker run --rm -v "$(pwd):/shared" espanso-ubuntu espanso/.github/scripts/ubuntu/build_deb.sh
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v4
         name: "Upload artifacts"
         with:
           name: Ubuntu-Debian Artifacts
@@ -118,10 +118,32 @@ jobs:
             espanso-debian-x11-amd64.deb
             espanso-debian-wayland-amd64.deb
 
+  # linux-rpm:
+  #   needs: ["extract-version"]
+  #   runs-on: fedora-latest
+  #
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - name: Print target version
+  #       run: |
+  #         echo Using version ${{ needs.extract-version.outputs.espanso_version }}
+  #     - name: Build docker image
+  #       run: |
+  #         sudo docker build -t espanso-fedora . -f .github/scripts/fedora/Dockerfile
+  #     - name: Build rpm packages
+  #       run: |
+  #         sudo docker run --rm -v "$(pwd):/shared" espanso-fedora espanso/.github/scripts/fedora/build_rpm.sh
+  #     - uses: actions/upload-artifact@v4
+  #       name: "Upload artifacts"
+  #       with:
+  #         name: Fedora Artifacts
+  #         path: |
+  #           espanso-fedora-wayland-amd64.deb
+  #
 
   macos-intel:
     needs: ["extract-version"]
-    runs-on: macos-11
+    runs-on: macos-latest
 
     steps:
       - uses: actions/checkout@v2
@@ -146,7 +168,7 @@ jobs:
       - name: Calculate hashes
         run: |
           shasum -a 256 Espanso-Mac-Intel.zip > Espanso-Mac-Intel.zip.sha256.txt
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v4
         name: "Upload artifacts"
         with:
           name: Mac Intel Artifacts
@@ -156,7 +178,7 @@ jobs:
   
   macos-m1:
     needs: ["extract-version"]
-    runs-on: macos-11
+    runs-on: macos-latest
 
     steps:
       - uses: actions/checkout@v2
@@ -177,7 +199,7 @@ jobs:
       - name: Calculate hashes
         run: |
           shasum -a 256 Espanso-Mac-M1.zip > Espanso-Mac-M1.zip.sha256.txt
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v4
         name: "Upload artifacts"
         with:
           name: Mac M1 Artifacts

@@ -58,7 +58,7 @@ mod interop {
 
   impl Interoperable for OwnedSearch {
     fn as_ptr(&self) -> *const c_void {
-      &(*self.interop) as *const SearchMetadata as *const c_void
+      std::ptr::from_ref::<SearchMetadata>(&(*self.interop)) as *const c_void
     }
   }
 
@@ -205,9 +205,9 @@ pub fn show(search: types::Search, algorithm: Box<SearchAlgorithmCallback>) -> O
     interop_show_search(
       metadata,
       search_callback,
-      &search_data as *const SearchData as *const c_void,
+      std::ptr::from_ref::<SearchData>(&search_data) as *const c_void,
       result_callback,
-      &mut result as *mut Option<String> as *mut c_void,
+      std::ptr::from_mut::<Option<String>>(&mut result) as *mut c_void,
     );
   }
 

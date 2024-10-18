@@ -119,7 +119,6 @@ pub struct Win32Source {
   keyboard_layout_cache_interval: i64,
 }
 
-#[allow(clippy::new_without_default)]
 impl Win32Source {
   pub fn new(
     hotkeys: &[HotKey],
@@ -143,8 +142,13 @@ impl Source for Win32Source {
     };
 
     let mut error_code = 0;
-    let handle =
-      unsafe { detect_initialize(self as *const Win32Source, &options, &mut error_code) };
+    let handle = unsafe {
+      detect_initialize(
+        std::ptr::from_ref::<Win32Source>(self),
+        &options,
+        &mut error_code,
+      )
+    };
 
     if handle.is_null() {
       let error = match error_code {

@@ -17,16 +17,6 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#[allow(unused_imports)]
-#[macro_use]
-#[cfg(test)]
-extern crate include_dir;
-
-#[allow(unused_imports)]
-#[macro_use]
-#[cfg(test)]
-extern crate test_case;
-
 use std::path::Path;
 
 use anyhow::Result;

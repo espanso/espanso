@@ -11,23 +11,23 @@ build = "build.rs"
 wayland = ["sctk"]
 
 [dependencies]
-log = "0.4.14"
-lazycell = "1.3.0"
-anyhow = "1.0.38"
-thiserror = "1.0.23"
-regex = "1.5.5"
-lazy_static = "1.4.0"
 wayland-client = "0.31.6"
 nix = { version = "0.29.0", features = ["socket"] }
+log.workspace = true
+lazycell.workspace = true
+anyhow.workspace = true
+thiserror.workspace = true
+regex.workspace = true
+lazy_static.workspace = true
 
 [dev-dependencies]
-enum-as-inner = "0.6.0"
+enum-as-inner.workspace = true
 
 [lints]
 workspace = true
 
 [target.'cfg(windows)'.dependencies]
-widestring = "0.4.3"
+widestring.workspace = true
 
 [target.'cfg(target_os="linux")'.dependencies]
 libc = "0.2.85"
@@ -35,4 +35,4 @@ scopeguard = "1.1.0"
 sctk = { package = "smithay-client-toolkit", version = "0.18.1", optional = true }
 
 [build-dependencies]
-cc = "1.0.73"
+cc.workspace = true
