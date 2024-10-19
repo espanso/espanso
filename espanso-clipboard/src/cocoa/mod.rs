@@ -27,8 +27,8 @@ use std::{
 use crate::{Clipboard, ClipboardOperationOptions};
 use anyhow::Result;
 use log::error;
-use thiserror::Error;
 use std::os::raw::c_char;
+use thiserror::Error;
 
 pub struct CocoaClipboard {}
 
@@ -43,7 +43,7 @@ impl Clipboard for CocoaClipboard {
     // get the clipbard size
     let length = unsafe { ffi::clipboard_get_length() };
     if length <= 0 {
-        return None;
+      return None;
     }
 
     // allocate the buffer with extra space for null terminator
