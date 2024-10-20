@@ -126,11 +126,15 @@ If you don't know which one to choose, follow [these steps to determine which on
 
 If compiling on a version of Ubuntu X11 before 22.04 (including 22.04):
 
-- `sudo apt install libx11-dev libxtst-dev libxkbcommon-dev libdbus-1-dev libwxgtk3.0-gtk3-dev`
+```bash
+sudo apt install libx11-dev libxtst-dev libxkbcommon-dev libdbus-1-dev libwxgtk3.0-gtk3-dev
+```
 
 If compiling on a version of Ubuntu X11 after 22.04:
 
-- `sudo apt install libx11-dev libxtst-dev libxkbcommon-dev libdbus-1-dev libwxgtk3.2-dev`
+```bash
+sudo apt install libx11-dev libxtst-dev libxkbcommon-dev libdbus-1-dev libwxgtk3.2-dev
+```
 
 #### Compiling for X11
 
@@ -167,7 +171,11 @@ cargo make --env NO_X11=true --profile release -- build-binary
 
 You'll then find the `espanso` binary in the `target/release` directory.
 
-### Disabling modulo (GUI features)
+### Advanced
+
+Espanso offers a few flags that might be necessary if you want to further tune the resulting binary.
+
+#### Disabling modulo (GUI features)
 
 Espanso includes a component known as _modulo_, which handles most of the graphical-related parts of the tool.
 For example, the Search bar or Forms are handled by it.
@@ -181,12 +189,10 @@ Keep in mind that espanso was designed with modulo as a first class citizen, so 
 
 It is good practice to cover your changes with a test. Also, try to think about corner cases and various ways how your changes could break. Cover those in the tests as well.
 
-Tests can be found in different places:
+Tests can be found in 2 places:
 
-- `/tests`
-- `src/tests`
-- command examples
-- crate-specific tests
+- `/test/` folder (we have this case only in `espanso-migrate`)
+- within the same file of the function, in a `tests` mod
 
 ## Creating a PR
 
@@ -315,3 +321,4 @@ Note: They might be false-positive.
 ```
 
 These are because the windows and linux can't see through the `target = macos`
+
