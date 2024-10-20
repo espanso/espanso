@@ -26,6 +26,10 @@ mod x11;
 mod gnome;
 
 #[cfg(target_os = "linux")]
+#[cfg(feature = "wayland")]
+mod wayland;
+
+#[cfg(target_os = "linux")]
 #[cfg(not(feature = "wayland"))]
 pub fn get_active_layout() -> Option<String> {
   x11::get_active_layout()
@@ -37,6 +41,11 @@ pub fn get_active_layout() -> Option<String> {
   if gnome::is_gnome() {
     gnome::get_active_layout()
   } else {
+    use log::info;
+    info!(
+      "Wayland compositor detected: {}",
+      wayland::get_compositor_name()
+    );
     None
   }
 }
