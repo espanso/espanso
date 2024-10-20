@@ -22,6 +22,20 @@
 #import <Foundation/Foundation.h>
 #include <string.h>
 
+// get the clipboard length in bytes
+int32_t clipboard_get_length() {
+  NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
+  for (id element in pasteboard.pasteboardItems) {
+    NSString *string = [element stringForType: NSPasteboardTypeString];
+    if (string != NULL) {
+      const char * text = [string UTF8String];
+      return strlen(text);
+    }
+  }
+  return -1;
+}
+
+
 int32_t clipboard_get_text(char * buffer, int32_t buffer_size) {
   NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
   for (id element in pasteboard.pasteboardItems) {
