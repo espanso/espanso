@@ -238,28 +238,10 @@ We would like the rust code:
 
 And C / C++ code:
 
-- we would like to use `clang-format`
-- and we would like to use `clang-tidy`
-
-`clang-format` and `clang-tidy` aren't capable of formatting folders recursively,
- so that's why we use [run-clang-format](https://github.com/lmapii/run-clang-format) and
- [run-clang-tidy](https://github.com/lmapii/run-clang-tidy)
-
-To format the code run:
-
-```bash
-run-clang-format .clang-format.json
-```
-
-And it should format all the `*.c`, `*.h`, `*.cpp`, `*.hpp` and `*.mm` files.
-
-With `clang-tidy` the structure is ready to run:
-
-```bash
-run-clang-tidy .clang-tidy.json
-```
-
-But it [is necessary to pass the build args](https://github.com/espanso/espanso/pull/1864#issuecomment-1962998631).
+- we would like to use a formatter, like `clang-format` (we can use [run-clang-format](https://github.com/lmapii/run-clang-format)
+to format folders recursively)
+- and we would like to use `clang-tidy`, but we need a Compilation database in order to use `clang-tidy`
+ (also, we can use [run-clang-tidy](https://github.com/lmapii/run-clang-tidy) to help too!)
 
 Today our submitted code is yet untidy. Work in progress!
 
