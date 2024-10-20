@@ -27,6 +27,7 @@ use std::{
 use crate::{Clipboard, ClipboardOperationOptions};
 use anyhow::Result;
 use log::error;
+use std::os::raw::c_char;
 use thiserror::Error;
 
 pub struct CocoaClipboard {}
@@ -39,9 +40,17 @@ impl CocoaClipboard {
 
 impl Clipboard for CocoaClipboard {
   fn get_text(&self, _: &ClipboardOperationOptions) -> Option<String> {
-    let mut buffer: [i8; 2048] = [0; 2048];
+    // get the clipbard size
+    let length = unsafe { ffi::clipboard_get_length() };
+    if length <= 0 {
+      return None;
+    }
+
+    // allocate the buffer with extra space for null terminator
+    let mut buffer: Vec<c_char> = vec![0; (length as usize) + 1];
     let native_result =
-      unsafe { ffi::clipboard_get_text(buffer.as_mut_ptr(), (buffer.len() - 1) as i32) };
+      unsafe { ffi::clipboard_get_text(buffer.as_mut_ptr(), buffer.len() as i32) };
+
     if native_result > 0 {
       let string = unsafe { CStr::from_ptr(buffer.as_ptr()) };
       Some(string.to_string_lossy().to_string())
