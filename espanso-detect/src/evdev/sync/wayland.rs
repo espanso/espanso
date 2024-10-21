@@ -84,18 +84,6 @@ pub fn get_modifiers_state() -> Result<Option<super::ModifiersState>> {
   // the correct options.
   window.commit();
 
-  // To request focus, we first need to request a token
-  if let Some(activation) = xdg_activation.as_ref() {
-    activation.request_token(
-      &qh,
-      RequestData {
-        seat_and_serial: None,
-        surface: Some(window.wl_surface().clone()),
-        app_id: Some(String::from("Espanso.SyncTool")),
-      },
-    );
-  }
-
   // We don't know how large the window will be yet, so lets assume the minimum size we suggested for the
   // initial memory allocation.
   let pool = SlotPool::new(256 * 256 * 4, &shm).expect("Failed to create pool");
