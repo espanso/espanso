@@ -40,3 +40,7 @@ venv/
 .vscode/
 *.profraw
 **/*.code-workspace
+
+# debian package builds
+*.deb
+
