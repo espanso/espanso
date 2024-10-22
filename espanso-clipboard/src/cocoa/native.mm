@@ -21,19 +21,23 @@
 #import <AppKit/AppKit.h>
 #import <Foundation/Foundation.h>
 #include <string.h>
+#import <dispatch/dispatch.h>
 
 int32_t clipboard_get_text(char * buffer, int32_t buffer_size) {
-  NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
-  for (id element in pasteboard.pasteboardItems) {
-    NSString *string = [element stringForType: NSPasteboardTypeString];
-    if (string != NULL) {
-      const char * text = [string UTF8String];
-      strncpy(buffer, text, buffer_size);
-
-      return 1;
+  __block int32_t result = 0;
+  dispatch_sync(dispatch_get_main_queue(), ^{
+    @autoreleasepool {
+      NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
+      NSString *string = [pasteboard stringForType:NSPasteboardTypeString];
+      if (string != NULL) {
+        BOOL success = [string getCString:buffer maxLength:buffer_size encoding:NSUTF8StringEncoding];
+        if (success) {
+            result = 1;
+        }
+      }
     }
-  }
-  return 0;
+  });
+  return result;
 }
 
 int32_t clipboard_set_text(char * text) {
@@ -87,4 +91,25 @@ int32_t clipboard_set_html(char * html, char * fallback_text) {
   }
   
   return 1;
+}
+
+int32_t clipboard_get_length() {
+  __block int32_t result = -1;
+  dispatch_sync(dispatch_get_main_queue(), ^{
+      @autoreleasepool {
+        NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
+        NSString *string = [pasteboard stringForType:NSPasteboardTypeString];
+        if (string != NULL) {
+          NSUInteger length = [string lengthOfBytesUsingEncoding:NSUTF8StringEncoding];
+            if (length != NSNotFound) {
+              result = (int32_t)length;
+            } else {
+              result = -1;
+            }
+        } else {
+          result = -1;
+      }
+    }
+  });
+  return result;
 }
