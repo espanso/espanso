@@ -41,8 +41,8 @@ pub fn get_active_layout() -> Option<String> {
   if gnome::is_gnome() {
     gnome::get_active_layout()
   } else {
-    use log::info;
-    info!(
+    use log::debug;
+    debug!(
       "Wayland compositor detected: {}",
       wayland::get_compositor_name()
     );
