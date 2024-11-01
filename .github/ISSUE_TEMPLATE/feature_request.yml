@@ -1,6 +1,6 @@
 name: 🚀 Feature Request / RFC
 description: Suggest an idea to make Espanso better
-labels: [feature, "status: needs triage"]
+labels: [enhancement, "needs-triage"]
 body:
   - type: textarea
     attributes:
