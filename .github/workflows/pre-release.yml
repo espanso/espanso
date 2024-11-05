@@ -1,12 +1,12 @@
 # Huge thanks to Alacritty, as their configuration served as a starting point for this one!
 # See: https://github.com/alacritty/alacritty
 
-name: Signpath Release
+name: Pre Release
 
 on:
   push:
     branches:
-      - master
+      - pre-release
 
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -66,20 +66,20 @@ jobs:
         run: cargo make --profile release -- test-binary
       - name: Build resources
         run: cargo make --profile release -- build-windows-resources
-      - name: Sign resources
-        run: cargo make sign-windows-resources
-        env:
-          CODESIGN_PWD: ${{ secrets.WIN_CODESIGN_PWD }}
-          CODESIGN_CROSS_SIGNED_B64: ${{ secrets.WIN_CODESIGN_INTERMEDIATE_B64 }}
-          CODESIGN_CERTIFICATE_B64: ${{ secrets.WIN_CODESIGN_CERTIFICATE_B64 }}
+      # - name: Sign resources
+      #   run: cargo make sign-windows-resources
+      #   env:
+      #     CODESIGN_PWD: ${{ secrets.WIN_CODESIGN_PWD }}
+      #     CODESIGN_CROSS_SIGNED_B64: ${{ secrets.WIN_CODESIGN_INTERMEDIATE_B64 }}
+      #     CODESIGN_CERTIFICATE_B64: ${{ secrets.WIN_CODESIGN_CERTIFICATE_B64 }}
       - name: Build installer
         run: cargo make --profile release --skip-tasks build-windows-resources -- build-windows-installer
-      - name: Sign installer
-        run: cargo make sign-windows-installer
-        env:
-          CODESIGN_PWD: ${{ secrets.WIN_CODESIGN_PWD }}
-          CODESIGN_CROSS_SIGNED_B64: ${{ secrets.WIN_CODESIGN_INTERMEDIATE_B64 }}
-          CODESIGN_CERTIFICATE_B64: ${{ secrets.WIN_CODESIGN_CERTIFICATE_B64 }}
+      # - name: Sign installer
+      #   run: cargo make sign-windows-installer
+      #   env:
+      #     CODESIGN_PWD: ${{ secrets.WIN_CODESIGN_PWD }}
+      #     CODESIGN_CROSS_SIGNED_B64: ${{ secrets.WIN_CODESIGN_INTERMEDIATE_B64 }}
+      #     CODESIGN_CERTIFICATE_B64: ${{ secrets.WIN_CODESIGN_CERTIFICATE_B64 }}
       - name: Build portable mode archive 
         run: cargo make --profile release --skip-tasks build-windows-resources -- build-windows-portable
       - name: Create portable mode archive
