@@ -3,6 +3,9 @@ name: Create release draft
 on:
     workflow_dispatch:
 
+env:
+  GH_TOKEN: ${{ github.token }}
+
 jobs:
   extract-version:
     name: extract-version
