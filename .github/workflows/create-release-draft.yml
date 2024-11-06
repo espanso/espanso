@@ -1,0 +1,157 @@
+name: Create release draft
+
+on:
+    workflow_dispatch:
+
+jobs:
+  extract-version:
+    name: extract-version
+    runs-on: ubuntu-latest
+    outputs:
+      espanso_version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: "Extract version"
+        id: "version"
+        run: |
+          ESPANSO_VERSION=$(grep '^version' espanso/Cargo.toml | awk -F '"' '{ print $2 }')
+          echo version: $ESPANSO_VERSION
+          echo "::set-output name=version::v$ESPANSO_VERSION"
+        # example output: v2.2.1
+
+  create-release:
+    name: create-release
+    needs: ["extract-version"]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Create new release (only on master)
+        if: ${{ github.ref == 'refs/heads/master' }}
+        # gh release create docs: https://cli.github.com/manual/gh_release_create
+        run: |
+          COMMIT_HASH=$(git rev-list --max-count=1 HEAD)
+          echo "Creating release: ${{ needs.extract-version.outputs.espanso_version }}"
+          echo "for hash: $COMMIT_HASH"
+          gh release create ${{ needs.extract-version.outputs.espanso_version }} \
+            --title ${{ needs.extract-version.outputs.espanso_version }} \
+            --notes "Automatically released by CI" \
+            --prerelease \
+            --target $COMMIT_HASH
+  
+  windows:
+    needs: ["extract-version", "create-release"]
+    runs-on: windows-latest
+    environment: production
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Print target version
+        run: |
+          echo Using version ${{ needs.extract-version.outputs.espanso_version }}
+      - name: Install rust-script and cargo-make
+        run: |
+          cargo install rust-script --version "0.7.0"
+          cargo install --force cargo-make --version 0.37.5
+      - name: Test
+        run: cargo make --profile release -- test-binary
+      - name: Build resources
+        run: cargo make --profile release -- build-windows-resources
+      - name: Build installer
+        run: cargo make --profile release --skip-tasks build-windows-resources -- build-windows-installer
+      - name: Build portable mode archive 
+        run: cargo make --profile release --skip-tasks build-windows-resources -- build-windows-portable
+      - name: Create portable mode archive
+        shell: powershell
+        run: |
+          Rename-Item target/windows/portable espanso-portable
+          Compress-Archive target/windows/espanso-portable target/windows/Espanso-Win-Portable-x86_64.zip
+      - name: Calculate hashes
+        shell: powershell
+        run: |
+          Get-FileHash target/windows/Espanso-Win-Portable-x86_64.zip -Algorithm SHA256 | select-object -ExpandProperty Hash > target/windows/Espanso-Win-Portable-x86_64.zip.sha256.txt
+          Get-FileHash target/windows/installer/Espanso-Win-Installer-x86_64.exe -Algorithm SHA256 | select-object -ExpandProperty Hash > target/windows/installer/Espanso-Win-Installer-x86_64.exe.sha256.txt
+      - uses: actions/upload-artifact@v4
+        id: upload-artifact-windows
+        name: "Upload artifacts"
+        with:
+          name: Windows Artifacts
+          path: |
+            target/windows/installer/Espanso-Win-Installer-x86_64.exe
+            target/windows/Espanso-Win-Portable-x86_64.zip
+            target/windows/installer/Espanso-Win-Installer-x86_64.exe.sha256.txt
+            target/windows/Espanso-Win-Portable-x86_64.zip.sha256.txt
+      - name: Upload artifacts to Github Releases (if master)
+        if: ${{ github.ref == 'refs/heads/master' }}
+        run: |
+          gh release upload ${{ needs.extract-version.outputs.espanso_version }} target/windows/installer/Espanso-Win-Installer-x86_64.exe target/windows/Espanso-Win-Portable-x86_64.zip target/windows/installer/Espanso-Win-Installer-x86_64.exe.sha256.txt target/windows/Espanso-Win-Portable-x86_64.zip.sha256.txt
+      - id: sign-windows-release
+        uses: signpath/github-action-submit-signing-request@v1
+        with:
+          api-token: '${{ secrets.SIGNPATH_API_TOKEN }}'
+          organization-id: 'e86b1459-62fc-4c7c-aac9-185d60749a03'
+          project-slug: 'espanso'
+          signing-policy-slug: 'test-signing'
+          github-artifact-id: '${{steps.upload-artifact-windows.outputs.artifact-id}}'
+          wait-for-completion: true
+          output-artifact-directory: 'target/windows/signpathOutput'
+          parameters: |
+            Version: ${{ needs.extract-version.outputs.espanso_version }}
+
+  linux-x11:
+    needs: ["extract-version", "create-release"]
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Print target version
+        run: |
+          echo Using version ${{ needs.extract-version.outputs.espanso_version }}
+      - name: Build docker image
+        run: |
+          sudo docker build -t espanso-ubuntu . -f .github/scripts/Dockerfile
+      - name: Build AppImage
+        run: |
+          sudo docker run --rm -v "$(pwd):/shared" espanso-ubuntu espanso/.github/scripts/ubuntu/build_appimage.sh
+      - uses: actions/upload-artifact@v4
+        name: "Upload artifacts"
+        with:
+          name: Linux X11 Artifacts
+          path: |
+            Espanso-X11.AppImage
+            Espanso-X11.AppImage.sha256.txt
+      - name: Upload artifacts to Github Releases (if master)
+        if: ${{ github.ref == 'refs/heads/master' }}
+        run: |
+          gh release upload ${{ needs.extract-version.outputs.espanso_version }} Espanso-X11.AppImage Espanso-X11.AppImage.sha256.txt
+  
+  linux-deb:
+    needs: ["extract-version", "create-release"]
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Print target version
+        run: |
+          echo Using version ${{ needs.extract-version.outputs.espanso_version }}
+      - name: Build docker image
+        run: |
+          sudo docker build -t espanso-ubuntu . -f .github/scripts/Dockerfile
+      - name: Build Deb packages
+        run: |
+          sudo docker run --rm -v "$(pwd):/shared" espanso-ubuntu espanso/.github/scripts/ubuntu/build_deb.sh
+      - uses: actions/upload-artifact@v4
+        name: "Upload artifacts"
+        with:
+          name: Ubuntu-Debian Artifacts
+          path: |
+            espanso-debian-x11-amd64.deb
+            espanso-debian-wayland-amd64.deb
+      - name: Upload artifacts to Github Releases (if master)
+        if: ${{ github.ref == 'refs/heads/master' }}
+        run: |
+          gh release upload ${{ needs.extract-version.outputs.espanso_version }} espanso-debian-x11-amd64.deb espanso-debian-wayland-amd64.deb espanso-debian-x11-amd64-sha256.txt espanso-debian-wayland-amd64-sha256.txt 
