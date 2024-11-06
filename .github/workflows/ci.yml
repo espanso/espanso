@@ -26,7 +26,7 @@ jobs:
       WX_WIDGETS_BUILD_OUT_DIR: "${{github.workspace}}/wx-widgets-build"
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - uses: Swatinem/rust-cache@v2
       - name: Check formatting
         run: |
