@@ -37,6 +37,7 @@ jobs:
           gh release create ${{ needs.extract-version.outputs.espanso_version }} \
             --title ${{ needs.extract-version.outputs.espanso_version }} \
             --notes "Automatically released by CI" \
+            --verify-tag \
             --prerelease \
             --target $COMMIT_HASH
   
