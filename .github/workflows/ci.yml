@@ -26,7 +26,7 @@ jobs:
       WX_WIDGETS_BUILD_OUT_DIR: "${{github.workspace}}/wx-widgets-build"
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - uses: Swatinem/rust-cache@v2
       - name: Check formatting
         run: |
@@ -68,7 +68,7 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - uses: Swatinem/rust-cache@v2
       - name: Check formatting
         run: |
@@ -89,7 +89,7 @@ jobs:
   build-wayland:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - uses: Swatinem/rust-cache@v2
       - name: Check formatting
         run: |
@@ -113,7 +113,7 @@ jobs:
   test-wayland:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - uses: Swatinem/rust-cache@v2
       - name: Check formatting
         run: |
@@ -135,7 +135,7 @@ jobs:
     env:
       WX_WIDGETS_BUILD_OUT_DIR: "${{github.workspace}}/wx-widgets-build"
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Install target
         run: rustup update && rustup target add aarch64-apple-darwin
       - uses: Swatinem/rust-cache@v2
