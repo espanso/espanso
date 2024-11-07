@@ -71,13 +71,14 @@ jobs:
       - name: Create portable mode archive
         shell: powershell
         run: |
-          Rename-Item target/windows/portable espanso-portable
-          Compress-Archive target/windows/espanso-portable target/windows/Espanso-Win-Portable-x86_64.zip
+          Rename-Item -Path target/windows/portable -NewName espanso-portable
+          Compress-Archive -Path target/windows/espanso-portable Espanso-Win-Portable-x86_64.zip
       - name: Calculate hashes
         shell: powershell
         run: |
-          Get-FileHash target/windows/Espanso-Win-Portable-x86_64.zip -Algorithm SHA256 | select-object -ExpandProperty Hash > target/windows/Espanso-Win-Portable-x86_64.zip.sha256.txt
-          Get-FileHash target/windows/installer/Espanso-Win-Installer-x86_64.exe -Algorithm SHA256 | select-object -ExpandProperty Hash > target/windows/installer/Espanso-Win-Installer-x86_64.exe.sha256.txt
+          Get-FileHash Espanso-Win-Portable-x86_64.zip -Algorithm SHA256 | select-object -ExpandProperty Hash > Espanso-Win-Portable-x86_64.zip.sha256.txt
+          Move-Item -Path .\target\windows\installer\Espanso-Win-Installer-x86_64.exe -Destination Espanso-Win-Installer-x86_64.exe
+          Get-FileHash Espanso-Win-Installer-x86_64.exe -Algorithm SHA256 | select-object -ExpandProperty Hash > Espanso-Win-Installer-x86_64.exe.sha256.txt
       - uses: actions/upload-artifact@v4
         id: upload-artifact-windows
         name: upload-unsigned-artifact
@@ -86,8 +87,6 @@ jobs:
           path: |
             .\Espanso-Win-Installer-x86_64.exe
             .\Espanso-Win-Portable-x86_64.zip
-            .\Espanso-Win-Installer-x86_64.exe.sha256.txt
-            .\Espanso-Win-Portable-x86_64.zip.sha256.txt
       - id: sign-windows-release
         uses: signpath/github-action-submit-signing-request@v1
         with:
@@ -187,9 +186,6 @@ jobs:
       - name: Create ZIP archive
         run: |
           ditto -c -k --sequesterRsrc --keepParent target/mac/Espanso.app Espanso-Mac-Intel.zip
-      - name: Calculate hashes
-        run: |
-          shasum -a 256 Espanso-Mac-Intel.zip > Espanso-Mac-Intel.zip.sha256.txt
       - uses: actions/upload-artifact@v4
         name: upload-unsigned-artifact
         id: upload-artifact-macos-intel
@@ -197,7 +193,6 @@ jobs:
           name: Mac Intel Artifacts
           path: |
             ./Espanso-Mac-Intel.zip
-            ./Espanso-Mac-Intel.zip.sha256.txt
       - id: sign-macos-intel-release
         uses: signpath/github-action-submit-signing-request@v1
         with:
@@ -210,6 +205,9 @@ jobs:
           output-artifact-directory: '.'
           parameters: |
             version: "${{ needs.extract-version.outputs.espanso_version }}"
+      - name: Calculate hashes
+        run: |
+          shasum -a 256 Espanso-Mac-Intel.zip > Espanso-Mac-Intel.zip.sha256.txt
       - name: Upload artifacts to Github Releases
         run: |
           gh release upload ${{ needs.extract-version.outputs.espanso_version }} Espanso-Mac-Intel.zip Espanso-Mac-Intel.zip.sha256.txt
@@ -235,9 +233,6 @@ jobs:
       - name: Create ZIP archive
         run: |
           ditto -c -k --sequesterRsrc --keepParent target/mac/Espanso.app Espanso-Mac-M1.zip
-      - name: Calculate hashes
-        run: |
-          shasum -a 256 Espanso-Mac-M1.zip > Espanso-Mac-M1.zip.sha256.txt
       - uses: actions/upload-artifact@v4
         name: upload-unsigned-artifact
         id: upload-artifact-macos-m1
@@ -245,7 +240,6 @@ jobs:
           name: Mac M1 Artifacts
           path: |
             ./Espanso-Mac-M1.zip
-            ./Espanso-Mac-M1.zip.sha256.txt
       - id: sign-macos-m1-release
         uses: signpath/github-action-submit-signing-request@v1
         with:
@@ -258,6 +252,9 @@ jobs:
           output-artifact-directory: '.'
           parameters: |
             version: "${{ needs.extract-version.outputs.espanso_version }}"
+      - name: Calculate hashes
+        run: |
+          shasum -a 256 Espanso-Mac-M1.zip > Espanso-Mac-M1.zip.sha256.txt
       - name: Upload artifacts to Github Releases
         run: |
           gh release upload ${{ needs.extract-version.outputs.espanso_version }} Espanso-Mac-M1.zip Espanso-Mac-M1.zip.sha256.txt
