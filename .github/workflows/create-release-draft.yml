@@ -1,7 +1,6 @@
 name: Create release draft
 
-on:
-    workflow_dispatch:
+on: workflow_dispatch
 
 env:
   GH_TOKEN: ${{ github.token }}
@@ -78,14 +77,14 @@ jobs:
           Get-FileHash target/windows/installer/Espanso-Win-Installer-x86_64.exe -Algorithm SHA256 | select-object -ExpandProperty Hash > target/windows/installer/Espanso-Win-Installer-x86_64.exe.sha256.txt
       - uses: actions/upload-artifact@v4
         id: upload-artifact-windows
-        name: "Upload artifacts"
+        name: upload-unsigned-artifact
         with:
           name: Windows Artifacts
           path: |
-            Espanso-Win-Installer-x86_64.exe
-            Espanso-Win-Portable-x86_64.zip
-            Espanso-Win-Installer-x86_64.exe.sha256.txt
-            Espanso-Win-Portable-x86_64.zip.sha256.txt
+            .\Espanso-Win-Installer-x86_64.exe
+            .\Espanso-Win-Portable-x86_64.zip
+            .\Espanso-Win-Installer-x86_64.exe.sha256.txt
+            .\Espanso-Win-Portable-x86_64.zip.sha256.txt
       - id: sign-windows-release
         uses: signpath/github-action-submit-signing-request@v1
         with:
@@ -93,7 +92,7 @@ jobs:
           organization-id: 'e86b1459-62fc-4c7c-aac9-185d60749a03'
           project-slug: 'espanso'
           signing-policy-slug: 'test-signing'
-          github-artifact-id: '${{steps.upload-artifact-windows.outputs.artifact-id}}'
+          github-artifact-id: ${{ steps.upload-artifact-windows.outputs.artifact-id }}
           wait-for-completion: true
           output-artifact-directory: '.'
           parameters: |
@@ -122,7 +121,7 @@ jobs:
         run: |
           sudo docker run --rm -v "$(pwd):/shared" espanso-ubuntu espanso/.github/scripts/ubuntu/build_appimage.sh
       - uses: actions/upload-artifact@v4
-        name: "Upload artifacts"
+        name: upload-unsigned-artifact
         with:
           name: Linux X11 Artifacts
           path: |
@@ -148,7 +147,7 @@ jobs:
         run: |
           sudo docker run --rm -v "$(pwd):/shared" espanso-ubuntu espanso/.github/scripts/ubuntu/build_deb.sh
       - uses: actions/upload-artifact@v4
-        name: "Upload artifacts"
+        name: upload-unsigned-artifact
         with:
           name: Ubuntu-Debian Artifacts
           path: |
@@ -186,13 +185,13 @@ jobs:
         run: |
           shasum -a 256 Espanso-Mac-Intel.zip > Espanso-Mac-Intel.zip.sha256.txt
       - uses: actions/upload-artifact@v4
-        name: "Upload artifacts"
+        name: upload-unsigned-artifact
         id: upload-artifact-macos-intel
         with:
           name: Mac Intel Artifacts
           path: |
-            Espanso-Mac-Intel.zip
-            Espanso-Mac-Intel.zip.sha256.txt
+            ./Espanso-Mac-Intel.zip
+            ./Espanso-Mac-Intel.zip.sha256.txt
       - id: sign-macos-intel-release
         uses: signpath/github-action-submit-signing-request@v1
         with:
@@ -200,7 +199,7 @@ jobs:
           organization-id: 'e86b1459-62fc-4c7c-aac9-185d60749a03'
           project-slug: 'espanso'
           signing-policy-slug: 'test-signing'
-          github-artifact-id: '${{steps.upload-artifact-macos-intel.outputs.artifact-id}}'
+          github-artifact-id: ${{ steps.upload-artifact-macos-intel.outputs.artifact-id }}
           wait-for-completion: true
           output-artifact-directory: '.'
           parameters: |
@@ -233,13 +232,13 @@ jobs:
         run: |
           shasum -a 256 Espanso-Mac-M1.zip > Espanso-Mac-M1.zip.sha256.txt
       - uses: actions/upload-artifact@v4
-        name: "Upload artifacts"
+        name: upload-unsigned-artifact
         id: upload-artifact-macos-m1
         with:
           name: Mac M1 Artifacts
           path: |
-            Espanso-Mac-M1.zip
-            Espanso-Mac-M1.zip.sha256.txt
+            ./Espanso-Mac-M1.zip
+            ./Espanso-Mac-M1.zip.sha256.txt
       - id: sign-macos-m1-release
         uses: signpath/github-action-submit-signing-request@v1
         with:
@@ -247,7 +246,7 @@ jobs:
           organization-id: 'e86b1459-62fc-4c7c-aac9-185d60749a03'
           project-slug: 'espanso'
           signing-policy-slug: 'test-signing'
-          github-artifact-id: '${{steps.upload-artifact-macos-m1.outputs.artifact-id}}'
+          github-artifact-id: ${{ steps.upload-artifact-macos-m1.outputs.artifact-id }}
           wait-for-completion: true
           output-artifact-directory: '.'
           parameters: |
