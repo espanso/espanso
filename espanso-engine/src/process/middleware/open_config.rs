@@ -38,7 +38,7 @@ impl<'a> ConfigMiddleware<'a> {
   }
 }
 
-impl<'a> Middleware for ConfigMiddleware<'a> {
+impl Middleware for ConfigMiddleware<'_> {
   fn name(&self) -> &'static str {
     "open_config"
   }
@@ -65,7 +65,11 @@ impl<'a> Middleware for ConfigMiddleware<'a> {
       } else {
         panic!("Unsupported OS")
       }
-      Command::new(program).arg(config_path).spawn().unwrap();
+      Command::new(program)
+        .arg(config_path)
+        .spawn()
+        .unwrap()
+        .wait();
       return Event::caused_by(event.source_id, EventType::NOOP);
     }
     event

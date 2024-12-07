@@ -37,7 +37,7 @@ impl<'a> NotificationMiddleware<'a> {
   }
 }
 
-impl<'a> Middleware for NotificationMiddleware<'a> {
+impl Middleware for NotificationMiddleware<'_> {
   fn name(&self) -> &'static str {
     "notification"
   }

@@ -168,7 +168,7 @@ impl<'a> DefaultProcessor<'a> {
   }
 }
 
-impl<'a> Processor for DefaultProcessor<'a> {
+impl Processor for DefaultProcessor<'_> {
   fn process(&mut self, event: Event) -> Vec<Event> {
     self.event_queue.push_front(event);
 

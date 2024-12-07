@@ -38,7 +38,7 @@ impl<'a> ImageResolverMiddleware<'a> {
   }
 }
 
-impl<'a> Middleware for ImageResolverMiddleware<'a> {
+impl Middleware for ImageResolverMiddleware<'_> {
   fn name(&self) -> &'static str {
     "image_resolve"
   }

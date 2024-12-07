@@ -57,7 +57,7 @@ impl<'a> RenderMiddleware<'a> {
   }
 }
 
-impl<'a> Middleware for RenderMiddleware<'a> {
+impl Middleware for RenderMiddleware<'_> {
   fn name(&self) -> &'static str {
     "render"
   }
