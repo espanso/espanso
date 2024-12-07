@@ -38,7 +38,7 @@ pub struct RollingMatcherState<'a, Id> {
   paths: Vec<RollingMatcherStatePath<'a, Id>>,
 }
 
-impl<'a, Id> Default for RollingMatcherState<'a, Id> {
+impl<Id> Default for RollingMatcherState<'_, Id> {
   fn default() -> Self {
     Self { paths: Vec::new() }
   }
