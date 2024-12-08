@@ -180,9 +180,8 @@ impl Default for Shell {
         Some(MacShell::Bash) => Shell::Bash,
         Some(MacShell::Nu) => Shell::Nu,
         Some(MacShell::Pwsh) => Shell::Pwsh,
-        Some(MacShell::Sh) => Shell::Sh,
         Some(MacShell::Zsh) => Shell::Zsh,
-        None => Shell::Sh,
+        None | Some(MacShell::Sh) => Shell::Sh,
       }
     } else if cfg!(target_os = "linux") {
       Shell::Bash
