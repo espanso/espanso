@@ -73,7 +73,7 @@ impl<'a> DefaultDispatcher<'a> {
   }
 }
 
-impl<'a> Dispatcher for DefaultDispatcher<'a> {
+impl Dispatcher for DefaultDispatcher<'_> {
   fn dispatch(&self, event: Event) {
     for executor in &self.executors {
       if executor.execute(&event) {

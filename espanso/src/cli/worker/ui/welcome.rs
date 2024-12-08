@@ -23,7 +23,10 @@ pub fn show_welcome_screen() {
   let mut command = std::process::Command::new(espanso_exe_path.to_string_lossy().to_string());
   command.args(["modulo", "welcome"]);
 
-  command.spawn().expect("unable to show welcome screen");
+  let _ = command
+    .spawn()
+    .expect("unable to show welcome screen")
+    .wait();
 }
 
 #[cfg(not(feature = "modulo"))]

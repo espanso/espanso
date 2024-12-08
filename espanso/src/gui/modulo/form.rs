@@ -49,7 +49,7 @@ impl<'a> ModuloFormUI<'a> {
   }
 }
 
-impl<'a> FormUI for ModuloFormUI<'a> {
+impl FormUI for ModuloFormUI<'_> {
   fn show(
     &self,
     layout: &str,

@@ -65,6 +65,8 @@ impl Middleware for ConfigMiddleware<'_> {
       } else {
         panic!("Unsupported OS")
       }
+
+      #[allow(unused_must_use)]
       Command::new(program)
         .arg(config_path)
         .spawn()

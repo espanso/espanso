@@ -39,7 +39,7 @@ impl<'a> ImageInjectExecutor<'a> {
   }
 }
 
-impl<'a> Executor for ImageInjectExecutor<'a> {
+impl Executor for ImageInjectExecutor<'_> {
   fn execute(&self, event: &Event) -> bool {
     if let EventType::ImageInject(inject_event) = &event.etype {
       if let Err(error) = self.injector.inject_image(&inject_event.image_path) {

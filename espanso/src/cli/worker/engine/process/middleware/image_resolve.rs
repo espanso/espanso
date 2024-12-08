@@ -31,7 +31,7 @@ impl<'a> PathProviderAdapter<'a> {
   }
 }
 
-impl<'a> PathProvider for PathProviderAdapter<'a> {
+impl PathProvider for PathProviderAdapter<'_> {
   fn get_config_path(&self) -> &std::path::Path {
     &self.paths.config
   }
