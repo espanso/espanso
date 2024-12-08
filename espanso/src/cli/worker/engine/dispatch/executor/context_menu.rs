@@ -31,7 +31,7 @@ impl<'a> ContextMenuHandlerAdapter<'a> {
   }
 }
 
-impl<'a> ContextMenuHandler for ContextMenuHandlerAdapter<'a> {
+impl ContextMenuHandler for ContextMenuHandlerAdapter<'_> {
   fn show_context_menu(&self, items: &[espanso_engine::event::ui::MenuItem]) -> anyhow::Result<()> {
     let ui_menu_items: Vec<espanso_ui::menu::MenuItem> =
       items.iter().map(convert_to_ui_menu_item).collect();

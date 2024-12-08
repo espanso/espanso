@@ -38,7 +38,7 @@ impl<'a> KeyInjectorAdapter<'a> {
   }
 }
 
-impl<'a> KeyInjector for KeyInjectorAdapter<'a> {
+impl KeyInjector for KeyInjectorAdapter<'_> {
   fn inject_sequence(&self, keys: &[espanso_engine::event::input::Key]) -> anyhow::Result<()> {
     let params = self.params_provider.get();
 

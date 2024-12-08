@@ -30,8 +30,8 @@ use widestring::{U16CStr, U16CString};
 pub struct Win32Clipboard {}
 
 impl Win32Clipboard {
-  pub fn new() -> Result<Self> {
-    Ok(Self {})
+  pub fn new() -> Self {
+    Self {}
   }
 }
 

@@ -39,7 +39,7 @@ impl<'a> EventInjectorAdapter<'a> {
   }
 }
 
-impl<'a> TextInjector for EventInjectorAdapter<'a> {
+impl TextInjector for EventInjectorAdapter<'_> {
   fn name(&self) -> &'static str {
     "event"
   }

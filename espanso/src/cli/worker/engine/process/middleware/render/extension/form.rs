@@ -37,7 +37,7 @@ impl<'a> FormProviderAdapter<'a> {
   }
 }
 
-impl<'a> FormProvider for FormProviderAdapter<'a> {
+impl FormProvider for FormProviderAdapter<'_> {
   fn show(&self, layout: &str, fields: &Params, _: &Params) -> FormProviderResult {
     let fields = convert_fields(fields);
     match self.form_ui.show(layout, &fields) {

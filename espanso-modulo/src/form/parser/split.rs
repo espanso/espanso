@@ -25,7 +25,7 @@ pub enum SplitState<'t> {
   Captured(Captures<'t>),
 }
 
-impl<'r, 't> Iterator for SplitCaptures<'r, 't> {
+impl<'t> Iterator for SplitCaptures<'_, 't> {
   type Item = SplitState<'t>;
 
   fn next(&mut self) -> Option<SplitState<'t>> {

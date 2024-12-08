@@ -50,7 +50,7 @@ impl<'a> ChoiceExtension<'a> {
   }
 }
 
-impl<'a> Extension for ChoiceExtension<'a> {
+impl Extension for ChoiceExtension<'_> {
   fn name(&self) -> &str {
     "choice"
   }

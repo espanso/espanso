@@ -46,7 +46,7 @@ impl<'a> DelayForModifierReleaseMiddleware<'a> {
   }
 }
 
-impl<'a> Middleware for DelayForModifierReleaseMiddleware<'a> {
+impl Middleware for DelayForModifierReleaseMiddleware<'_> {
   fn name(&self) -> &'static str {
     "delay_modifiers"
   }

@@ -56,7 +56,7 @@ impl<'a> MatchSelectMiddleware<'a> {
   }
 }
 
-impl<'a> Middleware for MatchSelectMiddleware<'a> {
+impl Middleware for MatchSelectMiddleware<'_> {
   fn name(&self) -> &'static str {
     "match_select"
   }

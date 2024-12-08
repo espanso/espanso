@@ -36,7 +36,7 @@ impl<'a> MultiplexMiddleware<'a> {
   }
 }
 
-impl<'a> Middleware for MultiplexMiddleware<'a> {
+impl Middleware for MultiplexMiddleware<'_> {
   fn name(&self) -> &'static str {
     "multiplex"
   }

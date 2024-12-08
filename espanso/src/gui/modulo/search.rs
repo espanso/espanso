@@ -46,7 +46,7 @@ impl<'a> ModuloSearchUI<'a> {
   }
 }
 
-impl<'a> SearchUI for ModuloSearchUI<'a> {
+impl SearchUI for ModuloSearchUI<'_> {
   fn show(&self, items: &[SearchItem], hint: Option<&str>) -> anyhow::Result<Option<String>> {
     let modulo_config = ModuloSearchConfig {
       title: "espanso",
