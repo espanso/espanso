@@ -90,7 +90,7 @@ sudo apt install libx11-dev libxtst-dev libxkbcommon-dev libdbus-1-dev libwxgtk3
 If compiling on a version of Ubuntu X11 after 22.04:
 
 ```bash
-sudo apt install libx11-dev libxtst-dev libxkbcommon-dev libdbus-1-dev libwxgtk3.2-dev
+sudo apt install libx11-dev libxtst-dev libxkbcommon-dev libdbus-1-dev libwxgtk3.*-dev
 ```
 
 ### Compiling for X11
