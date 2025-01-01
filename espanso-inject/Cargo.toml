@@ -17,9 +17,6 @@ thiserror.workspace = true
 lazy_static.workspace = true
 regex.workspace = true
 
-[dev-dependencies]
-enum-as-inner.workspace = true
-
 [lints]
 workspace = true
 
