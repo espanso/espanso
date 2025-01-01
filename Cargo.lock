@@ -861,7 +861,6 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "cc",
- "enum-as-inner 0.6.0",
  "itertools",
  "lazy_static",
  "libc",
@@ -1497,9 +1496,9 @@ checksum = "68f2d64f2edebec4ce84ad108148e67e1064789bee435edc5b60ad398714a3a9"
 
 [[package]]
 name = "itertools"
-version = "0.10.0"
+version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "37d572918e350e82412fe766d24b15e6682fb2ed2bbe018280caa810397cb319"
+checksum = "2b192c782037fadd9cfa75548310488aabdbf3d2da73885b31bd0abd03351285"
 dependencies = [
  "either",
 ]
