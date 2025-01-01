@@ -31,12 +31,11 @@ use crate::{
   cli::util::{prevent_running_as_root_on_macos, CommandExt},
   common_flags::*,
   exit_code::{
-    DAEMON_ALREADY_RUNNING, DAEMON_FATAL_CONFIG_ERROR, DAEMON_GENERAL_ERROR,
-    DAEMON_LEGACY_ALREADY_RUNNING, DAEMON_SUCCESS, WORKER_ERROR_EXIT_NO_CODE,
-    WORKER_EXIT_ALL_PROCESSES, WORKER_RESTART, WORKER_SUCCESS,
+    DAEMON_ALREADY_RUNNING, DAEMON_FATAL_CONFIG_ERROR, DAEMON_GENERAL_ERROR, DAEMON_SUCCESS,
+    WORKER_ERROR_EXIT_NO_CODE, WORKER_EXIT_ALL_PROCESSES, WORKER_RESTART, WORKER_SUCCESS,
   },
   ipc::{create_ipc_client_to_worker, IPCEvent},
-  lock::{acquire_daemon_lock, acquire_legacy_lock, acquire_worker_lock},
+  lock::{acquire_daemon_lock, acquire_worker_lock},
   VERSION,
 };
 
@@ -73,15 +72,6 @@ fn daemon_main(args: CliModuleArgs) -> i32 {
     error!("daemon is already running!");
     return DAEMON_ALREADY_RUNNING;
   }
-
-  let legacy_lock_file = acquire_legacy_lock(&paths.runtime);
-  if legacy_lock_file.is_none() {
-    // TODO: show a (blocking) alert message using modulo
-
-    error!("an instance of legacy espanso is running, please terminate it, otherwise the new version cannot start");
-    return DAEMON_LEGACY_ALREADY_RUNNING;
-  }
-  drop(legacy_lock_file);
 
   // TODO: we might need to check preconditions: accessibility on macOS, presence of binaries on Linux, etc
 

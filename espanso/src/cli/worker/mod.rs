@@ -24,10 +24,10 @@ use log::{debug, error, info};
 use crate::{
   cli::util::prevent_running_as_root_on_macos,
   exit_code::{
-    WORKER_ALREADY_RUNNING, WORKER_EXIT_ALL_PROCESSES, WORKER_GENERAL_ERROR,
-    WORKER_LEGACY_ALREADY_RUNNING, WORKER_RESTART, WORKER_SUCCESS,
+    WORKER_ALREADY_RUNNING, WORKER_EXIT_ALL_PROCESSES, WORKER_GENERAL_ERROR, WORKER_RESTART,
+    WORKER_SUCCESS,
   },
-  lock::{acquire_legacy_lock, acquire_worker_lock},
+  lock::acquire_worker_lock,
 };
 
 use self::ui::util::convert_icon_paths_to_tray_vec;
@@ -74,13 +74,6 @@ fn worker_main(args: CliModuleArgs) -> i32 {
     error!("worker is already running!");
     return WORKER_ALREADY_RUNNING;
   }
-
-  let legacy_lock_file = acquire_legacy_lock(&paths.runtime);
-  if legacy_lock_file.is_none() {
-    error!("an instance of legacy espanso is running, please terminate it, otherwise the new version cannot start");
-    return WORKER_LEGACY_ALREADY_RUNNING;
-  }
-  drop(legacy_lock_file);
 
   let config_store = args
     .config_store

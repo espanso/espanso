@@ -20,7 +20,6 @@
 pub const WORKER_SUCCESS: i32 = 0;
 pub const WORKER_ALREADY_RUNNING: i32 = 1;
 pub const WORKER_GENERAL_ERROR: i32 = 2;
-pub const WORKER_LEGACY_ALREADY_RUNNING: i32 = 3;
 pub const WORKER_EXIT_ALL_PROCESSES: i32 = 50;
 pub const WORKER_RESTART: i32 = 51;
 pub const WORKER_ERROR_EXIT_NO_CODE: i32 = 90;
@@ -28,16 +27,7 @@ pub const WORKER_ERROR_EXIT_NO_CODE: i32 = 90;
 pub const DAEMON_SUCCESS: i32 = 0;
 pub const DAEMON_ALREADY_RUNNING: i32 = 1;
 pub const DAEMON_GENERAL_ERROR: i32 = 2;
-pub const DAEMON_LEGACY_ALREADY_RUNNING: i32 = 3;
 pub const DAEMON_FATAL_CONFIG_ERROR: i32 = 4;
-
-pub const MIGRATE_SUCCESS: i32 = 0;
-pub const MIGRATE_ALREADY_NEW_FORMAT: i32 = 1;
-pub const MIGRATE_LEGACY_INSTANCE_RUNNING: i32 = 2;
-pub const MIGRATE_USER_ABORTED: i32 = 3;
-pub const MIGRATE_CLEAN_FAILURE: i32 = 50;
-pub const MIGRATE_DIRTY_FAILURE: i32 = 51;
-pub const MIGRATE_UNEXPECTED_FAILURE: i32 = 52;
 
 pub const ADD_TO_PATH_SUCCESS: i32 = 0;
 pub const ADD_TO_PATH_FAILURE: i32 = 1;
@@ -72,14 +62,7 @@ pub const PACKAGE_UPDATE_PARTIAL_FAILURE: i32 = 6;
 #[allow(dead_code)]
 pub const UNEXPECTED_RUN_AS_ROOT: i32 = 42;
 
-use lazy_static::lazy_static;
-use std::sync::Mutex;
-
 use crate::error_eprintln;
-
-lazy_static! {
-  static ref CURRENT_PANIC_EXIT_CODE: Mutex<i32> = Mutex::new(MIGRATE_UNEXPECTED_FAILURE);
-}
 
 pub fn configure_custom_panic_hook() {
   let previous_hook = std::panic::take_hook();
@@ -110,14 +93,6 @@ pub fn configure_custom_panic_hook() {
       error_eprintln!("ERROR: '{}' panicked at '{}'", thread, msg);
     }
 
-    let exit_code = CURRENT_PANIC_EXIT_CODE.lock().unwrap();
-    std::process::exit(*exit_code);
+    std::process::exit(52); // MIGRATE_UNEXPECTED_FAILURE
   }));
-}
-
-pub fn update_panic_exit_code(exit_code: i32) {
-  let mut lock = CURRENT_PANIC_EXIT_CODE
-    .lock()
-    .expect("unable to update panic exit code");
-  *lock = exit_code;
 }

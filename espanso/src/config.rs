@@ -74,51 +74,36 @@ pub fn populate_default_config(config_dir: &Path) -> Result<()> {
 pub struct ConfigLoadResult {
   pub config_store: Box<dyn ConfigStore>,
   pub match_store: Box<dyn MatchStore>,
-  pub is_legacy_config: bool,
   pub non_fatal_errors: Vec<NonFatalErrorSet>,
 }
 
-pub fn load_config(config_path: &Path, packages_path: &Path) -> Result<ConfigLoadResult> {
-  if espanso_config::is_legacy_config(config_path) {
-    let (config_store, match_store) = espanso_config::load_legacy(config_path, packages_path)
-      .context("unable to load legacy config")?;
+pub fn load_config(config_path: &Path) -> Result<ConfigLoadResult> {
+  let (config_store, match_store, non_fatal_errors) =
+    espanso_config::load(config_path).context("unable to load config")?;
 
-    Ok(ConfigLoadResult {
-      // Apply the built-in patches
-      config_store: crate::patch::patch_store(config_store),
-      match_store,
-      is_legacy_config: true,
-      non_fatal_errors: Vec::new(),
-    })
-  } else {
-    let (config_store, match_store, non_fatal_errors) =
-      espanso_config::load(config_path).context("unable to load config")?;
-
-    // TODO: add an option to avoid dumping the errors in the logs
-    if !non_fatal_errors.is_empty() {
-      warn!("------- detected some errors in the configuration: -------");
-      for non_fatal_error_set in &non_fatal_errors {
-        warn!(
-          ">>> {}",
-          non_fatal_error_set.file.to_string_lossy().to_string()
-        );
-        for record in &non_fatal_error_set.errors {
-          if record.level == ErrorLevel::Error {
-            error!("{:?}", record.error);
-          } else {
-            warn!("{:?}", record.error);
-          }
+  // TODO: add an option to avoid dumping the errors in the logs
+  if !non_fatal_errors.is_empty() {
+    warn!("------- detected some errors in the configuration: -------");
+    for non_fatal_error_set in &non_fatal_errors {
+      warn!(
+        ">>> {}",
+        non_fatal_error_set.file.to_string_lossy().to_string()
+      );
+      for record in &non_fatal_error_set.errors {
+        if record.level == ErrorLevel::Error {
+          error!("{:?}", record.error);
+        } else {
+          warn!("{:?}", record.error);
         }
       }
-      warn!("-----------------------------------------------------------");
     }
-
-    Ok(ConfigLoadResult {
-      // Apply the built-in patches
-      config_store: crate::patch::patch_store(config_store),
-      match_store,
-      is_legacy_config: false,
-      non_fatal_errors,
-    })
+    warn!("-----------------------------------------------------------");
   }
+
+  Ok(ConfigLoadResult {
+    // Apply the built-in patches
+    config_store: crate::patch::patch_store(config_store),
+    match_store,
+    non_fatal_errors,
+  })
 }

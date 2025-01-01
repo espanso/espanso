@@ -14,7 +14,6 @@ members = [
   "espanso-info",
   "espanso-path",
   "espanso-modulo",
-  "espanso-migrate",
   "espanso-mac-utils",
   "espanso-kvs",
   "espanso-engine",

@@ -1,1 +1,0 @@
-This directory contains the files used to test the migration strategy.

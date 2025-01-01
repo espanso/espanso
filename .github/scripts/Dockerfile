@@ -2,7 +2,7 @@ FROM ubuntu:24.04
 
 RUN apt-get update \
     && apt-get install -y \
-    libx11-dev libxtst-dev libxkbcommon-dev libdbus-1-dev libwxgtk3.2-dev \
+    libx11-dev libxtst-dev libxkbcommon-dev libdbus-1-dev libwxgtk3.*-dev \
     libssl-dev \
     libxdo-dev \
     wget git file build-essential pkg-config
