@@ -5,6 +5,8 @@ name: Dev Release
 
 on:
   push:
+    paths-ignore:
+      - 'docs/**'
     branches:
       - dev
 

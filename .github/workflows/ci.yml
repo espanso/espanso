@@ -5,6 +5,8 @@ name: CI
 
 on:
   push:
+    paths-ignore:
+      - 'docs/**'
     branches:
       - master
       - dev
