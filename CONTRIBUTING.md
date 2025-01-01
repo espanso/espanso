@@ -304,3 +304,21 @@ Note: They might be false-positive.
 
 These are because the windows and linux can't see through the `target = macos`
 
+## check for outdated dependencies
+
+
+install it by
+
+```bash
+# traditional cargo install
+cargo install cargo-outdated --locked
+# or with cargo binstall
+cargo binstall cargo-outdated --locked
+```
+
+An run it with
+
+```bash
+cargo outdated
+```
+
