@@ -53,7 +53,7 @@ impl<'a> DefaultRenderer<'a> {
   }
 }
 
-impl<'a> Renderer for DefaultRenderer<'a> {
+impl Renderer for DefaultRenderer<'_> {
   fn render(
     &self,
     template: &Template,

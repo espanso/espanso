@@ -30,7 +30,6 @@ pub mod env_path;
 pub mod launcher;
 pub mod log;
 pub mod match_cli;
-pub mod migrate;
 pub mod modulo;
 pub mod package;
 pub mod path;

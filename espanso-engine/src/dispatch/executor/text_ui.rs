@@ -37,7 +37,7 @@ impl<'a> TextUIExecutor<'a> {
   }
 }
 
-impl<'a> Executor for TextUIExecutor<'a> {
+impl Executor for TextUIExecutor<'_> {
   fn execute(&self, event: &Event) -> bool {
     if let EventType::ShowText(show_text_event) = &event.etype {
       if let Err(error) = self

@@ -2,15 +2,14 @@ FROM ubuntu:24.04
 
 RUN apt-get update \
     && apt-get install -y \
-    libx11-dev libxtst-dev libxkbcommon-dev libdbus-1-dev libwxgtk3.2-dev \
+    libx11-dev libxtst-dev libxkbcommon-dev libdbus-1-dev libwxgtk3.*-dev \
     libssl-dev \
     libxdo-dev \
     wget git file build-essential pkg-config
 
 ENV RUSTUP_HOME=/usr/local/rustup \
     CARGO_HOME=/usr/local/cargo \
-    PATH=/usr/local/cargo/bin:$PATH \
-    RUST_VERSION=1.77.0
+    PATH=/usr/local/cargo/bin:$PATH
 
 RUN set -eux; \
     dpkgArch="$(dpkg --print-architecture)"; \
@@ -26,7 +25,7 @@ RUN set -eux; \
     wget "$url"; \
     echo "${rustupSha256} *rustup-init" | sha256sum -c -; \
     chmod +x rustup-init; \
-    ./rustup-init -y --no-modify-path --profile minimal --default-toolchain $RUST_VERSION --default-host ${rustArch}; \
+    ./rustup-init -y --no-modify-path --profile minimal --default-host ${rustArch}; \
     rm rustup-init; \
     chmod -R a+w $RUSTUP_HOME $CARGO_HOME; \
     rustup --version; \

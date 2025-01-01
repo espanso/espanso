@@ -41,6 +41,11 @@ venv/
 *.profraw
 **/*.code-workspace
 
-# debian package builds
+# Binaries
+
+# Debian package builds
 *.deb
 
+# Windows
+Espanso-Win-Installer-x86_64*
+Espanso-Win-Portable-x86_64*

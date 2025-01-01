@@ -1,10 +1,10 @@
 [package]
 name = "espanso"
-version = "2.2.1"
+version = "2.2.2"
 authors = ["Federico Terzi <federicoterzi96@gmail.com>"]
 license = "GPL-3.0"
 description = "Cross-platform Text Expander written in Rust"
-readme = "README.md"
+readme = "../README.md"
 homepage = "https://github.com/espanso/espanso"
 edition = "2021"
 
@@ -47,7 +47,6 @@ espanso-render = { path = "../espanso-render" }
 espanso-path = { path = "../espanso-path" }
 espanso-ipc = { path = "../espanso-ipc" }
 espanso-modulo = { path = "../espanso-modulo", optional = true }
-espanso-migrate = { path = "../espanso-migrate" }
 espanso-kvs = { path = "../espanso-kvs" }
 espanso-engine = { path = "../espanso-engine" }
 espanso-package = { path = "../espanso-package" }
@@ -91,19 +90,16 @@ const_format = "0.2.14"
 regex.workspace = true
 
 [package.metadata.deb]
-maintainer = "Federico Terzi <federicoterzi96@gmail.com>"
-depends = "libc6 (>= 2.27), libdbus-1-3 (>= 1.9.14), libgcc1 (>= 1:4.2), libnotify-bin, libstdc++6 (>=6), libwxgtk3.0-gtk3-0v5 (>= 3.0.4+dfsg) | libwxgtk3.2-1, libx11-6, libxcb1, libxkbcommon0 (>= 0.5.0), libxtst6, systemd, xclip"
+maintainer = "Auca Coyan <aucacoyan@gmail.com>"
+depends = "$auto"
 section = "utility"
 license-file = ["../LICENSE", "1"]
 
 [package.metadata.deb.variants.wayland]
-depends = "libc6 (>= 2.27), libdbus-1-3 (>= 1.9.14), libgcc1 (>= 1:4.2), libnotify-bin, libstdc++6 (>= 5), libwxgtk3.0-gtk3-0v5 (>= 3.0.4+dfsg) | libwxgtk3.2-1, libxkbcommon0 (>= 0.5.0), systemd, wl-clipboard"
-# TODO: once this issue [1] is fixed, we should create a variant for
-# wayland to automatically run the setcap script.
-# [1]: https://github.com/mmstick/cargo-deb/issues/151
+depends = "$auto"
 
 [package.metadata.generate-rpm]
 assets = [
-    { source = "target/release/espanso", dest = "/usr/local/bin/espanso", mode = "755" }
+    { source = "target/release/espanso", dest = "/usr/local/bin/espanso", mode = "755" },
 ]
 post_install_script = "setcap 'cap_dac_override+p' /usr/local/bin/espanso"

@@ -49,7 +49,7 @@ impl<'a> MultiplexAdapter<'a> {
   }
 }
 
-impl<'a> Multiplexer for MultiplexAdapter<'a> {
+impl Multiplexer for MultiplexAdapter<'_> {
   fn convert(&self, detected_match: DetectedMatch) -> Option<EventType> {
     match self.provider.get(detected_match.id)? {
       MatchResult::User(m) => match &m.effect {

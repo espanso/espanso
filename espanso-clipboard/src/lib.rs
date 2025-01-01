@@ -73,7 +73,7 @@ impl Default for ClipboardOptions {
 #[cfg(target_os = "windows")]
 pub fn get_clipboard(_: ClipboardOptions) -> Result<Box<dyn Clipboard>> {
   info!("using Win32Clipboard");
-  Ok(Box::new(win32::Win32Clipboard::new()?))
+  Ok(Box::new(win32::Win32Clipboard::new()))
 }
 
 #[cfg(target_os = "macos")]

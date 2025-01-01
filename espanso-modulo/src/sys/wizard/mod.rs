@@ -25,10 +25,7 @@ use crate::sys::interop::{
 };
 use crate::sys::util::convert_to_cstring_or_null;
 use crate::{
-  sys::interop::{
-    WizardMetadata, WIZARD_MIGRATE_RESULT_CLEAN_FAILURE, WIZARD_MIGRATE_RESULT_DIRTY_FAILURE,
-    WIZARD_MIGRATE_RESULT_SUCCESS, WIZARD_MIGRATE_RESULT_UNKNOWN_FAILURE,
-  },
+  sys::interop::WizardMetadata,
   wizard::{WizardHandlers, WizardOptions},
 };
 use lazy_static::lazy_static;
@@ -50,32 +47,11 @@ pub fn show(options: WizardOptions) -> bool {
     convert_to_cstring_or_null(options.accessibility_image_2_path);
 
   extern "C" fn is_legacy_version_running() -> c_int {
-    let lock = HANDLERS
-      .lock()
-      .expect("unable to acquire lock in is_legacy_version_running method");
-    let handlers_ref = (*lock).as_ref().expect("unable to unwrap handlers");
-    if let Some(handler_ref) = handlers_ref.is_legacy_version_running.as_ref() {
-      i32::from((*handler_ref)())
-    } else {
-      -1
-    }
+    -1
   }
 
   extern "C" fn backup_and_migrate() -> c_int {
-    let lock = HANDLERS
-      .lock()
-      .expect("unable to acquire lock in backup_and_migrate method");
-    let handlers_ref = (*lock).as_ref().expect("unable to unwrap handlers");
-    if let Some(handler_ref) = handlers_ref.backup_and_migrate.as_ref() {
-      match (*handler_ref)() {
-        crate::wizard::MigrationResult::Success => WIZARD_MIGRATE_RESULT_SUCCESS,
-        crate::wizard::MigrationResult::CleanFailure => WIZARD_MIGRATE_RESULT_CLEAN_FAILURE,
-        crate::wizard::MigrationResult::DirtyFailure => WIZARD_MIGRATE_RESULT_DIRTY_FAILURE,
-        crate::wizard::MigrationResult::UnknownFailure => WIZARD_MIGRATE_RESULT_UNKNOWN_FAILURE,
-      }
-    } else {
-      WIZARD_MIGRATE_RESULT_UNKNOWN_FAILURE
-    }
+    3 // WIZARD_MIGRATE_RESULT_UNKNOWN_FAILURE
   }
 
   extern "C" fn auto_start(auto_start: c_int) -> c_int {
@@ -147,9 +123,7 @@ pub fn show(options: WizardOptions) -> bool {
 
     is_welcome_page_enabled: i32::from(options.is_welcome_page_enabled),
     is_move_bundle_page_enabled: i32::from(options.is_move_bundle_page_enabled),
-    is_legacy_version_page_enabled: i32::from(options.is_legacy_version_page_enabled),
     is_wrong_edition_page_enabled: i32::from(options.is_wrong_edition_page_enabled),
-    is_migrate_page_enabled: i32::from(options.is_migrate_page_enabled),
     is_auto_start_page_enabled: i32::from(options.is_auto_start_page_enabled),
     is_add_path_page_enabled: i32::from(options.is_add_path_page_enabled),
     is_accessibility_page_enabled: i32::from(options.is_accessibility_page_enabled),

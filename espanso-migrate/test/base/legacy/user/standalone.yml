@@ -1,7 +1,0 @@
-filter_class: "Standalone"
-
-exclude_default_entries: true
-
-matches:
-  - trigger: "hello"
-    replace: "world"

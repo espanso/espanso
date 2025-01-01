@@ -126,13 +126,6 @@ impl DefaultConfigStore {
       non_fatal_errors,
     ))
   }
-
-  pub fn from_configs(
-    default: Arc<dyn Config>,
-    customs: Vec<Arc<dyn Config>>,
-  ) -> DefaultConfigStore {
-    Self { default, customs }
-  }
 }
 
 #[cfg(test)]

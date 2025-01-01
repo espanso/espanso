@@ -40,7 +40,7 @@ impl<'a> DateExtension<'a> {
   }
 }
 
-impl<'a> Extension for DateExtension<'a> {
+impl Extension for DateExtension<'_> {
   fn name(&self) -> &str {
     "date"
   }
@@ -76,7 +76,7 @@ impl<'a> Extension for DateExtension<'a> {
   }
 }
 
-impl<'a> DateExtension<'a> {
+impl DateExtension<'_> {
   fn get_date(&self) -> DateTime<Local> {
     if let Some(fixed_date) = self.fixed_date {
       fixed_date

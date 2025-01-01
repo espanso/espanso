@@ -75,7 +75,7 @@ pub enum LoadResult {
 }
 
 pub fn load_config_or_troubleshoot(paths: &Paths, paths_overrides: &PathsOverrides) -> LoadResult {
-  match crate::load_config(&paths.config, &paths.packages) {
+  match crate::load_config(&paths.config) {
     Ok(load_result) => {
       if load_result.non_fatal_errors.is_empty() {
         LoadResult::Correct(load_result)

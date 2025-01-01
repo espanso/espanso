@@ -432,11 +432,6 @@ fn macos_link_search_path() -> Option<String> {
   None
 }
 
-// TODO: add documentation for linux
-// Install wxWidgets:
-// sudo apt install libwxgtk3.0-0v5 libwxgtk3.0-dev
-//
-// cargo run
 #[cfg(target_os = "linux")]
 fn build_native() {
   // Make sure wxWidgets is installed

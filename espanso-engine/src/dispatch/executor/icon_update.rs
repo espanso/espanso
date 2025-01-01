@@ -39,7 +39,7 @@ impl<'a> IconUpdateExecutor<'a> {
   }
 }
 
-impl<'a> Executor for IconUpdateExecutor<'a> {
+impl Executor for IconUpdateExecutor<'_> {
   fn execute(&self, event: &Event) -> bool {
     if let EventType::IconStatusChange(m_event) = &event.etype {
       if let Err(error) = self.handler.update_icon(&m_event.status) {

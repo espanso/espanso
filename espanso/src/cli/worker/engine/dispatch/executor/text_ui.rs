@@ -33,7 +33,7 @@ impl<'a> TextUIHandlerAdapter<'a> {
   }
 }
 
-impl<'a> TextUIHandler for TextUIHandlerAdapter<'a> {
+impl TextUIHandler for TextUIHandlerAdapter<'_> {
   fn show_text(&self, title: &str, text: &str) -> anyhow::Result<()> {
     self.text_ui.show_text(title, text)?;
     Ok(())

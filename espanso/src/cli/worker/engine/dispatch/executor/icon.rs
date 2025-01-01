@@ -31,7 +31,7 @@ impl<'a> IconHandlerAdapter<'a> {
   }
 }
 
-impl<'a> IconHandler for IconHandlerAdapter<'a> {
+impl IconHandler for IconHandlerAdapter<'_> {
   fn update_icon(&self, status: &IconStatus) -> anyhow::Result<()> {
     let icon = match status {
       IconStatus::Enabled => TrayIcon::Normal,

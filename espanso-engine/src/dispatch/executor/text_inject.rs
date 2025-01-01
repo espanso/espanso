@@ -63,7 +63,7 @@ impl<'a> TextInjectExecutor<'a> {
   }
 }
 
-impl<'a> Executor for TextInjectExecutor<'a> {
+impl Executor for TextInjectExecutor<'_> {
   fn execute(&self, event: &Event) -> bool {
     if let EventType::TextInject(inject_event) = &event.etype {
       let active_mode = self.mode_provider.active_mode();
