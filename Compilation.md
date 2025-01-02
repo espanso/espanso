@@ -17,7 +17,7 @@ These are the basic tools required to build espanso:
 steps. You can install it by running:
 
 ```bash
-cargo install rust-script --version "0.7.0"
+cargo install rust-script
 cargo install --force cargo-make --version 0.37.5
 ```
 
