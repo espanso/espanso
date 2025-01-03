@@ -41,7 +41,7 @@ jobs:
           sudo apt-get install -y libx11-dev libxtst-dev libxkbcommon-dev libdbus-1-dev libwxgtk3.*-dev
       - name: Install rust-script and cargo-make
         run: |
-          cargo install rust-script --version "0.7.0"
+          cargo install rust-script
           cargo install cargo-make --version 0.37.5
       # wxWidgets builds (internal to espanso-modulo) are by far the largest bottleneck
       # in the current pipeline, so we cache the results for a faster compilation process
@@ -83,7 +83,7 @@ jobs:
           sudo apt-get install -y libx11-dev libxtst-dev libxkbcommon-dev libdbus-1-dev libwxgtk3.*-dev
       - name: Install rust-script and cargo-make
         run: |
-          cargo install rust-script --version "0.7.0"
+          cargo install rust-script
           cargo install cargo-make --version 0.37.5
       - name: Run test suite
         run: cargo make test-binary
@@ -103,7 +103,7 @@ jobs:
           sudo apt-get install -y libxkbcommon-dev libwxgtk3.*-dev libdbus-1-dev
       - name: Install rust-script and cargo-make
         run: |
-          cargo install rust-script --version "0.7.0"
+          cargo install rust-script
           cargo install cargo-make --version 0.37.5
       - name: Build
         run: cargo make --env NO_X11=true -- build-binary
@@ -127,7 +127,7 @@ jobs:
           sudo apt-get install -y libxkbcommon-dev libwxgtk3.*-dev libdbus-1-dev
       - name: Install rust-script and cargo-make
         run: |
-          cargo install rust-script --version "0.7.0"
+          cargo install rust-script
           cargo install cargo-make --version 0.37.5
       - name: Run test suite
         run: cargo make --env NO_X11=true -- test-binary
@@ -143,7 +143,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - name: Install rust-script and cargo-make
         run: |
-          cargo install rust-script --version "0.7.0"
+          cargo install rust-script
           cargo install cargo-make --version 0.37.5
       - name: "Cache wxWidgets builds"
         if: ${{ runner.os != 'Linux' }}
