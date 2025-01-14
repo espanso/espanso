@@ -180,8 +180,7 @@ fn build_native() {
     arch => panic!("unsupported arch {arch}"),
   };
 
-  let is_arm64_ci = 
-      std::env::var("CI").unwrap_or_default() == "true" && target_arch == "arm64";
+  let is_arm64_ci = std::env::var("CI").unwrap_or_default() == "true" && target_arch == "arm64";
 
   if !out_wx_dir.is_dir() {
     // Extract the wxWidgets archive
@@ -197,17 +196,21 @@ fn build_native() {
     std::fs::create_dir_all(&build_dir).expect("unable to create build-cocoa directory");
 
     let configure_args: [&str; 4] = [
-        "--disable-shared",
-        "--without-libtiff",
-        "--with-macosx-version-min=10.13",
-        if is_arm64_ci { "--enable-universal-binary=arm64,x86_64" } else { &format!("--enable-macosx_arch={target_arch}") }
+      "--disable-shared",
+      "--without-libtiff",
+      "--with-macosx-version-min=10.13",
+      if is_arm64_ci {
+        "--enable-universal-binary=arm64,x86_64"
+      } else {
+        &format!("--enable-macosx_arch={target_arch}")
+      },
     ];
 
     let mut handle = Command::new(out_wx_dir.join("configure"))
-        .current_dir(build_dir.to_string_lossy().to_string())
-        .args(configure_args.iter())
-        .spawn()
-        .expect("failed to execute configure");
+      .current_dir(build_dir.to_string_lossy().to_string())
+      .args(configure_args.iter())
+      .spawn()
+      .expect("failed to execute configure");
 
     if !handle
       .wait()
