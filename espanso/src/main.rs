@@ -24,7 +24,7 @@ use std::path::PathBuf;
 
 use clap::{App, AppSettings, Arg, ArgMatches, SubCommand};
 use cli::{CliAlias, CliModule, CliModuleArgs};
-use log::{error, info, warn};
+use log::{error, info};
 use logging::FileProxy;
 use simplelog::{
   CombinedLogger, ConfigBuilder, LevelFilter, SharedLogger, TermLogger, TerminalMode, WriteLogger,
@@ -66,7 +66,6 @@ lazy_static! {
     cli::worker::new(),
     cli::daemon::new(),
     cli::modulo::new(),
-    cli::migrate::new(),
     cli::env_path::new(),
     cli::service::new(),
     cli::workaround::new(),
@@ -109,7 +108,7 @@ fn main() {
     .about("Install a package")
     .arg(
       Arg::with_name("external")
-        .short("e")
+        .short('e')
         .long("external")
         .required(false)
         .takes_value(false)
@@ -186,7 +185,7 @@ fn main() {
     .about("A Privacy-first, Cross-platform Text Expander")
     .arg(
       Arg::with_name("v")
-        .short("v")
+        .short('v')
         .multiple(true)
         .help("Sets the level of verbosity"),
     )
@@ -266,13 +265,13 @@ For example, specifying 'email' is equivalent to 'match/email.yml'."#))
             .about("Display a customizable form")
             .arg(
               Arg::with_name("input_file")
-                .short("i")
+                .short('i')
                 .takes_value(true)
                 .help("Input file or - for stdin"),
             )
             .arg(
               Arg::with_name("json")
-                .short("j")
+                .short('j')
                 .required(false)
                 .takes_value(false)
                 .help("Interpret the input data as JSON"),
@@ -283,13 +282,13 @@ For example, specifying 'email' is equivalent to 'match/email.yml'."#))
             .about("Display a search box")
             .arg(
               Arg::with_name("input_file")
-                .short("i")
+                .short('i')
                 .takes_value(true)
                 .help("Input file or - for stdin"),
             )
             .arg(
               Arg::with_name("json")
-                .short("j")
+                .short('j')
                 .required(false)
                 .takes_value(false)
                 .help("Interpret the input data as JSON"),
@@ -300,7 +299,7 @@ For example, specifying 'email' is equivalent to 'match/email.yml'."#))
             .about("Display a Text View")
             .arg(
               Arg::with_name("input_file")
-                .short("i")
+                .short('i')
                 .takes_value(true)
                 .help("Input file or - for stdin"),
             )
@@ -344,12 +343,6 @@ For example, specifying 'email' is equivalent to 'match/email.yml'."#))
         .subcommand(SubCommand::with_name("base").about("Print the default match file path.")),
     )
     .subcommand(
-      SubCommand::with_name("migrate")
-        .about("Automatically migrate legacy config files to the new v2 format.")
-        .arg(Arg::with_name("noconfirm").long("noconfirm"))
-        .help("Migrate the configuration without asking for confirmation"),
-    )
-    .subcommand(
       SubCommand::with_name("service")
         .subcommand(SubCommand::with_name("register").about("Register espanso as a system service"))
         .subcommand(
@@ -374,21 +367,21 @@ For example, specifying 'email' is equivalent to 'match/email.yml'."#))
         .subcommand(SubCommand::with_name("list")
             .about("Print matches to standard output")
             .arg(Arg::with_name("json")
-                .short("j")
+                .short('j')
                 .long("json")
                 .help("Output matches to the JSON format")
                 .required(false)
                 .takes_value(false)
             )
             .arg(Arg::with_name("onlytriggers")
-                .short("t")
+                .short('t')
                 .long("only-triggers")
                 .help("Print only triggers without replacement")
                 .required(false)
                 .takes_value(false)
             )
             .arg(Arg::with_name("preservenewlines")
-                .short("n")
+                .short('n')
                 .long("preserve-newlines")
                 .help("Preserve newlines when printing replacements. Does nothing when using JSON format.")
                 .required(false)
@@ -416,7 +409,7 @@ For example, specifying 'email' is equivalent to 'match/email.yml'."#))
         .subcommand(SubCommand::with_name("exec")
             .about("Triggers the expansion of a match")
             .arg(Arg::with_name("trigger")
-                .short("t")
+                .short('t')
                 .long("trigger")
                 .help("The trigger of the match to be expanded")
                 .required(false)
@@ -589,18 +582,11 @@ For example, specifying 'email' is equivalent to 'match/email.yml'."#))
       log_system_info();
 
       if handler.requires_config {
-        let config_result =
-          load_config(&paths.config, &paths.packages).expect("unable to load config");
+        let config_result = load_config(&paths.config).expect("unable to load config");
 
-        cli_args.is_legacy_config = config_result.is_legacy_config;
         cli_args.config_store = Some(config_result.config_store);
         cli_args.match_store = Some(config_result.match_store);
         cli_args.non_fatal_errors = config_result.non_fatal_errors;
-
-        if config_result.is_legacy_config {
-          warn!("espanso is reading the configuration using compatibility mode, thus some features might not be available");
-          warn!("you can migrate to the new configuration format by running 'espanso migrate' in a terminal");
-        }
       }
 
       if handler.enable_logs {

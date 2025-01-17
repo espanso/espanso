@@ -30,7 +30,6 @@ pub mod env_path;
 pub mod launcher;
 pub mod log;
 pub mod match_cli;
-pub mod migrate;
 pub mod modulo;
 pub mod package;
 pub mod path;
@@ -39,6 +38,7 @@ pub mod util;
 pub mod workaround;
 pub mod worker;
 
+#[allow(dead_code)]
 pub struct CliModule {
   pub enable_logs: bool,
   pub disable_logs_terminal_output: bool,
@@ -82,7 +82,7 @@ pub struct CliModuleArgs {
   pub non_fatal_errors: Vec<NonFatalErrorSet>,
   pub paths: Option<Paths>,
   pub paths_overrides: Option<PathsOverrides>,
-  pub cli_args: Option<ArgMatches<'static>>,
+  pub cli_args: Option<ArgMatches>,
 }
 
 pub struct PathsOverrides {

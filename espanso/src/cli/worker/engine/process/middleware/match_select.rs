@@ -50,7 +50,7 @@ impl<'a> MatchSelectorAdapter<'a> {
   }
 }
 
-impl<'a> MatchSelector for MatchSelectorAdapter<'a> {
+impl MatchSelector for MatchSelectorAdapter<'_> {
   fn select(&self, matches_ids: &[i32], is_search: bool) -> Option<i32> {
     let matches = self.match_provider.get_matches(matches_ids);
     let search_items: Vec<SearchItem> = matches

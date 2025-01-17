@@ -39,7 +39,7 @@ impl<'a> MatchExecRequestMiddleware<'a> {
   }
 }
 
-impl<'a> Middleware for MatchExecRequestMiddleware<'a> {
+impl Middleware for MatchExecRequestMiddleware<'_> {
   fn name(&self) -> &'static str {
     "match_exec_request"
   }

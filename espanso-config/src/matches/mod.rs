@@ -90,26 +90,22 @@ pub enum MatchCause {
 }
 
 impl MatchCause {
-  // TODO: test
   pub fn description(&self) -> Option<&str> {
-    if let MatchCause::Trigger(trigger_cause) = &self {
-      trigger_cause.triggers.first().map(String::as_str)
-    } else {
-      None
+    match &self {
+      MatchCause::Trigger(trigger_cause) => trigger_cause.triggers.first().map(String::as_str),
+      MatchCause::Regex(trigger_cause) => Some(trigger_cause.regex.as_str()),
+      MatchCause::None => None,
     }
     // TODO: insert rendering for hotkey/shortcut
-    // TODO: insert rendering for regex? I'm worried it might be too long
   }
 
-  // TODO: test
   pub fn long_description(&self) -> String {
-    if let MatchCause::Trigger(trigger_cause) = &self {
-      format!("triggers: {:?}", trigger_cause.triggers)
-    } else {
-      "No description available".to_owned()
+    match &self {
+      MatchCause::Trigger(trigger_cause) => format!("triggers: {:?}", trigger_cause.triggers),
+      MatchCause::Regex(trigger_cause) => format!("regex: {:?}", trigger_cause.regex),
+      MatchCause::None => "No description available".to_owned(),
     }
     // TODO: insert rendering for hotkey/shortcut
-    // TODO: insert rendering for regex? I'm worried it might be too long
   }
 
   pub fn search_terms(&self) -> Vec<&str> {
@@ -241,4 +237,55 @@ pub enum Value {
 pub enum Number {
   Integer(i64),
   Float(OrderedFloat<f64>),
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  fn trigger_cause() -> TriggerCause {
+    TriggerCause {
+      triggers: vec![":greet".to_string()],
+      ..TriggerCause::default()
+    }
+  }
+
+  fn regex_cause() -> RegexCause {
+    RegexCause {
+      regex: ":greet\\d".to_string(),
+    }
+  }
+
+  #[test]
+  fn match_cause_trigger_description() {
+    let trigger = trigger_cause();
+
+    assert_eq!(MatchCause::Trigger(trigger).description(), Some(":greet"));
+  }
+
+  #[test]
+  fn match_cause_regex_description() {
+    let regex = regex_cause();
+    assert_eq!(MatchCause::Regex(regex).description(), Some(":greet\\d"));
+  }
+
+  #[test]
+  fn match_cause_trigger_long_description() {
+    let trigger = trigger_cause();
+
+    assert_eq!(
+      MatchCause::Trigger(trigger).long_description(),
+      r#"triggers: [":greet"]"#
+    );
+  }
+
+  #[test]
+  fn match_cause_regex_long_description() {
+    let regex = regex_cause();
+
+    assert_eq!(
+      MatchCause::Regex(regex).long_description(),
+      r#"regex: ":greet\\d""#
+    );
+  }
 }

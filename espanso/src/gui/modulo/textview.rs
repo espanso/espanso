@@ -31,7 +31,7 @@ impl<'a> ModuloTextUI<'a> {
   }
 }
 
-impl<'a> TextUI for ModuloTextUI<'a> {
+impl TextUI for ModuloTextUI<'_> {
   fn show_text(&self, title: &str, text: &str) -> anyhow::Result<()> {
     self
       .manager

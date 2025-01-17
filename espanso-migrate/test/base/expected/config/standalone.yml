@@ -1,4 +1,0 @@
-filter_class: "Standalone"
-
-includes:
-  - "../match/_standalone.yml"

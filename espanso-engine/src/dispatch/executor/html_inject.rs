@@ -39,7 +39,7 @@ impl<'a> HtmlInjectExecutor<'a> {
   }
 }
 
-impl<'a> Executor for HtmlInjectExecutor<'a> {
+impl Executor for HtmlInjectExecutor<'_> {
   fn execute(&self, event: &Event) -> bool {
     if let EventType::HtmlInject(inject_event) = &event.etype {
       // Render the text fallback for those applications that don't support HTML clipboard

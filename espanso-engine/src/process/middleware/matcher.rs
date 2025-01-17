@@ -95,7 +95,7 @@ impl<'a, State> MatcherMiddleware<'a, State> {
   }
 }
 
-impl<'a, State> Middleware for MatcherMiddleware<'a, State> {
+impl<State> Middleware for MatcherMiddleware<'_, State> {
   fn name(&self) -> &'static str {
     "matcher"
   }

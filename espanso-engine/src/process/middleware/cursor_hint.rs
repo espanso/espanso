@@ -21,6 +21,7 @@ use super::super::Middleware;
 use crate::event::{
   effect::CursorHintCompensationEvent, internal::RenderedEvent, Event, EventType,
 };
+use unicode_segmentation::UnicodeSegmentation;
 
 pub struct CursorHintMiddleware {}
 
@@ -64,8 +65,8 @@ fn process_cursor_hint(body: String) -> (String, Option<usize>) {
   if let Some(index) = body.find("$|$") {
     // Convert the byte index to a char index
     let char_str = &body[0..index];
-    let char_index = char_str.chars().count();
-    let total_size = body.chars().count();
+    let char_index = char_str.graphemes(true).count();
+    let total_size = body.graphemes(true).count();
 
     // Remove the $|$ placeholder
     let body = body.replace("$|$", "");

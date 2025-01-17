@@ -46,7 +46,7 @@ impl<'a> AltCodeSynthesizerMiddleware<'a> {
   }
 }
 
-impl<'a> Middleware for AltCodeSynthesizerMiddleware<'a> {
+impl Middleware for AltCodeSynthesizerMiddleware<'_> {
   fn name(&self) -> &'static str {
     "alt_code_synthesizer"
   }

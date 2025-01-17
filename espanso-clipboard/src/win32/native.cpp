@@ -42,6 +42,33 @@
 
 #include <Windows.h>
 
+int32_t clipboard_get_length() {
+    // Open the clipboard
+    if (!OpenClipboard(NULL)) {
+        return -1; // Failed to open clipboard
+    }
+
+    // Check if the clipboard contains text data
+    HANDLE hData = GetClipboardData(CF_UNICODETEXT);
+    if (hData == NULL) {
+        CloseClipboard();
+        return -1; // No text data in clipboard
+    }
+
+    // Get the size of the clipboard data
+    SIZE_T size = GlobalSize(hData);
+    if (size == 0) {
+        CloseClipboard();
+        return -1; // Failed to get size
+    }
+
+    // Close the clipboard
+    CloseClipboard();
+
+    // Return the size of the clipboard data
+    return static_cast<int32_t>(size);
+}
+
 int32_t clipboard_get_text(wchar_t *buffer, int32_t buffer_size)
 {
   int32_t result = 0;

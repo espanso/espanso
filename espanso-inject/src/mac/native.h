@@ -23,7 +23,7 @@
 #include <stdint.h>
 
 // Inject a complete string using the KEYEVENTF_UNICODE flag
-extern "C" void inject_string(char * string, int32_t delay);
+extern "C" void inject_string(char * string, int32_t default_delay, int32_t delay);
 
 // Send a sequence of vkey presses and releases
 extern "C" void inject_separate_vkeys(int32_t *vkey_array, int32_t vkey_count, int32_t delay);

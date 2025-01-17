@@ -31,7 +31,7 @@ impl<'a> ChoiceSelectorAdapter<'a> {
   }
 }
 
-impl<'a> ChoiceSelector for ChoiceSelectorAdapter<'a> {
+impl ChoiceSelector for ChoiceSelectorAdapter<'_> {
   fn show(&self, choices: &[espanso_render::extension::choice::Choice]) -> ChoiceSelectorResult {
     let items = convert_items(choices);
     match self.search_ui.show(&items, None) {

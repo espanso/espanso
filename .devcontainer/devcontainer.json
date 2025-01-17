@@ -1,0 +1,36 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/rust
+{
+	"name": "Espanso",
+
+	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
+	"image": "mcr.microsoft.com/devcontainers/rust:1-1-bookworm",
+
+	// Features to add to the dev container. More info: https://containers.dev/features.
+	"features": {		
+		"./features/rust-dependencies": {},
+		"./features/x11-dependencies": {},
+		"ghcr.io/devcontainers/features/desktop-lite:1": {}
+	},
+
+	// Use a mount to make the cargo cache persistent in a Docker Volume.
+	"mounts": [
+		{
+			"source": "devcontainer-cargo-cache-${devcontainerId}",
+			"target": "/usr/local/cargo",
+			"type": "volume"
+		}
+	],
+
+	"forwardPorts": [5901, 6080],
+	"portsAttributes": {
+		"5901": {
+			"label": "vnc"
+		},
+
+		"6080": {
+			"label": "vnc-web",
+			"protocol": "http"
+		}
+	}
+}

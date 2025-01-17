@@ -44,7 +44,7 @@ impl<'a> UndoMiddleware<'a> {
   }
 }
 
-impl<'a> Middleware for UndoMiddleware<'a> {
+impl Middleware for UndoMiddleware<'_> {
   fn name(&self) -> &'static str {
     "undo"
   }

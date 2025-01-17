@@ -76,6 +76,8 @@ pub struct FormMetadata {
   pub iconPath: *const ::std::os::raw::c_char,
   pub fields: *const FieldMetadata,
   pub fieldSize: ::std::os::raw::c_int,
+  pub maxWindowWidth: ::std::os::raw::c_int,
+  pub maxWindowHeight: ::std::os::raw::c_int,
 }
 
 #[repr(C)]
@@ -108,11 +110,6 @@ pub struct SearchMetadata {
   pub hintText: *const ::std::os::raw::c_char,
 }
 
-pub const WIZARD_MIGRATE_RESULT_SUCCESS: i32 = 0;
-pub const WIZARD_MIGRATE_RESULT_CLEAN_FAILURE: i32 = 1;
-pub const WIZARD_MIGRATE_RESULT_DIRTY_FAILURE: i32 = 2;
-pub const WIZARD_MIGRATE_RESULT_UNKNOWN_FAILURE: i32 = 3;
-
 pub const WIZARD_DETECTED_OS_UNKNOWN: i32 = 0;
 pub const WIZARD_DETECTED_OS_X11: i32 = 1;
 pub const WIZARD_DETECTED_OS_WAYLAND: i32 = 2;
@@ -124,9 +121,7 @@ pub struct WizardMetadata {
 
   pub is_welcome_page_enabled: c_int,
   pub is_move_bundle_page_enabled: c_int,
-  pub is_legacy_version_page_enabled: c_int,
   pub is_wrong_edition_page_enabled: c_int,
-  pub is_migrate_page_enabled: c_int,
   pub is_auto_start_page_enabled: c_int,
   pub is_add_path_page_enabled: c_int,
   pub is_accessibility_page_enabled: c_int,

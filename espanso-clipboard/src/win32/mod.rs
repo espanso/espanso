@@ -30,14 +30,20 @@ use widestring::{U16CStr, U16CString};
 pub struct Win32Clipboard {}
 
 impl Win32Clipboard {
-  pub fn new() -> Result<Self> {
-    Ok(Self {})
+  pub fn new() -> Self {
+    Self {}
   }
 }
 
 impl Clipboard for Win32Clipboard {
   fn get_text(&self, _: &ClipboardOperationOptions) -> Option<String> {
-    let mut buffer: [u16; 2048] = [0; 2048];
+    // get the clipbard size
+    let length = unsafe { ffi::clipboard_get_length() };
+    if length <= 0 {
+      return None;
+    }
+    // allocate the buffer
+    let mut buffer: Vec<u16> = vec![0; length as usize];
     let native_result =
       unsafe { ffi::clipboard_get_text(buffer.as_mut_ptr(), (buffer.len() - 1) as i32) };
     if native_result > 0 {

@@ -39,19 +39,19 @@ impl<'a> DefaultContext<'a> {
   }
 }
 
-impl<'a> Context for DefaultContext<'a> {}
+impl Context for DefaultContext<'_> {}
 
-impl<'a> ConfigContext for DefaultContext<'a> {
-  fn get_default_config(&self) -> Arc<dyn Config> {
-    self.config_manager.default()
-  }
+impl ConfigContext for DefaultContext<'_> {
+  // fn get_default_config(&self) -> Arc<dyn Config> {
+  //   self.config_manager.default()
+  // }
 
   fn get_active_config(&self) -> Arc<dyn Config> {
     self.config_manager.active()
   }
 }
 
-impl<'a> AppInfoContext for DefaultContext<'a> {
+impl AppInfoContext for DefaultContext<'_> {
   fn get_active_app_info(&self) -> AppInfo {
     self.app_info_provider.get_info()
   }

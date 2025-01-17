@@ -26,18 +26,16 @@ use thiserror::Error;
 pub mod config;
 mod counter;
 pub mod error;
-mod legacy;
 pub mod matches;
 mod util;
 
-#[allow(clippy::type_complexity)]
-pub fn load(
-  base_path: &Path,
-) -> Result<(
+type LoadableConfig = (
   Box<dyn ConfigStore>,
   Box<dyn MatchStore>,
   Vec<error::NonFatalErrorSet>,
-)> {
+);
+
+pub fn load(base_path: &Path) -> Result<LoadableConfig> {
   let config_dir = base_path.join("config");
   if !config_dir.exists() || !config_dir.is_dir() {
     return Err(ConfigError::MissingConfigDir().into());
@@ -58,17 +56,6 @@ pub fn load(
     Box::new(match_store),
     non_fatal_errors,
   ))
-}
-
-pub fn load_legacy(
-  config_dir: &Path,
-  package_dir: &Path,
-) -> Result<(Box<dyn ConfigStore>, Box<dyn MatchStore>)> {
-  legacy::load(config_dir, package_dir)
-}
-
-pub fn is_legacy_config(base_dir: &Path) -> bool {
-  base_dir.join("user").is_dir() && base_dir.join("default.yml").is_file()
 }
 
 #[derive(Error, Debug)]

@@ -134,7 +134,6 @@ pub struct X11Source {
   valid_modifiers_mask: u32,
 }
 
-#[allow(clippy::new_without_default)]
 impl X11Source {
   pub fn new(hotkeys: &[HotKey]) -> X11Source {
     Self {
@@ -154,7 +153,8 @@ impl X11Source {
 impl Source for X11Source {
   fn initialize(&mut self) -> Result<()> {
     let mut error_code = 0;
-    let handle = unsafe { detect_initialize(self as *const X11Source, &mut error_code) };
+    let handle =
+      unsafe { detect_initialize(std::ptr::from_ref::<X11Source>(self), &mut error_code) };
 
     if handle.is_null() {
       let error = match error_code {

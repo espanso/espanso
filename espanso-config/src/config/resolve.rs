@@ -235,12 +235,18 @@ impl Config for ResolvedConfig {
       vec![
         " ".to_string(),
         ",".to_string(),
+        ";".to_string(),
+        ":".to_string(),
         ".".to_string(),
         "?".to_string(),
         "!".to_string(),
+        "(".to_string(),
         ")".to_string(),
+        "{".to_string(),
         "}".to_string(),
+        "[".to_string(),
         "]".to_string(),
+        "<".to_string(),
         ">".to_string(),
         "\'".to_string(),
         "\"".to_string(),
@@ -318,6 +324,14 @@ impl Config for ResolvedConfig {
       .parsed
       .post_form_delay
       .unwrap_or(DEFAULT_POST_FORM_DELAY)
+  }
+
+  fn max_form_width(&self) -> usize {
+    self.parsed.max_form_width.unwrap_or(700)
+  }
+
+  fn max_form_height(&self) -> usize {
+    self.parsed.max_form_height.unwrap_or(500)
   }
 
   fn post_search_delay(&self) -> usize {
@@ -432,6 +446,8 @@ impl ResolvedConfig {
       secure_input_notification,
       emulate_alt_codes,
       post_form_delay,
+      max_form_width,
+      max_form_height,
       post_search_delay,
       win32_exclude_orphan_events,
       win32_keyboard_layout_cache_interval,

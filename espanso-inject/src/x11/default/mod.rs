@@ -354,16 +354,15 @@ impl X11DefaultInjector {
     let mut current_state = 0u32;
     for record in original_records {
       let mut current_record = *record;
+      current_record.main.state = current_state;
+      records.push(current_record);
 
-      // Render the state by applying the modifiers
+      // Calculate the state for the next record by applying the modifiers
       for (mod_index, modifier) in modifiers_codes.iter().enumerate() {
         if modifier.contains(&(record.main.code as u8)) {
           current_state |= 1 << mod_index;
         }
       }
-
-      current_record.main.state = current_state;
-      records.push(current_record);
     }
 
     records

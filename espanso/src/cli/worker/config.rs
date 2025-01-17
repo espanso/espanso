@@ -75,7 +75,7 @@ fn to_app_properties(info: &AppInfo) -> AppProperties {
   }
 }
 
-impl<'a> espanso_engine::process::MatchFilter for ConfigManager<'a> {
+impl espanso_engine::process::MatchFilter for ConfigManager<'_> {
   fn filter_active(&self, matches_ids: &[i32]) -> Vec<i32> {
     let ids_set: HashSet<i32> = matches_ids.iter().copied().collect::<HashSet<_>>();
     let (_, match_set) = self.active_context();
@@ -117,7 +117,7 @@ impl<'a> super::engine::process::middleware::render::ConfigProvider<'a> for Conf
   }
 }
 
-impl<'a> espanso_engine::dispatch::ModeProvider for ConfigManager<'a> {
+impl espanso_engine::dispatch::ModeProvider for ConfigManager<'_> {
   fn active_mode(&self) -> espanso_engine::dispatch::Mode {
     let config = self.active();
     match config.backend() {
@@ -130,8 +130,8 @@ impl<'a> espanso_engine::dispatch::ModeProvider for ConfigManager<'a> {
   }
 }
 
-impl<'a> super::engine::dispatch::executor::clipboard_injector::ClipboardParamsProvider
-  for ConfigManager<'a>
+impl super::engine::dispatch::executor::clipboard_injector::ClipboardParamsProvider
+  for ConfigManager<'_>
 {
   fn get(&self) -> super::engine::dispatch::executor::clipboard_injector::ClipboardParams {
     let active = self.active();
@@ -148,7 +148,7 @@ impl<'a> super::engine::dispatch::executor::clipboard_injector::ClipboardParamsP
   }
 }
 
-impl<'a> ClipboardOperationOptionsProvider for ConfigManager<'a> {
+impl ClipboardOperationOptionsProvider for ConfigManager<'_> {
   fn get_operation_options(&self) -> espanso_clipboard::ClipboardOperationOptions {
     let active = self.active();
     espanso_clipboard::ClipboardOperationOptions {
@@ -157,7 +157,7 @@ impl<'a> ClipboardOperationOptionsProvider for ConfigManager<'a> {
   }
 }
 
-impl<'a> super::engine::dispatch::executor::InjectParamsProvider for ConfigManager<'a> {
+impl super::engine::dispatch::executor::InjectParamsProvider for ConfigManager<'_> {
   fn get(&self) -> super::engine::dispatch::executor::InjectParams {
     let active = self.active();
     super::engine::dispatch::executor::InjectParams {
@@ -170,13 +170,13 @@ impl<'a> super::engine::dispatch::executor::InjectParamsProvider for ConfigManag
   }
 }
 
-impl<'a> espanso_engine::process::MatcherMiddlewareConfigProvider for ConfigManager<'a> {
+impl espanso_engine::process::MatcherMiddlewareConfigProvider for ConfigManager<'_> {
   fn max_history_size(&self) -> usize {
     self.default().backspace_limit()
   }
 }
 
-impl<'a> espanso_engine::process::UndoEnabledProvider for ConfigManager<'a> {
+impl espanso_engine::process::UndoEnabledProvider for ConfigManager<'_> {
   fn is_undo_enabled(&self) -> bool {
     // Disable undo_backspace on Wayland for now as it's not stable
     if cfg!(feature = "wayland") {
@@ -194,25 +194,33 @@ impl<'a> espanso_engine::process::UndoEnabledProvider for ConfigManager<'a> {
   }
 }
 
-impl<'a> espanso_engine::process::EnabledStatusProvider for ConfigManager<'a> {
+impl espanso_engine::process::EnabledStatusProvider for ConfigManager<'_> {
   fn is_config_enabled(&self) -> bool {
     self.active().enable()
   }
 }
 
-impl<'a> crate::gui::modulo::form::ModuloFormUIOptionProvider for ConfigManager<'a> {
+impl crate::gui::modulo::form::ModuloFormUIOptionProvider for ConfigManager<'_> {
   fn get_post_form_delay(&self) -> usize {
     self.active().post_form_delay()
   }
+
+  fn get_max_form_width(&self) -> usize {
+    self.active().max_form_width()
+  }
+
+  fn get_max_form_height(&self) -> usize {
+    self.active().max_form_height()
+  }
 }
 
-impl<'a> crate::gui::modulo::search::ModuloSearchUIOptionProvider for ConfigManager<'a> {
+impl crate::gui::modulo::search::ModuloSearchUIOptionProvider for ConfigManager<'_> {
   fn get_post_search_delay(&self) -> usize {
     self.active().post_search_delay()
   }
 }
 
-impl<'a> espanso_engine::process::AltCodeSynthEnabledProvider for ConfigManager<'a> {
+impl espanso_engine::process::AltCodeSynthEnabledProvider for ConfigManager<'_> {
   fn is_alt_code_synthesizer_enabled(&self) -> bool {
     self.active().emulate_alt_codes()
   }

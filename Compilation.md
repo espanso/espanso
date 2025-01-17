@@ -17,7 +17,7 @@ These are the basic tools required to build espanso:
 steps. You can install it by running:
 
 ```bash
-cargo install rust-script --version "0.7.0"
+cargo install rust-script
 cargo install --force cargo-make --version 0.37.5
 ```
 
@@ -83,11 +83,15 @@ If you don't know which one to choose, follow [these steps to determine which on
 
 If compiling on a version of Ubuntu X11 before 22.04 (including 22.04):
 
-* `sudo apt install libx11-dev libxtst-dev libxkbcommon-dev libdbus-1-dev libwxgtk3.0-gtk3-dev`
+```bash
+sudo apt install libx11-dev libxtst-dev libxkbcommon-dev libdbus-1-dev libwxgtk3.0-gtk3-dev
+```
 
 If compiling on a version of Ubuntu X11 after 22.04:
 
-* `sudo apt install libx11-dev libxtst-dev libxkbcommon-dev libdbus-1-dev libwxgtk3.2-dev`
+```bash
+sudo apt install libx11-dev libxtst-dev libxkbcommon-dev libdbus-1-dev libwxgtk3.*-dev
+```
 
 ### Compiling for X11
 

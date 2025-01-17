@@ -41,7 +41,7 @@ impl<'a> ClipboardAdapter<'a> {
   }
 }
 
-impl<'a> ClipboardProvider for ClipboardAdapter<'a> {
+impl ClipboardProvider for ClipboardAdapter<'_> {
   fn get_text(&self) -> Option<String> {
     self.clipboard.get_text(
       &self

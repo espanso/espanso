@@ -77,7 +77,7 @@ pub fn is_builtin_match(id: i32) -> bool {
 }
 
 thread_local! {
-  static CURRENT_BUILTIN_MATCH_ID: Cell<i32> = Cell::new(MIN_BUILTIN_MATCH_ID);
+  static CURRENT_BUILTIN_MATCH_ID: Cell<i32> = const { Cell::new(MIN_BUILTIN_MATCH_ID) };
 }
 
 fn generate_next_builtin_id() -> i32 {

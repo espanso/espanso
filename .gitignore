@@ -39,3 +39,6 @@ venv/
 
 .vscode/
 *.profraw
+**/*.code-workspace
+Espanso-Win-Installer-x86_64*
+Espanso-Win-Portable-x86_64*

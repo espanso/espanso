@@ -46,6 +46,7 @@ const MAC_ACCESSIBILITY_2_BINARY: &[u8] = include_bytes!("res/accessibility_2.pn
 #[cfg(target_os = "macos")]
 const MAC_STATUS_ICON_EXPLAIN_IMAGE: &[u8] = include_bytes!("res/macos/icon_explain_image.png");
 
+#[allow(dead_code)]
 #[derive(Debug, Default)]
 pub struct IconPaths {
   pub form_icon: Option<PathBuf>,

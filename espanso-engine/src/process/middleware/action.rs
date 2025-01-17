@@ -53,7 +53,7 @@ impl<'a> ActionMiddleware<'a> {
   }
 }
 
-impl<'a> Middleware for ActionMiddleware<'a> {
+impl Middleware for ActionMiddleware<'_> {
   fn name(&self) -> &'static str {
     "action"
   }

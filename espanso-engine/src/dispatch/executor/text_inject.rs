@@ -63,7 +63,7 @@ impl<'a> TextInjectExecutor<'a> {
   }
 }
 
-impl<'a> Executor for TextInjectExecutor<'a> {
+impl Executor for TextInjectExecutor<'_> {
   fn execute(&self, event: &Event) -> bool {
     if let EventType::TextInject(inject_event) = &event.etype {
       let active_mode = self.mode_provider.active_mode();
@@ -85,7 +85,7 @@ impl<'a> Executor for TextInjectExecutor<'a> {
         if inject_event.text.chars().count() > clipboard_threshold {
           self.clipboard_injector
         } else if cfg!(target_os = "linux") {
-          if inject_event.text.chars().all(|c| c.is_ascii()) {
+          if inject_event.text.is_ascii() {
             self.event_injector
           } else {
             self.clipboard_injector

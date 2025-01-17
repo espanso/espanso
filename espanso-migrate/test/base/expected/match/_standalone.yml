@@ -1,3 +1,0 @@
-matches:
-  - trigger: "hello"
-    replace: "world"

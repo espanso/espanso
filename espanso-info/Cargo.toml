@@ -10,14 +10,14 @@ build = "build.rs"
 wayland = []
 
 [dependencies]
-log = "0.4.14"
-anyhow = "1.0.38"
+log.workspace = true
+anyhow.workspace = true
 
 [lints]
 workspace = true
 
 [target.'cfg(windows)'.dependencies]
-widestring = "0.4.3"
+widestring.workspace = true
 
 [build-dependencies]
-cc = "1.0.73"
+cc.workspace = true

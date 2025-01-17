@@ -28,7 +28,7 @@ use espanso_info::AppInfo;
 pub trait Context: ConfigContext + AppInfoContext {}
 
 pub trait ConfigContext {
-  fn get_default_config(&self) -> Arc<dyn Config>;
+  // fn get_default_config(&self) -> Arc<dyn Config>;
   fn get_active_config(&self) -> Arc<dyn Config>;
 }
 

@@ -31,7 +31,7 @@ impl<'a> DefaultFunnel<'a> {
   }
 }
 
-impl<'a> Funnel for DefaultFunnel<'a> {
+impl Funnel for DefaultFunnel<'_> {
   fn receive(&self) -> FunnelResult {
     let mut select = Select::new();
 
