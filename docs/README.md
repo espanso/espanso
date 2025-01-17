@@ -1,7 +1,7 @@
 # Espanso Developer docs
 
-This sub folder corresponds to the developer documentation. If you are looking to
-the user documentation it's [on the webpage](https://espanso.org/).
+This sub folder corresponds to the developer documentation. If you are looking
+to the user documentation it's [on the webpage](https://espanso.org/).
 
 ## TODO:
 

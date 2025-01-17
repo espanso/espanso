@@ -4,3 +4,12 @@ language = "en"
 multilingual = false
 src = "src"
 title = "espanso-docs"
+
+[preprocessor.pagetoc]
+[output.html]
+additional-css = ["theme/pagetoc.css"]
+additional-js  = ["theme/pagetoc.js"]
+default-theme = "ayu"
+preferred-dark-theme = "ayu"
+git-repository-url = "https://github.com/espanso/espanso"
+git-repository-icon = "fa-github"
