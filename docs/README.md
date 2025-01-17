@@ -3,9 +3,7 @@
 This sub folder corresponds to the developer documentation. If you are looking
 to the user documentation it's [on the webpage](https://espanso.org/).
 
-## TODO:
-
-..Add picture of espanso mkdocs..
+![espanso docs picture](./assets/espanso-docs.png)
 
 ## Description
 
