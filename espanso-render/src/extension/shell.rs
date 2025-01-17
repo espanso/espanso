@@ -208,7 +208,7 @@ impl ShellExtension {
 }
 
 impl Extension for ShellExtension {
-  fn name(&self) -> &str {
+  fn name(&self) -> &'static str {
     "shell"
   }
 

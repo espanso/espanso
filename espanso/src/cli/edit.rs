@@ -143,10 +143,10 @@ fn determine_target_path(config_path: &Path, target_file: Option<&str>) -> PathB
       custom => {
         if !std::path::Path::new(custom)
           .extension()
-          .map_or(false, |ext| ext.eq_ignore_ascii_case("yml"))
+          .is_some_and(|ext| ext.eq_ignore_ascii_case("yml"))
           && !std::path::Path::new(custom)
             .extension()
-            .map_or(false, |ext| ext.eq_ignore_ascii_case("yaml"))
+            .is_some_and(|ext| ext.eq_ignore_ascii_case("yaml"))
         {
           config_path.join("match").join(format!("{custom}.yml"))
         } else {

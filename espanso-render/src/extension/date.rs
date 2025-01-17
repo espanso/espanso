@@ -41,7 +41,7 @@ impl<'a> DateExtension<'a> {
 }
 
 impl Extension for DateExtension<'_> {
-  fn name(&self) -> &str {
+  fn name(&self) -> &'static str {
     "date"
   }
 
