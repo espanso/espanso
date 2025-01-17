@@ -28,7 +28,7 @@ Stylistic fixes and housekeeping can be bundled up into singular PRs.
 
 ### Going to the practice
 
-We would like the rust code:
+We would like the Rust code:
 
 - to be formatted via `rustfmt`
 
@@ -65,5 +65,5 @@ Today our submitted code is yet untidy. Work in progress!
 `git` is a powerful but a bit complex tool to use, and there are many criteria around the internet. We normally:
 
 - squash the commits when we merge a PR
-- TODO: setup git hooks with [`rusty-hook`](https://github.com/swellaby/rusty-hook)
+- TODO: setup git hooks with some tool
 
