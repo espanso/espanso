@@ -36,7 +36,7 @@ impl<'a> ClipboardExtension<'a> {
 }
 
 impl Extension for ClipboardExtension<'_> {
-  fn name(&self) -> &str {
+  fn name(&self) -> &'static str {
     "clipboard"
   }
 

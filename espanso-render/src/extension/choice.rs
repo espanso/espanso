@@ -51,7 +51,7 @@ impl<'a> ChoiceExtension<'a> {
 }
 
 impl Extension for ChoiceExtension<'_> {
-  fn name(&self) -> &str {
+  fn name(&self) -> &'static str {
     "choice"
   }
 

@@ -264,7 +264,7 @@ mod tests {
   struct MockExtension {}
 
   impl Extension for MockExtension {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
       "mock"
     }
 
