@@ -12,6 +12,9 @@ on:
       - master
       - dev
   pull_request:
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
 
 env:
   CARGO_TERM_COLOR: always
