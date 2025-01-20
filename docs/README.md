@@ -9,7 +9,7 @@ to the user documentation it's [on the webpage](https://espanso.org/).
 
 - `./docs` is the source directory of the book
 - `./docs/src/SUMMARY.md` configures the order of the menu on the left hand side
-  of the book ([more info here](https://rust-lang.github.io/mdBook/format/summary.html).
+  of the book ([more info here](https://rust-lang.github.io/mdBook/format/summary.html)).
 "Without this file, there is no book."
 - `./docs/assets` stores all the non-markdown content (screenshots, gifs) to be
   used.
