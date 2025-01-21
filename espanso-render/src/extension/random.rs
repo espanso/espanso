@@ -31,7 +31,7 @@ impl RandomExtension {
 }
 
 impl Extension for RandomExtension {
-  fn name(&self) -> &str {
+  fn name(&self) -> &'static str {
     "random"
   }
 

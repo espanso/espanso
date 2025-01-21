@@ -50,7 +50,7 @@ impl<'a> FormExtension<'a> {
 }
 
 impl Extension for FormExtension<'_> {
-  fn name(&self) -> &str {
+  fn name(&self) -> &'static str {
     "form"
   }
 

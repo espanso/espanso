@@ -47,5 +47,3 @@ If you don't want them, you can pass the `--env NO_MODULO=true` flag to any of t
 to remove support for it.
 
 Keep in mind that espanso was designed with modulo as a first class citizen, so the experience might be far from perfect without it.
-
-
