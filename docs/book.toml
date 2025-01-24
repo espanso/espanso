@@ -1,0 +1,12 @@
+[book]
+authors = ["Auca Coyan"]
+language = "en"
+multilingual = false
+src = "src"
+title = "espanso-docs"
+
+[output.html]
+default-theme = "ayu"
+preferred-dark-theme = "ayu"
+git-repository-url = "https://github.com/espanso/espanso"
+git-repository-icon = "fa-github"

@@ -5,6 +5,9 @@ name: Dev Release
 
 on:
   push:
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
     branches:
       - dev
 
