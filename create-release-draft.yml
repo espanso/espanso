@@ -4,28 +4,11 @@ on: workflow_dispatch
 
 env:
   GH_TOKEN: ${{ github.token }}
+  CARGO_TERM_COLOR: always
 
 jobs:
-  set-context:
-    continue-on-error: false
-    env:
-      GITHUB_REF: ${{ github.ref_name }}
-      GITHUB_CONTEXT: ${{ toJson(github) }}
-      SET_RELEASE_VERSION: ${{ github.event.inputs.set-release-version }}
-    name: set-context
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check trigger branch
-        run: |
-          if [ $(echo "${GITHUB_REF}" | grep -Ec "^dev$/") -eq 1 ] ; then
-            echo "  - ✅ The branch triggering this workflow is ${GITHUB_REF}."
-          else
-            echo "  - ❌ The branch triggering this workflow is ${GITHUB_REF} instead of master or release/[0-9].[0-9].[0-9]."
-            exit 1
-          fi
   extract-version:
     name: extract-version
-    needs: "set-context"
     continue-on-error: false
     runs-on: ubuntu-latest
     outputs:
@@ -201,6 +184,64 @@ jobs:
         run: cargo make --profile release -- create-bundle
         env:
           MACOSX_DEPLOYMENT_TARGET: "10.13"
+
+      - name: Install the Apple certificate
+        env:
+          BUILD_CERTIFICATE_BASE64: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
+          P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
+          # BUILD_PROVISION_PROFILE_BASE64: ${{ secrets.BUILD_PROVISION_PROFILE_BASE64 }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          # create variables
+          CERTIFICATE_PATH=$RUNNER_TEMP/build_certificate.p12
+          # PP_PATH=$RUNNER_TEMP/build_pp.mobileprovision
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+
+          # import certificate and provisioning profile from secrets
+          echo -n "$BUILD_CERTIFICATE_BASE64" | base64 --decode -o $CERTIFICATE_PATH
+          # echo -n "$BUILD_PROVISION_PROFILE_BASE64" | base64 --decode -o $PP_PATH
+
+          # create temporary keychain
+          security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+
+          # import certificate to keychain
+          security import $CERTIFICATE_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+          security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security list-keychain -d user -s $KEYCHAIN_PATH
+
+      - name: Codesign executable
+        env: 
+          BUILD_CERTIFICATE_BASE64: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
+          P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
+          # MACOS_CERTIFICATE_NAME: ${{ secrets.PROD_MACOS_CERTIFICATE_NAME }}
+          MACOS_CI_KEYCHAIN_PWD: ${{ secrets.PROD_MACOS_CI_KEYCHAIN_PWD }}
+        run: |
+          echo $MACOS_CERTIFICATE | base64 --decode > certificate.p12
+          security create-keychain -p "$MACOS_CI_KEYCHAIN_PWD" buildespanso.keychain 
+          security default-keychain -s buildespanso.keychain
+          security unlock-keychain -p "$MACOS_CI_KEYCHAIN_PWD" buildespanso.keychain
+          security import certificate.p12 -k buildespanso.keychain -P "$MACOS_CERTIFICATE_PWD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$MACOS_CI_KEYCHAIN_PWD" buildespanso.keychain
+          /usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" --options runtime target/mac/Espanso.app -v
+      - name: "Notarize executable"
+        env:
+          PROD_MACOS_NOTARIZATION_APPLE_ID: ${{ secrets.PROD_MACOS_NOTARIZATION_APPLE_ID }}
+          PROD_MACOS_NOTARIZATION_TEAM_ID: ${{ secrets.PROD_MACOS_NOTARIZATION_TEAM_ID }}
+          PROD_MACOS_NOTARIZATION_PWD: ${{ secrets.PROD_MACOS_NOTARIZATION_PWD }}
+        run: |
+          echo "Create keychain profile"
+          xcrun notarytool store-credentials "espanso-notarytool-profile" --apple-id "$PROD_MACOS_NOTARIZATION_APPLE_ID" --team-id "$PROD_MACOS_NOTARIZATION_TEAM_ID" --password "$PROD_MACOS_NOTARIZATION_PWD"
+
+          echo "Creating temp notarization archive"
+          ditto -c -k --keepParent "target/mac/Espanso.app" "notarization.zip"
+
+          echo "Notarize app"
+          xcrun notarytool submit "notarization.zip" --keychain-profile "espanso-notarytool-profile" --wait
+
+          echo "Attach staple"
+          xcrun stapler staple "target/mac/Espanso.app"
       - name: Create ZIP archive
         run: |
           ditto -c -k --sequesterRsrc --keepParent target/mac/Espanso.app Espanso-Mac-Intel.zip
@@ -211,18 +252,7 @@ jobs:
           name: Mac Intel Artifacts
           path: |
             ./Espanso-Mac-Intel.zip
-      - id: sign-macos-intel-release
-        uses: signpath/github-action-submit-signing-request@v1
-        with:
-          api-token: '${{ secrets.SIGNPATH_API_TOKEN }}'
-          organization-id: 'e86b1459-62fc-4c7c-aac9-185d60749a03'
-          project-slug: 'espanso'
-          signing-policy-slug: 'test-signing'
-          github-artifact-id: ${{ steps.upload-artifact-macos-intel.outputs.artifact-id }}
-          wait-for-completion: true
-          output-artifact-directory: '.'
-          parameters: |
-            version: "${{ needs.extract-version.outputs.espanso_version }}"
+
       - name: Calculate hashes
         run: |
           shasum -a 256 Espanso-Mac-Intel.zip > Espanso-Mac-Intel.zip.sha256.txt
@@ -230,6 +260,12 @@ jobs:
         run: |
           gh release upload ${{ needs.extract-version.outputs.espanso_version }} Espanso-Mac-Intel.zip Espanso-Mac-Intel.zip.sha256.txt
   
+      - name: Clean up keychain and provisioning profile
+        if: ${{ always() }}
+        run: |
+          security delete-keychain $RUNNER_TEMP/app-signing.keychain-db
+          rm ~/Library/MobileDevice/Provisioning\ Profiles/build_pp.mobileprovision
+
   macos-m1:
     needs: ["extract-version", "create-release"]
     runs-on: macos-latest
