@@ -78,19 +78,10 @@ pub struct ConfigLoadResult {
   pub non_fatal_errors: Vec<NonFatalErrorSet>,
 }
 
-pub fn load_config(config_path: &Path, packages_path: &Path) -> Result<ConfigLoadResult> {
-  if espanso_config::is_legacy_config(config_path) {
-    let (config_store, match_store) = espanso_config::load_legacy(config_path, packages_path)
-      .context("unable to load legacy config")?;
-
-    Ok(ConfigLoadResult {
-      // Apply the built-in patches
-      config_store: crate::patch::patch_store(config_store),
-      match_store,
-      is_legacy_config: true,
-      non_fatal_errors: Vec::new(),
-    })
-  } else {
+/// `_packages_path` it was used on the past to decide if it was legacy config
+/// or not
+pub fn load_config(config_path: &Path, _packages_path: &Path) -> Result<ConfigLoadResult> {
+  {
     let (config_store, match_store, non_fatal_errors) =
       espanso_config::load(config_path).context("unable to load config")?;
 
