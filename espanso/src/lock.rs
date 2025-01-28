@@ -66,3 +66,7 @@ pub fn acquire_daemon_lock(runtime_dir: &Path) -> Option<Lock> {
 pub fn acquire_worker_lock(runtime_dir: &Path) -> Option<Lock> {
   Lock::acquire(runtime_dir, "espanso-worker")
 }
+
+pub fn acquire_legacy_lock(runtime_dir: &Path) -> Option<Lock> {
+  Lock::acquire(runtime_dir, "espanso")
+}

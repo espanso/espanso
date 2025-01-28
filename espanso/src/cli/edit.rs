@@ -138,8 +138,20 @@ fn edit_main(args: CliModuleArgs) -> i32 {
 fn determine_target_path(config_path: &Path, target_file: Option<&str>) -> PathBuf {
   if let Some(target_file) = target_file {
     match target_file {
-      "default" => config_path.join("config").join("default.yml"),
-      "base" => config_path.join("match").join("base.yml"),
+      "default" => {
+        if espanso_config::is_legacy_config(config_path) {
+          config_path.join("default.yml")
+        } else {
+          config_path.join("config").join("default.yml")
+        }
+      }
+      "base" => {
+        if espanso_config::is_legacy_config(config_path) {
+          panic!("'base' alias cannot be used in compatibility mode, please migrate your configuration by running 'espanso migrate'")
+        } else {
+          config_path.join("match").join("base.yml")
+        }
+      }
       custom => {
         if !std::path::Path::new(custom)
           .extension()
@@ -148,12 +160,18 @@ fn determine_target_path(config_path: &Path, target_file: Option<&str>) -> PathB
             .extension()
             .is_some_and(|ext| ext.eq_ignore_ascii_case("yaml"))
         {
-          config_path.join("match").join(format!("{custom}.yml"))
+          if espanso_config::is_legacy_config(config_path) {
+            config_path.join("user").join(format!("{custom}.yml"))
+          } else {
+            config_path.join("match").join(format!("{custom}.yml"))
+          }
         } else {
           config_path.join(custom)
         }
       }
     }
+  } else if espanso_config::is_legacy_config(config_path) {
+    config_path.join("default.yml")
   } else {
     config_path.join("match").join("base.yml")
   }

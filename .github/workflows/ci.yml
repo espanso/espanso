@@ -22,7 +22,7 @@ env:
 jobs:
   build:
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         os: [windows-latest, macos-latest, ubuntu-latest]
 
@@ -42,7 +42,7 @@ jobs:
         if: ${{ runner.os == 'Linux' }}
         run: |
           sudo apt-get update
-          sudo apt-get install -y libx11-dev libxtst-dev libxkbcommon-dev libdbus-1-dev libwxgtk3.*-dev
+          sudo apt-get install -y libx11-dev libxtst-dev libxkbcommon-dev libdbus-1-dev libwxgtk3.0-gtk3-dev
       - name: Install rust-script and cargo-make
         run: |
           cargo install rust-script
@@ -84,7 +84,7 @@ jobs:
         if: ${{ runner.os == 'Linux' }}
         run: |
           sudo apt-get update
-          sudo apt-get install -y libx11-dev libxtst-dev libxkbcommon-dev libdbus-1-dev libwxgtk3.*-dev
+          sudo apt-get install -y libx11-dev libxtst-dev libxkbcommon-dev libdbus-1-dev libwxgtk3.0-gtk3-dev
       - name: Install rust-script and cargo-make
         run: |
           cargo install rust-script
@@ -104,7 +104,7 @@ jobs:
       - name: Install Linux dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libxkbcommon-dev libwxgtk3.*-dev libdbus-1-dev
+          sudo apt-get install -y libxkbcommon-dev libwxgtk3.0-gtk3-dev libdbus-1-dev
       - name: Install rust-script and cargo-make
         run: |
           cargo install rust-script
@@ -128,7 +128,7 @@ jobs:
       - name: Install Linux dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libxkbcommon-dev libwxgtk3.*-dev libdbus-1-dev
+          sudo apt-get install -y libxkbcommon-dev libwxgtk3.0-gtk3-dev libdbus-1-dev
       - name: Install rust-script and cargo-make
         run: |
           cargo install rust-script
