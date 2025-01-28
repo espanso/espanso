@@ -30,7 +30,6 @@ pub mod env_path;
 pub mod launcher;
 pub mod log;
 pub mod match_cli;
-pub mod migrate;
 pub mod modulo;
 pub mod package;
 pub mod path;
@@ -39,7 +38,8 @@ pub mod util;
 pub mod workaround;
 pub mod worker;
 
-#[allow(dead_code)]
+// we really need these bools until we rewrite the CLI in the Derive API of clap
+#[allow(dead_code, clippy::struct_excessive_bools)]
 pub struct CliModule {
   pub enable_logs: bool,
   pub disable_logs_terminal_output: bool,

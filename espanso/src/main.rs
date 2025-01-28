@@ -66,7 +66,6 @@ lazy_static! {
     cli::worker::new(),
     cli::daemon::new(),
     cli::modulo::new(),
-    cli::migrate::new(),
     cli::env_path::new(),
     cli::service::new(),
     cli::workaround::new(),
@@ -342,12 +341,6 @@ For example, specifying 'email' is equivalent to 'match/email.yml'."#))
           SubCommand::with_name("default").about("Print the default configuration file path."),
         )
         .subcommand(SubCommand::with_name("base").about("Print the default match file path.")),
-    )
-    .subcommand(
-      SubCommand::with_name("migrate")
-        .about("Automatically migrate legacy config files to the new v2 format.")
-        .arg(Arg::with_name("noconfirm").long("noconfirm"))
-        .help("Migrate the configuration without asking for confirmation"),
     )
     .subcommand(
       SubCommand::with_name("service")
