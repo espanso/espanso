@@ -180,8 +180,7 @@ fn build_native() {
     arch => panic!("unsupported arch {arch}"),
   };
 
-  let should_use_ci_m1_workaround =
-    std::env::var("CI").unwrap_or_default() == "true" && target_arch == "arm64";
+  let is_arm64_ci = std::env::var("CI").unwrap_or_default() == "true" && target_arch == "arm64";
 
   if !out_wx_dir.is_dir() {
     // Extract the wxWidgets archive
@@ -196,36 +195,22 @@ fn build_native() {
     let build_dir = out_wx_dir.join("build-cocoa");
     std::fs::create_dir_all(&build_dir).expect("unable to create build-cocoa directory");
 
-    let mut handle = if should_use_ci_m1_workaround {
-      // Because of a configuration problem on the GitHub CI pipeline,
-      // we need to use a series of workarounds to build for M1 machines.
-      // See: https://github.com/actions/virtual-environments/issues/3288#issuecomment-830207746
-      Command::new(out_wx_dir.join("configure"))
-        .current_dir(build_dir.to_string_lossy().to_string())
-        .args([
-          "--disable-shared",
-          "--without-libtiff",
-          "--without-liblzma",
-          "--with-libjpeg=builtin",
-          "--with-libpng=builtin",
-          "--enable-universal-binary=arm64,x86_64",
-        ])
-        .spawn()
-        .expect("failed to execute configure")
-    } else {
-      Command::new(out_wx_dir.join("configure"))
-        .current_dir(build_dir.to_string_lossy().to_string())
-        .args([
-          "--disable-shared",
-          "--without-libtiff",
-          "--without-liblzma",
-          "--with-libjpeg=builtin",
-          "--with-libpng=builtin",
-          &format!("--enable-macosx_arch={target_arch}"),
-        ])
-        .spawn()
-        .expect("failed to execute configure")
-    };
+    let configure_args: [&str; 4] = [
+      "--disable-shared",
+      "--without-libtiff",
+      "--with-macosx-version-min=10.13",
+      if is_arm64_ci {
+        "--enable-universal-binary=arm64,x86_64"
+      } else {
+        &format!("--enable-macosx_arch={target_arch}")
+      },
+    ];
+
+    let mut handle = Command::new(out_wx_dir.join("configure"))
+      .current_dir(build_dir.to_string_lossy().to_string())
+      .args(configure_args.iter())
+      .spawn()
+      .expect("failed to execute configure");
 
     if !handle
       .wait()
@@ -257,7 +242,7 @@ fn build_native() {
 
   // If using the M1 CI workaround, convert all the universal libraries to arm64 ones
   // This is needed until https://github.com/rust-lang/rust/issues/55235 is fixed
-  if should_use_ci_m1_workaround {
+  if is_arm64_ci {
     convert_fat_libraries_to_arm(&out_wx_dir.join("build-cocoa").join("lib"));
     convert_fat_libraries_to_arm(&out_wx_dir.join("build-cocoa"));
   }
@@ -432,11 +417,6 @@ fn macos_link_search_path() -> Option<String> {
   None
 }
 
-// TODO: add documentation for linux
-// Install wxWidgets:
-// sudo apt install libwxgtk3.0-0v5 libwxgtk3.0-dev
-//
-// cargo run
 #[cfg(target_os = "linux")]
 fn build_native() {
   // Make sure wxWidgets is installed

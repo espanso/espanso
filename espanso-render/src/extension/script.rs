@@ -44,7 +44,7 @@ impl ScriptExtension {
 }
 
 impl Extension for ScriptExtension {
-  fn name(&self) -> &str {
+  fn name(&self) -> &'static str {
     "script"
   }
 

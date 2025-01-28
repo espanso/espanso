@@ -26,7 +26,6 @@ use thiserror::Error;
 pub mod config;
 mod counter;
 pub mod error;
-mod legacy;
 pub mod matches;
 mod util;
 
@@ -57,17 +56,6 @@ pub fn load(base_path: &Path) -> Result<LoadableConfig> {
     Box::new(match_store),
     non_fatal_errors,
   ))
-}
-
-pub fn load_legacy(
-  config_dir: &Path,
-  package_dir: &Path,
-) -> Result<(Box<dyn ConfigStore>, Box<dyn MatchStore>)> {
-  legacy::load(config_dir, package_dir)
-}
-
-pub fn is_legacy_config(base_dir: &Path) -> bool {
-  base_dir.join("user").is_dir() && base_dir.join("default.yml").is_file()
 }
 
 #[derive(Error, Debug)]

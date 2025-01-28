@@ -6,8 +6,26 @@ env:
   GH_TOKEN: ${{ github.token }}
 
 jobs:
+  set-context:
+    continue-on-error: false
+    env:
+      GITHUB_REF: ${{ github.ref_name }}
+      GITHUB_CONTEXT: ${{ toJson(github) }}
+      SET_RELEASE_VERSION: ${{ github.event.inputs.set-release-version }}
+    name: set-context
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check trigger branch
+        run: |
+          if [ $(echo "${GITHUB_REF}" | grep -Ec "^dev$/") -eq 1 ] ; then
+            echo "  - ✅ The branch triggering this workflow is ${GITHUB_REF}."
+          else
+            echo "  - ❌ The branch triggering this workflow is ${GITHUB_REF} instead of master or release/[0-9].[0-9].[0-9]."
+            exit 1
+          fi
   extract-version:
     name: extract-version
+    needs: "set-context"
     continue-on-error: false
     runs-on: ubuntu-latest
     outputs:
@@ -58,7 +76,7 @@ jobs:
           echo Using version ${{ needs.extract-version.outputs.espanso_version }}
       - name: Install rust-script and cargo-make
         run: |
-          cargo install rust-script --version "0.7.0"
+          cargo install rust-script
           cargo install --force cargo-make --version 0.37.5
       - name: Test
         run: cargo make --profile release -- test-binary
@@ -173,7 +191,7 @@ jobs:
           echo Using version ${{ needs.extract-version.outputs.espanso_version }}
       - name: Install rust-script and cargo-make
         run: |
-          cargo install rust-script --version "0.7.0"
+          cargo install rust-script
           cargo install --force cargo-make --version 0.37.5
       - name: Test
         run: cargo make --profile release -- test-binary
@@ -226,7 +244,7 @@ jobs:
         run: rustup update && rustup target add aarch64-apple-darwin
       - name: Install rust-script and cargo-make
         run: |
-          cargo install rust-script --version "0.7.0"
+          cargo install rust-script
           cargo install --force cargo-make --version 0.37.5
       - name: Build
         run: cargo make --env BUILD_ARCH=aarch64-apple-darwin --profile release -- create-bundle

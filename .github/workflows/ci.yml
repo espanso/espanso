@@ -5,10 +5,16 @@ name: CI
 
 on:
   push:
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
     branches:
       - master
       - dev
   pull_request:
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
 
 env:
   CARGO_TERM_COLOR: always
@@ -16,7 +22,7 @@ env:
 jobs:
   build:
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         os: [windows-latest, macos-latest, ubuntu-latest]
 
@@ -36,10 +42,10 @@ jobs:
         if: ${{ runner.os == 'Linux' }}
         run: |
           sudo apt-get update
-          sudo apt-get install -y libx11-dev libxtst-dev libxkbcommon-dev libdbus-1-dev libwxgtk3.0-gtk3-dev
+          sudo apt-get install -y libx11-dev libxtst-dev libxkbcommon-dev libdbus-1-dev libwxgtk3.*-dev
       - name: Install rust-script and cargo-make
         run: |
-          cargo install rust-script --version "0.7.0"
+          cargo install rust-script
           cargo install cargo-make --version 0.37.5
       # wxWidgets builds (internal to espanso-modulo) are by far the largest bottleneck
       # in the current pipeline, so we cache the results for a faster compilation process
@@ -78,10 +84,10 @@ jobs:
         if: ${{ runner.os == 'Linux' }}
         run: |
           sudo apt-get update
-          sudo apt-get install -y libx11-dev libxtst-dev libxkbcommon-dev libdbus-1-dev libwxgtk3.0-gtk3-dev
+          sudo apt-get install -y libx11-dev libxtst-dev libxkbcommon-dev libdbus-1-dev libwxgtk3.*-dev
       - name: Install rust-script and cargo-make
         run: |
-          cargo install rust-script --version "0.7.0"
+          cargo install rust-script
           cargo install cargo-make --version 0.37.5
       - name: Run test suite
         run: cargo make test-binary
@@ -98,10 +104,10 @@ jobs:
       - name: Install Linux dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libxkbcommon-dev libwxgtk3.0-gtk3-dev libdbus-1-dev
+          sudo apt-get install -y libxkbcommon-dev libwxgtk3.*-dev libdbus-1-dev
       - name: Install rust-script and cargo-make
         run: |
-          cargo install rust-script --version "0.7.0"
+          cargo install rust-script
           cargo install cargo-make --version 0.37.5
       - name: Build
         run: cargo make --env NO_X11=true -- build-binary
@@ -122,10 +128,10 @@ jobs:
       - name: Install Linux dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libxkbcommon-dev libwxgtk3.0-gtk3-dev libdbus-1-dev
+          sudo apt-get install -y libxkbcommon-dev libwxgtk3.*-dev libdbus-1-dev
       - name: Install rust-script and cargo-make
         run: |
-          cargo install rust-script --version "0.7.0"
+          cargo install rust-script
           cargo install cargo-make --version 0.37.5
       - name: Run test suite
         run: cargo make --env NO_X11=true -- test-binary
@@ -141,7 +147,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - name: Install rust-script and cargo-make
         run: |
-          cargo install rust-script --version "0.7.0"
+          cargo install rust-script
           cargo install cargo-make --version 0.37.5
       - name: "Cache wxWidgets builds"
         if: ${{ runner.os != 'Linux' }}

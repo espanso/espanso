@@ -31,7 +31,7 @@ pub struct Lock {
 impl Lock {
   #[allow(dead_code)]
   pub fn release(self) -> Result<()> {
-    self.lock_file.unlock()?;
+    fs2::FileExt::unlock(&self.lock_file)?;
     Ok(())
   }
 
@@ -54,9 +54,7 @@ impl Lock {
 
 impl Drop for Lock {
   fn drop(&mut self) {
-    self
-      .lock_file
-      .unlock()
+    fs2::FileExt::unlock(&self.lock_file)
       .unwrap_or_else(|_| panic!("unable to unlock lock_file: {:?}", self.lock_file));
   }
 }
@@ -67,8 +65,4 @@ pub fn acquire_daemon_lock(runtime_dir: &Path) -> Option<Lock> {
 
 pub fn acquire_worker_lock(runtime_dir: &Path) -> Option<Lock> {
   Lock::acquire(runtime_dir, "espanso-worker")
-}
-
-pub fn acquire_legacy_lock(runtime_dir: &Path) -> Option<Lock> {
-  Lock::acquire(runtime_dir, "espanso")
 }
