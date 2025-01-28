@@ -47,7 +47,6 @@ espanso-render = { path = "../espanso-render" }
 espanso-path = { path = "../espanso-path" }
 espanso-ipc = { path = "../espanso-ipc" }
 espanso-modulo = { path = "../espanso-modulo", optional = true }
-espanso-migrate = { path = "../espanso-migrate" }
 espanso-kvs = { path = "../espanso-kvs" }
 espanso-engine = { path = "../espanso-engine" }
 espanso-package = { path = "../espanso-package" }

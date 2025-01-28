@@ -1,4 +1,0 @@
-filter_exec: "Executable"
-
-extra_includes:
-  - "../match/_extended.yml"

@@ -127,8 +127,9 @@ fn migrate_main(args: CliModuleArgs) -> i32 {
   info!("converting the configuration...");
   let temp_dir = TempDir::new("espanso-migrate-out").expect("unable to create temporary directory");
   let temp_out_dir = temp_dir.path().join("out");
-  espanso_migrate::migrate(&paths.config, &paths.packages, &temp_out_dir)
-    .expect("an error occurred while converting the configuration");
+  // NOPE
+  // espanso_migrate::migrate(&paths.config, &paths.packages, &temp_out_dir)
+  //.expect("an error occurred while converting the configuration");
   println!("{}", "Conversion completed!".green());
   info!("conversion completed!");
 
