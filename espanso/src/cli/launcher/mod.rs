@@ -52,8 +52,6 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
   use espanso_modulo::wizard::{MigrationResult, WizardHandlers, WizardOptions};
   let paths = args.paths.expect("missing paths in launcher main");
 
-  // TODO: should we create a non-gui wizard? We can also use it for the non-modulo versions of espanso
-
   // If espanso is already running, show a warning
   let lock_file = acquire_daemon_lock(&paths.runtime);
   if lock_file.is_none() {
