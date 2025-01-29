@@ -38,55 +38,54 @@ pub fn troubleshoot_main(paths: &Paths, icon_paths: &IconPaths) -> i32 {
     }
   });
 
-  let (is_fatal_error, error_sets) =
-    match crate::config::load_config(&paths.config, &paths.packages) {
-      Ok(config_result) => {
-        let error_sets = config_result
-          .non_fatal_errors
-          .into_iter()
-          .map(|error_set| espanso_modulo::troubleshooting::ErrorSet {
-            file: Some(error_set.file),
-            errors: error_set
-              .errors
-              .into_iter()
-              .map(|error| espanso_modulo::troubleshooting::ErrorRecord {
-                level: match error.level {
-                  espanso_config::error::ErrorLevel::Error => {
-                    espanso_modulo::troubleshooting::ErrorLevel::Error
-                  }
-                  espanso_config::error::ErrorLevel::Warning => {
-                    espanso_modulo::troubleshooting::ErrorLevel::Warning
-                  }
-                },
-                message: format!("{:?}", error.error),
-              })
-              .collect(),
-          })
-          .collect();
+  let (is_fatal_error, error_sets) = match crate::config::load_config(&paths.config) {
+    Ok(config_result) => {
+      let error_sets = config_result
+        .non_fatal_errors
+        .into_iter()
+        .map(|error_set| espanso_modulo::troubleshooting::ErrorSet {
+          file: Some(error_set.file),
+          errors: error_set
+            .errors
+            .into_iter()
+            .map(|error| espanso_modulo::troubleshooting::ErrorRecord {
+              level: match error.level {
+                espanso_config::error::ErrorLevel::Error => {
+                  espanso_modulo::troubleshooting::ErrorLevel::Error
+                }
+                espanso_config::error::ErrorLevel::Warning => {
+                  espanso_modulo::troubleshooting::ErrorLevel::Warning
+                }
+              },
+              message: format!("{:?}", error.error),
+            })
+            .collect(),
+        })
+        .collect();
 
-        (false, error_sets)
-      }
-      Err(err) => {
-        let message = format!("{err:?}");
-        let file_path = if message.contains("default.yml") {
-          let default_file_path = paths.config.join("config").join("default.yml");
-          Some(default_file_path)
-        } else {
-          None
-        };
+      (false, error_sets)
+    }
+    Err(err) => {
+      let message = format!("{err:?}");
+      let file_path = if message.contains("default.yml") {
+        let default_file_path = paths.config.join("config").join("default.yml");
+        Some(default_file_path)
+      } else {
+        None
+      };
 
-        (
-          true,
-          vec![espanso_modulo::troubleshooting::ErrorSet {
-            file: file_path,
-            errors: vec![espanso_modulo::troubleshooting::ErrorRecord {
-              level: espanso_modulo::troubleshooting::ErrorLevel::Error,
-              message: format!("{err:?}"),
-            }],
+      (
+        true,
+        vec![espanso_modulo::troubleshooting::ErrorSet {
+          file: file_path,
+          errors: vec![espanso_modulo::troubleshooting::ErrorRecord {
+            level: espanso_modulo::troubleshooting::ErrorLevel::Error,
+            message: format!("{err:?}"),
           }],
-        )
-      }
-    };
+        }],
+      )
+    }
+  };
 
   espanso_modulo::troubleshooting::show(TroubleshootingOptions {
     window_icon_path: icon_paths

@@ -82,7 +82,7 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
   let (is_wrong_edition_page_enabled, wrong_edition_detected_os) =
     edition_check::is_wrong_edition();
 
-  let is_migrate_page_enabled = espanso_config::is_legacy_config(&paths.config);
+  let is_migrate_page_enabled = false;
   let paths_clone = paths.clone();
   let backup_and_migrate_handler =
     Box::new(move || match util::migrate_configuration(&paths_clone) {
@@ -151,7 +151,6 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
   let should_launch_daemon = if is_welcome_page_enabled
     || is_move_bundle_page_enabled
     || is_legacy_version_page_enabled
-    || is_migrate_page_enabled
     || is_auto_start_page_enabled
     || is_add_path_page_enabled
     || is_accessibility_page_enabled
@@ -194,13 +193,11 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
     true
   };
 
-  if !espanso_config::is_legacy_config(&paths.config) {
-    if let Err(err) = crate::config::populate_default_config(&paths.config) {
-      error!("Error populating the config directory: {:?}", err);
+  if let Err(err) = crate::config::populate_default_config(&paths.config) {
+    error!("Error populating the config directory: {:?}", err);
 
-      // TODO: show an error message with GUI
-      return LAUNCHER_CONFIG_DIR_POPULATION_FAILURE;
-    }
+    // TODO: show an error message with GUI
+    return LAUNCHER_CONFIG_DIR_POPULATION_FAILURE;
   }
 
   if should_launch_daemon {

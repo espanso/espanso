@@ -24,7 +24,7 @@ use std::path::PathBuf;
 
 use clap::{App, AppSettings, Arg, ArgMatches, SubCommand};
 use cli::{CliAlias, CliModule, CliModuleArgs};
-use log::{error, info, warn};
+use log::{error, info};
 use logging::FileProxy;
 use simplelog::{
   CombinedLogger, ConfigBuilder, LevelFilter, SharedLogger, TermLogger, TerminalMode, WriteLogger,
@@ -582,18 +582,11 @@ For example, specifying 'email' is equivalent to 'match/email.yml'."#))
       log_system_info();
 
       if handler.requires_config {
-        let config_result =
-          load_config(&paths.config, &paths.packages).expect("unable to load config");
+        let config_result = load_config(&paths.config).expect("unable to load config");
 
-        cli_args.is_legacy_config = config_result.is_legacy_config;
         cli_args.config_store = Some(config_result.config_store);
         cli_args.match_store = Some(config_result.match_store);
         cli_args.non_fatal_errors = config_result.non_fatal_errors;
-
-        if config_result.is_legacy_config {
-          warn!("espanso is reading the configuration using compatibility mode, thus some features might not be available");
-          warn!("you can migrate to the new configuration format by running 'espanso migrate' in a terminal");
-        }
       }
 
       if handler.enable_logs {

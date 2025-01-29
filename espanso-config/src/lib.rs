@@ -58,10 +58,6 @@ pub fn load(base_path: &Path) -> Result<LoadableConfig> {
   ))
 }
 
-pub fn is_legacy_config(_: &Path) -> bool {
-  false
-}
-
 #[derive(Error, Debug)]
 pub enum ConfigError {
   #[error("missing config directory")]
