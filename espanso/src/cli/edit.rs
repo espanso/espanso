@@ -140,7 +140,6 @@ fn determine_target_path(config_path: &Path, target_file: Option<&str>) -> PathB
     match target_file {
       "default" => config_path.join("config").join("default.yml"),
       "base" => config_path.join("match").join("base.yml"),
-      "auca" => PathBuf::new(),
       custom => {
         if !std::path::Path::new(custom)
           .extension()
