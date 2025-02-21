@@ -45,6 +45,7 @@ items_after_statements = "allow"
 struct_field_names = "allow"
 unused_self = "allow"
 pedantic = { level = "warn", priority = -2 }
+semicolon_if_nothing_returned = "deny"
 
 [workspace.dependencies]
 anyhow = "1.0.38"

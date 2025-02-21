@@ -68,7 +68,7 @@ fn execute_secure_input_workaround() -> Result<()> {
   if running_apps.contains("com.google.Chrome") {
     println!("-> Running chrome defocusing workaround");
     if let Err(err) = run_apple_script(BLUR_CHROME_WINDOWS_SCRIPT) {
-      eprintln!("unable to run chrome defocusing workaround: {}", err);
+      eprintln!("unable to run chrome defocusing workaround: {err}");
     }
 
     if espanso_mac_utils::get_secure_input_pid().is_none() {
@@ -79,7 +79,7 @@ fn execute_secure_input_workaround() -> Result<()> {
   if running_apps.contains("com.bitwarden.desktop") {
     println!("-> Focusing/Defocusing on Bitwarden");
     if let Err(err) = run_apple_script(FOCUS_BITWARDEN_SCRIPT) {
-      eprintln!("unable to run bitwarden defocusing workaround: {}", err);
+      eprintln!("unable to run bitwarden defocusing workaround: {err}");
     }
 
     if espanso_mac_utils::get_secure_input_pid().is_none() {
@@ -90,7 +90,7 @@ fn execute_secure_input_workaround() -> Result<()> {
   // Ask the user if he wants to try locking the screen
   if run_apple_script(SECURE_INPUT_ASK_LOCK_SCREEN_SCRIPT)?.trim() == "yes" {
     if let Err(err) = lock_screen() {
-      eprintln!("failed to lock the screen: {}", err);
+      eprintln!("failed to lock the screen: {err}");
     }
   }
 

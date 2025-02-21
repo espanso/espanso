@@ -133,18 +133,18 @@ mod tests {
   #[test]
   fn test_get_app_name_from_path() {
     let app_name = get_app_name_from_path("/Applications/iTerm.app/Contents/MacOS/iTerm2");
-    assert_eq!(app_name.unwrap(), "iTerm")
+    assert_eq!(app_name.unwrap(), "iTerm");
   }
 
   #[test]
   fn test_get_app_name_from_path_no_app_name() {
     let app_name = get_app_name_from_path("/another/directory");
-    assert!(app_name.is_none())
+    assert!(app_name.is_none());
   }
 
   #[test]
   fn test_get_app_name_from_path_security_bundle() {
     let app_name = get_app_name_from_path("/System/Library/Frameworks/Security.framework/Versions/A/MachServices/SecurityAgent.bundle/Contents/MacOS/SecurityAgent");
-    assert_eq!(app_name.unwrap(), "SecurityAgent")
+    assert_eq!(app_name.unwrap(), "SecurityAgent");
   }
 }
