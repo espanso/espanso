@@ -20,59 +20,12 @@
 use std::process::Command;
 
 use anyhow::{bail, Result};
-use espanso_path::Paths;
 use thiserror::Error;
 
-use crate::{
-  exit_code::{MIGRATE_CLEAN_FAILURE, MIGRATE_DIRTY_FAILURE},
-  util::set_command_flags,
-};
+use crate::util::set_command_flags;
 
 pub fn is_legacy_version_running() -> bool {
   false
-}
-
-pub fn migrate_configuration(paths: &Paths) -> Result<()> {
-  let espanso_exe_path = std::env::current_exe()?;
-  let mut command = Command::new(espanso_exe_path.to_string_lossy().to_string());
-  command.args(["migrate", "--noconfirm"]);
-  command.env(
-    "ESPANSO_CONFIG_DIR",
-    paths.config.to_string_lossy().to_string(),
-  );
-  command.env(
-    "ESPANSO_PACKAGE_DIR",
-    paths.packages.to_string_lossy().to_string(),
-  );
-  command.env(
-    "ESPANSO_RUNTIME_DIR",
-    paths.runtime.to_string_lossy().to_string(),
-  );
-
-  let mut child = command.spawn()?;
-  let result = child.wait()?;
-
-  if result.success() {
-    Ok(())
-  } else {
-    match result.code() {
-      Some(code) if code == MIGRATE_CLEAN_FAILURE => Err(MigrationError::Clean.into()),
-      Some(code) if code == MIGRATE_DIRTY_FAILURE => Err(MigrationError::Dirty.into()),
-      _ => Err(MigrationError::Unexpected.into()),
-    }
-  }
-}
-
-#[derive(Error, Debug)]
-pub enum MigrationError {
-  #[error("clean error")]
-  Clean,
-
-  #[error("dirty error")]
-  Dirty,
-
-  #[error("unexpected error")]
-  Unexpected,
 }
 
 pub fn add_espanso_to_path() -> Result<()> {

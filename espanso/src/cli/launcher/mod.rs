@@ -17,7 +17,6 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use self::util::MigrationError;
 use crate::preferences::Preferences;
 use crate::{
   exit_code::{LAUNCHER_ALREADY_RUNNING, LAUNCHER_CONFIG_DIR_POPULATION_FAILURE, LAUNCHER_SUCCESS},
@@ -79,16 +78,7 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
     edition_check::is_wrong_edition();
 
   let is_migrate_page_enabled = false;
-  let paths_clone = paths.clone();
-  let backup_and_migrate_handler =
-    Box::new(move || match util::migrate_configuration(&paths_clone) {
-      Ok(()) => MigrationResult::Success,
-      Err(error) => match error.downcast_ref::<MigrationError>() {
-        Some(MigrationError::Dirty) => MigrationResult::DirtyFailure,
-        Some(MigrationError::Clean) => MigrationResult::CleanFailure,
-        _ => MigrationResult::UnknownFailure,
-      },
-    });
+  let backup_and_migrate_handler = Box::new(move || MigrationResult::Success);
 
   let is_auto_start_page_enabled =
     !preferences.has_selected_auto_start_option() && !cfg!(target_os = "linux");

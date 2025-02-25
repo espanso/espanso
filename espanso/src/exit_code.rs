@@ -29,9 +29,6 @@ pub const DAEMON_ALREADY_RUNNING: i32 = 1;
 pub const DAEMON_GENERAL_ERROR: i32 = 2;
 pub const DAEMON_FATAL_CONFIG_ERROR: i32 = 4;
 
-pub const MIGRATE_CLEAN_FAILURE: i32 = 50;
-pub const MIGRATE_DIRTY_FAILURE: i32 = 51;
-
 pub const ADD_TO_PATH_SUCCESS: i32 = 0;
 pub const ADD_TO_PATH_FAILURE: i32 = 1;
 
