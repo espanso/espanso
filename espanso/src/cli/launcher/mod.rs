@@ -72,10 +72,8 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
 
   let is_move_bundle_page_enabled = crate::cli::util::is_subject_to_app_translocation_on_macos();
 
-  let is_legacy_version_page_enabled = util::is_legacy_version_running(&paths.runtime);
-  let runtime_dir_clone = paths.runtime.clone();
-  let is_legacy_version_running_handler =
-    Box::new(move || util::is_legacy_version_running(&runtime_dir_clone));
+  let is_legacy_version_page_enabled = false;
+  let is_legacy_version_running_handler = Box::new(util::is_legacy_version_running);
 
   let (is_wrong_edition_page_enabled, wrong_edition_detected_os) =
     edition_check::is_wrong_edition();
@@ -148,7 +146,6 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
   // Only show the wizard if a panel should be displayed
   let should_launch_daemon = if is_welcome_page_enabled
     || is_move_bundle_page_enabled
-    || is_legacy_version_page_enabled
     || is_auto_start_page_enabled
     || is_add_path_page_enabled
     || is_accessibility_page_enabled

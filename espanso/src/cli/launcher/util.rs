@@ -17,7 +17,7 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::{path::Path, process::Command};
+use std::process::Command;
 
 use anyhow::{bail, Result};
 use espanso_path::Paths;
@@ -25,13 +25,11 @@ use thiserror::Error;
 
 use crate::{
   exit_code::{MIGRATE_CLEAN_FAILURE, MIGRATE_DIRTY_FAILURE},
-  lock::acquire_legacy_lock,
   util::set_command_flags,
 };
 
-pub fn is_legacy_version_running(runtime_path: &Path) -> bool {
-  let legacy_lock_file = acquire_legacy_lock(runtime_path);
-  legacy_lock_file.is_none()
+pub fn is_legacy_version_running() -> bool {
+  false
 }
 
 pub fn migrate_configuration(paths: &Paths) -> Result<()> {
