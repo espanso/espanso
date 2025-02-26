@@ -79,7 +79,6 @@ pub enum LogMode {
 pub struct CliModuleArgs {
   pub config_store: Option<Box<dyn ConfigStore>>,
   pub match_store: Option<Box<dyn MatchStore>>,
-  pub is_legacy_config: bool,
   pub non_fatal_errors: Vec<NonFatalErrorSet>,
   pub paths: Option<Paths>,
   pub paths_overrides: Option<PathsOverrides>,
