@@ -21,7 +21,8 @@ use crate::{
   error_eprintln,
   exit_code::{
     configure_custom_panic_hook, PACKAGE_INSTALL_FAILED, PACKAGE_LIST_FAILED, PACKAGE_SUCCESS,
-    PACKAGE_UNINSTALL_FAILED, PACKAGE_UPDATE_FAILED, PACKAGE_UPDATE_PARTIAL_FAILURE,
+    PACKAGE_UNEXPECTED_FAILURE, PACKAGE_UNINSTALL_FAILED, PACKAGE_UPDATE_FAILED,
+    PACKAGE_UPDATE_PARTIAL_FAILURE,
   },
 };
 
@@ -45,7 +46,7 @@ pub fn new() -> CliModule {
 }
 
 fn package_main(args: CliModuleArgs) -> i32 {
-  configure_custom_panic_hook();
+  configure_custom_panic_hook(PACKAGE_UNEXPECTED_FAILURE);
 
   let paths = args.paths.expect("missing paths argument");
   let cli_args = args.cli_args.expect("missing cli_args");

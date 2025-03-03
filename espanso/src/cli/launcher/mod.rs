@@ -48,10 +48,8 @@ pub fn new() -> CliModule {
 
 #[cfg(feature = "modulo")]
 fn launcher_main(args: CliModuleArgs) -> i32 {
-  use espanso_modulo::wizard::{WizardHandlers, WizardOptions};
+  use espanso_modulo::wizard::{MigrationResult, WizardHandlers, WizardOptions};
   let paths = args.paths.expect("missing paths in launcher main");
-
-  // TODO: should we create a non-gui wizard? We can also use it for the non-modulo versions of espanso
 
   // If espanso is already running, show a warning
   let lock_file = acquire_daemon_lock(&paths.runtime);
@@ -73,8 +71,14 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
 
   let is_move_bundle_page_enabled = crate::cli::util::is_subject_to_app_translocation_on_macos();
 
+  let is_legacy_version_page_enabled = false;
+  let is_legacy_version_running_handler = Box::new(util::is_legacy_version_running);
+
   let (is_wrong_edition_page_enabled, wrong_edition_detected_os) =
     edition_check::is_wrong_edition();
+
+  let is_migrate_page_enabled = false;
+  let backup_and_migrate_handler = Box::new(move || MigrationResult::Success);
 
   let is_auto_start_page_enabled =
     !preferences.has_selected_auto_start_option() && !cfg!(target_os = "linux");
@@ -141,7 +145,9 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
       version: crate::VERSION.to_string(),
       is_welcome_page_enabled,
       is_move_bundle_page_enabled,
+      is_legacy_version_page_enabled,
       is_wrong_edition_page_enabled,
+      is_migrate_page_enabled,
       is_auto_start_page_enabled,
       is_add_path_page_enabled,
       is_accessibility_page_enabled,
@@ -159,6 +165,8 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
         .map(|path| path.to_string_lossy().to_string()),
       detected_os: wrong_edition_detected_os,
       handlers: WizardHandlers {
+        is_legacy_version_running: Some(is_legacy_version_running_handler),
+        backup_and_migrate: Some(backup_and_migrate_handler),
         auto_start: Some(auto_start_handler),
         add_to_path: Some(add_to_path_handler),
         enable_accessibility: Some(enable_accessibility_handler),

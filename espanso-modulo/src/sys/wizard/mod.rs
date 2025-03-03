@@ -123,7 +123,9 @@ pub fn show(options: WizardOptions) -> bool {
 
     is_welcome_page_enabled: i32::from(options.is_welcome_page_enabled),
     is_move_bundle_page_enabled: i32::from(options.is_move_bundle_page_enabled),
+    is_legacy_version_page_enabled: i32::from(options.is_legacy_version_page_enabled),
     is_wrong_edition_page_enabled: i32::from(options.is_wrong_edition_page_enabled),
+    is_migrate_page_enabled: i32::from(options.is_migrate_page_enabled),
     is_auto_start_page_enabled: i32::from(options.is_auto_start_page_enabled),
     is_add_path_page_enabled: i32::from(options.is_add_path_page_enabled),
     is_accessibility_page_enabled: i32::from(options.is_accessibility_page_enabled),

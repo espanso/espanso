@@ -45,6 +45,7 @@ items_after_statements = "allow"
 struct_field_names = "allow"
 unused_self = "allow"
 pedantic = { level = "warn", priority = -2 }
+semicolon_if_nothing_returned = "deny"
 
 [workspace.dependencies]
 anyhow = "1.0.38"
@@ -63,4 +64,5 @@ serde_json = "1.0.62"
 serde_yaml = "0.8.17"
 tempdir = "0.3.7"
 thiserror = "1.0.23"
+walkdir = "2.3.1"
 widestring = "0.4.3"

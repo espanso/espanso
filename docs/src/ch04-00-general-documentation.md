@@ -3,6 +3,10 @@
 Becase we are just at the beginning of a genereral dev documentation, this
 chapters will sound a lot untidy.
 
+## General great resources to learn
+
+- We use `gdiplus` in some places. [Here is the doc from mslearn](https://learn.microsoft.com/en-us/windows/win32/gdiplus/-gdiplus-gdi-start)
+
 ## Cache folder
 
 Espanso saves the following files in the cache folder (for example in macos

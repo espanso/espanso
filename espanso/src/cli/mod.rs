@@ -38,7 +38,8 @@ pub mod util;
 pub mod workaround;
 pub mod worker;
 
-#[allow(dead_code)]
+// we really need these bools until we rewrite the CLI in the Derive API of clap
+#[allow(dead_code, clippy::struct_excessive_bools)]
 pub struct CliModule {
   pub enable_logs: bool,
   pub disable_logs_terminal_output: bool,
@@ -78,7 +79,6 @@ pub enum LogMode {
 pub struct CliModuleArgs {
   pub config_store: Option<Box<dyn ConfigStore>>,
   pub match_store: Option<Box<dyn MatchStore>>,
-  pub is_legacy_config: bool,
   pub non_fatal_errors: Vec<NonFatalErrorSet>,
   pub paths: Option<Paths>,
   pub paths_overrides: Option<PathsOverrides>,

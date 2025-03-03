@@ -24,6 +24,10 @@ use thiserror::Error;
 
 use crate::util::set_command_flags;
 
+pub fn is_legacy_version_running() -> bool {
+  false
+}
+
 pub fn add_espanso_to_path() -> Result<()> {
   let espanso_exe_path = std::env::current_exe()?;
   let mut command = Command::new(espanso_exe_path.to_string_lossy().to_string());

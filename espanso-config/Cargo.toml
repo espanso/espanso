@@ -14,12 +14,14 @@ glob.workspace = true
 regex.workspace = true
 lazy_static.workspace = true
 dunce = "1.0.1"
+walkdir.workspace = true
 enum-as-inner.workspace = true
 ordered-float = "2.0"
 indoc = "1.0.3"
 
 [dev-dependencies]
 tempdir.workspace = true
+tempfile = "3.2.0"
 mockall = "0.9.1"
 
 [lints]

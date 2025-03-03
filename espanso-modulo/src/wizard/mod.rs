@@ -24,7 +24,9 @@ pub struct WizardOptions {
 
   pub is_welcome_page_enabled: bool,
   pub is_move_bundle_page_enabled: bool,
+  pub is_legacy_version_page_enabled: bool,
   pub is_wrong_edition_page_enabled: bool,
+  pub is_migrate_page_enabled: bool,
   pub is_auto_start_page_enabled: bool,
   pub is_add_path_page_enabled: bool,
   pub is_accessibility_page_enabled: bool,
@@ -39,11 +41,21 @@ pub struct WizardOptions {
 }
 
 pub struct WizardHandlers {
+  pub is_legacy_version_running: Option<Box<dyn Fn() -> bool + Send>>,
+  pub backup_and_migrate: Option<Box<dyn Fn() -> MigrationResult + Send>>,
   pub auto_start: Option<Box<dyn Fn(bool) -> bool + Send>>,
   pub add_to_path: Option<Box<dyn Fn() -> bool + Send>>,
   pub enable_accessibility: Option<Box<dyn Fn() + Send>>,
   pub is_accessibility_enabled: Option<Box<dyn Fn() -> bool + Send>>,
   pub on_completed: Option<Box<dyn Fn() + Send>>,
+}
+
+#[derive(Debug)]
+pub enum MigrationResult {
+  Success,
+  CleanFailure,
+  DirtyFailure,
+  UnknownFailure,
 }
 
 #[derive(Debug)]

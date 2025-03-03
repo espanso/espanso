@@ -121,7 +121,9 @@ pub struct WizardMetadata {
 
   pub is_welcome_page_enabled: c_int,
   pub is_move_bundle_page_enabled: c_int,
+  pub is_legacy_version_page_enabled: c_int,
   pub is_wrong_edition_page_enabled: c_int,
+  pub is_migrate_page_enabled: c_int,
   pub is_auto_start_page_enabled: c_int,
   pub is_add_path_page_enabled: c_int,
   pub is_accessibility_page_enabled: c_int,
