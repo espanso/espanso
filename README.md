@@ -1,4 +1,9 @@
-![espanso](images/logo_extended.png)
+<p align="center">
+  <picture>
+    <source srcset="images/logo_extended.png" media="(prefers-color-scheme: light)" height="" alt="expanso logo light">
+    <img src="images/logo_extended_dark.png" height="" alt="expanso logo dark">
+  </picture>
+</p>
 
 > A cross-platform Text Expander written in Rust
 
