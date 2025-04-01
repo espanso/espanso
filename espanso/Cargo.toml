@@ -96,7 +96,7 @@ section = "utility"
 license-file = ["../LICENSE", "1"]
 
 [package.metadata.deb.variants.wayland]
-depends = "$auto"
+depends = ["wl-clipboard","$auto"]
 
 [package.metadata.generate-rpm]
 assets = [
