@@ -17,10 +17,10 @@ jobs:
     steps:
       - name: Check trigger branch
         run: |
-          if [ $(echo "${GITHUB_REF}" | grep -Ec "^dev$/") -eq 1 ] ; then
+          if [ $(echo "${GITHUB_REF}" | grep -Ec "^refs/heads/dev$") -eq 1 ] ; then
             echo "  - ✅ The branch triggering this workflow is ${GITHUB_REF}."
           else
-            echo "  - ❌ The branch triggering this workflow is ${GITHUB_REF} instead of master or release/[0-9].[0-9].[0-9]."
+            echo "  - ❌ The branch triggering this workflow is ${GITHUB_REF} instead of refs/heads/dev"
             exit 1
           fi
   extract-version:
