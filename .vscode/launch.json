@@ -1,0 +1,32 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Launch debug",
+            "program": "${workspaceFolder}/target/debug/espanso",
+            "args": [
+                // "log"
+            ],
+            "cwd": "${workspaceFolder}/target/debug",
+            "sourceLanguages": [
+                "rust"
+            ]
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Launch release",
+            "program": "${workspaceFolder}/target/release/espanso",
+            "args": [],
+            "cwd": "${workspaceFolder}/target/release",
+            "sourceLanguages": [
+                "rust"
+            ]
+        }
+    ]
+}

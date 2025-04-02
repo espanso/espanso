@@ -32,5 +32,12 @@
 			"label": "vnc-web",
 			"protocol": "http"
 		}
+	},
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"vadimcn.vscode-lldb"
+			]
+		}
 	}
 }
