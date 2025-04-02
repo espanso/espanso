@@ -37,7 +37,6 @@ DerivedData
 
 venv/
 
-.vscode/
 *.profraw
 **/*.code-workspace
 
