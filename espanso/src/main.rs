@@ -171,10 +171,14 @@ fn main() {
         .takes_value(false)
         .help("Run espanso as an unmanaged service (avoid system manager)"),
     );
-  let restart_subcommand = start_subcommand
-    .clone()
+  let restart_subcommand = SubCommand::with_name("restart")
     .about("Restart the espanso service")
-    .name("restart");
+    .arg(
+      Arg::with_name("unmanaged")
+        .long("unmanaged")
+        .required(false)
+        .takes_value(false),
+    );
   let stop_subcommand = SubCommand::with_name("stop").about("Stop espanso service");
   let status_subcommand =
     SubCommand::with_name("status").about("Check if the espanso daemon is running or not.");
@@ -186,6 +190,7 @@ fn main() {
     .arg(
       Arg::with_name("v")
         .short('v')
+        .takes_value(true)
         .multiple(true)
         .help("Sets the level of verbosity"),
     )
