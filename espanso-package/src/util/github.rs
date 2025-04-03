@@ -17,16 +17,15 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use std::sync::LazyLock;
+
 use anyhow::Result;
-use lazy_static::lazy_static;
 use regex::Regex;
 use reqwest::StatusCode;
 
-lazy_static! {
-  static ref GITHUB_REGEX: Regex =
-    Regex::new(r"(https://github.com/|git@github.com:)(?P<author>.*?)/(?P<name>.*?)(\.|$)")
-      .unwrap();
-}
+static GITHUB_REGEX: LazyLock<Regex> = LazyLock::new(|| {
+  Regex::new(r"(https://github.com/|git@github.com:)(?P<author>.*?)/(?P<name>.*?)(\.|$)").unwrap()
+});
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct GitHubParts {

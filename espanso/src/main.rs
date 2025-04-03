@@ -29,6 +29,7 @@ use logging::FileProxy;
 use simplelog::{
   CombinedLogger, ConfigBuilder, LevelFilter, SharedLogger, TermLogger, TerminalMode, WriteLogger,
 };
+use std::sync::LazyLock;
 
 use crate::{
   cli::{LogMode, PathsOverrides},
@@ -55,10 +56,8 @@ mod util;
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 const LOG_FILE_NAME: &str = "espanso.log";
 
-use lazy_static::lazy_static;
-
-lazy_static! {
-  static ref CLI_HANDLERS: Vec<CliModule> = vec![
+static CLI_HANDLERS: LazyLock<Vec<CliModule>> = LazyLock::new(|| {
+  vec![
     cli::path::new(),
     cli::edit::new(),
     cli::launcher::new(),
@@ -72,8 +71,11 @@ lazy_static! {
     cli::package::new(),
     cli::match_cli::new(),
     cli::cmd::new(),
-  ];
-  static ref ALIASES: Vec<CliAlias> = vec![
+  ]
+});
+
+static ALIASES: LazyLock<Vec<CliAlias>> = LazyLock::new(|| {
+  vec![
     CliAlias {
       subcommand: "start".to_owned(),
       forward_into: "service".to_owned(),
@@ -98,8 +100,8 @@ lazy_static! {
       subcommand: "uninstall".to_owned(),
       forward_into: "package".to_owned(),
     },
-  ];
-}
+  ]
+});
 
 fn main() {
   util::attach_console();
@@ -171,10 +173,14 @@ fn main() {
         .takes_value(false)
         .help("Run espanso as an unmanaged service (avoid system manager)"),
     );
-  let restart_subcommand = start_subcommand
-    .clone()
+  let restart_subcommand = SubCommand::with_name("restart")
     .about("Restart the espanso service")
-    .name("restart");
+    .arg(
+      Arg::with_name("unmanaged")
+        .long("unmanaged")
+        .required(false)
+        .takes_value(false),
+    );
   let stop_subcommand = SubCommand::with_name("stop").about("Stop espanso service");
   let status_subcommand =
     SubCommand::with_name("status").about("Check if the espanso daemon is running or not.");
@@ -186,6 +192,7 @@ fn main() {
     .arg(
       Arg::with_name("v")
         .short('v')
+        .takes_value(true)
         .multiple(true)
         .help("Sets the level of verbosity"),
     )

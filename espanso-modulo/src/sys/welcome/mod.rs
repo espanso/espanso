@@ -25,11 +25,8 @@ use crate::{
   sys::interop::WelcomeMetadata,
   welcome::{WelcomeHandlers, WelcomeOptions},
 };
-use lazy_static::lazy_static;
 
-lazy_static! {
-  static ref HANDLERS: Mutex<Option<WelcomeHandlers>> = Mutex::new(None);
-}
+static HANDLERS: LazyLock<Mutex<Option<WelcomeHandlers>>> = LazyLock::new(|| Mutex::new(None));
 
 pub fn show(options: WelcomeOptions) {
   let (_c_window_icon_path, c_window_icon_path_ptr) =

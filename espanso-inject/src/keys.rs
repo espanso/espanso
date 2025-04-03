@@ -18,13 +18,11 @@
  */
 
 use std::fmt::Display;
+use std::sync::LazyLock;
 
-use lazy_static::lazy_static;
 use regex::Regex;
 
-lazy_static! {
-  static ref RAW_PARSER: Regex = Regex::new(r"^RAW\((\d+)\)$").unwrap();
-}
+static RAW_PARSER: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^RAW\((\d+)\)$").unwrap());
 
 #[derive(Debug, Clone)]
 pub enum Key {

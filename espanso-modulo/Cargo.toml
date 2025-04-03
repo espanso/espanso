@@ -9,7 +9,6 @@ build = "build.rs"
 serde.workspace = true
 anyhow.workspace = true
 thiserror.workspace = true
-lazy_static.workspace = true
 regex.workspace = true
 
 [build-dependencies]

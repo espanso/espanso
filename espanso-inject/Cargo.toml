@@ -14,7 +14,6 @@ wayland = []
 log.workspace = true
 anyhow.workspace = true
 thiserror.workspace = true
-lazy_static.workspace = true
 regex.workspace = true
 
 [dev-dependencies]

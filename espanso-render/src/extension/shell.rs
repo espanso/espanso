@@ -175,10 +175,6 @@ impl Default for Shell {
       static DEFAULT_MACOS_SHELL: LazyLock<Option<MacShell>> =
         LazyLock::new(determine_default_macos_shell);
 
-      // lazy_static! {
-      //   static ref DEFAULT_MACOS_SHELL: Option<MacShell> = determine_default_macos_shell();
-      // }
-
       match &*DEFAULT_MACOS_SHELL {
         Some(MacShell::Bash) => Shell::Bash,
         Some(MacShell::Nu) => Shell::Nu,

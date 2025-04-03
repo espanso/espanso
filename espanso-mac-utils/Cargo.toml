@@ -6,7 +6,6 @@ edition = "2021"
 build = "build.rs"
 
 [dependencies]
-lazy_static.workspace = true
 regex.workspace = true
 
 [build-dependencies]
