@@ -24,7 +24,7 @@ use std::process::Command;
 use std::sync::LazyLock;
 
 static LAYOUT_EXTRACT_REGEX: LazyLock<Regex> =
-  LazyLock::new(Regex::new(r"^\[\('.*?', '(.*?)'\)").unwrap());
+  LazyLock::new(|| Regex::new(r"^\[\('.*?', '(.*?)'\)").unwrap());
 
 pub fn get_active_layout() -> Option<String> {
   match Command::new("gsettings")
