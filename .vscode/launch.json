@@ -10,7 +10,10 @@
             "name": "Launch debug",
             "program": "${workspaceFolder}/target/debug/espanso",
             "args": [
+                "cmd",
                 // "log"
+                // "help",
+                // "start"
             ],
             "cwd": "${workspaceFolder}/target/debug",
             "sourceLanguages": [
