@@ -20,13 +20,12 @@
 use std::{collections::HashSet, path::Path};
 
 use glob::glob;
-use lazy_static::lazy_static;
 use log::error;
 use regex::Regex;
+use std::sync::LazyLock;
 
-lazy_static! {
-  static ref ABSOLUTE_PATH: Regex = Regex::new(r"(?m)^([a-zA-Z]:\\|/).*$").unwrap();
-}
+static ABSOLUTE_PATH: LazyLock<Regex> =
+  LazyLock::new(|| Regex::new(r"(?m)^([a-zA-Z]:\\|/).*$").unwrap());
 
 pub fn calculate_paths<'a>(
   base_dir: &Path,

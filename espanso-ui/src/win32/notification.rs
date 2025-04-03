@@ -26,17 +26,16 @@ use std::{
 };
 
 use anyhow::{anyhow, bail, Result};
-use lazy_static::lazy_static;
 use log::{error, warn};
 use std::os::windows::process::CommandExt;
 use std::process::Command;
+use std::sync::LazyLock;
 use winrt_notification::{IconCrop, Toast};
 
 const ESPANSO_APP_USER_MODEL_ID: &str = "{5E3B6C0F-1A4D-45C4-8872-D8174702101A}";
 
-lazy_static! {
-  static ref SEND_CHANNEL: Arc<Mutex<Option<Sender<String>>>> = Arc::new(Mutex::new(None));
-}
+static SEND_CHANNEL: LazyLock<Arc<Mutex<Option<Sender<String>>>>> =
+  LazyLock::new(|| Arc::new(Mutex::new(None)));
 
 pub fn initialize_notification_thread(notification_icon_path: PathBuf) -> Result<()> {
   let (sender, receiver) = channel::<String>();
@@ -50,14 +49,15 @@ pub fn initialize_notification_thread(notification_icon_path: PathBuf) -> Result
 
   std::thread::Builder::new().name("notification-thread".to_string()).spawn(move || {
     // First determine which AppUserModelID we can use
-    lazy_static! {
-      static ref APP_USER_MODEL_ID: &'static str = if is_espanso_app_user_model_id_set() {
+      static APP_USER_MODEL_ID: LazyLock<&'static str> = LazyLock::new(||
+      if is_espanso_app_user_model_id_set() {
         ESPANSO_APP_USER_MODEL_ID
       } else {
         warn!("unable to find espanso AppUserModelID in the list of registered ones, falling back to Powershell");
         Toast::POWERSHELL_APP_ID
-      };
-    }
+      }
+    );
+
 
     while let Ok(message) = receiver.recv() {
       if let Err(err) = Toast::new(&APP_USER_MODEL_ID)

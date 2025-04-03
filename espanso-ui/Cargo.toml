@@ -21,7 +21,6 @@ thiserror.workspace = true
 widestring.workspace = true
 lazycell.workspace = true
 winrt-notification = "0.5.1"
-lazy_static.workspace = true
 
 [target.'cfg(target_os="macos")'.dependencies]
 lazycell.workspace = true

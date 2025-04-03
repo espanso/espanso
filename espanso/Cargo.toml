@@ -55,7 +55,6 @@ log.workspace = true
 anyhow.workspace = true
 thiserror.workspace = true
 clap = "3"
-lazy_static.workspace = true
 crossbeam.workspace = true
 enum-as-inner = "0.3.3"
 dirs.workspace = true
@@ -96,7 +95,7 @@ section = "utility"
 license-file = ["../LICENSE", "1"]
 
 [package.metadata.deb.variants.wayland]
-depends = ["wl-clipboard","$auto"]
+depends = ["wl-clipboard", "$auto"]
 
 [package.metadata.generate-rpm]
 assets = [

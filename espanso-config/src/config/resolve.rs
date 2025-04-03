@@ -478,13 +478,13 @@ impl ResolvedConfig {
       for include in yaml_includes {
         includes.insert(include.to_string());
       }
-    };
+    }
 
     if let Some(extra_includes) = config.extra_includes.as_ref() {
       for include in extra_includes {
         includes.insert(include.to_string());
       }
-    };
+    }
 
     includes
   }

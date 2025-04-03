@@ -59,7 +59,7 @@ impl HotKey {
           }
         }
         None => return Err(HotKeyError::InvalidKey(token).into()),
-      };
+      }
     }
 
     if modifiers.is_empty() || main_key.is_none() {

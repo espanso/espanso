@@ -142,7 +142,7 @@ checksum = "4da9a32f3fed317401fa3c862968128267c3106685286e15d5aaa3d7389c2f60"
 dependencies = [
  "proc-macro2",
  "quote 1.0.35",
- "syn 2.0.48",
+ "syn 2.0.100",
 ]
 
 [[package]]
@@ -614,7 +614,7 @@ dependencies = [
  "heck 0.4.1",
  "proc-macro2",
  "quote 1.0.35",
- "syn 2.0.48",
+ "syn 2.0.100",
 ]
 
 [[package]]
@@ -684,7 +684,6 @@ dependencies = [
  "espanso-ui",
  "fs2",
  "fs_extra",
- "lazy_static",
  "libc",
  "log",
  "log-panics",
@@ -725,7 +724,6 @@ dependencies = [
  "enum-as-inner 0.6.0",
  "glob",
  "indoc",
- "lazy_static",
  "log",
  "mockall",
  "ordered-float",
@@ -745,7 +743,6 @@ dependencies = [
  "anyhow",
  "cc",
  "enum-as-inner 0.6.0",
- "lazy_static",
  "lazycell",
  "libc",
  "log",
@@ -789,7 +786,6 @@ dependencies = [
  "cc",
  "enum-as-inner 0.6.0",
  "itertools",
- "lazy_static",
  "libc",
  "log",
  "regex",
@@ -826,7 +822,6 @@ name = "espanso-mac-utils"
 version = "0.1.0"
 dependencies = [
  "cc",
- "lazy_static",
  "regex",
 ]
 
@@ -846,7 +841,6 @@ dependencies = [
  "anyhow",
  "cc",
  "glob",
- "lazy_static",
  "regex",
  "serde",
  "thiserror",
@@ -862,7 +856,6 @@ dependencies = [
  "fs_extra",
  "glob",
  "hex",
- "lazy_static",
  "log",
  "natord",
  "regex",
@@ -892,7 +885,6 @@ dependencies = [
  "anyhow",
  "chrono",
  "enum-as-inner 0.6.0",
- "lazy_static",
  "log",
  "rand 0.8.3",
  "regex",
@@ -907,7 +899,6 @@ dependencies = [
  "anyhow",
  "cc",
  "crossbeam",
- "lazy_static",
  "lazycell",
  "log",
  "notify-rust",
@@ -1938,7 +1929,7 @@ checksum = "a948666b637a0f465e8564c73e89d4dde00d72d4d473cc972f390fc3dcee7d9c"
 dependencies = [
  "proc-macro2",
  "quote 1.0.35",
- "syn 2.0.48",
+ "syn 2.0.100",
 ]
 
 [[package]]
@@ -2132,9 +2123,9 @@ dependencies = [
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.78"
+version = "1.0.94"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e2422ad645d89c99f8f3e6b88a9fdeca7fabeac836b1002371c4367c8f984aae"
+checksum = "a31971752e70b8b2686d7e46ec17fb38dad4051d94024c88df49b667caea9c84"
 dependencies = [
  "unicode-ident",
 ]
@@ -2797,9 +2788,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "2.0.48"
+version = "2.0.100"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0f3531638e407dfc0814761abb7c00a5b54992b849452a0646b7f65c9f770f3f"
+checksum = "b09a44accad81e1ba1cd74a32461ba89dee89095ba17b32f5d03683b1b1fc2a0"
 dependencies = [
  "proc-macro2",
  "quote 1.0.35",
@@ -2920,7 +2911,7 @@ checksum = "fa0faa943b50f3db30a20aa7e265dbc66076993efed8463e8de414e5d06d3471"
 dependencies = [
  "proc-macro2",
  "quote 1.0.35",
- "syn 2.0.48",
+ "syn 2.0.100",
 ]
 
 [[package]]
@@ -3726,7 +3717,7 @@ checksum = "007a0353840b23e0c6dc73e5b962ff58ed7f6bc9ceff3ce7fe6fbad8d496edf4"
 dependencies = [
  "strum 0.22.0",
  "windows",
- "xml-rs 0.8.8",
+ "xml-rs 0.8.25",
 ]
 
 [[package]]
@@ -3779,9 +3770,9 @@ dependencies = [
 
 [[package]]
 name = "xml-rs"
-version = "0.8.8"
+version = "0.8.25"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4f20f14e2bd1fef6ec891d50dbb37c7290a0568a6bbd9020bf62010d02b6f80e"
+checksum = "c5b940ebc25896e71dd073bad2dbaa2abfe97b0a391415e22ad1326d9c54e3c4"
 
 [[package]]
 name = "xml5ever"

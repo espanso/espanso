@@ -17,6 +17,8 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use std::sync::LazyLock;
+
 use crate::{
   counter::next_id,
   error::{ErrorRecord, NonFatalErrorSet},
@@ -27,7 +29,6 @@ use crate::{
   },
 };
 use anyhow::{anyhow, bail, Context, Result};
-use lazy_static::lazy_static;
 use parse::YAMLMatchGroup;
 use regex::{Captures, Regex};
 
@@ -42,11 +43,10 @@ use super::Importer;
 pub(crate) mod parse;
 mod util;
 
-lazy_static! {
-  static ref VAR_REGEX: Regex = Regex::new("\\{\\{\\s*(\\w+)(\\.\\w+)?\\s*\\}\\}").unwrap();
-  static ref FORM_CONTROL_REGEX: Regex =
-    Regex::new("\\[\\[\\s*(\\w+)(\\.\\w+)?\\s*\\]\\]").unwrap();
-}
+static VAR_REGEX: LazyLock<Regex> =
+  LazyLock::new(|| Regex::new("\\{\\{\\s*(\\w+)(\\.\\w+)?\\s*\\}\\}").unwrap());
+static FORM_CONTROL_REGEX: LazyLock<Regex> =
+  LazyLock::new(|| Regex::new("\\[\\[\\s*(\\w+)(\\.\\w+)?\\s*\\]\\]").unwrap());
 
 // Create an alias to make the meaning more explicit
 type Warning = anyhow::Error;

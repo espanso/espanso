@@ -18,6 +18,7 @@
  */
 
 use std::os::raw::c_int;
+use std::sync::LazyLock;
 use std::{ffi::CString, sync::Mutex};
 
 use crate::sys::interop::{
@@ -28,11 +29,8 @@ use crate::{
   sys::interop::WizardMetadata,
   wizard::{WizardHandlers, WizardOptions},
 };
-use lazy_static::lazy_static;
 
-lazy_static! {
-  static ref HANDLERS: Mutex<Option<WizardHandlers>> = Mutex::new(None);
-}
+static HANDLERS: LazyLock<Mutex<Option<WizardHandlers>>> = LazyLock::new(|| Mutex::new(None));
 
 pub fn show(options: WizardOptions) -> bool {
   let c_version = CString::new(options.version).expect("unable to convert version to CString");
