@@ -19,6 +19,7 @@
 
 use super::split::*;
 use regex::Regex;
+use std::sync::LazyLock;
 
 // We need to match for both the new [[name]] syntax and the legacy {{name}} one
 static FIELD_REGEX: LazyLock<Regex> =

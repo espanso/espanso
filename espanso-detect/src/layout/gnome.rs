@@ -22,8 +22,8 @@ use regex::Regex;
 use std::path::PathBuf;
 use std::process::Command;
 
-  static ref LAYOUT_EXTRACT_REGEX: LazyLock<Regex> =
-    LazyLock::new(Regex::new(r"^\[\('.*?', '(.*?)'\)").unwrap());
+static LAYOUT_EXTRACT_REGEX: LazyLock<Regex> =
+  LazyLock::new(Regex::new(r"^\[\('.*?', '(.*?)'\)").unwrap());
 
 pub fn get_active_layout() -> Option<String> {
   match Command::new("gsettings")

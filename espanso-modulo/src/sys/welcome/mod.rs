@@ -18,6 +18,7 @@
  */
 
 use std::os::raw::c_int;
+use std::sync::LazyLock;
 use std::sync::Mutex;
 
 use crate::sys::util::convert_to_cstring_or_null;
