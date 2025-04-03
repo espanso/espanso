@@ -24,6 +24,7 @@ use std::{
   convert::TryInto,
   ffi::CStr,
   sync::{
+    LazyLock,
     mpsc::{channel, Receiver, Sender},
     Arc, Mutex,
   },

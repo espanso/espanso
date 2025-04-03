@@ -21,6 +21,7 @@ use log::error;
 use regex::Regex;
 use std::path::PathBuf;
 use std::process::Command;
+use std::sync::LazyLock;
 
 static LAYOUT_EXTRACT_REGEX: LazyLock<Regex> =
   LazyLock::new(Regex::new(r"^\[\('.*?', '(.*?)'\)").unwrap());
