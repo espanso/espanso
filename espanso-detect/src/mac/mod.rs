@@ -112,7 +112,7 @@ struct ModifierState {
 static CURRENT_SENDER: LazyLock<Arc<Mutex<Option<Sender<InputEvent>>>>> =
   LazyLock::new(|| Arc::new(Mutex::new(None)));
 static MODIFIER_STATE: LazyLock<Arc<Mutex<ModifierState>>> =
-  LazyLock::new(Arc::new(Mutex::new(ModifierState::default())));
+  LazyLock::new(|| Arc::new(Mutex::new(ModifierState::default())));
 
 extern "C" fn native_callback(raw_event: RawInputEvent) {
   let lock = CURRENT_SENDER
