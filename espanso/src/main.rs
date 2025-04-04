@@ -29,6 +29,7 @@ use logging::FileProxy;
 use simplelog::{
   CombinedLogger, ConfigBuilder, LevelFilter, SharedLogger, TermLogger, TerminalMode, WriteLogger,
 };
+use std::sync::LazyLock;
 
 use crate::{
   cli::{LogMode, PathsOverrides},
@@ -55,10 +56,8 @@ mod util;
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 const LOG_FILE_NAME: &str = "espanso.log";
 
-use lazy_static::lazy_static;
-
-lazy_static! {
-  static ref CLI_HANDLERS: Vec<CliModule> = vec![
+static CLI_HANDLERS: LazyLock<Vec<CliModule>> = LazyLock::new(|| {
+  vec![
     cli::path::new(),
     cli::edit::new(),
     cli::launcher::new(),
@@ -72,8 +71,11 @@ lazy_static! {
     cli::package::new(),
     cli::match_cli::new(),
     cli::cmd::new(),
-  ];
-  static ref ALIASES: Vec<CliAlias> = vec![
+  ]
+});
+
+static ALIASES: LazyLock<Vec<CliAlias>> = LazyLock::new(|| {
+  vec![
     CliAlias {
       subcommand: "start".to_owned(),
       forward_into: "service".to_owned(),
@@ -98,8 +100,8 @@ lazy_static! {
       subcommand: "uninstall".to_owned(),
       forward_into: "package".to_owned(),
     },
-  ];
-}
+  ]
+});
 
 fn main() {
   util::attach_console();

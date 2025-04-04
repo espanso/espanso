@@ -56,19 +56,18 @@ pub fn determine_default_macos_shell() -> Option<MacShell> {
   if cfg!(not(target_os = "macos")) {
     return None;
   }
-  use lazy_static::lazy_static;
   use regex::Regex;
   use std::process::Command;
+  use std::sync::LazyLock;
 
   let output = Command::new("sh")
     .args(["--login", "-c", "dscl . -read ~/ UserShell"])
     .output()
     .ok()?;
 
-  lazy_static! {
-    static ref EXTRACT_SHELL_REGEX: Regex =
-      Regex::new(r"UserShell:\s(.*)$").expect("unable to generate regex to extract default shell");
-  }
+  static EXTRACT_SHELL_REGEX: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"UserShell:\s(.*)$").expect("unable to generate regex to extract default shell")
+  });
 
   if !output.status.success() {
     return None;

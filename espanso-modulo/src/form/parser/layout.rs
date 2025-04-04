@@ -18,13 +18,12 @@
  */
 
 use super::split::*;
-use lazy_static::lazy_static;
 use regex::Regex;
+use std::sync::LazyLock;
 
-lazy_static! {
-  // We need to match for both the new [[name]] syntax and the legacy {{name}} one
-  static ref FIELD_REGEX: Regex = Regex::new(r"\{\{(.*?)\}\}|\[\[(.*?)\]\]").unwrap();
-}
+// We need to match for both the new [[name]] syntax and the legacy {{name}} one
+static FIELD_REGEX: LazyLock<Regex> =
+  LazyLock::new(|| Regex::new(r"\{\{(.*?)\}\}|\[\[(.*?)\]\]").unwrap());
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Token {

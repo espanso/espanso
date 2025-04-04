@@ -18,7 +18,6 @@
  */
 
 use anyhow::Result;
-use lazy_static::lazy_static;
 use lazycell::LazyCell;
 use log::{error, trace, warn};
 use std::{
@@ -26,7 +25,7 @@ use std::{
   ffi::CStr,
   sync::{
     mpsc::{channel, Receiver, Sender},
-    Arc, Mutex,
+    Arc, LazyLock, Mutex,
   },
 };
 use thiserror::Error;
@@ -110,11 +109,10 @@ struct ModifierState {
   is_option_down: bool,
 }
 
-lazy_static! {
-  static ref CURRENT_SENDER: Arc<Mutex<Option<Sender<InputEvent>>>> = Arc::new(Mutex::new(None));
-  static ref MODIFIER_STATE: Arc<Mutex<ModifierState>> =
-    Arc::new(Mutex::new(ModifierState::default()));
-}
+static CURRENT_SENDER: LazyLock<Arc<Mutex<Option<Sender<InputEvent>>>>> =
+  LazyLock::new(|| Arc::new(Mutex::new(None)));
+static MODIFIER_STATE: LazyLock<Arc<Mutex<ModifierState>>> =
+  LazyLock::new(|| Arc::new(Mutex::new(ModifierState::default())));
 
 extern "C" fn native_callback(raw_event: RawInputEvent) {
   let lock = CURRENT_SENDER

@@ -14,7 +14,6 @@ serde_yaml.workspace = true
 tempdir.workspace = true
 glob.workspace = true
 natord = "1.0.9"
-lazy_static.workspace = true
 regex.workspace = true
 zip = "0.5.13"
 scopeguard = "1.1.0"
