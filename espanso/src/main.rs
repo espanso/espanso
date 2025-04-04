@@ -192,8 +192,7 @@ fn main() {
     .arg(
       Arg::with_name("v")
         .short('v')
-        .takes_value(true)
-        .multiple(true)
+        .action(clap::ArgAction::Count)
         .help("Sets the level of verbosity"),
     )
     .arg(
@@ -479,7 +478,7 @@ For example, specifying 'email' is equivalent to 'match/email.yml'."#))
   // This should only apply when on macOS.
 
   let matches = clap_instance.clone().get_matches();
-  let log_level = match matches.occurrences_of("v") {
+  let log_level = match matches.get_count("v") {
     0 | 1 => LevelFilter::Info,
 
     // Trace mode is only available in debug mode for security reasons
