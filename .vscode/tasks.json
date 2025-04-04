@@ -1,0 +1,310 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "cargo build binary debug",
+			"detail": "builds the debug X11 version: modulo, native-tls",
+			"type": "cargo",
+			"command": "build",
+			"args": [
+				"--manifest-path",
+				"espanso/Cargo.toml",
+				"-p",
+				"espanso",
+				"--no-default-features",
+				"--features",
+				"modulo native-tls"
+			],
+			"problemMatcher": [
+				"$rustc"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+		},
+		{
+			"label": "cargo build binary release",
+			"detail": "builds the release X11 version: modulo, native-tls",
+			"type": "cargo",
+			"command": "build",
+			"args": [
+				"--release",
+				"--manifest-path",
+				"espanso/Cargo.toml",
+				"-p",
+				"espanso",
+				"--no-default-features",
+				"--features",
+				"modulo native-tls"
+			],
+			"problemMatcher": [
+				"$rustc"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+		},
+		{
+			"label": "cargo build binary Wayland debug",
+			"detail": "builds the debug Wayland version: modulo, native-tls",
+			"type": "cargo",
+			"command": "build",
+			"args": [
+				"--manifest-path",
+				"espanso/Cargo.toml",
+				"-p",
+				"espanso",
+				"--no-default-features",
+				"--features",
+				"wayland modulo native-tls"
+			],
+			"problemMatcher": [
+				"$rustc"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+		},
+		{
+			"label": "cargo build binary release",
+			"detail": "builds the release Wayland version: modulo, native-tls",
+			"type": "cargo",
+			"command": "build",
+			"args": [
+				"--release",
+				"--manifest-path",
+				"espanso/Cargo.toml",
+				"-p",
+				"espanso",
+				"--no-default-features",
+				"--features",
+				"wayland modulo native-tls"
+			],
+			"problemMatcher": [
+				"$rustc"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+		},
+		{
+			"label": "rust: cargo test",
+			"type": "cargo",
+			"command": "test",
+			"problemMatcher": [
+				"$rustc"
+			],
+			"group": {
+				"kind": "test",
+				"isDefault": true
+			},
+		},
+		{
+			"type": "cargo",
+			"command": "clippy",
+			"label": "clippy",
+			"detail": "run cargo clippy for all targets",
+			"problemMatcher": [
+				"$rustc"
+			],
+			"args": [
+				// "--",
+				"--workspace",
+				"--all-targets",
+				"--no-deps"
+			],
+			"group": {
+				"kind": "none",
+			},
+		},
+		{
+			"type": "process",
+			"command": "cargo",
+			"label": "build-windows-resources",
+			"detail": "build the windows resources",
+			"problemMatcher": [
+				"$rustc"
+			],
+			"args": [
+				"make",
+				"build-windows-resources"
+			],
+			"group": {
+				"kind": "none",
+			},
+		},
+		{
+			"type": "process",
+			"command": "cargo",
+			"label": "build-windows-portable",
+			"detail": "build the windows portable",
+			"problemMatcher": [
+				"$rustc"
+			],
+			"args": [
+				// "--",
+				"make",
+				"build-windows-portable"
+			],
+			"group": {
+				"kind": "none",
+			},
+		},
+		{
+			"type": "process",
+			"command": "cargo",
+			"label": "build-windows-installer",
+			"detail": "build the windows installer",
+			"problemMatcher": [
+				"$rustc"
+			],
+			"args": [
+				// "--",
+				"make",
+				"build-windows-installer"
+			],
+			"group": {
+				"kind": "none",
+			},
+		},
+		{
+			"type": "process",
+			"command": "cargo",
+			"label": "build-windows-all",
+			"detail": "build the windows portable and installer",
+			"problemMatcher": [
+				"$rustc"
+			],
+			"args": [
+				// "--",
+				"make",
+				"build-windows-all"
+			],
+			"group": {
+				"kind": "none",
+			},
+		},
+		{
+			"type": "process",
+			"command": "cargo",
+			"label": "build-macos-arm-binary",
+			"detail": "build the macOS arm binary",
+			"options": {
+				"env": {
+					"BUILD_ARCH": "aarch64-apple-darwin"
+				}
+			},
+			"problemMatcher": [
+				"$rustc"
+			],
+			"args": [
+				// "--",
+				"make",
+				"build-macos-arm-binary"
+			],
+			"group": {
+				"kind": "none",
+			},
+		},
+		{
+			"type": "process",
+			"command": "cargo",
+			"label": "build-macos-x86-binary",
+			"detail": "build the macOS x86 binary",
+			"options": {
+				"env": {
+					"BUILD_ARCH": "x86_64-apple-darwin"
+				}
+			},
+			"problemMatcher": [
+				"$rustc"
+			],
+			"args": [
+				// "--",
+				"make",
+				"build-macos-x86-binary"
+			],
+			"group": {
+				"kind": "none",
+			},
+		},
+		{
+			"type": "process",
+			"command": "cargo",
+			"label": "build-universal-binary",
+			"detail": "build the macOS universal (fat) binary",
+			"problemMatcher": [
+				"$rustc"
+			],
+			"args": [
+				// "--",
+				"make",
+				"build-universal-binary"
+			],
+			"group": {
+				"kind": "none",
+			},
+		},
+		{
+			"type": "shell",
+			"command": "${workspaceFolder}/scripts/create_bundle.sh",
+			"label": "macOS: create-bundle",
+			"detail": "creates the bundle for macOS",
+			"group": {
+				"kind": "none",
+			},
+		},
+		{
+			"type": "process",
+			"command": "cargo",
+			"label": "create-universal-bundle",
+			"detail": "creates the macOS universal bundle",
+			"options": {
+				"env": {
+					"EXEC_PATH": "target/universal/espanso"
+				}
+			},
+			"problemMatcher": [
+				"$rustc"
+			],
+			"args": [
+				// "--",
+				"make",
+				"create-universal-bundle"
+			],
+			"group": {
+				"kind": "none",
+			},
+		},
+		{
+			"type": "shell",
+			"command": "${workspaceFolder}/scripts/create_app_image.sh",
+			"label": "linux: create AppImage",
+			"detail": "creates the AppImage for linux",
+			"group": {
+				"kind": "none",
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Build everything: linux",
+			"detail": "excecutable, AppImage, deb package",
+			"dependsOn": [
+				"linux: create AppImage",
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Build everything: macOS",
+			"detail": "excecutable, bundle and universal bundle",
+			"dependsOn": [
+				"create-universal-bundle",
+			],
+			"problemMatcher": []
+		}
+	]
+}
