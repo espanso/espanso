@@ -17,8 +17,8 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::path::Paths;
 use espanso_engine::dispatch::TextUIHandler;
-use espanso_path::Paths;
 
 use crate::gui::TextUI;
 

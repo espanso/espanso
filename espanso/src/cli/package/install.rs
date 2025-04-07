@@ -17,10 +17,10 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::path::Paths;
 use anyhow::{anyhow, bail, Context, Result};
 use clap::ArgMatches;
 use espanso_package::{PackageSpecifier, ProviderOptions, SaveOptions};
-use espanso_path::Paths;
 
 use crate::{error_eprintln, info_println};
 

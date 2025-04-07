@@ -12,7 +12,6 @@ members = [
   "espanso-clipboard",
   "espanso-render",
   "espanso-info",
-  "espanso-path",
   "espanso-modulo",
   "espanso-mac-utils",
   "espanso-kvs",

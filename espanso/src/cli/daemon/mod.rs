@@ -19,12 +19,12 @@
 
 use std::{path::Path, process::Command, time::Instant};
 
+use crate::path::Paths;
 use crossbeam::{
   channel::{unbounded, Sender},
   select,
 };
 use espanso_ipc::IPCClient;
-use espanso_path::Paths;
 use log::{error, info, warn};
 
 use crate::{

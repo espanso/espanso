@@ -679,7 +679,6 @@ dependencies = [
  "espanso-match",
  "espanso-modulo",
  "espanso-package",
- "espanso-path",
  "espanso-render",
  "espanso-ui",
  "fs2",
@@ -868,14 +867,6 @@ dependencies = [
  "tempdir",
  "thiserror",
  "zip",
-]
-
-[[package]]
-name = "espanso-path"
-version = "0.1.0"
-dependencies = [
- "dirs 3.0.1",
- "log",
 ]
 
 [[package]]
