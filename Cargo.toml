@@ -22,8 +22,7 @@ members = [
 [workspace.lints.clippy]
 enum_glob_use = "deny"
 semicolon_if_nothing_returned = "deny"
-
-wildcard_imports = "warn"
+wildcard_imports = "deny"
 
 as_conversions = "allow"
 borrow_as_ptr = "allow"
