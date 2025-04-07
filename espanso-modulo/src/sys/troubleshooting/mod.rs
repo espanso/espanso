@@ -39,8 +39,7 @@ mod interop {
   use crate::troubleshooting::{ErrorRecord, ErrorSet};
 
   use super::super::interop::{
-    ErrorMetadata, ErrorSetMetadata, ERROR_METADATA_LEVEL_ERROR,
-    ERROR_METADATA_LEVEL_WARNING,
+    ErrorMetadata, ErrorSetMetadata, ERROR_METADATA_LEVEL_ERROR, ERROR_METADATA_LEVEL_WARNING,
   };
   use std::{ffi::CString, os::raw::c_int};
 
