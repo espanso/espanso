@@ -23,13 +23,13 @@ use std::time::Duration;
 use anyhow::{bail, Result};
 use crossbeam::channel::Receiver;
 use crossbeam::select;
-use espanso_path::Paths;
 use log::info;
 
 use crate::cli::util::CommandExt;
 use crate::cli::PathsOverrides;
 use crate::config::ConfigLoadResult;
 use crate::error_eprintln;
+use crate::path::Paths;
 use crate::preferences::Preferences;
 
 pub fn launch_troubleshoot(paths_overrides: &PathsOverrides) -> Result<TroubleshootGuard> {

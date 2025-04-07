@@ -1,4 +1,4 @@
-use espanso_path::Paths;
+use crate::path::Paths;
 
 use espanso_engine::process::ConfigPathProvider;
 

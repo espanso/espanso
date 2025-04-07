@@ -570,7 +570,7 @@ For example, specifying 'email' is equivalent to 'match/email.yml'."#))
       let force_package_path = get_path_override(&matches, "package_dir", "ESPANSO_PACKAGE_DIR");
       let force_runtime_path = get_path_override(&matches, "runtime_dir", "ESPANSO_RUNTIME_DIR");
 
-      let paths = espanso_path::resolve_paths(
+      let paths = crate::path::resolve_paths(
         force_config_path.as_deref(),
         force_package_path.as_deref(),
         force_runtime_path.as_deref(),
