@@ -38,9 +38,10 @@ mod interop {
   use crate::sys;
   use crate::troubleshooting::{ErrorRecord, ErrorSet};
 
-  use super::interop::{ErrorMetadata, ErrorSetMetadata};
-
-  use super::super::interop::{ERROR_METADATA_LEVEL_ERROR, ERROR_METADATA_LEVEL_WARNING};
+  use super::super::interop::{
+    ErrorMetadata, ErrorSetMetadata, ERROR_METADATA_LEVEL_ERROR,
+    ERROR_METADATA_LEVEL_WARNING,
+  };
   use std::{ffi::CString, os::raw::c_int};
 
   pub(crate) struct OwnedErrorSet {
