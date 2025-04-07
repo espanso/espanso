@@ -104,6 +104,19 @@
 			},
 		},
 		{
+			"label": "rust: coverage",
+			"type": "cargo",
+			"command": "tarpaulin",
+			"args": [
+				"--manifest-path",
+				"${workspaceFolder}/espanso/Cargo.toml",
+				"--config",
+				"${workspaceFolder}/tarpaulin.toml",
+			],
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
 			"type": "cargo",
 			"command": "clippy",
 			"label": "clippy",

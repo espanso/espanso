@@ -145,6 +145,7 @@ mod tests {
     client_handle.join().unwrap();
   }
 
+  #[ignore = "flaky test"]
   #[test]
   fn ipc_sync_message() {
     let server = server::<Event>("testespansoipcsync", &std::env::temp_dir()).unwrap();

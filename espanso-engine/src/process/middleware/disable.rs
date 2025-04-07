@@ -139,5 +139,3 @@ fn is_toggle_key(event: &KeyboardEvent, options: &DisableOptions) -> bool {
     false
   }
 }
-
-// TODO: test

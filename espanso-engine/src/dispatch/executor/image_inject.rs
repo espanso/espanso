@@ -52,5 +52,3 @@ impl Executor for ImageInjectExecutor<'_> {
     false
   }
 }
-
-// TODO: test

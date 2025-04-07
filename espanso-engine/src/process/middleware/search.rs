@@ -72,5 +72,3 @@ impl Middleware for SearchMiddleware<'_> {
     event
   }
 }
-
-// TODO: test

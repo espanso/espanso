@@ -60,7 +60,6 @@ impl Middleware for CursorHintMiddleware {
   }
 }
 
-// TODO: test
 fn process_cursor_hint(body: String) -> (String, Option<usize>) {
   if let Some(index) = body.find("$|$") {
     // Convert the byte index to a char index
@@ -79,5 +78,3 @@ fn process_cursor_hint(body: String) -> (String, Option<usize>) {
     (body, None)
   }
 }
-
-// TODO: test

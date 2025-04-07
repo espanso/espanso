@@ -53,5 +53,3 @@ impl Middleware for HotKeyMiddleware {
     event
   }
 }
-
-// TODO: test

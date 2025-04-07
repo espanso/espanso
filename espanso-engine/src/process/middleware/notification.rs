@@ -53,5 +53,3 @@ impl Middleware for NotificationMiddleware<'_> {
     event
   }
 }
-
-// TODO: test

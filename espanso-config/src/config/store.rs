@@ -55,7 +55,6 @@ impl ConfigStore for DefaultConfigStore {
     configs
   }
 
-  // TODO: test
   fn get_all_match_paths(&self) -> HashSet<String> {
     let mut paths = HashSet::new();
 

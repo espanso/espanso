@@ -107,5 +107,3 @@ impl Middleware for RenderMiddleware<'_> {
     event
   }
 }
-
-// TODO: test

@@ -66,7 +66,6 @@ impl<'a> ConfigManager<'a> {
   }
 }
 
-// TODO: test
 fn to_app_properties(info: &AppInfo) -> AppProperties {
   AppProperties {
     title: info.title.as_deref(),

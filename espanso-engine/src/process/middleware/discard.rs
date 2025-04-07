@@ -77,5 +77,3 @@ impl Middleware for EventsDiscardMiddleware {
     event
   }
 }
-
-// TODO: test

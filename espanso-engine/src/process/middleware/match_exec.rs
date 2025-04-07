@@ -76,5 +76,3 @@ impl Middleware for MatchExecRequestMiddleware<'_> {
     event
   }
 }
-
-// TODO: test

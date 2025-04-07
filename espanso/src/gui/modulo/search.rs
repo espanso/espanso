@@ -97,7 +97,6 @@ struct ModuloSearchItemConfig<'a> {
   is_builtin: bool,
 }
 
-// TODO: test
 fn convert_items(items: &[SearchItem]) -> Vec<ModuloSearchItemConfig> {
   items
     .iter()
