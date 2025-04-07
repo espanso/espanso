@@ -148,7 +148,6 @@ pub fn load_icon_paths(runtime_dir: &Path) -> Result<IconPaths> {
   })
 }
 
-// TODO: test
 fn extract_icon(data: &[u8], target_file: &Path) -> Result<PathBuf> {
   if target_file.exists() {
     debug!(

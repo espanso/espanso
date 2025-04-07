@@ -101,5 +101,3 @@ impl MatchSelector for MatchSelectorAdapter<'_> {
     }
   }
 }
-
-// TODO: test

@@ -125,7 +125,6 @@ impl Config for ResolvedConfig {
   }
 
   fn backend(&self) -> Backend {
-    // TODO: test
     match self
       .parsed
       .backend
@@ -167,7 +166,6 @@ impl Config for ResolvedConfig {
   }
 
   fn toggle_key(&self) -> Option<ToggleKey> {
-    // TODO: test
     match self
       .parsed
       .toggle_key

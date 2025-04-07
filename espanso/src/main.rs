@@ -440,7 +440,7 @@ For example, specifying 'email' is equivalent to 'match/email.yml'."#))
           "Update a package. If 'all' is passed as package name, attempts to update all packages.",
         ).arg(Arg::with_name("package_name").help("Package name")))
         .subcommand(
-          SubCommand::with_name("list").about("List all installed packages"), // TODO: update <Package> and update all
+          SubCommand::with_name("list").about("List all installed packages"),
         ),
     )
     .subcommand(

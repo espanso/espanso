@@ -43,5 +43,3 @@ impl Manifest {
     })
   }
 }
-
-// TODO: test

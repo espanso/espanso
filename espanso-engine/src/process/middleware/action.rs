@@ -150,5 +150,3 @@ impl Middleware for ActionMiddleware<'_> {
     }
   }
 }
-
-// TODO: test

@@ -77,5 +77,3 @@ impl Middleware for ConfigMiddleware<'_> {
     event
   }
 }
-
-// TODO: test

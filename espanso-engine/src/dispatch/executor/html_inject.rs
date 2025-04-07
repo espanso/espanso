@@ -60,5 +60,3 @@ impl Executor for HtmlInjectExecutor<'_> {
     false
   }
 }
-
-// TODO: test
