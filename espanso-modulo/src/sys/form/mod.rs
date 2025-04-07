@@ -93,7 +93,11 @@ pub mod types {
 mod interop {
   use crate::sys;
 
-  use super::super::interop::*;
+  use super::super::interop::{
+    ChoiceMetadata, ChoiceType_DROPDOWN, ChoiceType_LIST, FieldMetadata, FieldType,
+    FieldType_CHOICE, FieldType_LABEL, FieldType_ROW, FieldType_TEXT, FormMetadata, Interoperable,
+    LabelMetadata, RowMetadata, TextMetadata,
+  };
   use super::types;
   use std::ffi::{c_void, CString};
   use std::os::raw::{c_char, c_int};
