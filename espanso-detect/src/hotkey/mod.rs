@@ -25,7 +25,7 @@ use anyhow::Result;
 use keys::ShortcutKey;
 use thiserror::Error;
 
-static MODIFIERS: &[ShortcutKey; 4] = &[
+const MODIFIERS: &[ShortcutKey; 4] = &[
   ShortcutKey::Control,
   ShortcutKey::Alt,
   ShortcutKey::Shift,
@@ -113,7 +113,8 @@ pub enum HotKeyError {
 
 #[cfg(test)]
 mod tests {
-  use super::*;
+  use crate::hotkey::keys::ShortcutKey::{Control, Shift, V};
+  use crate::hotkey::HotKey;
 
   #[test]
   fn parse_correctly() {
@@ -121,16 +122,16 @@ mod tests {
       HotKey::new(1, "CTRL+V").unwrap(),
       HotKey {
         id: 1,
-        key: ShortcutKey::V,
-        modifiers: vec![ShortcutKey::Control],
+        key: V,
+        modifiers: vec![Control],
       }
     );
     assert_eq!(
       HotKey::new(2, "SHIFT + Ctrl + v").unwrap(),
       HotKey {
         id: 2,
-        key: ShortcutKey::V,
-        modifiers: vec![ShortcutKey::Shift, ShortcutKey::Control],
+        key: V,
+        modifiers: vec![Shift, Control],
       }
     );
     assert!(HotKey::new(3, "invalid").is_err());
@@ -146,5 +147,20 @@ mod tests {
     assert!(!HotKey::new(1, "SHIFT+ V").unwrap().has_ctrl());
     assert!(!HotKey::new(1, "SHIFT+ V").unwrap().has_alt());
     assert!(!HotKey::new(1, "SHIFT+ V").unwrap().has_meta());
+  }
+
+  #[test]
+  fn modifies_formatted_correctly() {
+    assert_eq!(
+      "SHIFT+V",
+      format!(
+        "{}",
+        HotKey {
+          id: 1,
+          modifiers: vec![Shift],
+          key: V
+        }
+      ),
+    );
   }
 }
