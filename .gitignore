@@ -51,4 +51,4 @@ Espanso-Win-Portable-x86_64*
 
 # rust
 mutants.out*
-
+tarpaulin-report.html
