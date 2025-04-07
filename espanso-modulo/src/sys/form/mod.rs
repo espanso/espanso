@@ -361,7 +361,7 @@ mod interop {
 }
 
 pub fn show(form: types::Form) -> HashMap<String, String> {
-  use super::interop::*;
+  use super::interop::{interop_show_form, FormMetadata, Interoperable, ValuePair};
   use std::os::raw::c_void;
 
   let owned_form: interop::OwnedForm = form.into();
