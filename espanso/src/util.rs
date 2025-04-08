@@ -27,7 +27,8 @@ pub fn set_command_flags(command: &mut Command) {
   // See: https://github.com/espanso/espanso/issues/249
   // and https://learn.microsoft.com/en-us/windows/win32/procthread/process-creation-flags
   use std::os::windows::process::CommandExt;
-  use winapi::um::winbase::CREATE_NO_WINDOW;
+
+  const CREATE_NO_WINDOW: u32 = 0x0800_0000;
   command.creation_flags(CREATE_NO_WINDOW);
 }
 
@@ -40,7 +41,8 @@ pub fn set_command_flags(_: &mut Command) {
 pub fn attach_console() {
   // When using the windows subsystem we loose the terminal output.
   // Therefore we try to attach to the current console if available.
-  unsafe { winapi::um::wincon::AttachConsole(0xFFFF_FFFF) };
+  use windows::Win32::System::Console::AttachConsole;
+  unsafe { AttachConsole(0xFFFF_FFFF) };
 }
 
 #[cfg(not(target_os = "windows"))]

@@ -73,7 +73,9 @@ fn write_user_path_value(value: String) -> Result<()> {
 }
 
 fn send_change_broadcast() {
-  use winapi::um::winuser::{SendMessageTimeoutW, HWND_BROADCAST, WM_SETTINGCHANGE};
+  use windows::Win32::UI::WindowsAndMessaging::{
+    SendMessageTimeoutW, HWND_BROADCAST, WM_SETTINGCHANGE,
+  };
 
   let wide_string = widestring::WideString::from("Environment".to_string());
 
