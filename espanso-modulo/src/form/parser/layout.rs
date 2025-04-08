@@ -17,7 +17,7 @@
  * along with modulo.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use super::split::*;
+use super::split::{SplitCaptures, SplitState};
 use regex::Regex;
 use std::sync::LazyLock;
 
