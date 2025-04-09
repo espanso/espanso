@@ -35,7 +35,6 @@ We know some false positives, running on windows or linux gives:
 unused dependencies:
 `espanso-mac-utils v0.1.0 (C:\Users\user\repos\espanso\espanso-mac-utils)`
 ├─── dependencies
-│    ├─── "lazy_static"
 │    └─── "regex"
 └─── build-dependencies
      └─── "cc"
