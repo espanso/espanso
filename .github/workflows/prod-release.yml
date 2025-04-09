@@ -1,6 +1,3 @@
-# Huge thanks to Alacritty, as their configuration served as a starting point for this one!
-# See: https://github.com/alacritty/alacritty
-
 name: Prod Release
 
 on:
