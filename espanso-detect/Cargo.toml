@@ -11,6 +11,7 @@ build = "build.rs"
 wayland = ["sctk"]
 
 [dependencies]
+espanso-info = { path = "../espanso-info" }
 nix = { version = "0.29.0", features = ["socket"] }
 log.workspace = true
 lazycell.workspace = true
