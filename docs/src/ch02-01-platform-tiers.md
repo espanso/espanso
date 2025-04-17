@@ -15,7 +15,7 @@ break compatibility, or we need to stop supporting some features because there
 are fewer users compared to the tier 1.
 
 Tier 3 is unsupported. This is because we don't have hardware to compile or
-repoduce the bugs. The shortage of people certainly doesn't help here. Help
+reproduce the bugs. The shortage of people certainly doesn't help here. Help
 needed!
 
 ### Tier 1: core
@@ -32,9 +32,11 @@ needed!
 - x86_64 Debian testing and Debian Sid (unstable)
 - x86_64 Fedora distros
 - x86_64 Arch linux
+- x86_64 nixOS
 
 ### Tier 3: unsupported
 
-- Windows (32 bits, ARM)
-- ChromeOS ([tracking issue](https://github.com/espanso/espanso/issues/2243))
-- FreeBSD and the BSD family (tracking issue)
+- FreeBSD and the BSD family ([tracking issue](https://github.com/espanso/espanso/issues/2304))
+- ChromeOS ([tracking issue](https://github.com/espanso/espanso/issues/2305))
+- Windows ARM architectures ([tracking issue](https://github.com/espanso/espanso/issues/2306)).
+- Windows in 32 bits is unsupported.
