@@ -1,7 +1,8 @@
 # Platform Tiers
 
 We have different tiers to indicate different levels of commitment for each
-architecture + Operative System.
+architecture + Operative System. In linux, we also have 2 desktop
+implementations, X11 and Wayland.
 
 In the Tier 1, we want to garantee the installation, configuration and general
 usage of the app. This are the platforms we spend the majority of time.
