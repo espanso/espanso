@@ -299,6 +299,14 @@ void SearchFrame::OnCharEvent(wxKeyEvent &event)
     {
         SelectPrevious();
     }
+    else if (event.GetKeyCode() == WXK_CONTROL_N)
+    {
+        SelectNext();
+    }
+    else if (event.GetKeyCode() == WXK_CONTROL_P)
+    {
+        SelectPrevious();
+    }
     else if (event.GetKeyCode() == WXK_RETURN)
     {
         Submit();
