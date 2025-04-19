@@ -12,6 +12,12 @@ on:
       - 'README.md'
     branches:
       - dev
+      # TODO: remove this
+      - ci-revamp
+
+defaults:
+  run:
+    shell: bash
 
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -28,7 +34,7 @@ jobs:
       - name: "Extract version"
         id: "version"
         run: |
-          ESPANSO_VERSION=$(grep '^version' espanso/Cargo.toml | awk -F '"' '{ print $2 }')
+          ESPANSO_VERSION=$(awk -F '"' '/^version/ { print $2; exit }' espanso/Cargo.toml)
           echo version: $ESPANSO_VERSION
           echo "::set-output name=version::v$ESPANSO_VERSION"
 
@@ -45,18 +51,34 @@ jobs:
       - name: Print target version
         run: |
           echo Using version ${{ needs.extract-version.outputs.espanso_version }}
-      - name: Install rust-script and cargo-make
+      - name: Build
         run: |
-          cargo install rust-script
-          cargo install --force cargo-make --version 0.37.5
+          cargo build \
+            -p espanso \
+            --no-default-features \
+            --features modulo,native-tls \
+            --release
       - name: Test
-        run: cargo make --profile release -- test-binary
+        run: |
+          cargo test \
+            --release \
+            --workspace \
+            --exclude espanso-modulo \
+            --exclude espanso-ipc \
+            --no-default-features \
+            --features native-tls
       - name: Build resources
-        run: cargo make --profile release -- build-windows-resources
+        run: ./scripts/build_windows_resources.sh
+        env:
+          EXEC_PATH: ./target/release/espanso
       - name: Build installer
-        run: cargo make --profile release --skip-tasks build-windows-resources -- build-windows-installer
+        run:  ./scripts/build_windows_installer.sh
+        env:
+          EXEC_PATH: ./target/release/espanso
       - name: Build portable mode archive 
-        run: cargo make --profile release --skip-tasks build-windows-resources -- build-windows-portable
+        run: ./scripts/build_windows_portable.sh
+        env:
+          EXEC_PATH: ./target/release/espanso
       - name: Create portable mode archive
         shell: powershell
         run: |
@@ -86,12 +108,28 @@ jobs:
       - name: Print target version
         run: |
           echo Using version ${{ needs.extract-version.outputs.espanso_version }}
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libx11-dev libxtst-dev libxkbcommon-dev libdbus-1-dev libwxgtk3.2-dev
       - name: Build docker image
         run: |
-          sudo docker build -t espanso-ubuntu . -f .github/scripts/Dockerfile
+          sudo docker build -t espanso-ubuntu . -f .github/scripts/ubuntu/Dockerfile
+      - name: Build
+        run: |
+          cargo build \
+            -p espanso \
+            --release \
+            --no-default-features \
+            --features vendored-tls,modulo
       - name: Build AppImage
         run: |
-          sudo docker run --rm -v "$(pwd):/shared" espanso-ubuntu espanso/.github/scripts/ubuntu/build_appimage.sh
+          sudo docker run \
+            --rm \
+            -v "$(pwd):/shared" \
+            -e EXEC_PATH=target/release/espanso \
+            espanso-ubuntu \
+            espanso/.github/scripts/ubuntu/build_appimage.sh
       - uses: actions/upload-artifact@v4
         name: "Upload artifacts"
         with:
@@ -109,6 +147,17 @@ jobs:
       - name: Print target version
         run: |
           echo Using version ${{ needs.extract-version.outputs.espanso_version }}
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libx11-dev libxtst-dev libxkbcommon-dev libdbus-1-dev libwxgtk3.2-dev
+      - name: Build
+        run: |
+          cargo build \
+            -p espanso \
+            --release \
+            --no-default-features \
+            --features vendored-tls,modulo
       - name: Build docker image
         run: |
           sudo docker build -t espanso-ubuntu . -f .github/scripts/Dockerfile
@@ -123,65 +172,7 @@ jobs:
             espanso-debian-x11-amd64.deb
             espanso-debian-wayland-amd64.deb
 
-  # linux-rpm:
-  #   needs: ["extract-version"]
-  #   runs-on: fedora-latest
-  #
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - name: Print target version
-  #       run: |
-  #         echo Using version ${{ needs.extract-version.outputs.espanso_version }}
-  #     - name: Build docker image
-  #       run: |
-  #         sudo docker build -t espanso-fedora . -f .github/scripts/fedora/Dockerfile
-  #     - name: Build rpm packages
-  #       run: |
-  #         sudo docker run --rm -v "$(pwd):/shared" espanso-fedora espanso/.github/scripts/fedora/build_rpm.sh
-  #     - uses: actions/upload-artifact@v4
-  #       name: "Upload artifacts"
-  #       with:
-  #         name: Fedora Artifacts
-  #         path: |
-  #           espanso-fedora-wayland-amd64.deb
-  #
-
-  macos-intel:
-    needs: ["extract-version"]
-    runs-on: macos-latest
-
-    steps:
-      - uses: actions/checkout@v4
-      - name: Print target version
-        run: |
-          echo Using version ${{ needs.extract-version.outputs.espanso_version }}
-      - name: Install rust-script and cargo-make
-        run: |
-          cargo install rust-script
-          cargo install --force cargo-make --version 0.37.5
-      - name: Test
-        run: cargo make --profile release -- test-binary
-        env:
-          MACOSX_DEPLOYMENT_TARGET: "10.13"
-      - name: Build
-        run: cargo make --profile release -- create-bundle
-        env:
-          MACOSX_DEPLOYMENT_TARGET: "10.13"
-      - name: Create ZIP archive
-        run: |
-          ditto -c -k --sequesterRsrc --keepParent target/mac/Espanso.app Espanso-Mac-Intel.zip
-      - name: Calculate hashes
-        run: |
-          shasum -a 256 Espanso-Mac-Intel.zip > Espanso-Mac-Intel.zip.sha256.txt
-      - uses: actions/upload-artifact@v4
-        name: "Upload artifacts"
-        with:
-          name: Mac Intel Artifacts
-          path: |
-            Espanso-Mac-Intel.zip
-            Espanso-Mac-Intel.zip.sha256.txt
-  
-  macos-m1:
+  macos:
     needs: ["extract-version"]
     runs-on: macos-latest
 
@@ -191,23 +182,32 @@ jobs:
         run: |
           echo Using version ${{ needs.extract-version.outputs.espanso_version }}
       - name: Install rust target
-        run: rustup update && rustup target add aarch64-apple-darwin
-      - name: Install rust-script and cargo-make
-        run: |
-          cargo install rust-script
-          cargo install --force cargo-make --version 0.37.5
+        run: rustup update && rustup target add aarch64-apple-darwin x86_64-apple-darwin
       - name: Build
-        run: cargo make --env BUILD_ARCH=aarch64-apple-darwin --profile release -- create-bundle
+        run: |
+          cargo build \
+            -p espanso \
+            --target x86_64-apple-darwin \
+            --release \
+            --no-default-features \
+            --features native-tls,modulo
+          cargo build \
+            -p espanso \
+            --target aarch64-apple-darwin \
+            --release \
+            --no-default-features \
+            --features native-tls,modulo
+          bash ./scripts/create_bundle.sh
       - name: Create ZIP archive
         run: |
-          ditto -c -k --sequesterRsrc --keepParent target/mac/Espanso.app Espanso-Mac-M1.zip
+          ditto -c -k --sequesterRsrc --keepParent target/mac/Espanso.app Espanso-Mac-Universal.zip
       - name: Calculate hashes
         run: |
-          shasum -a 256 Espanso-Mac-M1.zip > Espanso-Mac-M1.zip.sha256.txt
+          shasum -a 256 Espanso-Mac-Universal.zip > Espanso-Mac-Universal.zip.sha256.txt
       - uses: actions/upload-artifact@v4
         name: "Upload artifacts"
         with:
-          name: Mac M1 Artifacts
+          name: MacOS Artifacts
           path: |
-            Espanso-Mac-M1.zip
-            Espanso-Mac-M1.zip.sha256.txt
+            Espanso-Mac-Universal.zip
+            Espanso-Mac-Universal.zip.sha256.txt

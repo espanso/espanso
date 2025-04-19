@@ -4,6 +4,12 @@ on:
   push:
     branches:
       - master
+      # TODO: remove this
+      - ci-revamp
+
+defaults:
+  run:
+    shell: bash
 
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -16,13 +22,13 @@ jobs:
     outputs:
       espanso_version: ${{ steps.version.outputs.version }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: "Extract version"
         id: "version"
         run: |
           ESPANSO_VERSION=$(grep '^version' espanso/Cargo.toml | awk -F '"' '{ print $2 }')
-          echo version: $ESPANSO_VERSION
-          echo "::set-output name=version::v$ESPANSO_VERSION"
+          echo version: ${ESPANSO_VERSION}
+          echo "::set-output name=version::v${ESPANSO_VERSION}"
 
   create-release:
     name: create-release
@@ -30,57 +36,67 @@ jobs:
     environment: production
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Create new release (only on master)
         if: ${{ github.ref == 'refs/heads/master' }}
         run: |
           COMMIT_HASH=$(git rev-list --max-count=1 HEAD)
           echo "Creating release: ${{ needs.extract-version.outputs.espanso_version }}"
-          echo "for hash: $COMMIT_HASH"
+          echo "for hash: ${COMMIT_HASH}"
           gh release create ${{ needs.extract-version.outputs.espanso_version }} \
             -t ${{ needs.extract-version.outputs.espanso_version }} \
             --notes "Automatically released by CI" \
             --prerelease \
-            --target $COMMIT_HASH
+            --target "${COMMIT_HASH}"
 
   windows:
     needs: ["extract-version", "create-release"]
     runs-on: windows-latest
     environment: production
 
-    defaults:
-      run:
-        shell: bash
-
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Print target version
         run: |
           echo Using version ${{ needs.extract-version.outputs.espanso_version }}
-      - name: Install rust-script and cargo-make
+      - name: Build
         run: |
-          cargo install rust-script
-          cargo install --force cargo-make --version 0.37.5
+          cargo build \
+            -p espanso \
+            --no-default-features \
+            --features modulo,native-tls \
+            --release
       - name: Test
-        run: cargo make --profile release -- test-binary
+        run: |
+          cargo test \
+            --workspace \
+            --exclude espanso-modulo \
+            --exclude espanso-ipc \
+            --no-default-features \
+            --features native-tls \
+            --release
       - name: Build resources
-        run: cargo make --profile release -- build-windows-resources
+        run: EXEC_PATH=./target/release/espanso ./scripts/build_windows_resources.sh
       - name: Sign resources
-        run: cargo make sign-windows-resources
+        run: bash ./scripts/sign_windows_exe.sh
         env:
+          TARGET_SIGNTOOL_FILE: target/windows/resources/espansod.exe
           CODESIGN_PWD: ${{ secrets.WIN_CODESIGN_PWD }}
           CODESIGN_CROSS_SIGNED_B64: ${{ secrets.WIN_CODESIGN_INTERMEDIATE_B64 }}
           CODESIGN_CERTIFICATE_B64: ${{ secrets.WIN_CODESIGN_CERTIFICATE_B64 }}
       - name: Build installer
-        run: cargo make --profile release --skip-tasks build-windows-resources -- build-windows-installer
+        run: EXEC_PATH=./target/release/espanso ./scripts/build_windows_installer.sh
       - name: Sign installer
-        run: cargo make sign-windows-installer
+        run: bash ./scripts/sign_windows_exe.sh
         env:
+          TARGET_SIGNTOOL_FILE: target/windows/installer/Espanso-Win-Installer-x86_64.exe
           CODESIGN_PWD: ${{ secrets.WIN_CODESIGN_PWD }}
           CODESIGN_CROSS_SIGNED_B64: ${{ secrets.WIN_CODESIGN_INTERMEDIATE_B64 }}
           CODESIGN_CERTIFICATE_B64: ${{ secrets.WIN_CODESIGN_CERTIFICATE_B64 }}
       - name: Build portable mode archive 
-        run: cargo make --profile release --skip-tasks build-windows-resources -- build-windows-portable
+        run: ./scripts/build_windows_portable.sh
+        env:
+          EXEC_PATH: ./target/release/espanso
       - name: Create portable mode archive
         shell: powershell
         run: |
@@ -111,16 +127,32 @@ jobs:
     environment: production
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Print target version
         run: |
           echo Using version ${{ needs.extract-version.outputs.espanso_version }}
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libx11-dev libxtst-dev libxkbcommon-dev libdbus-1-dev libwxgtk3.2-dev
       - name: Build docker image
         run: |
-          sudo docker build -t espanso-ubuntu . -f .github/scripts/Dockerfile
+          sudo docker build -t espanso-ubuntu . -f .github/scripts/ubuntu/Dockerfile
+      - name: Build
+        run: |
+          cargo build \
+            -p espanso \
+            --release \
+            --no-default-features \
+            --features vendored-tls,modulo
       - name: Build AppImage
         run: |
-          sudo docker run --rm -v "$(pwd):/shared" espanso-ubuntu espanso/.github/scripts/ubuntu/build_appimage.sh
+          sudo docker run \
+            --rm \
+            -v "$(pwd):/shared" \
+            -e EXEC_PATH=target/release/espanso \
+            espanso-ubuntu \
+            espanso/.github/scripts/ubuntu/build_appimage.sh
       - uses: actions/upload-artifact@v4
         name: "Upload artifacts"
         with:
@@ -139,10 +171,21 @@ jobs:
     environment: production
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Print target version
         run: |
           echo Using version ${{ needs.extract-version.outputs.espanso_version }}
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libx11-dev libxtst-dev libxkbcommon-dev libdbus-1-dev libwxgtk3.2-dev
+      - name: Build
+        run: |
+          cargo build \
+            -p espanso \
+            --release \
+            --no-default-features \
+            --features vendored-tls,modulo
       - name: Build docker image
         run: |
           sudo docker build -t espanso-ubuntu . -f .github/scripts/Dockerfile
@@ -161,123 +204,33 @@ jobs:
         run: |
           gh release upload ${{ needs.extract-version.outputs.espanso_version }} espanso-debian-x11-amd64.deb espanso-debian-wayland-amd64.deb espanso-debian-x11-amd64-sha256.txt espanso-debian-wayland-amd64-sha256.txt 
 
-  # linux-rpm:
-  #   needs: ["extract-version", "create-release"]
-  #   runs-on: fedora-latest
-  #   environment: production
-  #
-  #   steps:
-  #     - uses: actions/checkout@v2
-  #     - name: Print target version
-  #       run: |
-  #         echo Using version ${{ needs.extract-version.outputs.espanso_version }}
-  #     - name: Build docker image
-  #       run: |
-  #         sudo docker build -t espanso-fedora . -f .github/scripts/fedora/Dockerfile
-  #     - name: Build rpm packages
-  #       run: |
-  #         sudo docker run --rm -v "$(pwd):/shared" espanso-fedora espanso/.github/scripts/fedora/build_rpm.sh
-  #     - uses: actions/upload-artifact@v4
-  #       name: "Upload artifacts"
-  #       with:
-  #         name: Fedora Artifacts
-  #         path: |
-  #           espanso-fedora-wayland-amd64.deb
-  #     - name: Upload artifacts to Github Releases (if master)
-  #       if: ${{ github.ref == 'refs/heads/master' }}
-  #       run: |
-  #         gh release upload ${{ needs.extract-version.outputs.espanso_version }} espanso-fedora-wayland-amd64.deb espanso-fedora-wayland-amd64-sha256.txt 
-  #
-
-  macos-intel:
+  macos:
     needs: ["extract-version", "create-release"]
     runs-on: macos-latest
     environment: production
 
     steps:
-      - uses: actions/checkout@v2
-      - name: Print target version
-        run: |
-          echo Using version ${{ needs.extract-version.outputs.espanso_version }}
-      - name: Install rust-script and cargo-make
-        run: |
-          cargo install rust-script
-          cargo install --force cargo-make --version 0.37.5
-      - name: Test
-        run: cargo make --profile release -- test-binary
-        env:
-          MACOSX_DEPLOYMENT_TARGET: "10.13"
-      - name: Build
-        run: cargo make --profile release -- create-bundle
-        env:
-          MACOSX_DEPLOYMENT_TARGET: "10.13"
-      - name: Codesign executable
-        env: 
-          MACOS_CERTIFICATE: ${{ secrets.PROD_MACOS_CERTIFICATE }}
-          MACOS_CERTIFICATE_PWD: ${{ secrets.PROD_MACOS_CERTIFICATE_PWD }}
-          MACOS_CERTIFICATE_NAME: ${{ secrets.PROD_MACOS_CERTIFICATE_NAME }}
-          MACOS_CI_KEYCHAIN_PWD: ${{ secrets.PROD_MACOS_CI_KEYCHAIN_PWD }}
-        run: |
-          echo $MACOS_CERTIFICATE | base64 --decode > certificate.p12
-          security create-keychain -p "$MACOS_CI_KEYCHAIN_PWD" buildespanso.keychain 
-          security default-keychain -s buildespanso.keychain
-          security unlock-keychain -p "$MACOS_CI_KEYCHAIN_PWD" buildespanso.keychain
-          security import certificate.p12 -k buildespanso.keychain -P "$MACOS_CERTIFICATE_PWD" -T /usr/bin/codesign
-          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$MACOS_CI_KEYCHAIN_PWD" buildespanso.keychain
-          /usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" --options runtime target/mac/Espanso.app -v
-      - name: "Notarize executable"
-        env:
-          PROD_MACOS_NOTARIZATION_APPLE_ID: ${{ secrets.PROD_MACOS_NOTARIZATION_APPLE_ID }}
-          PROD_MACOS_NOTARIZATION_TEAM_ID: ${{ secrets.PROD_MACOS_NOTARIZATION_TEAM_ID }}
-          PROD_MACOS_NOTARIZATION_PWD: ${{ secrets.PROD_MACOS_NOTARIZATION_PWD }}
-        run: |
-          echo "Create keychain profile"
-          xcrun notarytool store-credentials "espanso-notarytool-profile" --apple-id "$PROD_MACOS_NOTARIZATION_APPLE_ID" --team-id "$PROD_MACOS_NOTARIZATION_TEAM_ID" --password "$PROD_MACOS_NOTARIZATION_PWD"
-
-          echo "Creating temp notarization archive"
-          ditto -c -k --keepParent "target/mac/Espanso.app" "notarization.zip"
-
-          echo "Notarize app"
-          xcrun notarytool submit "notarization.zip" --keychain-profile "espanso-notarytool-profile" --wait
-
-          echo "Attach staple"
-          xcrun stapler staple "target/mac/Espanso.app"
-      - name: Create ZIP archive
-        run: |
-          ditto -c -k --sequesterRsrc --keepParent target/mac/Espanso.app Espanso-Mac-Intel.zip
-      - name: Calculate hashes
-        run: |
-          shasum -a 256 Espanso-Mac-Intel.zip > Espanso-Mac-Intel.zip.sha256.txt
-      - uses: actions/upload-artifact@v4
-        name: "Upload artifacts"
-        with:
-          name: Mac Intel Artifacts
-          path: |
-            Espanso-Mac-Intel.zip
-            Espanso-Mac-Intel.zip.sha256.txt
-      - name: Upload artifacts to Github Releases (if master)
-        if: ${{ github.ref == 'refs/heads/master' }}
-        run: |
-          gh release upload ${{ needs.extract-version.outputs.espanso_version }} Espanso-Mac-Intel.zip Espanso-Mac-Intel.zip.sha256.txt
-  
-  macos-m1:
-    needs: ["extract-version", "create-release"]
-    runs-on: macos-latest
-    environment: production
-
-    steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Print target version
         run: |
           echo Using version ${{ needs.extract-version.outputs.espanso_version }}
       - name: Install rust target
-        run: rustup update && rustup target add aarch64-apple-darwin
-      - name: Install rust-script and cargo-make
-        run: |
-          cargo install rust-script
-          cargo install --force cargo-make --version 0.37.5
+        run: rustup update && rustup target add aarch64-apple-darwin x86_64-apple-darwin
       - name: Build
-        run: cargo make --env BUILD_ARCH=aarch64-apple-darwin --profile release -- create-bundle
+        run: |
+          cargo build \
+            -p espanso \
+            --target x86_64-apple-darwin \
+            --release \
+            --no-default-features \
+            --features native-tls,modulo
+          cargo build \
+            -p espanso \
+            --target aarch64-apple-darwin \
+            --release \
+            --no-default-features \
+            --features native-tls,modulo
+          bash ./scripts/create_bundle.sh
       - name: Codesign executable
         env: 
           MACOS_CERTIFICATE: ${{ secrets.PROD_MACOS_CERTIFICATE }}
@@ -285,13 +238,13 @@ jobs:
           MACOS_CERTIFICATE_NAME: ${{ secrets.PROD_MACOS_CERTIFICATE_NAME }}
           MACOS_CI_KEYCHAIN_PWD: ${{ secrets.PROD_MACOS_CI_KEYCHAIN_PWD }}
         run: |
-          echo $MACOS_CERTIFICATE | base64 --decode > certificate.p12
-          security create-keychain -p "$MACOS_CI_KEYCHAIN_PWD" buildespanso.keychain 
+          base64 --decode --output certificate.p12  <<< "${MACOS_CERTIFICATE}"
+          security create-keychain -p "${MACOS_CI_KEYCHAIN_PWD}" buildespanso.keychain
           security default-keychain -s buildespanso.keychain
-          security unlock-keychain -p "$MACOS_CI_KEYCHAIN_PWD" buildespanso.keychain
-          security import certificate.p12 -k buildespanso.keychain -P "$MACOS_CERTIFICATE_PWD" -T /usr/bin/codesign
-          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$MACOS_CI_KEYCHAIN_PWD" buildespanso.keychain
-          /usr/bin/codesign --force -s "$MACOS_CERTIFICATE_NAME" --options runtime target/mac/Espanso.app -v
+          security unlock-keychain -p "${MACOS_CI_KEYCHAIN_PWD}" buildespanso.keychain
+          security import certificate.p12 -k buildespanso.keychain -P "${MACOS_CERTIFICATE_PWD}" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "${MACOS_CI_KEYCHAIN_PWD}" buildespanso.keychain
+          /usr/bin/codesign --force -s "${MACOS_CERTIFICATE_NAME}" --options runtime target/mac/Espanso.app -v
       - name: "Notarize executable"
         env:
           PROD_MACOS_NOTARIZATION_APPLE_ID: ${{ secrets.PROD_MACOS_NOTARIZATION_APPLE_ID }}
@@ -299,7 +252,11 @@ jobs:
           PROD_MACOS_NOTARIZATION_PWD: ${{ secrets.PROD_MACOS_NOTARIZATION_PWD }}
         run: |
           echo "Create keychain profile"
-          xcrun notarytool store-credentials "espanso-notarytool-profile" --apple-id "$PROD_MACOS_NOTARIZATION_APPLE_ID" --team-id "$PROD_MACOS_NOTARIZATION_TEAM_ID" --password "$PROD_MACOS_NOTARIZATION_PWD"
+          xcrun notarytool \
+            store-credentials espanso-notarytool-profile \
+            --apple-id "${PROD_MACOS_NOTARIZATION_APPLE_ID}" \
+            --team-id "${PROD_MACOS_NOTARIZATION_TEAM_ID}" \
+            --password "${PROD_MACOS_NOTARIZATION_PWD}"
 
           echo "Creating temp notarization archive"
           ditto -c -k --keepParent "target/mac/Espanso.app" "notarization.zip"
@@ -311,29 +268,29 @@ jobs:
           xcrun stapler staple "target/mac/Espanso.app"
       - name: Create ZIP archive
         run: |
-          ditto -c -k --sequesterRsrc --keepParent target/mac/Espanso.app Espanso-Mac-M1.zip
+          ditto -c -k --sequesterRsrc --keepParent target/mac/Espanso.app Espanso-Mac-Universal.zip
       - name: Calculate hashes
         run: |
-          shasum -a 256 Espanso-Mac-M1.zip > Espanso-Mac-M1.zip.sha256.txt
+          shasum -a 256 Espanso-Mac-Universal.zip > Espanso-Mac-Universal.zip.sha256.txt
       - uses: actions/upload-artifact@v4
         name: "Upload artifacts"
         with:
           name: Mac M1 Artifacts
           path: |
-            Espanso-Mac-M1.zip
-            Espanso-Mac-M1.zip.sha256.txt
+            Espanso-Mac-Universal.zip
+            Espanso-Mac-Universal.zip.sha256.txt
       - name: Upload artifacts to Github Releases (if master)
         if: ${{ github.ref == 'refs/heads/master' }}
         run: |
-          gh release upload ${{ needs.extract-version.outputs.espanso_version }} Espanso-Mac-M1.zip Espanso-Mac-M1.zip.sha256.txt
+          gh release upload ${{ needs.extract-version.outputs.espanso_version }} Espanso-Mac-Universal.zip Espanso-Mac-Universal.zip.sha256.txt
 
   macos-publish-homebrew:
-    needs: ["extract-version", "create-release", "macos-m1", "macos-intel"]
+    needs: ["extract-version", "create-release", "macos" ]
     runs-on: macos-latest
     environment: production
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Print target version
         run: |
           echo Using version ${{ needs.extract-version.outputs.espanso_version }}

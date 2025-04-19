@@ -7,9 +7,15 @@ on:
     branches:
       - master
       - dev
+      # TODO: remove this
+      - ci-revamp
   pull_request:
     paths-ignore:
       - 'docs/**'
+
+defaults:
+  run:
+    shell: bash
 
 env:
   CARGO_TERM_COLOR: always
@@ -23,12 +29,8 @@ jobs:
 
     runs-on: ${{ matrix.os }}
 
-    env:
-      WX_WIDGETS_BUILD_OUT_DIR: "${{github.workspace}}/wx-widgets-build"
-
     steps:
       - uses: actions/checkout@v4
-      - uses: Swatinem/rust-cache@v2
       - name: Check formatting
         run: |
           rustup component add rustfmt
@@ -37,29 +39,17 @@ jobs:
         if: ${{ runner.os == 'Linux' }}
         run: |
           sudo apt-get update
-          sudo apt-get install -y libx11-dev libxtst-dev libxkbcommon-dev libdbus-1-dev libwxgtk3.*-dev
-      - name: Install rust-script and cargo-make
-        run: |
-          cargo install rust-script
-          cargo install cargo-make --version 0.37.5
-      # wxWidgets builds (internal to espanso-modulo) are by far the largest bottleneck
-      # in the current pipeline, so we cache the results for a faster compilation process
-      - name: "Cache wxWidgets builds"
-        if: ${{ runner.os != 'Linux' }}
-        uses: actions/cache@v3
-        with:
-          path: |
-            ${{env.WX_WIDGETS_BUILD_OUT_DIR}}
-          key: ${{ github.job }}-${{ runner.os }}-${{ hashFiles('espanso-modulo/build.rs') }}-${{ hashFiles('espanso-modulo/vendor/*') }}
+          sudo apt-get install -y libx11-dev libxtst-dev libxkbcommon-dev libdbus-1-dev libwxgtk3.2-dev
       - name: Build
         run: |
-          cargo make build-binary
+          cargo build \
+            -p espanso \
+            --no-default-features \
+            --features modulo,native-tls
       - name: Check clippy
         run: |
           rustup component add clippy
           cargo clippy -- -D warnings
-        env:
-          MACOSX_DEPLOYMENT_TARGET: "10.13"
 
   test:
     strategy:
@@ -70,7 +60,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - uses: Swatinem/rust-cache@v2
       - name: Check formatting
         run: |
           rustup component add rustfmt
@@ -79,19 +68,20 @@ jobs:
         if: ${{ runner.os == 'Linux' }}
         run: |
           sudo apt-get update
-          sudo apt-get install -y libx11-dev libxtst-dev libxkbcommon-dev libdbus-1-dev libwxgtk3.*-dev
-      - name: Install rust-script and cargo-make
-        run: |
-          cargo install rust-script
-          cargo install cargo-make --version 0.37.5
+          sudo apt-get install -y libx11-dev libxtst-dev libxkbcommon-dev libdbus-1-dev libwxgtk3.2-dev
       - name: Run test suite
-        run: cargo make test-binary
+        run: |
+          cargo test \
+            --workspace \
+            --exclude espanso-modulo \
+            --exclude espanso-ipc \
+            --no-default-features \
+            --features native-tls
   
   build-wayland:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: Swatinem/rust-cache@v2
       - name: Check formatting
         run: |
           rustup component add rustfmt
@@ -99,13 +89,13 @@ jobs:
       - name: Install Linux dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libxkbcommon-dev libwxgtk3.*-dev libdbus-1-dev
-      - name: Install rust-script and cargo-make
-        run: |
-          cargo install rust-script
-          cargo install cargo-make --version 0.37.5
+          sudo apt-get install -y libxkbcommon-dev libwxgtk3.2-dev libdbus-1-dev
       - name: Build
-        run: cargo make --env NO_X11=true -- build-binary
+        run: |
+          cargo build \
+            -p espanso \
+            --no-default-features \
+            --features wayland,modulo,native-tls
       - name: Check clippy
         run: |
           rustup component add clippy
@@ -115,7 +105,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: Swatinem/rust-cache@v2
       - name: Check formatting
         run: |
           rustup component add rustfmt
@@ -123,38 +112,31 @@ jobs:
       - name: Install Linux dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libxkbcommon-dev libwxgtk3.*-dev libdbus-1-dev
-      - name: Install rust-script and cargo-make
-        run: |
-          cargo install rust-script
-          cargo install cargo-make --version 0.37.5
+          sudo apt-get install -y libxkbcommon-dev libwxgtk3.2-dev libdbus-1-dev
       - name: Run test suite
-        run: cargo make --env NO_X11=true -- test-binary
+        run: |
+          cargo test \
+            --workspace \
+            --exclude espanso-modulo \
+            --exclude espanso-ipc \
+            --no-default-features \
+            --features wayland,native-tls
   
-  build-macos-arm:
+  build-macos:
     runs-on: macos-latest
-    env:
-      WX_WIDGETS_BUILD_OUT_DIR: "${{github.workspace}}/wx-widgets-build"
     steps:
       - uses: actions/checkout@v4
       - name: Install target
-        run: rustup update && rustup target add aarch64-apple-darwin
-      - uses: Swatinem/rust-cache@v2
-      - name: Install rust-script and cargo-make
-        run: |
-          cargo install rust-script
-          cargo install cargo-make --version 0.37.5
-      - name: "Cache wxWidgets builds"
-        if: ${{ runner.os != 'Linux' }}
-        uses: actions/cache@v3
-        with:
-          path: |
-            ${{env.WX_WIDGETS_BUILD_OUT_DIR}}
-          key: ${{ github.job }}-${{ runner.os }}-${{ hashFiles('espanso-modulo/build.rs') }}-${{ hashFiles('espanso-modulo/vendor/*') }}
+        run: rustup update && rustup target add aarch64-apple-darwin x86_64-apple-darwin
       - name: Build
         run: |
-          cargo make build-macos-arm-binary
-      # - name: Setup tmate session
-      #   uses: mxschmitt/action-tmate@v3
-      #   with:
-      #     limit-access-to-actor: true
+          cargo build \
+            --target x86_64-apple-darwin \
+            -p espanso \
+            --no-default-features \
+            --features modulo,native-tls
+          cargo build \
+            --target aarch64-apple-darwin \
+            -p espanso \
+            --no-default-features \
+            --features modulo,native-tls
