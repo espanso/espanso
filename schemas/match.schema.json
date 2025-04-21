@@ -80,6 +80,9 @@
         "anchor": {
           "$ref": "#/definitions/anchor"
         },
+        "comment": {
+          "type": "string"
+        },
         "force_clipboard": {
           "type": "boolean"
         },
@@ -105,6 +108,9 @@
         "label": {
           "type": "string"
         },
+        "left_word": {
+          "type": "boolean"
+        },
         "markdown": {
           "type": "string"
         },
@@ -113,6 +119,9 @@
           "type": "boolean"
         },
         "propagate_case": {
+          "type": "boolean"
+        },
+        "right_word": {
           "type": "boolean"
         },
         "search_terms": {
@@ -201,6 +210,15 @@
                   "description": "Trim the output of the command. Useful if the cmd has an excess in spaces or newlines"
                 }
               }
+            },
+            "inject_vars": {
+              "type": "boolean"
+            },
+            "depends_on": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           }
         },
@@ -229,6 +247,15 @@
                     "type": "string"
                   }
                 }
+              }
+            },
+            "inject_vars": {
+              "type": "boolean"
+            },
+            "depends_on": {
+              "type": "array",
+              "items": {
+                "type": "string"
               }
             }
           }
@@ -565,6 +592,15 @@
                   ]
                 }
               }
+            },
+            "inject_vars": {
+              "type": "boolean"
+            },
+            "depends_on": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           }
         },
@@ -590,6 +626,15 @@
                   "type": "string"
                 }
               }
+            },
+            "inject_vars": {
+              "type": "boolean"
+            },
+            "depends_on": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           }
         },
@@ -606,6 +651,15 @@
             },
             "name": {
               "type": "string"
+            },
+            "inject_vars": {
+              "type": "boolean"
+            },
+            "depends_on": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           }
         },
@@ -630,10 +684,6 @@
                 "values": {
                   "type": "array",
                   "items": {
-                    "type": [
-                      "string",
-                      "object"
-                    ],
                     "required": [
                       "label",
                       "id"
@@ -648,6 +698,15 @@
                     }
                   }
                 }
+              }
+            },
+            "inject_vars": {
+              "type": "boolean"
+            },
+            "depends_on": {
+              "type": "array",
+              "items": {
+                "type": "string"
               }
             }
           }
@@ -677,6 +736,15 @@
                   "$ref": "#/definitions/form_field_definition"
                 }
               }
+            },
+            "inject_vars": {
+              "type": "boolean"
+            },
+            "depends_on": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           }
         },
@@ -701,6 +769,15 @@
                 "trigger": {
                   "type": "string"
                 }
+              }
+            },
+            "inject_vars": {
+              "type": "boolean"
+            },
+            "depends_on": {
+              "type": "array",
+              "items": {
+                "type": "string"
               }
             }
           }
