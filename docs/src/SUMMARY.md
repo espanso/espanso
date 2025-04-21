@@ -1,7 +1,9 @@
 # Summary
 
 - [Introduction](./ch01-introduction.md)
-- [General guidelines](./ch02-general-guidelines.md)
+- [General guidelines](./ch02-00-general-guidelines.md)
+  - [Platform support](./ch02-01-platform-tiers.md)
+  - [Triage method](./ch02-02-triage-method.md)
 - [Building and compilation](./ch03-00-building-and-compilation.md)
   - [Windows](./ch03-01-windows.md)
   - [macOS](./ch03-02-macos.md)

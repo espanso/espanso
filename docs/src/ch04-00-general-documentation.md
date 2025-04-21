@@ -6,6 +6,8 @@ chapters will sound a lot untidy.
 ## General great resources to learn
 
 - We use `gdiplus` in some places. [Here is the doc from mslearn](https://learn.microsoft.com/en-us/windows/win32/gdiplus/-gdiplus-gdi-start)
+- Here is the [documentation on wxWidgets 3.1.5](https://docs.wxwidgets.org/3.1.5/),
+the version we use currently in espanso.
 
 ## Cache folder
 
