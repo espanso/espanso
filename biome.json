@@ -1,18 +1,18 @@
 {
-  "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
-  "vcs": {
-    "enabled": true,
-    "clientKind": "git",
-    "useIgnoreFile": true
-  },
-  "formatter": {
-    "enabled": true,
-    "useEditorconfig": true
-  },
-  "linter": {
-    "enabled": true
-  },
-  "organizeImports": {
-    "enabled": true
-  }
+    "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
+    "vcs": {
+        "enabled": true,
+        "clientKind": "git",
+        "useIgnoreFile": true
+    },
+    "formatter": {
+        "enabled": true,
+        "useEditorconfig": true
+    },
+    "linter": {
+        "enabled": true
+    },
+    "organizeImports": {
+        "enabled": true
+    }
 }
