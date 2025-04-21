@@ -55,7 +55,6 @@ impl ConfigStore for DefaultConfigStore {
     configs
   }
 
-  // TODO: test
   fn get_all_match_paths(&self) -> HashSet<String> {
     let mut paths = HashSet::new();
 
@@ -125,13 +124,6 @@ impl DefaultConfigStore {
       },
       non_fatal_errors,
     ))
-  }
-
-  pub fn from_configs(
-    default: Arc<dyn Config>,
-    customs: Vec<Arc<dyn Config>>,
-  ) -> DefaultConfigStore {
-    Self { default, customs }
   }
 }
 

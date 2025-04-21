@@ -24,11 +24,12 @@ use std::path::PathBuf;
 
 use clap::{App, AppSettings, Arg, ArgMatches, SubCommand};
 use cli::{CliAlias, CliModule, CliModuleArgs};
-use log::{error, info, warn};
+use log::{error, info};
 use logging::FileProxy;
 use simplelog::{
   CombinedLogger, ConfigBuilder, LevelFilter, SharedLogger, TermLogger, TerminalMode, WriteLogger,
 };
+use std::sync::LazyLock;
 
 use crate::{
   cli::{LogMode, PathsOverrides},
@@ -55,10 +56,8 @@ mod util;
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 const LOG_FILE_NAME: &str = "espanso.log";
 
-use lazy_static::lazy_static;
-
-lazy_static! {
-  static ref CLI_HANDLERS: Vec<CliModule> = vec![
+static CLI_HANDLERS: LazyLock<Vec<CliModule>> = LazyLock::new(|| {
+  vec![
     cli::path::new(),
     cli::edit::new(),
     cli::launcher::new(),
@@ -66,15 +65,17 @@ lazy_static! {
     cli::worker::new(),
     cli::daemon::new(),
     cli::modulo::new(),
-    cli::migrate::new(),
     cli::env_path::new(),
     cli::service::new(),
     cli::workaround::new(),
     cli::package::new(),
     cli::match_cli::new(),
     cli::cmd::new(),
-  ];
-  static ref ALIASES: Vec<CliAlias> = vec![
+  ]
+});
+
+static ALIASES: LazyLock<Vec<CliAlias>> = LazyLock::new(|| {
+  vec![
     CliAlias {
       subcommand: "start".to_owned(),
       forward_into: "service".to_owned(),
@@ -99,8 +100,8 @@ lazy_static! {
       subcommand: "uninstall".to_owned(),
       forward_into: "package".to_owned(),
     },
-  ];
-}
+  ]
+});
 
 fn main() {
   util::attach_console();
@@ -172,10 +173,14 @@ fn main() {
         .takes_value(false)
         .help("Run espanso as an unmanaged service (avoid system manager)"),
     );
-  let restart_subcommand = start_subcommand
-    .clone()
+  let restart_subcommand = SubCommand::with_name("restart")
     .about("Restart the espanso service")
-    .name("restart");
+    .arg(
+      Arg::with_name("unmanaged")
+        .long("unmanaged")
+        .required(false)
+        .takes_value(false),
+    );
   let stop_subcommand = SubCommand::with_name("stop").about("Stop espanso service");
   let status_subcommand =
     SubCommand::with_name("status").about("Check if the espanso daemon is running or not.");
@@ -187,7 +192,7 @@ fn main() {
     .arg(
       Arg::with_name("v")
         .short('v')
-        .multiple(true)
+        .action(clap::ArgAction::Count)
         .help("Sets the level of verbosity"),
     )
     .arg(
@@ -344,12 +349,6 @@ For example, specifying 'email' is equivalent to 'match/email.yml'."#))
         .subcommand(SubCommand::with_name("base").about("Print the default match file path.")),
     )
     .subcommand(
-      SubCommand::with_name("migrate")
-        .about("Automatically migrate legacy config files to the new v2 format.")
-        .arg(Arg::with_name("noconfirm").long("noconfirm"))
-        .help("Migrate the configuration without asking for confirmation"),
-    )
-    .subcommand(
       SubCommand::with_name("service")
         .subcommand(SubCommand::with_name("register").about("Register espanso as a system service"))
         .subcommand(
@@ -441,7 +440,7 @@ For example, specifying 'email' is equivalent to 'match/email.yml'."#))
           "Update a package. If 'all' is passed as package name, attempts to update all packages.",
         ).arg(Arg::with_name("package_name").help("Package name")))
         .subcommand(
-          SubCommand::with_name("list").about("List all installed packages"), // TODO: update <Package> and update all
+          SubCommand::with_name("list").about("List all installed packages"),
         ),
     )
     .subcommand(
@@ -479,7 +478,7 @@ For example, specifying 'email' is equivalent to 'match/email.yml'."#))
   // This should only apply when on macOS.
 
   let matches = clap_instance.clone().get_matches();
-  let log_level = match matches.occurrences_of("v") {
+  let log_level = match matches.get_count("v") {
     0 | 1 => LevelFilter::Info,
 
     // Trace mode is only available in debug mode for security reasons
@@ -571,7 +570,7 @@ For example, specifying 'email' is equivalent to 'match/email.yml'."#))
       let force_package_path = get_path_override(&matches, "package_dir", "ESPANSO_PACKAGE_DIR");
       let force_runtime_path = get_path_override(&matches, "runtime_dir", "ESPANSO_RUNTIME_DIR");
 
-      let paths = espanso_path::resolve_paths(
+      let paths = crate::path::resolve_paths(
         force_config_path.as_deref(),
         force_package_path.as_deref(),
         force_runtime_path.as_deref(),
@@ -589,18 +588,11 @@ For example, specifying 'email' is equivalent to 'match/email.yml'."#))
       log_system_info();
 
       if handler.requires_config {
-        let config_result =
-          load_config(&paths.config, &paths.packages).expect("unable to load config");
+        let config_result = load_config(&paths.config).expect("unable to load config");
 
-        cli_args.is_legacy_config = config_result.is_legacy_config;
         cli_args.config_store = Some(config_result.config_store);
         cli_args.match_store = Some(config_result.match_store);
         cli_args.non_fatal_errors = config_result.non_fatal_errors;
-
-        if config_result.is_legacy_config {
-          warn!("espanso is reading the configuration using compatibility mode, thus some features might not be available");
-          warn!("you can migrate to the new configuration format by running 'espanso migrate' in a terminal");
-        }
       }
 
       if handler.enable_logs {

@@ -95,7 +95,7 @@ impl<'a, State> MatcherMiddleware<'a, State> {
   }
 }
 
-impl<'a, State> Middleware for MatcherMiddleware<'a, State> {
+impl<State> Middleware for MatcherMiddleware<'_, State> {
   fn name(&self) -> &'static str {
     "matcher"
   }
@@ -253,5 +253,3 @@ fn should_skip_key_event_due_to_modifier_press(modifier_state: &ModifierState) -
     unreachable!()
   }
 }
-
-// TODO: test

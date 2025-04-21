@@ -17,16 +17,13 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use lazy_static::lazy_static;
 use log::error;
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::LazyLock};
 use thiserror::Error;
 
 use crate::{Extension, ExtensionOutput, ExtensionResult, Params, Value};
 
-lazy_static! {
-  static ref EMPTY_PARAMS: Params = Params::new();
-}
+static EMPTY_PARAMS: LazyLock<Params> = LazyLock::new(Params::new);
 
 pub trait FormProvider {
   fn show(&self, layout: &str, fields: &Params, options: &Params) -> FormProviderResult;
@@ -49,8 +46,8 @@ impl<'a> FormExtension<'a> {
   }
 }
 
-impl<'a> Extension for FormExtension<'a> {
-  fn name(&self) -> &str {
+impl Extension for FormExtension<'_> {
+  fn name(&self) -> &'static str {
     "form"
   }
 

@@ -42,31 +42,23 @@ fn path_main(args: CliModuleArgs) -> i32 {
   {
     println!("{}", paths.runtime.to_string_lossy());
   } else if cli_args.subcommand_matches("default").is_some() {
-    if args.is_legacy_config {
-      println!("{}", paths.config.join("default.yml").to_string_lossy());
-    } else {
-      println!(
-        "{}",
-        paths
-          .config
-          .join("config")
-          .join("default.yml")
-          .to_string_lossy()
-      );
-    }
+    println!(
+      "{}",
+      paths
+        .config
+        .join("config")
+        .join("default.yml")
+        .to_string_lossy()
+    );
   } else if cli_args.subcommand_matches("base").is_some() {
-    if args.is_legacy_config {
-      eprintln!("base config not available when using legacy configuration format");
-    } else {
-      println!(
-        "{}",
-        paths
-          .config
-          .join("match")
-          .join("base.yml")
-          .to_string_lossy()
-      );
-    }
+    println!(
+      "{}",
+      paths
+        .config
+        .join("match")
+        .join("base.yml")
+        .to_string_lossy()
+    );
   } else {
     println!("Config: {}", paths.config.to_string_lossy());
     println!("Packages: {}", paths.packages.to_string_lossy());

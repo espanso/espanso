@@ -18,9 +18,9 @@
  */
 
 use crate::icon::IconPaths;
+use crate::path::Paths;
 use clap::ArgMatches;
 use espanso_modulo::welcome::*;
-use espanso_path::Paths;
 
 pub fn welcome_main(matches: &ArgMatches, _: &Paths, icon_paths: &IconPaths) -> i32 {
   let dont_show_again_handler = Box::new(move |_dont_show: bool| {

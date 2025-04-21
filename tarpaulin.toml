@@ -1,0 +1,15 @@
+[report]
+out = ["Html"]
+
+[X11]
+# Exclude default features from the build.
+no-default-features = true
+# Features to include in the build, e.g., "feature1 feature2".
+features = "modulo"
+
+
+[Wayland]
+# Exclude default features from the build.
+no-default-features = true
+# Features to include in the build, e.g., "feature1 feature2".
+features = "wayland modulo"

@@ -11,13 +11,13 @@ build = "build.rs"
 wayland = ["sctk"]
 
 [dependencies]
+espanso-info = { path = "../espanso-info" }
 nix = { version = "0.29.0", features = ["socket"] }
 log.workspace = true
 lazycell.workspace = true
 anyhow.workspace = true
 thiserror.workspace = true
 regex.workspace = true
-lazy_static.workspace = true
 
 [dev-dependencies]
 enum-as-inner.workspace = true

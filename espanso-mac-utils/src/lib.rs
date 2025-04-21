@@ -18,8 +18,6 @@
  */
 
 #[cfg(target_os = "macos")]
-use lazy_static::lazy_static;
-#[cfg(target_os = "macos")]
 use std::{ffi::CStr, os::raw::c_char};
 
 mod ffi;
@@ -78,10 +76,10 @@ pub fn get_secure_input_application() -> Option<(String, String)> {
 #[cfg(target_os = "macos")]
 fn get_app_name_from_path(path: &str) -> Option<String> {
   use regex::Regex;
+  use std::sync::LazyLock;
 
-  lazy_static! {
-    static ref APP_REGEX: Regex = Regex::new("/([^/]+).(app|bundle)/").unwrap();
-  };
+  static APP_REGEX: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new("/([^/]+).(app|bundle)/").unwrap());
 
   let caps = APP_REGEX.captures(path);
   caps.map(|caps| caps.get(1).map_or("", |m| m.as_str()).to_owned())
@@ -133,18 +131,18 @@ mod tests {
   #[test]
   fn test_get_app_name_from_path() {
     let app_name = get_app_name_from_path("/Applications/iTerm.app/Contents/MacOS/iTerm2");
-    assert_eq!(app_name.unwrap(), "iTerm")
+    assert_eq!(app_name.unwrap(), "iTerm");
   }
 
   #[test]
   fn test_get_app_name_from_path_no_app_name() {
     let app_name = get_app_name_from_path("/another/directory");
-    assert!(app_name.is_none())
+    assert!(app_name.is_none());
   }
 
   #[test]
   fn test_get_app_name_from_path_security_bundle() {
     let app_name = get_app_name_from_path("/System/Library/Frameworks/Security.framework/Versions/A/MachServices/SecurityAgent.bundle/Contents/MacOS/SecurityAgent");
-    assert_eq!(app_name.unwrap(), "SecurityAgent")
+    assert_eq!(app_name.unwrap(), "SecurityAgent");
   }
 }

@@ -36,7 +36,7 @@ impl<'a> SuppressMiddleware<'a> {
   }
 }
 
-impl<'a> Middleware for SuppressMiddleware<'a> {
+impl Middleware for SuppressMiddleware<'_> {
   fn name(&self) -> &'static str {
     "suppress"
   }

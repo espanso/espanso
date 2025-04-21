@@ -39,7 +39,7 @@ impl<'a> SearchMiddleware<'a> {
   }
 }
 
-impl<'a> Middleware for SearchMiddleware<'a> {
+impl Middleware for SearchMiddleware<'_> {
   fn name(&self) -> &'static str {
     "search"
   }
@@ -72,5 +72,3 @@ impl<'a> Middleware for SearchMiddleware<'a> {
     event
   }
 }
-
-// TODO: test

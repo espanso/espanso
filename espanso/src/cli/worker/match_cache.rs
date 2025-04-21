@@ -60,7 +60,7 @@ impl<'a> super::engine::process::middleware::render::MatchProvider<'a> for Match
   }
 }
 
-impl<'a> espanso_engine::process::MatchInfoProvider for MatchCache<'a> {
+impl espanso_engine::process::MatchInfoProvider for MatchCache<'_> {
   fn get_force_mode(&self, match_id: i32) -> Option<espanso_engine::event::effect::TextInjectMode> {
     let m = self.cache.get(&match_id)?;
     if let MatchEffect::Text(text_effect) = &m.effect {
@@ -160,7 +160,7 @@ impl<'a> super::engine::process::middleware::multiplex::MatchProvider<'a>
   }
 }
 
-impl<'a> espanso_engine::process::MatchProvider for CombinedMatchCache<'a> {
+impl espanso_engine::process::MatchProvider for CombinedMatchCache<'_> {
   fn get_all_matches_ids(&self) -> Vec<i32> {
     let mut ids: Vec<i32> = self.builtin_match_cache.keys().copied().collect();
     ids.extend(self.user_match_cache.ids());
@@ -168,7 +168,7 @@ impl<'a> espanso_engine::process::MatchProvider for CombinedMatchCache<'a> {
   }
 }
 
-impl<'a> espanso_engine::process::MatchResolver for CombinedMatchCache<'a> {
+impl espanso_engine::process::MatchResolver for CombinedMatchCache<'_> {
   fn find_matches_from_trigger(&self, trigger: &str) -> Vec<DetectedMatch> {
     let user_matches: Vec<DetectedMatch> = self
       .user_match_cache

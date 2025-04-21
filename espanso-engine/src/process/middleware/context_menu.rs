@@ -201,5 +201,3 @@ impl Middleware for ContextMenuMiddleware {
     }
   }
 }
-
-// TODO: test

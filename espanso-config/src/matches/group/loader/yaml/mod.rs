@@ -17,6 +17,8 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use std::sync::LazyLock;
+
 use crate::{
   counter::next_id,
   error::{ErrorRecord, NonFatalErrorSet},
@@ -27,7 +29,6 @@ use crate::{
   },
 };
 use anyhow::{anyhow, bail, Context, Result};
-use lazy_static::lazy_static;
 use parse::YAMLMatchGroup;
 use regex::{Captures, Regex};
 
@@ -42,11 +43,10 @@ use super::Importer;
 pub(crate) mod parse;
 mod util;
 
-lazy_static! {
-  static ref VAR_REGEX: Regex = Regex::new("\\{\\{\\s*(\\w+)(\\.\\w+)?\\s*\\}\\}").unwrap();
-  static ref FORM_CONTROL_REGEX: Regex =
-    Regex::new("\\[\\[\\s*(\\w+)(\\.\\w+)?\\s*\\]\\]").unwrap();
-}
+static VAR_REGEX: LazyLock<Regex> =
+  LazyLock::new(|| Regex::new("\\{\\{\\s*(\\w+)(\\.\\w+)?\\s*\\}\\}").unwrap());
+static FORM_CONTROL_REGEX: LazyLock<Regex> =
+  LazyLock::new(|| Regex::new("\\[\\[\\s*(\\w+)(\\.\\w+)?\\s*\\]\\]").unwrap());
 
 // Create an alias to make the meaning more explicit
 type Warning = anyhow::Error;
@@ -124,7 +124,7 @@ impl Importer for YAMLImporter {
 
 pub fn try_convert_into_match(
   yaml_match: YAMLMatch,
-  use_compatibility_mode: bool,
+  use_compatibility_mode: bool, // TODO: unused variable. Remove from the codebase
 ) -> Result<(Match, Vec<Warning>)> {
   let mut warnings = Vec::new();
 
@@ -175,13 +175,11 @@ pub fn try_convert_into_match(
       uppercase_style,
     })
   } else if let Some(regex) = yaml_match.regex {
-    // TODO: add test case
     MatchCause::Regex(RegexCause { regex })
   } else {
     MatchCause::None
   };
 
-  // TODO: test force_mode/force_clipboard
   let force_mode = if let Some(true) = yaml_match.force_clipboard {
     Some(TextInjectMode::Clipboard)
   } else if let Some(mode) = yaml_match.force_mode {
@@ -196,7 +194,6 @@ pub fn try_convert_into_match(
 
   let effect =
     if yaml_match.replace.is_some() || yaml_match.markdown.is_some() || yaml_match.html.is_some() {
-      // TODO: test markdown and html cases
       let (replace, format) = if let Some(plain) = yaml_match.replace {
         (plain, TextFormat::Plain)
       } else if let Some(markdown) = yaml_match.markdown {
@@ -282,7 +279,6 @@ pub fn try_convert_into_match(
         force_mode,
       })
     } else if let Some(image_path) = yaml_match.image_path {
-      // TODO: test image case
       MatchEffect::Image(ImageEffect { path: image_path })
     } else {
       MatchEffect::None

@@ -46,7 +46,7 @@ impl<'a> DelayForModifierReleaseMiddleware<'a> {
   }
 }
 
-impl<'a> Middleware for DelayForModifierReleaseMiddleware<'a> {
+impl Middleware for DelayForModifierReleaseMiddleware<'_> {
   fn name(&self) -> &'static str {
     "delay_modifiers"
   }
@@ -83,5 +83,3 @@ fn is_injection_event(event_type: &EventType) -> bool {
       | EventType::MarkdownInject(_)
   )
 }
-
-// TODO: test

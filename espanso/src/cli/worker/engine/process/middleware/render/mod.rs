@@ -70,7 +70,6 @@ impl<'a> RendererAdapter<'a> {
   }
 }
 
-// TODO: test
 fn generate_template_map(match_provider: &dyn MatchProvider) -> HashMap<i32, Option<Template>> {
   let mut template_map = HashMap::new();
   for m in match_provider.matches() {
@@ -80,7 +79,6 @@ fn generate_template_map(match_provider: &dyn MatchProvider) -> HashMap<i32, Opt
   template_map
 }
 
-// TODO: test
 fn generate_global_vars_map(config_provider: &dyn ConfigProvider) -> HashMap<i32, Variable> {
   let mut global_vars_map = HashMap::new();
 
@@ -95,7 +93,6 @@ fn generate_global_vars_map(config_provider: &dyn ConfigProvider) -> HashMap<i32
   global_vars_map
 }
 
-// TODO: test
 fn generate_context<'a>(
   match_set: &MatchSet,
   template_map: &'a HashMap<i32, Option<Template>>,
@@ -270,7 +267,6 @@ fn is_propagate_case(m: &Match) -> bool {
   }
 }
 
-// TODO: test
 fn calculate_casing_style(
   trigger: &str,
   uppercasing_style: Option<UpperCasingStyle>,

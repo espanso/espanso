@@ -17,7 +17,7 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use espanso_path::Paths;
+use crate::path::Paths;
 
 use espanso_engine::process::PathProvider;
 
@@ -31,7 +31,7 @@ impl<'a> PathProviderAdapter<'a> {
   }
 }
 
-impl<'a> PathProvider for PathProviderAdapter<'a> {
+impl PathProvider for PathProviderAdapter<'_> {
   fn get_config_path(&self) -> &std::path::Path {
     &self.paths.config
   }

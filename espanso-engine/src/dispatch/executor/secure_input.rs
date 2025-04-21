@@ -40,7 +40,7 @@ impl<'a> SecureInputExecutor<'a> {
   }
 }
 
-impl<'a> Executor for SecureInputExecutor<'a> {
+impl Executor for SecureInputExecutor<'_> {
   fn execute(&self, event: &Event) -> bool {
     if let EventType::DisplaySecureInputTroubleshoot = &event.etype {
       if let Err(error) = self.manager.display_secure_input_troubleshoot() {

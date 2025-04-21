@@ -36,7 +36,7 @@ impl<'a> ContextMenuExecutor<'a> {
   }
 }
 
-impl<'a> Executor for ContextMenuExecutor<'a> {
+impl Executor for ContextMenuExecutor<'_> {
   fn execute(&self, event: &Event) -> bool {
     if let EventType::ShowContextMenu(context_menu_event) = &event.etype {
       if let Err(error) = self.handler.show_context_menu(&context_menu_event.items) {
@@ -49,5 +49,3 @@ impl<'a> Executor for ContextMenuExecutor<'a> {
     false
   }
 }
-
-// TODO: test

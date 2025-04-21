@@ -19,6 +19,7 @@
 
 use std::thread::JoinHandle;
 
+use crate::path::Paths;
 use anyhow::Result;
 use crossbeam::channel::Receiver;
 use espanso_clipboard::ClipboardOptions;
@@ -26,7 +27,6 @@ use espanso_config::{config::ConfigStore, matches::store::MatchStore};
 use espanso_detect::SourceCreationOptions;
 use espanso_engine::event::{EventType, ExitMode};
 use espanso_inject::{InjectorCreationOptions, KeyboardStateProvider};
-use espanso_path::Paths;
 use espanso_ui::{event::UIEvent, UIRemote};
 use log::{debug, error, info, warn};
 

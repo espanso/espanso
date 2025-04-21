@@ -23,9 +23,9 @@ use crate::{
   CasingStyle, Context, Extension, ExtensionOutput, ExtensionResult, RenderOptions, RenderResult,
   Renderer, Scope, Template, Value, Variable,
 };
-use lazy_static::lazy_static;
 use log::{error, warn};
 use regex::{Captures, Regex};
+use std::sync::LazyLock;
 use thiserror::Error;
 
 use self::util::{inject_variables_into_params, render_variables};
@@ -33,11 +33,9 @@ use self::util::{inject_variables_into_params, render_variables};
 mod resolve;
 mod util;
 
-lazy_static! {
-  pub(crate) static ref VAR_REGEX: Regex =
-    Regex::new(r"\{\{\s*((?P<name>\w+)(\.(?P<subname>(\w+)))?)\s*\}\}").unwrap();
-  static ref WORD_REGEX: Regex = Regex::new(r"(\w+)").unwrap();
-}
+pub(crate) static VAR_REGEX: LazyLock<Regex> =
+  LazyLock::new(|| Regex::new(r"\{\{\s*((?P<name>\w+)(\.(?P<subname>(\w+)))?)\s*\}\}").unwrap());
+static WORD_REGEX: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(\w+)").unwrap());
 
 pub(crate) struct DefaultRenderer<'a> {
   extensions: HashMap<String, &'a dyn Extension>,
@@ -53,7 +51,7 @@ impl<'a> DefaultRenderer<'a> {
   }
 }
 
-impl<'a> Renderer for DefaultRenderer<'a> {
+impl Renderer for DefaultRenderer<'_> {
   fn render(
     &self,
     template: &Template,
@@ -264,7 +262,7 @@ mod tests {
   struct MockExtension {}
 
   impl Extension for MockExtension {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
       "mock"
     }
 

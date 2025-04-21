@@ -38,7 +38,7 @@ impl<'a> KeyInjectExecutor<'a> {
   }
 }
 
-impl<'a> Executor for KeyInjectExecutor<'a> {
+impl Executor for KeyInjectExecutor<'_> {
   fn execute(&self, event: &Event) -> bool {
     if let EventType::KeySequenceInject(inject_event) = &event.etype {
       if let Err(error) = self.injector.inject_sequence(&inject_event.keys) {

@@ -67,12 +67,12 @@ fn secure_input_main(
       let should_notify = if let Some(old_pid) = last_secure_input_pid {
         // We already detected a `SecureInput` app
         #[allow(clippy::needless_bool)]
-        if old_pid != pid {
-          // The old app is different from the current one, we should take action
-          true
-        } else {
+        if old_pid == pid {
           // We already notified this application before
           false
+        } else {
+          // The old app is different from the current one, we should take action
+          true
         }
       } else {
         // First time we see this `SecureInput` app, we should take action
@@ -108,7 +108,7 @@ fn secure_input_main(
         }
       }
 
-      last_secure_input_pid = None
+      last_secure_input_pid = None;
     }
 
     // If an application is currently keeping secure input, refresh the status more often

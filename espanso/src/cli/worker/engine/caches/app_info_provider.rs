@@ -41,7 +41,7 @@ impl<'a> CachedAppInfoProvider<'a> {
   }
 }
 
-impl<'a> AppInfoProvider for CachedAppInfoProvider<'a> {
+impl AppInfoProvider for CachedAppInfoProvider<'_> {
   fn get_info(&self) -> espanso_info::AppInfo {
     let mut cached_info = self.cached_info.borrow_mut();
     if let Some((instant, cached_value)) = &*cached_info {

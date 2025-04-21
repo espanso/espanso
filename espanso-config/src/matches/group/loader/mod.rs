@@ -18,8 +18,7 @@
  */
 
 use anyhow::Result;
-use lazy_static::lazy_static;
-use std::path::Path;
+use std::{path::Path, sync::LazyLock};
 use thiserror::Error;
 
 use crate::error::NonFatalErrorSet;
@@ -35,9 +34,8 @@ trait Importer {
   fn load_group(&self, path: &Path) -> Result<(MatchGroup, Option<NonFatalErrorSet>)>;
 }
 
-lazy_static! {
-  static ref IMPORTERS: Vec<Box<dyn Importer + Sync + Send>> = vec![Box::new(YAMLImporter::new()),];
-}
+static IMPORTERS: LazyLock<Vec<Box<dyn Importer + Sync + Send>>> =
+  LazyLock::new(|| vec![Box::new(YAMLImporter::new())]);
 
 pub(crate) fn load_match_group(path: &Path) -> Result<(MatchGroup, Option<NonFatalErrorSet>)> {
   if let Some(extension) = path.extension() {

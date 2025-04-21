@@ -35,7 +35,6 @@ pub(crate) struct MatchGroup {
 }
 
 impl MatchGroup {
-  // TODO: test
   pub fn load(group_path: &Path) -> Result<(Self, Option<NonFatalErrorSet>)> {
     loader::load_match_group(group_path)
   }

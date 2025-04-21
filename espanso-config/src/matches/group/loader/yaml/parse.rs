@@ -49,7 +49,6 @@ impl YAMLMatchGroup {
     Ok(serde_yaml::from_str(yaml)?)
   }
 
-  // TODO: test
   pub fn parse_from_file(path: &Path) -> Result<Self> {
     let content = std::fs::read_to_string(path)?;
     Self::parse_from_str(&content)

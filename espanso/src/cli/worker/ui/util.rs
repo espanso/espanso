@@ -21,7 +21,6 @@ use espanso_ui::icons::TrayIcon;
 
 use crate::icon::IconPaths;
 
-// TODO: test
 pub fn convert_icon_paths_to_tray_vec(icon_paths: &IconPaths) -> Vec<(TrayIcon, String)> {
   let mut paths = Vec::new();
 
