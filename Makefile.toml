@@ -125,11 +125,13 @@ script = { file = "scripts/format_clang.rs"}
 
 [tasks.fmt-nix]
 command = "nix"
+condition = { platforms = ["linux", "mac"] }
 args = ["fmt", "."]
 
 [tasks.fmt-json]
 script_runner = "@rust"
-script = { file = "scripts/format_json.rs"}
+command = "biome"
+args = ["format", ".", "--write"]
 
 [tasks.fmt-rs]
 command = "cargo"
