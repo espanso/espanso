@@ -17,6 +17,7 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use anyhow::Result;
 use log::info;
 use std::process::Command;
 use sysinfo::{System, SystemExt};
@@ -27,7 +28,8 @@ pub fn set_command_flags(command: &mut Command) {
   // See: https://github.com/espanso/espanso/issues/249
   // and https://learn.microsoft.com/en-us/windows/win32/procthread/process-creation-flags
   use std::os::windows::process::CommandExt;
-  use winapi::um::winbase::CREATE_NO_WINDOW;
+
+  const CREATE_NO_WINDOW: u32 = 0x0800_0000;
   command.creation_flags(CREATE_NO_WINDOW);
 }
 
@@ -37,15 +39,18 @@ pub fn set_command_flags(_: &mut Command) {
 }
 
 #[cfg(target_os = "windows")]
-pub fn attach_console() {
+pub fn attach_console() -> Result<()> {
   // When using the windows subsystem we loose the terminal output.
   // Therefore we try to attach to the current console if available.
-  unsafe { winapi::um::wincon::AttachConsole(0xFFFF_FFFF) };
+  use windows::Win32::System::Console::AttachConsole;
+  unsafe { AttachConsole(0xFFFF_FFFF)? };
+  Ok(())
 }
 
 #[cfg(not(target_os = "windows"))]
-pub fn attach_console() {
+pub fn attach_console() -> Result<()> {
   // Not necessary on Linux and macOS
+  Ok(())
 }
 
 pub fn log_system_info() {

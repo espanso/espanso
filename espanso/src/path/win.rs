@@ -18,6 +18,10 @@
  */
 
 use anyhow::Result;
+use windows::Win32::Foundation::{LPARAM, WPARAM};
+use windows::Win32::UI::WindowsAndMessaging::{
+  SendMessageTimeoutW, HWND_BROADCAST, SMTO_ABORTIFHUNG, WM_SETTINGCHANGE,
+};
 use winreg::enums::*;
 use winreg::RegKey;
 
@@ -73,20 +77,23 @@ fn write_user_path_value(value: String) -> Result<()> {
 }
 
 fn send_change_broadcast() {
-  use winapi::um::winuser::{SendMessageTimeoutW, HWND_BROADCAST, WM_SETTINGCHANGE};
-
   let wide_string = widestring::WideString::from("Environment".to_string());
 
   unsafe {
-    let mut res: usize = 0;
+    // a null ptr
+    let res = std::ptr::null_mut::<usize>();
+
+    // docs: https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-sendmessagetimeoutw
     SendMessageTimeoutW(
       HWND_BROADCAST,
+      // WM_SETTINGCHANGE, WPARM and LPARM docs:
+      // https://learn.microsoft.com/en-us/windows/win32/winmsg/wm-settingchange
       WM_SETTINGCHANGE,
-      0,
-      wide_string.as_ptr() as isize,
-      2,
+      WPARAM(0),
+      LPARAM(*wide_string.as_ptr() as isize),
+      SMTO_ABORTIFHUNG,
       50,
-      &mut res,
+      Some(res),
     );
   }
 }
