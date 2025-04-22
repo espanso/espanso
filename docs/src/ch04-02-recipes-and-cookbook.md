@@ -96,7 +96,7 @@ npm install --global @biomejs/biome
 bun install --global @biomejs/biome
 ```
 
-- and `clang` to format files
+- and `clang-format` to format files
 
 You can install it in Windows with npm (so you don't need to deal with MinGW)
 
