@@ -20,9 +20,9 @@
 use std::path::Path;
 
 use crate::icon::IconPaths;
+use crate::path::Paths;
 use crate::preferences::Preferences;
 use espanso_modulo::troubleshooting::{TroubleshootingHandlers, TroubleshootingOptions};
-use espanso_path::Paths;
 
 pub fn troubleshoot_main(paths: &Paths, icon_paths: &IconPaths) -> i32 {
   let preferences =

@@ -1,20 +1,15 @@
-# Huge thanks to Alacritty, as their configuration served as a starting point for this one!
-# See: https://github.com/alacritty/alacritty
-
 name: CI
 
 on:
   push:
     paths-ignore:
       - 'docs/**'
-      - '*.md'
     branches:
       - master
       - dev
   pull_request:
     paths-ignore:
       - 'docs/**'
-      - '*.md'
 
 env:
   CARGO_TERM_COLOR: always

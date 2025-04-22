@@ -47,5 +47,3 @@ impl Middleware for ExitMiddleware {
     event
   }
 }
-
-// TODO: test

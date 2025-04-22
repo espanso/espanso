@@ -43,7 +43,7 @@ pub mod types {
 mod interop {
   use crate::sys;
 
-  use super::super::interop::*;
+  use super::super::interop::{Interoperable, SearchItem, SearchMetadata};
   use super::types;
   use std::ffi::{c_void, CString};
 
@@ -161,7 +161,9 @@ struct SearchData {
 }
 
 pub fn show(search: types::Search, algorithm: Box<SearchAlgorithmCallback>) -> Option<String> {
-  use super::interop::*;
+  use super::interop::{
+    interop_show_search, update_items, Interoperable, SearchItem, SearchMetadata,
+  };
 
   let owned_search: interop::OwnedSearch = (&search).into();
   let metadata: *const SearchMetadata = owned_search.as_ptr() as *const SearchMetadata;

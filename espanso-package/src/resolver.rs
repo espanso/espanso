@@ -52,7 +52,7 @@ pub fn resolve_package(
       .into_iter()
       .find(|package| package.manifest.version == explicit_version)
   } else {
-    matching_packages.into_iter().last()
+    matching_packages.into_iter().next_back()
   };
 
   if let Some(matching_package) = matching_package {

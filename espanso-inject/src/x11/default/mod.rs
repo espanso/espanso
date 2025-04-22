@@ -218,14 +218,14 @@ impl X11DefaultInjector {
           // Keysym was found
           if sym != 0 {
             sym_map.entry(sym).or_insert(key_record);
-          };
+          }
 
           // Char was found
           if result > 0 {
             let raw_string = unsafe { CStr::from_ptr(buffer.as_ptr()) };
             let string = raw_string.to_string_lossy().to_string();
             char_map.entry(string).or_insert(key_record);
-          };
+          }
 
           // We need to reset the context state to prevent
           // deadkeys effect to propagate to the next combination

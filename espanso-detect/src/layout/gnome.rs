@@ -17,15 +17,14 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use lazy_static::lazy_static;
 use log::error;
 use regex::Regex;
 use std::path::PathBuf;
 use std::process::Command;
+use std::sync::LazyLock;
 
-lazy_static! {
-  static ref LAYOUT_EXTRACT_REGEX: Regex = Regex::new(r"^\[\('.*?', '(.*?)'\)").unwrap();
-}
+static LAYOUT_EXTRACT_REGEX: LazyLock<Regex> =
+  LazyLock::new(|| Regex::new(r"^\[\('.*?', '(.*?)'\)").unwrap());
 
 pub fn get_active_layout() -> Option<String> {
   match Command::new("gsettings")

@@ -128,5 +128,3 @@ impl Middleware for MatchSelectMiddleware<'_> {
     event
   }
 }
-
-// TODO: test

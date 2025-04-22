@@ -54,5 +54,3 @@ impl Middleware for MultiplexMiddleware<'_> {
     event
   }
 }
-
-// TODO: test

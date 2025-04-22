@@ -51,7 +51,6 @@ impl Default for Match {
 }
 
 impl Match {
-  // TODO: test
   pub fn description(&self) -> &str {
     if let Some(label) = &self.label {
       label
@@ -64,7 +63,6 @@ impl Match {
     }
   }
 
-  // TODO: test
   pub fn cause_description(&self) -> Option<&str> {
     self.cause.description()
   }

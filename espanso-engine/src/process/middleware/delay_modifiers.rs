@@ -83,5 +83,3 @@ fn is_injection_event(event_type: &EventType) -> bool {
       | EventType::MarkdownInject(_)
   )
 }
-
-// TODO: test

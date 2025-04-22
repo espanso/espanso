@@ -19,11 +19,11 @@
 
 use anyhow::Result;
 use const_format::formatcp;
-use lazy_static::lazy_static;
 use regex::Regex;
 use std::fs::create_dir_all;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
+use std::sync::LazyLock;
 use thiserror::Error;
 
 use crate::{error_eprintln, info_println, warn_eprintln};
@@ -129,9 +129,8 @@ pub fn is_registered() -> bool {
     }
 
     // Make sure the systemd service points to the right binary
-    lazy_static! {
-      static ref EXEC_PATH_REGEX: Regex = Regex::new("ExecStart=(?P<path>.*?)\\s").unwrap();
-    }
+    static EXEC_PATH_REGEX: LazyLock<Regex> =
+      LazyLock::new(|| Regex::new("ExecStart=(?P<path>.*?)\\s").unwrap());
 
     match Command::new("systemctl")
       .args(["--user", "cat", LINUX_SERVICE_NAME])

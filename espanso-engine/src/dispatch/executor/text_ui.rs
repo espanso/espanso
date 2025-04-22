@@ -59,5 +59,3 @@ impl Executor for TextUIExecutor<'_> {
     false
   }
 }
-
-// TODO: test

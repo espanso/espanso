@@ -110,5 +110,3 @@ struct InjectionRecord {
   trigger: Option<String>,
   injected_text: Option<String>,
 }
-
-// TODO: test

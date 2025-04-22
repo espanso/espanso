@@ -48,7 +48,6 @@ impl FormProvider for FormProviderAdapter<'_> {
   }
 }
 
-// TODO: test
 fn convert_fields(fields: &Params) -> HashMap<String, FormField> {
   let mut out = HashMap::new();
   for (name, field) in fields {

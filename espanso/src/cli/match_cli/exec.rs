@@ -19,10 +19,10 @@
 
 use std::collections::HashMap;
 
+use crate::path::Paths;
 use anyhow::{bail, Context, Result};
 use clap::ArgMatches;
 use espanso_ipc::IPCClient;
-use espanso_path::Paths;
 
 use crate::{
   ipc::{create_ipc_client_to_worker, IPCEvent, RequestMatchExpansionPayload},

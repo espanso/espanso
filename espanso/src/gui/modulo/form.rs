@@ -99,7 +99,6 @@ struct ModuloFormConfig<'a> {
   max_form_height: usize,
 }
 
-// TODO: test
 fn convert_fields_into_object(fields: &HashMap<String, FormField>) -> Map<String, Value> {
   let mut obj = Map::new();
   for (name, field) in fields {

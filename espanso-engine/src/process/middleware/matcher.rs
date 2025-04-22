@@ -253,5 +253,3 @@ fn should_skip_key_event_due_to_modifier_press(modifier_state: &ModifierState) -
     unreachable!()
   }
 }
-
-// TODO: test

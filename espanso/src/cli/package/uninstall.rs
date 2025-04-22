@@ -17,9 +17,9 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::path::Paths;
 use anyhow::{anyhow, Context, Result};
 use clap::ArgMatches;
-use espanso_path::Paths;
 
 use crate::info_println;
 

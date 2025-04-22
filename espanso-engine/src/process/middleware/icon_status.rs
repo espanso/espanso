@@ -77,5 +77,3 @@ impl Middleware for IconStatusMiddleware {
     event
   }
 }
-
-// TODO: test

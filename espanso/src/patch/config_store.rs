@@ -89,5 +89,3 @@ impl ConfigStore for PatchedConfigStore {
     self.config_store.get_all_match_paths()
   }
 }
-
-// TODO: test

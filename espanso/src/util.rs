@@ -23,10 +23,12 @@ use sysinfo::{System, SystemExt};
 
 #[cfg(target_os = "windows")]
 pub fn set_command_flags(command: &mut Command) {
-  use std::os::windows::process::CommandExt;
   // Avoid showing the shell window
   // See: https://github.com/espanso/espanso/issues/249
-  command.creation_flags(0x0800_0000);
+  // and https://learn.microsoft.com/en-us/windows/win32/procthread/process-creation-flags
+  use std::os::windows::process::CommandExt;
+  use winapi::um::winbase::CREATE_NO_WINDOW;
+  command.creation_flags(CREATE_NO_WINDOW);
 }
 
 #[cfg(not(target_os = "windows"))]

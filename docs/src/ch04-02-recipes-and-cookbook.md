@@ -35,7 +35,6 @@ We know some false positives, running on windows or linux gives:
 unused dependencies:
 `espanso-mac-utils v0.1.0 (C:\Users\user\repos\espanso\espanso-mac-utils)`
 ├─── dependencies
-│    ├─── "lazy_static"
 │    └─── "regex"
 └─── build-dependencies
      └─── "cc"
@@ -61,3 +60,23 @@ An run it with
 ```bash
 cargo outdated
 ```
+
+## make a coverage report
+
+install `cargo-tarpaulin`
+
+```
+cargo binstall cargo-tarpaulin
+```
+
+and then
+
+```
+cargo tarpaulin
+```
+
+that reads the file `tarpaulin.toml` where we have the config. Once it's
+finished, it makes an HTML report in the root folder (gitignored)
+
+You can also `Ctrl + Shift + p` in vs code and select 
+`Tasks: Run Task: rust coverage`

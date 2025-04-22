@@ -22,17 +22,17 @@ use crate::{package::DefaultPackage, resolver::resolve_package, Package, Package
 use anyhow::Result;
 
 pub struct GitLabPackageProvider {
-  repo_author: String,
-  repo_name: String,
-  repo_branch: String,
+  author: String,
+  name: String,
+  branch: String,
 }
 
 impl GitLabPackageProvider {
   pub fn new(repo_author: String, repo_name: String, repo_branch: String) -> Self {
     Self {
-      repo_author,
-      repo_name,
-      repo_branch,
+      author: repo_author,
+      name: repo_name,
+      branch: repo_branch,
     }
   }
 }
@@ -45,7 +45,7 @@ impl PackageProvider for GitLabPackageProvider {
   fn download(&self, package: &PackageSpecifier) -> Result<Box<dyn Package>> {
     let download_url = format!(
       "https://gitlab.com/{}/{}/-/archive/{}/{}-{}.zip",
-      &self.repo_author, &self.repo_name, &self.repo_branch, &self.repo_name, &self.repo_branch
+      &self.author, &self.name, &self.branch, &self.name, &self.branch
     );
 
     let temp_dir = tempdir::TempDir::new("espanso-package-download")?;

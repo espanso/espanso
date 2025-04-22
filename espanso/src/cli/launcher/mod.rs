@@ -32,8 +32,6 @@ mod daemon;
 mod edition_check;
 mod util;
 
-// TODO: test also with modulo feature disabled
-
 pub fn new() -> CliModule {
   #[allow(clippy::needless_update)]
   CliModule {

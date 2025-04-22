@@ -113,5 +113,3 @@ impl Executor for TextInjectExecutor<'_> {
     false
   }
 }
-
-// TODO: test

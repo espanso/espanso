@@ -52,5 +52,3 @@ impl Executor for IconUpdateExecutor<'_> {
     false
   }
 }
-
-// TODO: test

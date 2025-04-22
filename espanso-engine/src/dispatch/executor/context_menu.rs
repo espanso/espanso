@@ -49,5 +49,3 @@ impl Executor for ContextMenuExecutor<'_> {
     false
   }
 }
-
-// TODO: test

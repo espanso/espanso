@@ -20,6 +20,7 @@
 use std::ffi::CStr;
 use std::os::raw::{c_char, c_int};
 use std::path::PathBuf;
+use std::sync::LazyLock;
 use std::sync::Mutex;
 
 use crate::sys;
@@ -28,20 +29,18 @@ use crate::sys::troubleshooting::interop::OwnedErrorSet;
 use crate::sys::util::convert_to_cstring_or_null;
 use crate::troubleshooting::{TroubleshootingHandlers, TroubleshootingOptions};
 use anyhow::Result;
-use lazy_static::lazy_static;
 
-lazy_static! {
-  static ref HANDLERS: Mutex<Option<TroubleshootingHandlers>> = Mutex::new(None);
-}
+static HANDLERS: LazyLock<Mutex<Option<TroubleshootingHandlers>>> =
+  LazyLock::new(|| Mutex::new(None));
 
 #[allow(dead_code)]
 mod interop {
   use crate::sys;
   use crate::troubleshooting::{ErrorRecord, ErrorSet};
 
-  use super::interop::{ErrorMetadata, ErrorSetMetadata};
-
-  use super::super::interop::*;
+  use super::super::interop::{
+    ErrorMetadata, ErrorSetMetadata, ERROR_METADATA_LEVEL_ERROR, ERROR_METADATA_LEVEL_WARNING,
+  };
   use std::{ffi::CString, os::raw::c_int};
 
   pub(crate) struct OwnedErrorSet {

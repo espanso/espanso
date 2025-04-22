@@ -62,5 +62,3 @@ impl Middleware for CauseCompensateMiddleware {
     event
   }
 }
-
-// TODO: test

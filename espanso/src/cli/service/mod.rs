@@ -32,8 +32,8 @@ use crate::{
 
 #[cfg(target_os = "macos")]
 mod macos;
+use crate::path::Paths;
 use clap::ArgMatches;
-use espanso_path::Paths;
 #[cfg(target_os = "macos")]
 use macos::*;
 

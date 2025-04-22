@@ -46,10 +46,10 @@ ___
 
 Visit the [official documentation](https://espanso.org/docs/).
 
-## Support
-
 If you need some help to setup espanso, want to ask a question or simply get involved
-in the community, [Join the official Subreddit](https://www.reddit.com/r/espanso/)! :)
+in the community, you can [join the official Subreddit](https://www.reddit.com/r/espanso/)
+ or [join the official Discord](https://discord.gg/DFcCNDg7bB)!
+
 
 ## Donations
 

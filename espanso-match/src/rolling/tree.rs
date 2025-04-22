@@ -83,7 +83,7 @@ fn insert_items_recursively<Id>(id: Id, node: &mut MatcherTreeNode<Id>, items: &
             matches.push(id);
           } else {
             entry.1 = MatcherTreeRef::Matches(vec![id]);
-          };
+          }
         } else {
           node
             .keys
@@ -96,7 +96,7 @@ fn insert_items_recursively<Id>(id: Id, node: &mut MatcherTreeNode<Id>, items: &
             matches.push(id);
           } else {
             entry.1 = MatcherTreeRef::Matches(vec![id]);
-          };
+          }
         } else {
           node
             .chars
@@ -114,7 +114,7 @@ fn insert_items_recursively<Id>(id: Id, node: &mut MatcherTreeNode<Id>, items: &
             matches.push(id);
           } else {
             entry.1 = MatcherTreeRef::Matches(vec![id]);
-          };
+          }
         } else {
           node
             .chars_insensitive

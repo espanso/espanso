@@ -189,7 +189,7 @@ impl PackageIndex {
         .into_iter()
         .find(|package| package.version == explicit_version)
     } else {
-      matching_packages.into_iter().last()
+      matching_packages.into_iter().next_back()
     }
   }
 }
