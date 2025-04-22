@@ -208,6 +208,10 @@
                 "trim": {
                   "type": "boolean",
                   "description": "Trim the output of the command. Useful if the cmd has an excess in spaces or newlines"
+                },
+                "debug": {
+                  "type": "boolean",
+                  "description": "Add the result of the shell operation in the espanso logs"
                 }
               }
             },
