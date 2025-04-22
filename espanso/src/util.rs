@@ -17,6 +17,7 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use anyhow::Result;
 use log::info;
 use std::process::Command;
 use sysinfo::{System, SystemExt};
@@ -38,16 +39,18 @@ pub fn set_command_flags(_: &mut Command) {
 }
 
 #[cfg(target_os = "windows")]
-pub fn attach_console() {
+pub fn attach_console() -> Result<()> {
   // When using the windows subsystem we loose the terminal output.
   // Therefore we try to attach to the current console if available.
   use windows::Win32::System::Console::AttachConsole;
-  unsafe { AttachConsole(0xFFFF_FFFF) };
+  unsafe { AttachConsole(0xFFFF_FFFF)? };
+  Ok(())
 }
 
 #[cfg(not(target_os = "windows"))]
-pub fn attach_console() {
+pub fn attach_console() -> Result<()> {
   // Not necessary on Linux and macOS
+  Ok(())
 }
 
 pub fn log_system_info() {

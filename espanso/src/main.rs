@@ -104,7 +104,10 @@ static ALIASES: LazyLock<Vec<CliAlias>> = LazyLock::new(|| {
 });
 
 fn main() {
-  util::attach_console();
+  match util::attach_console() {
+    Ok(()) => info!("Console attached"),
+    Err(e) => panic!("Could not attach console! {e}"),
+  }
 
   let install_subcommand = SubCommand::with_name("install")
     .about("Install a package")
