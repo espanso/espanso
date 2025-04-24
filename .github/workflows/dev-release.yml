@@ -3,7 +3,13 @@ name: Dev Release
 on:
   push:
     paths-ignore:
+      - '.devcontainer/**'
+      - '.github/ISSUE_TEMPLATE/**'
+      - '.vscode/**'
       - 'docs/**'
+      - 'images/**'
+      - 'schema/**'
+      - 'README.md'
     branches:
       - dev
 

@@ -7,6 +7,19 @@
     "$schema": {
       "type": "string"
     },
+    "imports": {
+      "type": "array",
+      "description": "Import other matches from external locations",
+      "items": {
+        "type": "string"
+      }
+    },
+    "anchors": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/anchor"
+      }
+    },
     "matches": {
       "type": "array",
       "description": "Array of matches",
@@ -64,6 +77,12 @@
         }
       ],
       "properties": {
+        "anchor": {
+          "$ref": "#/definitions/anchor"
+        },
+        "comment": {
+          "type": "string"
+        },
         "force_clipboard": {
           "type": "boolean"
         },
@@ -78,54 +97,7 @@
           "type": "string"
         },
         "form_fields": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "text": {
-              "type": "object",
-              "additionalProperties": false,
-              "properties": {
-                "multiline": {
-                  "type": "boolean"
-                },
-                "default": {
-                  "type": "string",
-                  "default": ""
-                }
-              }
-            },
-            "choices": {
-              "type": "object",
-              "additionalProperties": false,
-              "properties": {
-                "type": {
-                  "type": "string",
-                  "enum": [
-                    "choice",
-                    "list"
-                  ]
-                },
-                "values": {
-                  "type": [
-                    "array",
-                    "string"
-                  ],
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                "default": {
-                  "type": "string",
-                  "default": ""
-                },
-                "trim_string_values": {
-                  "type": "boolean",
-                  "description": "If you pass the values as a multiline string and this option is true, Espanso will trim the values and remove empty ones.",
-                  "default": false
-                }
-              }
-            }
-          }
+          "$ref": "#/definitions/form_field_definition"
         },
         "html": {
           "type": "string"
@@ -136,6 +108,9 @@
         "label": {
           "type": "string"
         },
+        "left_word": {
+          "type": "boolean"
+        },
         "markdown": {
           "type": "string"
         },
@@ -145,6 +120,15 @@
         },
         "propagate_case": {
           "type": "boolean"
+        },
+        "right_word": {
+          "type": "boolean"
+        },
+        "search_terms": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         },
         "uppercase_style": {
           "type": "string",
@@ -158,7 +142,10 @@
           "type": "string"
         },
         "replace": {
-          "type": "string"
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "trigger": {
           "type": "string"
@@ -205,12 +192,36 @@
                   "type": "string",
                   "enum": [
                     "bash",
-                    "cmd"
+                    "cmd",
+                    "nu",
+                    "powershell",
+                    "pwsh",
+                    "sh",
+                    "wsl",
+                    "wsl2",
+                    "zsh"
                   ]
                 },
                 "cmd": {
                   "type": "string"
+                },
+                "trim": {
+                  "type": "boolean",
+                  "description": "Trim the output of the command. Useful if the cmd has an excess in spaces or newlines"
+                },
+                "debug": {
+                  "type": "boolean",
+                  "description": "Add the result of the shell operation in the espanso logs"
                 }
+              }
+            },
+            "inject_vars": {
+              "type": "boolean"
+            },
+            "depends_on": {
+              "type": "array",
+              "items": {
+                "type": "string"
               }
             }
           }
@@ -240,6 +251,15 @@
                     "type": "string"
                   }
                 }
+              }
+            },
+            "inject_vars": {
+              "type": "boolean"
+            },
+            "depends_on": {
+              "type": "array",
+              "items": {
+                "type": "string"
               }
             }
           }
@@ -576,6 +596,15 @@
                   ]
                 }
               }
+            },
+            "inject_vars": {
+              "type": "boolean"
+            },
+            "depends_on": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           }
         },
@@ -601,6 +630,15 @@
                   "type": "string"
                 }
               }
+            },
+            "inject_vars": {
+              "type": "boolean"
+            },
+            "depends_on": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           }
         },
@@ -617,6 +655,15 @@
             },
             "name": {
               "type": "string"
+            },
+            "inject_vars": {
+              "type": "boolean"
+            },
+            "depends_on": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           }
         },
@@ -641,7 +688,10 @@
                 "values": {
                   "type": "array",
                   "items": {
-                    "type": "object",
+                    "required": [
+                      "label",
+                      "id"
+                    ],
                     "properties": {
                       "label": {
                         "type": "string"
@@ -652,6 +702,15 @@
                     }
                   }
                 }
+              }
+            },
+            "inject_vars": {
+              "type": "boolean"
+            },
+            "depends_on": {
+              "type": "array",
+              "items": {
+                "type": "string"
               }
             }
           }
@@ -678,35 +737,17 @@
                   "type": "string"
                 },
                 "fields": {
-                  "type": "object",
-                  "patternProperties": {
-                    "^.*$": {
-                      "anyOf": [
-                        {
-                          "type": "object",
-                          "additionalProperties": false,
-                          "properties": {
-                            "type": {
-                              "type": "string"
-                            },
-                            "default": {
-                              "type": "string"
-                            },
-                            "values": {
-                              "type": "array",
-                              "items": {
-                                "type": "string"
-                              }
-                            },
-                            "multiline": {
-                              "type": "boolean"
-                            }
-                          }
-                        }
-                      ]
-                    }
-                  }
+                  "$ref": "#/definitions/form_field_definition"
                 }
+              }
+            },
+            "inject_vars": {
+              "type": "boolean"
+            },
+            "depends_on": {
+              "type": "array",
+              "items": {
+                "type": "string"
               }
             }
           }
@@ -733,10 +774,89 @@
                   "type": "string"
                 }
               }
+            },
+            "inject_vars": {
+              "type": "boolean"
+            },
+            "depends_on": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           }
         }
       ]
+    },
+    "anchor": {
+      "$comment": "https://espanso.org/docs/matches/extensions/#anchors-and-aliases",
+      "type": "string"
+    },
+    "form_field_definition": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^.*$": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/form_multiline_field"
+            },
+            {
+              "$ref": "#/definitions/form_choice_or_list_field"
+            }
+          ]
+        }
+      }
+    },
+    "form_multiline_field": {
+      "$comment": "multine string",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "multiline": {
+          "type": "boolean"
+        },
+        "default": {
+          "type": "string",
+          "default": ""
+        }
+      }
+    },
+    "form_choice_or_list_field": {
+      "$comment": "choice or list",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "values",
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "choice",
+            "list"
+          ]
+        },
+        "values": {
+          "type": [
+            "array",
+            "string"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "default": {
+          "type": "string",
+          "default": ""
+        },
+        "trim_string_values": {
+          "type": "boolean",
+          "description": "If you pass the values as a multiline string and this option is true, Espanso will trim the values and remove empty ones.",
+          "default": false
+        }
+      }
     }
   }
 }
