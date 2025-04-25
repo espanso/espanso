@@ -75,3 +75,4 @@ Many people helped the project along the way, thank you to all of you!
 
 espanso was created by [Federico Terzi](http://federicoterzi.com)
 and is licensed under the [GPL-3.0 license](/LICENSE).
+
