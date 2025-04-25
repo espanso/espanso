@@ -27,66 +27,63 @@ use super::Preferences;
 const HAS_COMPLETED_WIZARD_KEY: &str = "has_completed_wizard";
 const HAS_DISPLAYED_WELCOME_KEY: &str = "has_displayed_welcome";
 const SHOULD_DISPLAY_TROUBLESHOOT_FOR_NON_FATAL_ERRORS: &str =
-  "should_display_troubleshoot_for_non_fatal_errors";
+    "should_display_troubleshoot_for_non_fatal_errors";
 const HAS_SELECTED_AUTO_START_OPTION: &str = "has_selected_auto_start_option";
 
 #[derive(Clone)]
 pub struct DefaultPreferences<KVSType: KVS> {
-  kvs: KVSType,
+    kvs: KVSType,
 }
 
 impl<KVSType: KVS> DefaultPreferences<KVSType> {
-  pub fn new(kvs: KVSType) -> Result<Self> {
-    Ok(Self { kvs })
-  }
+    pub fn new(kvs: KVSType) -> Result<Self> {
+        Ok(Self { kvs })
+    }
 
-  fn get<T: DeserializeOwned>(&self, key: &str) -> Option<T> {
-    self
-      .kvs
-      .get(key)
-      .unwrap_or_else(|_| panic!("unable to read preference for key {key}"))
-  }
+    fn get<T: DeserializeOwned>(&self, key: &str) -> Option<T> {
+        self.kvs
+            .get(key)
+            .unwrap_or_else(|_| panic!("unable to read preference for key {key}"))
+    }
 
-  fn set<T: Serialize>(&self, key: &str, value: T) {
-    self
-      .kvs
-      .set(key, value)
-      .unwrap_or_else(|_| panic!("unable to write preference for key {key}"));
-  }
+    fn set<T: Serialize>(&self, key: &str, value: T) {
+        self.kvs
+            .set(key, value)
+            .unwrap_or_else(|_| panic!("unable to write preference for key {key}"));
+    }
 }
 
 impl<KVSType: KVS> Preferences for DefaultPreferences<KVSType> {
-  fn has_completed_wizard(&self) -> bool {
-    self.get(HAS_COMPLETED_WIZARD_KEY).unwrap_or(false)
-  }
+    fn has_completed_wizard(&self) -> bool {
+        self.get(HAS_COMPLETED_WIZARD_KEY).unwrap_or(false)
+    }
 
-  fn set_completed_wizard(&self, value: bool) {
-    self.set(HAS_COMPLETED_WIZARD_KEY, value);
-  }
+    fn set_completed_wizard(&self, value: bool) {
+        self.set(HAS_COMPLETED_WIZARD_KEY, value);
+    }
 
-  fn has_displayed_welcome(&self) -> bool {
-    self.get(HAS_DISPLAYED_WELCOME_KEY).unwrap_or(false)
-  }
+    fn has_displayed_welcome(&self) -> bool {
+        self.get(HAS_DISPLAYED_WELCOME_KEY).unwrap_or(false)
+    }
 
-  fn set_has_displayed_welcome(&self, value: bool) {
-    self.set(HAS_DISPLAYED_WELCOME_KEY, value);
-  }
+    fn set_has_displayed_welcome(&self, value: bool) {
+        self.set(HAS_DISPLAYED_WELCOME_KEY, value);
+    }
 
-  fn should_display_troubleshoot_for_non_fatal_errors(&self) -> bool {
-    self
-      .get(SHOULD_DISPLAY_TROUBLESHOOT_FOR_NON_FATAL_ERRORS)
-      .unwrap_or(true)
-  }
+    fn should_display_troubleshoot_for_non_fatal_errors(&self) -> bool {
+        self.get(SHOULD_DISPLAY_TROUBLESHOOT_FOR_NON_FATAL_ERRORS)
+            .unwrap_or(true)
+    }
 
-  fn set_should_display_troubleshoot_for_non_fatal_errors(&self, value: bool) {
-    self.set(SHOULD_DISPLAY_TROUBLESHOOT_FOR_NON_FATAL_ERRORS, value);
-  }
+    fn set_should_display_troubleshoot_for_non_fatal_errors(&self, value: bool) {
+        self.set(SHOULD_DISPLAY_TROUBLESHOOT_FOR_NON_FATAL_ERRORS, value);
+    }
 
-  fn has_selected_auto_start_option(&self) -> bool {
-    self.get(HAS_SELECTED_AUTO_START_OPTION).unwrap_or(false)
-  }
+    fn has_selected_auto_start_option(&self) -> bool {
+        self.get(HAS_SELECTED_AUTO_START_OPTION).unwrap_or(false)
+    }
 
-  fn set_has_selected_auto_start_option(&self, value: bool) {
-    self.set(HAS_SELECTED_AUTO_START_OPTION, value);
-  }
+    fn set_has_selected_auto_start_option(&self, value: bool) {
+        self.set(HAS_SELECTED_AUTO_START_OPTION, value);
+    }
 }

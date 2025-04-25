@@ -24,13 +24,13 @@
 
 #include <wx/wxprec.h>
 #ifndef WX_PRECOMP
-    #include <wx/wx.h>
+#include <wx/wx.h>
 #endif
 
-void setFrameIcon(wxString iconPath, wxFrame * frame);
+void setFrameIcon(wxString iconPath, wxFrame *frame);
 
-void Activate(wxFrame * frame);
+void Activate(wxFrame *frame);
 
-void SetupWindowStyle(wxFrame * frame);
+void SetupWindowStyle(wxFrame *frame);
 
 #endif

@@ -21,55 +21,55 @@ use crate::{ExtensionOutput, Scope};
 use std::{collections::HashMap, process::Command};
 
 pub fn convert_to_env_variables(scope: &Scope) -> HashMap<String, String> {
-  let mut output = HashMap::new();
+    let mut output = HashMap::new();
 
-  for (key, result) in scope {
-    match result {
-      ExtensionOutput::Single(value) => {
-        let name = format!("ESPANSO_{}", key.to_uppercase());
-        output.insert(name, value.clone());
-      }
-      ExtensionOutput::Multiple(values) => {
-        for (sub_key, sub_value) in values {
-          let name = format!("ESPANSO_{}_{}", key.to_uppercase(), sub_key.to_uppercase());
-          output.insert(name, sub_value.clone());
+    for (key, result) in scope {
+        match result {
+            ExtensionOutput::Single(value) => {
+                let name = format!("ESPANSO_{}", key.to_uppercase());
+                output.insert(name, value.clone());
+            }
+            ExtensionOutput::Multiple(values) => {
+                for (sub_key, sub_value) in values {
+                    let name = format!("ESPANSO_{}_{}", key.to_uppercase(), sub_key.to_uppercase());
+                    output.insert(name, sub_value.clone());
+                }
+            }
         }
-      }
     }
-  }
 
-  output
+    output
 }
 
 #[cfg(target_os = "windows")]
 pub fn set_command_flags(command: &mut Command) {
-  use std::os::windows::process::CommandExt;
-  // Avoid showing the shell window
-  // See: https://github.com/espanso/espanso/issues/249
-  command.creation_flags(0x0800_0000);
+    use std::os::windows::process::CommandExt;
+    // Avoid showing the shell window
+    // See: https://github.com/espanso/espanso/issues/249
+    command.creation_flags(0x0800_0000);
 }
 
 #[cfg(not(target_os = "windows"))]
 pub fn set_command_flags(_: &mut Command) {
-  // NOOP on Linux and macOS
+    // NOOP on Linux and macOS
 }
 
 #[cfg(test)]
 mod tests {
-  use super::*;
+    use super::*;
 
-  #[test]
-  fn test_convert_to_env_variables() {
-    let mut vars: Scope = HashMap::new();
-    let mut subvars = HashMap::new();
-    subvars.insert("name".to_owned(), "John".to_owned());
-    subvars.insert("lastname".to_owned(), "Snow".to_owned());
-    vars.insert("form1", ExtensionOutput::Multiple(subvars));
-    vars.insert("var1", ExtensionOutput::Single("test".to_owned()));
+    #[test]
+    fn test_convert_to_env_variables() {
+        let mut vars: Scope = HashMap::new();
+        let mut subvars = HashMap::new();
+        subvars.insert("name".to_owned(), "John".to_owned());
+        subvars.insert("lastname".to_owned(), "Snow".to_owned());
+        vars.insert("form1", ExtensionOutput::Multiple(subvars));
+        vars.insert("var1", ExtensionOutput::Single("test".to_owned()));
 
-    let output = convert_to_env_variables(&vars);
-    assert_eq!(output.get("ESPANSO_FORM1_NAME").unwrap(), "John");
-    assert_eq!(output.get("ESPANSO_FORM1_LASTNAME").unwrap(), "Snow");
-    assert_eq!(output.get("ESPANSO_VAR1").unwrap(), "test");
-  }
+        let output = convert_to_env_variables(&vars);
+        assert_eq!(output.get("ESPANSO_FORM1_NAME").unwrap(), "John");
+        assert_eq!(output.get("ESPANSO_FORM1_LASTNAME").unwrap(), "Snow");
+        assert_eq!(output.get("ESPANSO_VAR1").unwrap(), "test");
+    }
 }

@@ -45,35 +45,23 @@
       "additionalProperties": false,
       "required": [],
       "dependencies": {
-        "uppercase_style": [
-          "propagate_case"
-        ]
+        "uppercase_style": ["propagate_case"]
       },
       "oneOf": [
         {
-          "required": [
-            "replace"
-          ]
+          "required": ["replace"]
         },
         {
-          "required": [
-            "form"
-          ]
+          "required": ["form"]
         },
         {
-          "required": [
-            "html"
-          ]
+          "required": ["html"]
         },
         {
-          "required": [
-            "image_path"
-          ]
+          "required": ["image_path"]
         },
         {
-          "required": [
-            "markdown"
-          ]
+          "required": ["markdown"]
         }
       ],
       "properties": {
@@ -88,10 +76,7 @@
         },
         "force_mode": {
           "type": "string",
-          "enum": [
-            "clipboard",
-            "keys"
-          ]
+          "enum": ["clipboard", "keys"]
         },
         "form": {
           "type": "string"
@@ -132,20 +117,13 @@
         },
         "uppercase_style": {
           "type": "string",
-          "enum": [
-            "capitalize",
-            "capitalize_words",
-            "uppercase"
-          ]
+          "enum": ["capitalize", "capitalize_words", "uppercase"]
         },
         "regex": {
           "type": "string"
         },
         "replace": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         },
         "trigger": {
           "type": "string"
@@ -177,9 +155,7 @@
           "properties": {
             "type": {
               "type": "string",
-              "enum": [
-                "shell"
-              ]
+              "enum": ["shell"]
             },
             "name": {
               "type": "string"
@@ -233,9 +209,7 @@
           "properties": {
             "type": {
               "type": "string",
-              "enum": [
-                "script"
-              ]
+              "enum": ["script"]
             },
             "name": {
               "type": "string"
@@ -271,9 +245,7 @@
           "properties": {
             "type": {
               "type": "string",
-              "enum": [
-                "date"
-              ]
+              "enum": ["date"]
             },
             "name": {
               "type": "string"
@@ -615,9 +587,7 @@
           "properties": {
             "type": {
               "type": "string",
-              "enum": [
-                "echo"
-              ]
+              "enum": ["echo"]
             },
             "name": {
               "type": "string"
@@ -649,9 +619,7 @@
           "properties": {
             "type": {
               "type": "string",
-              "enum": [
-                "clipboard"
-              ]
+              "enum": ["clipboard"]
             },
             "name": {
               "type": "string"
@@ -674,9 +642,7 @@
           "properties": {
             "type": {
               "type": "string",
-              "enum": [
-                "choice"
-              ]
+              "enum": ["choice"]
             },
             "name": {
               "type": "string"
@@ -688,10 +654,7 @@
                 "values": {
                   "type": "array",
                   "items": {
-                    "required": [
-                      "label",
-                      "id"
-                    ],
+                    "required": ["label", "id"],
                     "properties": {
                       "label": {
                         "type": "string"
@@ -722,9 +685,7 @@
           "properties": {
             "type": {
               "type": "string",
-              "enum": [
-                "form"
-              ]
+              "enum": ["form"]
             },
             "name": {
               "type": "string"
@@ -759,9 +720,7 @@
           "properties": {
             "type": {
               "type": "string",
-              "enum": [
-                "match"
-              ]
+              "enum": ["match"]
             },
             "name": {
               "type": "string"
@@ -826,23 +785,14 @@
       "$comment": "choice or list",
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "values",
-        "type"
-      ],
+      "required": ["values", "type"],
       "properties": {
         "type": {
           "type": "string",
-          "enum": [
-            "choice",
-            "list"
-          ]
+          "enum": ["choice", "list"]
         },
         "values": {
-          "type": [
-            "array",
-            "string"
-          ],
+          "type": ["array", "string"],
           "items": {
             "type": "string"
           }

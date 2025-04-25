@@ -63,34 +63,34 @@ pub const UNEXPECTED_RUN_AS_ROOT: i32 = 42;
 use crate::error_eprintln;
 
 pub fn configure_custom_panic_hook(fail_exit_code: i32) {
-  let previous_hook = std::panic::take_hook();
-  std::panic::set_hook(Box::new(move |info| {
-    (*previous_hook)(info);
+    let previous_hook = std::panic::take_hook();
+    std::panic::set_hook(Box::new(move |info| {
+        (*previous_hook)(info);
 
-    // Part of this code is taken from the "rust-log-panics" crate
-    let thread = std::thread::current();
-    let thread = thread.name().unwrap_or("<unnamed>");
+        // Part of this code is taken from the "rust-log-panics" crate
+        let thread = std::thread::current();
+        let thread = thread.name().unwrap_or("<unnamed>");
 
-    let msg = match info.payload().downcast_ref::<&'static str>() {
-      Some(s) => *s,
-      None => match info.payload().downcast_ref::<String>() {
-        Some(s) => &**s,
-        None => "Box<Any>",
-      },
-    };
+        let msg = match info.payload().downcast_ref::<&'static str>() {
+            Some(s) => *s,
+            None => match info.payload().downcast_ref::<String>() {
+                Some(s) => &**s,
+                None => "Box<Any>",
+            },
+        };
 
-    if let Some(location) = info.location() {
-      error_eprintln!(
-        "ERROR: '{}' panicked at '{}': {}:{}",
-        thread,
-        msg,
-        location.file(),
-        location.line(),
-      );
-    } else {
-      error_eprintln!("ERROR: '{}' panicked at '{}'", thread, msg);
-    }
+        if let Some(location) = info.location() {
+            error_eprintln!(
+                "ERROR: '{}' panicked at '{}': {}:{}",
+                thread,
+                msg,
+                location.file(),
+                location.line(),
+            );
+        } else {
+            error_eprintln!("ERROR: '{}' panicked at '{}'", thread, msg);
+        }
 
-    std::process::exit(fail_exit_code);
-  }));
+        std::process::exit(fail_exit_code);
+    }));
 }

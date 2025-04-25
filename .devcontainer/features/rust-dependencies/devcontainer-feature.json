@@ -1,10 +1,8 @@
 {
-    "name": "Espanso - Rust dependencies",
-    "id": "espanso_rust",
-    "version": "1.0.0",
-    "description": "A feature to install the required Rust tools for Espanso",
+  "name": "Espanso - Rust dependencies",
+  "id": "espanso_rust",
+  "version": "1.0.0",
+  "description": "A feature to install the required Rust tools for Espanso",
 
-    "installsAfter": [
-        "ghcr.io/devcontainers/features/common-utils"
-    ]
+  "installsAfter": ["ghcr.io/devcontainers/features/common-utils"]
 }

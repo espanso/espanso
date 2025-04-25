@@ -19,6 +19,6 @@
 
 #[link(name = "espansoinfo", kind = "static")]
 extern "C" {
-  pub fn info_get_title(buffer: *mut u16, buffer_size: i32) -> i32;
-  pub fn info_get_exec(buffer: *mut u16, buffer_size: i32) -> i32;
+    pub fn info_get_title(buffer: *mut u16, buffer_size: i32) -> i32;
+    pub fn info_get_exec(buffer: *mut u16, buffer_size: i32) -> i32;
 }

@@ -23,18 +23,23 @@
 #include <stdint.h>
 
 // Inject a complete string using the KEYEVENTF_UNICODE flag
-extern "C" void inject_string(wchar_t * string);
+extern "C" void inject_string(wchar_t *string);
 
 // Send a sequence of vkey presses and releases
 extern "C" void inject_separate_vkeys(int32_t *vkey_array, int32_t vkey_count);
 
 // Send a combination of vkeys, first pressing all the vkeys and then releasing
 // This is needed for keyboard shortcuts, for example.
-extern "C" void inject_vkeys_combination(int32_t *vkey_array, int32_t vkey_count);
+extern "C" void inject_vkeys_combination(int32_t *vkey_array,
+                                         int32_t vkey_count);
 
-// These two variants introduce a delay between each event, which is sometimes needed when
-// dealing with slow applications
-extern "C" void inject_separate_vkeys_with_delay(int32_t *vkey_array, int32_t vkey_count, int32_t delay);
-extern "C" void inject_vkeys_combination_with_delay(int32_t *vkey_array, int32_t vkey_count, int32_t delay);
+// These two variants introduce a delay between each event, which is sometimes
+// needed when dealing with slow applications
+extern "C" void inject_separate_vkeys_with_delay(int32_t *vkey_array,
+                                                 int32_t vkey_count,
+                                                 int32_t delay);
+extern "C" void inject_vkeys_combination_with_delay(int32_t *vkey_array,
+                                                    int32_t vkey_count,
+                                                    int32_t delay);
 
-#endif //ESPANSO_INJECT_H
+#endif // ESPANSO_INJECT_H

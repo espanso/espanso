@@ -1,360 +1,272 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "type": "lldb",
-            "request": "launch",
-            "name": "Debug",
-            "program": "${workspaceFolder}/target/debug/espanso",
-            "args": [
-                // put the commands you want here, for example:
-                "cmd",
-                "disable"
-                //"--help"
-                // "log"
-                // "help",
-                // "start"
-            ],
-            "cwd": "${workspaceFolder}/target/debug",
-            "sourceLanguages": [
-                "rust"
-            ]
-        },
-        {
-            "type": "lldb",
-            "request": "launch",
-            "name": "Release",
-            "program": "${workspaceFolder}/target/release/espanso",
-            "args": [],
-            "cwd": "${workspaceFolder}/target/release",
-            "sourceLanguages": [
-                "rust"
-            ]
-        },
-        {
-            "type": "lldb",
-            "request": "launch",
-            "name": "Debug build process 'espanso'",
-            "cargo": {
-                "args": [
-                    "build",
-                    "--bin=espanso",
-                    "--package=espanso"
-                ],
-                "filter": {
-                    "name": "espanso",
-                    "kind": "bin"
-                }
-            },
-            "args": [],
-            "cwd": "${workspaceFolder}"
-        },
-        {
-            "type": "lldb",
-            "request": "launch",
-            "name": "Debug unit tests in executable 'espanso'",
-            "cargo": {
-                "args": [
-                    "test",
-                    "--no-run",
-                    "--bin=espanso",
-                    "--package=espanso"
-                ],
-                "filter": {
-                    "name": "espanso",
-                    "kind": "bin"
-                }
-            },
-            "args": [],
-            "cwd": "${workspaceFolder}"
-        },
-        {
-            "type": "lldb",
-            "request": "launch",
-            "name": "Debug unit tests in library 'espanso_clipboard'",
-            "cargo": {
-                "args": [
-                    "test",
-                    "--no-run",
-                    "--lib",
-                    "--package=espanso-clipboard"
-                ],
-                "filter": {
-                    "name": "espanso_clipboard",
-                    "kind": "lib"
-                }
-            },
-            "args": [],
-            "cwd": "${workspaceFolder}"
-        },
-        {
-            "type": "lldb",
-            "request": "launch",
-            "name": "Debug unit tests in library 'espanso_config'",
-            "cargo": {
-                "args": [
-                    "test",
-                    "--no-run",
-                    "--lib",
-                    "--package=espanso-config"
-                ],
-                "filter": {
-                    "name": "espanso_config",
-                    "kind": "lib"
-                }
-            },
-            "args": [],
-            "cwd": "${workspaceFolder}"
-        },
-        {
-            "type": "lldb",
-            "request": "launch",
-            "name": "Debug unit tests in library 'espanso_detect'",
-            "cargo": {
-                "args": [
-                    "test",
-                    "--no-run",
-                    "--lib",
-                    "--package=espanso-detect"
-                ],
-                "filter": {
-                    "name": "espanso_detect",
-                    "kind": "lib"
-                }
-            },
-            "args": [],
-            "cwd": "${workspaceFolder}"
-        },
-        {
-            "type": "lldb",
-            "request": "launch",
-            "name": "Debug unit tests in library 'espanso_engine'",
-            "cargo": {
-                "args": [
-                    "test",
-                    "--no-run",
-                    "--lib",
-                    "--package=espanso-engine"
-                ],
-                "filter": {
-                    "name": "espanso_engine",
-                    "kind": "lib"
-                }
-            },
-            "args": [],
-            "cwd": "${workspaceFolder}"
-        },
-        {
-            "type": "lldb",
-            "request": "launch",
-            "name": "Debug unit tests in library 'espanso_info'",
-            "cargo": {
-                "args": [
-                    "test",
-                    "--no-run",
-                    "--lib",
-                    "--package=espanso-info"
-                ],
-                "filter": {
-                    "name": "espanso_info",
-                    "kind": "lib"
-                }
-            },
-            "args": [],
-            "cwd": "${workspaceFolder}"
-        },
-        {
-            "type": "lldb",
-            "request": "launch",
-            "name": "Debug unit tests in library 'espanso_inject'",
-            "cargo": {
-                "args": [
-                    "test",
-                    "--no-run",
-                    "--lib",
-                    "--package=espanso-inject"
-                ],
-                "filter": {
-                    "name": "espanso_inject",
-                    "kind": "lib"
-                }
-            },
-            "args": [],
-            "cwd": "${workspaceFolder}"
-        },
-        {
-            "type": "lldb",
-            "request": "launch",
-            "name": "Debug unit tests in library 'espanso_ipc'",
-            "cargo": {
-                "args": [
-                    "test",
-                    "--no-run",
-                    "--lib",
-                    "--package=espanso-ipc"
-                ],
-                "filter": {
-                    "name": "espanso_ipc",
-                    "kind": "lib"
-                }
-            },
-            "args": [],
-            "cwd": "${workspaceFolder}"
-        },
-        {
-            "type": "lldb",
-            "request": "launch",
-            "name": "Debug unit tests in library 'espanso_kvs'",
-            "cargo": {
-                "args": [
-                    "test",
-                    "--no-run",
-                    "--lib",
-                    "--package=espanso-kvs"
-                ],
-                "filter": {
-                    "name": "espanso_kvs",
-                    "kind": "lib"
-                }
-            },
-            "args": [],
-            "cwd": "${workspaceFolder}"
-        },
-        {
-            "type": "lldb",
-            "request": "launch",
-            "name": "Debug unit tests in library 'espanso_match'",
-            "cargo": {
-                "args": [
-                    "test",
-                    "--no-run",
-                    "--lib",
-                    "--package=espanso-match"
-                ],
-                "filter": {
-                    "name": "espanso_match",
-                    "kind": "lib"
-                }
-            },
-            "args": [],
-            "cwd": "${workspaceFolder}"
-        },
-        {
-            "type": "lldb",
-            "request": "launch",
-            "name": "Debug unit tests in library 'espanso_modulo'",
-            "cargo": {
-                "args": [
-                    "test",
-                    "--no-run",
-                    "--lib",
-                    "--package=espanso-modulo"
-                ],
-                "filter": {
-                    "name": "espanso_modulo",
-                    "kind": "lib"
-                }
-            },
-            "args": [],
-            "cwd": "${workspaceFolder}"
-        },
-        {
-            "type": "lldb",
-            "request": "launch",
-            "name": "Debug unit tests in library 'espanso_package'",
-            "cargo": {
-                "args": [
-                    "test",
-                    "--no-run",
-                    "--lib",
-                    "--package=espanso-package"
-                ],
-                "filter": {
-                    "name": "espanso_package",
-                    "kind": "lib"
-                }
-            },
-            "args": [],
-            "cwd": "${workspaceFolder}"
-        },
-        {
-            "type": "lldb",
-            "request": "launch",
-            "name": "Debug unit tests in library 'espanso_path'",
-            "cargo": {
-                "args": [
-                    "test",
-                    "--no-run",
-                    "--lib",
-                    "--package=espanso-path"
-                ],
-                "filter": {
-                    "name": "espanso_path",
-                    "kind": "lib"
-                }
-            },
-            "args": [],
-            "cwd": "${workspaceFolder}"
-        },
-        {
-            "type": "lldb",
-            "request": "launch",
-            "name": "Debug unit tests in library 'espanso_render'",
-            "cargo": {
-                "args": [
-                    "test",
-                    "--no-run",
-                    "--lib",
-                    "--package=espanso-render"
-                ],
-                "filter": {
-                    "name": "espanso_render",
-                    "kind": "lib"
-                }
-            },
-            "args": [],
-            "cwd": "${workspaceFolder}"
-        },
-        {
-            "type": "lldb",
-            "request": "launch",
-            "name": "Debug unit tests in library 'espanso_ui'",
-            "cargo": {
-                "args": [
-                    "test",
-                    "--no-run",
-                    "--lib",
-                    "--package=espanso-ui"
-                ],
-                "filter": {
-                    "name": "espanso_ui",
-                    "kind": "lib"
-                }
-            },
-            "args": [],
-            "cwd": "${workspaceFolder}"
-        },
-        {
-            "type": "lldb",
-            "request": "launch",
-            "name": "Debug unit tests in library 'espanso_mac_utils'",
-            "cargo": {
-                "args": [
-                    "test",
-                    "--no-run",
-                    "--lib",
-                    "--package=espanso-mac-utils"
-                ],
-                "filter": {
-                    "name": "espanso_mac_utils",
-                    "kind": "lib"
-                }
-            },
-            "args": [],
-            "cwd": "${workspaceFolder}"
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug",
+      "program": "${workspaceFolder}/target/debug/espanso",
+      "args": [
+        // put the commands you want here, for example:
+        "cmd",
+        "disable"
+        //"--help"
+        // "log"
+        // "help",
+        // "start"
+      ],
+      "cwd": "${workspaceFolder}/target/debug",
+      "sourceLanguages": ["rust"]
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Release",
+      "program": "${workspaceFolder}/target/release/espanso",
+      "args": [],
+      "cwd": "${workspaceFolder}/target/release",
+      "sourceLanguages": ["rust"]
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug build process 'espanso'",
+      "cargo": {
+        "args": ["build", "--bin=espanso", "--package=espanso"],
+        "filter": {
+          "name": "espanso",
+          "kind": "bin"
         }
-    ]
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in executable 'espanso'",
+      "cargo": {
+        "args": ["test", "--no-run", "--bin=espanso", "--package=espanso"],
+        "filter": {
+          "name": "espanso",
+          "kind": "bin"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in library 'espanso_clipboard'",
+      "cargo": {
+        "args": ["test", "--no-run", "--lib", "--package=espanso-clipboard"],
+        "filter": {
+          "name": "espanso_clipboard",
+          "kind": "lib"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in library 'espanso_config'",
+      "cargo": {
+        "args": ["test", "--no-run", "--lib", "--package=espanso-config"],
+        "filter": {
+          "name": "espanso_config",
+          "kind": "lib"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in library 'espanso_detect'",
+      "cargo": {
+        "args": ["test", "--no-run", "--lib", "--package=espanso-detect"],
+        "filter": {
+          "name": "espanso_detect",
+          "kind": "lib"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in library 'espanso_engine'",
+      "cargo": {
+        "args": ["test", "--no-run", "--lib", "--package=espanso-engine"],
+        "filter": {
+          "name": "espanso_engine",
+          "kind": "lib"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in library 'espanso_info'",
+      "cargo": {
+        "args": ["test", "--no-run", "--lib", "--package=espanso-info"],
+        "filter": {
+          "name": "espanso_info",
+          "kind": "lib"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in library 'espanso_inject'",
+      "cargo": {
+        "args": ["test", "--no-run", "--lib", "--package=espanso-inject"],
+        "filter": {
+          "name": "espanso_inject",
+          "kind": "lib"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in library 'espanso_ipc'",
+      "cargo": {
+        "args": ["test", "--no-run", "--lib", "--package=espanso-ipc"],
+        "filter": {
+          "name": "espanso_ipc",
+          "kind": "lib"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in library 'espanso_kvs'",
+      "cargo": {
+        "args": ["test", "--no-run", "--lib", "--package=espanso-kvs"],
+        "filter": {
+          "name": "espanso_kvs",
+          "kind": "lib"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in library 'espanso_match'",
+      "cargo": {
+        "args": ["test", "--no-run", "--lib", "--package=espanso-match"],
+        "filter": {
+          "name": "espanso_match",
+          "kind": "lib"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in library 'espanso_modulo'",
+      "cargo": {
+        "args": ["test", "--no-run", "--lib", "--package=espanso-modulo"],
+        "filter": {
+          "name": "espanso_modulo",
+          "kind": "lib"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in library 'espanso_package'",
+      "cargo": {
+        "args": ["test", "--no-run", "--lib", "--package=espanso-package"],
+        "filter": {
+          "name": "espanso_package",
+          "kind": "lib"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in library 'espanso_path'",
+      "cargo": {
+        "args": ["test", "--no-run", "--lib", "--package=espanso-path"],
+        "filter": {
+          "name": "espanso_path",
+          "kind": "lib"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in library 'espanso_render'",
+      "cargo": {
+        "args": ["test", "--no-run", "--lib", "--package=espanso-render"],
+        "filter": {
+          "name": "espanso_render",
+          "kind": "lib"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in library 'espanso_ui'",
+      "cargo": {
+        "args": ["test", "--no-run", "--lib", "--package=espanso-ui"],
+        "filter": {
+          "name": "espanso_ui",
+          "kind": "lib"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in library 'espanso_mac_utils'",
+      "cargo": {
+        "args": ["test", "--no-run", "--lib", "--package=espanso-mac-utils"],
+        "filter": {
+          "name": "espanso_mac_utils",
+          "kind": "lib"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    }
+  ]
 }

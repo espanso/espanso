@@ -24,4 +24,4 @@
 
 extern "C" int32_t is_keyboard_or_mouse(int fd);
 
-#endif //ESPANSO_DETECT_EVDEV_H
+#endif // ESPANSO_DETECT_EVDEV_H

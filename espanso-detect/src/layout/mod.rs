@@ -32,26 +32,26 @@ mod wayland;
 #[cfg(target_os = "linux")]
 #[cfg(not(feature = "wayland"))]
 pub fn get_active_layout() -> Option<String> {
-  x11::get_active_layout()
+    x11::get_active_layout()
 }
 
 #[cfg(target_os = "linux")]
 #[cfg(feature = "wayland")]
 pub fn get_active_layout() -> Option<String> {
-  if gnome::is_gnome() {
-    gnome::get_active_layout()
-  } else {
-    use log::debug;
-    debug!(
-      "Wayland compositor detected: {}",
-      wayland::get_compositor_name()
-    );
-    None
-  }
+    if gnome::is_gnome() {
+        gnome::get_active_layout()
+    } else {
+        use log::debug;
+        debug!(
+            "Wayland compositor detected: {}",
+            wayland::get_compositor_name()
+        );
+        None
+    }
 }
 
 #[cfg(not(target_os = "linux"))]
 pub fn get_active_layout() -> Option<String> {
-  // Not available on Windows and macOS yet
-  None
+    // Not available on Windows and macOS yet
+    None
 }
