@@ -2215,7 +2215,7 @@ int fast_send_keysequence_window_list_do(const xdo_t *xdo, Window window,
         if (keys[i].needs_binding == 1) {
             KeySym keysym_list[] = {keys[i].symbol};
             //_xdo_debug(xdo, "Mapping sym %lu to %d", keys[i].symbol,
-            //scratch_keycode);
+            // scratch_keycode);
             XChangeKeyboardMapping(xdo->xdpy, scratch_keycode, 1, keysym_list,
                                    1);
             XSync(xdo->xdpy, False);

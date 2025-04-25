@@ -22,18 +22,18 @@ use crate::{AppInfo, AppInfoProvider};
 pub(crate) struct WaylandAppInfoProvider {}
 
 impl WaylandAppInfoProvider {
-  pub fn new() -> Self {
-    Self {}
-  }
+    pub fn new() -> Self {
+        Self {}
+    }
 }
 
 impl AppInfoProvider for WaylandAppInfoProvider {
-  // TODO: can we read these info on Wayland?
-  fn get_info(&self) -> AppInfo {
-    AppInfo {
-      title: None,
-      exec: None,
-      class: None,
+    // TODO: can we read these info on Wayland?
+    fn get_info(&self) -> AppInfo {
+        AppInfo {
+            title: None,
+            exec: None,
+            class: None,
+        }
     }
-  }
 }

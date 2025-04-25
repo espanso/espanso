@@ -25,55 +25,55 @@ use std::path::Path;
 use std::process::Command;
 
 pub trait ConfigPathProvider {
-  fn get_config_path(&self) -> &Path;
+    fn get_config_path(&self) -> &Path;
 }
 
 pub struct ConfigMiddleware<'a> {
-  provider: &'a dyn ConfigPathProvider,
+    provider: &'a dyn ConfigPathProvider,
 }
 
 impl<'a> ConfigMiddleware<'a> {
-  pub fn new(provider: &'a dyn ConfigPathProvider) -> Self {
-    Self { provider }
-  }
+    pub fn new(provider: &'a dyn ConfigPathProvider) -> Self {
+        Self { provider }
+    }
 }
 
 impl Middleware for ConfigMiddleware<'_> {
-  fn name(&self) -> &'static str {
-    "open_config"
-  }
-
-  fn next(&self, event: Event, _dispatch: &mut dyn FnMut(Event)) -> Event {
-    let config_path = match self.provider.get_config_path().canonicalize() {
-      Ok(path) => path,
-      Err(err) => {
-        error!(
-          "unable to canonicalize the config path into the image resolver: {}",
-          err
-        );
-        self.provider.get_config_path().to_owned()
-      }
-    };
-    if let EventType::ShowConfigFolder = event.etype {
-      let program: &str;
-      if env::consts::OS == "macos" {
-        program = "open";
-      } else if env::consts::OS == "windows" {
-        program = "explorer";
-      } else if env::consts::OS == "linux" {
-        program = "xdg-open";
-      } else {
-        panic!("Unsupported OS")
-      }
-
-      #[allow(unused_must_use)]
-      Command::new(program)
-        .arg(config_path)
-        .spawn()
-        .unwrap()
-        .wait();
-      return Event::caused_by(event.source_id, EventType::NOOP);
+    fn name(&self) -> &'static str {
+        "open_config"
     }
-    event
-  }
+
+    fn next(&self, event: Event, _dispatch: &mut dyn FnMut(Event)) -> Event {
+        let config_path = match self.provider.get_config_path().canonicalize() {
+            Ok(path) => path,
+            Err(err) => {
+                error!(
+                    "unable to canonicalize the config path into the image resolver: {}",
+                    err
+                );
+                self.provider.get_config_path().to_owned()
+            }
+        };
+        if let EventType::ShowConfigFolder = event.etype {
+            let program: &str;
+            if env::consts::OS == "macos" {
+                program = "open";
+            } else if env::consts::OS == "windows" {
+                program = "explorer";
+            } else if env::consts::OS == "linux" {
+                program = "xdg-open";
+            } else {
+                panic!("Unsupported OS")
+            }
+
+            #[allow(unused_must_use)]
+            Command::new(program)
+                .arg(config_path)
+                .spawn()
+                .unwrap()
+                .wait();
+            return Event::caused_by(event.source_id, EventType::NOOP);
+        }
+        event
+    }
 }

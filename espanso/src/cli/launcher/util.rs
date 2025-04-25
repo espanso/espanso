@@ -25,59 +25,59 @@ use thiserror::Error;
 use crate::util::set_command_flags;
 
 pub fn is_legacy_version_running() -> bool {
-  false
+    false
 }
 
 pub fn add_espanso_to_path() -> Result<()> {
-  let espanso_exe_path = std::env::current_exe()?;
-  let mut command = Command::new(espanso_exe_path.to_string_lossy().to_string());
-  command.args(["env-path", "--prompt", "register"]);
+    let espanso_exe_path = std::env::current_exe()?;
+    let mut command = Command::new(espanso_exe_path.to_string_lossy().to_string());
+    command.args(["env-path", "--prompt", "register"]);
 
-  let mut child = command.spawn()?;
-  let result = child.wait()?;
+    let mut child = command.spawn()?;
+    let result = child.wait()?;
 
-  if result.success() {
-    Ok(())
-  } else {
-    Err(AddToPathError::NonZeroExitCode.into())
-  }
+    if result.success() {
+        Ok(())
+    } else {
+        Err(AddToPathError::NonZeroExitCode.into())
+    }
 }
 
 #[derive(Error, Debug)]
 pub enum AddToPathError {
-  #[error("unexpected error, 'espanso env-path register' returned a non-zero exit code.")]
-  NonZeroExitCode,
+    #[error("unexpected error, 'espanso env-path register' returned a non-zero exit code.")]
+    NonZeroExitCode,
 }
 
 pub fn show_already_running_warning() -> Result<()> {
-  let espanso_exe_path = std::env::current_exe()?;
-  let mut command = Command::new(espanso_exe_path.to_string_lossy().to_string());
-  command.args(["modulo", "welcome", "--already-running"]);
+    let espanso_exe_path = std::env::current_exe()?;
+    let mut command = Command::new(espanso_exe_path.to_string_lossy().to_string());
+    command.args(["modulo", "welcome", "--already-running"]);
 
-  let mut child = command.spawn()?;
-  child.wait()?;
-  Ok(())
+    let mut child = command.spawn()?;
+    child.wait()?;
+    Ok(())
 }
 
 pub fn configure_auto_start(auto_start: bool) -> Result<()> {
-  let espanso_exe_path = std::env::current_exe()?;
-  let mut command = Command::new(espanso_exe_path.to_string_lossy().to_string());
-  let mut args = vec!["service"];
-  if auto_start {
-    args.push("register");
-  } else {
-    args.push("unregister");
-  }
+    let espanso_exe_path = std::env::current_exe()?;
+    let mut command = Command::new(espanso_exe_path.to_string_lossy().to_string());
+    let mut args = vec!["service"];
+    if auto_start {
+        args.push("register");
+    } else {
+        args.push("unregister");
+    }
 
-  command.args(&args);
-  set_command_flags(&mut command);
+    command.args(&args);
+    set_command_flags(&mut command);
 
-  let mut child = command.spawn()?;
-  let result = child.wait()?;
+    let mut child = command.spawn()?;
+    let result = child.wait()?;
 
-  if result.success() {
-    Ok(())
-  } else {
-    bail!("service registration returned non-zero exit code");
-  }
+    if result.success() {
+        Ok(())
+    } else {
+        bail!("service registration returned non-zero exit code");
+    }
 }

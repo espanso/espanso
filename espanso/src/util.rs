@@ -24,41 +24,41 @@ use sysinfo::{System, SystemExt};
 
 #[cfg(target_os = "windows")]
 pub fn set_command_flags(command: &mut Command) {
-  // Avoid showing the shell window
-  // See: https://github.com/espanso/espanso/issues/249
-  // and https://learn.microsoft.com/en-us/windows/win32/procthread/process-creation-flags
-  use std::os::windows::process::CommandExt;
+    // Avoid showing the shell window
+    // See: https://github.com/espanso/espanso/issues/249
+    // and https://learn.microsoft.com/en-us/windows/win32/procthread/process-creation-flags
+    use std::os::windows::process::CommandExt;
 
-  const CREATE_NO_WINDOW: u32 = 0x0800_0000;
-  command.creation_flags(CREATE_NO_WINDOW);
+    const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+    command.creation_flags(CREATE_NO_WINDOW);
 }
 
 #[cfg(not(target_os = "windows"))]
 pub fn set_command_flags(_: &mut Command) {
-  // NOOP on Linux and macOS
+    // NOOP on Linux and macOS
 }
 
 #[cfg(target_os = "windows")]
 pub fn attach_console() -> Result<()> {
-  // When using the windows subsystem we loose the terminal output.
-  // Therefore we try to attach to the current console if available.
-  use windows::Win32::System::Console::AttachConsole;
-  unsafe { AttachConsole(0xFFFF_FFFF)? };
-  Ok(())
+    // When using the windows subsystem we loose the terminal output.
+    // Therefore we try to attach to the current console if available.
+    use windows::Win32::System::Console::AttachConsole;
+    unsafe { AttachConsole(0xFFFF_FFFF)? };
+    Ok(())
 }
 
 #[cfg(not(target_os = "windows"))]
 pub fn attach_console() -> Result<()> {
-  // Not necessary on Linux and macOS
-  Ok(())
+    // Not necessary on Linux and macOS
+    Ok(())
 }
 
 pub fn log_system_info() {
-  let sys = System::new();
-  info!(
-    "system info: {} v{} - kernel: {}",
-    sys.name().unwrap_or_default(),
-    sys.os_version().unwrap_or_default(),
-    sys.kernel_version().unwrap_or_default()
-  );
+    let sys = System::new();
+    info!(
+        "system info: {} v{} - kernel: {}",
+        sys.name().unwrap_or_default(),
+        sys.os_version().unwrap_or_default(),
+        sys.kernel_version().unwrap_or_default()
+    );
 }
