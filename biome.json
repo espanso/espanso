@@ -1,28 +1,28 @@
 {
-    "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
-    "vcs": {
-        "enabled": true,
-        "clientKind": "git",
-        "useIgnoreFile": true
+  "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "useEditorconfig": true
+  },
+  "json": {
+    "parser": {
+      "allowComments": true,
+      "allowTrailingCommas": true
     },
     "formatter": {
-        "enabled": true,
-        "indentStyle": "space",
-        "useEditorconfig": true
-    },
-    "json": {
-        "parser": {
-            "allowComments": true,
-            "allowTrailingCommas": true
-        },
-        "formatter": {
-            "indentWidth": 2
-        }
-    },
-    "linter": {
-        "enabled": true
-    },
-    "organizeImports": {
-        "enabled": true
+      "indentWidth": 2
     }
+  },
+  "linter": {
+    "enabled": true
+  },
+  "organizeImports": {
+    "enabled": true
+  }
 }

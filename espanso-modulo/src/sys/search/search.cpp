@@ -17,7 +17,8 @@
  * along with modulo.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// Mouse dragging mechanism greatly inspired by: https://developpaper.com/wxwidgets-implementing-the-drag-effect-of-titleless-bar-window/
+// Mouse dragging mechanism greatly inspired by:
+// https://developpaper.com/wxwidgets-implementing-the-drag-effect-of-titleless-bar-window/
 
 #define _UNICODE
 
@@ -26,9 +27,9 @@
 
 #include "wx/htmllbox.h"
 
-#include <vector>
 #include <memory>
 #include <unordered_map>
+#include <vector>
 
 // Platform-specific styles
 #ifdef __WXMSW__
@@ -67,19 +68,18 @@ wxArrayString wxIds;
 
 // App Code
 
-class SearchApp : public wxApp
-{
-public:
+class SearchApp : public wxApp {
+  public:
     virtual bool OnInit();
 };
 
-class ResultListBox : public wxHtmlListBox
-{
-public:
+class ResultListBox : public wxHtmlListBox {
+  public:
     ResultListBox() {}
-    ResultListBox(wxWindow *parent, bool isDark, const wxWindowID id, const wxPoint &pos, const wxSize &size);
+    ResultListBox(wxWindow *parent, bool isDark, const wxWindowID id,
+                  const wxPoint &pos, const wxSize &size);
 
-protected:
+  protected:
     // override this method to return data to be shown in the listbox (this is
     // mandatory)
     virtual wxString OnGetItem(size_t n) const;
@@ -89,52 +89,49 @@ protected:
 
     bool isDark = false;
 
-public:
+  public:
     wxDECLARE_NO_COPY_CLASS(ResultListBox);
     wxDECLARE_DYNAMIC_CLASS(ResultListBox);
 };
 
 wxIMPLEMENT_DYNAMIC_CLASS(ResultListBox, wxHtmlListBox);
 
-ResultListBox::ResultListBox(wxWindow *parent, bool isDark, const wxWindowID id, const wxPoint &pos, const wxSize &size)
-    : wxHtmlListBox(parent, id, pos, size, 0)
-{
+ResultListBox::ResultListBox(wxWindow *parent, bool isDark, const wxWindowID id,
+                             const wxPoint &pos, const wxSize &size)
+    : wxHtmlListBox(parent, id, pos, size, 0) {
     this->isDark = isDark;
     SetMargins(5, 5);
     Refresh();
 }
 
-void ResultListBox::OnDrawBackground(wxDC &dc, const wxRect &rect, size_t n) const
-{
-    if (IsSelected(n))
-    {
-        if (isDark)
-        {
+void ResultListBox::OnDrawBackground(wxDC &dc, const wxRect &rect,
+                                     size_t n) const {
+    if (IsSelected(n)) {
+        if (isDark) {
             dc.SetBrush(wxBrush(SELECTION_DARK_BG));
-        }
-        else
-        {
+        } else {
             dc.SetBrush(wxBrush(SELECTION_LIGHT_BG));
         }
-    }
-    else
-    {
+    } else {
         dc.SetBrush(*wxTRANSPARENT_BRUSH);
     }
     dc.SetPen(*wxTRANSPARENT_PEN);
     dc.DrawRectangle(0, 0, rect.GetRight(), rect.GetBottom());
 }
 
-wxString ResultListBox::OnGetItem(size_t n) const
-{
+wxString ResultListBox::OnGetItem(size_t n) const {
     wxString textColor = isDark ? "white" : "";
-    wxString shortcut = (n < 8) ? wxString::Format(wxT("Alt+%i"), (int)n + 1) : " ";
-    return wxString::Format(wxT("<font color='%s'><table width='100%%'><tr><td>%s</td><td align='right'><b>%s</b> <font color='#636e72'> %s</font></td></tr></table></font>"), textColor, wxItems[n], wxTriggers[n], shortcut);
+    wxString shortcut =
+        (n < 8) ? wxString::Format(wxT("Alt+%i"), (int)n + 1) : " ";
+    return wxString::Format(
+        wxT("<font color='%s'><table width='100%%'><tr><td>%s</td><td "
+            "align='right'><b>%s</b> <font color='#636e72'> "
+            "%s</font></td></tr></table></font>"),
+        textColor, wxItems[n], wxTriggers[n], shortcut);
 }
 
-class SearchFrame : public wxFrame
-{
-public:
+class SearchFrame : public wxFrame {
+  public:
     SearchFrame(const wxString &title, const wxPoint &pos, const wxSize &size);
 
     wxPanel *panel = nullptr;
@@ -144,7 +141,7 @@ public:
     ResultListBox *resultBox = nullptr;
     void SetItems(SearchItem *items, int itemSize);
 
-private:
+  private:
     void OnCharEvent(wxKeyEvent &event);
     void OnQueryChange(wxCommandEvent &event);
     void OnItemClickEvent(wxCommandEvent &event);
@@ -164,17 +161,18 @@ private:
     void Submit();
 };
 
-bool SearchApp::OnInit()
-{
-    SearchFrame *frame = new SearchFrame(wxString::FromUTF8(searchMetadata->windowTitle), wxPoint(50, 50), wxSize(450, 340));
+bool SearchApp::OnInit() {
+    SearchFrame *frame =
+        new SearchFrame(wxString::FromUTF8(searchMetadata->windowTitle),
+                        wxPoint(50, 50), wxSize(450, 340));
     frame->Show(true);
     SetupWindowStyle(frame);
     Activate(frame);
     return true;
 }
-SearchFrame::SearchFrame(const wxString &title, const wxPoint &pos, const wxSize &size)
-    : wxFrame(NULL, wxID_ANY, title, pos, size, DEFAULT_STYLE)
-{
+SearchFrame::SearchFrame(const wxString &title, const wxPoint &pos,
+                         const wxSize &size)
+    : wxFrame(NULL, wxID_ANY, title, pos, size, DEFAULT_STYLE) {
     wxInitAllImageHandlers();
 
 #if wxCHECK_VERSION(3, 1, 3)
@@ -196,25 +194,26 @@ SearchFrame::SearchFrame(const wxString &title, const wxPoint &pos, const wxSize
 
     int iconId = NewControlId();
     iconPanel = nullptr;
-    if (searchMetadata->iconPath)
-    {
+    if (searchMetadata->iconPath) {
         wxString iconPath = wxString::FromUTF8(searchMetadata->iconPath);
-        if (wxFileExists(iconPath))
-        {
+        if (wxFileExists(iconPath)) {
             wxBitmap bitmap = wxBitmap(iconPath, wxBITMAP_TYPE_PNG);
-            if (bitmap.IsOk())
-            {
+            if (bitmap.IsOk()) {
                 wxImage image = bitmap.ConvertToImage();
                 image.Rescale(32, 32, wxIMAGE_QUALITY_HIGH);
                 wxBitmap resizedBitmap = wxBitmap(image, -1);
-                iconPanel = new wxStaticBitmap(panel, iconId, resizedBitmap, wxDefaultPosition, wxSize(32, 32));
-                topBox->Add(iconPanel, 0, wxEXPAND | wxLEFT | wxUP | wxDOWN, 10);
+                iconPanel =
+                    new wxStaticBitmap(panel, iconId, resizedBitmap,
+                                       wxDefaultPosition, wxSize(32, 32));
+                topBox->Add(iconPanel, 0, wxEXPAND | wxLEFT | wxUP | wxDOWN,
+                            10);
             }
         }
     }
 
     int textId = NewControlId();
-    searchBar = new wxTextCtrl(panel, textId, "", wxDefaultPosition, wxDefaultSize);
+    searchBar =
+        new wxTextCtrl(panel, textId, "", wxDefaultPosition, wxDefaultSize);
     wxFont font = searchBar->GetFont();
     font.SetPointSize(SEARCH_BAR_FONT_SIZE);
     searchBar->SetFont(font);
@@ -223,7 +222,8 @@ SearchFrame::SearchFrame(const wxString &title, const wxPoint &pos, const wxSize
     vbox->Add(topBox, 1, wxEXPAND);
 
     if (searchMetadata->hintText) {
-        helpText = new wxStaticText(panel, wxID_ANY, wxString::FromUTF8(searchMetadata->hintText));
+        helpText = new wxStaticText(
+            panel, wxID_ANY, wxString::FromUTF8(searchMetadata->hintText));
         vbox->Add(helpText, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 10);
         wxFont helpFont = helpText->GetFont();
         helpFont.SetPointSize(HELP_TEXT_FONT_SIZE);
@@ -232,7 +232,8 @@ SearchFrame::SearchFrame(const wxString &title, const wxPoint &pos, const wxSize
 
     wxArrayString choices;
     int resultId = NewControlId();
-    resultBox = new ResultListBox(panel, isDark, resultId, wxDefaultPosition, wxSize(MIN_WIDTH, MIN_HEIGHT));
+    resultBox = new ResultListBox(panel, isDark, resultId, wxDefaultPosition,
+                                  wxSize(MIN_WIDTH, MIN_HEIGHT));
     vbox->Add(resultBox, 5, wxEXPAND | wxALL, 0);
 
     Bind(wxEVT_CHAR_HOOK, &SearchFrame::OnCharEvent, this, wxID_ANY);
@@ -242,8 +243,7 @@ SearchFrame::SearchFrame(const wxString &title, const wxPoint &pos, const wxSize
     Bind(wxEVT_ACTIVATE, &SearchFrame::OnActivate, this, wxID_ANY);
 
     // Events to handle the mouse drag
-    if (iconPanel)
-    {
+    if (iconPanel) {
         iconPanel->Bind(wxEVT_LEFT_UP, &SearchFrame::OnMouseLUp, this);
         iconPanel->Bind(wxEVT_LEFT_DOWN, &SearchFrame::OnMouseLDown, this);
         Bind(wxEVT_MOTION, &SearchFrame::OnMouseMove, this);
@@ -260,95 +260,67 @@ SearchFrame::SearchFrame(const wxString &title, const wxPoint &pos, const wxSize
     queryCallback("", (void *)this, data);
 }
 
-void SearchFrame::OnCharEvent(wxKeyEvent &event)
-{
-    if (event.GetKeyCode() == WXK_ESCAPE)
-    {
+void SearchFrame::OnCharEvent(wxKeyEvent &event) {
+    if (event.GetKeyCode() == WXK_ESCAPE) {
         Close(true);
-    }
-    else if (event.GetKeyCode() == WXK_TAB)
-    {
-        if (wxGetKeyState(WXK_SHIFT))
-        {
+    } else if (event.GetKeyCode() == WXK_TAB) {
+        if (wxGetKeyState(WXK_SHIFT)) {
             SelectPrevious();
-        }
-        else
-        {
+        } else {
             SelectNext();
         }
-    }
-    else if (event.GetUnicodeKey() >= '1' && event.GetUnicodeKey() <= '9')
-    { // Alt + num shortcut
+    } else if (event.GetUnicodeKey() >= '1' &&
+               event.GetUnicodeKey() <= '9') { // Alt + num shortcut
         int index = event.GetUnicodeKey() - '1';
-        if (wxGetKeyState(WXK_ALT))
-        {
-            if (resultBox->GetItemCount() > index)
-            {
+        if (wxGetKeyState(WXK_ALT)) {
+            if (resultBox->GetItemCount() > index) {
                 resultBox->SetSelection(index);
                 Submit();
             }
         } else {
             event.Skip();
         }
-    }
-    else if (event.GetKeyCode() == WXK_DOWN)
-    {
+    } else if (event.GetKeyCode() == WXK_DOWN) {
         SelectNext();
-    }
-    else if (event.GetKeyCode() == WXK_UP)
-    {
+    } else if (event.GetKeyCode() == WXK_UP) {
         SelectPrevious();
-    }
-    else if (event.GetKeyCode() == WXK_CONTROL_N)
-    {
+    } else if (event.GetKeyCode() == WXK_CONTROL_N) {
         SelectNext();
-    }
-    else if (event.GetKeyCode() == WXK_CONTROL_P)
-    {
+    } else if (event.GetKeyCode() == WXK_CONTROL_P) {
         SelectPrevious();
-    }
-    else if (event.GetKeyCode() == WXK_RETURN)
-    {
+    } else if (event.GetKeyCode() == WXK_RETURN) {
         Submit();
-    }
-    else
-    {
+    } else {
         event.Skip();
     }
 }
 
-void SearchFrame::OnQueryChange(wxCommandEvent &event)
-{
+void SearchFrame::OnQueryChange(wxCommandEvent &event) {
     if (helpText != nullptr) {
         helpText->Destroy();
         panel->Layout();
         helpText = nullptr;
     }
-    
+
     wxString queryString = searchBar->GetValue();
     const char *query = queryString.ToUTF8();
     queryCallback(query, (void *)this, data);
 }
 
-void SearchFrame::OnItemClickEvent(wxCommandEvent &event)
-{
+void SearchFrame::OnItemClickEvent(wxCommandEvent &event) {
     resultBox->SetSelection(event.GetInt());
     Submit();
 }
 
-void SearchFrame::OnActivate(wxActivateEvent &event)
-{
-    if (!event.GetActive())
-    {
+void SearchFrame::OnActivate(wxActivateEvent &event) {
+    if (!event.GetActive()) {
         Close(true);
     }
     event.Skip();
 }
 
-void SearchFrame::OnMouseMove(wxMouseEvent &event)
-{
-    if (event.LeftIsDown() && event.Dragging())
-    {
+void SearchFrame::OnMouseMove(wxMouseEvent &event) {
+    if (event.LeftIsDown() && event.Dragging()) {
         wxPoint pt = event.GetPosition();
         wxPoint wndLeftTopPt = GetPosition();
         int distanceX = pt.x - mLastPt.x;
@@ -360,17 +332,14 @@ void SearchFrame::OnMouseMove(wxMouseEvent &event)
         this->Move(desPt);
     }
 
-    if (event.LeftDown())
-    {
+    if (event.LeftDown()) {
         this->CaptureMouse();
         mLastPt = event.GetPosition();
     }
 }
 
-void SearchFrame::OnMouseLeave(wxMouseEvent &event)
-{
-    if (event.LeftIsDown() && event.Dragging())
-    {
+void SearchFrame::OnMouseLeave(wxMouseEvent &event) {
+    if (event.LeftIsDown() && event.Dragging()) {
         wxPoint pt = event.GetPosition();
         wxPoint wndLeftTopPt = GetPosition();
         int distanceX = pt.x - mLastPt.x;
@@ -383,32 +352,27 @@ void SearchFrame::OnMouseLeave(wxMouseEvent &event)
     }
 }
 
-void SearchFrame::OnMouseLDown(wxMouseEvent &event)
-{
+void SearchFrame::OnMouseLDown(wxMouseEvent &event) {
     if (!HasCapture())
         this->CaptureMouse();
 }
 
-void SearchFrame::OnMouseLUp(wxMouseEvent &event)
-{
+void SearchFrame::OnMouseLUp(wxMouseEvent &event) {
     if (HasCapture())
         ReleaseMouse();
 }
 
-void SearchFrame::OnMouseCaptureLost(wxMouseCaptureLostEvent &event)
-{
+void SearchFrame::OnMouseCaptureLost(wxMouseCaptureLostEvent &event) {
     if (HasCapture())
         ReleaseMouse();
 }
 
-void SearchFrame::SetItems(SearchItem *items, int itemSize)
-{
+void SearchFrame::SetItems(SearchItem *items, int itemSize) {
     wxItems.Clear();
     wxIds.Clear();
     wxTriggers.Clear();
 
-    for (int i = 0; i < itemSize; i++)
-    {
+    for (int i = 0; i < itemSize; i++) {
         wxString item = wxString::FromUTF8(items[i].label);
         wxItems.Add(item);
 
@@ -421,21 +385,18 @@ void SearchFrame::SetItems(SearchItem *items, int itemSize)
 
     resultBox->SetItemCount(itemSize);
 
-    if (itemSize > 0)
-    {
+    if (itemSize > 0) {
         resultBox->SetSelection(0);
     }
     resultBox->RefreshAll();
     resultBox->Refresh();
 }
 
-void SearchFrame::SelectNext()
-{
-    if (resultBox->GetItemCount() > 0 && resultBox->GetSelection() != wxNOT_FOUND)
-    {
+void SearchFrame::SelectNext() {
+    if (resultBox->GetItemCount() > 0 &&
+        resultBox->GetSelection() != wxNOT_FOUND) {
         int newSelected = 0;
-        if (resultBox->GetSelection() < (resultBox->GetItemCount() - 1))
-        {
+        if (resultBox->GetSelection() < (resultBox->GetItemCount() - 1)) {
             newSelected = resultBox->GetSelection() + 1;
         }
 
@@ -443,13 +404,11 @@ void SearchFrame::SelectNext()
     }
 }
 
-void SearchFrame::SelectPrevious()
-{
-    if (resultBox->GetItemCount() > 0 && resultBox->GetSelection() != wxNOT_FOUND)
-    {
+void SearchFrame::SelectPrevious() {
+    if (resultBox->GetItemCount() > 0 &&
+        resultBox->GetSelection() != wxNOT_FOUND) {
         int newSelected = resultBox->GetItemCount() - 1;
-        if (resultBox->GetSelection() > 0)
-        {
+        if (resultBox->GetSelection() > 0) {
             newSelected = resultBox->GetSelection() - 1;
         }
 
@@ -457,14 +416,12 @@ void SearchFrame::SelectPrevious()
     }
 }
 
-void SearchFrame::Submit()
-{
-    if (resultBox->GetItemCount() > 0 && resultBox->GetSelection() != wxNOT_FOUND)
-    {
+void SearchFrame::Submit() {
+    if (resultBox->GetItemCount() > 0 &&
+        resultBox->GetSelection() != wxNOT_FOUND) {
         long index = resultBox->GetSelection();
         wxString id = wxIds[index];
-        if (resultCallback)
-        {
+        if (resultCallback) {
             resultCallback(id.ToUTF8(), resultData);
         }
 
@@ -472,8 +429,10 @@ void SearchFrame::Submit()
     }
 }
 
-extern "C" void interop_show_search(SearchMetadata *_metadata, QueryCallback _queryCallback, void *_data, ResultCallback _resultCallback, void *_resultData)
-{
+extern "C" void interop_show_search(SearchMetadata *_metadata,
+                                    QueryCallback _queryCallback, void *_data,
+                                    ResultCallback _resultCallback,
+                                    void *_resultData) {
 // Setup high DPI support on Windows
 #ifdef __WXMSW__
     SetProcessDPIAware();
@@ -490,8 +449,7 @@ extern "C" void interop_show_search(SearchMetadata *_metadata, QueryCallback _qu
     wxEntry(argc, (char **)nullptr);
 }
 
-extern "C" void update_items(void *app, SearchItem *items, int itemSize)
-{
+extern "C" void update_items(void *app, SearchItem *items, int itemSize) {
     SearchFrame *frame = (SearchFrame *)app;
     frame->SetItems(items, itemSize);
 }

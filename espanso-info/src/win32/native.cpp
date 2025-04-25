@@ -18,12 +18,12 @@
  */
 
 #include "native.h"
+#include <array>
 #include <iostream>
+#include <memory>
 #include <stdio.h>
 #include <string>
 #include <vector>
-#include <memory>
-#include <array>
 
 #define UNICODE
 
@@ -34,32 +34,31 @@
 #define STRSAFE_NO_DEPRECATE
 #endif
 
+#include <strsafe.h>
 #include <windows.h>
 #include <winuser.h>
-#include <strsafe.h>
 
 #include <Windows.h>
 
-int32_t info_get_title(wchar_t *buffer, int32_t buffer_size)
-{
-  HWND hwnd = GetForegroundWindow();
-  return GetWindowText(hwnd, buffer, buffer_size);
+int32_t info_get_title(wchar_t *buffer, int32_t buffer_size) {
+    HWND hwnd = GetForegroundWindow();
+    return GetWindowText(hwnd, buffer, buffer_size);
 }
 
-int32_t info_get_exec(wchar_t *buffer, int32_t buffer_size)
-{
-  HWND hwnd = GetForegroundWindow();
+int32_t info_get_exec(wchar_t *buffer, int32_t buffer_size) {
+    HWND hwnd = GetForegroundWindow();
 
-  // Extract the window PID
-  DWORD windowPid;
-  GetWindowThreadProcessId(hwnd, &windowPid);
+    // Extract the window PID
+    DWORD windowPid;
+    GetWindowThreadProcessId(hwnd, &windowPid);
 
-  DWORD dsize = (DWORD)buffer_size;
+    DWORD dsize = (DWORD)buffer_size;
 
-  // Extract the process executable file path
-  HANDLE process = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, windowPid);
-  int res = QueryFullProcessImageNameW(process, 0, buffer, &dsize);
-  CloseHandle(process);
+    // Extract the process executable file path
+    HANDLE process =
+        OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, windowPid);
+    int res = QueryFullProcessImageNameW(process, 0, buffer, &dsize);
+    CloseHandle(process);
 
-  return res;
+    return res;
 }

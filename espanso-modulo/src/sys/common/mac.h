@@ -18,4 +18,4 @@
  */
 
 void ActivateApp();
-void SetWindowStyles(NSWindow * window);
+void SetWindowStyles(NSWindow *window);

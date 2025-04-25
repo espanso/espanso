@@ -31,30 +31,29 @@
 #define UI_EVENT_TYPE_HEARTBEAT 3
 
 typedef struct {
-  int32_t show_icon;
+    int32_t show_icon;
 
-  char icon_paths[MAX_ICON_COUNT][MAX_FILE_PATH];
-  int32_t icon_paths_count;
+    char icon_paths[MAX_ICON_COUNT][MAX_FILE_PATH];
+    int32_t icon_paths_count;
 } UIOptions;
 
 typedef struct {
-  int32_t event_type;
-  uint32_t context_menu_id;
+    int32_t event_type;
+    uint32_t context_menu_id;
 } UIEvent;
 
-typedef void (*EventCallback)(void * self, UIEvent data);
+typedef void (*EventCallback)(void *self, UIEvent data);
 
-typedef struct
-{
-  UIOptions options;
+typedef struct {
+    UIOptions options;
 
-  // Rust interop
-  void *rust_instance;
-  EventCallback event_callback;
+    // Rust interop
+    void *rust_instance;
+    EventCallback event_callback;
 } UIVariables;
 
 // Initialize the Application delegate.
-extern "C" void ui_initialize(void * self, UIOptions options);
+extern "C" void ui_initialize(void *self, UIOptions options);
 
 // Run the event loop. Blocking call.
 extern "C" int32_t ui_eventloop(EventCallback callback);
@@ -62,16 +61,16 @@ extern "C" int32_t ui_eventloop(EventCallback callback);
 // Stops the application eventloop.
 extern "C" void ui_exit();
 
-// Updates the tray icon to the given one. The method accepts an index that refers to
-// the icon within the UIOptions.icon_paths array.
+// Updates the tray icon to the given one. The method accepts an index that
+// refers to the icon within the UIOptions.icon_paths array.
 extern "C" void ui_update_tray_icon(int32_t index);
 
 // Show a native notification
-extern "C" void ui_show_notification(char * message, double delay);
+extern "C" void ui_show_notification(char *message, double delay);
 
 // Display the context menu on the tray icon.
 // Payload is passed as JSON as given the complex structure, parsing
 // this manually would have been complex.
-extern "C" void ui_show_context_menu(char * payload);
+extern "C" void ui_show_context_menu(char *payload);
 
-#endif //ESPANSO_UI_H
+#endif // ESPANSO_UI_H
