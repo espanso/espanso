@@ -113,3 +113,26 @@ dependencies=["create-app-image"]
 [tasks.test-output]
 command = "cargo"
 args = ["test", "--workspace", "--exclude", "espanso-modulo", "--exclude", "espanso-ipc", "--no-default-features", "--", "--nocapture"]
+
+# Formatting
+
+[tasks.fmt]
+dependencies = ["fmt-clang", "fmt-json", "fmt-nix", "fmt-rs"]
+
+[tasks.fmt-clang]
+script_runner = "@rust"
+script = { file = "scripts/format_clang.rs"}
+
+[tasks.fmt-nix]
+command = "nix"
+condition = { platforms = ["linux", "mac"] }
+args = ["fmt", "."]
+
+[tasks.fmt-json]
+script_runner = "@rust"
+command = "biome"
+args = ["format", ".", "--write"]
+
+[tasks.fmt-rs]
+command = "cargo"
+args = ["fmt"]
