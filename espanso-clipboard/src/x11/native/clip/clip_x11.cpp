@@ -835,8 +835,8 @@ class Manager {
             return 0;
     }
 
-    void encode_data_on_demand(
-        __attribute__((unused)) std::pair<const xcb_atom_t, buffer_ptr> &e) {
+    void encode_data_on_demand(__attribute__((unused))
+                               std::pair<const xcb_atom_t, buffer_ptr> &e) {
 #ifdef HAVE_PNG_H
         if (e.first == get_atom(MIME_IMAGE_PNG)) {
             assert(m_image.is_valid());

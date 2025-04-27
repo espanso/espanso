@@ -1704,8 +1704,8 @@ int _xdo_query_keycode_to_modifier(XModifierKeymap *modmap, KeyCode keycode) {
                     break;
                 }
             } /* end if */
-        } /* end loop j */
-    } /* end loop i */
+        }     /* end loop j */
+    }         /* end loop i */
 
     /* No modifier found for this keycode, return no mask */
     return 0;
