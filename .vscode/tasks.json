@@ -264,13 +264,24 @@
     },
     {
       "type": "shell",
+      "label": "give excecution permissions: create AppImage.sh",
+      "command": [
+        "chmod",
+        "+x",
+        "${workspaceFolder}/scripts/create_app_image.sh"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "type": "shell",
       "command": "${workspaceFolder}/scripts/create_app_image.sh",
       "label": "linux: create AppImage",
       "detail": "creates the AppImage for linux",
       "group": {
         "kind": "none"
       },
-      "problemMatcher": []
+      "problemMatcher": [],
+      "dependsOn": ["give excecution permissions: create AppImage.sh"]
     },
     {
       "label": "Build everything: linux",

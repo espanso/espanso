@@ -1,4 +1,4 @@
-FROM ubuntu:24.04
+FROM debian:bookworm-slim
 
 RUN apt-get update \
     && apt-get install -y \
