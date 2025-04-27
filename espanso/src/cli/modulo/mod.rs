@@ -31,46 +31,47 @@ mod troubleshoot;
 mod welcome;
 
 pub fn new() -> CliModule {
-  #[allow(clippy::needless_update)]
-  CliModule {
-    requires_paths: true,
-    enable_logs: false,
-    subcommand: "modulo".to_string(),
-    entry: modulo_main,
-    ..Default::default()
-  }
+    #[allow(clippy::needless_update)]
+    CliModule {
+        requires_paths: true,
+        enable_logs: false,
+        subcommand: "modulo".to_string(),
+        entry: modulo_main,
+        ..Default::default()
+    }
 }
 
 #[cfg(feature = "modulo")]
 fn modulo_main(args: CliModuleArgs) -> i32 {
-  let paths = args.paths.expect("missing paths in modulo main");
-  let cli_args = args.cli_args.expect("missing cli_args in modulo main");
-  let icon_paths = crate::icon::load_icon_paths(&paths.runtime).expect("unable to load icon paths");
+    let paths = args.paths.expect("missing paths in modulo main");
+    let cli_args = args.cli_args.expect("missing cli_args in modulo main");
+    let icon_paths =
+        crate::icon::load_icon_paths(&paths.runtime).expect("unable to load icon paths");
 
-  if let Some(matches) = cli_args.subcommand_matches("form") {
-    return form::form_main(matches, &icon_paths);
-  }
+    if let Some(matches) = cli_args.subcommand_matches("form") {
+        return form::form_main(matches, &icon_paths);
+    }
 
-  if let Some(matches) = cli_args.subcommand_matches("search") {
-    return search::search_main(matches, &icon_paths);
-  }
+    if let Some(matches) = cli_args.subcommand_matches("search") {
+        return search::search_main(matches, &icon_paths);
+    }
 
-  if let Some(matches) = cli_args.subcommand_matches("welcome") {
-    return welcome::welcome_main(matches, &paths, &icon_paths);
-  }
+    if let Some(matches) = cli_args.subcommand_matches("welcome") {
+        return welcome::welcome_main(matches, &paths, &icon_paths);
+    }
 
-  if let Some(matches) = cli_args.subcommand_matches("textview") {
-    return textview::textview_main(matches, &icon_paths);
-  }
+    if let Some(matches) = cli_args.subcommand_matches("textview") {
+        return textview::textview_main(matches, &icon_paths);
+    }
 
-  if cli_args.subcommand_matches("troubleshoot").is_some() {
-    return troubleshoot::troubleshoot_main(&paths, &icon_paths);
-  }
+    if cli_args.subcommand_matches("troubleshoot").is_some() {
+        return troubleshoot::troubleshoot_main(&paths, &icon_paths);
+    }
 
-  0
+    0
 }
 
 #[cfg(not(feature = "modulo"))]
 fn modulo_main(_: CliModuleArgs) -> i32 {
-  panic!("this version of espanso was not compiled with 'modulo' support, please obtain a version that does or recompile it with the 'modulo' feature flag");
+    panic!("this version of espanso was not compiled with 'modulo' support, please obtain a version that does or recompile it with the 'modulo' feature flag");
 }

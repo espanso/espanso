@@ -24,32 +24,32 @@ use std::process::Command;
 use std::sync::LazyLock;
 
 static LAYOUT_EXTRACT_REGEX: LazyLock<Regex> =
-  LazyLock::new(|| Regex::new(r"^\[\('.*?', '(.*?)'\)").unwrap());
+    LazyLock::new(|| Regex::new(r"^\[\('.*?', '(.*?)'\)").unwrap());
 
 pub fn get_active_layout() -> Option<String> {
-  match Command::new("gsettings")
-    .arg("get")
-    .arg("org.gnome.desktop.input-sources")
-    .arg("mru-sources")
-    .output()
-  {
-    Ok(output) => {
-      let output_str = String::from_utf8_lossy(&output.stdout);
-      let captures = LAYOUT_EXTRACT_REGEX.captures(&output_str)?;
-      let layout = captures.get(1)?.as_str();
-      Some(layout.to_string())
+    match Command::new("gsettings")
+        .arg("get")
+        .arg("org.gnome.desktop.input-sources")
+        .arg("mru-sources")
+        .output()
+    {
+        Ok(output) => {
+            let output_str = String::from_utf8_lossy(&output.stdout);
+            let captures = LAYOUT_EXTRACT_REGEX.captures(&output_str)?;
+            let layout = captures.get(1)?.as_str();
+            Some(layout.to_string())
+        }
+        Err(err) => {
+            error!(
+                "unable to retrieve current keyboard layout with 'gsettings': {}",
+                err
+            );
+            None
+        }
     }
-    Err(err) => {
-      error!(
-        "unable to retrieve current keyboard layout with 'gsettings': {}",
-        err
-      );
-      None
-    }
-  }
 }
 
 pub fn is_gnome() -> bool {
-  let target_session_file = PathBuf::from("/usr/bin/gnome-session");
-  target_session_file.exists()
+    let target_session_file = PathBuf::from("/usr/bin/gnome-session");
+    target_session_file.exists()
 }

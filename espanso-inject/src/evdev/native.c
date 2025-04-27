@@ -19,56 +19,42 @@
 
 #include "native.h"
 #include <linux/uinput.h>
-#include <unistd.h>
 #include <memory.h>
+#include <unistd.h>
 
-unsigned long ui_dev_destroy()
-{
-  return UI_DEV_DESTROY;
+unsigned long ui_dev_destroy() { return UI_DEV_DESTROY; }
+
+unsigned long ui_dev_create() { return UI_DEV_CREATE; }
+
+unsigned long ui_set_evbit() { return UI_SET_EVBIT; }
+
+unsigned long ui_set_keybit() { return UI_SET_KEYBIT; }
+
+int setup_uinput_device(int fd) {
+    struct uinput_setup usetup;
+
+    memset(&usetup, 0, sizeof(usetup));
+    usetup.id.bustype = BUS_USB;
+    usetup.id.vendor = 0x1234;  // sample vendor
+    usetup.id.product = 0x5678; // sample product
+    strcpy(usetup.name, "Espanso virtual device");
+
+    return ioctl(fd, UI_DEV_SETUP, &usetup);
 }
 
-unsigned long ui_dev_create()
-{
-  return UI_DEV_CREATE;
-}
+void emit(int fd, int type, int code, int val) {
+    struct input_event ie;
+    ie.type = type;
+    ie.code = code;
+    ie.value = val;
+    // timestamp values below are ignored
+    ie.time.tv_sec = 0;
+    ie.time.tv_usec = 0;
 
-unsigned long ui_set_evbit()
-{
-  return UI_SET_EVBIT;
-}
-
-unsigned long ui_set_keybit()
-{
-  return UI_SET_KEYBIT;
-}
-
-int setup_uinput_device(int fd)
-{
-  struct uinput_setup usetup;
-
-  memset(&usetup, 0, sizeof(usetup));
-  usetup.id.bustype = BUS_USB;
-  usetup.id.vendor = 0x1234;  // sample vendor
-  usetup.id.product = 0x5678; // sample product
-  strcpy(usetup.name, "Espanso virtual device");
-
-  return ioctl(fd, UI_DEV_SETUP, &usetup);
-}
-
-void emit(int fd, int type, int code, int val)
-{
-  struct input_event ie;
-  ie.type = type;
-  ie.code = code;
-  ie.value = val;
-  // timestamp values below are ignored
-  ie.time.tv_sec = 0;
-  ie.time.tv_usec = 0;
-
-  write(fd, &ie, sizeof(ie));
+    write(fd, &ie, sizeof(ie));
 }
 
 void uinput_emit(int fd, unsigned int code, int pressed) {
-  emit(fd, EV_KEY, code, pressed);
-  emit(fd, EV_SYN, SYN_REPORT, 0);
+    emit(fd, EV_KEY, code, pressed);
+    emit(fd, EV_SYN, SYN_REPORT, 0);
 }

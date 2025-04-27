@@ -22,10 +22,10 @@
 
 #include <stdint.h>
 
-extern "C" int32_t clipboard_x11_get_text(char * buffer, int32_t buffer_size);
+extern "C" int32_t clipboard_x11_get_text(char *buffer, int32_t buffer_size);
 
-extern "C" int32_t clipboard_x11_set_text(char * text);
-extern "C" int32_t clipboard_x11_set_html(char * html, char * fallback_text);
-extern "C" int32_t clipboard_x11_set_image(char * buffer, int32_t buffer_size);
+extern "C" int32_t clipboard_x11_set_text(char *text);
+extern "C" int32_t clipboard_x11_set_html(char *html, char *fallback_text);
+extern "C" int32_t clipboard_x11_set_image(char *buffer, int32_t buffer_size);
 
-#endif //ESPANSO_X11_CLIPBOARD_H
+#endif // ESPANSO_X11_CLIPBOARD_H

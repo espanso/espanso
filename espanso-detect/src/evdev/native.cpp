@@ -1,5 +1,6 @@
-// A good portion of the following code has been taken by the "interactive-evdev.c"
-// example of "libxkbcommon" by Ran Benita. The original license is included as follows:
+// A good portion of the following code has been taken by the
+// "interactive-evdev.c" example of "libxkbcommon" by Ran Benita. The original
+// license is included as follows:
 // https://github.com/xkbcommon/libxkbcommon/blob/master/tools/interactive-evdev.c
 
 /*
@@ -40,51 +41,48 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <string>
+#include <unistd.h>
 
-#include <sys/epoll.h>
 #include <linux/input.h>
+#include <sys/epoll.h>
 
 #include "xkbcommon/xkbcommon.h"
 
 #define NLONGS(n) (((n) + LONG_BIT - 1) / LONG_BIT)
 
-static bool
-evdev_bit_is_set(const unsigned long *array, int bit)
-{
-  return array[bit / LONG_BIT] & (1LL << (bit % LONG_BIT));
+static bool evdev_bit_is_set(const unsigned long *array, int bit) {
+    return array[bit / LONG_BIT] & (1LL << (bit % LONG_BIT));
 }
 
 /* Some heuristics to see if the device is a keyboard. */
-int32_t is_keyboard_or_mouse(int fd)
-{
-  int i;
-  unsigned long evbits[NLONGS(EV_CNT)] = {0};
-  unsigned long keybits[NLONGS(KEY_CNT)] = {0};
+int32_t is_keyboard_or_mouse(int fd) {
+    int i;
+    unsigned long evbits[NLONGS(EV_CNT)] = {0};
+    unsigned long keybits[NLONGS(KEY_CNT)] = {0};
 
-  errno = 0;
-  ioctl(fd, EVIOCGBIT(0, sizeof(evbits)), evbits);
-  if (errno)
+    errno = 0;
+    ioctl(fd, EVIOCGBIT(0, sizeof(evbits)), evbits);
+    if (errno)
+        return false;
+
+    if (!evdev_bit_is_set(evbits, EV_KEY))
+        return false;
+
+    errno = 0;
+    ioctl(fd, EVIOCGBIT(EV_KEY, sizeof(keybits)), keybits);
+    if (errno)
+        return false;
+
+    // Test for keyboard keys
+    for (i = KEY_RESERVED; i <= KEY_MIN_INTERESTING; i++)
+        if (evdev_bit_is_set(keybits, i))
+            return true;
+
+    // Test for mouse keys
+    for (i = BTN_MOUSE; i <= BTN_TASK; i++)
+        if (evdev_bit_is_set(keybits, i))
+            return true;
+
     return false;
-
-  if (!evdev_bit_is_set(evbits, EV_KEY))
-    return false;
-
-  errno = 0;
-  ioctl(fd, EVIOCGBIT(EV_KEY, sizeof(keybits)), keybits);
-  if (errno)
-    return false;
-
-  // Test for keyboard keys
-  for (i = KEY_RESERVED; i <= KEY_MIN_INTERESTING; i++)
-    if (evdev_bit_is_set(keybits, i))
-      return true;
-
-  // Test for mouse keys
-  for (i = BTN_MOUSE; i <= BTN_TASK; i++)
-    if (evdev_bit_is_set(keybits, i))
-      return true;
-
-  return false;
 }

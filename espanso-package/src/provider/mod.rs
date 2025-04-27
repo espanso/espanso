@@ -28,24 +28,24 @@ pub(crate) mod hub;
 
 #[derive(Debug, Default)]
 pub struct PackageSpecifier {
-  pub name: String,
-  pub version: Option<String>,
+    pub name: String,
+    pub version: Option<String>,
 
-  // Source information
-  pub git_repo_url: Option<String>,
-  pub git_branch: Option<String>,
+    // Source information
+    pub git_repo_url: Option<String>,
+    pub git_branch: Option<String>,
 
-  // Resolution options
-  pub use_native_git: bool,
+    // Resolution options
+    pub use_native_git: bool,
 }
 
 pub trait PackageProvider {
-  fn name(&self) -> String;
-  fn download(&self, package: &PackageSpecifier) -> Result<Box<dyn Package>>;
-  // TODO: fn check update available? (probably should be only available in the hub)
+    fn name(&self) -> String;
+    fn download(&self, package: &PackageSpecifier) -> Result<Box<dyn Package>>;
+    // TODO: fn check update available? (probably should be only available in the hub)
 }
 
 #[derive(Debug, Default)]
 pub struct ProviderOptions {
-  pub force_index_update: bool,
+    pub force_index_update: bool,
 }

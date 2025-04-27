@@ -32,38 +32,39 @@
 #define UI_EVENT_TYPE_HEARTBEAT 3
 
 typedef struct {
-  int32_t show_icon;
+    int32_t show_icon;
 
-  wchar_t icon_paths[MAX_ICON_COUNT][MAX_FILE_PATH];
-  int32_t icon_paths_count;
+    wchar_t icon_paths[MAX_ICON_COUNT][MAX_FILE_PATH];
+    int32_t icon_paths_count;
 } UIOptions;
 
 typedef struct {
-  int32_t event_type;
-  uint32_t context_menu_id;
+    int32_t event_type;
+    uint32_t context_menu_id;
 } UIEvent;
 
-typedef void (*EventCallback)(void * self, UIEvent data);
+typedef void (*EventCallback)(void *self, UIEvent data);
 
 // Initialize the hidden UI window, the tray icon and returns the window handle.
-extern "C" void * ui_initialize(void * self, UIOptions options, int32_t * error_code);
+extern "C" void *ui_initialize(void *self, UIOptions options,
+                               int32_t *error_code);
 
 // Run the event loop. Blocking call.
-extern "C" int32_t ui_eventloop(void * window, EventCallback callback);
+extern "C" int32_t ui_eventloop(void *window, EventCallback callback);
 
 // Destroy the given window.
-extern "C" int32_t ui_destroy(void * window);
+extern "C" int32_t ui_destroy(void *window);
 
 // Send a termination event that exits the event loop
-extern "C" void ui_exit(void * window);
+extern "C" void ui_exit(void *window);
 
-// Updates the tray icon to the given one. The method accepts an index that refers to
-// the icon within the UIOptions.icon_paths array.
-extern "C" void ui_update_tray_icon(void * window, int32_t index);
+// Updates the tray icon to the given one. The method accepts an index that
+// refers to the icon within the UIOptions.icon_paths array.
+extern "C" void ui_update_tray_icon(void *window, int32_t index);
 
 // Display the context menu on the tray icon.
 // Payload is passed as JSON as given the complex structure, parsing
 // this manually would have been complex.
-extern "C" int32_t ui_show_context_menu(void * window, char * payload);
+extern "C" int32_t ui_show_context_menu(void *window, char *payload);
 
-#endif //ESPANSO_UI_H
+#endif // ESPANSO_UI_H
