@@ -183,6 +183,18 @@ jobs:
           echo Using version ${{ needs.extract-version.outputs.espanso_version }}
       - name: Install rust target
         run: rustup update && rustup target add aarch64-apple-darwin x86_64-apple-darwin
+      - name: Test
+        run: |
+          cargo test \
+            -p espanso \
+            --target x86_64-apple-darwin \
+            --no-default-features \
+            --features native-tls,modulo
+          cargo test \
+            -p espanso \
+            --target aarch64-apple-darwin \
+            --no-default-features \
+            --features native-tls,modulo
       - name: Build
         run: |
           cargo build \
