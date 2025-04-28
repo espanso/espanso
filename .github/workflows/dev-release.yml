@@ -114,7 +114,7 @@ jobs:
           sudo apt-get install -y libx11-dev libxtst-dev libxkbcommon-dev libdbus-1-dev libwxgtk3.2-dev
       - name: Build docker image
         run: |
-          sudo docker build -t espanso-ubuntu . -f .github/scripts/ubuntu/Dockerfile
+          sudo docker build -t espanso-ubuntu . -f .github/scripts/Dockerfile
       - name: Build
         run: |
           cargo build \
