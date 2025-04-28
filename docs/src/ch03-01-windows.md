@@ -8,28 +8,30 @@ Espanso supports multiple targets on Windows: plain executable, installer and po
 
 If you only want to build the "plain" Espanso executable, you can do so by running:
 
-```bash
-cargo make --profile release -- build-binary
+```console
+$ cargo build --no-default-features --features modulo,native-tls --release
 ```
 
 This will create an `espanso` executable in the `target/release` directory.
 
 ##### Installer
 
-If you want to build the Installer (the executable that installs Espanso on a machine), you can run:
+If you want to build the Installer (the executable that installs Espanso on a machine), first build the executable as per above. Afterwards, you can run:
 
-```bash
-cargo make --profile release -- build-windows-installer
+<!-- TODO: @AucaCoyan change this to powershell equivalent? -->
+```console
+$ ./scripts/build_windows_installer.sh
 ```
 
 This will generate the installer in the `target/windows/installer` directory.
 
 ##### Portable mode bundle
 
-You can also generate a portable-mode bundle (a self-contained ZIP archive that does not require installation) by running:
+You can also generate a portable-mode bundle (a self-contained ZIP archive that does not require installation) by first building the executable as per above, and then running:
 
-```bash
-cargo make --profile release -- build-windows-portable
+<!-- TODO: @AucaCoyan change this to powershell equivalent? -->
+```console
+$ ./scripts/build_windows_portable.sh
 ```
 
 This will generate the executable in the `target/windows/portable` directory.
