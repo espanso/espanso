@@ -47,10 +47,8 @@
                 with pkgs;
                 [
                   biome
-                  cargo-make
                   clang-tools
                   rustfmt
-                  rust-script
                 ]
                 ++ lib.optional (stdenv.isx86_64 && stdenv.isLinux) [ cargo-tarpaulin ];
               shellHook = ''
