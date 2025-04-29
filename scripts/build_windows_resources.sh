@@ -16,9 +16,7 @@ err() {
 readonly TARGET_DIR="target/windows/resources"
 
 main() {
-  if test -z "${EXEC_PATH:-}"; then
-    err "EXEC_PATH is a required environment variable for this script"
-  fi
+  local build_type=${1:-release}
 
   # Clean the target directory
   rm -rf -- "${TARGET_DIR}"
@@ -36,7 +34,7 @@ main() {
 
   find "${tooldir}" -name '*.dll' -exec cp -t "${TARGET_DIR}" {} +
 
-  cp "${EXEC_PATH}" "${TARGET_DIR}/espansod.exe"
+  cp ./target/"${build_type}"/espanso "${TARGET_DIR}/espansod.exe"
 
   echo '@"%~dp0espansod.exe" %*' > "${TARGET_DIR}/espanso.cmd"
 }
