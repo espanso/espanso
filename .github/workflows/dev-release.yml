@@ -172,7 +172,9 @@ jobs:
         run: |
           echo Using version ${{ needs.extract-version.outputs.espanso_version }}
       - name: Install rust target
-        run: rustup update && rustup target add aarch64-apple-darwin x86_64-apple-darwin
+        run: |
+          rustup update
+          rustup target add aarch64-apple-darwin x86_64-apple-darwin
       - name: Test
         run: |
           cargo test \
