@@ -21,122 +21,98 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
-
-    runs-on: ${{ matrix.os }}
-
+  linux-x11:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Check formatting
+      - name: Install Linux X11 dependencies
         run: |
-          rustup component add rustfmt
-          cargo fmt --all -- --check
-      - name: Install Linux dependencies
-        if: ${{ runner.os == 'Linux' }}
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libx11-dev libxtst-dev libxkbcommon-dev libdbus-1-dev libwxgtk3.2-dev
-      - name: Build
+          sudo apt update
+          sudo apt install -y \
+            build-essential \
+            git \
+            libdbus-1-dev \
+            libssl-dev \
+            libwxgtk3.*-dev \
+            libx11-dev \
+            libxkbcommon-dev \
+            libxtst-dev
+      - name: build
         run: |
           cargo build \
-            -p espanso \
             --no-default-features \
-            --features modulo,native-tls
-      - name: Clippy
+            --features modulo,vendored-tls
+      - name: test
         run: |
-          rustup component add clippy
+          cargo test \
+            --workspace \
+            --exclude espanso-modulo \
+            --exclude espanso-ipc \
+            --no-default-features \
+            --features vendored-tls
+      - name: lint
+        run: |
+          cargo fmt --all -- --check
           cargo clippy -- -D warnings
 
-  test:
-    strategy:
-      matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
-
-    runs-on: ${{ matrix.os }}
-
-    steps:
-      - uses: actions/checkout@v4
-      - name: Check formatting
-        run: |
-          rustup component add rustfmt
-          cargo fmt --all -- --check
-      - name: Install Linux dependencies
-        if: ${{ runner.os == 'Linux' }}
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libx11-dev libxtst-dev libxkbcommon-dev libdbus-1-dev libwxgtk3.2-dev
-      - name: Run test suite
-        run: |
-          cargo test \
-            --workspace \
-            --exclude espanso-modulo \
-            --exclude espanso-ipc \
-            --no-default-features \
-            --features native-tls
-  
-  build-wayland:
+  linux-wayland:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Check formatting
+      - name: Install Linux wayland dependencies
         run: |
-          rustup component add rustfmt
-          cargo fmt --all -- --check
-      - name: Install Linux dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libxkbcommon-dev libwxgtk3.2-dev libdbus-1-dev
-      - name: Build
+          sudo apt update
+          sudo apt install -y \
+            build-essential \
+            git \
+            libdbus-1-dev \
+            libssl-dev \
+            libwxgtk3.*-dev \
+            libxkbcommon-dev \
+            wl-clipboard
+      - name: build
         run: |
           cargo build \
-            -p espanso \
             --no-default-features \
-            --features wayland,modulo,native-tls
-      - name: Check clippy
-        run: |
-          rustup component add clippy
-          cargo clippy -p espanso --features wayland -- -D warnings
-  
-  test-wayland:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Check formatting
-        run: |
-          rustup component add rustfmt
-          cargo fmt --all -- --check
-      - name: Install Linux dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libxkbcommon-dev libwxgtk3.2-dev libdbus-1-dev
-      - name: Run test suite
+            --features modulo,vendored-tls,wayland
+      - name: test
         run: |
           cargo test \
             --workspace \
             --exclude espanso-modulo \
             --exclude espanso-ipc \
             --no-default-features \
-            --features wayland,native-tls
-  
-  build-macos:
+            --features vendored-tls,wayland
+      - name: lint
+        run: |
+          cargo fmt --all -- --check
+          cargo clippy -- -D warnings
+
+  macos:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
       - name: Install target
-        run: rustup update && rustup target add aarch64-apple-darwin x86_64-apple-darwin
+        run: |
+          rustup update
+          rustup target add aarch64-apple-darwin x86_64-apple-darwin
       - name: Build
         run: |
-          cargo build \
-            --target x86_64-apple-darwin \
-            -p espanso \
-            --no-default-features \
-            --features modulo,native-tls
-          cargo build \
-            --target aarch64-apple-darwin \
-            -p espanso \
-            --no-default-features \
-            --features modulo,native-tls
+          cargo build --target aarch64-apple-darwin \
+          cargo build --target x86_64-apple-darwin
+      - name: lint
+        run: |
+          cargo fmt --all -- --check
+          cargo clippy -- -D warnings
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: |
+          cargo build
+      - name: lint
+        run: |
+          cargo fmt --all -- --check
+          cargo clippy -- -D warnings
