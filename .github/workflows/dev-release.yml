@@ -24,22 +24,7 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  extract-version:
-    name: extract-version
-    runs-on: ubuntu-latest
-    outputs:
-      espanso_version: ${{ steps.version.outputs.version }}
-    steps:
-      - uses: actions/checkout@v4
-      - name: "Extract version"
-        id: "version"
-        run: |
-          ESPANSO_VERSION=$(awk -F '"' '/^version/ { print $2; exit }' espanso/Cargo.toml)
-          echo "version: ${ESPANSO_VERSION}"
-          echo "version=v${ESPANSO_VERSION}" >> "${GITHUB_OUTPUT}"
-
   windows:
-    needs: ["extract-version"]
     runs-on: windows-latest
 
     defaults:
@@ -48,9 +33,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - name: Print target version
-        run: |
-          echo Using version ${{ needs.extract-version.outputs.espanso_version }}
       - name: Build
         run: |
           cargo build --release
@@ -90,14 +72,10 @@ jobs:
             target/windows/Espanso-Win-Portable-x86_64.zip.sha256.txt
   
   linux-x11:
-    needs: ["extract-version"]
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
-      - name: Print target version
-        run: |
-          echo Using version ${{ needs.extract-version.outputs.espanso_version }}
       - name: Install Linux dependencies
         run: |
           sudo apt-get update
@@ -128,14 +106,10 @@ jobs:
             Espanso-X11.AppImage.sha256.txt
   
   linux-deb:
-    needs: ["extract-version"]
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
-      - name: Print target version
-        run: |
-          echo Using version ${{ needs.extract-version.outputs.espanso_version }}
       - name: Install Linux dependencies
         run: |
           sudo apt-get update
@@ -162,14 +136,10 @@ jobs:
             espanso-debian-wayland-amd64.deb
 
   macos:
-    needs: ["extract-version"]
     runs-on: macos-latest
 
     steps:
       - uses: actions/checkout@v4
-      - name: Print target version
-        run: |
-          echo Using version ${{ needs.extract-version.outputs.espanso_version }}
       - name: Install rust target
         run: |
           rustup update
