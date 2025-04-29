@@ -98,7 +98,7 @@ jobs:
           rustup target add aarch64-apple-darwin x86_64-apple-darwin
       - name: Build
         run: |
-          cargo build --target aarch64-apple-darwin \
+          cargo build --target aarch64-apple-darwin
           cargo build --target x86_64-apple-darwin
       - name: Lint
         run: |
