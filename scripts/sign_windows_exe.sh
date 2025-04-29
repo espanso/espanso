@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 set -Eeuf -o pipefail
+# TODO
 set -x
 
 readonly WINDOWS_KITS_LOCATION="C:/Program Files (x86)/Windows Kits/10/bin"

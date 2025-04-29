@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 set -Eeuf -o pipefail
+# TODO
 set -x
 
 readonly INSTALLER_NAME="Espanso-Win-Installer"

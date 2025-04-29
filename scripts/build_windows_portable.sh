@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 set -Eeuf -o pipefail
+# TODO
 set -x
 
 TARGET_DIR=target/windows/portable
