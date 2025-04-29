@@ -37,12 +37,12 @@ jobs:
             libx11-dev \
             libxkbcommon-dev \
             libxtst-dev
-      - name: build
+      - name: Build
         run: |
           cargo build \
             --no-default-features \
             --features modulo,vendored-tls
-      - name: test
+      - name: Test
         run: |
           cargo test \
             --workspace \
@@ -50,7 +50,7 @@ jobs:
             --exclude espanso-ipc \
             --no-default-features \
             --features vendored-tls
-      - name: lint
+      - name: Lint
         run: |
           cargo fmt --all -- --check
           cargo clippy -- -D warnings
@@ -70,12 +70,12 @@ jobs:
             libwxgtk3.*-dev \
             libxkbcommon-dev \
             wl-clipboard
-      - name: build
+      - name: Build
         run: |
           cargo build \
             --no-default-features \
             --features modulo,vendored-tls,wayland
-      - name: test
+      - name: Test
         run: |
           cargo test \
             --workspace \
@@ -83,7 +83,7 @@ jobs:
             --exclude espanso-ipc \
             --no-default-features \
             --features vendored-tls,wayland
-      - name: lint
+      - name: Lint
         run: |
           cargo fmt --all -- --check
           cargo clippy -- -D warnings
@@ -100,7 +100,7 @@ jobs:
         run: |
           cargo build --target aarch64-apple-darwin \
           cargo build --target x86_64-apple-darwin
-      - name: lint
+      - name: Lint
         run: |
           cargo fmt --all -- --check
           cargo clippy -- -D warnings
@@ -112,7 +112,7 @@ jobs:
       - name: Build
         run: |
           cargo build
-      - name: lint
+      - name: Lint
         run: |
           cargo fmt --all -- --check
           cargo clippy -- -D warnings
