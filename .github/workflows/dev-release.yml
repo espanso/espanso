@@ -35,8 +35,8 @@ jobs:
         id: "version"
         run: |
           ESPANSO_VERSION=$(awk -F '"' '/^version/ { print $2; exit }' espanso/Cargo.toml)
-          echo version: $ESPANSO_VERSION
-          echo "::set-output name=version::v$ESPANSO_VERSION"
+          echo "version: ${ESPANSO_VERSION}"
+          echo "version=v${ESPANSO_VERSION}" >> "${GITHUB_OUTPUT}"
 
   windows:
     needs: ["extract-version"]
