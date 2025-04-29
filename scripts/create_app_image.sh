@@ -8,6 +8,8 @@ readonly BUILD_DIR=${TARGET_DIR}/build
 readonly OUTPUT_DIR=${TARGET_DIR}/out
 
 main() {
+  local build_type=${1:-release}
+
   rm -rf -- "${TARGET_DIR}"
   mkdir -p "${OUTPUT_DIR}"
   mkdir -p "${BUILD_DIR}"
@@ -16,7 +18,7 @@ main() {
   pushd "${OUTPUT_DIR}"
 
   linuxdeploy=$(find "${BASE_DIR}"/scripts/vendor-app-image -maxdepth 1 -name 'linuxdeploy*.AppImage' -print -quit)
-  "${linuxdeploy}" --appimage-extract-and-run -e "${BASE_DIR}/${EXEC_PATH}" \
+  "${linuxdeploy}" --appimage-extract-and-run -e "${BASE_DIR}/target/${build_type}/espanso" \
     -d "${BASE_DIR}/espanso/src/res/linux/espanso.desktop" \
     -i "${BASE_DIR}/espanso/src/res/linux/icon.png" \
     --appdir "${BUILD_DIR}" \

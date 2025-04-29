@@ -20,7 +20,6 @@ main() {
 
   log "Building espanso and creating AppImage"
   cargo build \
-    -p espanso \
     --no-default-features \
     --features modulo,vendored-tls \
     --release

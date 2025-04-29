@@ -91,17 +91,11 @@ jobs:
             --no-default-features \
             --features native-tls
       - name: Build resources
-        run: ./scripts/build_windows_resources.sh
-        env:
-          EXEC_PATH: ./target/release/espanso
+        run: ./scripts/build_windows_resources.sh release
       - name: Build installer
         run:  ./scripts/build_windows_installer.sh
-        env:
-          EXEC_PATH: ./target/release/espanso
       - name: Build portable mode archive 
         run: ./scripts/build_windows_portable.sh
-        env:
-          EXEC_PATH: ./target/release/espanso
       - name: Create portable mode archive
         shell: powershell
         run: |

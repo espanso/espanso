@@ -117,7 +117,6 @@ jobs:
           sudo docker run \
             --rm \
             -v "$(pwd):/shared" \
-            -e EXEC_PATH=target/release/espanso \
             espanso-ubuntu \
             espanso/.github/scripts/ubuntu/build_appimage.sh
       - uses: actions/upload-artifact@v4
