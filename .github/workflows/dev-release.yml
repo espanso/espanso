@@ -53,11 +53,7 @@ jobs:
           echo Using version ${{ needs.extract-version.outputs.espanso_version }}
       - name: Build
         run: |
-          cargo build \
-            -p espanso \
-            --no-default-features \
-            --features modulo,native-tls \
-            --release
+          cargo build --release
       - name: Test
         run: |
           cargo test \
