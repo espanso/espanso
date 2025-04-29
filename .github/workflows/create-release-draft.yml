@@ -91,7 +91,7 @@ jobs:
             --no-default-features \
             --features native-tls
       - name: Build resources
-        run: ./scripts/build_windows_resources.sh release
+        run: ./scripts/build_windows_resources.sh
       - name: Build installer
         run:  ./scripts/build_windows_installer.sh
       - name: Build portable mode archive 

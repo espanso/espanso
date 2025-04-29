@@ -16,7 +16,7 @@ err() {
 readonly TARGET_DIR="target/windows/resources"
 
 main() {
-  local build_type=${1:-release}
+  local espanso_bin=${1:-./target/release/espanso}
 
   # Clean the target directory
   rm -rf -- "${TARGET_DIR}"
@@ -34,7 +34,7 @@ main() {
 
   find "${tooldir}" -name '*.dll' -exec cp -t "${TARGET_DIR}" {} +
 
-  cp ./target/"${build_type}"/espanso "${TARGET_DIR}/espansod.exe"
+  cp "${espanso_bin}" "${TARGET_DIR}/espansod.exe"
 
   echo '@"%~dp0espansod.exe" %*' > "${TARGET_DIR}/espanso.cmd"
 }
