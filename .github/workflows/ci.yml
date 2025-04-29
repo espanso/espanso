@@ -46,7 +46,7 @@ jobs:
             -p espanso \
             --no-default-features \
             --features modulo,native-tls
-      - name: Check clippy
+      - name: Clippy
         run: |
           rustup component add clippy
           cargo clippy -- -D warnings
