@@ -50,10 +50,10 @@ jobs:
             --exclude espanso-ipc \
             --no-default-features \
             --features vendored-tls
-      - name: Lint
-        run: |
-          cargo fmt --all -- --check
-          cargo clippy -- -D warnings
+      - name: Format
+        run: cargo fmt --all -- --check
+      - name: Clippy
+        run: cargo clippy --all-targets --all-features -- --deny warnings
 
   linux-wayland:
     runs-on: ubuntu-latest
@@ -83,10 +83,10 @@ jobs:
             --exclude espanso-ipc \
             --no-default-features \
             --features vendored-tls,wayland
-      - name: Lint
-        run: |
-          cargo fmt --all -- --check
-          cargo clippy -- -D warnings
+      - name: Format
+        run: cargo fmt --all -- --check
+      - name: Clippy
+        run: cargo clippy --all-targets --all-features -- --deny warnings
 
   macos:
     runs-on: macos-latest
@@ -100,10 +100,10 @@ jobs:
         run: |
           cargo build --target aarch64-apple-darwin
           cargo build --target x86_64-apple-darwin
-      - name: Lint
-        run: |
-          cargo fmt --all -- --check
-          cargo clippy -- -D warnings
+      - name: Format
+        run: cargo fmt --all -- --check
+      - name: Clippy
+        run: cargo clippy --all-targets --all-features -- --deny warnings
 
   windows:
     runs-on: windows-latest
@@ -112,7 +112,7 @@ jobs:
       - name: Build
         run: |
           cargo build
-      - name: Lint
-        run: |
-          cargo fmt --all -- --check
-          cargo clippy -- -D warnings
+      - name: Format
+        run: cargo fmt --all -- --check
+      - name: Clippy
+        run: cargo clippy --all-targets --all-features -- --deny warnings
