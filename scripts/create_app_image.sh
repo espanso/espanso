@@ -1,13 +1,16 @@
 #!/usr/bin/env bash
 
 set -Eeuf -o pipefail
+# TODO
+set -x
 
-readonly TARGET_DIR=./target/linux/AppImage
+readonly BASE_DIR=$(pwd)
+readonly TARGET_DIR=${BASE_DIR}/target/linux/AppImage
 readonly BUILD_DIR=${TARGET_DIR}/build
 readonly OUTPUT_DIR=${TARGET_DIR}/out
 
 main() {
-  local espanso_bin=${1:-./target/release/espanso}
+  local espanso_bin=${1:-${BASE_DIR}/target/release/espanso}
 
   rm -rf -- "${TARGET_DIR}"
   mkdir -p "${OUTPUT_DIR}"
@@ -17,15 +20,15 @@ main() {
   pushd "${OUTPUT_DIR}"
 
   linuxdeploy=$(
-    find ./scripts/vendor-app-image \
+    find "${BASE_DIR}"/scripts/vendor-app-image \
       -maxdepth 1 \
       -name 'linuxdeploy*.AppImage' \
       -print \
       -quit
   )
   "${linuxdeploy}" --appimage-extract-and-run -e "${espanso_bin}" \
-    -d ./espanso/src/res/linux/espanso.desktop \
-    -i ./espanso/src/res/linux/icon.png \
+    -d "${BASE_DIR}"/espanso/src/res/linux/espanso.desktop \
+    -i "${BASE_DIR}"/espanso/src/res/linux/icon.png \
     --appdir "${BUILD_DIR}" \
     --output appimage
 
@@ -43,7 +46,7 @@ main() {
   find squashfs-root/usr/lib -maxdepth 1 -name 'libgmodule*' -delete -quit
 
   appimagetool=$(
-    find ./scripts/vendor-app-image \
+    find "${BASE_DIR}"/scripts/vendor-app-image \
       -maxdepth 1 \
       -name 'appimagetool*.AppImage' \
       -print \
