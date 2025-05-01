@@ -46,11 +46,19 @@ jobs:
             --no-default-features \
             --features native-tls
       - name: Build resources
-        run: ./scripts/build_windows_resources.sh
+        shell: pwsh
+        run: |
+            $env:EXEC_PATH = "target\release\espanso.exe"
+            scripts\build_windows_resources.ps1
       - name: Build installer
-        run:  ./scripts/build_windows_installer.sh
-      - name: Build portable mode archive 
-        run: ./scripts/build_windows_portable.sh
+        shell: pwsh
+        run: |
+            Install-Module -Name 'PSTOML' -Force
+            scripts\build_windows_installer.ps1
+      - name: Build portable mode archive
+        shell: pwsh
+        run: |
+            scripts\build_windows_portable.ps1
       - name: Create portable mode archive
         shell: powershell
         run: |
