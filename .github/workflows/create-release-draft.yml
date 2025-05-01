@@ -31,7 +31,7 @@ jobs:
     outputs:
       espanso_version: ${{ steps.version.outputs.version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@main
       - name: "Extract version"
         id: "version"
         run: |
@@ -46,7 +46,7 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: false
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@main
       - name: Create new release
         # gh release create docs: https://cli.github.com/manual/gh_release_create
         run: |
@@ -70,7 +70,7 @@ jobs:
         shell: bash
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@main
       - name: Print target version
         run: |
           echo Using version ${{ needs.extract-version.outputs.espanso_version }}
@@ -110,7 +110,7 @@ jobs:
           Get-FileHash Espanso-Win-Portable-x86_64.zip -Algorithm SHA256 | select-object -ExpandProperty Hash > Espanso-Win-Portable-x86_64.zip.sha256.txt
           Move-Item -Path .\target\windows\installer\Espanso-Win-Installer-x86_64.exe -Destination Espanso-Win-Installer-x86_64.exe
           Get-FileHash Espanso-Win-Installer-x86_64.exe -Algorithm SHA256 | select-object -ExpandProperty Hash > Espanso-Win-Installer-x86_64.exe.sha256.txt
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@main
         id: upload-artifact-windows
         name: upload-unsigned-artifact
         with:
@@ -144,7 +144,7 @@ jobs:
     continue-on-error: false
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@main
       - name: Print target version
         run: |
           echo Using version ${{ needs.extract-version.outputs.espanso_version }}
@@ -154,7 +154,7 @@ jobs:
       - name: Build AppImage
         run: |
           sudo docker run --rm -v "$(pwd):/shared" espanso-ubuntu espanso/.github/scripts/ubuntu/build_appimage.sh
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@main
         name: upload-unsigned-artifact
         with:
           name: Linux X11 Artifacts
@@ -171,7 +171,7 @@ jobs:
     continue-on-error: false
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@main
       - name: Print target version
         run: |
           echo Using version ${{ needs.extract-version.outputs.espanso_version }}
@@ -181,7 +181,7 @@ jobs:
       - name: Build Deb packages
         run: |
           sudo docker run --rm -v "$(pwd):/shared" espanso-ubuntu espanso/.github/scripts/ubuntu/build_deb.sh
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@main
         name: upload-unsigned-artifact
         with:
           name: Ubuntu-Debian Artifacts
@@ -198,7 +198,7 @@ jobs:
     continue-on-error: false
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@main
       - name: Print target version
         run: |
           echo Using version ${{ needs.extract-version.outputs.espanso_version }}
@@ -245,7 +245,7 @@ jobs:
     continue-on-error: false
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@main
       - name: Print target version
         run: |
           echo Using version ${{ needs.extract-version.outputs.espanso_version }}
