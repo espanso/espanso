@@ -28,12 +28,12 @@
       {
         checks.espanso = self.packages.${system}.espanso.override { buildType = "debug"; };
         formatter = pkgs.nixfmt-rfc-style;
-        packages = rec {
+        packages = {
           espanso = pkgs.callPackage ./nix/espanso.nix { };
           espanso-wayland = pkgs.callPackage ./nix/espanso.nix {
             waylandSupport = true;
           };
-          default = espanso;
+          default = self.packages.${system}.espanso;
         };
         devShells =
           let
