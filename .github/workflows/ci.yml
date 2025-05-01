@@ -25,6 +25,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Format
+        run: cargo fmt --all -- --check
       - name: Install Linux X11 dependencies
         run: |
           sudo apt update
@@ -50,8 +52,6 @@ jobs:
             --exclude espanso-ipc \
             --no-default-features \
             --features vendored-tls
-      - name: Format
-        run: cargo fmt --all -- --check
       - name: Clippy
         run: cargo clippy --all-targets --features=modulo,vendored-tls -- --deny warnings
 
@@ -59,6 +59,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Format
+        run: cargo fmt --all -- --check
       - name: Install Linux wayland dependencies
         run: |
           sudo apt update
@@ -83,8 +85,6 @@ jobs:
             --exclude espanso-ipc \
             --no-default-features \
             --features vendored-tls,wayland
-      - name: Format
-        run: cargo fmt --all -- --check
       - name: Clippy
         run: cargo clippy --features=modulo,vendored-tls,wayland -- --deny warnings
 
@@ -96,12 +96,12 @@ jobs:
         run: |
           rustup update
           rustup target add aarch64-apple-darwin x86_64-apple-darwin
+      - name: Format
+        run: cargo fmt --all -- --check
       - name: Build
         run: |
           cargo build --target aarch64-apple-darwin
           cargo build --target x86_64-apple-darwin
-      - name: Format
-        run: cargo fmt --all -- --check
       - name: Clippy
         run: |
           cargo clippy --target=aarch64-apple-darwin -- --deny warnings
@@ -111,10 +111,10 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Format
+        run: cargo fmt --all -- --check
       - name: Build
         run: |
           cargo build
-      - name: Format
-        run: cargo fmt --all -- --check
       - name: Clippy
         run: cargo clippy -- --deny warnings
