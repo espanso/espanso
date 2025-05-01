@@ -43,10 +43,6 @@ function Main {
         Write-Error "You need to build the windows resources first.`nPlease run scripts/build_windows_resources.ps1"
     }
 
-    if ([string]::IsNullOrEmpty($env:EXEC_PATH)) {
-        Write-Error 'Please do $env:EXEC_PATH = "target\windows\resources\espansod.exe" for release'
-    }
-
     # Clean the output directory
     if (Test-Path $TARGET_DIR) {
         Remove-Item $TARGET_DIR -Recurse -Force
