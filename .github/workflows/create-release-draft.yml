@@ -59,7 +59,7 @@ jobs:
             --verify-tag \
             --prerelease \
             --target $COMMIT_HASH
-  
+
   windows:
     needs: ["extract-version", "create-release"]
     runs-on: windows-latest
@@ -93,22 +93,22 @@ jobs:
       - name: Build resources
         shell: pwsh
         run: |
-            $env:EXEC_PATH = "target\release\espanso.exe"
-            scripts\build_windows_resources.ps1
+          $env:EXEC_PATH = "target\release\espanso.exe"
+          scripts\build_windows_resources.ps1
       - name: Build installer
         shell: pwsh
         run: |
-            Install-Module -Name 'PSTOML' -Force
-            scripts\build_windows_installer.ps1
+          Install-Module -Name 'PSTOML' -Force
+          scripts\build_windows_installer.ps1
       - name: Build portable mode archive
         shell: pwsh
         run: |
-            scripts\build_windows_portable.ps1
+          scripts\build_windows_portable.ps1
       - name: Create portable mode archive
         shell: powershell
         run: |
-          Rename-Item target/windows/portable espanso-portable
-          Compress-Archive target/windows/espanso-portable target/windows/Espanso-Win-Portable-x86_64.zip
+          Rename-Item -Path target/windows/portable -NewName espanso-portable
+          Compress-Archive target/windows/espanso-portable Espanso-Win-Portable-x86_64.zip
       - name: Calculate hashes
         shell: powershell
         run: |
@@ -126,16 +126,16 @@ jobs:
       - id: sign-windows-release
         uses: signpath/github-action-submit-signing-request@v1
         with:
-          api-token: '${{ secrets.SIGNPATH_API_TOKEN }}'
-          organization-id: 'e86b1459-62fc-4c7c-aac9-185d60749a03'
-          project-slug: 'espanso'
-          signing-policy-slug: 'test-signing'
+          api-token: "${{ secrets.SIGNPATH_API_TOKEN }}"
+          organization-id: "e86b1459-62fc-4c7c-aac9-185d60749a03"
+          project-slug: "espanso"
+          signing-policy-slug: "test-signing"
           github-artifact-id: ${{ steps.upload-artifact-windows.outputs.artifact-id }}
           wait-for-completion: true
-          output-artifact-directory: '.'
+          output-artifact-directory: "."
           parameters: |
             version: "${{ needs.extract-version.outputs.espanso_version }}"
-      - name: 'DEBUG: List items of ./'
+      - name: "DEBUG: List items of ./"
         shell: powershell
         run: |
           Get-ChildItem .
@@ -169,7 +169,7 @@ jobs:
       - name: Upload artifacts to Github Releases
         run: |
           gh release upload ${{ needs.extract-version.outputs.espanso_version }} Espanso-X11.AppImage Espanso-X11.AppImage.sha256.txt
-  
+
   linux-deb:
     needs: ["extract-version", "create-release"]
     runs-on: ubuntu-latest
@@ -195,7 +195,7 @@ jobs:
             espanso-debian-wayland-amd64.deb
       - name: Upload artifacts to Github Releases
         run: |
-          gh release upload ${{ needs.extract-version.outputs.espanso_version }} espanso-debian-x11-amd64.deb espanso-debian-wayland-amd64.deb espanso-debian-x11-amd64-sha256.txt espanso-debian-wayland-amd64-sha256.txt 
+          gh release upload ${{ needs.extract-version.outputs.espanso_version }} espanso-debian-x11-amd64.deb espanso-debian-wayland-amd64.deb espanso-debian-x11-amd64-sha256.txt espanso-debian-wayland-amd64-sha256.txt
 
   macos:
     needs: ["extract-version", "create-release"]
@@ -237,32 +237,13 @@ jobs:
       - name: Create ZIP archive
         run: |
           ditto -c -k --sequesterRsrc --keepParent target/mac/Espanso.app Espanso-Mac-Intel.zip
-      - uses: actions/upload-artifact@v4
-        name: upload-unsigned-artifact
-        id: upload-artifact-macos
-        with:
-          name: Mac Artifacts
-          path: |
-            ./Espanso-Mac-Universal.zip
-      - id: sign-macos-release
-        uses: signpath/github-action-submit-signing-request@v1
-        with:
-          api-token: '${{ secrets.SIGNPATH_API_TOKEN }}'
-          organization-id: 'e86b1459-62fc-4c7c-aac9-185d60749a03'
-          project-slug: 'espanso'
-          signing-policy-slug: 'test-signing'
-          github-artifact-id: ${{ steps.upload-artifact-macos.outputs.artifact-id }}
-          wait-for-completion: true
-          output-artifact-directory: '.'
-          parameters: |
-            version: "${{ needs.extract-version.outputs.espanso_version }}"
       - name: Calculate hashes
         run: |
           shasum -a 256 Espanso-Mac-Universal.zip > Espanso-Mac-Universal.zip.sha256.txt
       - name: Upload artifacts to Github Releases
         run: |
           gh release upload ${{ needs.extract-version.outputs.espanso_version }} Espanso-Mac-Universal.zip Espanso-Mac-Universal.zip.sha256.txt
-  
+
   macos-publish-homebrew:
     needs: ["extract-version", "create-release", "macos-m1", "macos-intel"]
     runs-on: macos-latest
@@ -278,7 +259,7 @@ jobs:
         uses: webfactory/ssh-agent@fc49353b67b2b7c1e0e6a600572d01a69f2672dd
         with:
           ssh-private-key: ${{ secrets.HOMEBREW_CASK_SSH_PRIVATE_KEY }}
-      
+
       - name: Create and Publish Homebrew Cask
         run: |
           VERSION="${{ needs.extract-version.outputs.espanso_version }}" ./scripts/publish_homebrew_version.sh
