@@ -59,11 +59,6 @@ jobs:
         shell: pwsh
         run: |
             scripts\build_windows_portable.ps1
-      - name: Create portable mode archive
-        shell: powershell
-        run: |
-          Rename-Item -Path target/windows/portable -NewName espanso-portable
-          Compress-Archive target/windows/espanso-portable Espanso-Win-Portable-x86_64.zip
       - name: Calculate hashes
         shell: powershell
         run: |
@@ -78,7 +73,7 @@ jobs:
             target/windows/Espanso-Win-Portable-x86_64.zip
             target/windows/installer/Espanso-Win-Installer-x86_64.exe.sha256.txt
             target/windows/Espanso-Win-Portable-x86_64.zip.sha256.txt
-  
+
   linux-x11:
     runs-on: ubuntu-latest
 
@@ -112,7 +107,7 @@ jobs:
           path: |
             Espanso-X11.AppImage
             Espanso-X11.AppImage.sha256.txt
-  
+
   linux-deb:
     runs-on: ubuntu-latest
 

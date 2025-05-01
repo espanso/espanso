@@ -50,6 +50,11 @@ wrapper (which can simply be run as "espanso" in the terminal). This is needed t
 STD console handles on Windows.
 "@
     $readmeContent | Out-File "$TARGET_DIR/README.txt" -Encoding UTF8
+
+    Rename-Item -Path $TARGET_DIR -NewName espanso-portable
+    Compress-Archive target/windows/espanso-portable Espanso-Win-Portable-x86_64.zip
+
+    Write-Output "Espanso Portable created!"
 }
 
 Main @PSBoundParameters

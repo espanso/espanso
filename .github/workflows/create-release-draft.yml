@@ -104,11 +104,6 @@ jobs:
         shell: pwsh
         run: |
           scripts\build_windows_portable.ps1
-      - name: Create portable mode archive
-        shell: powershell
-        run: |
-          Rename-Item -Path target/windows/portable -NewName espanso-portable
-          Compress-Archive target/windows/espanso-portable Espanso-Win-Portable-x86_64.zip
       - name: Calculate hashes
         shell: powershell
         run: |
