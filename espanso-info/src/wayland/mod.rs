@@ -47,7 +47,11 @@ impl AppInfoProvider for WaylandAppInfoProvider {
             .output()
         {
             Ok(out) => {
-                let class_ = String::from_utf8(out.stdout).expect("Error decoding from utf8");
+                let mut __stdout = out.stdout;
+                if !__stdout.is_empty() {
+                    __stdout.pop();
+                }
+                let class_ = String::from_utf8(__stdout).expect("Error decoding from utf8");
                 Some(class_)
             }
             Err(_) => return empty_app_info(),
@@ -59,7 +63,11 @@ impl AppInfoProvider for WaylandAppInfoProvider {
             .output()
         {
             Ok(out) => {
-                let title_ = String::from_utf8(out.stdout).expect("Error decoding from utf8");
+                let mut __stdout = out.stdout;
+                if !__stdout.is_empty() {
+                    __stdout.pop();
+                }
+                let title_ = String::from_utf8(__stdout).expect("Error decoding from utf8");
                 Some(title_)
             }
             Err(_) => None,
@@ -71,7 +79,11 @@ impl AppInfoProvider for WaylandAppInfoProvider {
             .output()
         {
             Ok(out) => {
-                let pid_ = String::from_utf8(out.stdout).expect("Error decoding from utf8");
+                let mut __stdout = out.stdout;
+                if !__stdout.is_empty() {
+                    __stdout.pop();
+                }
+                let pid_ = String::from_utf8(__stdout).expect("Error decoding from utf8");
                 Some(pid_)
                 // match Command::new("readlink")
                 //     .arg(format!("/proc/{}/exe", pid_))
