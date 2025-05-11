@@ -19,7 +19,17 @@
 
 use crate::{AppInfo, AppInfoProvider};
 
+use std::process::Command;
+
 pub(crate) struct WaylandAppInfoProvider {}
+
+fn empty_app_info() -> AppInfo {
+    AppInfo {
+        title: None,
+        exec: Some("Maybe missing kdotool?".into()),
+        class: None,
+    }
+}
 
 impl WaylandAppInfoProvider {
     pub fn new() -> Self {
@@ -29,11 +39,34 @@ impl WaylandAppInfoProvider {
 
 impl AppInfoProvider for WaylandAppInfoProvider {
     // TODO: can we read these info on Wayland?
+    // maybe
     fn get_info(&self) -> AppInfo {
-        AppInfo {
-            title: None,
-            exec: None,
-            class: None,
-        }
+        let class = match Command::new("kdotool")
+            .arg("getactivewindow")
+            .arg("getwindowclassname")
+            .output()
+        {
+            Ok(out) => {
+                let class_ = String::from_utf8(out.stdout).expect("Error decoding from utf8");
+                Some(class_)
+            }
+            Err(_) => return empty_app_info(),
+        };
+
+        let title = match Command::new("kdotool")
+            .arg("getactivewindow")
+            .arg("getwindowname")
+            .output()
+        {
+            Ok(out) => {
+                let title_ = String::from_utf8(out.stdout).expect("Error decoding from utf8");
+                Some(title_)
+            }
+            Err(_) => None,
+        };
+
+        let exec = Some("maybe have kdotool?".into());
+
+        AppInfo { title, exec, class }
     }
 }
