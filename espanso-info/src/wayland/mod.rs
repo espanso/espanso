@@ -26,7 +26,7 @@ pub(crate) struct WaylandAppInfoProvider {}
 fn empty_app_info() -> AppInfo {
     AppInfo {
         title: None,
-        exec: Some("Maybe missing kdotool?".into()),
+        exec: Some("Missing kdotool or non-KDE environment!".into()),
         class: None,
     }
 }
@@ -65,7 +65,27 @@ impl AppInfoProvider for WaylandAppInfoProvider {
             Err(_) => None,
         };
 
-        let exec = Some("maybe have kdotool?".into());
+        let exec = match Command::new("kdotool")
+            .arg("getactivewindow")
+            .arg("getwindowpid")
+            .output()
+        {
+            Ok(out) => {
+                let pid_ = String::from_utf8(out.stdout).expect("Error decoding from utf8");
+                match Command::new("readlink")
+                    .arg(format!("/proc/{}", pid_))
+                    .output()
+                {
+                    Ok(out) => {
+                        let exec_ =
+                            String::from_utf8(out.stdout).expect("Error decoding from utf8");
+                        Some(exec_)
+                    }
+                    Err(_) => None,
+                }
+            }
+            Err(_) => None,
+        };
 
         AppInfo { title, exec, class }
     }
