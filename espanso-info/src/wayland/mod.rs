@@ -72,17 +72,18 @@ impl AppInfoProvider for WaylandAppInfoProvider {
         {
             Ok(out) => {
                 let pid_ = String::from_utf8(out.stdout).expect("Error decoding from utf8");
-                match Command::new("readlink")
-                    .arg(format!("/proc/{}/exe", pid_))
-                    .output()
-                {
-                    Ok(out) => {
-                        let exec_ =
-                            String::from_utf8(out.stdout).expect("Error decoding from utf8");
-                        Some(exec_)
-                    }
-                    Err(_) => None,
-                }
+                Some(pid_)
+                // match Command::new("readlink")
+                //     .arg(format!("/proc/{}/exe", pid_))
+                //     .output()
+                // {
+                //     Ok(out) => {
+                //         let exec_ =
+                //             String::from_utf8(out.stdout).expect("Error decoding from utf8");
+                //         Some(exec_)
+                //     }
+                //     Err(_) => None,
+                // }
             }
             Err(_) => None,
         };
