@@ -18,6 +18,7 @@
  */
 
 use crate::{AppInfo, AppInfoProvider};
+use espanso_package::info_println;
 
 use std::process::Command;
 
@@ -54,7 +55,10 @@ impl AppInfoProvider for WaylandAppInfoProvider {
                 let class_ = String::from_utf8(__stdout).expect("Error decoding from utf8");
                 Some(class_)
             }
-            Err(_) => return empty_app_info(),
+            Err(_) => {
+                info_println!("kdotool missing or not available for the current wayland DE.");
+                return empty_app_info();
+            }
         };
 
         let title = match Command::new("kdotool")
