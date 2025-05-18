@@ -26,7 +26,7 @@ pub(crate) struct WaylandAppInfoProvider {}
 fn empty_app_info() -> AppInfo {
     AppInfo {
         title: None,
-        exec: Some("Missing kdotool!".into()),
+        exec: None,
         class: None,
     }
 }
