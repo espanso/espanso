@@ -42,23 +42,20 @@ impl AppInfoProvider for WaylandAppInfoProvider {
     // TODO: can we read these info on Wayland?
     // maybe
     fn get_info(&self) -> AppInfo {
-        let class = match Command::new("kdotool")
+        let class = if let Ok(out) = Command::new("kdotool")
             .arg("getactivewindow")
             .arg("getwindowclassname")
             .output()
         {
-            Ok(out) => {
-                let mut __stdout = out.stdout;
-                if !__stdout.is_empty() {
-                    __stdout.pop();
-                }
-                let class_ = String::from_utf8(__stdout).expect("Error decoding from utf8");
-                Some(class_)
+            let mut __stdout = out.stdout;
+            if !__stdout.is_empty() {
+                __stdout.pop();
             }
-            Err(_) => {
-                info_println!("kdotool missing or not available for the current wayland DE.");
-                return empty_app_info();
-            }
+            let class_ = String::from_utf8(__stdout).expect("Error decoding from utf8");
+            Some(class_)
+        } else {
+            info_println!("kdotool missing or not available for the current wayland DE.");
+            return empty_app_info();
         };
 
         let title = match Command::new("kdotool")
@@ -89,7 +86,7 @@ impl AppInfoProvider for WaylandAppInfoProvider {
                 }
                 let pid_ = String::from_utf8(__stdout).expect("Error decoding from utf8");
                 match Command::new("readlink")
-                    .arg(format!("/proc/{}/exe", pid_))
+                    .arg(format!("/proc/{pid_}/exe"))
                     .output()
                 {
                     Ok(out) => {
