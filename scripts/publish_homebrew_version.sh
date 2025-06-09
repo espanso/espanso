@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 
 set -Eeuf -o pipefail
-# TODO
-set -x
 
 main() {
   if [[ -z "${VERSION}" ]]; then

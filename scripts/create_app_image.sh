@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 
 set -Eeuf -o pipefail
-# TODO
-set -x
 
 readonly BASE_DIR=$(pwd)
 readonly TARGET_DIR=${BASE_DIR}/target/linux/AppImage

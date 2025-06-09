@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
 set -Eeuf -o pipefail
-set -x
 
 log() {
   printf '%s\n' "$*" >&2
