@@ -26,6 +26,7 @@ pub fn read_line<R: std::io::Read>(stream: R) -> Result<Option<String>> {
 
     let mut is_eof = true;
 
+    #[allow(clippy::unbuffered_bytes)]
     for byte_res in stream.bytes() {
         let byte = byte_res?;
 

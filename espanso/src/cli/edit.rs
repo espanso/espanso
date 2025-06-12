@@ -50,8 +50,8 @@ fn edit_main(args: CliModuleArgs) -> i32 {
 
     assert!(
         paths.config.is_dir(),
-        "config directory does not exist in path: {:?}",
-        paths.config
+        "config directory does not exist in path: {}",
+        paths.config.display()
     );
 
     // Determine which is the file to edit

@@ -44,7 +44,10 @@ impl Lock {
             .truncate(true)
             .open(&lock_file_path)
             .unwrap_or_else(|_| {
-                panic!("unable to create reference to lock file: {lock_file_path:?}")
+                panic!(
+                    "unable to create reference to lock file: {}",
+                    lock_file_path.display()
+                )
             });
         if lock_file.try_lock_exclusive().is_ok() {
             Some(Lock { lock_file })

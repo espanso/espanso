@@ -196,7 +196,7 @@ pub trait Config: Send + Sync {
     // in this issue: https://github.com/espanso/espanso/issues/745
     fn win32_keyboard_layout_cache_interval(&self) -> i64;
 
-    #[allow(clippy::needless_lifetimes)]
+    #[allow(clippy::elidable_lifetime_names)]
     fn is_match<'a>(&self, app: &AppProperties<'a>) -> bool;
 
     fn pretty_dump(&self) -> String {
