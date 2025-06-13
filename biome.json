@@ -5,6 +5,9 @@
     "clientKind": "git",
     "useIgnoreFile": true
   },
+  "files": {
+    "ignore": ["./docs/book/**"]
+  },
   "formatter": {
     "enabled": true,
     "indentStyle": "space",
