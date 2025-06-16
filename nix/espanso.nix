@@ -100,7 +100,7 @@ rustPlatform.buildRustPackage {
   '';
 
   postInstall = lib.optionalString stdenv.hostPlatform.isDarwin ''
-    EXEC_PATH=$out/bin/espanso BUILD_ARCH=current ${stdenv.shell} ./scripts/create_bundle.sh
+    ${stdenv.shell} ./scripts/create_bundle.sh $out/bin/espanso
   '';
 
   meta = {

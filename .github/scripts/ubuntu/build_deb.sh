@@ -1,24 +1,32 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-set -e
+set -Eeuf -o pipefail
 
-echo "Installing cargo-deb"
-cargo install cargo-deb
+log() {
+  printf '%s\n' "$*" >&2
+}
 
-cd espanso
+main() {
+  log "Installing cargo-deb"
+  cargo install cargo-deb
 
-echo "Building X11 deb package"
-cargo deb --package espanso -- --no-default-features --features "modulo vendored-tls"
+  pushd espanso
 
-echo "Building Wayland deb package"
-cargo deb --package espanso --variant wayland -- --no-default-features --features "modulo wayland vendored-tls"
+  log "Building X11 deb package"
+  cargo deb --package espanso -- --no-default-features --features modulo,vendored-tls
 
-cd ..
-cp espanso/target/debian/espanso_*.deb espanso-debian-x11-amd64.deb
-sha256sum espanso-debian-x11-amd64.deb > espanso-debian-x11-amd64-sha256.txt
-cp espanso/target/debian/espanso-wayland*.deb espanso-debian-wayland-amd64.deb
-sha256sum espanso-debian-wayland-amd64.deb > espanso-debian-wayland-amd64-sha256.txt
-ls -la
+  log "Building Wayland deb package"
+  cargo deb --package espanso --variant wayland -- --no-default-features --features modulo,vendored-tls,wayland
 
-echo "Copying to mounted volume"
-cp espanso-debian-* /shared
+  popd
+
+  find ./espanso/target/debian -name 'espanso_*.deb' -exec cp {} espanso-debian-x11-amd64.deb \; -quit
+  sha256sum espanso-debian-x11-amd64.deb > espanso-debian-x11-amd64-sha256.txt
+
+  find ./espanso/target/debian -name 'espanso-wayland*.deb' -exec cp {} espanso-debian-wayland-amd64.deb \; -quit
+  sha256sum espanso-debian-wayland-amd64.deb > espanso-debian-wayland-amd64-sha256.txt
+
+  log "Copying to mounted volume"
+  find . -maxdepth 1 -name 'espanso-debian-*' -exec cp -t /shared {} +
+}
+main "$@"

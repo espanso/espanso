@@ -5,7 +5,8 @@ authors = ["Federico Terzi <federicoterzi96@gmail.com>"]
 license = "GPL-3.0"
 description = "Cross-platform Text Expander written in Rust"
 readme = "../README.md"
-homepage = "https://github.com/espanso/espanso"
+homepage = "https://espanso.org/"
+repository = "https://github.com/espanso/espanso"
 edition = "2021"
 
 [features]
