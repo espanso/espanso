@@ -10,7 +10,7 @@ Creating a release is still a cloudy and ambiguos process, so
 
 1) checkout a new branch, change the version in `espanso/Cargo.toml`
 
-2) create a pr with the new release: [sample pr] (missing-link)
+2) create a pr with the new release: [sample pr](https://github.com/espanso/espanso/pull/2359)
 
 3) when ready, close the pr (merge to `dev`). Checkout to `dev` and add a git
 tag with:
