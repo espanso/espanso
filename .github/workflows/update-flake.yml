@@ -12,7 +12,7 @@ permissions:
 jobs:
   update-flake:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' # Ensure workflow_dispatch only runs on main
+    if: github.ref == 'refs/heads/dev' # Ensure workflow_dispatch only runs on dev
 
     steps:
       - name: Checkout repository
