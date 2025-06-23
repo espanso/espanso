@@ -251,7 +251,7 @@ jobs:
           echo Using version ${{ needs.extract-version.outputs.espanso_version }}
 
       - name: "Setup SSH deploy key"
-        uses: webfactory/ssh-agent@fc49353b67b2b7c1e0e6a600572d01a69f2672dd
+        uses: webfactory/ssh-agent@a6f90b1f127823b31d4d4a8d96047790581349bd
         with:
           ssh-private-key: ${{ secrets.HOMEBREW_CASK_SSH_PRIVATE_KEY }}
 
