@@ -23,73 +23,74 @@
 #include <stdint.h>
 
 #define INPUT_EVENT_TYPE_KEYBOARD 1
-#define INPUT_EVENT_TYPE_MOUSE    2
-#define INPUT_EVENT_TYPE_HOTKEY   3
+#define INPUT_EVENT_TYPE_MOUSE 2
+#define INPUT_EVENT_TYPE_HOTKEY 3
 
-#define INPUT_STATUS_PRESSED      1
-#define INPUT_STATUS_RELEASED     2
+#define INPUT_STATUS_PRESSED 1
+#define INPUT_STATUS_RELEASED 2
 
 #define INPUT_LEFT_VARIANT 1
 #define INPUT_RIGHT_VARIANT 2
 
-#define INPUT_MOUSE_LEFT_BUTTON   1
-#define INPUT_MOUSE_RIGHT_BUTTON  2
+#define INPUT_MOUSE_LEFT_BUTTON 1
+#define INPUT_MOUSE_RIGHT_BUTTON 2
 #define INPUT_MOUSE_MIDDLE_BUTTON 3
-#define INPUT_MOUSE_BUTTON_1      4
-#define INPUT_MOUSE_BUTTON_2      5
-#define INPUT_MOUSE_BUTTON_3      6
-#define INPUT_MOUSE_BUTTON_4      7
-#define INPUT_MOUSE_BUTTON_5      8
+#define INPUT_MOUSE_BUTTON_1 4
+#define INPUT_MOUSE_BUTTON_2 5
+#define INPUT_MOUSE_BUTTON_3 6
+#define INPUT_MOUSE_BUTTON_4 7
+#define INPUT_MOUSE_BUTTON_5 8
 
 typedef struct {
-  // Keyboard, Mouse or Hotkey event
-  int32_t event_type;
+    // Keyboard, Mouse or Hotkey event
+    int32_t event_type;
 
-  // Contains the string corresponding to the key, if any
-  uint16_t buffer[24];
-  // Length of the extracted string. Equals 0 if no string is extracted
-  int32_t buffer_len;
-  
-  // Virtual key code of the pressed key in case of keyboard events
-  // Mouse button code for mouse events.
-  // Hotkey id for hotkey events
-  int32_t key_code;
-  
-  // Left or Right variant
-  int32_t variant;
+    // Contains the string corresponding to the key, if any
+    uint16_t buffer[24];
+    // Length of the extracted string. Equals 0 if no string is extracted
+    int32_t buffer_len;
 
-  // Pressed or Released status
-  int32_t status;
+    // Virtual key code of the pressed key in case of keyboard events
+    // Mouse button code for mouse events.
+    // Hotkey id for hotkey events
+    int32_t key_code;
 
-  // Only relevant for keyboard events, this is set to 1
-  // if a keyboard event has an explicit source, 0 otherwise.
-  // This is needed to filter out software generated events,
-  // including those from espanso.
-  int32_t has_known_source;
+    // Left or Right variant
+    int32_t variant;
+
+    // Pressed or Released status
+    int32_t status;
+
+    // Only relevant for keyboard events, this is set to 1
+    // if a keyboard event has an explicit source, 0 otherwise.
+    // This is needed to filter out software generated events,
+    // including those from espanso.
+    int32_t has_known_source;
 } InputEvent;
 
 typedef struct {
-  int32_t hk_id;
-  uint32_t key_code;
-  uint32_t flags;
+    int32_t hk_id;
+    uint32_t key_code;
+    uint32_t flags;
 } HotKey;
 
-typedef void (*EventCallback)(void * rust_istance, InputEvent data);
+typedef void (*EventCallback)(void *rust_istance, InputEvent data);
 
 typedef struct {
-  long keyboard_layout_cache_interval;
+    long keyboard_layout_cache_interval;
 } InitOptions;
 
 // Initialize the Raw Input API and the Window.
-extern "C" void * detect_initialize(void * rust_istance, InitOptions * options, int32_t *error_code);
+extern "C" void *detect_initialize(void *rust_istance, InitOptions *options,
+                                   int32_t *error_code);
 
 // Register the given hotkey, return a non-zero code if successful
-extern "C" int32_t detect_register_hotkey(void * window, HotKey hotkey);
+extern "C" int32_t detect_register_hotkey(void *window, HotKey hotkey);
 
 // Run the event loop. Blocking call.
-extern "C" int32_t detect_eventloop(void * window, EventCallback callback);
+extern "C" int32_t detect_eventloop(void *window, EventCallback callback);
 
 // Destroy the given window.
-extern "C" int32_t detect_destroy(void * window);
+extern "C" int32_t detect_destroy(void *window);
 
-#endif //ESPANSO_DETECT_H
+#endif // ESPANSO_DETECT_H

@@ -11,6 +11,7 @@ build = "build.rs"
 wayland = []
 
 [dependencies]
+espanso-info = { path = "../espanso-info" }
 log.workspace = true
 anyhow.workspace = true
 thiserror.workspace = true

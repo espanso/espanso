@@ -1,8 +1,8 @@
 # Dev recipes and cookbook
 
-Developing a project is sometimes complex, and we use these tools every now and then to check if we
- are doing everything right. These aren't tools that we _need_ to run on CI, but
- it's nice to have them and check if it's allright.
+Developing a project is sometimes complex, and we use these tools every now and 
+then to check if we are doing everything right. These aren't tools that we 
+_need_ to run on CI, but it's nice to have them and check if it's allright.
 
 ## `cargo udeps` to find unused dependencies
 
@@ -80,3 +80,37 @@ finished, it makes an HTML report in the root folder (gitignored)
 
 You can also `Ctrl + Shift + p` in vs code and select 
 `Tasks: Run Task: rust coverage`
+
+## format everything
+
+We added `cargo make fmt` to format everything, it requires some tools:
+
+- rust is formatted with `cargo fmt`. Easy.
+- json is formatted with [biome](https://next.biomejs.dev/guides/getting-started/)
+You can install biome in your node package manager globally like this:
+
+```bash
+# node
+npm install --global @biomejs/biome
+# bun
+bun install --global @biomejs/biome
+```
+
+- and `clang-format` to format files
+
+You can install it in Windows with npm (so you don't need to deal with MinGW)
+
+```
+npm install --global clang-format
+# or with bun
+bun install --global clang-format
+```
+
+In linux, it will come with your package manager.
+
+and in macOS:
+```zsh
+brew install clang-format
+```
+
+- if you are in macOS or linux, we add `nix` to the list: [Download it](https://nixos.org/download/)

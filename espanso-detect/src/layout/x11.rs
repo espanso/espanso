@@ -22,19 +22,19 @@ use std::process::Command;
 use log::error;
 
 pub fn get_active_layout() -> Option<String> {
-  match Command::new("setxkbmap").arg("-query").output() {
-    Ok(output) => {
-      let output_str = String::from_utf8_lossy(&output.stdout);
-      let layout_line = output_str.lines().find(|line| line.contains("layout:"))?;
-      let layout_raw: Vec<&str> = layout_line.split("layout:").collect();
-      Some(layout_raw.get(1)?.trim().to_string())
+    match Command::new("setxkbmap").arg("-query").output() {
+        Ok(output) => {
+            let output_str = String::from_utf8_lossy(&output.stdout);
+            let layout_line = output_str.lines().find(|line| line.contains("layout:"))?;
+            let layout_raw: Vec<&str> = layout_line.split("layout:").collect();
+            Some(layout_raw.get(1)?.trim().to_string())
+        }
+        Err(err) => {
+            error!(
+                "unable to retrieve current keyboard layout with 'setxkbmap': {}",
+                err
+            );
+            None
+        }
     }
-    Err(err) => {
-      error!(
-        "unable to retrieve current keyboard layout with 'setxkbmap': {}",
-        err
-      );
-      None
-    }
-  }
 }

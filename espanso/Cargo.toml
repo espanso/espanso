@@ -5,7 +5,8 @@ authors = ["Federico Terzi <federicoterzi96@gmail.com>"]
 license = "GPL-3.0"
 description = "Cross-platform Text Expander written in Rust"
 readme = "../README.md"
-homepage = "https://github.com/espanso/espanso"
+homepage = "https://espanso.org/"
+repository = "https://github.com/espanso/espanso"
 edition = "2021"
 
 [features]
@@ -71,10 +72,10 @@ opener = "0.5.0"
 sysinfo = "0.28.4"
 
 [target.'cfg(windows)'.dependencies]
-named_pipe = "0.4.1"
-winapi = { version = "0.3.9", features = ["wincon"] }
-winreg = "0.9.0"
 widestring.workspace = true
+windows.workspace = true
+named_pipe = "0.4.1"
+winreg = "0.9.0"
 
 [target.'cfg(unix)'.dependencies]
 libc = "0.2.98"

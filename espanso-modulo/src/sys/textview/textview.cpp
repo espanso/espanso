@@ -23,82 +23,76 @@
 #include "../interop/interop.h"
 #include "./textview_gui.h"
 
-#include <wx/clipbrd.h>
-#include <vector>
 #include <memory>
 #include <unordered_map>
+#include <vector>
+#include <wx/clipbrd.h>
 
 TextViewMetadata *text_view_metadata = nullptr;
 
 // App Code
 
-class TextViewApp : public wxApp
-{
-public:
-  virtual bool OnInit();
+class TextViewApp : public wxApp {
+  public:
+    virtual bool OnInit();
 };
 
-class DerivedTextViewFrame : public TextViewFrame
-{
-protected:
-  void on_copy_to_clipboard( wxCommandEvent& event );
-  
-  void on_char_event(wxKeyEvent &event);
+class DerivedTextViewFrame : public TextViewFrame {
+  protected:
+    void on_copy_to_clipboard(wxCommandEvent &event);
 
-public:
-  DerivedTextViewFrame(wxWindow *parent);
+    void on_char_event(wxKeyEvent &event);
+
+  public:
+    DerivedTextViewFrame(wxWindow *parent);
 };
 
 DerivedTextViewFrame::DerivedTextViewFrame(wxWindow *parent)
-    : TextViewFrame(parent)
-{
-  this->text_content->SetValue(wxString::FromUTF8(text_view_metadata->content));
-  this->SetTitle(wxString::FromUTF8(text_view_metadata->title));
+    : TextViewFrame(parent) {
+    this->text_content->SetValue(
+        wxString::FromUTF8(text_view_metadata->content));
+    this->SetTitle(wxString::FromUTF8(text_view_metadata->title));
 
-
-  Bind(wxEVT_CHAR_HOOK, &DerivedTextViewFrame::on_char_event, this, wxID_ANY);
+    Bind(wxEVT_CHAR_HOOK, &DerivedTextViewFrame::on_char_event, this, wxID_ANY);
 }
 
 void DerivedTextViewFrame::on_char_event(wxKeyEvent &event) {
-  if (event.GetKeyCode() == WXK_ESCAPE)
-  {
-    Close(true);
-  }
+    if (event.GetKeyCode() == WXK_ESCAPE) {
+        Close(true);
+    }
 }
 
-void DerivedTextViewFrame::on_copy_to_clipboard( wxCommandEvent& event ) {
-  if (wxTheClipboard->Open())
-  {
-    wxTheClipboard->SetData( new wxTextDataObject(wxString::FromUTF8(text_view_metadata->content)) );
-    wxTheClipboard->Close();
-  }
+void DerivedTextViewFrame::on_copy_to_clipboard(wxCommandEvent &event) {
+    if (wxTheClipboard->Open()) {
+        wxTheClipboard->SetData(new wxTextDataObject(
+            wxString::FromUTF8(text_view_metadata->content)));
+        wxTheClipboard->Close();
+    }
 }
 
-bool TextViewApp::OnInit()
-{
-  DerivedTextViewFrame *frame = new DerivedTextViewFrame(NULL);
+bool TextViewApp::OnInit() {
+    DerivedTextViewFrame *frame = new DerivedTextViewFrame(NULL);
 
-  if (text_view_metadata->window_icon_path)
-  {
-    setFrameIcon(wxString::FromUTF8(text_view_metadata->window_icon_path), frame);
-  }
+    if (text_view_metadata->window_icon_path) {
+        setFrameIcon(wxString::FromUTF8(text_view_metadata->window_icon_path),
+                     frame);
+    }
 
-  frame->Show(true);
-  Activate(frame);
+    frame->Show(true);
+    Activate(frame);
 
-  return true;
+    return true;
 }
 
-extern "C" void interop_show_text_view(TextViewMetadata *_metadata)
-{
+extern "C" void interop_show_text_view(TextViewMetadata *_metadata) {
 // Setup high DPI support on Windows
 #ifdef __WXMSW__
-  SetProcessDPIAware();
+    SetProcessDPIAware();
 #endif
 
-  text_view_metadata = _metadata;
+    text_view_metadata = _metadata;
 
-  wxApp::SetInstance(new TextViewApp());
-  int argc = 0;
-  wxEntry(argc, (char **)nullptr);
+    wxApp::SetInstance(new TextViewApp());
+    int argc = 0;
+    wxEntry(argc, (char **)nullptr);
 }

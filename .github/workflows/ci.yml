@@ -11,150 +11,108 @@ on:
     paths-ignore:
       - 'docs/**'
 
+defaults:
+  run:
+    shell: bash
+
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
-
-    runs-on: ${{ matrix.os }}
-
-    env:
-      WX_WIDGETS_BUILD_OUT_DIR: "${{github.workspace}}/wx-widgets-build"
-
-    steps:
-      - uses: actions/checkout@v4
-      - uses: Swatinem/rust-cache@v2
-      - name: Check formatting
-        run: |
-          rustup component add rustfmt
-          cargo fmt --all -- --check
-      - name: Install Linux dependencies
-        if: ${{ runner.os == 'Linux' }}
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libx11-dev libxtst-dev libxkbcommon-dev libdbus-1-dev libwxgtk3.*-dev
-      - name: Install rust-script and cargo-make
-        run: |
-          cargo install rust-script
-          cargo install cargo-make --version 0.37.5
-      # wxWidgets builds (internal to espanso-modulo) are by far the largest bottleneck
-      # in the current pipeline, so we cache the results for a faster compilation process
-      - name: "Cache wxWidgets builds"
-        if: ${{ runner.os != 'Linux' }}
-        uses: actions/cache@v3
-        with:
-          path: |
-            ${{env.WX_WIDGETS_BUILD_OUT_DIR}}
-          key: ${{ github.job }}-${{ runner.os }}-${{ hashFiles('espanso-modulo/build.rs') }}-${{ hashFiles('espanso-modulo/vendor/*') }}
-      - name: Build
-        run: |
-          cargo make build-binary
-      - name: Check clippy
-        run: |
-          rustup component add clippy
-          cargo clippy -- -D warnings
-        env:
-          MACOSX_DEPLOYMENT_TARGET: "10.13"
-
-  test:
-    strategy:
-      matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
-
-    runs-on: ${{ matrix.os }}
-
-    steps:
-      - uses: actions/checkout@v4
-      - uses: Swatinem/rust-cache@v2
-      - name: Check formatting
-        run: |
-          rustup component add rustfmt
-          cargo fmt --all -- --check
-      - name: Install Linux dependencies
-        if: ${{ runner.os == 'Linux' }}
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libx11-dev libxtst-dev libxkbcommon-dev libdbus-1-dev libwxgtk3.*-dev
-      - name: Install rust-script and cargo-make
-        run: |
-          cargo install rust-script
-          cargo install cargo-make --version 0.37.5
-      - name: Run test suite
-        run: cargo make test-binary
-  
-  build-wayland:
+  linux-x11:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: Swatinem/rust-cache@v2
-      - name: Check formatting
+      - uses: actions/checkout@main
+      - name: Format
+        run: cargo fmt --all -- --check
+      - name: Install Linux X11 dependencies
         run: |
-          rustup component add rustfmt
-          cargo fmt --all -- --check
-      - name: Install Linux dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libxkbcommon-dev libwxgtk3.*-dev libdbus-1-dev
-      - name: Install rust-script and cargo-make
-        run: |
-          cargo install rust-script
-          cargo install cargo-make --version 0.37.5
+          sudo apt update
+          sudo apt install -y \
+            build-essential \
+            git \
+            libdbus-1-dev \
+            libssl-dev \
+            libwxgtk3.*-dev \
+            libx11-dev \
+            libxkbcommon-dev \
+            libxtst-dev
       - name: Build
-        run: cargo make --env NO_X11=true -- build-binary
-      - name: Check clippy
         run: |
-          rustup component add clippy
-          cargo clippy -p espanso --features wayland -- -D warnings
-  
-  test-wayland:
+          cargo build \
+            --no-default-features \
+            --features modulo,vendored-tls
+      - name: Test
+        run: |
+          cargo test \
+            --workspace \
+            --exclude espanso-modulo \
+            --exclude espanso-ipc \
+            --no-default-features \
+            --features vendored-tls
+      - name: Clippy
+        run: cargo clippy --all-targets --features=modulo,vendored-tls -- --deny warnings
+
+  linux-wayland:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: Swatinem/rust-cache@v2
-      - name: Check formatting
+      - uses: actions/checkout@main
+      - name: Format
+        run: cargo fmt --all -- --check
+      - name: Install Linux wayland dependencies
         run: |
-          rustup component add rustfmt
-          cargo fmt --all -- --check
-      - name: Install Linux dependencies
+          sudo apt update
+          sudo apt install -y \
+            build-essential \
+            git \
+            libdbus-1-dev \
+            libssl-dev \
+            libwxgtk3.*-dev \
+            libxkbcommon-dev \
+            wl-clipboard
+      - name: Build
         run: |
-          sudo apt-get update
-          sudo apt-get install -y libxkbcommon-dev libwxgtk3.*-dev libdbus-1-dev
-      - name: Install rust-script and cargo-make
+          cargo build \
+            --no-default-features \
+            --features modulo,vendored-tls,wayland
+      - name: Test
         run: |
-          cargo install rust-script
-          cargo install cargo-make --version 0.37.5
-      - name: Run test suite
-        run: cargo make --env NO_X11=true -- test-binary
-  
-  build-macos-arm:
+          cargo test \
+            --workspace \
+            --exclude espanso-modulo \
+            --exclude espanso-ipc \
+            --no-default-features \
+            --features vendored-tls,wayland
+      - name: Clippy
+        run: cargo clippy --features=modulo,vendored-tls,wayland -- --deny warnings
+
+  macos:
     runs-on: macos-latest
-    env:
-      WX_WIDGETS_BUILD_OUT_DIR: "${{github.workspace}}/wx-widgets-build"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@main
       - name: Install target
-        run: rustup update && rustup target add aarch64-apple-darwin
-      - uses: Swatinem/rust-cache@v2
-      - name: Install rust-script and cargo-make
         run: |
-          cargo install rust-script
-          cargo install cargo-make --version 0.37.5
-      - name: "Cache wxWidgets builds"
-        if: ${{ runner.os != 'Linux' }}
-        uses: actions/cache@v3
-        with:
-          path: |
-            ${{env.WX_WIDGETS_BUILD_OUT_DIR}}
-          key: ${{ github.job }}-${{ runner.os }}-${{ hashFiles('espanso-modulo/build.rs') }}-${{ hashFiles('espanso-modulo/vendor/*') }}
+          rustup update
+          rustup target add aarch64-apple-darwin x86_64-apple-darwin
+      - name: Format
+        run: cargo fmt --all -- --check
       - name: Build
         run: |
-          cargo make build-macos-arm-binary
-      # - name: Setup tmate session
-      #   uses: mxschmitt/action-tmate@v3
-      #   with:
-      #     limit-access-to-actor: true
+          cargo build --target aarch64-apple-darwin
+          cargo build --target x86_64-apple-darwin
+      - name: Clippy
+        run: |
+          cargo clippy --target=aarch64-apple-darwin -- --deny warnings
+          cargo clippy --target=x86_64-apple-darwin -- --deny warnings
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@main
+      - name: Format
+        run: cargo fmt --all -- --check
+      - name: Build
+        run: |
+          cargo build
+      - name: Clippy
+        run: cargo clippy -- --deny warnings

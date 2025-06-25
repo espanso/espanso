@@ -39,42 +39,42 @@ macro_rules! merge {
 }
 
 pub fn os_matches(os: &str) -> bool {
-  match os {
-    "macos" => cfg!(target_os = "macos"),
-    "windows" => cfg!(target_os = "windows"),
-    "linux" => cfg!(target_os = "linux"),
-    _ => false,
-  }
+    match os {
+        "macos" => cfg!(target_os = "macos"),
+        "windows" => cfg!(target_os = "windows"),
+        "linux" => cfg!(target_os = "linux"),
+        _ => false,
+    }
 }
 
 #[cfg(test)]
 mod tests {
-  use super::*;
+    use super::*;
 
-  #[test]
-  #[cfg(target_os = "linux")]
-  fn os_matches_linux() {
-    assert!(os_matches("linux"));
-    assert!(!os_matches("windows"));
-    assert!(!os_matches("macos"));
-    assert!(!os_matches("invalid"));
-  }
+    #[test]
+    #[cfg(target_os = "linux")]
+    fn os_matches_linux() {
+        assert!(os_matches("linux"));
+        assert!(!os_matches("windows"));
+        assert!(!os_matches("macos"));
+        assert!(!os_matches("invalid"));
+    }
 
-  #[test]
-  #[cfg(target_os = "macos")]
-  fn os_matches_macos() {
-    assert!(os_matches("macos"));
-    assert!(!os_matches("windows"));
-    assert!(!os_matches("linux"));
-    assert!(!os_matches("invalid"));
-  }
+    #[test]
+    #[cfg(target_os = "macos")]
+    fn os_matches_macos() {
+        assert!(os_matches("macos"));
+        assert!(!os_matches("windows"));
+        assert!(!os_matches("linux"));
+        assert!(!os_matches("invalid"));
+    }
 
-  #[test]
-  #[cfg(target_os = "windows")]
-  fn os_matches_windows() {
-    assert!(os_matches("windows"));
-    assert!(!os_matches("macos"));
-    assert!(!os_matches("linux"));
-    assert!(!os_matches("invalid"));
-  }
+    #[test]
+    #[cfg(target_os = "windows")]
+    fn os_matches_windows() {
+        assert!(os_matches("windows"));
+        assert!(!os_matches("macos"));
+        assert!(!os_matches("linux"));
+        assert!(!os_matches("invalid"));
+    }
 }

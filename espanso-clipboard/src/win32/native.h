@@ -23,9 +23,10 @@
 #include <stdint.h>
 
 extern "C" int32_t clipboard_get_length();
-extern "C" int32_t clipboard_get_text(wchar_t * buffer, int32_t buffer_size);
-extern "C" int32_t clipboard_set_text(wchar_t * text);
-extern "C" int32_t clipboard_set_image(wchar_t * image);
-extern "C" int32_t clipboard_set_html(char * html_descriptor, wchar_t * fallback_text);
+extern "C" int32_t clipboard_get_text(wchar_t *buffer, int32_t buffer_size);
+extern "C" int32_t clipboard_set_text(wchar_t *text);
+extern "C" int32_t clipboard_set_image(wchar_t *image);
+extern "C" int32_t clipboard_set_html(char *html_descriptor,
+                                      wchar_t *fallback_text);
 
-#endif //ESPANSO_CLIPBOARD_H
+#endif // ESPANSO_CLIPBOARD_H
