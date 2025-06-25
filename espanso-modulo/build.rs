@@ -465,7 +465,6 @@ fn build_native() {
     build.flag("-Wno-unused-parameter");
     build.flag("-Wno-implicit-fallthrough");
 
-
     for flag in cpp_flags {
         build.flag(&flag);
     }
