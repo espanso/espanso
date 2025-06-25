@@ -20,7 +20,7 @@
 // This is needed to avoid showing a console window when starting espanso on Windows
 #![windows_subsystem = "windows"]
 
-use std::path::PathBuf;
+use std::{path::PathBuf, process::Command};
 
 use clap::{App, AppSettings, Arg, ArgMatches, SubCommand};
 use cli::{CliAlias, CliModule, CliModuleArgs};
@@ -611,6 +611,17 @@ For example, specifying 'email' is equivalent to 'match/email.yml'."#))
             }
 
             cli_args.paths = Some(paths);
+        }
+
+        // try to invoke `kdotool` to see if you have it or not.
+        if Command::new("kdotool")
+            .arg("getactivewindow")
+            .arg("getwindowclassname")
+            .output()
+            .is_ok()
+        {
+        } else {
+            info!("kdotool missing or not available for the current wayland DE.");
         }
 
         // If the current handler is an alias, rather than sending the sub-arguments
