@@ -43,7 +43,7 @@ impl std::fmt::Debug for dyn Package {
             self.title(),
             self.description(),
             self.author(),
-            self.location()
+            self.location().display()
         )
     }
 }

@@ -1,0 +1,35 @@
+name: Update flake
+
+on:
+  schedule:
+    - cron: "0 0 * * 0" # Every Sunday at 00:00
+  workflow_dispatch: # Allow manual trigger
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-flake:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/dev' # Ensure workflow_dispatch only runs on dev
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31
+
+      - name: Update flake
+        run: nix flake update
+
+      - name: Create pull request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          commit-message: ":up_arrow: update flake"
+          branch: update-flake
+          delete-branch: true
+          branch-suffix: short-commit-hash
+          title: Update flake
+          add-paths: flake.lock

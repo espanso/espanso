@@ -80,10 +80,7 @@ impl Write for FileProxy {
                     Output::File(output) => output.write(buf),
                 }
             }
-            Err(_) => Err(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                "lock poison error",
-            )),
+            Err(_) => Err(std::io::Error::other("lock poison error")),
         }
     }
 
@@ -93,10 +90,7 @@ impl Write for FileProxy {
                 Output::Memory(buffer) => buffer.flush(),
                 Output::File(output) => output.flush(),
             },
-            Err(_) => Err(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                "lock poison error",
-            )),
+            Err(_) => Err(std::io::Error::other("lock poison error")),
         }
     }
 }

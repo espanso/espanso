@@ -15,6 +15,11 @@ function Main {
         Remove-Item $TARGET_DIR -Recurse -Force
     }
 
+    # Remove the portable folder if found
+    if (Test-Path "target/windows/espanso-portable") {
+        Remove-Item "target/windows/espanso-portable" -Recurse -Force
+    }
+
     # Copy the resources directory
     Copy-Item -Path $RESOURCE_DIR -Destination $TARGET_DIR -Recurse -Force
 
@@ -52,7 +57,7 @@ STD console handles on Windows.
     $readmeContent | Out-File "$TARGET_DIR/README.txt" -Encoding UTF8
 
     Rename-Item -Path $TARGET_DIR -NewName espanso-portable
-    Compress-Archive target/windows/espanso-portable Espanso-Win-Portable-x86_64.zip
+    Compress-Archive target/windows/espanso-portable target/windows/Espanso-Win-Portable-x86_64.zip -Force
 
     Write-Output "Espanso Portable created!"
 }

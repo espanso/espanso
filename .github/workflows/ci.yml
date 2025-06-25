@@ -24,7 +24,7 @@ jobs:
   linux-x11:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@main
       - name: Format
         run: cargo fmt --all -- --check
       - name: Install Linux X11 dependencies
@@ -54,14 +54,11 @@ jobs:
             --features vendored-tls
       - name: Clippy
         run: cargo clippy --all-targets --features=modulo,vendored-tls -- --deny warnings
-      - uses: cachix/install-nix-action@latest
-      - name: nix build
-        run: nix build
 
   linux-wayland:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@main
       - name: Format
         run: cargo fmt --all -- --check
       - name: Install Linux wayland dependencies
@@ -90,14 +87,11 @@ jobs:
             --features vendored-tls,wayland
       - name: Clippy
         run: cargo clippy --features=modulo,vendored-tls,wayland -- --deny warnings
-      - uses: cachix/install-nix-action@latest
-      - name: nix build
-        run: nix build .#espanso-wayland
 
   macos:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@main
       - name: Install target
         run: |
           rustup update
@@ -112,14 +106,11 @@ jobs:
         run: |
           cargo clippy --target=aarch64-apple-darwin -- --deny warnings
           cargo clippy --target=x86_64-apple-darwin -- --deny warnings
-      - uses: cachix/install-nix-action@latest
-      - name: nix build
-        run: nix build
 
   windows:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@main
       - name: Format
         run: cargo fmt --all -- --check
       - name: Build

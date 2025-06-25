@@ -284,9 +284,9 @@ void SearchFrame::OnCharEvent(wxKeyEvent &event) {
         SelectNext();
     } else if (event.GetKeyCode() == WXK_UP) {
         SelectPrevious();
-    } else if (event.GetKeyCode() == WXK_CONTROL_N) {
+    } else if (event.GetKeyCode() == 'N' && event.RawControlDown()) {
         SelectNext();
-    } else if (event.GetKeyCode() == WXK_CONTROL_P) {
+    } else if (event.GetKeyCode() == 'P' && event.RawControlDown()) {
         SelectPrevious();
     } else if (event.GetKeyCode() == WXK_RETURN) {
         Submit();

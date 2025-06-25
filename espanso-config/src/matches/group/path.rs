@@ -35,8 +35,9 @@ pub fn resolve_imports(
             parent
         } else {
             return Err(ResolveImportError::Failed(format!(
-          "unable to resolve imports for match group starting from current path: {group_path:?}"
-        ))
+                "unable to resolve imports for match group starting from current path: {}",
+                group_path.display()
+            ))
             .into());
         }
     } else {
@@ -55,9 +56,12 @@ pub fn resolve_imports(
             import_path
         };
 
-        match dunce::canonicalize(&full_path)
-            .with_context(|| format!("unable to canonicalize import path: {full_path:?}"))
-        {
+        match dunce::canonicalize(&full_path).with_context(|| {
+            format!(
+                "unable to canonicalize import path: {}",
+                full_path.display()
+            )
+        }) {
             Ok(canonical_path) => {
                 if canonical_path.exists() && canonical_path.is_file() {
                     paths.push(canonical_path);

@@ -19,6 +19,10 @@ defaults:
   run:
     shell: bash
 
+defaults:
+  run:
+    shell: bash
+
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   CARGO_TERM_COLOR: always
@@ -32,7 +36,7 @@ jobs:
         shell: bash
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@main
       - name: Build
         run: |
           cargo build --release
@@ -64,7 +68,7 @@ jobs:
         run: |
           Get-FileHash target/windows/Espanso-Win-Portable-x86_64.zip -Algorithm SHA256 | select-object -ExpandProperty Hash > target/windows/Espanso-Win-Portable-x86_64.zip.sha256.txt
           Get-FileHash target/windows/installer/Espanso-Win-Installer-x86_64.exe -Algorithm SHA256 | select-object -ExpandProperty Hash > target/windows/installer/Espanso-Win-Installer-x86_64.exe.sha256.txt
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@main
         name: "Upload artifacts"
         with:
           name: Windows Artifacts
@@ -78,7 +82,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@main
       - name: Install Linux dependencies
         run: |
           sudo apt-get update
@@ -100,7 +104,7 @@ jobs:
             -v "$(pwd):/shared" \
             espanso-ubuntu \
             espanso/.github/scripts/ubuntu/build_appimage.sh
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@main
         name: "Upload artifacts"
         with:
           name: Linux X11 Artifacts
@@ -112,7 +116,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@main
       - name: Install Linux dependencies
         run: |
           sudo apt-get update
@@ -130,7 +134,7 @@ jobs:
       - name: Build Deb packages
         run: |
           sudo docker run --rm -v "$(pwd):/shared" espanso-ubuntu espanso/.github/scripts/ubuntu/build_deb.sh
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@main
         name: "Upload artifacts"
         with:
           name: Ubuntu-Debian Artifacts
@@ -142,7 +146,7 @@ jobs:
     runs-on: macos-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@main
       - name: Install rust target
         run: |
           rustup update
@@ -180,7 +184,7 @@ jobs:
       - name: Calculate hashes
         run: |
           shasum -a 256 Espanso-Mac-Universal.zip > Espanso-Mac-Universal.zip.sha256.txt
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@main
         name: "Upload artifacts"
         with:
           name: MacOS Artifacts
