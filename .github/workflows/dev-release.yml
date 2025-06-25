@@ -12,8 +12,6 @@ on:
       - 'README.md'
     branches:
       - dev
-      # TODO: remove this
-      - ci-revamp
 
 defaults:
   run:
