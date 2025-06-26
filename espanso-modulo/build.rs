@@ -461,6 +461,9 @@ fn build_native() {
         .file("src/sys/troubleshooting/troubleshooting.cpp")
         .file("src/sys/troubleshooting/troubleshooting_gui.cpp");
     build.flag("-std=c++17");
+    // ignore a lot of warnings of these two lints
+    build.flag("-Wno-unused-parameter");
+    build.flag("-Wno-implicit-fallthrough");
 
     for flag in cpp_flags {
         build.flag(&flag);
