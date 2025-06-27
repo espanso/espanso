@@ -31,6 +31,11 @@ pub fn is_espanso_in_path() -> bool {
 
 pub fn add_espanso_to_path(_: bool) -> Result<()> {
     let mut paths = read_paths();
+    if let Some(last) = paths.last_mut() {
+        if last.ends_with(';') {
+            last.pop(); // remove the last ';' for pretty join
+        }
+    }
     let exe_path = std::env::current_exe().expect("unable to obtain exec path");
     let parent_path = exe_path.parent().expect("unable to obtain parent path");
 
