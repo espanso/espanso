@@ -21,7 +21,7 @@ use crate::{AppInfo, AppInfoProvider};
 
 use std::process::Command;
 
-pub(crate) struct WaylandAppInfoProvider {}
+pub(crate) struct WaylandKDEAppInfoProvider {}
 
 fn empty_app_info() -> AppInfo {
     AppInfo {
@@ -31,13 +31,13 @@ fn empty_app_info() -> AppInfo {
     }
 }
 
-impl WaylandAppInfoProvider {
+impl WaylandKDEAppInfoProvider {
     pub fn new() -> Self {
         Self {}
     }
 }
 
-impl AppInfoProvider for WaylandAppInfoProvider {
+impl AppInfoProvider for WaylandKDEAppInfoProvider {
     // TODO: other get current window info for other window managers
     fn get_info(&self) -> AppInfo {
         let class = if let Ok(out) = Command::new("kdotool")
