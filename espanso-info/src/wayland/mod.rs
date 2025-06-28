@@ -135,14 +135,37 @@ impl AppInfoProvider for WaylandNiriAppInfoProvider {
             .arg("focused-window")
             .output()
         {
-            let mut __stdout = out.stdout;
-            // if !__stdout.is_empty() {
-            //     __stdout.pop();
-            // }
+            let txt = String::from_utf8(out.stdout).expect("Error decoding from utf8");
 
-            let title = Some(String::from_utf8(__stdout).expect("some error"));
-            let exec = None;
-            let class = None;
+            let mut title = None;
+            let mut class = None;
+            let mut exec = None;
+
+            for line in txt.lines() {
+                let trimmed = line.trim();
+                if let Some(rest) = trimmed.strip_prefix("Title:") {
+                    title = Some(rest.trim().trim_matches('"').to_string());
+                } else if let Some(rest) = trimmed.strip_prefix("App ID:") {
+                    class = Some(rest.trim().trim_matches('"').to_string());
+                } else if let Some(rest) = trimmed.strip_prefix("PID:") {
+                    let pid_ = rest.trim().to_string();
+                    exec = match Command::new("readlink")
+                        .arg(format!("/proc/{pid_}/exe"))
+                        .output()
+                    {
+                        Ok(out) => {
+                            let mut __stdout = out.stdout;
+                            if !__stdout.is_empty() {
+                                __stdout.pop();
+                            }
+                            let exec_ =
+                                String::from_utf8(__stdout).expect("Error decoding from utf8");
+                            Some(exec_)
+                        }
+                        Err(_) => None,
+                    }
+                }
+            }
 
             return AppInfo { title, exec, class };
         }
