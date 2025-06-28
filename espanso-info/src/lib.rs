@@ -78,7 +78,7 @@ pub fn get_provider() -> Result<Box<dyn AppInfoProvider>> {
                 info!("using WaylandNiriAppInfoProvider");
                 return Ok(Box::new(wayland::WaylandNiriAppInfoProvider::new()));
             }
-            "KDE" => {
+            "kde" => {
                 info!("using WaylandKDEAppInfoProvider");
                 return Ok(Box::new(wayland::WaylandKDEAppInfoProvider::new()));
             }
