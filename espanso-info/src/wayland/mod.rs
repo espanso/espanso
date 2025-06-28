@@ -21,7 +21,7 @@ use crate::{AppInfo, AppInfoProvider};
 
 use std::process::Command;
 
-pub(crate) struct WaylandEmptyInfoProvider {}
+pub(crate) struct WaylandEmptyAppInfoProvider {}
 pub(crate) struct WaylandKDEAppInfoProvider {}
 
 fn empty_app_info() -> AppInfo {
@@ -33,13 +33,13 @@ fn empty_app_info() -> AppInfo {
 }
 
 // for unsupported DEs/WMs
-impl WaylandEmptyInfoProvider {
+impl WaylandEmptyAppInfoProvider {
     pub fn new() -> Self {
         Self {}
     }
 }
 
-impl AppInfoProvider for WaylandEmptyInfoProvider {
+impl AppInfoProvider for WaylandEmptyAppInfoProvider {
     fn get_info(&self) -> AppInfo {
         empty_app_info()
     }
