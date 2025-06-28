@@ -23,6 +23,7 @@ use std::process::Command;
 
 pub(crate) struct WaylandEmptyAppInfoProvider {}
 pub(crate) struct WaylandKDEAppInfoProvider {}
+pub(crate) struct WaylandNiriAppInfoProvider {}
 
 fn empty_app_info() -> AppInfo {
     AppInfo {
@@ -117,5 +118,34 @@ impl AppInfoProvider for WaylandKDEAppInfoProvider {
         };
 
         AppInfo { title, exec, class }
+    }
+}
+
+// for Niri
+impl WaylandNiriAppInfoProvider {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+
+impl AppInfoProvider for WaylandNiriAppInfoProvider {
+    fn get_info(&self) -> AppInfo {
+        if let Ok(out) = Command::new("niri")
+            .arg("msg")
+            .arg("focused-window")
+            .output()
+        {
+            let mut __stdout = out.stdout;
+            // if !__stdout.is_empty() {
+            //     __stdout.pop();
+            // }
+
+            let title = Some(String::from_utf8(__stdout).expect("some error"));
+            let exec = None;
+            let class = None;
+
+            return AppInfo { title, exec, class };
+        }
+        empty_app_info()
     }
 }
