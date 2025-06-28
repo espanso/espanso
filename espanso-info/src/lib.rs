@@ -19,6 +19,7 @@
 
 use anyhow::Result;
 use log::info;
+use std::env;
 
 #[cfg(target_os = "windows")]
 mod win32;
@@ -66,9 +67,24 @@ pub fn get_provider() -> Result<Box<dyn AppInfoProvider>> {
 
 #[cfg(target_os = "linux")]
 #[cfg(feature = "wayland")]
+#[allow(clippy::match_str_case_mismatch)]
 pub fn get_provider() -> Result<Box<dyn AppInfoProvider>> {
-    info!("using WaylandAppInfoProvider");
-    Ok(Box::new(wayland::WaylandAppInfoProvider::new()))
+    if let Ok(value) = env::var("XDG_SESSION_DESKTOP") {
+        match value.to_lowercase().as_str() {
+            "niri" => {
+                info!("using WaylandNiriAppInfoProvider");
+                return Ok(Box::new(wayland::WaylandNiriAppInfoProvider::new()));
+            }
+            "KDE" => {
+                info!("using WaylandKDEAppInfoProvider");
+                return Ok(Box::new(wayland::WaylandKDEAppInfoProvider::new()));
+            }
+            _ => {}
+        }
+    }
+
+    info!("no appropriate WaylandAppInfoProvider found for current DE/WM");
+    Ok(Box::new(wayland::WaylandEmptyAppInfoProvider::new()))
 }
 
 #[cfg(target_os = "windows")]
