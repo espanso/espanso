@@ -19,7 +19,6 @@
 
 use anyhow::Result;
 use log::info;
-use std::env;
 
 #[cfg(target_os = "windows")]
 mod win32;
@@ -31,6 +30,10 @@ mod x11;
 #[cfg(target_os = "linux")]
 #[cfg(feature = "wayland")]
 mod wayland;
+
+#[cfg(target_os = "linux")]
+#[cfg(feature = "wayland")]
+use std::env;
 
 #[cfg(target_os = "macos")]
 mod cocoa;
