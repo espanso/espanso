@@ -20,7 +20,7 @@
 // This is needed to avoid showing a console window when starting espanso on Windows
 #![windows_subsystem = "windows"]
 
-use std::{path::PathBuf, process::Command};
+use std::path::PathBuf;
 
 use clap::{App, AppSettings, Arg, ArgMatches, SubCommand};
 use cli::{CliAlias, CliModule, CliModuleArgs};
@@ -246,9 +246,9 @@ fn main() {
     .subcommand(SubCommand::with_name("edit")
         .about("Shortcut to open the default text editor to edit config files")
         .arg(Arg::with_name("target_file")
-            .help(r#"Defaults to "match/base.yml", it contains the relative path of the file you want to edit, 
-such as 'config/default.yml' or 'match/base.yml'. 
-For convenience, you can also specify the name directly and Espanso will figure out the path. 
+            .help(r#"Defaults to "match/base.yml", it contains the relative path of the file you want to edit,
+such as 'config/default.yml' or 'match/base.yml'.
+For convenience, you can also specify the name directly and Espanso will figure out the path.
 For example, specifying 'email' is equivalent to 'match/email.yml'."#))
         // .arg(Arg::with_name("norestart")
         //     .short("n")
@@ -611,17 +611,6 @@ For example, specifying 'email' is equivalent to 'match/email.yml'."#))
             }
 
             cli_args.paths = Some(paths);
-        }
-
-        // try to invoke `kdotool` to see if you have it or not.
-        if Command::new("kdotool")
-            .arg("getactivewindow")
-            .arg("getwindowclassname")
-            .output()
-            .is_ok()
-        {
-        } else {
-            info!("kdotool missing or not available for the current wayland DE.");
         }
 
         // If the current handler is an alias, rather than sending the sub-arguments
