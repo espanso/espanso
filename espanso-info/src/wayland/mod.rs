@@ -38,8 +38,7 @@ impl WaylandAppInfoProvider {
 }
 
 impl AppInfoProvider for WaylandAppInfoProvider {
-    // TODO: can we read these info on Wayland?
-    // maybe
+    // TODO: other get current window info for other window managers
     fn get_info(&self) -> AppInfo {
         let class = if let Ok(out) = Command::new("kdotool")
             .arg("getactivewindow")
