@@ -114,7 +114,9 @@ jobs:
           cargo clippy --target=x86_64-apple-darwin -- --deny warnings
       - uses: cachix/install-nix-action@v31
       - name: nix build
-        run: nix build
+        run: |
+          nix build .#packages.aarch64-darwin.espanso
+          nix build .#packages.x86_64-darwin.espanso
 
   windows:
     runs-on: windows-latest
