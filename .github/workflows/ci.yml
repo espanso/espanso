@@ -53,6 +53,8 @@ jobs:
       - name: Clippy
         run: cargo clippy --all-targets --features=modulo,vendored-tls -- --deny warnings
       - uses: cachix/install-nix-action@v31
+      - name: nix fmt
+        run: nix fmt -- --check **/*.nix
       - name: nix build
         run: nix build
 
