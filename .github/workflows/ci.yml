@@ -52,6 +52,11 @@ jobs:
             --features vendored-tls
       - name: Clippy
         run: cargo clippy --all-targets --features=modulo,vendored-tls -- --deny warnings
+      - uses: cachix/install-nix-action@v31
+      - name: nix fmt
+        run: nix fmt -- --check **/*.nix
+      - name: nix build
+        run: nix build
 
   linux-wayland:
     runs-on: ubuntu-latest
@@ -85,6 +90,9 @@ jobs:
             --features vendored-tls,wayland
       - name: Clippy
         run: cargo clippy --features=modulo,vendored-tls,wayland -- --deny warnings
+      - uses: cachix/install-nix-action@v31
+      - name: nix build
+        run: nix build .#espanso-wayland
 
   macos:
     runs-on: macos-latest
@@ -104,6 +112,11 @@ jobs:
         run: |
           cargo clippy --target=aarch64-apple-darwin -- --deny warnings
           cargo clippy --target=x86_64-apple-darwin -- --deny warnings
+      - uses: cachix/install-nix-action@v31
+      - name: nix build
+        run: |
+          nix build .#packages.aarch64-darwin.espanso
+          nix build .#packages.x86_64-darwin.espanso
 
   windows:
     runs-on: windows-latest
