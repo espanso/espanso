@@ -12,7 +12,9 @@ permissions:
 jobs:
   update-flake:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/dev' # Ensure workflow_dispatch only runs on dev
+    # Ensure workflow_dispatch only runs on dev
+    # and only run on the 'espanso/espanso' repo, not on forks
+    if: github.ref == 'refs/heads/dev' && github.repository == 'espanso/espanso'
 
     steps:
       - name: Checkout repository
