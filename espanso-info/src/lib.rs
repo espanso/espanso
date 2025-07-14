@@ -66,9 +66,37 @@ pub fn get_provider() -> Result<Box<dyn AppInfoProvider>> {
 
 #[cfg(target_os = "linux")]
 #[cfg(feature = "wayland")]
+#[allow(clippy::match_str_case_mismatch)]
 pub fn get_provider() -> Result<Box<dyn AppInfoProvider>> {
-    info!("using WaylandAppInfoProvider");
-    Ok(Box::new(wayland::WaylandAppInfoProvider::new()))
+    use std::env;
+
+    if let Ok(value) = env::var("XDG_SESSION_DESKTOP") {
+        match value.to_lowercase().as_str() {
+            "niri" => {
+                info!("using WaylandNiriAppInfoProvider");
+                return Ok(Box::new(wayland::WaylandNiriAppInfoProvider::new()));
+            }
+            "kde" => {
+                // try to invoke `kdotool` to see if you have it or not.
+                use std::process::Command;
+                if Command::new("kdotool")
+                    .arg("getactivewindow")
+                    .arg("getwindowclassname")
+                    .output()
+                    .is_ok()
+                {
+                    info!("using WaylandKDEAppInfoProvider");
+                    return Ok(Box::new(wayland::WaylandKDEAppInfoProvider::new()));
+                }
+                info!("kdotool missing or not available for the current wayland DE.");
+                // since we dont have `kdotool` anyway, just output empty info
+            }
+            _ => {}
+        }
+    }
+
+    info!("no appropriate WaylandAppInfoProvider found for current DE/WM");
+    Ok(Box::new(wayland::WaylandEmptyAppInfoProvider::new()))
 }
 
 #[cfg(target_os = "windows")]

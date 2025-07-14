@@ -21,7 +21,9 @@ use crate::{AppInfo, AppInfoProvider};
 
 use std::process::Command;
 
-pub(crate) struct WaylandAppInfoProvider {}
+pub(crate) struct WaylandEmptyAppInfoProvider {}
+pub(crate) struct WaylandKDEAppInfoProvider {}
+pub(crate) struct WaylandNiriAppInfoProvider {}
 
 fn empty_app_info() -> AppInfo {
     AppInfo {
@@ -31,15 +33,27 @@ fn empty_app_info() -> AppInfo {
     }
 }
 
-impl WaylandAppInfoProvider {
+// for unsupported DEs/WMs
+impl WaylandEmptyAppInfoProvider {
     pub fn new() -> Self {
         Self {}
     }
 }
 
-impl AppInfoProvider for WaylandAppInfoProvider {
-    // TODO: can we read these info on Wayland?
-    // maybe
+impl AppInfoProvider for WaylandEmptyAppInfoProvider {
+    fn get_info(&self) -> AppInfo {
+        empty_app_info()
+    }
+}
+
+// for KDE with kdotool
+impl WaylandKDEAppInfoProvider {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+
+impl AppInfoProvider for WaylandKDEAppInfoProvider {
     fn get_info(&self) -> AppInfo {
         let class = if let Ok(out) = Command::new("kdotool")
             .arg("getactivewindow")
@@ -104,5 +118,57 @@ impl AppInfoProvider for WaylandAppInfoProvider {
         };
 
         AppInfo { title, exec, class }
+    }
+}
+
+// for Niri
+impl WaylandNiriAppInfoProvider {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+
+impl AppInfoProvider for WaylandNiriAppInfoProvider {
+    fn get_info(&self) -> AppInfo {
+        if let Ok(out) = Command::new("niri")
+            .arg("msg")
+            .arg("focused-window")
+            .output()
+        {
+            let txt = String::from_utf8(out.stdout).expect("Error decoding from utf8");
+
+            let mut title = None;
+            let mut class = None;
+            let mut exec = None;
+
+            for line in txt.lines() {
+                let trimmed = line.trim();
+                if let Some(rest) = trimmed.strip_prefix("Title:") {
+                    title = Some(rest.trim().trim_matches('"').to_string());
+                } else if let Some(rest) = trimmed.strip_prefix("App ID:") {
+                    class = Some(rest.trim().trim_matches('"').to_string());
+                } else if let Some(rest) = trimmed.strip_prefix("PID:") {
+                    let pid_ = rest.trim().to_string();
+                    exec = match Command::new("readlink")
+                        .arg(format!("/proc/{pid_}/exe"))
+                        .output()
+                    {
+                        Ok(out) => {
+                            let mut __stdout = out.stdout;
+                            if !__stdout.is_empty() {
+                                __stdout.pop();
+                            }
+                            let exec_ =
+                                String::from_utf8(__stdout).expect("Error decoding from utf8");
+                            Some(exec_)
+                        }
+                        Err(_) => None,
+                    }
+                }
+            }
+
+            return AppInfo { title, exec, class };
+        }
+        empty_app_info()
     }
 }
