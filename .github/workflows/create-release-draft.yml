@@ -124,7 +124,7 @@ jobs:
           api-token: "${{ secrets.SIGNPATH_API_TOKEN }}"
           organization-id: "e86b1459-62fc-4c7c-aac9-185d60749a03"
           project-slug: "espanso"
-          signing-policy-slug: "test-signing"
+          signing-policy-slug: "release-signing"
           github-artifact-id: ${{ steps.upload-artifact-windows.outputs.artifact-id }}
           wait-for-completion: true
           output-artifact-directory: "."
