@@ -240,7 +240,7 @@ jobs:
           gh release upload ${{ needs.extract-version.outputs.espanso_version }} Espanso-Mac-Universal.zip Espanso-Mac-Universal.zip.sha256.txt
 
   macos-publish-homebrew:
-    needs: ["extract-version", "create-release", "macos-m1", "macos-intel"]
+    needs: ["extract-version", "create-release", "macos"]
     runs-on: macos-latest
     continue-on-error: false
 
