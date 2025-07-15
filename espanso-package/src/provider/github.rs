@@ -70,7 +70,6 @@ mod tests {
     use super::*;
 
     #[test]
-    #[ignore]
     fn test_download_github_package() {
         let provider = GitHubPackageProvider::new(
             "espanso".to_string(),
