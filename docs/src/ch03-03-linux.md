@@ -52,3 +52,22 @@ cargo build --release --no-default-features --features wayland,modulo,vendored-t
 ```
 
 You'll then find the `espanso` binary in the `target/release` directory.
+
+#### Using nix for compilation
+
+We do have nix for building the repo and flakes to track the dependencies.
+
+Do this to build the `release` mode
+
+```
+nix build
+```
+
+The binary will be located at `/your-espanso-repo-folder/result/bin/espanso`
+
+And this to run:
+
+```
+nix run
+```
+
