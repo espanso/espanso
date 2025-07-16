@@ -110,8 +110,8 @@ jobs:
         with:
           name: Windows Artifacts
           path: |
-            .\Espanso-Win-Installer-x86_64.exe
-            .\Espanso-Win-Portable-x86_64.zip
+            target/windows/installer/Espanso-Win-Installer-x86_64.exe
+            target/windows/Espanso-Win-Portable-x86_64.zip
       - id: sign-windows-release
         uses: signpath/github-action-submit-signing-request@v1
         with:
