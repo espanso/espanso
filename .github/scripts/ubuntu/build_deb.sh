@@ -21,10 +21,8 @@ main() {
   popd
 
   find ./espanso/target/debian -name 'espanso_*.deb' -exec cp {} espanso-debian-x11-amd64.deb \; -quit
-  sha256sum espanso-debian-x11-amd64.deb > espanso-debian-x11-amd64-sha256.txt
 
   find ./espanso/target/debian -name 'espanso-wayland*.deb' -exec cp {} espanso-debian-wayland-amd64.deb \; -quit
-  sha256sum espanso-debian-wayland-amd64.deb > espanso-debian-wayland-amd64-sha256.txt
 
   log "Copying to mounted volume"
   find . -maxdepth 1 -name 'espanso-debian-*' -exec cp -t /shared {} +

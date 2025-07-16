@@ -15,7 +15,6 @@ cargo generate-rpm -p espanso
 
 cd ..
 cp espanso/target/generate-rpm/*.rpm espanso-fedora-wayland-amd64.rpm
-sha256sum espanso-fedora-wayland-amd64.rpm > espanso-fedora-wayland-amd64-sha256.txt
 ls -la
 
 echo "Copying to mounted volume"

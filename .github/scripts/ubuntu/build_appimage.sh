@@ -28,7 +28,6 @@ main() {
 
   find 'espanso/target/linux/AppImage/out' -maxdepth 1 -name 'Espanso-*.AppImage' -exec cp {} Espanso-X11.AppImage \; -quit
 
-  sha256sum Espanso-X11.AppImage > Espanso-X11.AppImage.sha256.txt
   ls -la
 
   log "Copying to mounted volume"

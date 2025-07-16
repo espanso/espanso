@@ -104,12 +104,6 @@ jobs:
         shell: pwsh
         run: |
           scripts\build_windows_portable.ps1
-      - name: Calculate hashes
-        shell: powershell
-        run: |
-          Get-FileHash Espanso-Win-Portable-x86_64.zip -Algorithm SHA256 | select-object -ExpandProperty Hash > Espanso-Win-Portable-x86_64.zip.sha256.txt
-          Move-Item -Path .\target\windows\installer\Espanso-Win-Installer-x86_64.exe -Destination Espanso-Win-Installer-x86_64.exe
-          Get-FileHash Espanso-Win-Installer-x86_64.exe -Algorithm SHA256 | select-object -ExpandProperty Hash > Espanso-Win-Installer-x86_64.exe.sha256.txt
       - uses: actions/upload-artifact@main
         id: upload-artifact-windows
         name: upload-unsigned-artifact
@@ -136,7 +130,7 @@ jobs:
           Get-ChildItem .
       - name: Upload artifacts to Github Releases
         run: |
-          gh release upload ${{ needs.extract-version.outputs.espanso_version }} Espanso-Win-Installer-x86_64.exe Espanso-Win-Portable-x86_64.zip Espanso-Win-Installer-x86_64.exe.sha256.txt Espanso-Win-Portable-x86_64.zip.sha256.txt
+          gh release upload ${{ needs.extract-version.outputs.espanso_version }} Espanso-Win-Installer-x86_64.exe Espanso-Win-Portable-x86_64.zip
 
   linux-x11:
     needs: ["extract-version", "create-release"]
@@ -160,10 +154,9 @@ jobs:
           name: Linux X11 Artifacts
           path: |
             Espanso-X11.AppImage
-            Espanso-X11.AppImage.sha256.txt
       - name: Upload artifacts to Github Releases
         run: |
-          gh release upload ${{ needs.extract-version.outputs.espanso_version }} Espanso-X11.AppImage Espanso-X11.AppImage.sha256.txt
+          gh release upload ${{ needs.extract-version.outputs.espanso_version }} Espanso-X11.AppImage
 
   linux-deb:
     needs: ["extract-version", "create-release"]
@@ -190,7 +183,7 @@ jobs:
             espanso-debian-wayland-amd64.deb
       - name: Upload artifacts to Github Releases
         run: |
-          gh release upload ${{ needs.extract-version.outputs.espanso_version }} espanso-debian-x11-amd64.deb espanso-debian-wayland-amd64.deb espanso-debian-x11-amd64-sha256.txt espanso-debian-wayland-amd64-sha256.txt
+          gh release upload ${{ needs.extract-version.outputs.espanso_version }} espanso-debian-x11-amd64.deb espanso-debian-wayland-amd64.deb
 
   macos:
     needs: ["extract-version", "create-release"]
@@ -235,13 +228,10 @@ jobs:
           bash ./scripts/create_bundle.sh
       - name: Create ZIP archive
         run: |
-          ditto -c -k --sequesterRsrc --keepParent target/mac/Espanso.app Espanso-Mac-Intel.zip
-      - name: Calculate hashes
-        run: |
-          shasum -a 256 Espanso-Mac-Universal.zip > Espanso-Mac-Universal.zip.sha256.txt
+          ditto -c -k --sequesterRsrc --keepParent target/mac/Espanso.app Espanso-Mac-Universal.zip
       - name: Upload artifacts to Github Releases
         run: |
-          gh release upload ${{ needs.extract-version.outputs.espanso_version }} Espanso-Mac-Universal.zip Espanso-Mac-Universal.zip.sha256.txt
+          gh release upload ${{ needs.extract-version.outputs.espanso_version }} Espanso-Mac-Universal.zip
 
   macos-publish-homebrew:
     needs: ["extract-version", "create-release", "macos"]

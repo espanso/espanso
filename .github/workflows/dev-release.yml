@@ -57,11 +57,6 @@ jobs:
         shell: pwsh
         run: |
             scripts\build_windows_portable.ps1
-      - name: Calculate hashes
-        shell: powershell
-        run: |
-          Get-FileHash target/windows/Espanso-Win-Portable-x86_64.zip -Algorithm SHA256 | select-object -ExpandProperty Hash > target/windows/Espanso-Win-Portable-x86_64.zip.sha256.txt
-          Get-FileHash target/windows/installer/Espanso-Win-Installer-x86_64.exe -Algorithm SHA256 | select-object -ExpandProperty Hash > target/windows/installer/Espanso-Win-Installer-x86_64.exe.sha256.txt
       - uses: actions/upload-artifact@main
         name: "Upload artifacts"
         with:
@@ -69,8 +64,6 @@ jobs:
           path: |
             target/windows/installer/Espanso-Win-Installer-x86_64.exe
             target/windows/Espanso-Win-Portable-x86_64.zip
-            target/windows/installer/Espanso-Win-Installer-x86_64.exe.sha256.txt
-            target/windows/Espanso-Win-Portable-x86_64.zip.sha256.txt
 
   linux-x11:
     runs-on: ubuntu-latest
@@ -104,7 +97,6 @@ jobs:
           name: Linux X11 Artifacts
           path: |
             Espanso-X11.AppImage
-            Espanso-X11.AppImage.sha256.txt
 
   linux-deb:
     runs-on: ubuntu-latest
@@ -175,13 +167,9 @@ jobs:
       - name: Create ZIP archive
         run: |
           ditto -c -k --sequesterRsrc --keepParent target/mac/Espanso.app Espanso-Mac-Universal.zip
-      - name: Calculate hashes
-        run: |
-          shasum -a 256 Espanso-Mac-Universal.zip > Espanso-Mac-Universal.zip.sha256.txt
       - uses: actions/upload-artifact@main
         name: "Upload artifacts"
         with:
           name: MacOS Artifacts
           path: |
             Espanso-Mac-Universal.zip
-            Espanso-Mac-Universal.zip.sha256.txt
