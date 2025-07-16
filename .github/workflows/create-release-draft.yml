@@ -124,10 +124,6 @@ jobs:
           output-artifact-directory: "."
           parameters: |
             version: "${{ needs.extract-version.outputs.espanso_version }}"
-      - name: "DEBUG: List items of ./"
-        shell: powershell
-        run: |
-          Get-ChildItem .
       - name: Upload artifacts to Github Releases
         run: |
           gh release upload ${{ needs.extract-version.outputs.espanso_version }} Espanso-Win-Installer-x86_64.exe Espanso-Win-Portable-x86_64.zip
