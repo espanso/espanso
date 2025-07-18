@@ -35,7 +35,13 @@ pub fn add_espanso_to_path(_: bool) -> Result<()> {
 
     let target_link_path = target_link_dir.join("espanso");
 
+    if target_link_path.exists() && target_link_path.is_symlink() {
+        debug!("the symlink already exist, removing...");
+        remove_espanso_from_path(true)?;
+    }
+
     if let Err(error) = std::os::unix::fs::symlink(exec_path, target_link_path) {
+        debug!("creating the symlink from executable to /usr/local/bin");
         return Err(PathError::SymlinkError(error).into());
     }
 
