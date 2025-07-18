@@ -22,7 +22,7 @@ use std::{fs::create_dir_all, io::ErrorKind};
 use thiserror::Error;
 
 use anyhow::{bail, Context, Result};
-use log::{error, warn};
+use log::{debug, error, warn};
 
 pub fn is_espanso_in_path() -> bool {
     PathBuf::from("/usr/local/bin/espanso").is_file()
@@ -62,7 +62,13 @@ pub fn add_espanso_to_path(prompt_when_necessary: bool) -> Result<()> {
         }
     }
 
+    if target_link_path.exists() && target_link_path.is_symlink() {
+        debug!("the symlink already exist, removing...");
+        remove_espanso_from_path(true)?;
+    }
+
     if let Err(error) = std::os::unix::fs::symlink(&exec_path, &target_link_path) {
+        debug!("creating the symlink from executable to /usr/local/bin");
         match error.kind() {
             ErrorKind::PermissionDenied if prompt_when_necessary => {
                 warn!("target link file can't be accessed with current permissions, requesting elevated ones through AppleScript.");
