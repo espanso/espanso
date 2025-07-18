@@ -18,6 +18,7 @@
  */
 
 use anyhow::Result;
+use log::debug;
 use std::path::PathBuf;
 use thiserror::Error;
 
