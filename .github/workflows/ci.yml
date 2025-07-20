@@ -4,9 +4,6 @@ on:
   push:
     paths-ignore:
       - 'docs/**'
-    branches:
-      - master
-      - dev
   pull_request:
     paths-ignore:
       - 'docs/**'

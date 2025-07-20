@@ -53,6 +53,13 @@ venv/
 Espanso-Win-Installer-x86_64*
 Espanso-Win-Portable-x86_64*
 
+# macOS
+*.dmg
+
+# Linux
+*.deb
+*.AppImage
+
 # rust
 mutants.out*
 tarpaulin-report.html
