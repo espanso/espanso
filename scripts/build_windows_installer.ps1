@@ -9,7 +9,6 @@ $ErrorActionPreference = "Stop"
 # Define constants
 $INSTALLER_NAME = "Espanso-Win-Installer"
 $ARCH = "x86_64"
-$TARGET_DIR = "target/windows/installer"
 $RESOURCE_DIR = "target/windows/resources"
 
 $BASE_DIR = Get-Location
@@ -33,7 +32,6 @@ function Get-TomlVersion {
     }
 
     Write-Error "Could not find the version in Cargo.toml"
-
 }
 
 function Main {
@@ -42,14 +40,6 @@ function Main {
     if (!$espansod_exists) {
         Write-Error "You need to build the windows resources first.`nPlease run scripts/build_windows_resources.ps1"
     }
-
-    # Clean the output directory
-    if (Test-Path $TARGET_DIR) {
-        Remove-Item $TARGET_DIR -Recurse -Force
-    }
-
-    # Create the target directory
-    New-Item -Path $TARGET_DIR -ItemType Directory -Force | Out-Null
 
     $script_resources_path = Join-Path $BASE_DIR "scripts/resources/windows"
     $template_path = Join-Path $script_resources_path "setupscript.iss"
@@ -67,7 +57,7 @@ function Main {
     $license = Join-Path $BASE_DIR "LICENSE"
     $icon = Join-Path $script_resources_path "icon.ico"
     $cli_helper = Join-Path $script_resources_path "espanso.cmd"
-    $output_dir = Join-Path $BASE_DIR $TARGET_DIR
+    $output_dir = Join-Path $BASE_DIR "target/windows"
 
     $include_paths = ""
     Get-ChildItem -Path $RESOURCE_DIR -Filter "*.dll" | ForEach-Object {
@@ -85,7 +75,7 @@ function Main {
     $template = $template -replace '{{{executable_path}}}', $espansod_path
     $template = $template -replace '{{{dll_include}}}', $include_paths
 
-    $iss_setup = Join-Path $TARGET_DIR "setupscript.iss"
+    $iss_setup = Join-Path $RESOURCE_DIR "setupscript.iss"
     $template | Out-File $iss_setup -Encoding UTF8
 
     # Helpful for debugging in CI, as the iscc errors mention line numbers
