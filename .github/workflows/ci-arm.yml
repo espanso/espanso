@@ -1,0 +1,64 @@
+name: ARM CI
+
+on:
+    workflow_dispatch:
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  linux-arm:
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@main
+      #   - name: Format
+      #     run: cargo fmt --all -- --check
+      - name: Install Linux X11 dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y \
+            build-essential \
+            git \
+            libdbus-1-dev \
+            libssl-dev \
+            libwxgtk3.*-dev \
+            libx11-dev \
+            libxkbcommon-dev \
+            libxtst-dev
+      - name: Build
+        run: |
+          cargo build \
+            --no-default-features \
+            --features modulo,vendored-tls
+      - name: Test
+        run: |
+          cargo test \
+            --workspace \
+            --exclude espanso-modulo \
+            --exclude espanso-ipc \
+            --no-default-features \
+            --features vendored-tls
+      - name: Clippy
+        run: cargo clippy --all-targets --features=modulo,vendored-tls -- --deny warnings
+      # - uses: cachix/install-nix-action@v31
+      #   - name: nix fmt
+      #     run: nix fmt -- --check **/*.nix
+      #   - name: nix build
+      #     run: nix build
+
+  windows-arm:
+    runs-on: windows-11-arm
+    steps:
+      - uses: actions/checkout@main
+      #   - name: Format
+      #     run: cargo fmt --all -- --check
+      - name: Build
+        run: |
+          cargo build
+      - name: Clippy
+        run: cargo clippy -- --deny warnings
+
