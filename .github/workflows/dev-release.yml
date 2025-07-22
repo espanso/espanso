@@ -62,7 +62,7 @@ jobs:
         with:
           name: Windows Artifacts
           path: |
-            target/windows/installer/Espanso-Win-Installer-x86_64.exe
+            target/windows/Espanso-Win-Installer-x86_64.exe
             target/windows/Espanso-Win-Portable-x86_64.zip
 
   linux-x11:

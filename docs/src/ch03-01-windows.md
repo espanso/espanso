@@ -41,7 +41,7 @@ Install-Module -Name 'PSTOML' -Force # just needed once
 scripts\build_windows_installer.ps1
 ```
 
-This will generate the installer in the `target/windows/installer` directory.
+This will generate the installer in the `target/windows` directory.
 
 ##### Portable mode bundle
 
@@ -53,5 +53,5 @@ then running:
 scripts\build_windows_portable.ps1
 ```
 
-This will generate the executable in the `target/windows/portable` directory.
+This will generate the zip file in the `target/windows` directory.
 There are README instructions inside!.
