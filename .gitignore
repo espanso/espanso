@@ -46,9 +46,6 @@ venv/
 
 # Binaries
 
-# Debian package builds
-*.deb
-
 # Windows
 Espanso-Win-Installer-x86_64*
 Espanso-Win-Portable-x86_64*

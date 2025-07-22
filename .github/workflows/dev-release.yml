@@ -94,7 +94,7 @@ jobs:
       - uses: actions/upload-artifact@main
         name: "Upload artifacts"
         with:
-          name: Linux X11 Artifacts
+          name: Linux X11 AppImage Artifact
           path: |
             Espanso-X11.AppImage
 
@@ -123,7 +123,7 @@ jobs:
       - uses: actions/upload-artifact@main
         name: "Upload artifacts"
         with:
-          name: Ubuntu-Debian Artifacts
+          name: Linux Deb Artifacts
           path: |
             espanso-debian-x11-amd64.deb
             espanso-debian-wayland-amd64.deb

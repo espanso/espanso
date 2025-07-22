@@ -147,7 +147,7 @@ jobs:
       - uses: actions/upload-artifact@main
         name: upload-unsigned-artifact
         with:
-          name: Linux X11 Artifacts
+          name: Linux X11 AppImage Artifact
           path: |
             Espanso-X11.AppImage
       - name: Upload artifacts to Github Releases
@@ -173,7 +173,7 @@ jobs:
       - uses: actions/upload-artifact@main
         name: upload-unsigned-artifact
         with:
-          name: Ubuntu-Debian Artifacts
+          name: Linux Deb Artifacts
           path: |
             espanso-debian-x11-amd64.deb
             espanso-debian-wayland-amd64.deb
@@ -228,25 +228,3 @@ jobs:
       - name: Upload artifacts to Github Releases
         run: |
           gh release upload ${{ needs.extract-version.outputs.espanso_version }} Espanso-Mac-Universal.zip
-
-  macos-publish-homebrew:
-    needs: ["extract-version", "create-release", "macos"]
-    runs-on: macos-latest
-    continue-on-error: false
-
-    steps:
-      - uses: actions/checkout@main
-      - name: Print target version
-        run: |
-          echo Using version ${{ needs.extract-version.outputs.espanso_version }}
-
-      - name: "Setup SSH deploy key"
-        uses: webfactory/ssh-agent@a6f90b1f127823b31d4d4a8d96047790581349bd
-        with:
-          ssh-private-key: ${{ secrets.HOMEBREW_CASK_SSH_PRIVATE_KEY }}
-
-      - name: Create and Publish Homebrew Cask
-        run: |
-          VERSION="${{ needs.extract-version.outputs.espanso_version }}" ./scripts/publish_homebrew_version.sh
-
-          echo "Cask formula has been published here: "
