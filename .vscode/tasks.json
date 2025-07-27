@@ -318,6 +318,57 @@
             ]
         },
         {
+            "label": "Build .deb package",
+            "detail": "Builds the deb package. It needs cargo-deb and a Debian based distro",
+            "type": "cargo",
+            "problemMatcher": [],
+            "command": "deb",
+            "args": [
+                "-p",
+                "espanso",
+                "--variant",
+                "wayland",
+                "--",
+                "--no-default-features",
+                "--features",
+                "modulo wayland vendored-tls"
+            ]
+        },
+        {
+            "label": "Build .deb - Docker image",
+            "detail": "Prepare the Docker image build the .deb file",
+            "type": "shell",
+            "problemMatcher": [],
+            "command": "sudo",
+            "args": [
+                "docker",
+                "build",
+                "-t",
+                "espanso-ubuntu",
+                ".",
+                "-f",
+                ".github/scripts/Dockerfile"
+            ]
+        },
+        {
+            "label": "Build .deb - Docker deb build",
+            "detail": "Build the .deb file from the Docker image",
+            "type": "shell",
+            "problemMatcher": [],
+            "command": "sudo",
+            "args": [
+                "docker",
+                "run",
+                "-v",
+                "\"$(pwd):/shared\"",
+                "espanso-ubuntu",
+                "espanso/.github/scripts/ubuntu/build_deb.sh",
+            ],
+            "dependsOn": [
+                "Build .deb - Docker image"
+            ]
+        },
+        {
             "label": "Build everything: linux",
             "detail": "excecutable, AppImage, deb package",
             "dependsOn": [
