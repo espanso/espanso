@@ -28,18 +28,17 @@
       {
         checks.espanso = self.packages.${system}.espanso.override { buildType = "debug"; };
         formatter = pkgs.nixfmt-rfc-style;
-        packages =
-          {
-            espanso = pkgs.callPackage ./nix/espanso.nix { };
-            default = self.packages.${system}.espanso;
-          }
-          // (nixpkgs.lib.optionalAttrs pkgs.stdenv.isLinux {
-            espanso-wayland = (
-              pkgs.callPackage ./nix/espanso.nix {
-                waylandSupport = true;
-              }
-            );
-          });
+        packages = {
+          espanso = pkgs.callPackage ./nix/espanso.nix { };
+          default = self.packages.${system}.espanso;
+        }
+        // (nixpkgs.lib.optionalAttrs pkgs.stdenv.isLinux {
+          espanso-wayland = (
+            pkgs.callPackage ./nix/espanso.nix {
+              waylandSupport = true;
+            }
+          );
+        });
         devShells =
           let
             commonRustFlagsEnv = "-C target-cpu=native";

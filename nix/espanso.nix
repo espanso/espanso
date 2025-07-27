@@ -45,27 +45,26 @@ rustPlatform.buildRustPackage {
   };
   doCheck = true;
 
-  buildInputs =
-    [
-      libpng
-      wxGTK32
-    ]
-    ++ lib.optionals stdenv.hostPlatform.isLinux [
-      dbus
-      libxkbcommon
-      openssl
-      setxkbmap
-    ]
-    ++ lib.optionals waylandSupport [
-      wl-clipboard
-    ]
-    ++ lib.optionals x11Support [
-      libX11
-      libXi
-      libXtst
-      xclip
-      xdotool
-    ];
+  buildInputs = [
+    libpng
+    wxGTK32
+  ]
+  ++ lib.optionals stdenv.hostPlatform.isLinux [
+    dbus
+    libxkbcommon
+    openssl
+    setxkbmap
+  ]
+  ++ lib.optionals waylandSupport [
+    wl-clipboard
+  ]
+  ++ lib.optionals x11Support [
+    libX11
+    libXi
+    libXtst
+    xclip
+    xdotool
+  ];
   nativeBuildInputs = [
     pkg-config
     wxGTK32
@@ -74,19 +73,18 @@ rustPlatform.buildRustPackage {
   inherit buildType;
 
   buildNoDefaultFeatures = true;
-  buildFeatures =
-    [
-      "modulo"
-    ]
-    ++ lib.optionals waylandSupport [
-      "wayland"
-    ]
-    ++ lib.optionals stdenv.hostPlatform.isLinux [
-      "vendored-tls"
-    ]
-    ++ lib.optional stdenv.hostPlatform.isDarwin [
-      "native-tls"
-    ];
+  buildFeatures = [
+    "modulo"
+  ]
+  ++ lib.optionals waylandSupport [
+    "wayland"
+  ]
+  ++ lib.optionals stdenv.hostPlatform.isLinux [
+    "vendored-tls"
+  ]
+  ++ lib.optional stdenv.hostPlatform.isDarwin [
+    "native-tls"
+  ];
 
   postPatch = lib.optionalString stdenv.hostPlatform.isDarwin ''
     substituteInPlace scripts/create_bundle.sh \
