@@ -96,6 +96,7 @@ license-file = ["../LICENSE", "1"]
 
 [package.metadata.deb.variants.wayland]
 depends = ["wl-clipboard", "$auto"]
+maintainer-scripts = "scripts/debian/"
 
 [package.metadata.generate-rpm]
 assets = [
