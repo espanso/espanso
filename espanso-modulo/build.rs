@@ -57,7 +57,7 @@ fn build_native() {
             .extract(&out_wx_dir)
             .expect("unable to extract wxWidgets source dir");
 
-        let tool =  cc::Build::new().get_compiler();
+        let tool = cc::Build::new().get_compiler();
         if !tool.is_like_msvc() {
             panic!("The tool found is not of the MSVC family, did you install Visual Studio?");
         }
