@@ -102,7 +102,7 @@ impl ModuloManager {
                                         // Check also if the program reports an error
                                         let error = String::from_utf8_lossy(&child_output.stderr);
                                         if !error.is_empty() {
-                                            error!("modulo reported an error: {}", error);
+                                            error!("modulo reported an error: {error}");
                                         }
 
                                         if !child_output.status.success() {

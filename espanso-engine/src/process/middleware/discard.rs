@@ -53,7 +53,7 @@ impl Middleware for EventsDiscardMiddleware {
 
         // Filter out previous events
         if event.source_id < *max_id_threshold && event.source_id >= *min_id_threshold {
-            trace!("discarding previous event: {:?}", event);
+            trace!("discarding previous event: {event:?}");
             return Event::caused_by(event.source_id, EventType::NOOP);
         }
 

@@ -40,7 +40,7 @@ impl Executor for ContextMenuExecutor<'_> {
     fn execute(&self, event: &Event) -> bool {
         if let EventType::ShowContextMenu(context_menu_event) = &event.etype {
             if let Err(error) = self.handler.show_context_menu(&context_menu_event.items) {
-                error!("context menu handler reported an error: {:?}", error);
+                error!("context menu handler reported an error: {error:?}");
             }
 
             return true;

@@ -51,7 +51,7 @@ fn daemon_monitor_main(runtime_dir: &Path, exit_notify: Sender<ExitMode>) {
         if is_daemon_lock_free {
             warn!("detected unexpected daemon termination, sending exit signal to the engine");
             if let Err(error) = exit_notify.send(ExitMode::Exit) {
-                error!("unable to send daemon exit signal: {}", error);
+                error!("unable to send daemon exit signal: {error}");
             }
             break;
         }

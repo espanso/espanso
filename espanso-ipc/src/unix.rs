@@ -75,14 +75,14 @@ impl<Event: Send + Sync + DeserializeOwned + Serialize> IPCServer<Event> for Uni
                                     // Async event, no need to reply
                                 }
                                 EventHandlerResponse::Error(err) => {
-                                    error!("ipc handler reported an error: {}", err);
+                                    error!("ipc handler reported an error: {err}");
                                 }
                                 EventHandlerResponse::Exit => {
                                     return Ok(());
                                 }
                             },
                             Err(error) => {
-                                error!("received malformed event from ipc stream: {}", error);
+                                error!("received malformed event from ipc stream: {error}");
                                 break;
                             }
                         }
@@ -92,7 +92,7 @@ impl<Event: Send + Sync + DeserializeOwned + Serialize> IPCServer<Event> for Uni
                         break;
                     }
                     Err(error) => {
-                        error!("error reading ipc stream: {}", error);
+                        error!("error reading ipc stream: {error}");
                         break;
                     }
                 }

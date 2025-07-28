@@ -53,24 +53,19 @@ pub fn calculate_paths<'a>(
                                 }
                                 Err(err) => {
                                     error!(
-                    "unable to canonicalize path from glob: {:?}, with error: {}",
-                    path, err
+                    "unable to canonicalize path from glob: {}, with error: {err}", path.display()
                   );
                                 }
                             }
                         }
                         Err(err) => error!(
-                            "glob error when processing pattern: {}, with error: {}",
-                            glob_pattern, err
+                            "glob error when processing pattern: {glob_pattern}, with error: {err}"
                         ),
                     }
                 }
             }
             Err(err) => {
-                error!(
-                    "unable to calculate glob from pattern: {}, with error: {}",
-                    glob_pattern, err
-                );
+                error!("unable to calculate glob from pattern: {glob_pattern}, with error: {err}");
             }
         }
     }

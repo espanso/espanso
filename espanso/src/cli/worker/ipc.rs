@@ -42,8 +42,7 @@ pub fn initialize_and_spawn(
                     IPCEvent::Exit => {
                         if let Err(err) = exit_notify.send(ExitMode::Exit) {
                             error!(
-                "experienced error while sending exit signal from worker ipc handler: {}",
-                err
+                "experienced error while sending exit signal from worker ipc handler: {err}"
               );
                         }
 
@@ -52,8 +51,7 @@ pub fn initialize_and_spawn(
                     IPCEvent::ExitAllProcesses => {
                         if let Err(err) = exit_notify.send(ExitMode::ExitAllProcesses) {
                             error!(
-                "experienced error while sending exit signal from worker ipc handler: {}",
-                err
+                "experienced error while sending exit signal from worker ipc handler: {err}"
               );
                         }
 
@@ -78,8 +76,7 @@ pub fn initialize_and_spawn(
                     #[allow(unreachable_patterns)]
                     unexpected_event => {
                         warn!(
-                            "received unexpected event in worker ipc handler: {:?}",
-                            unexpected_event
+                            "received unexpected event in worker ipc handler: {unexpected_event:?}"
                         );
 
                         EventHandlerResponse::NoResponse
@@ -96,10 +93,7 @@ fn send_event(
     event: EventType,
 ) -> EventHandlerResponse<IPCEvent> {
     if let Err(err) = event_notify.send(event) {
-        error!(
-            "experienced error while sending event signal from worker ipc handler: {}",
-            err
-        );
+        error!("experienced error while sending event signal from worker ipc handler: {err}");
     }
 
     EventHandlerResponse::NoResponse

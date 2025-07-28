@@ -49,13 +49,10 @@ impl SecureInputManager for SecureInputManagerAdapter {
         let error_str = String::from_utf8_lossy(&output.stderr);
 
         if output.status.success() {
-            info!(
-                "Secure input workaround executed successfully: {}",
-                output_str
-            );
+            info!("Secure input workaround executed successfully: {output_str}");
             Ok(())
         } else {
-            error!("Secure input autofix reported error: {}", error_str);
+            error!("Secure input autofix reported error: {error_str}");
             bail!("non-successful autofix status code");
         }
     }

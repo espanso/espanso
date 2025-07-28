@@ -53,10 +53,7 @@ impl<'a> funnel::Source<'a> for IpcEventSource<'a> {
 
         // Execute only events that have been whitelisted
         if !is_event_type_allowed(&ipc_event) {
-            warn!(
-                "received black-listed event from IPC stream, blocking it: {:?}",
-                ipc_event
-            );
+            warn!("received black-listed event from IPC stream, blocking it: {ipc_event:?}");
             return None;
         }
 

@@ -42,7 +42,7 @@ impl Executor for KeyInjectExecutor<'_> {
     fn execute(&self, event: &Event) -> bool {
         if let EventType::KeySequenceInject(inject_event) = &event.etype {
             if let Err(error) = self.injector.inject_sequence(&inject_event.keys) {
-                error!("key injector reported an error: {}", error);
+                error!("key injector reported an error: {error}");
             }
             return true;
         }

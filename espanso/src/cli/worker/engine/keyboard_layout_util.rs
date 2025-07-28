@@ -47,7 +47,7 @@ fn generate_rmlvo_config(config: &dyn Config) -> Option<RMLVOConfig> {
 pub fn generate_detect_rmlvo(config: &dyn Config) -> Option<espanso_detect::KeyboardConfig> {
     generate_rmlvo_config(config)
         .map(|config| {
-            info!("detection module will use this keyboard layout: {}", config);
+            info!("detection module will use this keyboard layout: {config}");
             config
         })
         .map(|config| espanso_detect::KeyboardConfig {
@@ -62,7 +62,7 @@ pub fn generate_detect_rmlvo(config: &dyn Config) -> Option<espanso_detect::Keyb
 pub fn generate_inject_rmlvo(config: &dyn Config) -> Option<espanso_inject::KeyboardConfig> {
     generate_rmlvo_config(config)
         .map(|config| {
-            info!("inject module will use this keyboard layout: {}", config);
+            info!("inject module will use this keyboard layout: {config}");
             config
         })
         .map(|config| espanso_inject::KeyboardConfig {

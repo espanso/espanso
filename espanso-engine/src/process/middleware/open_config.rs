@@ -47,10 +47,7 @@ impl Middleware for ConfigMiddleware<'_> {
         let config_path = match self.provider.get_config_path().canonicalize() {
             Ok(path) => path,
             Err(err) => {
-                error!(
-                    "unable to canonicalize the config path into the image resolver: {}",
-                    err
-                );
+                error!("unable to canonicalize the config path into the image resolver: {err}");
                 self.provider.get_config_path().to_owned()
             }
         };

@@ -37,8 +37,7 @@ pub fn initialize_and_spawn(runtime_dir: &Path, exit_notify: Sender<i32>) -> Res
                     IPCEvent::Exit => {
                         if let Err(err) = exit_notify.send(DAEMON_SUCCESS) {
                             error!(
-                "experienced error while sending exit signal from daemon ipc handler: {}",
-                err
+                "experienced error while sending exit signal from daemon ipc handler: {err}"
               );
                         }
 
@@ -46,8 +45,7 @@ pub fn initialize_and_spawn(runtime_dir: &Path, exit_notify: Sender<i32>) -> Res
                     }
                     unexpected_event => {
                         warn!(
-                            "received unexpected event in daemon ipc handler: {:?}",
-                            unexpected_event
+                            "received unexpected event in daemon ipc handler: {unexpected_event:?}"
                         );
 
                         EventHandlerResponse::NoResponse

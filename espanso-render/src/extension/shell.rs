@@ -128,7 +128,7 @@ impl Shell {
             if let Some(path_env_override) =
                 super::exec_util::determine_path_env_variable_override(supported_mac_shell)
             {
-                debug!("overriding PATH env variable with: {}", path_env_override);
+                debug!("overriding PATH env variable with: {path_env_override}");
                 command.env("PATH", path_env_override);
             }
         }
@@ -251,10 +251,10 @@ impl Extension for ShellExtension {
                         .unwrap_or(false);
 
                     if debug {
-                        info!("debug information for command> {}", cmd);
+                        info!("debug information for command> {cmd}");
                         info!("exit status: '{}'", output.status);
-                        info!("stdout: '{}'", output_str);
-                        info!("stderr: '{}'", error_str);
+                        info!("stdout: '{output_str}'");
+                        info!("stderr: '{error_str}'");
                         info!(
                             "this debug information was shown because the 'debug' option is true."
                         );

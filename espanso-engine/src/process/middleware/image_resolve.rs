@@ -57,8 +57,7 @@ impl Middleware for ImageResolverMiddleware<'_> {
                     Ok(path) => path,
                     Err(err) => {
                         error!(
-                            "unable to canonicalize the config path into the image resolver: {}",
-                            err
+                            "unable to canonicalize the config path into the image resolver: {err}"
                         );
                         self.provider.get_config_path().to_owned()
                     }

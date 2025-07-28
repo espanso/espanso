@@ -57,7 +57,7 @@ impl<'a> Engine<'a> {
                     let processed_events = self.processor.process(event);
                     for event in processed_events {
                         if let EventType::Exit(mode) = &event.etype {
-                            debug!("exit event received with mode {:?}, exiting engine", mode);
+                            debug!("exit event received with mode {mode:?}, exiting engine");
                             return mode.clone();
                         }
 

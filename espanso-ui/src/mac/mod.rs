@@ -194,7 +194,7 @@ impl UIRemote for MacRemote {
         match c_string {
             Ok(message) => unsafe { ui_show_notification(message.as_ptr(), 3.0) },
             Err(error) => {
-                error!("Unable to show notification {}", error);
+                error!("Unable to show notification {error}");
             }
         }
     }
@@ -206,13 +206,12 @@ impl UIRemote for MacRemote {
                 match c_string {
                     Ok(c_string) => unsafe { ui_show_context_menu(c_string.as_ptr()) },
                     Err(error) => error!(
-            "Unable to show context menu, impossible to convert payload to c_string: {}",
-            error
+            "Unable to show context menu, impossible to convert payload to c_string: {error}"
           ),
                 }
             }
             Err(error) => {
-                error!("Unable to show context menu, {}", error);
+                error!("Unable to show context menu, {error}");
             }
         }
     }

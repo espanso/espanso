@@ -44,12 +44,12 @@ impl Executor for SecureInputExecutor<'_> {
     fn execute(&self, event: &Event) -> bool {
         if let EventType::DisplaySecureInputTroubleshoot = &event.etype {
             if let Err(error) = self.manager.display_secure_input_troubleshoot() {
-                error!("unable to display secure input troubleshoot: {}", error);
+                error!("unable to display secure input troubleshoot: {error}");
             }
             return true;
         } else if let EventType::LaunchSecureInputAutoFix = &event.etype {
             if let Err(error) = self.manager.launch_secure_input_autofix() {
-                error!("unable to launch secure input autofix: {}", error);
+                error!("unable to launch secure input autofix: {error}");
             }
             return true;
         }

@@ -131,7 +131,7 @@ impl<'a> DefaultProcessor<'a> {
 
             let mut current_queue = VecDeque::new();
             let mut dispatch = |event: Event| {
-                trace!("dispatched event: {:?}", event);
+                trace!("dispatched event: {event:?}");
                 current_queue.push_front(event);
             };
 

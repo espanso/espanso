@@ -37,10 +37,7 @@ impl Middleware for ExitMiddleware {
 
     fn next(&self, event: Event, _: &mut dyn FnMut(Event)) -> Event {
         if let EventType::ExitRequested(mode) = &event.etype {
-            debug!(
-                "received ExitRequested event with mode: {:?}, dispatching exit",
-                mode
-            );
+            debug!("received ExitRequested event with mode: {mode:?}, dispatching exit");
             return Event::caused_by(event.source_id, EventType::Exit(mode.clone()));
         }
 

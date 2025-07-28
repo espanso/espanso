@@ -89,7 +89,7 @@ impl Middleware for RenderMiddleware<'_> {
                     if let Some(RendererError::Aborted) = err.downcast_ref::<RendererError>() {
                         return Event::caused_by(event.source_id, EventType::NOOP);
                     }
-                    error!("error during rendering: {:?}", err);
+                    error!("error during rendering: {err:?}");
 
                     dispatch(Event::caused_by(
                     event.source_id,

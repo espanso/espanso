@@ -1,0 +1,6 @@
+repos:
+  - repo: https://github.com/biomejs/pre-commit
+    rev: v2.0.0-beta.1 # Use the sha / tag you want to point at
+    hooks:
+      - id: biome-check
+        files: "\\.(jsx?|tsx?|c(js|ts)|m(js|ts)|d\\.(ts|cts|mts)|jsonc?|css|svelte|vue|astro|graphql|gql)$"

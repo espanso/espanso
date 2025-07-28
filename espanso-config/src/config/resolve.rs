@@ -137,7 +137,7 @@ impl Config for ResolvedConfig {
             Some("auto") => Backend::Auto,
             None => Backend::Auto,
             err => {
-                error!("invalid backend specified {:?}, falling back to Auto", err);
+                error!("invalid backend specified {err:?}, falling back to Auto");
                 Backend::Auto
             }
         }
@@ -186,7 +186,7 @@ impl Config for ResolvedConfig {
             Some("off") => None,
             None => None,
             err => {
-                error!("invalid toggle_key specified {:?}", err);
+                error!("invalid toggle_key specified {err:?}");
                 None
             }
         }

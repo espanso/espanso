@@ -554,7 +554,7 @@ For example, specifying 'email' is equivalent to 'match/email.yml'."#))
         // If the process doesn't require linux capabilities, disable them
         if !handler.requires_linux_capabilities {
             if let Err(err) = crate::capabilities::clear_capabilities() {
-                error!("unable to clear linux capabilities: {}", err);
+                error!("unable to clear linux capabilities: {err}");
             }
         }
 

@@ -107,14 +107,14 @@ pub fn init_and_spawn(
                 }
             }
             Err(error) => {
-                error!("cannot initialize event source: {:?}", error);
+                error!("cannot initialize event source: {error:?}");
                 init_tx
                     .send(false)
                     .expect("unable to send to the init_tx channel");
             }
         })
     {
-        error!("detection thread initialization failed: {:?}", error);
+        error!("detection thread initialization failed: {error:?}");
         return Err(DetectSourceError::ThreadInitFailed.into());
     }
 

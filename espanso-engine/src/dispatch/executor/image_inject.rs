@@ -43,7 +43,7 @@ impl Executor for ImageInjectExecutor<'_> {
     fn execute(&self, event: &Event) -> bool {
         if let EventType::ImageInject(inject_event) = &event.etype {
             if let Err(error) = self.injector.inject_image(&inject_event.image_path) {
-                error!("image injector reported an error: {:?}", error);
+                error!("image injector reported an error: {error:?}");
             }
 
             return true;
