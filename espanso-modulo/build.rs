@@ -57,9 +57,13 @@ fn build_native() {
             .extract(&out_wx_dir)
             .expect("unable to extract wxWidgets source dir");
 
+        let tool = cc::Build::new().get_compiler();
+        assert!(
+            tool.is_like_msvc(),
+            "The tool found is not of the MSVC family, did you install Visual Studio?"
+        );
+
         // Compile wxWidgets
-        let tool = cc::windows_registry::find_tool("msvc", "devenv")
-            .expect("unable to locate MSVC compiler, did you install Visual Studio?");
         let mut vcvars_path = None;
         let mut current_root = tool.path();
         while let Some(parent) = current_root.parent() {

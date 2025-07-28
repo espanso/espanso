@@ -51,7 +51,7 @@ pedantic = { level = "warn", priority = -2 }
 
 [workspace.dependencies]
 anyhow = "1.0.38"
-cc = "=1.0.83"
+cc = "1.2.30"
 crossbeam = "0.8.0"
 dirs = "3.0.1"
 enum-as-inner = "0.6.0"
