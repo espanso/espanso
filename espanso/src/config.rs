@@ -49,7 +49,7 @@ pub fn populate_default_config(config_dir: &Path) -> Result<()> {
         std::fs::create_dir_all(&sub_config_dir)?;
     }
     if !sub_match_dir.is_dir() {
-        info!("generating match directory in: {sub_match_dir:?}");
+        info!("generating match directory in: {}", sub_match_dir.display());
         std::fs::create_dir_all(&sub_match_dir)?;
     }
 
@@ -57,11 +57,17 @@ pub fn populate_default_config(config_dir: &Path) -> Result<()> {
     let match_file = sub_match_dir.join("base.yml");
 
     if !default_file.is_file() {
-        info!("populating default.yml file with initial content: {default_file:?}");
+        info!(
+            "populating default.yml file with initial content: {}",
+            default_file.display()
+        );
         std::fs::write(default_file, DEFAULT_CONFIG_FILE_CONTENT)?;
     }
     if !match_file.is_file() {
-        info!("populating base.yml file with initial content: {match_file:?}");
+        info!(
+            "populating base.yml file with initial content: {}",
+            match_file.display()
+        );
         std::fs::write(match_file, DEFAULT_MATCH_FILE_CONTENT)?;
     }
 
