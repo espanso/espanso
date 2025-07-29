@@ -600,7 +600,7 @@ mod tests {
     #[test]
     fn aggregate_excludes_empty_config() {
         assert_eq!(
-            ResolvedConfig::aggregate_excludes(&Default::default()).len(),
+            ResolvedConfig::aggregate_excludes(&ParsedConfig::default()).len(),
             0
         );
     }
