@@ -29,7 +29,7 @@ use std::{
     path::PathBuf,
 };
 
-pub(crate) struct DefaultMatchStore {
+pub struct DefaultMatchStore {
     pub groups: HashMap<String, MatchGroup>,
 }
 

@@ -35,7 +35,7 @@ struct Node<'a> {
     dependencies: Option<HashSet<&'a str>>,
 }
 
-pub(crate) fn resolve_evaluation_order<'a>(
+pub fn resolve_evaluation_order<'a>(
     body: &'a str,
     local_vars: &'a [&'a Variable],
     global_vars: &'a [&'a Variable],

@@ -68,9 +68,7 @@ pub struct FieldConfig {
 impl Default for FieldConfig {
     fn default() -> Self {
         Self {
-            field_type: FieldTypeConfig::Text(TextFieldConfig {
-                ..Default::default()
-            }),
+            field_type: FieldTypeConfig::Text(TextFieldConfig::default()),
         }
     }
 }

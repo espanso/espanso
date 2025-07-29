@@ -110,7 +110,7 @@ impl EspansoHubPackageProvider {
             }
         }
 
-        let new_index = EspansoHubPackageProvider::download_index()?;
+        let new_index = Self::download_index()?;
         self.save_index_to_cache(new_index.clone())?;
         Ok(new_index)
     }

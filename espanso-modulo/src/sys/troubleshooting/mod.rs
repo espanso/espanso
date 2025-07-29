@@ -43,7 +43,7 @@ mod interop {
     };
     use std::{ffi::CString, os::raw::c_int};
 
-    pub(crate) struct OwnedErrorSet {
+    pub struct OwnedErrorSet {
         file_path: Option<CString>,
         errors: Vec<OwnedErrorMetadata>,
         pub(crate) interop_errors: Vec<ErrorMetadata>,
@@ -87,7 +87,7 @@ mod interop {
         }
     }
 
-    pub(crate) struct OwnedErrorMetadata {
+    pub struct OwnedErrorMetadata {
         level: c_int,
         message: CString,
     }
@@ -128,10 +128,11 @@ pub fn show(options: TroubleshootingOptions) -> Result<()> {
         .collect();
 
     extern "C" fn dont_show_again_changed(dont_show: c_int) {
-        let lock = HANDLERS
+        let handlers_ref = HANDLERS
             .lock()
-            .expect("unable to acquire lock in dont_show_again_changed method");
-        let handlers_ref = (*lock).as_ref().expect("unable to unwrap handlers");
+            .expect("unable to acquire lock in dont_show_again_changed method")
+            .expect("unable to unwrap handlers");
+
         if let Some(handler_ref) = handlers_ref.dont_show_again_changed.as_ref() {
             let value = dont_show == 1;
             (*handler_ref)(value);

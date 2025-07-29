@@ -21,10 +21,10 @@ use anyhow::Result;
 
 use crate::Package;
 
-pub(crate) mod git;
-pub(crate) mod github;
-pub(crate) mod gitlab;
-pub(crate) mod hub;
+pub mod git;
+pub mod github;
+pub mod gitlab;
+pub mod hub;
 
 #[derive(Debug, Default)]
 pub struct PackageSpecifier {

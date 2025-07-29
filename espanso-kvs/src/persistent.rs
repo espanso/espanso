@@ -101,9 +101,10 @@ impl KVS for PersistentJsonKVS {
             return Err(PersistentJsonKVSError::InvalidKey(key.to_string()).into());
         }
 
-        let mut lock = self.store.lock().expect("unable to obtain KVS delete lock");
-
-        lock.remove(key);
+        self.store
+            .lock()
+            .expect("unable to obtain KVS delete lock")
+            .remove(key);
 
         let target_file = self.kvs_dir.join(key);
         if target_file.is_file() {

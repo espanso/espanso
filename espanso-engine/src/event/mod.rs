@@ -37,8 +37,8 @@ pub struct Event {
 }
 
 impl Event {
-    pub fn caused_by(cause_id: SourceId, event_type: EventType) -> Event {
-        Event {
+    pub fn caused_by(cause_id: SourceId, event_type: EventType) -> Self {
+        Self {
             source_id: cause_id,
             etype: event_type,
         }

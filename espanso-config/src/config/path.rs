@@ -130,7 +130,8 @@ pub mod tests {
             let sub_file = sub_dir.join("sub.yml");
             std::fs::write(&sub_file, "test").unwrap();
 
-            let result = calculate_paths(base, ["match/sub/../sub/*.yml".to_string()].iter());
+            let result =
+                calculate_paths(base, std::iter::once(&"match/sub/../sub/*.yml".to_string()));
 
             let mut expected = HashSet::new();
             expected.insert(sub_file.to_string_lossy().to_string());

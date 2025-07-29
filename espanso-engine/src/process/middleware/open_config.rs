@@ -51,7 +51,7 @@ impl Middleware for ConfigMiddleware<'_> {
                 self.provider.get_config_path().to_owned()
             }
         };
-        if let EventType::ShowConfigFolder = event.etype {
+        if matches!(event.etype, EventType::ShowConfigFolder) {
             let program: &str;
             if env::consts::OS == "macos" {
                 program = "open";

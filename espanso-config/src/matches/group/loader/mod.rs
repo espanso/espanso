@@ -27,7 +27,7 @@ use self::yaml::YAMLImporter;
 
 use super::MatchGroup;
 
-pub(crate) mod yaml;
+pub mod yaml;
 
 trait Importer {
     fn is_supported(&self, extension: &str) -> bool;
@@ -37,7 +37,7 @@ trait Importer {
 static IMPORTERS: LazyLock<Vec<Box<dyn Importer + Sync + Send>>> =
     LazyLock::new(|| vec![Box::new(YAMLImporter::new())]);
 
-pub(crate) fn load_match_group(path: &Path) -> Result<(MatchGroup, Option<NonFatalErrorSet>)> {
+pub fn load_match_group(path: &Path) -> Result<(MatchGroup, Option<NonFatalErrorSet>)> {
     if let Some(extension) = path.extension() {
         let extension = extension.to_string_lossy().to_lowercase();
 

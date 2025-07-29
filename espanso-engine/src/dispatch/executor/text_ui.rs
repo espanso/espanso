@@ -48,7 +48,7 @@ impl Executor for TextUIExecutor<'_> {
             }
 
             return true;
-        } else if let EventType::ShowLogs = &event.etype {
+        } else if matches!(&event.etype, EventType::ShowLogs) {
             if let Err(error) = self.handler.show_logs() {
                 error!("text UI handler reported an error: {error:?}");
             }

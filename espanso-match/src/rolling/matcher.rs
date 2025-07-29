@@ -245,9 +245,7 @@ mod tests {
                 RollingMatch::from_string(4, "myself", &StringMatchOptions::default()),
                 RollingMatch::from_string(5, "hi", &StringMatchOptions::default()),
             ],
-            RollingMatcherOptions {
-                ..Default::default()
-            },
+            RollingMatcherOptions::default(),
         );
 
         assert_eq!(

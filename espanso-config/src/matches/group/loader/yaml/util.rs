@@ -25,7 +25,7 @@ use thiserror::Error;
 
 use crate::matches::{Number, Params, Value};
 
-pub(crate) fn convert_params(m: Mapping) -> Result<Params> {
+pub fn convert_params(m: Mapping) -> Result<Params> {
     let mut params = Params::new();
 
     for (key, value) in m {

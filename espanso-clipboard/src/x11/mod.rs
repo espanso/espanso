@@ -24,7 +24,7 @@ use crate::{Clipboard, ClipboardOperationOptions};
 mod native;
 mod xclip;
 
-pub(crate) struct X11Clipboard {
+pub struct X11Clipboard {
     native_backend: native::X11NativeClipboard,
     xclip_backend: xclip::XClipClipboard,
 }

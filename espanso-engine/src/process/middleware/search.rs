@@ -45,7 +45,7 @@ impl Middleware for SearchMiddleware<'_> {
     }
 
     fn next(&self, event: Event, dispatch: &mut dyn FnMut(Event)) -> Event {
-        if let EventType::ShowSearchBar = event.etype {
+        if matches!(event.etype, EventType::ShowSearchBar) {
             let detected_matches = Event::caused_by(
                 event.source_id,
                 EventType::MatchesDetected(MatchesDetectedEvent {

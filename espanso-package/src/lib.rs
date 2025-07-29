@@ -105,7 +105,7 @@ pub(crate) mod tests {
     use super::*;
     use tempdir::TempDir;
 
-    pub(crate) fn run_with_temp_dir(action: impl FnOnce(&Path)) {
+    pub fn run_with_temp_dir(action: impl FnOnce(&Path)) {
         let tmp_dir = TempDir::new("espanso-package").unwrap();
         let tmp_path = tmp_dir.path();
 

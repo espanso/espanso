@@ -25,7 +25,7 @@ use regex::Captures;
 use super::VAR_REGEX;
 use std::collections::HashSet;
 
-pub(crate) fn get_body_variable_names(body: &str) -> HashSet<&str> {
+pub fn get_body_variable_names(body: &str) -> HashSet<&str> {
     let mut variables = HashSet::new();
     for caps in VAR_REGEX.captures_iter(body) {
         let var_name = caps.name("name").unwrap().as_str();
@@ -34,7 +34,7 @@ pub(crate) fn get_body_variable_names(body: &str) -> HashSet<&str> {
     variables
 }
 
-pub(crate) fn get_params_variable_names(params: &Params) -> HashSet<&str> {
+pub fn get_params_variable_names(params: &Params) -> HashSet<&str> {
     let mut names = HashSet::new();
 
     for value in params.values() {
@@ -66,7 +66,7 @@ fn get_value_variable_names_recursively(value: &Value) -> HashSet<&str> {
     }
 }
 
-pub(crate) fn render_variables(body: &str, scope: &Scope) -> Result<String> {
+pub fn render_variables(body: &str, scope: &Scope) -> Result<String> {
     let mut replacing_error = None;
     let output = VAR_REGEX
         .replace_all(body, |caps: &Captures| {
@@ -105,11 +105,11 @@ pub(crate) fn render_variables(body: &str, scope: &Scope) -> Result<String> {
     Ok(unescaped_output)
 }
 
-pub(crate) fn unescape_variable_inections(body: &str) -> String {
+pub fn unescape_variable_inections(body: &str) -> String {
     body.replace("\\{\\{", "{{").replace("\\}\\}", "}}")
 }
 
-pub(crate) fn inject_variables_into_params(params: &Params, scope: &Scope) -> Result<Params> {
+pub fn inject_variables_into_params(params: &Params, scope: &Scope) -> Result<Params> {
     let mut params = params.clone();
 
     for value in &mut params.values_mut() {

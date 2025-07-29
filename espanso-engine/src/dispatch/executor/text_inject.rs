@@ -69,14 +69,14 @@ impl Executor for TextInjectExecutor<'_> {
             let active_mode = self.mode_provider.active_mode();
 
             let injector = if let Some(force_mode) = &inject_event.force_mode {
-                if let TextInjectMode::Keys = force_mode {
+                if matches!(force_mode, TextInjectMode::Keys) {
                     self.event_injector
                 } else {
                     self.clipboard_injector
                 }
-            } else if let Mode::Clipboard = active_mode {
+            } else if matches!(active_mode, Mode::Clipboard) {
                 self.clipboard_injector
-            } else if let Mode::Event = active_mode {
+            } else if matches!(active_mode, Mode::Event) {
                 self.event_injector
             } else if let Mode::Auto {
                 clipboard_threshold,

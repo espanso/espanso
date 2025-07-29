@@ -25,7 +25,7 @@ use log::{debug, error};
 use std::sync::Arc;
 use std::{collections::HashSet, path::Path};
 
-pub(crate) struct DefaultConfigStore {
+pub struct DefaultConfigStore {
     default: Arc<dyn Config>,
     customs: Vec<Arc<dyn Config>>,
 }

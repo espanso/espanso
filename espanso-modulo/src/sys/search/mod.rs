@@ -47,7 +47,7 @@ mod interop {
     use super::types;
     use std::ffi::{c_void, CString};
 
-    pub(crate) struct OwnedSearch {
+    pub struct OwnedSearch {
         title: CString,
         icon_path: CString,
         hint: CString,
@@ -120,7 +120,7 @@ mod interop {
         }
     }
 
-    pub(crate) struct OwnedSearchItem {
+    pub struct OwnedSearchItem {
         id: CString,
         label: CString,
         trigger: CString,
