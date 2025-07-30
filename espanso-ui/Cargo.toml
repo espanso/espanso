@@ -26,7 +26,7 @@ tauri-winrt-notification.workspace = true
 lazycell.workspace = true
 
 [target.'cfg(target_os="linux")'.dependencies]
-notify-rust = "4.11.7"
+notify-rust.workspace = true
 crossbeam.workspace = true
 
 [build-dependencies]
