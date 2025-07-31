@@ -1,0 +1,44 @@
+name: nix build
+
+on:
+  workflow_dispatch:
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  linux-x11:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@main
+      - uses: cachix/install-nix-action@v31
+      - name: nix fmt
+        run: nix fmt -- --check **/*.nix
+      - name: nix build
+        run: nix build
+
+  linux-wayland:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@main
+      - uses: cachix/install-nix-action@v31
+      - name: nix build
+        run: nix build .#espanso-wayland
+
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@main
+      - name: Install target
+        run: |
+          rustup update
+          rustup target add aarch64-apple-darwin x86_64-apple-darwin
+      - uses: cachix/install-nix-action@v31
+      - name: nix build
+        run: |
+          nix build .#packages.aarch64-darwin.espanso
+          nix build .#packages.x86_64-darwin.espanso
