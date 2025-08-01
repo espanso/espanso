@@ -43,7 +43,7 @@ impl Executor for IconUpdateExecutor<'_> {
     fn execute(&self, event: &Event) -> bool {
         if let EventType::IconStatusChange(m_event) = &event.etype {
             if let Err(error) = self.handler.update_icon(&m_event.status) {
-                error!("icon handler reported an error: {:?}", error);
+                error!("icon handler reported an error: {error:?}");
             }
 
             return true;

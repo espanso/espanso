@@ -170,8 +170,7 @@ extern "C" fn native_callback(raw_event: RawInputEvent) {
 
     if !compensating_events.is_empty() {
         warn!(
-            "detected inconsistent modifier state for keys {:?}, sending compensating events...",
-            compensating_events
+            "detected inconsistent modifier state for keys {compensating_events:?}, sending compensating events..."
         );
     }
 
@@ -184,17 +183,14 @@ extern "C" fn native_callback(raw_event: RawInputEvent) {
                 variant: None,
                 code,
             })) {
-                error!(
-                    "Unable to send compensating event to Cocoa Sender: {}",
-                    error
-                );
+                error!("Unable to send compensating event to Cocoa Sender: {error}");
             }
         }
 
         let event: Option<InputEvent> = raw_event.into();
         if let Some(event) = event {
             if let Err(error) = sender.send(event) {
-                error!("Unable to send event to Cocoa Sender: {}", error);
+                error!("Unable to send event to Cocoa Sender: {error}");
             }
         } else {
             trace!("Unable to convert raw event to input event");
@@ -237,7 +233,7 @@ impl Source for CocoaSource {
             .filter_map(|hk| {
                 let raw = convert_hotkey_to_raw(hk);
                 if raw.is_none() {
-                    error!("unable to register hotkey: {:?}", hk);
+                    error!("unable to register hotkey: {hk:?}");
                 }
                 raw
             })
@@ -266,7 +262,7 @@ impl Source for CocoaSource {
                         event_callback(event);
                     }
                     Err(error) => {
-                        error!("CocoaSource receiver reported error: {}", error);
+                        error!("CocoaSource receiver reported error: {error}");
                         break;
                     }
                 }
@@ -356,13 +352,13 @@ impl From<RawInputEvent> for Option<InputEvent> {
                             match string_result {
                                 Ok(value) => Some(value.to_string()),
                                 Err(err) => {
-                                    warn!("CocoaSource event utf8 conversion error: {}", err);
+                                    warn!("CocoaSource event utf8 conversion error: {err}");
                                     None
                                 }
                             }
                         }
                         Err(err) => {
-                            trace!("Received malformed event buffer: {}", err);
+                            trace!("Received malformed event buffer: {err}");
                             None
                         }
                     }

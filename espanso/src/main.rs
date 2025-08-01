@@ -554,7 +554,7 @@ For example, specifying 'email' is equivalent to 'match/email.yml'."#))
         // If the process doesn't require linux capabilities, disable them
         if !handler.requires_linux_capabilities {
             if let Err(err) = crate::capabilities::clear_capabilities() {
-                error!("unable to clear linux capabilities: {}", err);
+                error!("unable to clear linux capabilities: {err}");
             }
         }
 
@@ -587,9 +587,9 @@ For example, specifying 'email' is equivalent to 'match/email.yml'."#))
                 runtime: force_runtime_path,
             });
 
-            info!("reading configs from: {:?}", paths.config);
-            info!("reading packages from: {:?}", paths.packages);
-            info!("using runtime dir: {:?}", paths.runtime);
+            info!("reading configs from: {:?}", paths.config.display());
+            info!("reading packages from: {:?}", paths.packages.display());
+            info!("using runtime dir: {:?}", paths.runtime.display());
             log_system_info();
 
             if handler.requires_config {

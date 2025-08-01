@@ -38,7 +38,7 @@ use thiserror::Error;
 const STANDARD_INCLUDES: &[&str] = &["../match/**/[!_]*.yml"];
 
 #[derive(Debug, Clone, Default)]
-pub(crate) struct ResolvedConfig {
+pub struct ResolvedConfig {
     parsed: ParsedConfig,
 
     source_path: Option<PathBuf>,
@@ -137,7 +137,7 @@ impl Config for ResolvedConfig {
             Some("auto") => Backend::Auto,
             None => Backend::Auto,
             err => {
-                error!("invalid backend specified {:?}, falling back to Auto", err);
+                error!("invalid backend specified {err:?}, falling back to Auto");
                 Backend::Auto
             }
         }
@@ -183,10 +183,9 @@ impl Config for ResolvedConfig {
             Some("left_alt") => Some(ToggleKey::LeftAlt),
             Some("left_shift") => Some(ToggleKey::LeftShift),
             Some("left_meta" | "left_cmd") => Some(ToggleKey::LeftMeta),
-            Some("off") => None,
-            None => None,
+            Some("off") | None => None,
             err => {
-                error!("invalid toggle_key specified {:?}", err);
+                error!("invalid toggle_key specified {err:?}");
                 None
             }
         }
@@ -401,6 +400,7 @@ impl ResolvedConfig {
         })
     }
 
+    #[allow(clippy::cognitive_complexity)]
     fn merge_parsed(child: &mut ParsedConfig, parent: &ParsedConfig) {
         // Override the None fields with the parent's value
         merge!(
@@ -526,11 +526,8 @@ mod tests {
     #[test]
     fn aggregate_includes_empty_config() {
         assert_eq!(
-            ResolvedConfig::aggregate_includes(&ParsedConfig {
-                ..Default::default()
-            }),
-            ["../match/**/[!_]*.yml".to_string()]
-                .iter()
+            ResolvedConfig::aggregate_includes(&ParsedConfig::default()),
+            std::iter::once(&"../match/**/[!_]*.yml".to_string())
                 .cloned()
                 .collect::<HashSet<_>>()
         );
@@ -603,10 +600,7 @@ mod tests {
     #[test]
     fn aggregate_excludes_empty_config() {
         assert_eq!(
-            ResolvedConfig::aggregate_excludes(&ParsedConfig {
-                ..Default::default()
-            })
-            .len(),
+            ResolvedConfig::aggregate_excludes(&ParsedConfig::default()).len(),
             0
         );
     }
@@ -643,8 +637,7 @@ mod tests {
                 extra_excludes: Some(vec!["custom/*.yml".to_string()]),
                 ..Default::default()
             }),
-            ["custom/*.yml".to_string()]
-                .iter()
+            std::iter::once(&"custom/*.yml".to_string())
                 .cloned()
                 .collect::<HashSet<_>>()
         );
@@ -671,9 +664,7 @@ mod tests {
             use_standard_includes: Some(false),
             ..Default::default()
         };
-        let mut child = ParsedConfig {
-            ..Default::default()
-        };
+        let mut child: ParsedConfig = ParsedConfig::default();
         assert_eq!(child.use_standard_includes, None);
 
         ResolvedConfig::merge_parsed(&mut child, &parent);

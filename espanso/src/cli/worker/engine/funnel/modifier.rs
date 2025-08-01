@@ -64,10 +64,7 @@ impl ModifierStateStore {
         let mut is_any_modifier_pressed = false;
         for (modifier, status) in &mut state.modifiers {
             if status.is_outdated() {
-                warn!(
-                    "detected outdated modifier records for {:?}, releasing the state",
-                    modifier
-                );
+                warn!("detected outdated modifier records for {modifier:?}, releasing the state");
                 status.release();
             }
 
@@ -160,10 +157,7 @@ impl espanso_engine::process::ModifierStateProvider for ModifierStateStore {
 
         for (modifier, status) in &mut state.modifiers {
             if status.is_outdated() {
-                warn!(
-                    "detected outdated modifier records for {:?}, releasing the state",
-                    modifier
-                );
+                warn!("detected outdated modifier records for {modifier:?}, releasing the state");
                 status.release();
             }
 

@@ -18,13 +18,13 @@
  */
 
 #[cfg(test)]
-pub(crate) mod tests {
+pub mod tests {
     use crate::{
         event::{Event, Key},
         MatchResult, Matcher,
     };
 
-    pub(crate) fn get_matches_after_str<'a, Id: Clone, S, M: Matcher<'a, S, Id>>(
+    pub fn get_matches_after_str<'a, Id: Clone, S, M: Matcher<'a, S, Id>>(
         string: &str,
         matcher: &'a M,
     ) -> Vec<MatchResult<Id>> {

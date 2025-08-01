@@ -37,15 +37,12 @@ pub fn terminate_worker(runtime_dir: &Path) -> Result<()> {
     match create_ipc_client_to_worker(runtime_dir) {
         Ok(mut worker_ipc) => {
             if let Err(err) = worker_ipc.send_async(IPCEvent::ExitAllProcesses) {
-                error!(
-                    "unable to send termination signal to worker process: {}",
-                    err
-                );
+                error!("unable to send termination signal to worker process: {err}");
                 return Err(StopError::IPCError(err).into());
             }
         }
         Err(err) => {
-            error!("could not establish IPC connection with worker: {}", err);
+            error!("could not establish IPC connection with worker: {err}");
             return Err(StopError::IPCError(err).into());
         }
     }

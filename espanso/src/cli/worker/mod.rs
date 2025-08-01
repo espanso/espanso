@@ -66,7 +66,7 @@ fn worker_main(args: CliModuleArgs) -> i32 {
 
     // When restarted, the daemon passes the reason why the worker was restarted (config_change, etc)
     let start_reason = cli_args.value_of("start-reason").map(String::from);
-    debug!("starting with start-reason = {:?}", start_reason);
+    debug!("starting with start-reason = {start_reason:?}");
 
     // Avoid running multiple worker instances
     let lock_file = acquire_worker_lock(&paths.runtime);
@@ -146,7 +146,7 @@ fn worker_main(args: CliModuleArgs) -> i32 {
     eventloop
         .run(Box::new(move |event| {
             if let Err(error) = engine_ui_event_sender.send(event) {
-                error!("unable to send UIEvent to engine: {}", error);
+                error!("unable to send UIEvent to engine: {error}");
                 panic!("broken UI->Engine channel");
             }
         }))
@@ -169,7 +169,7 @@ fn worker_main(args: CliModuleArgs) -> i32 {
             }
         },
         Err(err) => {
-            error!("unable to read engine exit mode: {:?}", err);
+            error!("unable to read engine exit mode: {err:?}");
             WORKER_GENERAL_ERROR
         }
     }

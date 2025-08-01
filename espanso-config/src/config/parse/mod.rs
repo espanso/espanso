@@ -24,7 +24,7 @@ use thiserror::Error;
 mod yaml;
 
 #[derive(Debug, Clone, PartialEq, Default)]
-pub(crate) struct ParsedConfig {
+pub struct ParsedConfig {
     pub label: Option<String>,
 
     pub backend: Option<String>,

@@ -40,7 +40,7 @@ use crate::matches::{MatchCause, MatchEffect, TextEffect, TriggerCause};
 
 use super::Importer;
 
-pub(crate) mod parse;
+pub mod parse;
 mod util;
 
 static VAR_REGEX: LazyLock<Regex> =
@@ -51,7 +51,7 @@ static FORM_CONTROL_REGEX: LazyLock<Regex> =
 // Create an alias to make the meaning more explicit
 type Warning = anyhow::Error;
 
-pub(crate) struct YAMLImporter {}
+pub struct YAMLImporter {}
 
 impl YAMLImporter {
     pub fn new() -> Self {
@@ -180,7 +180,7 @@ pub fn try_convert_into_match(
         MatchCause::None
     };
 
-    let force_mode = if let Some(true) = yaml_match.force_clipboard {
+    let force_mode = if yaml_match.force_clipboard == Some(true) {
         Some(TextInjectMode::Clipboard)
     } else if let Some(mode) = yaml_match.force_mode {
         match mode.to_lowercase().as_str() {
@@ -286,7 +286,7 @@ pub fn try_convert_into_match(
         MatchEffect::None
     };
 
-    if let MatchEffect::None = effect {
+    if effect == MatchEffect::None {
         bail!(
       "match triggered by {:?} does not produce any effect. Did you forget the 'replace' field?",
       cause.long_description()

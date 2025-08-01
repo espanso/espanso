@@ -151,12 +151,12 @@ pub fn load_icon_paths(runtime_dir: &Path) -> Result<IconPaths> {
 fn extract_icon(data: &[u8], target_file: &Path) -> Result<PathBuf> {
     if target_file.exists() {
         debug!(
-            "skipping extraction for '{:?}', as it's already present",
-            target_file
+            "skipping extraction for '{}', as it's already present",
+            target_file.display()
         );
     } else {
         std::fs::write(target_file, data)?;
-        info!("extracted icon to: {:?}", target_file);
+        info!("extracted icon to: {}", target_file.display());
     }
 
     Ok(target_file.to_owned())

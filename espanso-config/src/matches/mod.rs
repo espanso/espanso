@@ -89,26 +89,24 @@ pub enum MatchCause {
 impl MatchCause {
     pub fn description(&self) -> Option<&str> {
         match &self {
-            MatchCause::Trigger(trigger_cause) => {
-                trigger_cause.triggers.first().map(String::as_str)
-            }
-            MatchCause::Regex(trigger_cause) => Some(trigger_cause.regex.as_str()),
-            MatchCause::None => None,
+            Self::Trigger(trigger_cause) => trigger_cause.triggers.first().map(String::as_str),
+            Self::Regex(trigger_cause) => Some(trigger_cause.regex.as_str()),
+            Self::None => None,
         }
         // TODO: insert rendering for hotkey/shortcut
     }
 
     pub fn long_description(&self) -> String {
         match &self {
-            MatchCause::Trigger(trigger_cause) => format!("triggers: {:?}", trigger_cause.triggers),
-            MatchCause::Regex(trigger_cause) => format!("regex: {:?}", trigger_cause.regex),
-            MatchCause::None => "No description available".to_owned(),
+            Self::Trigger(trigger_cause) => format!("triggers: {:?}", trigger_cause.triggers),
+            Self::Regex(trigger_cause) => format!("regex: {:?}", trigger_cause.regex),
+            Self::None => "No description available".to_owned(),
         }
         // TODO: insert rendering for hotkey/shortcut
     }
 
     pub fn search_terms(&self) -> Vec<&str> {
-        if let MatchCause::Trigger(trigger_cause) = &self {
+        if let Self::Trigger(trigger_cause) = &self {
             trigger_cause.triggers.iter().map(String::as_str).collect()
         } else {
             vec![]

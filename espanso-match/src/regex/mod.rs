@@ -126,10 +126,7 @@ where
                         }
                     }
                 } else {
-                    error!(
-                        "received inconsistent index from regex set with index: {}",
-                        index
-                    );
+                    error!("received inconsistent index from regex set with index: {index}");
                 }
             }
 

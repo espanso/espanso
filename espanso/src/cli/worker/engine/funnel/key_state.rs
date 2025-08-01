@@ -49,10 +49,7 @@ impl KeyStateStore {
 
         if let Some(status) = state.keys.get_mut(&key_code) {
             if status.is_outdated() {
-                warn!(
-                    "detected outdated key records for {:?}, releasing the state",
-                    key_code
-                );
+                warn!("detected outdated key records for {key_code:?}, releasing the state");
                 status.release();
             }
 

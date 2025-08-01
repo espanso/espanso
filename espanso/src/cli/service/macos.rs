@@ -84,7 +84,7 @@ pub fn register() -> Result<()> {
         .args(["unload", "-w", plist_file.to_str().unwrap_or_default()])
         .output()
     {
-        warn!("unload command failed: {}", err);
+        warn!("unload command failed: {err}");
     }
 
     let res = Command::new("launchctl")

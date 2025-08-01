@@ -71,7 +71,7 @@ pub fn resolve_paths(
     } else {
         // Create the config directory if not already present
         let config_dir = get_default_config_path();
-        info!("creating config directory in {:?}", config_dir);
+        info!("creating config directory in {}", config_dir.display());
         create_dir_all(&config_dir).expect("unable to create config directory");
         config_dir
     };
@@ -87,7 +87,7 @@ pub fn resolve_paths(
         } else {
             get_default_runtime_path()
         };
-        info!("creating runtime directory in {:?}", runtime_dir);
+        info!("creating runtime directory in {}", runtime_dir.display());
         create_dir_all(&runtime_dir).expect("unable to create runtime directory");
         runtime_dir
     };
@@ -99,7 +99,7 @@ pub fn resolve_paths(
     } else {
         // Create the packages directory if not already present
         let packages_dir = get_default_packages_path(&config_dir);
-        info!("creating packages directory in {:?}", packages_dir);
+        info!("creating packages directory in {}", packages_dir.display());
         create_dir_all(&packages_dir).expect("unable to create packages directory");
         packages_dir
     };
@@ -118,7 +118,10 @@ pub fn resolve_paths(
 fn get_config_dir() -> Option<PathBuf> {
     if let Some(portable_dir) = get_portable_config_dir() {
         // Portable mode
-        debug!("detected portable config directory in {:?}", portable_dir);
+        debug!(
+            "detected portable config directory in {}",
+            portable_dir.display()
+        );
         Some(portable_dir)
     } else if let Some(config_dir) = get_home_espanso_dir() {
         // $HOME/.espanso
@@ -131,12 +134,15 @@ fn get_config_dir() -> Option<PathBuf> {
     } else if let Some(legacy_mac_dir) = get_legacy_mac_dir() {
         // Legacy macOS location in ~/Library/Preferences/espanso
         debug!(
-            "detected legacy config directory location at {:?}",
-            legacy_mac_dir
+            "detected legacy config directory location at {}",
+            legacy_mac_dir.display()
         );
         Some(legacy_mac_dir)
     } else if let Some(config_dir) = get_default_config_dir() {
-        debug!("detected default config directory at {:?}", config_dir);
+        debug!(
+            "detected default config directory at {}",
+            config_dir.display()
+        );
         Some(config_dir)
     } else {
         None
@@ -206,13 +212,13 @@ fn get_legacy_mac_dir() -> Option<PathBuf> {
 
 fn get_runtime_dir() -> Option<PathBuf> {
     if let Some(runtime_dir) = get_portable_runtime_dir() {
-        debug!("detected portable runtime dir: {:?}", runtime_dir);
+        debug!("detected portable runtime dir: {}", runtime_dir.display());
         Some(runtime_dir)
     } else if let Some(legacy_dir) = get_legacy_runtime_dir() {
-        debug!("detected legacy runtime dir: {:?}", legacy_dir);
+        debug!("detected legacy runtime dir: {}", legacy_dir.display());
         Some(legacy_dir)
     } else if let Some(default_dir) = get_default_runtime_dir() {
-        debug!("detected default runtime dir: {:?}", default_dir);
+        debug!("detected default runtime dir: {}", default_dir.display());
         Some(default_dir)
     } else {
         None
@@ -264,13 +270,13 @@ fn get_default_runtime_path() -> PathBuf {
 
 fn get_packages_dir(config_dir: &Path, legacy_data_dir: &Path) -> Option<PathBuf> {
     if let Some(packages_dir) = get_default_packages_dir(config_dir) {
-        debug!("detected default packages dir: {:?}", packages_dir);
+        debug!("detected default packages dir: {}", packages_dir.display());
         Some(packages_dir)
     } else if let Some(packages_dir) = get_legacy_embedded_packages_dir(config_dir) {
-        debug!("detected legacy packages dir: {:?}", packages_dir);
+        debug!("detected legacy packages dir: {}", packages_dir.display());
         Some(packages_dir)
     } else if let Some(packages_dir) = get_legacy_packages_dir(legacy_data_dir) {
-        debug!("detected legacy packages dir: {:?}", packages_dir);
+        debug!("detected legacy packages dir: {}", packages_dir.display());
         Some(packages_dir)
     } else {
         None

@@ -88,8 +88,8 @@ impl PackageSource {
 impl std::fmt::Display for PackageSource {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            PackageSource::Hub => write!(f, "espanso-hub"),
-            PackageSource::Git {
+            Self::Hub => write!(f, "espanso-hub"),
+            Self::Git {
                 repo_url,
                 repo_branch: _,
                 use_native_git: _,
@@ -115,7 +115,7 @@ impl From<&PackageSpecifier> for PackageSource {
 impl From<&ArchivedPackage> for PackageSpecifier {
     fn from(package: &ArchivedPackage) -> Self {
         match &package.source {
-            PackageSource::Hub => PackageSpecifier {
+            PackageSource::Hub => Self {
                 name: package.manifest.name.to_string(),
                 ..Default::default()
             },
@@ -123,7 +123,7 @@ impl From<&ArchivedPackage> for PackageSpecifier {
                 repo_url,
                 repo_branch,
                 use_native_git,
-            } => PackageSpecifier {
+            } => Self {
                 name: package.manifest.name.to_string(),
                 git_repo_url: Some(repo_url.to_string()),
                 git_branch: repo_branch.clone(),

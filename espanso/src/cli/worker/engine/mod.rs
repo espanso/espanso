@@ -282,7 +282,7 @@ pub fn initialize_and_spawn(
             // Disable previously granted linux capabilities if not needed anymore
             if has_granted_capabilities {
                 if let Err(err) = crate::capabilities::clear_capabilities() {
-                    error!("unable to revoke linux capabilities: {}", err);
+                    error!("unable to revoke linux capabilities: {err}");
                 }
             }
 
@@ -323,7 +323,7 @@ fn grant_linux_capabilities(use_evdev_backend: bool) -> bool {
         if crate::capabilities::can_use_capabilities() {
             debug!("using linux capabilities to grant permissions needed by EVDEV backend");
             if let Err(err) = crate::capabilities::grant_capabilities() {
-                error!("unable to grant CAP_DAC_OVERRIDE capability: {}", err);
+                error!("unable to grant CAP_DAC_OVERRIDE capability: {err}");
                 false
             } else {
                 debug!("successfully granted permissions using capabilities");

@@ -20,7 +20,7 @@
 use std::ffi::c_void;
 use std::os::raw::{c_char, c_int};
 
-pub(crate) trait Interoperable {
+pub trait Interoperable {
     fn as_ptr(&self) -> *const c_void;
 }
 

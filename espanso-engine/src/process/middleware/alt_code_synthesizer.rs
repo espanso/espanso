@@ -61,7 +61,7 @@ impl Middleware for AltCodeSynthesizerMiddleware<'_> {
                 let mut code_buffer = self.code_buffer.borrow_mut();
 
                 if keyboard_event.status == Status::Pressed {
-                    if let Key::Alt = &keyboard_event.key {
+                    if matches!(&keyboard_event.key, Key::Alt) {
                         *code_buffer = Some(String::new());
                     } else if let Some(buffer) = &mut *code_buffer {
                         match keyboard_event.key {

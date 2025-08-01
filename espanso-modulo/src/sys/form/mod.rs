@@ -103,7 +103,7 @@ mod interop {
     use std::os::raw::{c_char, c_int};
     use std::ptr::null;
 
-    pub(crate) struct OwnedForm {
+    pub struct OwnedForm {
         title: CString,
         icon_path: CString,
         fields: Vec<OwnedField>,

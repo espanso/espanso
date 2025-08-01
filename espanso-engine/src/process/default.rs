@@ -79,7 +79,7 @@ impl<'a> DefaultProcessor<'a> {
         match_resolver: &'a dyn MatchResolver,
         notification_manager: &'a dyn NotificationManager,
         alt_code_synth_enabled_provider: &'a dyn AltCodeSynthEnabledProvider,
-    ) -> DefaultProcessor<'a> {
+    ) -> Self {
         Self {
             event_queue: VecDeque::new(),
             middleware: vec![
@@ -131,7 +131,7 @@ impl<'a> DefaultProcessor<'a> {
 
             let mut current_queue = VecDeque::new();
             let mut dispatch = |event: Event| {
-                trace!("dispatched event: {:?}", event);
+                trace!("dispatched event: {event:?}");
                 current_queue.push_front(event);
             };
 
@@ -151,7 +151,7 @@ impl<'a> DefaultProcessor<'a> {
                     current_event
                 );
 
-                if let EventType::NOOP = current_event.etype {
+                if matches!(current_event.etype, EventType::NOOP) {
                     trace!("interrupting chain as the event is NOOP");
                     break;
                 }

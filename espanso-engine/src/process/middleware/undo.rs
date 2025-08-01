@@ -59,7 +59,7 @@ impl Middleware for UndoMiddleware<'_> {
                 ..Default::default()
             });
         } else if let EventType::Rendered(m_event) = &event.etype {
-            if let TextFormat::Plain = m_event.format {
+            if m_event.format == TextFormat::Plain {
                 if let Some(record) = &mut *record {
                     if record.id == Some(event.source_id) {
                         record.injected_text = Some(m_event.body.clone());

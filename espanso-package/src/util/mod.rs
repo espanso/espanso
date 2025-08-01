@@ -17,7 +17,7 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub(crate) mod download;
-pub(crate) mod git;
-pub(crate) mod github;
-pub(crate) mod gitlab;
+pub mod download;
+pub mod git;
+pub mod github;
+pub mod gitlab;

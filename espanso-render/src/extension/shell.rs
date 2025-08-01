@@ -52,49 +52,49 @@ impl Shell {
         let mut is_wsl = false;
 
         let mut command = match self {
-            Shell::Bash => {
+            Self::Bash => {
                 let mut command = Command::new("bash");
                 command.args(["-c", cmd]);
                 command
             }
-            Shell::Cmd => {
+            Self::Cmd => {
                 let mut command = Command::new("cmd");
                 command.args(["/C", cmd]);
                 command
             }
-            Shell::Nu => {
+            Self::Nu => {
                 let mut command = Command::new("nu");
                 command.args(["--commands", cmd]);
                 command
             }
-            Shell::Powershell => {
+            Self::Powershell => {
                 let mut command = Command::new("powershell");
                 command.args(["-Command", cmd]);
                 command
             }
-            Shell::Pwsh => {
+            Self::Pwsh => {
                 let mut command = Command::new("pwsh");
                 command.args(["-Command", cmd]);
                 command
             }
-            Shell::Sh => {
+            Self::Sh => {
                 let mut command = Command::new("sh");
                 command.args(["-c", cmd]);
                 command
             }
-            Shell::WSL => {
+            Self::WSL => {
                 is_wsl = true;
                 let mut command = Command::new("bash");
                 command.args(["-c", cmd]);
                 command
             }
-            Shell::WSL2 => {
+            Self::WSL2 => {
                 is_wsl = true;
                 let mut command = Command::new("wsl");
                 command.args(["bash", "-c", cmd]);
                 command
             }
-            Shell::Zsh => {
+            Self::Zsh => {
                 let mut command = Command::new("zsh");
                 command.args(["-c", cmd]);
                 command
@@ -118,17 +118,17 @@ impl Shell {
         // spawning a login shell and extracting the PATH after the processing.
         if cfg!(target_os = "macos") && override_path_on_macos {
             let supported_mac_shell = match self {
-                Shell::Bash => Some(MacShell::Bash),
-                Shell::Nu => Some(MacShell::Nu),
-                Shell::Pwsh => Some(MacShell::Pwsh),
-                Shell::Sh => Some(MacShell::Sh),
-                Shell::Zsh => Some(MacShell::Zsh),
+                Self::Bash => Some(MacShell::Bash),
+                Self::Nu => Some(MacShell::Nu),
+                Self::Pwsh => Some(MacShell::Pwsh),
+                Self::Sh => Some(MacShell::Sh),
+                Self::Zsh => Some(MacShell::Zsh),
                 _ => None,
             };
             if let Some(path_env_override) =
                 super::exec_util::determine_path_env_variable_override(supported_mac_shell)
             {
-                debug!("overriding PATH env variable with: {}", path_env_override);
+                debug!("overriding PATH env variable with: {path_env_override}");
                 command.env("PATH", path_env_override);
             }
         }
@@ -151,39 +151,39 @@ impl Shell {
         command.output()
     }
 
-    fn from_string(shell: &str) -> Option<Shell> {
+    fn from_string(shell: &str) -> Option<Self> {
         match shell {
-            "bash" => Some(Shell::Bash),
-            "cmd" => Some(Shell::Cmd),
-            "nu" => Some(Shell::Nu),
-            "powershell" => Some(Shell::Powershell),
-            "pwsh" => Some(Shell::Pwsh),
-            "sh" => Some(Shell::Sh),
-            "wsl" => Some(Shell::WSL),
-            "wsl2" => Some(Shell::WSL2),
-            "zsh" => Some(Shell::Zsh),
+            "bash" => Some(Self::Bash),
+            "cmd" => Some(Self::Cmd),
+            "nu" => Some(Self::Nu),
+            "powershell" => Some(Self::Powershell),
+            "pwsh" => Some(Self::Pwsh),
+            "sh" => Some(Self::Sh),
+            "wsl" => Some(Self::WSL),
+            "wsl2" => Some(Self::WSL2),
+            "zsh" => Some(Self::Zsh),
             _ => None,
         }
     }
 }
 
 impl Default for Shell {
-    fn default() -> Shell {
+    fn default() -> Self {
         if cfg!(target_os = "windows") {
-            Shell::Powershell
+            Self::Powershell
         } else if cfg!(target_os = "macos") {
             static DEFAULT_MACOS_SHELL: LazyLock<Option<MacShell>> =
                 LazyLock::new(determine_default_macos_shell);
 
             match &*DEFAULT_MACOS_SHELL {
-                Some(MacShell::Bash) => Shell::Bash,
-                Some(MacShell::Nu) => Shell::Nu,
-                Some(MacShell::Pwsh) => Shell::Pwsh,
-                Some(MacShell::Zsh) => Shell::Zsh,
-                None | Some(MacShell::Sh) => Shell::Sh,
+                Some(MacShell::Bash) => Self::Bash,
+                Some(MacShell::Nu) => Self::Nu,
+                Some(MacShell::Pwsh) => Self::Pwsh,
+                Some(MacShell::Zsh) => Self::Zsh,
+                None | Some(MacShell::Sh) => Self::Sh,
             }
         } else if cfg!(target_os = "linux") {
-            Shell::Bash
+            Self::Bash
         } else {
             panic!("invalid target os for shell")
         }
@@ -251,10 +251,10 @@ impl Extension for ShellExtension {
                         .unwrap_or(false);
 
                     if debug {
-                        info!("debug information for command> {}", cmd);
+                        info!("debug information for command> {cmd}");
                         info!("exit status: '{}'", output.status);
-                        info!("stdout: '{}'", output_str);
-                        info!("stderr: '{}'", error_str);
+                        info!("stdout: '{output_str}'");
+                        info!("stderr: '{error_str}'");
                         info!(
                             "this debug information was shown because the 'debug' option is true."
                         );

@@ -57,7 +57,7 @@ fn watcher_main(watcher_notify: &Sender<()>) {
             );
 
             if let Err(error) = watcher_notify.send(()) {
-                error!("unable to send keyboard layout changed event: {}", error);
+                error!("unable to send keyboard layout changed event: {error}");
             }
 
             layout = current_layout;

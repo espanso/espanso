@@ -27,7 +27,7 @@ use crate::util::is_yaml_empty;
 use super::ParsedConfig;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub(crate) struct YAMLConfig {
+pub struct YAMLConfig {
     #[serde(default)]
     pub label: Option<String>,
 

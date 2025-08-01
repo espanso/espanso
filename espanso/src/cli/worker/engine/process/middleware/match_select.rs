@@ -86,16 +86,13 @@ impl MatchSelector for MatchSelectorAdapter<'_> {
             Ok(Some(selected_id)) => match selected_id.parse::<i32>() {
                 Ok(id) => Some(id),
                 Err(err) => {
-                    error!(
-                        "match selector received an invalid id from SearchUI: {}",
-                        err
-                    );
+                    error!("match selector received an invalid id from SearchUI: {err}");
                     None
                 }
             },
             Ok(None) => None,
             Err(err) => {
-                error!("SearchUI reported an error: {}", err);
+                error!("SearchUI reported an error: {err}");
                 None
             }
         }

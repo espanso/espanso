@@ -24,13 +24,13 @@ use crate::event::Key;
 use super::{RollingItem, RollingMatch};
 
 #[derive(Debug, PartialEq)]
-pub(crate) enum MatcherTreeRef<Id> {
+pub enum MatcherTreeRef<Id> {
     Matches(Vec<Id>),
     Node(Box<MatcherTreeNode<Id>>),
 }
 
 #[derive(Debug, PartialEq)]
-pub(crate) struct MatcherTreeNode<Id> {
+pub struct MatcherTreeNode<Id> {
     pub word_separators: Option<MatcherTreeRef<Id>>,
     pub keys: Vec<(Key, MatcherTreeRef<Id>)>,
     pub chars: Vec<(String, MatcherTreeRef<Id>)>,
@@ -52,8 +52,8 @@ impl<Id> MatcherTreeNode<Id>
 where
     Id: Clone,
 {
-    pub fn from_matches(matches: &[RollingMatch<Id>]) -> MatcherTreeNode<Id> {
-        let mut root = MatcherTreeNode::default();
+    pub fn from_matches(matches: &[RollingMatch<Id>]) -> Self {
+        let mut root = Self::default();
         for m in matches {
             insert_items_recursively(m.id.clone(), &mut root, &m.items);
         }

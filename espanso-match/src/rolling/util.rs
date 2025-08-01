@@ -21,7 +21,7 @@ use crate::Event;
 
 use super::matcher::IsWordSeparator;
 
-pub(crate) fn extract_string_from_events(
+pub fn extract_string_from_events(
     events: &[(Event, IsWordSeparator)],
 ) -> (String, Option<String>, Option<String>) {
     let mut string = String::new();

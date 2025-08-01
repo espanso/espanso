@@ -59,7 +59,7 @@ fn watcher_main(config_dir: &Path, debounce_tx: Sender<()>) {
         .watch(config_dir, RecursiveMode::Recursive)
         .expect("unable to start file watcher");
 
-    info!("watching for changes in path: {:?}", config_dir);
+    info!("watching for changes in path: {}", config_dir.display());
 
     loop {
         let should_reload = match rx.recv() {
@@ -91,17 +91,14 @@ fn watcher_main(config_dir: &Path, debounce_tx: Sender<()>) {
                 }
             }
             Err(e) => {
-                warn!("error while watching files: {:?}", e);
+                warn!("error while watching files: {e:?}");
                 false
             }
         };
 
         if should_reload {
             if let Err(error) = debounce_tx.send(()) {
-                error!(
-                    "unable to send watcher file changed event to debouncer: {}",
-                    error
-                );
+                error!("unable to send watcher file changed event to debouncer: {error}");
             }
         }
     }
@@ -118,7 +115,7 @@ fn debouncer_main(debounce_rx: crossbeam::channel::Receiver<()>, watcher_notify:
           default(Duration::from_millis(WATCHER_DEBOUNCE_DURATION_MS)) => {
             if has_received_event {
               if let Err(error) = watcher_notify.send(()) {
-                error!("unable to send watcher file changed event: {}", error);
+                error!("unable to send watcher file changed event: {error}");
               }
             }
 

@@ -54,7 +54,7 @@ impl Executor for HtmlInjectExecutor<'_> {
                 .injector
                 .inject_html(&inject_event.html, &fallback_text)
             {
-                error!("html injector reported an error: {:?}", error);
+                error!("html injector reported an error: {error:?}");
             }
 
             return true;

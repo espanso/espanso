@@ -110,12 +110,12 @@ fn daemon_main(args: CliModuleArgs) -> i32 {
                 result.config_store
             }
             Err(err) => {
-                error!("critical error while loading config: {}", err);
+                error!("critical error while loading config: {err}");
                 return DAEMON_FATAL_CONFIG_ERROR;
             }
         };
 
-    info!("espanso version: {}", VERSION);
+    info!("espanso version: {VERSION}");
     // TODO: print os system and version? (with os_info crate)
 
     terminate_worker_if_already_running(&paths.runtime);
@@ -177,13 +177,13 @@ fn daemon_main(args: CliModuleArgs) -> i32 {
                     spawn_worker(&paths_overrides, exit_notify.clone(), Some(WORKER_START_REASON_MANUAL.to_string()));
                   }
                   _ => {
-                    error!("received unexpected exit code from worker {}, exiting", code);
+                    error!("received unexpected exit code from worker {code}, exiting");
                     return code;
                   }
                 }
               },
               Err(err) => {
-                error!("received error when unwrapping exit_code: {}", err);
+                error!("received error when unwrapping exit_code: {err}");
                 return DAEMON_GENERAL_ERROR;
               },
             }
@@ -205,14 +205,11 @@ fn terminate_worker_if_already_running(runtime_dir: &Path) {
     match create_ipc_client_to_worker(runtime_dir) {
         Ok(mut worker_ipc) => {
             if let Err(err) = worker_ipc.send_async(IPCEvent::Exit) {
-                error!(
-                    "unable to send termination signal to worker process: {}",
-                    err
-                );
+                error!("unable to send termination signal to worker process: {err}");
             }
         }
         Err(err) => {
-            error!("could not establish IPC connection with worker: {}", err);
+            error!("could not establish IPC connection with worker: {err}");
         }
     }
 
@@ -285,14 +282,11 @@ fn restart_worker(
     match create_ipc_client_to_worker(&paths.runtime) {
         Ok(mut worker_ipc) => {
             if let Err(err) = worker_ipc.send_async(IPCEvent::Exit) {
-                error!(
-                    "unable to send termination signal to worker process: {}",
-                    err
-                );
+                error!("unable to send termination signal to worker process: {err}");
             }
         }
         Err(err) => {
-            error!("could not establish IPC connection with worker: {}", err);
+            error!("could not establish IPC connection with worker: {err}");
         }
     }
 

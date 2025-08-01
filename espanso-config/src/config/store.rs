@@ -25,7 +25,7 @@ use log::{debug, error};
 use std::sync::Arc;
 use std::{collections::HashSet, path::Path};
 
-pub(crate) struct DefaultConfigStore {
+pub struct DefaultConfigStore {
     default: Arc<dyn Config>,
     customs: Vec<Arc<dyn Config>>,
 }
@@ -83,7 +83,7 @@ impl DefaultConfigStore {
 
         let default = ResolvedConfig::load(&default_file, None)
             .context("failed to load default.yml configuration")?;
-        debug!("loaded default config at path: {:?}", default_file);
+        debug!("loaded default config at path: {}", default_file.display());
 
         // Then the others
         let mut customs: Vec<Arc<dyn Config>> = Vec::new();
@@ -104,12 +104,12 @@ impl DefaultConfigStore {
                 match ResolvedConfig::load(&config_file, Some(&default)) {
                     Ok(config) => {
                         customs.push(Arc::new(config));
-                        debug!("loaded config at path: {:?}", config_file);
+                        debug!("loaded config at path: {}", config_file.display());
                     }
                     Err(err) => {
                         error!(
-                            "unable to load config at path: {:?}, with error: {}",
-                            config_file, err
+                            "unable to load config at path: {}, with error: {err}",
+                            config_file.display()
                         );
                         non_fatal_errors.push(NonFatalErrorSet::single_error(&config_file, err));
                     }

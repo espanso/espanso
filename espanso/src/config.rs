@@ -32,8 +32,8 @@ const DEFAULT_MATCH_FILE_CONTENT: &str = include_str!("./res/config/base.yml");
 pub fn populate_default_config(config_dir: &Path) -> Result<()> {
     if !config_dir.is_dir() {
         info!(
-            "generating base configuration directory in: {:?}",
-            config_dir
+            "generating base configuration directory in: {}",
+            config_dir.display()
         );
         std::fs::create_dir_all(config_dir)?;
     }
@@ -42,11 +42,14 @@ pub fn populate_default_config(config_dir: &Path) -> Result<()> {
     let sub_match_dir = config_dir.join("match");
 
     if !sub_config_dir.is_dir() {
-        info!("generating config directory in: {:?}", sub_config_dir);
+        info!(
+            "generating config directory in: {}",
+            sub_config_dir.display()
+        );
         std::fs::create_dir_all(&sub_config_dir)?;
     }
     if !sub_match_dir.is_dir() {
-        info!("generating match directory in: {:?}", sub_match_dir);
+        info!("generating match directory in: {}", sub_match_dir.display());
         std::fs::create_dir_all(&sub_match_dir)?;
     }
 
@@ -55,15 +58,15 @@ pub fn populate_default_config(config_dir: &Path) -> Result<()> {
 
     if !default_file.is_file() {
         info!(
-            "populating default.yml file with initial content: {:?}",
-            default_file
+            "populating default.yml file with initial content: {}",
+            default_file.display()
         );
         std::fs::write(default_file, DEFAULT_CONFIG_FILE_CONTENT)?;
     }
     if !match_file.is_file() {
         info!(
-            "populating base.yml file with initial content: {:?}",
-            match_file
+            "populating base.yml file with initial content: {}",
+            match_file.display()
         );
         std::fs::write(match_file, DEFAULT_MATCH_FILE_CONTENT)?;
     }
@@ -85,10 +88,7 @@ pub fn load_config(config_path: &Path) -> Result<ConfigLoadResult> {
     if !non_fatal_errors.is_empty() {
         warn!("------- detected some errors in the configuration: -------");
         for non_fatal_error_set in &non_fatal_errors {
-            warn!(
-                ">>> {}",
-                non_fatal_error_set.file.to_string_lossy().to_string()
-            );
+            warn!(">>> {}", non_fatal_error_set.file.to_string_lossy());
             for record in &non_fatal_error_set.errors {
                 if record.level == ErrorLevel::Error {
                     error!("{:?}", record.error);

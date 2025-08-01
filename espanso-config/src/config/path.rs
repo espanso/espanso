@@ -53,24 +53,19 @@ pub fn calculate_paths<'a>(
                                 }
                                 Err(err) => {
                                     error!(
-                    "unable to canonicalize path from glob: {:?}, with error: {}",
-                    path, err
+                    "unable to canonicalize path from glob: {}, with error: {err}", path.display()
                   );
                                 }
                             }
                         }
                         Err(err) => error!(
-                            "glob error when processing pattern: {}, with error: {}",
-                            glob_pattern, err
+                            "glob error when processing pattern: {glob_pattern}, with error: {err}"
                         ),
                     }
                 }
             }
             Err(err) => {
-                error!(
-                    "unable to calculate glob from pattern: {}, with error: {}",
-                    glob_pattern, err
-                );
+                error!("unable to calculate glob from pattern: {glob_pattern}, with error: {err}");
             }
         }
     }
@@ -135,7 +130,8 @@ pub mod tests {
             let sub_file = sub_dir.join("sub.yml");
             std::fs::write(&sub_file, "test").unwrap();
 
-            let result = calculate_paths(base, ["match/sub/../sub/*.yml".to_string()].iter());
+            let result =
+                calculate_paths(base, std::iter::once(&"match/sub/../sub/*.yml".to_string()));
 
             let mut expected = HashSet::new();
             expected.insert(sub_file.to_string_lossy().to_string());

@@ -44,13 +44,13 @@ impl Executor for TextUIExecutor<'_> {
                 .handler
                 .show_text(&show_text_event.title, &show_text_event.text)
             {
-                error!("text UI handler reported an error: {:?}", error);
+                error!("text UI handler reported an error: {error:?}");
             }
 
             return true;
-        } else if let EventType::ShowLogs = &event.etype {
+        } else if matches!(&event.etype, EventType::ShowLogs) {
             if let Err(error) = self.handler.show_logs() {
-                error!("text UI handler reported an error: {:?}", error);
+                error!("text UI handler reported an error: {error:?}");
             }
 
             return true;

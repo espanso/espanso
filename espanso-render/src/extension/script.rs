@@ -111,10 +111,10 @@ impl Extension for ScriptExtension {
                         .unwrap_or(false);
 
                     if debug {
-                        info!("debug information for script> {:?}", args);
+                        info!("debug information for script> {args:?}");
                         info!("exit status: '{}'", output.status);
-                        info!("stdout: '{}'", output_str);
-                        info!("stderr: '{}'", error_str);
+                        info!("stdout: '{output_str}'");
+                        info!("stderr: '{error_str}'");
                         info!(
                             "this debug information was shown because the 'debug' option is true."
                         );

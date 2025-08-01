@@ -175,9 +175,9 @@ impl Middleware for ContextMenuMiddleware {
                         ));
                         Event::caused_by(event.source_id, EventType::NOOP)
                     }
-                    _ => {
-                        // TODO: handle dynamic items
-                        todo!()
+                    9_u32..=u32::MAX => {
+                        // Should be unreachable, given there are no other options
+                        unreachable!()
                     }
                 }
             }

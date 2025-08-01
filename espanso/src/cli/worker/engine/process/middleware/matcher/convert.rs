@@ -113,7 +113,7 @@ impl<'a> MatchConverter<'a> {
                 match HotKey::new(m.id, hotkey) {
                     Ok(hotkey) => hotkeys.push(hotkey),
                     Err(err) => {
-                        error!("unable to register hotkey: {}, with error: {}", hotkey, err);
+                        error!("unable to register hotkey: {hotkey}, with error: {err}");
                     }
                 }
             }

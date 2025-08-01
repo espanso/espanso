@@ -95,7 +95,7 @@ fn convert_fields(fields: &Params) -> HashMap<String, FormField> {
         if let Some(form_field) = form_field {
             out.insert(name.clone(), form_field);
         } else {
-            error!("malformed form field format for '{}'", name);
+            error!("malformed form field format for '{name}'");
         }
     }
     out

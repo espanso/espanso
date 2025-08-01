@@ -33,11 +33,11 @@ use self::util::{inject_variables_into_params, render_variables};
 mod resolve;
 mod util;
 
-pub(crate) static VAR_REGEX: LazyLock<Regex> =
+pub static VAR_REGEX: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"\{\{\s*((?P<name>\w+)(\.(?P<subname>(\w+)))?)\s*\}\}").unwrap());
 static WORD_REGEX: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(\w+)").unwrap());
 
-pub(crate) struct DefaultRenderer<'a> {
+pub struct DefaultRenderer<'a> {
     extensions: HashMap<String, &'a dyn Extension>,
 }
 
@@ -698,13 +698,7 @@ mod tests {
             }],
             ..Default::default()
         };
-        let res = renderer.render(
-            &template,
-            &Context {
-                ..Default::default()
-            },
-            &RenderOptions::default(),
-        );
+        let res = renderer.render(&template, &Context::default(), &RenderOptions::default());
         assert!(matches!(res, RenderResult::Error(_)));
     }
 

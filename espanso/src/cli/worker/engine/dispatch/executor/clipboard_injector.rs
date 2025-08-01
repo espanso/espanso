@@ -74,7 +74,7 @@ impl<'a> ClipboardInjectorAdapter<'a> {
             if let Some(combination) = parse_combination(&custom_shortcut) {
                 custom_combination = Some(combination);
             } else {
-                error!("'{}' is not a valid paste shortcut", custom_shortcut);
+                error!("'{custom_shortcut}' is not a valid paste shortcut");
             }
         }
 
@@ -213,10 +213,7 @@ impl Drop for ClipboardRestoreGuard<'_> {
                 .clipboard
                 .set_text(&content, &self.clipboard_operation_options)
             {
-                error!(
-                    "unable to restore clipboard content after expansion: {}",
-                    error
-                );
+                error!("unable to restore clipboard content after expansion: {error}");
             }
         }
     }
