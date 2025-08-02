@@ -839,7 +839,6 @@
     "form_multiline_field": {
       "$comment": "multine string",
       "type": "object",
-      "additionalProperties": false,
       "properties": {
         "multiline": {
           "type": "boolean"
@@ -853,7 +852,6 @@
     "form_choice_or_list_field": {
       "$comment": "choice or list",
       "type": "object",
-      "additionalProperties": false,
       "required": [
         "values",
         "type"
