@@ -109,6 +109,7 @@
           "type": "string"
         },
         "left_word": {
+          "description": "The related properties, left_word: true and right_word: true, ensure a match will only occur at the beginning or end of words respectively, and not in the middle.",
           "type": "boolean"
         },
         "markdown": {
@@ -122,6 +123,7 @@
           "type": "boolean"
         },
         "right_word": {
+          "description": "The related properties, left_word: true and right_word: true, ensure a match will only occur at the beginning or end of words respectively, and not in the middle.",
           "type": "boolean"
         },
         "search_terms": {
@@ -174,6 +176,10 @@
           "$comment": "shell var",
           "type": "object",
           "additionalProperties": false,
+          "required": [
+            "type",
+            "name"
+          ],
           "properties": {
             "type": {
               "type": "string",
