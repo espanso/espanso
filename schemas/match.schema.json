@@ -776,7 +776,7 @@
               "type": "object",
               "additionalProperties": false,
               "properties": {
-                "choice": {
+                "choices": {
                   "type": "array",
                   "items": {
                     "type": "string"
