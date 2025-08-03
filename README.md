@@ -1,11 +1,13 @@
 ![espanso](images/logo_extended.png)
 
+
 > A cross-platform Text Expander written in Rust
 
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/espanso/espanso)
 ![Language](https://img.shields.io/badge/language-rust-orange)
 ![Platforms](https://img.shields.io/badge/platforms-Windows%2C%20macOS%20and%20Linux-blue)
 ![License](https://img.shields.io/github/license/espanso/espanso)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/espanso/espanso)
 
 ![example](images/example.gif)
 
