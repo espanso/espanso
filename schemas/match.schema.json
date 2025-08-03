@@ -45,23 +45,35 @@
       "additionalProperties": false,
       "required": [],
       "dependencies": {
-        "uppercase_style": ["propagate_case"]
+        "uppercase_style": [
+          "propagate_case"
+        ]
       },
       "oneOf": [
         {
-          "required": ["replace"]
+          "required": [
+            "replace"
+          ]
         },
         {
-          "required": ["form"]
+          "required": [
+            "form"
+          ]
         },
         {
-          "required": ["html"]
+          "required": [
+            "html"
+          ]
         },
         {
-          "required": ["image_path"]
+          "required": [
+            "image_path"
+          ]
         },
         {
-          "required": ["markdown"]
+          "required": [
+            "markdown"
+          ]
         }
       ],
       "properties": {
@@ -76,7 +88,10 @@
         },
         "force_mode": {
           "type": "string",
-          "enum": ["clipboard", "keys"]
+          "enum": [
+            "clipboard",
+            "keys"
+          ]
         },
         "form": {
           "type": "string"
@@ -94,6 +109,7 @@
           "type": "string"
         },
         "left_word": {
+          "description": "The related properties, left_word: true and right_word: true, ensure a match will only occur at the beginning or end of words respectively, and not in the middle.",
           "type": "boolean"
         },
         "markdown": {
@@ -107,6 +123,7 @@
           "type": "boolean"
         },
         "right_word": {
+          "description": "The related properties, left_word: true and right_word: true, ensure a match will only occur at the beginning or end of words respectively, and not in the middle.",
           "type": "boolean"
         },
         "search_terms": {
@@ -117,13 +134,20 @@
         },
         "uppercase_style": {
           "type": "string",
-          "enum": ["capitalize", "capitalize_words", "uppercase"]
+          "enum": [
+            "capitalize",
+            "capitalize_words",
+            "uppercase"
+          ]
         },
         "regex": {
           "type": "string"
         },
         "replace": {
-          "type": ["string", "null"]
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "trigger": {
           "type": "string"
@@ -152,10 +176,16 @@
           "$comment": "shell var",
           "type": "object",
           "additionalProperties": false,
+          "required": [
+            "type",
+            "name"
+          ],
           "properties": {
             "type": {
               "type": "string",
-              "enum": ["shell"]
+              "enum": [
+                "shell"
+              ]
             },
             "name": {
               "type": "string"
@@ -209,7 +239,9 @@
           "properties": {
             "type": {
               "type": "string",
-              "enum": ["script"]
+              "enum": [
+                "script"
+              ]
             },
             "name": {
               "type": "string"
@@ -245,7 +277,9 @@
           "properties": {
             "type": {
               "type": "string",
-              "enum": ["date"]
+              "enum": [
+                "date"
+              ]
             },
             "name": {
               "type": "string"
@@ -587,7 +621,9 @@
           "properties": {
             "type": {
               "type": "string",
-              "enum": ["echo"]
+              "enum": [
+                "echo"
+              ]
             },
             "name": {
               "type": "string"
@@ -619,7 +655,9 @@
           "properties": {
             "type": {
               "type": "string",
-              "enum": ["clipboard"]
+              "enum": [
+                "clipboard"
+              ]
             },
             "name": {
               "type": "string"
@@ -642,7 +680,9 @@
           "properties": {
             "type": {
               "type": "string",
-              "enum": ["choice"]
+              "enum": [
+                "choice"
+              ]
             },
             "name": {
               "type": "string"
@@ -654,7 +694,10 @@
                 "values": {
                   "type": "array",
                   "items": {
-                    "required": ["label", "id"],
+                    "required": [
+                      "label",
+                      "id"
+                    ],
                     "properties": {
                       "label": {
                         "type": "string"
@@ -685,7 +728,9 @@
           "properties": {
             "type": {
               "type": "string",
-              "enum": ["form"]
+              "enum": [
+                "form"
+              ]
             },
             "name": {
               "type": "string"
@@ -714,13 +759,43 @@
           }
         },
         {
+          "$comment": "random",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "random"
+              ]
+            },
+            "params": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "choices": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
           "$comment": "Nested match",
           "type": "object",
           "additionalProperties": false,
           "properties": {
             "type": {
               "type": "string",
-              "enum": ["match"]
+              "enum": [
+                "match"
+              ]
             },
             "name": {
               "type": "string"
@@ -770,7 +845,6 @@
     "form_multiline_field": {
       "$comment": "multine string",
       "type": "object",
-      "additionalProperties": false,
       "properties": {
         "multiline": {
           "type": "boolean"
@@ -784,15 +858,23 @@
     "form_choice_or_list_field": {
       "$comment": "choice or list",
       "type": "object",
-      "additionalProperties": false,
-      "required": ["values", "type"],
+      "required": [
+        "values",
+        "type"
+      ],
       "properties": {
         "type": {
           "type": "string",
-          "enum": ["choice", "list"]
+          "enum": [
+            "choice",
+            "list"
+          ]
         },
         "values": {
-          "type": ["array", "string"],
+          "type": [
+            "array",
+            "string"
+          ],
           "items": {
             "type": "string"
           }
