@@ -2,7 +2,7 @@ name: Update flake
 
 on:
   schedule:
-    - cron: "0 0 * * 0" # Every Sunday at 00:00
+    - cron: "0 0 * * 0" # Every Sunday at 00:00 UTC
   workflow_dispatch: # Allow manual trigger
 
 permissions:
@@ -29,7 +29,7 @@ jobs:
       - name: Create pull request
         uses: peter-evans/create-pull-request@v7
         with:
-          commit-message: ":up_arrow: update flake"
+          commit-message: ":arrow_up: update flake"
           branch: update-flake
           delete-branch: true
           branch-suffix: short-commit-hash
