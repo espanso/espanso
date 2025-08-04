@@ -442,14 +442,14 @@ SubCommand::with_name("install")
         }
     };
 
-    let log_level = if cfg!(debug_assertions) {
+    let log_level = match matches.get_count("v") {
+        0 | 1 => LevelFilter::Info,
+
         // Trace mode is only available in debug mode for security reasons
-        LevelFilter::Trace
-    } else {
-        match matches.get_count("v") {
-            0 | 1 => LevelFilter::Info,
-            _ => LevelFilter::Debug,
-        }
+        #[cfg(debug_assertions)]
+        3 => LevelFilter::Trace,
+
+        _ => LevelFilter::Debug,
     };
 
     let mut handler = CLI_HANDLERS
