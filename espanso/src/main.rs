@@ -86,7 +86,7 @@ fn main() {
     let mut clap_instance = App::new("espanso")
     .arg_required_else_help(true)
     .version(VERSION)
-    .author("Federico Terzi")
+    .author("Federico Terzi and the espanso contributors")
     .about("A Privacy-first, Cross-platform Text Expander")
     .arg(
       Arg::with_name("v")
