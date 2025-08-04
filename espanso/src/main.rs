@@ -23,7 +23,7 @@
 use std::{path::PathBuf, process::Command};
 
 use clap::{App, AppSettings, Arg, ArgMatches, SubCommand};
-use cli::{CliAlias, CliModule, CliModuleArgs};
+use cli::{CliModule, CliModuleArgs};
 use log::{error, info};
 use logging::FileProxy;
 use simplelog::{
@@ -74,121 +74,17 @@ static CLI_HANDLERS: LazyLock<Vec<CliModule>> = LazyLock::new(|| {
     ]
 });
 
-static ALIASES: LazyLock<Vec<CliAlias>> = LazyLock::new(|| {
-    vec![
-        CliAlias {
-            subcommand: "start".to_owned(),
-            forward_into: "service".to_owned(),
-        },
-        CliAlias {
-            subcommand: "restart".to_owned(),
-            forward_into: "service".to_owned(),
-        },
-        CliAlias {
-            subcommand: "stop".to_owned(),
-            forward_into: "service".to_owned(),
-        },
-        CliAlias {
-            subcommand: "status".to_owned(),
-            forward_into: "service".to_owned(),
-        },
-        CliAlias {
-            subcommand: "install".to_owned(),
-            forward_into: "package".to_owned(),
-        },
-        CliAlias {
-            subcommand: "uninstall".to_owned(),
-            forward_into: "package".to_owned(),
-        },
-    ]
-});
-
 fn main() {
     match util::attach_console() {
         Ok(()) => info!("Console attached"),
         Err(e) => panic!("Could not attach console! {e}"),
     }
 
-    let install_subcommand = SubCommand::with_name("install")
-    .about("Install a package")
-    .arg(
-      Arg::with_name("external")
-        .short('e')
-        .long("external")
-        .required(false)
-        .takes_value(false)
-        .help("Allow installing packages from non-verified repositories."),
-    )
-    .arg(Arg::with_name("package_name").help("Package name"))
-    .arg(
-      Arg::with_name("version")
-        .long("version")
-        .required(false)
-        .takes_value(true)
-        .help("Force a particular version to be installed instead of the latest available."),
-    )
-    .arg(
-      Arg::with_name("git")
-        .long("git")
-        .required(false)
-        .takes_value(true)
-        .help("Git repository from which espanso should install the package."),
-    )
-    .arg(
-      Arg::with_name("git-branch")
-        .long("git-branch")
-        .required(false)
-        .takes_value(true)
-        .help("Force espanso to search for the package on a specific git branch"),
-    )
-    .arg(
-      Arg::with_name("force")
-        .long("force")
-        .required(false)
-        .takes_value(false)
-        .help("Overwrite the package if already installed"),
-    )
-    .arg(
-      Arg::with_name("refresh-index")
-        .long("refresh-index")
-        .required(false)
-        .takes_value(false)
-        .help("Request a fresh copy of the Espanso Hub package index instead of using the cached version.")
-    )
-    .arg(
-      Arg::with_name("use-native-git")
-        .long("use-native-git")
-        .required(false)
-        .takes_value(false)
-        .help("If specified, espanso will use the 'git' command instead of trying direct methods."),
-    );
-
-    let uninstall_subcommand = SubCommand::with_name("uninstall")
-        .about("Remove a package")
-        .arg(Arg::with_name("package_name").help("Package name"));
-
-    let start_subcommand = SubCommand::with_name("start")
-        .about("Start espanso as a service")
-        .arg(
-            Arg::with_name("unmanaged")
-                .long("unmanaged")
-                .required(false)
-                .takes_value(false)
-                .help("Run espanso as an unmanaged service (avoid system manager)"),
-        );
-    let restart_subcommand = SubCommand::with_name("restart")
-        .about("Restart the espanso service")
-        .arg(
-            Arg::with_name("unmanaged")
-                .long("unmanaged")
-                .required(false)
-                .takes_value(false),
-        );
-    let stop_subcommand = SubCommand::with_name("stop").about("Stop espanso service");
-    let status_subcommand =
-        SubCommand::with_name("status").about("Check if the espanso daemon is running or not.");
+    let args: Vec<String> = std::env::args().collect();
+    let processed_args = preprocess_aliases(args);
 
     let mut clap_instance = App::new("espanso")
+    .arg_required_else_help(true)
     .version(VERSION)
     .author("Federico Terzi")
     .about("A Privacy-first, Cross-platform Text Expander")
@@ -250,15 +146,7 @@ fn main() {
 such as 'config/default.yml' or 'match/base.yml'.
 For convenience, you can also specify the name directly and Espanso will figure out the path.
 For example, specifying 'email' is equivalent to 'match/email.yml'."#))
-        // .arg(Arg::with_name("norestart")
-        //     .short("n")
-        //     .long("norestart")
-        //     .required(false)
-        //     .takes_value(false)
-        //     .help("Avoid restarting espanso after editing the file"))
     )
-    // .subcommand(SubCommand::with_name("detect")
-    //     .about("Tool to detect current window properties, to simplify filters creation."))
     .subcommand(
       SubCommand::with_name("daemon")
         .setting(AppSettings::Hidden)
@@ -361,16 +249,28 @@ For example, specifying 'email' is equivalent to 'match/email.yml'."#))
           SubCommand::with_name("check")
             .about("Check if espanso is registered as a system service"),
         )
-        .subcommand(start_subcommand.clone())
-        .subcommand(restart_subcommand.clone())
-        .subcommand(stop_subcommand.clone())
-        .subcommand(status_subcommand.clone())
+        .subcommand(SubCommand::with_name("start")
+        .about("Start espanso as a service")
+        .arg(
+            Arg::with_name("unmanaged")
+                .long("unmanaged")
+                .required(false)
+                .takes_value(false)
+                .help("Run espanso as an unmanaged service (avoid system manager)"),
+        ))
+        .subcommand(SubCommand::with_name("restart")
+        .about("Restart the espanso service")
+        .arg(
+            Arg::with_name("unmanaged")
+                .long("unmanaged")
+                .required(false)
+                .takes_value(false)
+        ))
+        .subcommand(SubCommand::with_name("stop").about("Stop espanso service"))
+        .subcommand(
+        SubCommand::with_name("status").about("Check if the espanso daemon is running or not."))
         .about("A collection of commands to manage the Espanso service (for example, enabling auto-start on system boot)."),
     )
-    .subcommand(start_subcommand)
-    .subcommand(restart_subcommand)
-    .subcommand(stop_subcommand)
-    .subcommand(status_subcommand)
     .subcommand(SubCommand::with_name("match")
         .about("List and execute matches from the CLI")
         .subcommand(SubCommand::with_name("list")
@@ -437,8 +337,64 @@ For example, specifying 'email' is equivalent to 'match/email.yml'."#))
     .subcommand(
       SubCommand::with_name("package")
         .about("package-management commands")
-        .subcommand(install_subcommand.clone())
-        .subcommand(uninstall_subcommand.clone())
+        .subcommand(
+SubCommand::with_name("install")
+    .about("Install a package")
+    .arg(
+      Arg::with_name("external")
+        .short('e')
+        .long("external")
+        .required(false)
+        .takes_value(false)
+        .help("Allow installing packages from non-verified repositories."),
+    )
+    .arg(Arg::with_name("package_name").help("Package name"))
+    .arg(
+      Arg::with_name("version")
+        .long("version")
+        .required(false)
+        .takes_value(true)
+        .help("Force a particular version to be installed instead of the latest available."),
+    )
+    .arg(
+      Arg::with_name("git")
+        .long("git")
+        .required(false)
+        .takes_value(true)
+        .help("Git repository from which espanso should install the package."),
+    )
+    .arg(
+      Arg::with_name("git-branch")
+        .long("git-branch")
+        .required(false)
+        .takes_value(true)
+        .help("Force espanso to search for the package on a specific git branch"),
+    )
+    .arg(
+      Arg::with_name("force")
+        .long("force")
+        .required(false)
+        .takes_value(false)
+        .help("Overwrite the package if already installed"),
+    )
+    .arg(
+      Arg::with_name("refresh-index")
+        .long("refresh-index")
+        .required(false)
+        .takes_value(false)
+        .help("Request a fresh copy of the Espanso Hub package index instead of using the cached version.")
+    )
+    .arg(
+      Arg::with_name("use-native-git")
+        .long("use-native-git")
+        .required(false)
+        .takes_value(false)
+        .help("If specified, espanso will use the 'git' command instead of trying direct methods."),
+    ))
+        .subcommand(
+          SubCommand::with_name("uninstall")
+        .about("Remove a package")
+        .arg(Arg::with_name("package_name").help("Package name")))
         .subcommand(SubCommand::with_name("update").about(
           "Update a package. If 'all' is passed as package name, attempts to update all packages.",
         ).arg(Arg::with_name("package_name").help("Package name")))
@@ -469,9 +425,7 @@ For example, specifying 'email' is equivalent to 'match/email.yml'."#))
             .required(false)
             .takes_value(false),
         ),
-    )
-    .subcommand(install_subcommand)
-    .subcommand(uninstall_subcommand);
+    );
 
     // TODO: explain that the register and unregister commands are only meaningful
     // when using the system daemon manager on macOS and Linux
@@ -480,30 +434,27 @@ For example, specifying 'email' is equivalent to 'match/email.yml'."#))
     // to detect if the executable was launched inside an AppBundle, and if so, launch the "launcher" handler
     // This should only apply when on macOS.
 
-    let matches = clap_instance.clone().get_matches();
-    let log_level = match matches.get_count("v") {
-        0 | 1 => LevelFilter::Info,
-
-        // Trace mode is only available in debug mode for security reasons
-        #[cfg(debug_assertions)]
-        3 => LevelFilter::Trace,
-
-        _ => LevelFilter::Debug,
+    let matches = match clap_instance.clone().try_get_matches_from(processed_args) {
+        Ok(matches) => matches,
+        Err(_) => {
+            clap_instance.print_help().expect("unable to print help");
+            std::process::exit(1);
+        }
     };
 
-    let alias = ALIASES
+    let log_level = if cfg!(debug_assertions) {
+        // Trace mode is only available in debug mode for security reasons
+        LevelFilter::Trace
+    } else {
+        match matches.get_count("v") {
+            0 | 1 => LevelFilter::Info,
+            _ => LevelFilter::Debug,
+        }
+    };
+
+    let mut handler = CLI_HANDLERS
         .iter()
         .find(|cli| matches.subcommand_matches(&cli.subcommand).is_some());
-
-    let mut handler = if let Some(alias) = alias {
-        CLI_HANDLERS
-            .iter()
-            .find(|cli| cli.subcommand == alias.forward_into)
-    } else {
-        CLI_HANDLERS
-            .iter()
-            .find(|cli| matches.subcommand_matches(&cli.subcommand).is_some())
-    };
 
     if handler.is_none() {
         // When started from the macOS App Bundle, override the default
@@ -624,23 +575,13 @@ For example, specifying 'email' is equivalent to 'match/email.yml'."#))
             info!("kdotool missing or not available for the current wayland DE.");
         }
 
-        // If the current handler is an alias, rather than sending the sub-arguments
-        // we simply forward the current ones
-        // For example, the args for "espanso start" are forwarded to "espanso service start"
-        if alias.is_some() {
-            cli_args.cli_args = Some(matches);
-        } else if let Some(args) = matches.subcommand_matches(&handler.subcommand) {
+        if let Some(args) = matches.subcommand_matches(&handler.subcommand) {
             cli_args.cli_args = Some(args.clone());
         }
 
         let exit_code = (handler.entry)(cli_args);
 
         std::process::exit(exit_code);
-    } else {
-        clap_instance
-            .print_long_help()
-            .expect("unable to print help");
-        println!();
     }
 }
 
@@ -664,4 +605,45 @@ fn get_path_override(matches: &ArgMatches, argument: &str, env_var: &str) -> Opt
     } else {
         None
     }
+}
+
+/// # Aliases pre-processing
+///
+/// Before clap gets to parse the arguments, we want to work with them. This is
+/// because clap is unable to alias one subcommand to a different (upper) level
+/// of the same command.
+/// I found App::visible_alias("alias") but it only works on the same level,
+/// like:
+/// `espanso service start` for `espanso service st`
+fn preprocess_aliases(mut args: Vec<String>) -> Vec<String> {
+    if args.len() >= 2 {
+        match args[1].as_str() {
+            "start" => {
+                args[1] = "service".to_string();
+                args.insert(2, "start".to_string());
+            }
+            "restart" => {
+                args[1] = "service".to_string();
+                args.insert(2, "restart".to_string());
+            }
+            "stop" => {
+                args[1] = "service".to_string();
+                args.insert(2, "stop".to_string());
+            }
+            "status" => {
+                args[1] = "service".to_string();
+                args.insert(2, "status".to_string());
+            }
+            "install" => {
+                args[1] = "package".to_string();
+                args.insert(2, "install".to_string());
+            }
+            "uninstall" => {
+                args[1] = "package".to_string();
+                args.insert(2, "uninstall".to_string());
+            }
+            _ => {}
+        }
+    }
+    args
 }
