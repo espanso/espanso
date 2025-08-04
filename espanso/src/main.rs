@@ -434,9 +434,13 @@ SubCommand::with_name("install")
     // to detect if the executable was launched inside an AppBundle, and if so, launch the "launcher" handler
     // This should only apply when on macOS.
 
-    let matches = match clap_instance.clone().try_get_matches_from(processed_args) {
+    let matches = match clap_instance
+        .clone()
+        .try_get_matches_from(processed_args.clone())
+    {
         Ok(matches) => matches,
         Err(_) => {
+            println!("error: Found argument {processed_args:?} which wasn't expected, or isn't valid in this context");
             clap_instance.print_help().expect("unable to print help");
             std::process::exit(1);
         }
@@ -616,34 +620,148 @@ fn get_path_override(matches: &ArgMatches, argument: &str, env_var: &str) -> Opt
 /// like:
 /// `espanso service start` for `espanso service st`
 fn preprocess_aliases(mut args: Vec<String>) -> Vec<String> {
+    // make sure the vec is not empty
+    debug_assert!(
+        !args.is_empty(),
+        "Preprocess aliases got an empty vec! {args:#?}"
+    );
+
     if args.len() >= 2 {
-        match args[1].as_str() {
+        let last_arg = args.pop().unwrap();
+
+        match last_arg.as_str() {
             "start" => {
-                args[1] = "service".to_string();
-                args.insert(2, "start".to_string());
+                args.extend(["service".to_string(), "start".to_string()]);
             }
             "restart" => {
-                args[1] = "service".to_string();
-                args.insert(2, "restart".to_string());
+                args.extend(["service".to_string(), "restart".to_string()]);
             }
             "stop" => {
-                args[1] = "service".to_string();
-                args.insert(2, "stop".to_string());
+                args.extend(["service".to_string(), "stop".to_string()]);
             }
             "status" => {
-                args[1] = "service".to_string();
-                args.insert(2, "status".to_string());
+                args.extend(["service".to_string(), "status".to_string()]);
             }
             "install" => {
-                args[1] = "package".to_string();
-                args.insert(2, "install".to_string());
+                args.extend(["package".to_string(), "install".to_string()]);
             }
             "uninstall" => {
-                args[1] = "package".to_string();
-                args.insert(2, "uninstall".to_string());
+                args.extend(["package".to_string(), "uninstall".to_string()]);
             }
-            _ => {}
+            _ => {
+                // Put the argument back if it's not an alias
+                args.push(last_arg);
+            }
         }
     }
     args
+}
+
+#[cfg(test)]
+mod tests {
+    use super::preprocess_aliases;
+
+    #[test]
+    fn test_preprocess_aliases_service_start() {
+        let args = vec!["espanso".to_string(), "start".to_string()];
+        let result = preprocess_aliases(args);
+        assert_eq!(result, vec!["espanso", "service", "start"]);
+    }
+
+    #[test]
+    fn test_preprocess_aliases_service_restart() {
+        let args = vec!["espanso".to_string(), "restart".to_string()];
+        let result = preprocess_aliases(args);
+        assert_eq!(result, vec!["espanso", "service", "restart"]);
+    }
+
+    #[test]
+    fn test_preprocess_aliases_service_stop() {
+        let args = vec!["espanso".to_string(), "stop".to_string()];
+        let result = preprocess_aliases(args);
+        assert_eq!(result, vec!["espanso", "service", "stop"]);
+    }
+
+    #[test]
+    fn test_preprocess_aliases_service_status() {
+        let args = vec!["espanso".to_string(), "status".to_string()];
+        let result = preprocess_aliases(args);
+        assert_eq!(result, vec!["espanso", "service", "status"]);
+    }
+
+    #[test]
+    fn test_preprocess_aliases_package_install() {
+        let args = vec!["espanso".to_string(), "install".to_string()];
+        let result = preprocess_aliases(args);
+        assert_eq!(result, vec!["espanso", "package", "install"]);
+    }
+
+    #[test]
+    fn test_preprocess_aliases_package_uninstall() {
+        let args = vec!["espanso".to_string(), "uninstall".to_string()];
+        let result = preprocess_aliases(args);
+        assert_eq!(result, vec!["espanso", "package", "uninstall"]);
+    }
+
+    #[test]
+    fn test_preprocess_aliases_with_additional_args() {
+        let args = vec![
+            "espanso".to_string(),
+            "start".to_string(),
+            "--unmanaged".to_string(),
+        ];
+        let result = preprocess_aliases(args);
+        assert_eq!(result, vec!["espanso", "service", "start", "--unmanaged"]);
+    }
+
+    #[test]
+    fn test_preprocess_aliases_no_alias_needed() {
+        let args = vec![
+            "espanso".to_string(),
+            "service".to_string(),
+            "start".to_string(),
+        ];
+        let result = preprocess_aliases(args);
+        assert_eq!(result, vec!["espanso", "service", "start"]);
+    }
+
+    #[test]
+    fn test_preprocess_aliases_unknown_command() {
+        let args = vec!["espanso".to_string(), "unknown".to_string()];
+        let result = preprocess_aliases(args);
+        assert_eq!(result, vec!["espanso", "unknown"]);
+    }
+
+    #[test]
+    fn test_preprocess_aliases_only_program_name() {
+        let args = vec!["espanso".to_string()];
+        let result = preprocess_aliases(args);
+        assert_eq!(result, vec!["espanso"]);
+    }
+
+    #[test]
+    fn test_preprocess_aliases_preserves_case() {
+        let args = vec!["espanso".to_string(), "START".to_string()];
+        let result = preprocess_aliases(args);
+        // Should not match since we're checking exact string match
+        assert_eq!(result, vec!["espanso", "START"]);
+    }
+
+    #[test]
+    fn test_preprocess_aliases_install_with_package_name() {
+        let args = vec![
+            "espanso".to_string(),
+            "install".to_string(),
+            "my-package".to_string(),
+        ];
+        let result = preprocess_aliases(args);
+        assert_eq!(result, vec!["espanso", "package", "install", "my-package"]);
+    }
+
+    #[test]
+    fn test_preprocess_aliases_skips_vebose_argument() {
+        let args = vec!["espanso".to_string(), "-v".to_string(), "start".to_string()];
+        let result = preprocess_aliases(args);
+        assert_eq!(result, vec!["espanso", "-v", "service", "start"]);
+    }
 }
