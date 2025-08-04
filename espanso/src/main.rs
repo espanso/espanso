@@ -627,30 +627,41 @@ fn preprocess_aliases(mut args: Vec<String>) -> Vec<String> {
     );
 
     if args.len() >= 2 {
-        let last_arg = args.pop().unwrap();
+        // Find the first non-flag argument (the command)
+        let mut command_index = None;
+        for (i, arg) in args.iter().enumerate().skip(1) {
+            if !arg.starts_with('-') {
+                command_index = Some(i);
+                break;
+            }
+        }
 
-        match last_arg.as_str() {
-            "start" => {
-                args.extend(["service".to_string(), "start".to_string()]);
-            }
-            "restart" => {
-                args.extend(["service".to_string(), "restart".to_string()]);
-            }
-            "stop" => {
-                args.extend(["service".to_string(), "stop".to_string()]);
-            }
-            "status" => {
-                args.extend(["service".to_string(), "status".to_string()]);
-            }
-            "install" => {
-                args.extend(["package".to_string(), "install".to_string()]);
-            }
-            "uninstall" => {
-                args.extend(["package".to_string(), "uninstall".to_string()]);
-            }
-            _ => {
-                // Put the argument back if it's not an alias
-                args.push(last_arg);
+        if let Some(index) = command_index {
+            // Clone the command string to avoid borrowing issues
+            let command = args[index].clone();
+
+            // Check if this is already a proper subcommand structure
+            // (e.g., "espanso service start" should not be transformed)
+            let is_already_expanded = if index + 1 < args.len() {
+                matches!(command.as_str(), "service" | "package")
+            } else {
+                false
+            };
+
+            if !is_already_expanded {
+                match command.as_str() {
+                    "start" | "restart" | "stop" | "status" => {
+                        args[index] = "service".to_string();
+                        args.insert(index + 1, command);
+                    }
+                    "install" | "uninstall" => {
+                        args[index] = "package".to_string();
+                        args.insert(index + 1, command);
+                    }
+                    _ => {
+                        // No transformation needed
+                    }
+                }
             }
         }
     }
