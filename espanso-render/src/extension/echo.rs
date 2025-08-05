@@ -32,6 +32,12 @@ impl EchoExtension {
     }
 }
 
+impl Default for EchoExtension {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Extension for EchoExtension {
     fn name(&self) -> &str {
         self.alias.as_str()
