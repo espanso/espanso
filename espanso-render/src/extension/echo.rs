@@ -24,18 +24,17 @@ pub struct EchoExtension {
     alias: String,
 }
 
-#[allow(clippy::new_without_default)]
 impl EchoExtension {
     pub fn new() -> Self {
         Self {
             alias: "echo".to_string(),
         }
     }
+}
 
-    pub fn new_with_alias(alias: &str) -> Self {
-        Self {
-            alias: alias.to_string(),
-        }
+impl Default for EchoExtension {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -95,14 +94,5 @@ mod tests {
             extension.calculate(&crate::Context::default(), &HashMap::default(), &param),
             ExtensionResult::Error(_)
         ));
-    }
-
-    #[test]
-    fn alias() {
-        let extension_with_alias = EchoExtension::new_with_alias("dummy");
-        let extension = EchoExtension::new();
-
-        assert_eq!(extension.name(), "echo");
-        assert_eq!(extension_with_alias.name(), "dummy");
     }
 }
