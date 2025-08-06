@@ -22,7 +22,7 @@
 
 use std::{path::PathBuf, process::Command};
 
-use clap::{App, AppSettings, Arg, ArgMatches, SubCommand};
+use clap::{App, AppSettings, Arg, ArgMatches, ErrorKind, SubCommand};
 use cli::{CliModule, CliModuleArgs};
 use log::{error, info};
 use logging::FileProxy;
@@ -86,6 +86,7 @@ fn main() {
     let mut clap_instance = App::new("espanso")
     .arg_required_else_help(true)
     .version(VERSION)
+    .long_version(VERSION)
     .author("Federico Terzi and the espanso contributors")
     .about("A Privacy-first, Cross-platform Text Expander")
     .arg(
@@ -439,11 +440,26 @@ SubCommand::with_name("install")
         .try_get_matches_from(processed_args.clone())
     {
         Ok(matches) => matches,
-        Err(_) => {
-            println!("error: Found argument {processed_args:?} which wasn't expected, or isn't valid in this context");
-            clap_instance.print_help().expect("unable to print help");
-            std::process::exit(1);
-        }
+        Err(err) => match err.kind {
+            ErrorKind::DisplayHelpOnMissingArgumentOrSubcommand | ErrorKind::DisplayHelp => {
+                clap_instance.print_help().expect("unable to print help");
+                std::process::exit(1);
+            }
+            ErrorKind::DisplayVersion => {
+                println!(
+                    "{}",
+                    clap_instance
+                        .get_long_version()
+                        .expect("Unable to print the long version")
+                );
+                std::process::exit(1);
+            }
+            _ => {
+                println!("error: Found argument {processed_args:?} which wasn't expected, or isn't valid in this context. Error: {:#?}", err.kind);
+                clap_instance.print_help().expect("unable to print help");
+                std::process::exit(1);
+            }
+        },
     };
 
     let log_level = match matches.get_count("v") {
@@ -616,7 +632,7 @@ fn get_path_override(matches: &ArgMatches, argument: &str, env_var: &str) -> Opt
 /// Before clap gets to parse the arguments, we want to work with them. This is
 /// because clap is unable to alias one subcommand to a different (upper) level
 /// of the same command.
-/// I found App::visible_alias("alias") but it only works on the same level,
+/// I found `App::visible_alias("alias")` but it only works on the same level,
 /// like:
 /// `espanso service start` for `espanso service st`
 fn preprocess_aliases(mut args: Vec<String>) -> Vec<String> {
