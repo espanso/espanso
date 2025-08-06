@@ -41,3 +41,14 @@ repos:
   #       entry: ./scripts/format_clang.sh
   #       language: script
   #       pass_filenames: true
+
+  - repo: local
+    hooks:
+    - id: check-todos
+      name: Check for TODO comments
+      # entry: sh -c 'rg "TODO" && exit 1 || exit 0'
+      # entry: rg 'auca' --quiet
+      entry: nu -c 'if (rg "TODO" | complete).exit_code == 0 { exit 1 } else { exit 0 }'
+      language: system
+      pass_filenames: false
+      files: '.*'
