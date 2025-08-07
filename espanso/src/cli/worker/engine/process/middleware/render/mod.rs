@@ -35,8 +35,8 @@ pub trait MatchProvider<'a> {
 }
 
 pub trait ConfigProvider<'a> {
-    fn configs(&self) -> Vec<(Arc<dyn Config>, MatchSet)>;
-    fn active(&self) -> (Arc<dyn Config>, MatchSet);
+    fn configs(&'_ self) -> Vec<(Arc<dyn Config>, MatchSet<'_>)>;
+    fn active(&'_ self) -> (Arc<dyn Config>, MatchSet<'_>);
 }
 
 pub struct RendererAdapter<'a> {

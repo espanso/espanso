@@ -122,7 +122,7 @@ impl<'a> MatchConverter<'a> {
         hotkeys
     }
 
-    fn global_match_set(&self) -> MatchSet {
+    fn global_match_set(&'_ self) -> MatchSet<'_> {
         let paths = self.config_store.get_all_match_paths();
         self.match_store
             .query(&paths.into_iter().collect::<Vec<_>>())

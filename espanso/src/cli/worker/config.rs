@@ -55,7 +55,7 @@ impl<'a> ConfigManager<'a> {
         self.config_store.active(&info)
     }
 
-    pub fn active_context(&self) -> (Arc<dyn Config>, MatchSet) {
+    pub fn active_context(&'_ self) -> (Arc<dyn Config>, MatchSet<'_>) {
         let config = self.active();
         let match_paths = config.match_paths();
         (config.clone(), self.match_store.query(match_paths))
@@ -66,7 +66,7 @@ impl<'a> ConfigManager<'a> {
     }
 }
 
-fn to_app_properties(info: &AppInfo) -> AppProperties {
+fn to_app_properties(info: &'_ AppInfo) -> AppProperties<'_> {
     AppProperties {
         title: info.title.as_deref(),
         class: info.class.as_deref(),
@@ -99,7 +99,7 @@ impl espanso_engine::process::MatchFilter for ConfigManager<'_> {
 }
 
 impl<'a> super::engine::process::middleware::render::ConfigProvider<'a> for ConfigManager<'a> {
-    fn configs(&self) -> Vec<(Arc<dyn Config>, MatchSet)> {
+    fn configs(&'_ self) -> Vec<(Arc<dyn Config>, MatchSet<'_>)> {
         self.config_store
             .configs()
             .into_iter()
@@ -110,7 +110,7 @@ impl<'a> super::engine::process::middleware::render::ConfigProvider<'a> for Conf
             .collect()
     }
 
-    fn active(&self) -> (Arc<dyn Config>, MatchSet) {
+    fn active(&'_ self) -> (Arc<dyn Config>, MatchSet<'_>) {
         self.active_context()
     }
 }
