@@ -123,7 +123,7 @@ fn generate_nodes<'a>(
     node_map
 }
 
-fn create_node_from_var(var: &Variable) -> Node {
+fn create_node_from_var(var: &'_ Variable) -> Node<'_> {
     let dependencies = if var.inject_vars || !var.depends_on.is_empty() {
         let mut vars = HashSet::new();
 

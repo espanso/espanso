@@ -48,7 +48,7 @@ impl DefaultMatchStore {
 }
 
 impl MatchStore for DefaultMatchStore {
-    fn query(&self, paths: &[String]) -> MatchSet {
+    fn query(&'_ self, paths: &[String]) -> MatchSet<'_> {
         let mut matches: Vec<&Match> = Vec::new();
         let mut global_vars: Vec<&Variable> = Vec::new();
         let mut visited_paths = HashSet::new();

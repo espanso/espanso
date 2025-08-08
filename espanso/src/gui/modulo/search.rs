@@ -97,7 +97,7 @@ struct ModuloSearchItemConfig<'a> {
     is_builtin: bool,
 }
 
-fn convert_items(items: &[SearchItem]) -> Vec<ModuloSearchItemConfig> {
+fn convert_items(items: &'_ [SearchItem]) -> Vec<ModuloSearchItemConfig<'_>> {
     items
         .iter()
         .map(|item| ModuloSearchItemConfig {

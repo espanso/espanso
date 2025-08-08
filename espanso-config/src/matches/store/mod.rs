@@ -24,7 +24,7 @@ use super::{Match, Variable};
 mod default;
 
 pub trait MatchStore: Send {
-    fn query(&self, paths: &[String]) -> MatchSet;
+    fn query(&'_ self, paths: &[String]) -> MatchSet<'_>;
     fn loaded_paths(&self) -> Vec<String>;
 }
 
