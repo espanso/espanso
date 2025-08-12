@@ -26,13 +26,13 @@
 #include "mac.h"
 #endif
 
-void setFrameIcon(wxString iconPath, wxFrame * frame) {
+void setFrameIcon(wxString iconPath, wxFrame *frame) {
     if (!iconPath.IsEmpty()) {
         wxBitmapType imgType = wxICON_DEFAULT_TYPE;
 
-        #ifdef __WXMSW__
-            imgType = wxBITMAP_TYPE_ICO;
-        #endif
+#ifdef __WXMSW__
+        imgType = wxBITMAP_TYPE_ICO;
+#endif
 
         wxIcon icon;
         icon.LoadFile(iconPath, imgType);
@@ -42,8 +42,8 @@ void setFrameIcon(wxString iconPath, wxFrame * frame) {
     }
 }
 
-void Activate(wxFrame * frame) {
-    #ifdef __WXMSW__
+void Activate(wxFrame *frame) {
+#ifdef __WXMSW__
 
     HWND handle = frame->GetHandle();
     if (handle == GetForegroundWindow()) {
@@ -69,14 +69,14 @@ void Activate(wxFrame * frame) {
 
     SetForegroundWindow(handle);
 
-    #endif
-    #ifdef __WXOSX__
+#endif
+#ifdef __WXOSX__
     ActivateApp();
-    #endif
+#endif
 }
 
-void SetupWindowStyle(wxFrame * frame) {
-    #ifdef __WXOSX__
-        SetWindowStyles((NSWindow*) frame->MacGetTopLevelWindowRef());
-    #endif
+void SetupWindowStyle(wxFrame *frame) {
+#ifdef __WXOSX__
+    SetWindowStyles((NSWindow *)frame->MacGetTopLevelWindowRef());
+#endif
 }

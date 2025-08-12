@@ -28,80 +28,80 @@ mod ffi;
 pub struct CocoaAppInfoProvider {}
 
 impl CocoaAppInfoProvider {
-  pub fn new() -> Self {
-    Self {}
-  }
+    pub fn new() -> Self {
+        Self {}
+    }
 }
 
 impl AppInfoProvider for CocoaAppInfoProvider {
-  fn get_info(&self) -> AppInfo {
-    AppInfo {
-      title: self.get_title().or_else(|| self.get_title_fallback()),
-      class: self.get_class(),
-      exec: self.get_exec(),
+    fn get_info(&self) -> AppInfo {
+        AppInfo {
+            title: self.get_title().or_else(|| self.get_title_fallback()),
+            class: self.get_class(),
+            exec: self.get_exec(),
+        }
     }
-  }
 }
 
 impl CocoaAppInfoProvider {
-  fn get_exec(&self) -> Option<String> {
-    let mut buffer: [c_char; 2048] = [0; 2048];
-    if unsafe { info_get_exec(buffer.as_mut_ptr(), (buffer.len() - 1) as i32) } > 0 {
-      let string = unsafe { CStr::from_ptr(buffer.as_ptr()) };
-      let string = string.to_string_lossy();
-      if string.is_empty() {
-        None
-      } else {
-        Some(string.to_string())
-      }
-    } else {
-      None
+    fn get_exec(&self) -> Option<String> {
+        let mut buffer: [c_char; 2048] = [0; 2048];
+        if unsafe { info_get_exec(buffer.as_mut_ptr(), (buffer.len() - 1) as i32) } > 0 {
+            let string = unsafe { CStr::from_ptr(buffer.as_ptr()) };
+            let string = string.to_string_lossy();
+            if string.is_empty() {
+                None
+            } else {
+                Some(string.to_string())
+            }
+        } else {
+            None
+        }
     }
-  }
 
-  fn get_class(&self) -> Option<String> {
-    let mut buffer: [c_char; 2048] = [0; 2048];
-    if unsafe { info_get_class(buffer.as_mut_ptr(), (buffer.len() - 1) as i32) } > 0 {
-      let string = unsafe { CStr::from_ptr(buffer.as_ptr()) };
-      let string = string.to_string_lossy();
-      if string.is_empty() {
-        None
-      } else {
-        Some(string.to_string())
-      }
-    } else {
-      None
+    fn get_class(&self) -> Option<String> {
+        let mut buffer: [c_char; 2048] = [0; 2048];
+        if unsafe { info_get_class(buffer.as_mut_ptr(), (buffer.len() - 1) as i32) } > 0 {
+            let string = unsafe { CStr::from_ptr(buffer.as_ptr()) };
+            let string = string.to_string_lossy();
+            if string.is_empty() {
+                None
+            } else {
+                Some(string.to_string())
+            }
+        } else {
+            None
+        }
     }
-  }
 
-  fn get_title(&self) -> Option<String> {
-    let mut buffer: [c_char; 2048] = [0; 2048];
-    if unsafe { info_get_title(buffer.as_mut_ptr(), (buffer.len() - 1) as i32) } > 0 {
-      let string = unsafe { CStr::from_ptr(buffer.as_ptr()) };
-      let string = string.to_string_lossy();
-      if string.is_empty() {
-        None
-      } else {
-        Some(string.to_string())
-      }
-    } else {
-      None
+    fn get_title(&self) -> Option<String> {
+        let mut buffer: [c_char; 2048] = [0; 2048];
+        if unsafe { info_get_title(buffer.as_mut_ptr(), (buffer.len() - 1) as i32) } > 0 {
+            let string = unsafe { CStr::from_ptr(buffer.as_ptr()) };
+            let string = string.to_string_lossy();
+            if string.is_empty() {
+                None
+            } else {
+                Some(string.to_string())
+            }
+        } else {
+            None
+        }
     }
-  }
 
-  // Fallback using Accessibility API instead of Carbon
-  fn get_title_fallback(&self) -> Option<String> {
-    let mut buffer: [c_char; 2048] = [0; 2048];
-    if unsafe { info_get_title_fallback(buffer.as_mut_ptr(), (buffer.len() - 1) as i32) } > 0 {
-      let string = unsafe { CStr::from_ptr(buffer.as_ptr()) };
-      let string = string.to_string_lossy();
-      if string.is_empty() {
-        None
-      } else {
-        Some(string.to_string())
-      }
-    } else {
-      None
+    // Fallback using Accessibility API instead of Carbon
+    fn get_title_fallback(&self) -> Option<String> {
+        let mut buffer: [c_char; 2048] = [0; 2048];
+        if unsafe { info_get_title_fallback(buffer.as_mut_ptr(), (buffer.len() - 1) as i32) } > 0 {
+            let string = unsafe { CStr::from_ptr(buffer.as_ptr()) };
+            let string = string.to_string_lossy();
+            if string.is_empty() {
+                None
+            } else {
+                Some(string.to_string())
+            }
+        } else {
+            None
+        }
     }
-  }
 }

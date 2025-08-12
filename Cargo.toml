@@ -12,7 +12,6 @@ members = [
   "espanso-clipboard",
   "espanso-render",
   "espanso-info",
-  "espanso-path",
   "espanso-modulo",
   "espanso-mac-utils",
   "espanso-kvs",
@@ -21,46 +20,56 @@ members = [
 ]
 
 [workspace.lints.clippy]
-too_many_lines = "allow"
-needless_pass_by_value = "allow"
+enum_glob_use = "deny"
+semicolon_if_nothing_returned = "deny"
+wildcard_imports = "deny"
+
+as_conversions = "allow"
+borrow_as_ptr = "allow"
+cast_lossless = "allow"
+cast_possible_truncation = "allow"
+cast_possible_wrap = "allow"
+cast_sign_loss = "allow"
+items_after_statements = "allow"
+match_same_arms = "allow"
 missing_errors_doc = "allow"
 missing_panics_doc = "allow"
-cast_possible_wrap = "allow"
 module_name_repetitions = "allow"
-match_same_arms = "allow"
-unnecessary_wraps = "allow"
-cast_possible_truncation = "allow"
-cast_sign_loss = "allow"
-cast_lossless = "allow"
-ptr_as_ptr = "allow"
-as_conversions = "allow"
-used_underscore_binding = "allow"
-no_effect_underscore_binding = "allow"
-borrow_as_ptr = "allow"
 must_use_candidate = "allow"
+needless_pass_by_value = "allow"
+no_effect_underscore_binding = "allow"
+ptr_as_ptr = "allow"
 similar_names = "allow"
 struct_excessive_bools = "allow"
-wildcard_imports = "allow"
-items_after_statements = "allow"
 struct_field_names = "allow"
+too_many_lines = "allow"
+unnecessary_wraps = "allow"
 unused_self = "allow"
+used_underscore_binding = "allow"
+
 pedantic = { level = "warn", priority = -2 }
 
 [workspace.dependencies]
 anyhow = "1.0.38"
-cc = "1.0.73"
+cc = "1.2.30"
 crossbeam = "0.8.0"
 dirs = "3.0.1"
 enum-as-inner = "0.6.0"
 fs_extra = "1.3.0"
 glob = "0.3.0"
-lazy_static = "1.5.0"
 lazycell = "1.3.0"
 log = "0.4.14"
+notify-rust = "4.11.7"
 regex = "1.5.5"
 serde = { version = "1.0.123", features = ["derive"] }
 serde_json = "1.0.62"
 serde_yaml = "0.8.17"
+tauri-winrt-notification = "0.7.2"
 tempdir = "0.3.7"
 thiserror = "1.0.23"
+walkdir = "2.3.1"
 widestring = "0.4.3"
+windows = { version = "0.61.1", features = [
+  "Win32_UI_WindowsAndMessaging",
+  "Win32_System_Console",
+] }

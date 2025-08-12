@@ -25,52 +25,52 @@
 clip::format html_format = clip::register_format("text/html");
 clip::format png_format = clip::register_format("image/png");
 
-int32_t clipboard_x11_get_text(char * buffer, int32_t buffer_size) {
-  std::string value;
-  if (!clip::get_text(value)) {
-    return 0;
-  }
+int32_t clipboard_x11_get_text(char *buffer, int32_t buffer_size) {
+    std::string value;
+    if (!clip::get_text(value)) {
+        return 0;
+    }
 
-  if (value.length() == 0) {
-    return 0;
-  }
+    if (value.length() == 0) {
+        return 0;
+    }
 
-  strncpy(buffer, value.c_str(), buffer_size - 1);
-  return 1;
-}
-
-int32_t clipboard_x11_set_text(char * text) {
-  if (!clip::set_text(text)) {
-    return 0;
-  } else {
+    strncpy(buffer, value.c_str(), buffer_size - 1);
     return 1;
-  }
 }
 
-int32_t clipboard_x11_set_html(char * html, char * fallback_text) {
-  clip::lock l;
-  if (!l.clear()) {
-    return 0;
-  }
-  if (!l.set_data(html_format, html, strlen(html))) {
-    return 0;
-  }
-  if (fallback_text) {
-    // Best effort to set the fallback
-    l.set_data(clip::text_format(), fallback_text, strlen(fallback_text));
-  }
-  return 1;
+int32_t clipboard_x11_set_text(char *text) {
+    if (!clip::set_text(text)) {
+        return 0;
+    } else {
+        return 1;
+    }
 }
 
-int32_t clipboard_x11_set_image(char * buffer, int32_t size) {
-  clip::lock l;
-  if (!l.clear()) {
-    return 0;
-  }
+int32_t clipboard_x11_set_html(char *html, char *fallback_text) {
+    clip::lock l;
+    if (!l.clear()) {
+        return 0;
+    }
+    if (!l.set_data(html_format, html, strlen(html))) {
+        return 0;
+    }
+    if (fallback_text) {
+        // Best effort to set the fallback
+        l.set_data(clip::text_format(), fallback_text, strlen(fallback_text));
+    }
+    return 1;
+}
 
-  if (!l.set_data(png_format, buffer, size)) {
-    return 0;
-  }
+int32_t clipboard_x11_set_image(char *buffer, int32_t size) {
+    clip::lock l;
+    if (!l.clear()) {
+        return 0;
+    }
 
-  return 1;
+    if (!l.set_data(png_format, buffer, size)) {
+        return 0;
+    }
+
+    return 1;
 }

@@ -18,12 +18,12 @@
  */
 
 #include "native.h"
+#include <array>
 #include <iostream>
+#include <memory>
 #include <stdio.h>
 #include <string>
 #include <vector>
-#include <memory>
-#include <array>
 
 #define UNICODE
 
@@ -34,139 +34,129 @@
 #define STRSAFE_NO_DEPRECATE
 #endif
 
+#include <Windows.h>
+#include <strsafe.h>
 #include <windows.h>
 #include <winuser.h>
-#include <strsafe.h>
-#include <Windows.h>
 
-void inject_string(wchar_t *string)
-{
-  std::wstring msg(string);
+void inject_string(wchar_t *string) {
+    std::wstring msg(string);
 
-  std::vector<INPUT> vec;
-  for (auto ch : msg)
-  {
-    INPUT input = {0};
-    input.type = INPUT_KEYBOARD;
-    input.ki.dwFlags = KEYEVENTF_UNICODE;
-    input.ki.wScan = ch;
-    vec.push_back(input);
+    std::vector<INPUT> vec;
+    for (auto ch : msg) {
+        INPUT input = {0};
+        input.type = INPUT_KEYBOARD;
+        input.ki.dwFlags = KEYEVENTF_UNICODE;
+        input.ki.wScan = ch;
+        vec.push_back(input);
 
-    input.ki.dwFlags |= KEYEVENTF_KEYUP;
-    vec.push_back(input);
-  }
+        input.ki.dwFlags |= KEYEVENTF_KEYUP;
+        vec.push_back(input);
+    }
 
-  SendInput(vec.size(), vec.data(), sizeof(INPUT));
+    SendInput(vec.size(), vec.data(), sizeof(INPUT));
 }
 
-void inject_separate_vkeys(int32_t *vkey_array, int32_t vkey_count)
-{
-  std::vector<INPUT> vec;
+void inject_separate_vkeys(int32_t *vkey_array, int32_t vkey_count) {
+    std::vector<INPUT> vec;
 
-  for (int i = 0; i < vkey_count; i++)
-  {
-    INPUT input = {0};
+    for (int i = 0; i < vkey_count; i++) {
+        INPUT input = {0};
 
-    input.type = INPUT_KEYBOARD;
-    input.ki.wScan = 0;
-    input.ki.time = 0;
-    input.ki.dwExtraInfo = 0;
-    input.ki.wVk = vkey_array[i];
-    input.ki.dwFlags = 0; // 0 for key press
-    vec.push_back(input);
+        input.type = INPUT_KEYBOARD;
+        input.ki.wScan = 0;
+        input.ki.time = 0;
+        input.ki.dwExtraInfo = 0;
+        input.ki.wVk = vkey_array[i];
+        input.ki.dwFlags = 0; // 0 for key press
+        vec.push_back(input);
 
-    input.ki.dwFlags = KEYEVENTF_KEYUP;
-    vec.push_back(input);
-  }
+        input.ki.dwFlags = KEYEVENTF_KEYUP;
+        vec.push_back(input);
+    }
 
-  SendInput(vec.size(), vec.data(), sizeof(INPUT));
+    SendInput(vec.size(), vec.data(), sizeof(INPUT));
 }
 
-void inject_vkeys_combination(int32_t *vkey_array, int32_t vkey_count)
-{
-  std::vector<INPUT> vec;
+void inject_vkeys_combination(int32_t *vkey_array, int32_t vkey_count) {
+    std::vector<INPUT> vec;
 
-  // First send the presses
-  for (int i = 0; i < vkey_count; i++)
-  {
-    INPUT input = {0};
-    input.type = INPUT_KEYBOARD;
-    input.ki.wScan = 0;
-    input.ki.time = 0;
-    input.ki.dwExtraInfo = 0;
-    input.ki.wVk = vkey_array[i];
-    input.ki.dwFlags = 0;
-    vec.push_back(input);
-  }
+    // First send the presses
+    for (int i = 0; i < vkey_count; i++) {
+        INPUT input = {0};
+        input.type = INPUT_KEYBOARD;
+        input.ki.wScan = 0;
+        input.ki.time = 0;
+        input.ki.dwExtraInfo = 0;
+        input.ki.wVk = vkey_array[i];
+        input.ki.dwFlags = 0;
+        vec.push_back(input);
+    }
 
-  // Then the releases
-  for (int i = (vkey_count - 1); i >= 0; i--)
-  {
-    INPUT input = {0};
-    input.type = INPUT_KEYBOARD;
-    input.ki.wScan = 0;
-    input.ki.time = 0;
-    input.ki.dwExtraInfo = 0;
-    input.ki.wVk = vkey_array[i];
-    input.ki.dwFlags = KEYEVENTF_KEYUP;
-    vec.push_back(input);
-  }
+    // Then the releases
+    for (int i = (vkey_count - 1); i >= 0; i--) {
+        INPUT input = {0};
+        input.type = INPUT_KEYBOARD;
+        input.ki.wScan = 0;
+        input.ki.time = 0;
+        input.ki.dwExtraInfo = 0;
+        input.ki.wVk = vkey_array[i];
+        input.ki.dwFlags = KEYEVENTF_KEYUP;
+        vec.push_back(input);
+    }
 
-  SendInput(vec.size(), vec.data(), sizeof(INPUT));
+    SendInput(vec.size(), vec.data(), sizeof(INPUT));
 }
 
-void inject_separate_vkeys_with_delay(int32_t *vkey_array, int32_t vkey_count, int32_t delay)
-{
-  for (int i = 0; i < vkey_count; i++)
-  {
-    INPUT input = {0};
+void inject_separate_vkeys_with_delay(int32_t *vkey_array, int32_t vkey_count,
+                                      int32_t delay) {
+    for (int i = 0; i < vkey_count; i++) {
+        INPUT input = {0};
 
-    input.type = INPUT_KEYBOARD;
-    input.ki.wScan = 0;
-    input.ki.time = 0;
-    input.ki.dwExtraInfo = 0;
-    input.ki.wVk = vkey_array[i];
-    input.ki.dwFlags = 0; // 0 for key press
-    SendInput(1, &input, sizeof(INPUT));
+        input.type = INPUT_KEYBOARD;
+        input.ki.wScan = 0;
+        input.ki.time = 0;
+        input.ki.dwExtraInfo = 0;
+        input.ki.wVk = vkey_array[i];
+        input.ki.dwFlags = 0; // 0 for key press
+        SendInput(1, &input, sizeof(INPUT));
 
-    Sleep(delay);
+        Sleep(delay);
 
-    input.ki.dwFlags = KEYEVENTF_KEYUP; // KEYEVENTF_KEYUP for key release
-    SendInput(1, &input, sizeof(INPUT));
+        input.ki.dwFlags = KEYEVENTF_KEYUP; // KEYEVENTF_KEYUP for key release
+        SendInput(1, &input, sizeof(INPUT));
 
-    Sleep(delay);
-  }
+        Sleep(delay);
+    }
 }
 
-void inject_vkeys_combination_with_delay(int32_t *vkey_array, int32_t vkey_count, int32_t delay)
-{
-  // First send the presses
-  for (int i = 0; i < vkey_count; i++)
-  {
-    INPUT input = {0};
-    input.type = INPUT_KEYBOARD;
-    input.ki.wScan = 0;
-    input.ki.time = 0;
-    input.ki.dwExtraInfo = 0;
-    input.ki.wVk = vkey_array[i];
-    input.ki.dwFlags = 0;
-    
-    SendInput(1, &input, sizeof(INPUT));
-    Sleep(delay);
-  }
+void inject_vkeys_combination_with_delay(int32_t *vkey_array,
+                                         int32_t vkey_count, int32_t delay) {
+    // First send the presses
+    for (int i = 0; i < vkey_count; i++) {
+        INPUT input = {0};
+        input.type = INPUT_KEYBOARD;
+        input.ki.wScan = 0;
+        input.ki.time = 0;
+        input.ki.dwExtraInfo = 0;
+        input.ki.wVk = vkey_array[i];
+        input.ki.dwFlags = 0;
 
-  // Then the releases
-  for (int i = (vkey_count - 1); i >= 0; i--)
-  {
-    INPUT input = {0};
-    input.type = INPUT_KEYBOARD;
-    input.ki.wScan = 0;
-    input.ki.time = 0;
-    input.ki.dwExtraInfo = 0;
-    input.ki.wVk = vkey_array[i];
-    input.ki.dwFlags = KEYEVENTF_KEYUP;
+        SendInput(1, &input, sizeof(INPUT));
+        Sleep(delay);
+    }
 
-    SendInput(1, &input, sizeof(INPUT));
-    Sleep(delay);
-  }
+    // Then the releases
+    for (int i = (vkey_count - 1); i >= 0; i--) {
+        INPUT input = {0};
+        input.type = INPUT_KEYBOARD;
+        input.ki.wScan = 0;
+        input.ki.time = 0;
+        input.ki.dwExtraInfo = 0;
+        input.ki.wVk = vkey_array[i];
+        input.ki.dwFlags = KEYEVENTF_KEYUP;
+
+        SendInput(1, &input, sizeof(INPUT));
+        Sleep(delay);
+    }
 }

@@ -23,61 +23,62 @@
 #include <stdint.h>
 
 #define INPUT_EVENT_TYPE_KEYBOARD 1
-#define INPUT_EVENT_TYPE_MOUSE    2
-#define INPUT_EVENT_TYPE_HOTKEY   3
+#define INPUT_EVENT_TYPE_MOUSE 2
+#define INPUT_EVENT_TYPE_HOTKEY 3
 
-#define INPUT_STATUS_PRESSED      1
-#define INPUT_STATUS_RELEASED     2
+#define INPUT_STATUS_PRESSED 1
+#define INPUT_STATUS_RELEASED 2
 
 #define INPUT_LEFT_VARIANT 1
 #define INPUT_RIGHT_VARIANT 2
 
-#define INPUT_MOUSE_LEFT_BUTTON   1
-#define INPUT_MOUSE_RIGHT_BUTTON  2
+#define INPUT_MOUSE_LEFT_BUTTON 1
+#define INPUT_MOUSE_RIGHT_BUTTON 2
 #define INPUT_MOUSE_MIDDLE_BUTTON 3
 
 typedef struct {
-  // Keyboard, Mouse or Hotkey event
-  int32_t event_type;
+    // Keyboard, Mouse or Hotkey event
+    int32_t event_type;
 
-  // Contains the string corresponding to the key, if any
-  char buffer[24];
-  // Length of the extracted string. Equals 0 if no string is extracted
-  int32_t buffer_len;
-  
-  // Virtual key code of the pressed key in case of keyboard events
-  // Mouse button code if mouse_event.
-  // Hotkey ID in case of hotkeys
-  int32_t key_code;
-  
-  // Pressed or Released status
-  int32_t status;
+    // Contains the string corresponding to the key, if any
+    char buffer[24];
+    // Length of the extracted string. Equals 0 if no string is extracted
+    int32_t buffer_len;
 
-  // Modifier keys status, this is needed to "correct" missing modifier release events.
-  // For more info, see the following issues:
-  // https://github.com/espanso/espanso/issues/825
-  // https://github.com/espanso/espanso/issues/858
-  int32_t is_caps_lock_pressed;
-  int32_t is_shift_pressed;
-  int32_t is_control_pressed;
-  int32_t is_option_pressed;
-  int32_t is_command_pressed;
+    // Virtual key code of the pressed key in case of keyboard events
+    // Mouse button code if mouse_event.
+    // Hotkey ID in case of hotkeys
+    int32_t key_code;
+
+    // Pressed or Released status
+    int32_t status;
+
+    // Modifier keys status, this is needed to "correct" missing modifier
+    // release events. For more info, see the following issues:
+    // https://github.com/espanso/espanso/issues/825
+    // https://github.com/espanso/espanso/issues/858
+    int32_t is_caps_lock_pressed;
+    int32_t is_shift_pressed;
+    int32_t is_control_pressed;
+    int32_t is_option_pressed;
+    int32_t is_command_pressed;
 } InputEvent;
 
 typedef void (*EventCallback)(InputEvent data);
 
 typedef struct {
-  int32_t hk_id;
-  uint16_t key_code;
-  uint32_t flags;
+    int32_t hk_id;
+    uint16_t key_code;
+    uint32_t flags;
 } HotKey;
 
 typedef struct {
-  HotKey *hotkeys;
-  int32_t hotkeys_count;
+    HotKey *hotkeys;
+    int32_t hotkeys_count;
 } InitializeOptions;
 
 // Initialize the event global monitor
-extern "C" void * detect_initialize(EventCallback callback, InitializeOptions options);
+extern "C" void *detect_initialize(EventCallback callback,
+                                   InitializeOptions options);
 
-#endif //ESPANSO_DETECT_H
+#endif // ESPANSO_DETECT_H

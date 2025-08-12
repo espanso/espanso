@@ -12,6 +12,7 @@ wayland = []
 [dependencies]
 log.workspace = true
 anyhow.workspace = true
+espanso-package = { path = "../espanso-package" }
 
 [lints]
 workspace = true

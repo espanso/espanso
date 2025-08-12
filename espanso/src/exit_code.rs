@@ -49,9 +49,7 @@ pub const WORKAROUND_FAILURE: i32 = 1;
 #[allow(dead_code)]
 pub const WORKAROUND_NOT_AVAILABLE: i32 = 2;
 
-#[allow(dead_code)]
 pub const PACKAGE_SUCCESS: i32 = 0;
-#[allow(dead_code)]
 pub const PACKAGE_UNEXPECTED_FAILURE: i32 = 1;
 pub const PACKAGE_INSTALL_FAILED: i32 = 2;
 pub const PACKAGE_UNINSTALL_FAILED: i32 = 3;
@@ -64,35 +62,35 @@ pub const UNEXPECTED_RUN_AS_ROOT: i32 = 42;
 
 use crate::error_eprintln;
 
-pub fn configure_custom_panic_hook() {
-  let previous_hook = std::panic::take_hook();
-  std::panic::set_hook(Box::new(move |info| {
-    (*previous_hook)(info);
+pub fn configure_custom_panic_hook(fail_exit_code: i32) {
+    let previous_hook = std::panic::take_hook();
+    std::panic::set_hook(Box::new(move |info| {
+        (*previous_hook)(info);
 
-    // Part of this code is taken from the "rust-log-panics" crate
-    let thread = std::thread::current();
-    let thread = thread.name().unwrap_or("<unnamed>");
+        // Part of this code is taken from the "rust-log-panics" crate
+        let thread = std::thread::current();
+        let thread = thread.name().unwrap_or("<unnamed>");
 
-    let msg = match info.payload().downcast_ref::<&'static str>() {
-      Some(s) => *s,
-      None => match info.payload().downcast_ref::<String>() {
-        Some(s) => &**s,
-        None => "Box<Any>",
-      },
-    };
+        let msg = match info.payload().downcast_ref::<&'static str>() {
+            Some(s) => *s,
+            None => match info.payload().downcast_ref::<String>() {
+                Some(s) => &**s,
+                None => "Box<Any>",
+            },
+        };
 
-    if let Some(location) = info.location() {
-      error_eprintln!(
-        "ERROR: '{}' panicked at '{}': {}:{}",
-        thread,
-        msg,
-        location.file(),
-        location.line(),
-      );
-    } else {
-      error_eprintln!("ERROR: '{}' panicked at '{}'", thread, msg);
-    }
+        if let Some(location) = info.location() {
+            error_eprintln!(
+                "ERROR: '{}' panicked at '{}': {}:{}",
+                thread,
+                msg,
+                location.file(),
+                location.line(),
+            );
+        } else {
+            error_eprintln!("ERROR: '{}' panicked at '{}'", thread, msg);
+        }
 
-    std::process::exit(52); // MIGRATE_UNEXPECTED_FAILURE
-  }));
+        std::process::exit(fail_exit_code);
+    }));
 }

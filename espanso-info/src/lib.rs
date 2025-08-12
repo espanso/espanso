@@ -35,38 +35,87 @@ mod wayland;
 mod cocoa;
 
 pub trait AppInfoProvider {
-  fn get_info(&self) -> AppInfo;
+    fn get_info(&self) -> AppInfo;
 }
 
 #[derive(Debug, Clone)]
 pub struct AppInfo {
-  pub title: Option<String>,
-  pub exec: Option<String>,
-  pub class: Option<String>,
+    pub title: Option<String>,
+    pub exec: Option<String>,
+    pub class: Option<String>,
 }
 
 #[cfg(target_os = "windows")]
 pub fn get_provider() -> Result<Box<dyn AppInfoProvider>> {
-  info!("using Win32AppInfoProvider");
-  Ok(Box::new(win32::WinAppInfoProvider::new()))
+    info!("using Win32AppInfoProvider");
+    Ok(Box::new(win32::WinAppInfoProvider::new()))
 }
 
 #[cfg(target_os = "macos")]
 pub fn get_provider() -> Result<Box<dyn AppInfoProvider>> {
-  info!("using CocoaAppInfoProvider");
-  Ok(Box::new(cocoa::CocoaAppInfoProvider::new()))
+    info!("using CocoaAppInfoProvider");
+    Ok(Box::new(cocoa::CocoaAppInfoProvider::new()))
 }
 
 #[cfg(target_os = "linux")]
 #[cfg(not(feature = "wayland"))]
 pub fn get_provider() -> Result<Box<dyn AppInfoProvider>> {
-  info!("using X11AppInfoProvider");
-  Ok(Box::new(x11::X11AppInfoProvider::new()))
+    info!("using X11AppInfoProvider");
+    Ok(Box::new(x11::X11AppInfoProvider::new()))
 }
 
 #[cfg(target_os = "linux")]
 #[cfg(feature = "wayland")]
+#[allow(clippy::match_str_case_mismatch)]
 pub fn get_provider() -> Result<Box<dyn AppInfoProvider>> {
-  info!("using WaylandAppInfoProvider");
-  Ok(Box::new(wayland::WaylandAppInfoProvider::new()))
+    use std::env;
+
+    if let Ok(value) = env::var("XDG_SESSION_DESKTOP") {
+        match value.to_lowercase().as_str() {
+            "niri" => {
+                info!("using WaylandNiriAppInfoProvider");
+                return Ok(Box::new(wayland::WaylandNiriAppInfoProvider::new()));
+            }
+            "kde" => {
+                // try to invoke `kdotool` to see if you have it or not.
+                use std::process::Command;
+                if Command::new("kdotool")
+                    .arg("getactivewindow")
+                    .arg("getwindowclassname")
+                    .output()
+                    .is_ok()
+                {
+                    info!("using WaylandKDEAppInfoProvider");
+                    return Ok(Box::new(wayland::WaylandKDEAppInfoProvider::new()));
+                }
+                info!("kdotool missing or not available for the current wayland DE.");
+                // since we dont have `kdotool` anyway, just output empty info
+            }
+            _ => {}
+        }
+    }
+
+    info!("no appropriate WaylandAppInfoProvider found for current DE/WM");
+    Ok(Box::new(wayland::WaylandEmptyAppInfoProvider::new()))
+}
+
+#[cfg(target_os = "windows")]
+use std::sync::atomic::{AtomicUsize, Ordering::SeqCst};
+#[cfg(target_os = "windows")]
+static EXPANSION_NUM_EVENTS_REMAINING: AtomicUsize = AtomicUsize::new(0);
+#[cfg(target_os = "windows")]
+pub fn add_expansion_events(ev_count: usize) {
+    EXPANSION_NUM_EVENTS_REMAINING.fetch_add(ev_count, SeqCst);
+}
+#[cfg(target_os = "windows")]
+pub fn decr_expansion_events() {
+    if EXPANSION_NUM_EVENTS_REMAINING.fetch_sub(1, SeqCst) == 0 {
+        // Defensively do saturating subtract. Events may have been added, so can't unconditionally
+        // store 0.
+        let _ = EXPANSION_NUM_EVENTS_REMAINING.compare_exchange(usize::MAX, 0, SeqCst, SeqCst);
+    }
+}
+#[cfg(target_os = "windows")]
+pub fn expansion_is_in_progress() -> bool {
+    EXPANSION_NUM_EVENTS_REMAINING.load(SeqCst) > 0
 }

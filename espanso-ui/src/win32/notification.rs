@@ -18,46 +18,46 @@
  */
 
 use std::{
-  path::PathBuf,
-  sync::{
-    mpsc::{channel, Sender},
-    Arc, Mutex,
-  },
+    path::PathBuf,
+    sync::{
+        mpsc::{channel, Sender},
+        Arc, Mutex,
+    },
 };
 
 use anyhow::{anyhow, bail, Result};
-use lazy_static::lazy_static;
 use log::{error, warn};
 use std::os::windows::process::CommandExt;
 use std::process::Command;
-use winrt_notification::{IconCrop, Toast};
+use std::sync::LazyLock;
+use tauri_winrt_notification::{IconCrop, Toast};
 
 const ESPANSO_APP_USER_MODEL_ID: &str = "{5E3B6C0F-1A4D-45C4-8872-D8174702101A}";
 
-lazy_static! {
-  static ref SEND_CHANNEL: Arc<Mutex<Option<Sender<String>>>> = Arc::new(Mutex::new(None));
-}
+static SEND_CHANNEL: LazyLock<Arc<Mutex<Option<Sender<String>>>>> =
+    LazyLock::new(|| Arc::new(Mutex::new(None)));
 
 pub fn initialize_notification_thread(notification_icon_path: PathBuf) -> Result<()> {
-  let (sender, receiver) = channel::<String>();
+    let (sender, receiver) = channel::<String>();
 
-  {
-    let mut lock = SEND_CHANNEL
-      .lock()
-      .map_err(|e| anyhow!("failed to define shared notification sender: {}", e))?;
-    *lock = Some(sender);
-  }
+    {
+        let mut lock = SEND_CHANNEL
+            .lock()
+            .map_err(|e| anyhow!("failed to define shared notification sender: {}", e))?;
+        *lock = Some(sender);
+    }
 
-  std::thread::Builder::new().name("notification-thread".to_string()).spawn(move || {
+    std::thread::Builder::new().name("notification-thread".to_string()).spawn(move || {
     // First determine which AppUserModelID we can use
-    lazy_static! {
-      static ref APP_USER_MODEL_ID: &'static str = if is_espanso_app_user_model_id_set() {
+      static APP_USER_MODEL_ID: LazyLock<&'static str> = LazyLock::new(||
+      if is_espanso_app_user_model_id_set() {
         ESPANSO_APP_USER_MODEL_ID
       } else {
         warn!("unable to find espanso AppUserModelID in the list of registered ones, falling back to Powershell");
         Toast::POWERSHELL_APP_ID
-      };
-    }
+      }
+    );
+
 
     while let Ok(message) = receiver.recv() {
       if let Err(err) = Toast::new(&APP_USER_MODEL_ID)
@@ -72,41 +72,41 @@ pub fn initialize_notification_thread(notification_icon_path: PathBuf) -> Result
     }
   })?;
 
-  Ok(())
+    Ok(())
 }
 
 pub fn show_notification(msg: &str) -> Result<()> {
-  let mut lock = SEND_CHANNEL
-    .lock()
-    .map_err(|e| anyhow!("unable to acquire notification send channel: {}", e))?;
-  match &mut *lock {
-    Some(sender) => {
-      sender.send(msg.to_string())?;
-      Ok(())
+    let mut lock = SEND_CHANNEL
+        .lock()
+        .map_err(|e| anyhow!("unable to acquire notification send channel: {}", e))?;
+    match &mut *lock {
+        Some(sender) => {
+            sender.send(msg.to_string())?;
+            Ok(())
+        }
+        None => bail!("notification sender not available"),
     }
-    None => bail!("notification sender not available"),
-  }
 }
 
 fn is_espanso_app_user_model_id_set() -> bool {
-  match Command::new("powershell")
-    .args(["-c", "get-startapps"])
-    .creation_flags(0x0800_0000)
-    .output()
-  {
-    Ok(output) => {
-      let output_str = String::from_utf8_lossy(&output.stdout);
-      // Check if espanso is present
-      output_str
-        .lines()
-        .any(|line| line.contains(ESPANSO_APP_USER_MODEL_ID))
+    match Command::new("powershell")
+        .args(["-c", "get-startapps"])
+        .creation_flags(0x0800_0000)
+        .output()
+    {
+        Ok(output) => {
+            let output_str = String::from_utf8_lossy(&output.stdout);
+            // Check if espanso is present
+            output_str
+                .lines()
+                .any(|line| line.contains(ESPANSO_APP_USER_MODEL_ID))
+        }
+        Err(err) => {
+            error!(
+                "unable to determine if AppUserModelID was registered: {}",
+                err
+            );
+            false
+        }
     }
-    Err(err) => {
-      error!(
-        "unable to determine if AppUserModelID was registered: {}",
-        err
-      );
-      false
-    }
-  }
 }

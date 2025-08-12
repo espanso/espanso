@@ -23,33 +23,33 @@ use std::{fs::File, io::BufReader};
 use super::{CliModule, CliModuleArgs};
 
 pub fn new() -> CliModule {
-  CliModule {
-    requires_paths: true,
-    subcommand: "log".to_string(),
-    entry: log_main,
-    ..Default::default()
-  }
+    CliModule {
+        requires_paths: true,
+        subcommand: "log".to_string(),
+        entry: log_main,
+        ..Default::default()
+    }
 }
 
 fn log_main(args: CliModuleArgs) -> i32 {
-  let paths = args.paths.expect("missing paths argument");
-  let log_file = paths.runtime.join(crate::LOG_FILE_NAME);
+    let paths = args.paths.expect("missing paths argument");
+    let log_file = paths.runtime.join(crate::LOG_FILE_NAME);
 
-  if !log_file.exists() {
-    eprintln!("No log file found.");
-    return 2;
-  }
-
-  let log_file = File::open(log_file);
-  if let Ok(log_file) = log_file {
-    let reader = BufReader::new(log_file);
-    for line in reader.lines().map_while(Result::ok) {
-      println!("{line}");
+    if !log_file.exists() {
+        eprintln!("No log file found.");
+        return 2;
     }
-  } else {
-    eprintln!("Error reading log file");
-    return 1;
-  }
 
-  0
+    let log_file = File::open(log_file);
+    if let Ok(log_file) = log_file {
+        let reader = BufReader::new(log_file);
+        for line in reader.lines().map_while(Result::ok) {
+            println!("{line}");
+        }
+    } else {
+        eprintln!("Error reading log file");
+        return 1;
+    }
+
+    0
 }

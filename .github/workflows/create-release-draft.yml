@@ -6,20 +6,38 @@ env:
   GH_TOKEN: ${{ github.token }}
 
 jobs:
+  set-context:
+    continue-on-error: false
+    env:
+      GITHUB_REF: ${{ github.ref_name }}
+      GITHUB_CONTEXT: ${{ toJson(github) }}
+      SET_RELEASE_VERSION: ${{ github.event.inputs.set-release-version }}
+    name: set-context
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check trigger branch
+        run: |
+          if [ $(echo "${GITHUB_REF}" | grep -Ec "^refs/heads/dev$") -eq 1 ] ; then
+            echo "  - ✅ The branch triggering this workflow is ${GITHUB_REF}."
+          else
+            echo "  - ❌ The branch triggering this workflow is ${GITHUB_REF} instead of refs/heads/dev"
+            exit 1
+          fi
   extract-version:
     name: extract-version
+    needs: "set-context"
     continue-on-error: false
     runs-on: ubuntu-latest
     outputs:
       espanso_version: ${{ steps.version.outputs.version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@main
       - name: "Extract version"
         id: "version"
         run: |
           ESPANSO_VERSION=$(grep '^version' espanso/Cargo.toml | awk -F '"' '{ print $2 }')
           echo version: $ESPANSO_VERSION
-          echo "::set-output name=version::v$ESPANSO_VERSION"
+          echo "version=v${ESPANSO_VERSION}" >> "${GITHUB_OUTPUT}"
         # example output: v2.2.1
 
   create-release:
@@ -28,7 +46,7 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: false
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@main
       - name: Create new release
         # gh release create docs: https://cli.github.com/manual/gh_release_create
         run: |
@@ -41,7 +59,7 @@ jobs:
             --verify-tag \
             --prerelease \
             --target $COMMIT_HASH
-  
+
   windows:
     needs: ["extract-version", "create-release"]
     runs-on: windows-latest
@@ -52,60 +70,63 @@ jobs:
         shell: bash
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@main
       - name: Print target version
         run: |
           echo Using version ${{ needs.extract-version.outputs.espanso_version }}
-      - name: Install rust-script and cargo-make
+      - name: Build
         run: |
-          cargo install rust-script
-          cargo install --force cargo-make --version 0.37.5
+          cargo build \
+            -p espanso \
+            --no-default-features \
+            --features modulo,native-tls \
+            --release
       - name: Test
-        run: cargo make --profile release -- test-binary
+        run: |
+          cargo test \
+            --release \
+            --workspace \
+            --exclude espanso-modulo \
+            --exclude espanso-ipc \
+            --no-default-features \
+            --features native-tls
       - name: Build resources
-        run: cargo make --profile release -- build-windows-resources
+        shell: pwsh
+        run: |
+          $env:EXEC_PATH = "target\release\espanso.exe"
+          scripts\build_windows_resources.ps1
       - name: Build installer
-        run: cargo make --profile release --skip-tasks build-windows-resources -- build-windows-installer
-      - name: Build portable mode archive 
-        run: cargo make --profile release --skip-tasks build-windows-resources -- build-windows-portable
-      - name: Create portable mode archive
-        shell: powershell
+        shell: pwsh
         run: |
-          Rename-Item -Path target/windows/portable -NewName espanso-portable
-          Compress-Archive -Path target/windows/espanso-portable Espanso-Win-Portable-x86_64.zip
-      - name: Calculate hashes
-        shell: powershell
+          Install-Module -Name 'PSTOML' -Force
+          scripts\build_windows_installer.ps1
+      - name: Build portable mode archive
+        shell: pwsh
         run: |
-          Get-FileHash Espanso-Win-Portable-x86_64.zip -Algorithm SHA256 | select-object -ExpandProperty Hash > Espanso-Win-Portable-x86_64.zip.sha256.txt
-          Move-Item -Path .\target\windows\installer\Espanso-Win-Installer-x86_64.exe -Destination Espanso-Win-Installer-x86_64.exe
-          Get-FileHash Espanso-Win-Installer-x86_64.exe -Algorithm SHA256 | select-object -ExpandProperty Hash > Espanso-Win-Installer-x86_64.exe.sha256.txt
-      - uses: actions/upload-artifact@v4
+          scripts\build_windows_portable.ps1
+      - uses: actions/upload-artifact@main
         id: upload-artifact-windows
         name: upload-unsigned-artifact
         with:
           name: Windows Artifacts
           path: |
-            .\Espanso-Win-Installer-x86_64.exe
-            .\Espanso-Win-Portable-x86_64.zip
+            target/windows/Espanso-Win-Installer-x86_64.exe
+            target/windows/Espanso-Win-Portable-x86_64.zip
       - id: sign-windows-release
         uses: signpath/github-action-submit-signing-request@v1
         with:
-          api-token: '${{ secrets.SIGNPATH_API_TOKEN }}'
-          organization-id: 'e86b1459-62fc-4c7c-aac9-185d60749a03'
-          project-slug: 'espanso'
-          signing-policy-slug: 'test-signing'
+          api-token: "${{ secrets.SIGNPATH_API_TOKEN }}"
+          organization-id: "e86b1459-62fc-4c7c-aac9-185d60749a03"
+          project-slug: "espanso"
+          signing-policy-slug: "release-signing"
           github-artifact-id: ${{ steps.upload-artifact-windows.outputs.artifact-id }}
           wait-for-completion: true
-          output-artifact-directory: '.'
+          output-artifact-directory: "."
           parameters: |
             version: "${{ needs.extract-version.outputs.espanso_version }}"
-      - name: 'DEBUG: List items of ./'
-        shell: powershell
-        run: |
-          Get-ChildItem .
       - name: Upload artifacts to Github Releases
         run: |
-          gh release upload ${{ needs.extract-version.outputs.espanso_version }} Espanso-Win-Installer-x86_64.exe Espanso-Win-Portable-x86_64.zip Espanso-Win-Installer-x86_64.exe.sha256.txt Espanso-Win-Portable-x86_64.zip.sha256.txt
+          gh release upload ${{ needs.extract-version.outputs.espanso_version }} Espanso-Win-Installer-x86_64.exe Espanso-Win-Portable-x86_64.zip
 
   linux-x11:
     needs: ["extract-version", "create-release"]
@@ -113,7 +134,7 @@ jobs:
     continue-on-error: false
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@main
       - name: Print target version
         run: |
           echo Using version ${{ needs.extract-version.outputs.espanso_version }}
@@ -123,24 +144,23 @@ jobs:
       - name: Build AppImage
         run: |
           sudo docker run --rm -v "$(pwd):/shared" espanso-ubuntu espanso/.github/scripts/ubuntu/build_appimage.sh
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@main
         name: upload-unsigned-artifact
         with:
-          name: Linux X11 Artifacts
+          name: Linux X11 AppImage Artifact
           path: |
             Espanso-X11.AppImage
-            Espanso-X11.AppImage.sha256.txt
       - name: Upload artifacts to Github Releases
         run: |
-          gh release upload ${{ needs.extract-version.outputs.espanso_version }} Espanso-X11.AppImage Espanso-X11.AppImage.sha256.txt
-  
+          gh release upload ${{ needs.extract-version.outputs.espanso_version }} Espanso-X11.AppImage
+
   linux-deb:
     needs: ["extract-version", "create-release"]
     runs-on: ubuntu-latest
     continue-on-error: false
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@main
       - name: Print target version
         run: |
           echo Using version ${{ needs.extract-version.outputs.espanso_version }}
@@ -150,133 +170,61 @@ jobs:
       - name: Build Deb packages
         run: |
           sudo docker run --rm -v "$(pwd):/shared" espanso-ubuntu espanso/.github/scripts/ubuntu/build_deb.sh
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@main
         name: upload-unsigned-artifact
         with:
-          name: Ubuntu-Debian Artifacts
+          name: Linux Deb Artifacts
           path: |
             espanso-debian-x11-amd64.deb
             espanso-debian-wayland-amd64.deb
       - name: Upload artifacts to Github Releases
         run: |
-          gh release upload ${{ needs.extract-version.outputs.espanso_version }} espanso-debian-x11-amd64.deb espanso-debian-wayland-amd64.deb espanso-debian-x11-amd64-sha256.txt espanso-debian-wayland-amd64-sha256.txt 
+          gh release upload ${{ needs.extract-version.outputs.espanso_version }} espanso-debian-x11-amd64.deb espanso-debian-wayland-amd64.deb
 
-  macos-intel:
+  macos:
     needs: ["extract-version", "create-release"]
     runs-on: macos-latest
     continue-on-error: false
 
     steps:
-      - uses: actions/checkout@v4
-      - name: Print target version
-        run: |
-          echo Using version ${{ needs.extract-version.outputs.espanso_version }}
-      - name: Install rust-script and cargo-make
-        run: |
-          cargo install rust-script
-          cargo install --force cargo-make --version 0.37.5
-      - name: Test
-        run: cargo make --profile release -- test-binary
-        env:
-          MACOSX_DEPLOYMENT_TARGET: "10.13"
-      - name: Build
-        run: cargo make --profile release -- create-bundle
-        env:
-          MACOSX_DEPLOYMENT_TARGET: "10.13"
-      - name: Create ZIP archive
-        run: |
-          ditto -c -k --sequesterRsrc --keepParent target/mac/Espanso.app Espanso-Mac-Intel.zip
-      - uses: actions/upload-artifact@v4
-        name: upload-unsigned-artifact
-        id: upload-artifact-macos-intel
-        with:
-          name: Mac Intel Artifacts
-          path: |
-            ./Espanso-Mac-Intel.zip
-      - id: sign-macos-intel-release
-        uses: signpath/github-action-submit-signing-request@v1
-        with:
-          api-token: '${{ secrets.SIGNPATH_API_TOKEN }}'
-          organization-id: 'e86b1459-62fc-4c7c-aac9-185d60749a03'
-          project-slug: 'espanso'
-          signing-policy-slug: 'test-signing'
-          github-artifact-id: ${{ steps.upload-artifact-macos-intel.outputs.artifact-id }}
-          wait-for-completion: true
-          output-artifact-directory: '.'
-          parameters: |
-            version: "${{ needs.extract-version.outputs.espanso_version }}"
-      - name: Calculate hashes
-        run: |
-          shasum -a 256 Espanso-Mac-Intel.zip > Espanso-Mac-Intel.zip.sha256.txt
-      - name: Upload artifacts to Github Releases
-        run: |
-          gh release upload ${{ needs.extract-version.outputs.espanso_version }} Espanso-Mac-Intel.zip Espanso-Mac-Intel.zip.sha256.txt
-  
-  macos-m1:
-    needs: ["extract-version", "create-release"]
-    runs-on: macos-latest
-    continue-on-error: false
-
-    steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@main
       - name: Print target version
         run: |
           echo Using version ${{ needs.extract-version.outputs.espanso_version }}
       - name: Install rust target
-        run: rustup update && rustup target add aarch64-apple-darwin
-      - name: Install rust-script and cargo-make
         run: |
-          cargo install rust-script
-          cargo install --force cargo-make --version 0.37.5
+          rustup update
+          rustup target add aarch64-apple-darwin x86_64-apple-darwin
+      - name: Test
+        run: |
+          cargo test \
+            -p espanso \
+            --target x86_64-apple-darwin \
+            --no-default-features \
+            --features native-tls,modulo
+          cargo test \
+            -p espanso \
+            --target aarch64-apple-darwin \
+            --no-default-features \
+            --features native-tls,modulo
       - name: Build
-        run: cargo make --env BUILD_ARCH=aarch64-apple-darwin --profile release -- create-bundle
+        run: |
+          cargo build \
+            -p espanso \
+            --target x86_64-apple-darwin \
+            --release \
+            --no-default-features \
+            --features native-tls,modulo
+          cargo build \
+            -p espanso \
+            --target aarch64-apple-darwin \
+            --release \
+            --no-default-features \
+            --features native-tls,modulo
+          bash ./scripts/create_bundle.sh
       - name: Create ZIP archive
         run: |
-          ditto -c -k --sequesterRsrc --keepParent target/mac/Espanso.app Espanso-Mac-M1.zip
-      - uses: actions/upload-artifact@v4
-        name: upload-unsigned-artifact
-        id: upload-artifact-macos-m1
-        with:
-          name: Mac M1 Artifacts
-          path: |
-            ./Espanso-Mac-M1.zip
-      - id: sign-macos-m1-release
-        uses: signpath/github-action-submit-signing-request@v1
-        with:
-          api-token: '${{ secrets.SIGNPATH_API_TOKEN }}'
-          organization-id: 'e86b1459-62fc-4c7c-aac9-185d60749a03'
-          project-slug: 'espanso'
-          signing-policy-slug: 'test-signing'
-          github-artifact-id: ${{ steps.upload-artifact-macos-m1.outputs.artifact-id }}
-          wait-for-completion: true
-          output-artifact-directory: '.'
-          parameters: |
-            version: "${{ needs.extract-version.outputs.espanso_version }}"
-      - name: Calculate hashes
-        run: |
-          shasum -a 256 Espanso-Mac-M1.zip > Espanso-Mac-M1.zip.sha256.txt
+          ditto -c -k --sequesterRsrc --keepParent target/mac/Espanso.app Espanso-Mac-Universal.zip
       - name: Upload artifacts to Github Releases
         run: |
-          gh release upload ${{ needs.extract-version.outputs.espanso_version }} Espanso-Mac-M1.zip Espanso-Mac-M1.zip.sha256.txt
-  
-  macos-publish-homebrew:
-    needs: ["extract-version", "create-release", "macos-m1", "macos-intel"]
-    runs-on: macos-latest
-    continue-on-error: false
-
-    steps:
-      - uses: actions/checkout@v4
-      - name: Print target version
-        run: |
-          echo Using version ${{ needs.extract-version.outputs.espanso_version }}
-
-      - name: "Setup SSH deploy key"
-        uses: webfactory/ssh-agent@fc49353b67b2b7c1e0e6a600572d01a69f2672dd
-        with:
-          ssh-private-key: ${{ secrets.HOMEBREW_CASK_SSH_PRIVATE_KEY }}
-      
-      - name: Create and Publish Homebrew Cask
-        run: |
-          VERSION="${{ needs.extract-version.outputs.espanso_version }}" ./scripts/publish_homebrew_version.sh
-
-          echo "Cask formula has been published here: "
+          gh release upload ${{ needs.extract-version.outputs.espanso_version }} Espanso-Mac-Universal.zip

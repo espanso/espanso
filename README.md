@@ -1,11 +1,13 @@
 ![espanso](images/logo_extended.png)
 
+
 > A cross-platform Text Expander written in Rust
 
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/espanso/espanso)
 ![Language](https://img.shields.io/badge/language-rust-orange)
 ![Platforms](https://img.shields.io/badge/platforms-Windows%2C%20macOS%20and%20Linux-blue)
 ![License](https://img.shields.io/github/license/espanso/espanso)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/espanso/espanso)
 
 ![example](images/example.gif)
 
@@ -46,10 +48,10 @@ ___
 
 Visit the [official documentation](https://espanso.org/docs/).
 
-## Support
-
 If you need some help to setup espanso, want to ask a question or simply get involved
-in the community, [Join the official Subreddit](https://www.reddit.com/r/espanso/)! :)
+in the community, you can [join the official Subreddit](https://www.reddit.com/r/espanso/)
+ or [join the official Discord](https://discord.gg/DFcCNDg7bB)!
+
 
 ## Donations
 
@@ -75,3 +77,4 @@ Many people helped the project along the way, thank you to all of you!
 
 espanso was created by [Federico Terzi](http://federicoterzi.com)
 and is licensed under the [GPL-3.0 license](/LICENSE).
+

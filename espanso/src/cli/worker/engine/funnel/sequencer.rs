@@ -18,31 +18,31 @@
  */
 
 use std::sync::{
-  atomic::{AtomicU32, Ordering},
-  Arc,
+    atomic::{AtomicU32, Ordering},
+    Arc,
 };
 
 use espanso_engine::{event::SourceId, process::EventSequenceProvider};
 
 #[derive(Clone)]
 pub struct Sequencer {
-  current_id: Arc<AtomicU32>,
+    current_id: Arc<AtomicU32>,
 }
 
 impl Sequencer {
-  pub fn new() -> Self {
-    Self {
-      current_id: Arc::new(AtomicU32::new(0)),
+    pub fn new() -> Self {
+        Self {
+            current_id: Arc::new(AtomicU32::new(0)),
+        }
     }
-  }
 
-  pub fn next_id(&self) -> SourceId {
-    self.current_id.fetch_add(1, Ordering::SeqCst)
-  }
+    pub fn next_id(&self) -> SourceId {
+        self.current_id.fetch_add(1, Ordering::SeqCst)
+    }
 }
 
 impl EventSequenceProvider for Sequencer {
-  fn get_next_id(&self) -> SourceId {
-    self.next_id()
-  }
+    fn get_next_id(&self) -> SourceId {
+        self.next_id()
+    }
 }

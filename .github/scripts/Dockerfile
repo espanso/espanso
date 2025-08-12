@@ -1,4 +1,4 @@
-FROM ubuntu:24.04
+FROM debian:bookworm-slim
 
 RUN apt-get update \
     && apt-get install -y \
@@ -32,7 +32,7 @@ RUN set -eux; \
     cargo --version; \
     rustc --version;
 
-RUN mkdir espanso && cargo install rust-script && cargo install --force cargo-make --version 0.37.5
+RUN mkdir espanso
 
 COPY . espanso
 
