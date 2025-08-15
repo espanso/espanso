@@ -1,7 +1,3 @@
-> TODO: this document is relative to version 1 and will be updated soon for changes introduced in version 2
->
-> Despite significant architectural differences, the following points are still a good approximation of the internals.
-
 # Security
 
 Espanso has always been designed with a strong focus on security. In the following section, there is an overview of the critical security components.

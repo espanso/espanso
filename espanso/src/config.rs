@@ -84,7 +84,6 @@ pub fn load_config(config_path: &Path) -> Result<ConfigLoadResult> {
     let (config_store, match_store, non_fatal_errors) =
         espanso_config::load(config_path).context("unable to load config")?;
 
-    // TODO: add an option to avoid dumping the errors in the logs
     if !non_fatal_errors.is_empty() {
         warn!("------- detected some errors in the configuration: -------");
         for non_fatal_error_set in &non_fatal_errors {
