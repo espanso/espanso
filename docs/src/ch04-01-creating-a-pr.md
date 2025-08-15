@@ -65,5 +65,3 @@ Today our submitted code is yet untidy. Work in progress!
 `git` is a powerful but a bit complex tool to use, and there are many criteria around the internet. We normally:
 
 - squash the commits when we merge a PR
-- TODO: setup git hooks with some tool
-
