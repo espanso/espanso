@@ -119,8 +119,6 @@ fn generate_context<'a>(
     }
 }
 
-// TODO: move conversion methods to new file?
-
 fn convert_to_template(m: &Match) -> Option<Template> {
     if let MatchEffect::Text(text_effect) = &m.effect {
         let ids = if let MatchCause::Trigger(cause) = &m.cause {

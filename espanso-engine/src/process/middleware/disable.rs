@@ -34,7 +34,6 @@ pub struct DisableOptions {
     pub toggle_key: Option<Key>,
     pub toggle_key_variant: Option<Variant>,
     pub toggle_key_maximum_window: Duration,
-    // TODO: toggle shortcut?
 }
 
 pub struct DisableMiddleware {

@@ -93,13 +93,11 @@ pub fn initialize_and_spawn(
     let handle = std::thread::Builder::new()
         .name("engine thread".to_string())
         .spawn(move || {
-            // TODO: properly order the initializations if necessary
             let preferences = crate::preferences::get_default(&paths.runtime)
                 .expect("unable to load preferences");
 
             let app_info_provider =
                 espanso_info::get_provider().expect("unable to initialize app info provider");
-            // TODO: read interval from configs?
             let cached_app_info_provider = caches::app_info_provider::CachedAppInfoProvider::from(
                 &*app_info_provider,
                 std::time::Duration::from_millis(400),
@@ -131,7 +129,6 @@ pub fn initialize_and_spawn(
 
             let has_granted_capabilities = grant_linux_capabilities(use_evdev_backend);
 
-            // TODO: pass all the options
             let (detect_source, modifier_state_store, sequencer, key_state_store) =
                 super::engine::funnel::init_and_spawn(SourceCreationOptions {
                     use_evdev: use_evdev_backend,
@@ -168,7 +165,7 @@ pub fn initialize_and_spawn(
             let regex_matcher = RegexMatcherAdapter::new(
                 &match_converter.get_regex_matches(),
                 &RegexMatcherAdapterOptions {
-                    max_buffer_size: 30, // TODO: load from configs
+                    max_buffer_size: 30,
                 },
             );
             let matchers: Vec<
@@ -188,9 +185,9 @@ pub fn initialize_and_spawn(
                 ),
                 ..Default::default()
             })
-            .expect("failed to initialize injector module"); // TODO: handle the options
+            .expect("failed to initialize injector module");
             let clipboard = espanso_clipboard::get_clipboard(ClipboardOptions::default())
-                .expect("failed to initialize clipboard module"); // TODO: handle options
+                .expect("failed to initialize clipboard module");
 
             let clipboard_adapter = ClipboardAdapter::new(&*clipboard, &config_manager);
             let clipboard_extension =

@@ -37,7 +37,6 @@ pub fn initialize_and_spawn(secure_input_sender: Sender<SecureInputEvent>) -> Re
     std::thread::Builder::new()
         .name("secure-input-monitor".to_string())
         .spawn(move || {
-            // TODO: pass interval from config parameter
             secure_input_main(
                 secure_input_sender,
                 std::time::Duration::from_secs(3),

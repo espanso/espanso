@@ -733,6 +733,4 @@ mod tests {
             );
         });
     }
-
-    // TODO: add fatal and non-fatal error cases
 }

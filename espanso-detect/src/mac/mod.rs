@@ -403,7 +403,7 @@ fn key_code_to_key(key_code: i32) -> (Key, Option<Variant>) {
         // Modifiers
         0x3A => (Alt, Some(Left)),
         0x3D => (Alt, Some(Right)),
-        0x39 => (CapsLock, None), // TODO
+        0x39 => (CapsLock, None),
         0x3B => (Control, Some(Left)),
         0x3E => (Control, Some(Right)),
         0x37 => (Meta, Some(Left)),

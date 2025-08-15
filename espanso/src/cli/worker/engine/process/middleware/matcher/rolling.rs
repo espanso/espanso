@@ -40,7 +40,7 @@ impl RollingMatcherAdapter {
             matches,
             RollingMatcherOptions {
                 char_word_separators: options.char_word_separators,
-                key_word_separators: vec![], // TODO?
+                key_word_separators: vec![],
             },
         );
 

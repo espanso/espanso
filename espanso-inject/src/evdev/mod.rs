@@ -77,7 +77,6 @@ const DEFAULT_MODIFIERS: [u32; 10] = [
 
 const DEFAULT_MAX_MODIFIER_COMBINATION_LEN: i32 = 3;
 
-// TODO: make the timeout a configurable option
 const DEFAULT_WAIT_KEY_RELEASE_TIMEOUT_MS: u64 = 4000;
 
 pub type KeySym = u32;

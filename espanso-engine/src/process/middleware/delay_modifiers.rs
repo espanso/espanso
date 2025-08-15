@@ -60,8 +60,6 @@ impl Middleware for DelayForModifierReleaseMiddleware<'_> {
                     break;
                 }
 
-                // TODO: here we might show a popup window to tell the users to release those keys
-
                 trace!("delaying injection event as some modifiers are pressed");
                 std::thread::sleep(Duration::from_millis(100));
             }

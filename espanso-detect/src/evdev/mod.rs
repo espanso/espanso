@@ -80,7 +80,6 @@ const BTN_EXTRA: u16 = 0x114;
 const EVDEV_OFFSET: u32 = 8;
 
 // List of modifier keycodes, as defined in the "input-event-codes.h" header
-// TODO: create an option to override them if needed
 const KEY_CTRL: u32 = 29;
 const KEY_SHIFT: u32 = 42;
 const KEY_ALT: u32 = 56;

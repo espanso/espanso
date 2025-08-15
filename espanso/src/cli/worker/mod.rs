@@ -82,8 +82,6 @@ fn worker_main(args: CliModuleArgs) -> i32 {
         .match_store
         .expect("missing match store in worker main");
 
-    // TODO: show config loading errors in a GUI, if any
-
     let use_evdev_backend = if cfg!(feature = "wayland") {
         true
     } else {

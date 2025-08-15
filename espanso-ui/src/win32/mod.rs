@@ -332,7 +332,6 @@ impl UIRemote for Win32Remote {
     }
 }
 
-#[allow(clippy::single_match)] // TODO: remove after another match is used
 impl From<RawUIEvent> for Option<UIEvent> {
     fn from(raw: RawUIEvent) -> Option<UIEvent> {
         match raw.event_type {

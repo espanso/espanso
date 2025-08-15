@@ -185,7 +185,6 @@ mod interop {
                 types::FieldType::Unknown => panic!("unknown field type"),
             };
 
-            // TODO: clean up this match
             let specific: Box<dyn Interoperable> = match field.field_type {
                 types::FieldType::Row(metadata) => {
                     let owned_metadata: OwnedRowMetadata = metadata.into();

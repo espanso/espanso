@@ -87,7 +87,6 @@ impl<'a> MatchConverter<'a> {
         matches
     }
 
-    // TODO: (might need to move the conversion logic into a separate function)
     pub fn get_regex_matches(&self) -> Vec<RegexMatch<i32>> {
         let match_set = self.global_match_set();
         let mut matches = Vec::new();
@@ -104,9 +103,7 @@ impl<'a> MatchConverter<'a> {
     pub fn get_hotkeys(&self) -> Vec<HotKey> {
         let mut hotkeys = Vec::new();
 
-        // TODO: read user-defined matches
-
-        // Then convert built-in ones
+        // Convert built-in ones
         for m in self.builtin_matches {
             if let Some(hotkey) = &m.hotkey {
                 match HotKey::new(m.id, hotkey) {

@@ -83,7 +83,6 @@ pub enum MatchCause {
     None,
     Trigger(TriggerCause),
     Regex(RegexCause),
-    // TODO: shortcut
 }
 
 impl MatchCause {
@@ -93,7 +92,6 @@ impl MatchCause {
             Self::Regex(trigger_cause) => Some(trigger_cause.regex.as_str()),
             Self::None => None,
         }
-        // TODO: insert rendering for hotkey/shortcut
     }
 
     pub fn long_description(&self) -> String {
@@ -102,7 +100,6 @@ impl MatchCause {
             Self::Regex(trigger_cause) => format!("regex: {:?}", trigger_cause.regex),
             Self::None => "No description available".to_owned(),
         }
-        // TODO: insert rendering for hotkey/shortcut
     }
 
     pub fn search_terms(&self) -> Vec<&str> {

@@ -42,7 +42,6 @@ pub struct PackageSpecifier {
 pub trait PackageProvider {
     fn name(&self) -> String;
     fn download(&self, package: &PackageSpecifier) -> Result<Box<dyn Package>>;
-    // TODO: fn check update available? (probably should be only available in the hub)
 }
 
 #[derive(Debug, Default)]
