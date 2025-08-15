@@ -52,7 +52,6 @@ impl<'a> MatchConverter<'a> {
         }
     }
 
-    // TODO: (might need to move the conversion logic into a separate function)
     pub fn get_rolling_matches(&self) -> Vec<RollingMatch<i32>> {
         let match_set = self.global_match_set();
         let mut matches = Vec::new();

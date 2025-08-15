@@ -73,8 +73,6 @@ fn daemon_main(args: CliModuleArgs) -> i32 {
         return DAEMON_ALREADY_RUNNING;
     }
 
-    // TODO: we might need to check preconditions: accessibility on macOS, presence of binaries on Linux, etc
-
     // This variable holds the current troubleshooter guard.
     // When a guard is dropped, the troubleshooting GUI is killed
     // so this ensures that there is only one troubleshooter running
@@ -116,13 +114,9 @@ fn daemon_main(args: CliModuleArgs) -> i32 {
         };
 
     info!("espanso version: {VERSION}");
-    // TODO: print os system and version? (with os_info crate)
-
     terminate_worker_if_already_running(&paths.runtime);
 
     let (exit_notify, exit_signal) = unbounded::<i32>();
-
-    // TODO: register signals to terminate the worker if the daemon terminates
 
     spawn_worker(&paths_overrides, exit_notify.clone(), None);
 

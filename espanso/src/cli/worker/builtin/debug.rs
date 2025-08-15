@@ -23,8 +23,6 @@ use crate::cli::worker::builtin::generate_next_builtin_id;
 
 use super::BuiltInMatch;
 
-// TODO: create task that opens up a GUI with this content
-
 pub fn create_match_paste_active_config_info() -> BuiltInMatch {
     BuiltInMatch {
         id: generate_next_builtin_id(),
