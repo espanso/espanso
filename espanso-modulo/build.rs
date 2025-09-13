@@ -23,7 +23,7 @@ use std::path::PathBuf;
 use std::path::Path;
 
 #[cfg(not(target_os = "linux"))]
-const WX_WIDGETS_ARCHIVE_NAME: &str = "wxWidgets-3.1.5.zip";
+const WX_WIDGETS_ARCHIVE_NAME: &str = "wxWidgets-3.1.5-patched.zip";
 
 #[cfg(not(target_os = "linux"))]
 const WX_WIDGETS_BUILD_OUT_DIR_ENV_NAME: &str = "WX_WIDGETS_BUILD_OUT_DIR";
@@ -337,6 +337,7 @@ fn convert_fat_libraries_to_arm(lib_dir: &Path) {
 
 #[cfg(not(target_os = "windows"))]
 fn get_cpp_flags(wx_config_path: &Path) -> Vec<String> {
+    println!("using {}", &wx_config_path.display());
     let config_output = std::process::Command::new(wx_config_path)
         .arg("--cxxflags")
         .output()
