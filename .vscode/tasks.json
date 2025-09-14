@@ -195,7 +195,6 @@
             ],
             "args": [
                 // "--",
-                // TODO replace cargo make
                 "make",
                 "build-windows-all"
             ],
@@ -218,7 +217,6 @@
             ],
             "args": [
                 // "--",
-                // TODO replace cargo make
                 "make",
                 "build-macos-arm-binary"
             ],
@@ -241,7 +239,6 @@
             ],
             "args": [
                 // "--",
-                // TODO replace cargo make
                 "make",
                 "build-macos-x86-binary"
             ],
@@ -259,7 +256,6 @@
             ],
             "args": [
                 // "--",
-                // TODO replace cargo make
                 "make",
                 "build-universal-binary"
             ],
@@ -291,7 +287,6 @@
             ],
             "args": [
                 // "--",
-                // TODO replace cargo make
                 "make",
                 "create-universal-bundle"
             ],

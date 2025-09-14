@@ -122,7 +122,10 @@ impl Middleware for ContextMenuMiddleware {
                 // a mapping structure match_id <-> context-menu-id
                 Event::caused_by(
                     event.source_id,
-                    EventType::ShowContextMenu(ShowContextMenuEvent { items }),
+                    EventType::ShowContextMenu(ShowContextMenuEvent {
+                        // TODO: add actual entries
+                        items,
+                    }),
                 )
             }
             EventType::ContextMenuClicked(context_click_event) => {

@@ -39,6 +39,7 @@
 
 /**
  * The number of tries to check for a wait condition before aborting.
+ * TODO(sissel): Make this tunable at runtime?
  */
 #define MAX_TRIES 500
 
@@ -127,6 +128,7 @@ xdo_t *xdo_new_with_opened_display(Display *xdpy, const char *display,
 
     // This library and xdotool do not work correctly on Wayland/XWayland.
     // Try to detect XWayland and warn the user about problems.
+    // TODO(sissel): This was disabled due to issue #346
     //  -- xdotool works on XWayland for some operations, so it isn't helpful to
     //  refuse all usage on XWayland.
     // if (appears_to_be_wayland(xdpy)) {
@@ -186,7 +188,7 @@ int xdo_wait_for_window_map_state(const xdo_t *xdo, Window wid, int map_state) {
     while (tries > 0 && attr.map_state != map_state) {
         XGetWindowAttributes(xdo->xdpy, wid, &attr);
         usleep(
-            30000);
+            30000); /* TODO(sissel): Use exponential backoff up to 1 second */
         tries--;
     }
     return 0;
@@ -439,6 +441,8 @@ int xdo_wait_for_window_size(const xdo_t *xdo, Window window,
                                            &height);
     } else {
         unsigned int hint_width, hint_height;
+        /* TODO(sissel): fix compiler warning here, but it will require
+         * an ABI breakage by changing types... */
         xdo_translate_window_with_sizehint(xdo, window, 1, 1, &hint_width,
                                            &hint_height);
         // printf("Hint: %dx%d\n", hint_width, hint_height);
@@ -1229,7 +1233,7 @@ int xdo_wait_for_window_focus(const xdo_t *xdo, Window window, int want_focus) {
     while (tries > 0 &&
            (want_focus ? focuswin != window : focuswin == window)) {
         usleep(
-            30000);
+            30000); /* TODO(sissel): Use exponential backoff up to 1 second */
         ret = xdo_get_focused_window(xdo, &focuswin);
         if (ret != 0) {
             return ret;
