@@ -161,7 +161,6 @@ fn build_native() {
 
 #[cfg(target_os = "macos")]
 fn build_native() {
-    println!("starting the build!");
     use std::process::Command;
 
     let project_dir =
@@ -229,7 +228,7 @@ fn build_native() {
             },
         ];
 
-        let mut handle = Command::new(out_wx_dir.join("wxWidgets-3.1.5").join("configure"))
+        let mut handle = Command::new(out_wx_dir.join("configure"))
             .current_dir(build_dir.to_string_lossy().to_string())
             .args(configure_args.iter())
             .spawn()
@@ -276,13 +275,8 @@ fn build_native() {
     // If using the M1 CI workaround, convert all the universal libraries to arm64 ones
     // This is needed until https://github.com/rust-lang/rust/issues/55235 is fixed
     if is_arm64_ci {
-        convert_fat_libraries_to_arm(
-            &out_wx_dir
-                .join("wxWidgets-3.1.5")
-                .join("build-cocoa")
-                .join("lib"),
-        );
-        convert_fat_libraries_to_arm(&out_wx_dir.join("wxWidgets-3.1.5").join("build-cocoa"));
+        convert_fat_libraries_to_arm(&out_wx_dir.join("build-cocoa").join("lib"));
+        convert_fat_libraries_to_arm(&out_wx_dir.join("build-cocoa"));
     }
 
     let config_path = out_dir.join("wx").join("build-cocoa").join("wx-config");
