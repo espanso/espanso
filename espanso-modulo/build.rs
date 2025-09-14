@@ -23,7 +23,7 @@ use std::path::PathBuf;
 use std::path::Path;
 
 #[cfg(not(target_os = "linux"))]
-const WX_WIDGETS_ARCHIVE_NAME: &str = "wxWidgets-3.1.5.zip";
+const WX_WIDGETS_ARCHIVE_NAME: &str = "wxWidgets-3.1.5-patched-version-3.zip";
 
 #[cfg(not(target_os = "linux"))]
 const WX_WIDGETS_BUILD_OUT_DIR_ENV_NAME: &str = "WX_WIDGETS_BUILD_OUT_DIR";
@@ -80,6 +80,7 @@ fn build_native() {
         }
 
         let vcvars_path = vcvars_path.expect("unable to find vcvars64.bat file");
+        println!("vsvars folder: {}", vcvars_path.display());
         let mut handle = Command::new("cmd")
             .current_dir(
                 out_wx_dir
@@ -110,6 +111,8 @@ fn build_native() {
             panic!("nmake returned non-zero exit code!");
         }
     }
+
+    println!("wxWidgets will be compiled into: {}", out_wx_dir.display());
 
     // Make sure wxWidgets is compiled
     if !out_wx_dir
@@ -187,7 +190,14 @@ fn build_native() {
 
     let is_arm64_ci = std::env::var("CI").unwrap_or_default() == "true" && target_arch == "arm64";
 
-    if !out_wx_dir.is_dir() {
+    if !out_wx_dir.is_dir()
+        || out_wx_dir
+            .join("build-cocoa")
+            .read_dir()
+            .expect("unable to read the `out_wx_dir` variable")
+            .next()
+            .is_none()
+    {
         // Extract the wxWidgets archive
         let wx_archive =
             std::fs::File::open(&wx_archive).expect("unable to open wxWidgets source archive");
@@ -196,6 +206,12 @@ fn build_native() {
         archive
             .extract(&out_wx_dir)
             .expect("unable to extract wxWidgets source dir");
+
+        // Fix permissions after extraction to ensure all directories are accessible
+        std::process::Command::new("chmod")
+            .args(["-R", "755", &out_wx_dir.to_string_lossy()])
+            .output()
+            .expect("unable to fix permissions after extraction");
 
         // Compile wxWidgets
         let build_dir = out_wx_dir.join("build-cocoa");
@@ -246,6 +262,11 @@ fn build_native() {
         "wxWidgets is not compiled correctly, missing 'build-cocoa/' directory"
     );
 
+    assert!(
+        out_wx_dir.join("build-cocoa").join("wx-config").exists(),
+        "wxWidgets is not compiled correctly, missing 'wx-config'"
+    );
+
     // If using the M1 CI workaround, convert all the universal libraries to arm64 ones
     // This is needed until https://github.com/rust-lang/rust/issues/55235 is fixed
     if is_arm64_ci {
@@ -254,6 +275,7 @@ fn build_native() {
     }
 
     let config_path = out_wx_dir.join("build-cocoa").join("wx-config");
+
     let cpp_flags = get_cpp_flags(&config_path);
 
     let mut build = cc::Build::new();
@@ -337,6 +359,7 @@ fn convert_fat_libraries_to_arm(lib_dir: &Path) {
 
 #[cfg(not(target_os = "windows"))]
 fn get_cpp_flags(wx_config_path: &Path) -> Vec<String> {
+    println!("using {}", &wx_config_path.display());
     let config_output = std::process::Command::new(wx_config_path)
         .arg("--cxxflags")
         .output()
