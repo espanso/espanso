@@ -57,15 +57,6 @@ fn build_native() {
             .extract(&out_wx_dir)
             .expect("unable to extract wxWidgets source dir");
 
-        // Fix permissions after extraction to ensure all directories are accessible
-        #[cfg(not(target_os = "windows"))]
-        {
-            std::process::Command::new("chmod")
-                .args(["-R", "755", &out_wx_dir.to_string_lossy()])
-                .output()
-                .expect("unable to fix permissions after extraction");
-        }
-
         let tool = cc::Build::new().get_compiler();
         assert!(
             tool.is_like_msvc(),
@@ -89,6 +80,7 @@ fn build_native() {
         }
 
         let vcvars_path = vcvars_path.expect("unable to find vcvars64.bat file");
+        println!("vsvars folder: {}", vcvars_path.display());
         let mut handle = Command::new("cmd")
             .current_dir(
                 out_wx_dir
@@ -119,6 +111,8 @@ fn build_native() {
             panic!("nmake returned non-zero exit code!");
         }
     }
+
+    println!("wxWidgets will be compiled into: {}", out_wx_dir.display());
 
     // Make sure wxWidgets is compiled
     if !out_wx_dir
