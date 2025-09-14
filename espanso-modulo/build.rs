@@ -23,7 +23,7 @@ use std::path::PathBuf;
 use std::path::Path;
 
 #[cfg(not(target_os = "linux"))]
-const WX_WIDGETS_ARCHIVE_NAME: &str = "wxWidgets-3.1.5-patched-version-2.zip";
+const WX_WIDGETS_ARCHIVE_NAME: &str = "wxWidgets-3.1.5-patched-version-3.zip";
 
 #[cfg(not(target_os = "linux"))]
 const WX_WIDGETS_BUILD_OUT_DIR_ENV_NAME: &str = "WX_WIDGETS_BUILD_OUT_DIR";
