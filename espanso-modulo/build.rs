@@ -262,13 +262,8 @@ fn build_native() {
         "wxWidgets is not compiled correctly, missing 'build-cocoa/' directory"
     );
 
-    println!("out dir: {}", out_dir.display());
     assert!(
-        out_dir
-            .join("wx")
-            .join("build-cocoa")
-            .join("wx-config")
-            .exists(),
+        out_wx_dir.join("build-cocoa").join("wx-config").exists(),
         "wxWidgets is not compiled correctly, missing 'wx-config'"
     );
 
@@ -279,7 +274,7 @@ fn build_native() {
         convert_fat_libraries_to_arm(&out_wx_dir.join("build-cocoa"));
     }
 
-    let config_path = out_dir.join("wx").join("build-cocoa").join("wx-config");
+    let config_path = out_wx_dir.join("build-cocoa").join("wx-config");
 
     let cpp_flags = get_cpp_flags(&config_path);
 
@@ -368,8 +363,7 @@ fn get_cpp_flags(wx_config_path: &Path) -> Vec<String> {
     let config_output = std::process::Command::new(wx_config_path)
         .arg("--cxxflags")
         .output()
-        .expect("unable to execute wx-config.in");
-
+        .expect("unable to execute wx-config");
     let config_libs =
         String::from_utf8(config_output.stdout).expect("unable to parse wx-config output");
     let cpp_flags: Vec<String> = config_libs
