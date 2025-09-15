@@ -80,7 +80,7 @@ Many people helped the project along the way, thank you to all of you!
 * Thanks to [libxdo](https://github.com/jordansissel/xdotool) and [xclip](https://github.com/astrand/xclip), used to implement the Linux port.
 * Thanks to [libxkbcommon](https://xkbcommon.org/) and [wl-clipboard](https://github.com/bugaevc/wl-clipboard), used to implement the Wayland port.
 * Thanks to [wxWidgets](https://www.wxwidgets.org/) for providing a powerful cross-platform GUI library.
-* Free code signing provided by SignPath.io, certificate by SignPath Foundation
+* Free code signing provided by SignPath.io, certificate by SignPath Foundation.
 
 ## License
 
