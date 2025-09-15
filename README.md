@@ -61,6 +61,14 @@ please consider making a small donation, it really helps :)
 
 [![Donate with PayPal](images/donate.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=FHNLR5DRS267E&source=url)
 
+## Team members
+
+You can check the members of the team [here](https://github.com/orgs/espanso/people):
+
+## Sponsors
+
+We want to thank SignPath.io for code signing the Windows binaries ❤️
+
 ## Contributors
 
 Many people helped the project along the way, thank you to all of you!
@@ -72,6 +80,7 @@ Many people helped the project along the way, thank you to all of you!
 * Thanks to [libxdo](https://github.com/jordansissel/xdotool) and [xclip](https://github.com/astrand/xclip), used to implement the Linux port.
 * Thanks to [libxkbcommon](https://xkbcommon.org/) and [wl-clipboard](https://github.com/bugaevc/wl-clipboard), used to implement the Wayland port.
 * Thanks to [wxWidgets](https://www.wxwidgets.org/) for providing a powerful cross-platform GUI library.
+* Free code signing provided by SignPath.io, certificate by SignPath Foundation.
 
 ## License
 
