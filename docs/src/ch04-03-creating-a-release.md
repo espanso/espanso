@@ -22,21 +22,15 @@ git push origin <tagname>
 
 for example `git tag v2.2.2` and `git push origin v2.2.2`
 
-4) Auca needs to build the software (only him can sign the executables)
+4) Run the `create-release-draft.yml` workflow. Even though the CI is able to 
+build the mac executables, only Auca can sign the executables, so this step in 
+the workflow is commented out for macOS.
 
-5) and sign the binaries
+5) Wait until the workflow finishes... meanwhile you build and sign the macos
+binaries...
 
-- macOS Silicon arch
+6) Upload the *.dmg, update the description and hit publish!
 
-6) create a release manually in github (mark it as draft, or pre-release)
-
-7) add all the signed binaries, SHAs and add some text.
-
-8) modify the website
-
-- the download links
-- the version number
-
-9) lastly, the news!
+7) lastly, the news!
 
 - make an announcement in the `espanso` discord
