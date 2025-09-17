@@ -51,7 +51,9 @@ Espanso-Win-Installer-x86_64*
 Espanso-Win-Portable-x86_64*
 
 # macOS
+Espanso.app/
 *.dmg
+Espanso-Mac-Universal.zip
 
 # Linux
 *.deb

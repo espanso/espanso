@@ -14,5 +14,5 @@ cargo build --no-default-features --features modulo,native-tls --release
 bash ./scripts/create_bundle.sh
 ```
 
-This will create the `Espanso.app` bundle in the `target/mac` directory as a 
+This will create the `Espanso.app` bundle in the `target/mac` directory as a
 universal binary that will run well on both Intel and Apple Silicon machines.

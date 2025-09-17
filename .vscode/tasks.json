@@ -69,7 +69,7 @@
             }
         },
         {
-            "label": "cargo build binary release",
+            "label": "cargo build binary Wayland release",
             "detail": "builds the release Wayland version: modulo, native-tls",
             "type": "cargo",
             "command": "build",
@@ -125,7 +125,6 @@
                 "$rustc"
             ],
             "args": [
-                // "--",
                 "--workspace",
                 "--all-targets",
                 "--no-deps"
@@ -135,9 +134,9 @@
             }
         },
         {
+            "label": "Windows: build-windows-resources",
             "type": "process",
             "command": "pwsh",
-            "label": "build-windows-resources",
             "detail": "build the windows resources",
             "problemMatcher": [],
             "args": [
@@ -153,12 +152,12 @@
             }
         },
         {
+            "label": "Windows: build-windows-portable",
             "type": "process",
             "command": "pwsh",
-            "label": "build-windows-portable",
             "detail": "build the windows portable",
             "dependsOn": [
-                "build-windows-resources"
+                "Windows: build-windows-resources"
             ],
             "problemMatcher": [],
             "args": [
@@ -169,14 +168,14 @@
             }
         },
         {
+            "label": "Windows: build-windows-installer",
             "type": "process",
             "command": "pwsh",
-            "label": "build-windows-installer",
             "detail": "build the windows installer",
             "problemMatcher": [],
             "dependsOrder": "sequence",
             "dependsOn": [
-                "build-windows-resources"
+                "Windows: build-windows-resources"
             ],
             "args": [
                 "${workspaceFolder}/scripts/build_windows_installer.ps1"
@@ -186,26 +185,26 @@
             }
         },
         {
+            "label": "Windows build-windows-all",
             "type": "process",
-            "command": "cargo",
-            "label": "build-windows-all",
+            "command": "echo",
             "detail": "build the windows portable and installer",
-            "problemMatcher": [
-                "$rustc"
+            "dependsOn": [
+                "Windows: build-windows-portable",
+                "Windows: build-windows-installer",
             ],
+            "dependsOrder": "sequence",
             "args": [
-                // "--",
-                "make",
-                "build-windows-all"
+                "Done!"
             ],
             "group": {
                 "kind": "none"
             }
         },
         {
+            "label": "macOS: release-build-arm-binary",
             "type": "process",
             "command": "cargo",
-            "label": "build-macos-arm-binary",
             "detail": "build the macOS arm binary",
             "options": {
                 "env": {
@@ -216,18 +215,22 @@
                 "$rustc"
             ],
             "args": [
-                // "--",
-                "make",
-                "build-macos-arm-binary"
+                "build",
+                "-p",
+                "espanso",
+                "--target=aarch64-apple-darwin",
+                "--release",
+                "--no-default-features",
+                "--features=native-tls,modulo",
             ],
             "group": {
                 "kind": "none"
             }
         },
         {
+            "label": "macOS: release-build-x86-binary",
             "type": "process",
             "command": "cargo",
-            "label": "build-macos-x86-binary",
             "detail": "build the macOS x86 binary",
             "options": {
                 "env": {
@@ -238,65 +241,51 @@
                 "$rustc"
             ],
             "args": [
-                // "--",
-                "make",
-                "build-macos-x86-binary"
+                "build",
+                "-p",
+                "espanso",
+                "--target=x86_64-apple-darwin",
+                "--release",
+                "--no-default-features",
+                "--features=native-tls,modulo",
             ],
             "group": {
                 "kind": "none"
             }
         },
         {
+            "label": "macOS: create .dmg image",
             "type": "process",
-            "command": "cargo",
-            "label": "build-universal-binary",
-            "detail": "build the macOS universal (fat) binary",
-            "problemMatcher": [
-                "$rustc"
-            ],
+            "command": "ditto",
             "args": [
-                // "--",
-                "make",
-                "build-universal-binary"
+                "-c",
+                "-k",
+                "--sequesterRsrc",
+                "--keepParent",
+                "target/mac/Espanso.app",
+                "Espanso-Mac-Universal.zip"
             ],
-            "group": {
-                "kind": "none"
-            }
+            "problemMatcher": []
         },
         {
-            "type": "shell",
-            "command": "${workspaceFolder}/scripts/create_bundle.sh",
-            "label": "macOS: create-bundle",
-            "detail": "creates the bundle for macOS",
-            "group": {
-                "kind": "none"
-            }
-        },
-        {
+            "label": "macOS: create-universal-bundle",
             "type": "process",
-            "command": "cargo",
-            "label": "create-universal-bundle",
+            "command": "bash",
             "detail": "creates the macOS universal bundle",
-            "options": {
-                "env": {
-                    "EXEC_PATH": "target/universal/espanso"
-                }
-            },
-            "problemMatcher": [
-                "$rustc"
-            ],
+            "problemMatcher": [],
             "args": [
-                // "--",
-                "make",
-                "create-universal-bundle"
+                "${workspaceFolder}/scripts/create_bundle.sh",
             ],
-            "group": {
-                "kind": "none"
-            }
+            "dependsOn": [
+                "macOS: release-build-x86-binary",
+                "macOS: release-build-arm-binary",
+                "macOS: create .dmg image"
+            ],
+            "dependsOrder": "sequence"
         },
         {
-            "type": "shell",
             "label": "give excecution permissions: create AppImage.sh",
+            "type": "shell",
             "command": [
                 "chmod",
                 "+x",
@@ -305,9 +294,9 @@
             "problemMatcher": []
         },
         {
+            "label": "Linux: create AppImage",
             "type": "shell",
             "command": "${workspaceFolder}/scripts/create_app_image.sh",
-            "label": "linux: create AppImage",
             "detail": "creates the AppImage for linux",
             "group": {
                 "kind": "none"
@@ -368,21 +357,5 @@
                 "Build .deb - Docker image"
             ]
         },
-        {
-            "label": "Build everything: linux",
-            "detail": "excecutable, AppImage, deb package",
-            "dependsOn": [
-                "linux: create AppImage"
-            ],
-            "problemMatcher": []
-        },
-        {
-            "label": "Build everything: macOS",
-            "detail": "excecutable, bundle and universal bundle",
-            "dependsOn": [
-                "create-universal-bundle"
-            ],
-            "problemMatcher": []
-        }
     ]
 }
