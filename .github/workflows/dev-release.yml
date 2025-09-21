@@ -49,7 +49,7 @@ jobs:
             $env:EXEC_PATH = "target\release\espanso.exe"
             scripts\build_windows_resources.ps1
       - name: Download and install Inno Setup (missing in Windows Server 2025)
-        run: choco install innosetup --no-progres
+        run: choco install innosetup --no-progress
       - name: Build installer
         shell: pwsh
         run: |
