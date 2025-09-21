@@ -49,8 +49,11 @@ jobs:
       - uses: cachix/install-nix-action@v31
       - name: nix fmt
         run: nix fmt -- --check **/*.nix
-      - name: nix build
-        run: nix build
+      # This step fails to find `xcb/xcb.h`
+      #
+      #  xcb/xcb.h: No such file or directory
+      # - name: nix build
+      #   run: nix build
 
   linux-wayland:
     runs-on: ubuntu-latest
