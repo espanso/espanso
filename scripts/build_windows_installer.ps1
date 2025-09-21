@@ -23,7 +23,7 @@ if (Get-Command iscc -errorAction SilentlyContinue) {
     "iscc installed!"
 }
 else {
-    Write-Error "Iscc is not installed. Please visit website or choco-install it"
+    Write-Error "Iscc is not installed. Please visit the website or choco-install it"
     exit 1
 }
 
