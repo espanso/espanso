@@ -9,6 +9,12 @@ $ErrorActionPreference = "Stop"
 $TARGET_DIR = "target/windows/portable"
 $RESOURCE_DIR = "target/windows/resources"
 
+# Check if the resources were previously built
+if (-not (Test-Path $RESOURCE_DIR)) {
+    Write-Error "You need to build the windows resources first.`nPlease run scripts/build_windows_resources.ps1"
+    exit 1
+}
+
 function Main {
     # Clean the target directory
     if (Test-Path $TARGET_DIR) {
