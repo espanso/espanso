@@ -24,7 +24,7 @@ use std::{path::PathBuf, process::Command};
 
 use clap::{App, AppSettings, Arg, ArgMatches, ErrorKind, SubCommand};
 use cli::{CliModule, CliModuleArgs};
-use log::{error, info};
+use log::{error, info, warn};
 use logging::FileProxy;
 use simplelog::{
     CombinedLogger, ConfigBuilder, LevelFilter, SharedLogger, TermLogger, TerminalMode, WriteLogger,
@@ -77,7 +77,7 @@ static CLI_HANDLERS: LazyLock<Vec<CliModule>> = LazyLock::new(|| {
 fn main() {
     match util::attach_console() {
         Ok(()) => info!("Console attached"),
-        Err(e) => panic!("Could not attach console! {e}"),
+        Err(e) => warn!("Could not attach console! {e}"),
     }
 
     let args: Vec<String> = std::env::args().collect();
