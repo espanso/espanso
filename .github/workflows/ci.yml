@@ -3,8 +3,24 @@ name: CI
 on:
   pull_request:
     paths-ignore:
+      - ".devcontainer/**"
+      - ".dockerignore"
+      - ".editorconfig"
+      - ".github/*"
+      - ".github/workflows/create-release-draft.yml"
+      - ".github/workflows/dev-release.yml"
+      - ".github/workflows/nix-build.yml"
+      - ".github/workflows/update-flake.yml"
+      - ".vscode/**"
+      - "CONTRIBUTING.md"
+      - "LICENSE"
+      - "README.md"
+      - "SECURITY.md"
       - "docs/**"
-
+      - "images/**"
+      - "schemas/**"
+      - "tarpaulin.toml"
+      
 defaults:
   run:
     shell: bash
