@@ -19,6 +19,14 @@ if (!$ResourcesDirExists) {
     exit 1
 }
 
+if (Get-Command iscc -errorAction SilentlyContinue) {
+    "iscc installed!"
+}
+else {
+    Write-Error "Iscc is not installed. Please visit website or choco-install it"
+    exit 1
+}
+
 function Get-TomlVersion {
     $TomlPath = Join-Path $BASE_DIR "espanso/Cargo.toml"
 
