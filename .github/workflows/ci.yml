@@ -16,7 +16,6 @@ on:
       - "LICENSE"
       - "README.md"
       - "SECURITY.md"
-      - "SECURITY.md"
       - "docs/**"
       - "images/**"
       - "schemas/**"
