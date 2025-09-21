@@ -15,7 +15,16 @@ $BASE_DIR = Get-Location
 
 $ResourcesDirExists = Test-Path -Path $RESOURCE_DIR
 if (!$ResourcesDirExists) {
-    Write-Error "You need to build the resources before building the windows installer`n Run ./scripts/build_windows_resources.ps1"
+    Write-Error "You need to build the windows resources first.`nPlease run scripts/build_windows_resources.ps1"
+    exit 1
+}
+
+if (Get-Command iscc -errorAction SilentlyContinue) {
+    "iscc installed!"
+}
+else {
+    Write-Error "Iscc is not installed. Please visit website or choco-install it"
+    exit 1
 }
 
 function Get-TomlVersion {
@@ -36,10 +45,6 @@ function Get-TomlVersion {
 
 function Main {
     $espansod_path = Join-Path $BASE_DIR "target\windows\resources\espansod.exe"
-    $espansod_exists = Test-Path $espansod_path
-    if (!$espansod_exists) {
-        Write-Error "You need to build the windows resources first.`nPlease run scripts/build_windows_resources.ps1"
-    }
 
     $script_resources_path = Join-Path $BASE_DIR "scripts/resources/windows"
     $template_path = Join-Path $script_resources_path "setupscript.iss"

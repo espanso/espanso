@@ -10,9 +10,9 @@ $TARGET_DIR = "target/windows/resources"
 
 function Main {
     if ([string]::IsNullOrEmpty($env:EXEC_PATH)) {
-        Write-Error "EXEC_PATH is a required environment variable for this script`n"
-        Write-Error 'Please do $env:EXEC_PATH = ".\target\release\espanso.exe" for release'
-        Write-Error 'or $env:EXEC_PATH = ".\target\debug\espanso.exe" for debug mode'
+        Write-Output "EXEC_PATH is a required environment variable for this script`n"
+        Write-Output 'Please do $env:EXEC_PATH = ".\target\release\espanso.exe" for release'
+        Write-Output 'or $env:EXEC_PATH = ".\target\debug\espanso.exe" for debug mode'
     }
 
     $EXEC_PATH = Test-Path -Path $env:EXEC_PATH

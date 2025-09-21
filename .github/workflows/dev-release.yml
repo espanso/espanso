@@ -48,6 +48,34 @@ jobs:
         run: |
             $env:EXEC_PATH = "target\release\espanso.exe"
             scripts\build_windows_resources.ps1
+      - name: Download and install Inno Setup (missing in Windows Server 2025)
+        run: |
+          echo "Checking pre-installation..."
+          
+          set "ISCC_PATH=%programfiles(x86)%\Inno Setup 6\ISCC.exe"
+          
+          if exist "%ISCC_PATH%" (
+            echo ::warning::Inno Setup is already installed
+            exit /b 0
+          )
+          
+          echo "Downloading Inno Setup..."
+
+          set "_url_=https://jrsoftware.org/download.php/is.exe?site=1"
+          set "_file_=innosetup.exe"
+
+          curl -L -o "%tmp%\%_file_%" "%_url_%"
+          
+          echo "Installing Inno Setup..."
+          "%tmp%\%_file_%" /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-
+          
+          if not exist "%ISCC_PATH%" (
+            echo "::error::Inno Setup installation failed"
+            exit 1
+          )
+          
+          echo ::warning::Inno Setup installed successfully!
+        shell: cmd
       - name: Build installer
         shell: pwsh
         run: |
