@@ -6,6 +6,7 @@ on:
       - ".devcontainer/**"
       - ".dockerignore"
       - ".editorconfig"
+      - ".github/*"
       - ".github/workflows/nix-build.yml"
       - ".github/workflows/update-flake.yml"
       - ".vscode/**"
