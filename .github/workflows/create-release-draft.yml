@@ -193,10 +193,9 @@ jobs:
       - name: Print target version
         run: |
           echo Using version ${{ needs.extract-version.outputs.espanso_version }}
-      - name: Install rust target
-        run: |
-          rustup update
-          rustup target add aarch64-apple-darwin x86_64-apple-darwin
+      - uses: dtolnay/rust-toolchain@stable
+        components: clippy, rustfmt
+        targets: aarch64-apple-darwin, x86_64-apple-darwin
       - name: Test
         run: |
           cargo test \
@@ -227,7 +226,7 @@ jobs:
       - name: Create ZIP archive
         run: |
           ditto -c -k --sequesterRsrc --keepParent target/mac/Espanso.app Espanso-Mac-Universal.zip
-      
+
       # This doesn't work:
       #
       # - name: Upload artifacts to Github Releases
