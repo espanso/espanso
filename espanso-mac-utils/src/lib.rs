@@ -18,6 +18,8 @@
  */
 
 #[cfg(target_os = "macos")]
+use macos_accessibility_client;
+#[cfg(target_os = "macos")]
 use std::{ffi::CStr, os::raw::c_char};
 
 mod ffi;
@@ -88,12 +90,12 @@ fn get_app_name_from_path(path: &str) -> Option<String> {
 
 #[cfg(target_os = "macos")]
 pub fn check_accessibility() -> bool {
-    unsafe { ffi::mac_utils_check_accessibility() > 0 }
+    macos_accessibility_client::accessibility::application_is_trusted()
 }
 
 #[cfg(target_os = "macos")]
 pub fn prompt_accessibility() -> bool {
-    unsafe { ffi::mac_utils_prompt_accessibility() > 0 }
+    macos_accessibility_client::accessibility::application_is_trusted_with_prompt()
 }
 
 #[cfg(target_os = "macos")]
