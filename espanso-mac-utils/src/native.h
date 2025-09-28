@@ -31,12 +31,6 @@ extern "C" int32_t mac_utils_get_secure_input_process(int64_t *pid);
 extern "C" int32_t mac_utils_get_path_from_pid(int64_t pid, char *buff,
                                                int buff_size);
 
-// Return 1 if the accessibility permissions have been granted, 0 otherwise
-extern "C" int32_t mac_utils_check_accessibility();
-
-// Return 1 if the accessibility permissions have been granted, 0 otherwise
-extern "C" int32_t mac_utils_prompt_accessibility();
-
 // When called, convert the current process to a foreground app (showing the
 // dock icon).
 extern "C" void mac_utils_transition_to_foreground_app();

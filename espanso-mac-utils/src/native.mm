@@ -68,16 +68,6 @@ int32_t mac_utils_get_path_from_pid(int64_t pid, char *buff, int buff_size) {
   }
 }
 
-int32_t mac_utils_check_accessibility() {
-  NSDictionary* opts = @{(__bridge id)kAXTrustedCheckOptionPrompt: @NO};
-  return AXIsProcessTrustedWithOptions((__bridge CFDictionaryRef)opts);
-}
-
-int32_t mac_utils_prompt_accessibility() {
-  NSDictionary* opts = @{(__bridge id)kAXTrustedCheckOptionPrompt: @YES};
-  return AXIsProcessTrustedWithOptions((__bridge CFDictionaryRef)opts);
-}
-
 void mac_utils_transition_to_foreground_app() {
   ProcessSerialNumber psn = { 0, kCurrentProcess };
   TransformProcessType(&psn, kProcessTransformToForegroundApplication);
