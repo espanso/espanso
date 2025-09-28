@@ -7,8 +7,6 @@ on:
       - ".dockerignore"
       - ".editorconfig"
       - ".github/*"
-      - ".github/workflows/create-release-draft.yml"
-      - ".github/workflows/dev-release.yml"
       - ".github/workflows/nix-build.yml"
       - ".github/workflows/update-flake.yml"
       - ".vscode/**"
