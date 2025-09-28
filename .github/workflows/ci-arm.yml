@@ -57,7 +57,9 @@ jobs:
     runs-on: windows-11-arm
     steps:
       - uses: actions/checkout@main
-      - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
       #   - name: Format
       #     run: cargo fmt --all -- --check
       - name: Build
