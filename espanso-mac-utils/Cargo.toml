@@ -6,8 +6,10 @@ edition = "2021"
 build = "build.rs"
 
 [dependencies]
-macos-accessibility-client = "0.0.1"
 regex.workspace = true
+
+[target.'cfg(target_os="macos")'.dependencies]
+macos-accessibility-client = "0.0.1"
 
 [build-dependencies]
 cc.workspace = true
