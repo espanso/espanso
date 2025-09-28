@@ -136,7 +136,8 @@ jobs:
     steps:
       - uses: actions/checkout@main
       - uses: dtolnay/rust-toolchain@stable
-        targets: aarch64-apple-darwin, x86_64-apple-darwin
+        with:
+          targets: aarch64-apple-darwin, x86_64-apple-darwin
       - name: Test
         run: |
           cargo test \
