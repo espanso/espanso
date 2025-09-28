@@ -8,7 +8,7 @@ on:
       - ".editorconfig"
       - ".github/workflows/nix-build.yml"
       - ".github/workflows/update-flake.yml"
-      - ".vscode/**"
+      # - ".vscode/**"
       - "CONTRIBUTING.md"
       - "LICENSE"
       - "README.md"
