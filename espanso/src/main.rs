@@ -442,8 +442,7 @@ SubCommand::with_name("install")
         Ok(matches) => matches,
         Err(err) => match err.kind {
             ErrorKind::DisplayHelpOnMissingArgumentOrSubcommand | ErrorKind::DisplayHelp => {
-                clap_instance.print_help().expect("unable to print help");
-                std::process::exit(1);
+                err.exit();
             }
             ErrorKind::DisplayVersion => {
                 println!(
