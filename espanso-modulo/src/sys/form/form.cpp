@@ -311,7 +311,11 @@ void FormFrame::HandleMultilineFocus(wxFocusEvent &event) {
 
 void FormFrame::UpdateHelpText() {
     if (hasFocusedMultilineControl) {
+#ifdef __WXOSX__
+        helpText->SetLabel("(or press CMD+Enter to submit, ESC to cancel)");
+#else
         helpText->SetLabel("(or press CTRL+Enter to submit, ESC to cancel)");
+#endif
     } else {
         helpText->SetLabel("(or press Enter to submit, ESC to cancel)");
     }
@@ -324,7 +328,7 @@ void FormFrame::OnCharHook(wxKeyEvent &event) {
     if (event.GetKeyCode() == WXK_ESCAPE) {
         Close(true);
     } else if (event.GetKeyCode() == WXK_RETURN) {
-        if (!hasFocusedMultilineControl || wxGetKeyState(WXK_RAW_CONTROL)) {
+        if (!hasFocusedMultilineControl || event.CmdDown()) {
             Submit();
         } else {
             event.Skip();
