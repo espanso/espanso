@@ -288,7 +288,7 @@ void SearchFrame::OnCharEvent(wxKeyEvent &event) {
         SelectNext();
     } else if (event.GetKeyCode() == 'P' && event.RawControlDown()) {
         SelectPrevious();
-    } else if (event.GetKeyCode() == WXK_RETURN) {
+    } else if (event.GetKeyCode() == WXK_RETURN || event.GetKeyCode() == WXK_NUMPAD_ENTER) {
         Submit();
     } else {
         event.Skip();
