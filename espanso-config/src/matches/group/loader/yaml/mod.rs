@@ -140,6 +140,24 @@ pub fn try_convert_into_match(
         yaml_match.triggers
     };
 
+    // Filter out empty triggers and add a warning
+    let triggers = if let Some(mut triggers_vec) = triggers {
+        let original_len = triggers_vec.len();
+        triggers_vec.retain(|t| !t.trim().is_empty());
+        if triggers_vec.len() < original_len {
+            warnings.push(anyhow!(
+                "empty triggers are not allowed and have been ignored"
+            ));
+        }
+        if triggers_vec.is_empty() {
+            None
+        } else {
+            Some(triggers_vec)
+        }
+    } else {
+        None
+    };
+
     let uppercase_style = match yaml_match
         .uppercase_style
         .map(|s| s.to_lowercase())
