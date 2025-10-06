@@ -584,6 +584,7 @@ SubCommand::with_name("install")
         }
 
         // try to invoke `kdotool` to see if you have it or not.
+        #[cfg(target_os = "linux")]
         if Command::new("kdotool")
             .arg("getactivewindow")
             .arg("getwindowclassname")
