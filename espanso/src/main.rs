@@ -20,7 +20,10 @@
 // This is needed to avoid showing a console window when starting espanso on Windows
 #![windows_subsystem = "windows"]
 
-use std::{path::PathBuf, process::Command};
+use std::path::PathBuf;
+
+#[cfg(target_os = "linux")]
+use std::process::Command;
 
 use clap::{App, AppSettings, Arg, ArgMatches, ErrorKind, SubCommand};
 use cli::{CliModule, CliModuleArgs};
@@ -583,6 +586,7 @@ SubCommand::with_name("install")
         }
 
         // try to invoke `kdotool` to see if you have it or not.
+        #[cfg(target_os = "linux")]
         if Command::new("kdotool")
             .arg("getactivewindow")
             .arg("getwindowclassname")
