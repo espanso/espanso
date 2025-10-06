@@ -39,6 +39,9 @@ pub struct YAMLMatchGroup {
 
 impl YAMLMatchGroup {
     pub fn parse_from_str(yaml: &str) -> Result<Self> {
+        // Remove UTF-8 BOM if present (common in Windows editors like Notepad)
+        let yaml = yaml.trim_start_matches('\u{FEFF}');
+
         // Because an empty string is not valid YAML but we want to support it anyway
         if is_yaml_empty(yaml) {
             return Ok(serde_yaml::from_str(
