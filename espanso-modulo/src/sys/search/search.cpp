@@ -134,16 +134,18 @@ wxString ResultListBox::OnGetItem(size_t n) const {
     wxString shortcut =
         (n < 8) ? wxString::Format(wxT("Alt+%i"), (int)n + 1) : " ";
 
-    // Escape HTML special characters in label and trigger to prevent them from being
-    // interpreted as HTML tags (fixes issue #974)
+    // Escape HTML special characters in label and trigger to prevent them
+    // from being interpreted as HTML tags (fixes issue #974)
     wxString escapedLabel = EscapeHtml(wxItems[n]);
     wxString escapedTrigger = EscapeHtml(wxTriggers[n]);
 
-    return wxString::Format(
+    wxString result = wxString::Format(
         wxT("<font color='%s'><table width='100%%'><tr><td>%s</td><td "
             "align='right'><b>%s</b> <font color='#636e72'> "
             "%s</font></td></tr></table></font>"),
         textColor, escapedLabel, escapedTrigger, shortcut);
+
+    return result;
 }
 
 class SearchFrame : public wxFrame {
