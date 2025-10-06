@@ -18,6 +18,8 @@
  */
 
 use chrono::{DateTime, Duration, Local, Locale};
+use std::fmt::Write;
+use thiserror::Error;
 
 use crate::{Extension, ExtensionOutput, ExtensionResult, Number, Params, Value};
 
@@ -67,7 +69,10 @@ impl Extension for DateExtension<'_> {
             .map_or_else(|| self.locale_provider.get_system_locale(), String::from);
 
         let date = if let Some(Value::String(format)) = format {
-            DateExtension::format_date_with_locale_string(now, format, &locale)
+            match DateExtension::format_date_with_locale_string(now, format, &locale) {
+                Ok(formatted) => formatted,
+                Err(err) => return ExtensionResult::Error(err.into()),
+            }
         } else {
             now.to_rfc2822()
         };
@@ -85,15 +90,22 @@ impl DateExtension<'_> {
         }
     }
 
-    fn format_date_with_locale(date: DateTime<Local>, format: &str, locale: Locale) -> String {
-        date.format_localized(format, locale).to_string()
+    fn format_date_with_locale(
+        date: DateTime<Local>,
+        format: &str,
+        locale: Locale,
+    ) -> Result<String, DateExtensionError> {
+        let mut output = String::new();
+        write!(output, "{}", date.format_localized(format, locale))
+            .map_err(|_| DateExtensionError::InvalidFormat(format.to_string()))?;
+        Ok(output)
     }
 
     fn format_date_with_locale_string(
         date: DateTime<Local>,
         format: &str,
         locale_str: &str,
-    ) -> String {
+    ) -> Result<String, DateExtensionError> {
         let locale = convert_locale_string_to_locale(locale_str).unwrap_or(Locale::en_US);
         Self::format_date_with_locale(date, format, locale)
     }
@@ -420,6 +432,12 @@ impl DefaultLocaleProvider {
     }
 }
 
+#[derive(Error, Debug)]
+pub enum DateExtensionError {
+    #[error("invalid date format: `{0}`")]
+    InvalidFormat(String),
+}
+
 #[cfg(test)]
 mod tests {
     use std::collections::HashMap;
@@ -566,5 +584,24 @@ mod tests {
                 .unwrap(),
             ExtensionOutput::Single("martedì".to_string())
         );
+    }
+
+    #[test]
+    fn invalid_format_should_return_error() {
+        let locale_provider = MockLocaleProvider::new();
+        let extension = DateExtension::new(&locale_provider);
+
+        // Test with the format from issue #993
+        let param = vec![(
+            "format".to_string(),
+            Value::String("%Y-%m-%dT%H:%i:%s%Q".to_string()),
+        )]
+        .into_iter()
+        .collect::<Params>();
+
+        assert!(matches!(
+            extension.calculate(&crate::Context::default(), &HashMap::default(), &param),
+            ExtensionResult::Error(_)
+        ));
     }
 }
