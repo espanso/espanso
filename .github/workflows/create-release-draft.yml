@@ -193,10 +193,6 @@ jobs:
       - name: Print target version
         run: |
           echo Using version ${{ needs.extract-version.outputs.espanso_version }}
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          components: clippy, rustfmt
-          targets: aarch64-apple-darwin, x86_64-apple-darwin
       - name: Test
         run: |
           cargo test \
