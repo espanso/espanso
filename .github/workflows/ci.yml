@@ -115,6 +115,7 @@ jobs:
       - name: Build
         run: |
           cargo build --target aarch64-apple-darwin
+          rustup target add x86_64-apple-darwin
           cargo build --target x86_64-apple-darwin
       - name: Clippy
         run: |
