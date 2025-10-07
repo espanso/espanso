@@ -35,7 +35,7 @@ use std::path::PathBuf;
 use std::{collections::HashSet, path::Path};
 use thiserror::Error;
 
-const STANDARD_INCLUDES: &[&str] = &["../match/**/[!_]*.yml"];
+const STANDARD_INCLUDES: &[&str] = &["../match/**/[!_]*.yaml", "../match/**/[!_]*.yml"];
 
 #[derive(Debug, Clone, Default)]
 pub struct ResolvedConfig {
