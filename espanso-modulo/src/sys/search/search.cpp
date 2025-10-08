@@ -119,15 +119,33 @@ void ResultListBox::OnDrawBackground(wxDC &dc, const wxRect &rect,
     dc.DrawRectangle(0, 0, rect.GetRight(), rect.GetBottom());
 }
 
+// Helper function to escape HTML special characters
+wxString EscapeHtml(const wxString &str) {
+    wxString escaped = str;
+    escaped.Replace(wxT("&"), wxT("&amp;"));  // Must be first to avoid double-escaping
+    escaped.Replace(wxT("<"), wxT("&lt;"));
+    escaped.Replace(wxT(">"), wxT("&gt;"));
+    escaped.Replace(wxT("\""), wxT("&quot;"));
+    return escaped;
+}
+
 wxString ResultListBox::OnGetItem(size_t n) const {
     wxString textColor = isDark ? "white" : "";
     wxString shortcut =
         (n < 8) ? wxString::Format(wxT("Alt+%i"), (int)n + 1) : " ";
-    return wxString::Format(
+
+    // Escape HTML special characters in label and trigger to prevent them
+    // from being interpreted as HTML tags (fixes issue #974)
+    wxString escapedLabel = EscapeHtml(wxItems[n]);
+    wxString escapedTrigger = EscapeHtml(wxTriggers[n]);
+
+    wxString result = wxString::Format(
         wxT("<font color='%s'><table width='100%%'><tr><td>%s</td><td "
             "align='right'><b>%s</b> <font color='#636e72'> "
             "%s</font></td></tr></table></font>"),
-        textColor, wxItems[n], wxTriggers[n], shortcut);
+        textColor, escapedLabel, escapedTrigger, shortcut);
+
+    return result;
 }
 
 class SearchFrame : public wxFrame {
