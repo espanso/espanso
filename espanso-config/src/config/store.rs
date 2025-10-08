@@ -73,16 +73,22 @@ impl DefaultConfigStore {
             return Err(ConfigStoreError::InvalidConfigDir().into());
         }
 
-        // First get the default.yml file
-        let default_file = config_dir.join("default.yml");
-        if !default_file.exists() || !default_file.is_file() {
+        // First get the default config file (try .yaml first, then .yml for backwards compatibility)
+        let default_file_yaml = config_dir.join("default.yaml");
+        let default_file_yml = config_dir.join("default.yml");
+
+        let default_file = if default_file_yaml.exists() && default_file_yaml.is_file() {
+            default_file_yaml
+        } else if default_file_yml.exists() && default_file_yml.is_file() {
+            default_file_yml
+        } else {
             return Err(ConfigStoreError::MissingDefault().into());
-        }
+        };
 
         let mut non_fatal_errors = Vec::new();
 
         let default = ResolvedConfig::load(&default_file, None)
-            .context("failed to load default.yml configuration")?;
+            .context("failed to load default.yaml or default.yml configuration")?;
         debug!("loaded default config at path: {}", default_file.display());
 
         // Then the others

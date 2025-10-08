@@ -105,9 +105,15 @@ pub fn print_matches_as_json(match_list: &[&Match]) -> Result<()> {
             MatchCause::Regex(regex_cause) => vec![regex_cause.regex.clone()],
         };
 
+        let replace = match &m.effect {
+            espanso_config::matches::MatchEffect::Text(text_effect) => text_effect.replace.clone(),
+            espanso_config::matches::MatchEffect::Image(image_effect) => image_effect.path.clone(),
+            espanso_config::matches::MatchEffect::None => String::new(),
+        };
+
         entries.push(JsonMatchEntry {
             triggers,
-            replace: m.description().to_string(),
+            replace,
             label: m.label.clone(),
         });
     }

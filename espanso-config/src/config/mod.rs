@@ -348,7 +348,7 @@ pub enum ConfigStoreError {
     #[error("invalid config directory")]
     InvalidConfigDir(),
 
-    #[error("missing default.yml config")]
+    #[error("missing default config (default.yaml or default.yml)")]
     MissingDefault(),
 
     #[error("io error")]
