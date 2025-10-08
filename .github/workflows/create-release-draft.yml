@@ -31,6 +31,13 @@ jobs:
     outputs:
       espanso_version: ${{ steps.version.outputs.version }}
     steps:
+      - uses: actions/cache@main
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - uses: actions/checkout@main
       - name: "Extract version"
         id: "version"
@@ -46,6 +53,13 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: false
     steps:
+      - uses: actions/cache@main
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - uses: actions/checkout@main
       - name: Create new release
         # gh release create docs: https://cli.github.com/manual/gh_release_create
@@ -70,6 +84,13 @@ jobs:
         shell: bash
 
     steps:
+      - uses: actions/cache@main
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - uses: actions/checkout@main
       - name: Print target version
         run: |
@@ -136,6 +157,13 @@ jobs:
     continue-on-error: false
 
     steps:
+      - uses: actions/cache@main
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - uses: actions/checkout@main
       - name: Print target version
         run: |
@@ -162,6 +190,13 @@ jobs:
     continue-on-error: false
 
     steps:
+      - uses: actions/cache@main
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - uses: actions/checkout@main
       - name: Print target version
         run: |
@@ -189,6 +224,13 @@ jobs:
     continue-on-error: false
 
     steps:
+      - uses: actions/cache@main
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - uses: actions/checkout@main
       - name: Print target version
         run: |

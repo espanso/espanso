@@ -14,6 +14,13 @@ jobs:
   linux-arm:
     runs-on: ubuntu-24.04-arm
     steps:
+      - uses: actions/cache@main
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - uses: actions/checkout@main
       #   - name: Format
       #     run: cargo fmt --all -- --check
@@ -53,6 +60,13 @@ jobs:
   windows-arm:
     runs-on: windows-11-arm
     steps:
+      - uses: actions/cache@main
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - uses: actions/checkout@main
       #   - name: Format
       #     run: cargo fmt --all -- --check
