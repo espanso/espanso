@@ -1,361 +1,323 @@
 {
-    "version": "2.0.0",
-    "tasks": [
-        {
-            "label": "cargo build binary debug",
-            "detail": "builds the debug X11 version: modulo, native-tls",
-            "type": "cargo",
-            "command": "build",
-            "args": [
-                "--manifest-path",
-                "espanso/Cargo.toml",
-                "-p",
-                "espanso",
-                "--no-default-features",
-                "--features",
-                "modulo native-tls"
-            ],
-            "problemMatcher": [
-                "$rustc"
-            ],
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            }
-        },
-        {
-            "label": "cargo build binary release",
-            "detail": "builds the release X11 version: modulo, native-tls",
-            "type": "cargo",
-            "command": "build",
-            "args": [
-                "--release",
-                "--manifest-path",
-                "espanso/Cargo.toml",
-                "-p",
-                "espanso",
-                "--no-default-features",
-                "--features",
-                "modulo native-tls"
-            ],
-            "problemMatcher": [
-                "$rustc"
-            ],
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            }
-        },
-        {
-            "label": "cargo build binary Wayland debug",
-            "detail": "builds the debug Wayland version: modulo, native-tls",
-            "type": "cargo",
-            "command": "build",
-            "args": [
-                "--manifest-path",
-                "espanso/Cargo.toml",
-                "-p",
-                "espanso",
-                "--no-default-features",
-                "--features",
-                "wayland modulo native-tls"
-            ],
-            "problemMatcher": [
-                "$rustc"
-            ],
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            }
-        },
-        {
-            "label": "cargo build binary Wayland release",
-            "detail": "builds the release Wayland version: modulo, native-tls",
-            "type": "cargo",
-            "command": "build",
-            "args": [
-                "--release",
-                "--manifest-path",
-                "espanso/Cargo.toml",
-                "-p",
-                "espanso",
-                "--no-default-features",
-                "--features",
-                "wayland modulo native-tls"
-            ],
-            "problemMatcher": [
-                "$rustc"
-            ],
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            }
-        },
-        {
-            "label": "rust: cargo test",
-            "type": "cargo",
-            "command": "test",
-            "problemMatcher": [
-                "$rustc"
-            ],
-            "group": {
-                "kind": "test",
-                "isDefault": true
-            }
-        },
-        {
-            "label": "rust: coverage",
-            "type": "cargo",
-            "command": "tarpaulin",
-            "args": [
-                "--manifest-path",
-                "${workspaceFolder}/espanso/Cargo.toml",
-                "--config",
-                "${workspaceFolder}/tarpaulin.toml"
-            ],
-            "problemMatcher": [],
-            "group": "test"
-        },
-        {
-            "type": "cargo",
-            "command": "clippy",
-            "label": "clippy",
-            "detail": "run cargo clippy for all targets",
-            "problemMatcher": [
-                "$rustc"
-            ],
-            "args": [
-                "--workspace",
-                "--all-targets",
-                "--no-deps"
-            ],
-            "group": {
-                "kind": "none"
-            }
-        },
-        {
-            "label": "Windows: build-windows-resources",
-            "type": "process",
-            "command": "pwsh",
-            "detail": "build the windows resources",
-            "problemMatcher": [],
-            "args": [
-                "${workspaceFolder}/scripts/build_windows_resources.ps1"
-            ],
-            "options": {
-                "env": {
-                    "EXEC_PATH": "target/debug/espanso.exe"
-                }
-            },
-            "group": {
-                "kind": "none"
-            }
-        },
-        {
-            "label": "Windows: build-windows-portable",
-            "type": "process",
-            "command": "pwsh",
-            "detail": "build the windows portable",
-            "dependsOn": [
-                "Windows: build-windows-resources"
-            ],
-            "problemMatcher": [],
-            "args": [
-                "${workspaceFolder}/scripts/build_windows_portable.ps1"
-            ],
-            "group": {
-                "kind": "none"
-            }
-        },
-        {
-            "label": "Windows: build-windows-installer",
-            "type": "process",
-            "command": "pwsh",
-            "detail": "build the windows installer",
-            "problemMatcher": [],
-            "dependsOrder": "sequence",
-            "dependsOn": [
-                "Windows: build-windows-resources"
-            ],
-            "args": [
-                "${workspaceFolder}/scripts/build_windows_installer.ps1"
-            ],
-            "group": {
-                "kind": "none"
-            }
-        },
-        {
-            "label": "Windows build-windows-all",
-            "type": "process",
-            "command": "echo",
-            "detail": "build the windows portable and installer",
-            "dependsOn": [
-                "Windows: build-windows-portable",
-                "Windows: build-windows-installer",
-            ],
-            "dependsOrder": "sequence",
-            "args": [
-                "Done!"
-            ],
-            "group": {
-                "kind": "none"
-            }
-        },
-        {
-            "label": "macOS: release-build-arm-binary",
-            "type": "process",
-            "command": "cargo",
-            "detail": "build the macOS arm binary",
-            "options": {
-                "env": {
-                    "BUILD_ARCH": "aarch64-apple-darwin"
-                }
-            },
-            "problemMatcher": [
-                "$rustc"
-            ],
-            "args": [
-                "build",
-                "-p",
-                "espanso",
-                "--target=aarch64-apple-darwin",
-                "--release",
-                "--no-default-features",
-                "--features=native-tls,modulo",
-            ],
-            "group": {
-                "kind": "none"
-            }
-        },
-        {
-            "label": "macOS: release-build-x86-binary",
-            "type": "process",
-            "command": "cargo",
-            "detail": "build the macOS x86 binary",
-            "options": {
-                "env": {
-                    "BUILD_ARCH": "x86_64-apple-darwin"
-                }
-            },
-            "problemMatcher": [
-                "$rustc"
-            ],
-            "args": [
-                "build",
-                "-p",
-                "espanso",
-                "--target=x86_64-apple-darwin",
-                "--release",
-                "--no-default-features",
-                "--features=native-tls,modulo",
-            ],
-            "group": {
-                "kind": "none"
-            }
-        },
-        {
-            "label": "macOS: create .dmg image",
-            "type": "process",
-            "command": "ditto",
-            "args": [
-                "-c",
-                "-k",
-                "--sequesterRsrc",
-                "--keepParent",
-                "target/mac/Espanso.app",
-                "Espanso-Mac-Universal.zip"
-            ],
-            "problemMatcher": []
-        },
-        {
-            "label": "macOS: create-universal-bundle",
-            "type": "process",
-            "command": "bash",
-            "detail": "creates the macOS universal bundle",
-            "problemMatcher": [],
-            "args": [
-                "${workspaceFolder}/scripts/create_bundle.sh",
-            ],
-            "dependsOn": [
-                "macOS: release-build-x86-binary",
-                "macOS: release-build-arm-binary",
-                "macOS: create .dmg image"
-            ],
-            "dependsOrder": "sequence"
-        },
-        {
-            "label": "give excecution permissions: create AppImage.sh",
-            "type": "shell",
-            "command": [
-                "chmod",
-                "+x",
-                "${workspaceFolder}/scripts/create_app_image.sh"
-            ],
-            "problemMatcher": []
-        },
-        {
-            "label": "Linux: create AppImage",
-            "type": "shell",
-            "command": "${workspaceFolder}/scripts/create_app_image.sh",
-            "detail": "creates the AppImage for linux",
-            "group": {
-                "kind": "none"
-            },
-            "problemMatcher": [],
-            "dependsOn": [
-                "give excecution permissions: create AppImage.sh"
-            ]
-        },
-        {
-            "label": "Build .deb package",
-            "detail": "Builds the deb package. It needs cargo-deb and a Debian based distro",
-            "type": "cargo",
-            "problemMatcher": [],
-            "command": "deb",
-            "args": [
-                "-p",
-                "espanso",
-                "--variant",
-                "wayland",
-                "--",
-                "--no-default-features",
-                "--features",
-                "modulo wayland vendored-tls"
-            ]
-        },
-        {
-            "label": "Build .deb - Docker image",
-            "detail": "Prepare the Docker image build the .deb file",
-            "type": "shell",
-            "problemMatcher": [],
-            "command": "sudo",
-            "args": [
-                "docker",
-                "build",
-                "-t",
-                "espanso-ubuntu",
-                ".",
-                "-f",
-                ".github/scripts/Dockerfile"
-            ]
-        },
-        {
-            "label": "Build .deb - Docker deb build",
-            "detail": "Build the .deb file from the Docker image",
-            "type": "shell",
-            "problemMatcher": [],
-            "command": "sudo",
-            "args": [
-                "docker",
-                "run",
-                "-v",
-                "\"$(pwd):/shared\"",
-                "espanso-ubuntu",
-                "espanso/.github/scripts/ubuntu/build_deb.sh",
-            ],
-            "dependsOn": [
-                "Build .deb - Docker image"
-            ]
-        },
-    ]
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "cargo build binary debug",
+      "detail": "builds the debug X11 version: modulo, native-tls",
+      "type": "cargo",
+      "command": "build",
+      "args": [
+        "--manifest-path",
+        "espanso/Cargo.toml",
+        "-p",
+        "espanso",
+        "--no-default-features",
+        "--features",
+        "modulo native-tls"
+      ],
+      "problemMatcher": ["$rustc"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "cargo build binary release",
+      "detail": "builds the release X11 version: modulo, native-tls",
+      "type": "cargo",
+      "command": "build",
+      "args": [
+        "--release",
+        "--manifest-path",
+        "espanso/Cargo.toml",
+        "-p",
+        "espanso",
+        "--no-default-features",
+        "--features",
+        "modulo native-tls"
+      ],
+      "problemMatcher": ["$rustc"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "cargo build binary Wayland debug",
+      "detail": "builds the debug Wayland version: modulo, native-tls",
+      "type": "cargo",
+      "command": "build",
+      "args": [
+        "--manifest-path",
+        "espanso/Cargo.toml",
+        "-p",
+        "espanso",
+        "--no-default-features",
+        "--features",
+        "wayland modulo native-tls"
+      ],
+      "problemMatcher": ["$rustc"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "cargo build binary Wayland release",
+      "detail": "builds the release Wayland version: modulo, native-tls",
+      "type": "cargo",
+      "command": "build",
+      "args": [
+        "--release",
+        "--manifest-path",
+        "espanso/Cargo.toml",
+        "-p",
+        "espanso",
+        "--no-default-features",
+        "--features",
+        "wayland modulo native-tls"
+      ],
+      "problemMatcher": ["$rustc"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "rust: cargo test",
+      "type": "cargo",
+      "command": "test",
+      "problemMatcher": ["$rustc"],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "rust: coverage",
+      "type": "cargo",
+      "command": "tarpaulin",
+      "args": [
+        "--manifest-path",
+        "${workspaceFolder}/espanso/Cargo.toml",
+        "--config",
+        "${workspaceFolder}/tarpaulin.toml"
+      ],
+      "problemMatcher": [],
+      "group": "test"
+    },
+    {
+      "type": "cargo",
+      "command": "clippy",
+      "label": "clippy",
+      "detail": "run cargo clippy for all targets",
+      "problemMatcher": ["$rustc"],
+      "args": ["--workspace", "--all-targets", "--no-deps"],
+      "group": {
+        "kind": "none"
+      }
+    },
+    {
+      "label": "Windows: build-windows-resources",
+      "type": "process",
+      "command": "pwsh",
+      "detail": "build the windows resources",
+      "problemMatcher": [],
+      "args": ["${workspaceFolder}/scripts/build_windows_resources.ps1"],
+      "options": {
+        "env": {
+          "EXEC_PATH": "target/debug/espanso.exe"
+        }
+      },
+      "group": {
+        "kind": "none"
+      }
+    },
+    {
+      "label": "Windows: build-windows-portable",
+      "type": "process",
+      "command": "pwsh",
+      "detail": "build the windows portable",
+      "dependsOn": ["Windows: build-windows-resources"],
+      "problemMatcher": [],
+      "args": ["${workspaceFolder}/scripts/build_windows_portable.ps1"],
+      "group": {
+        "kind": "none"
+      }
+    },
+    {
+      "label": "Windows: build-windows-installer",
+      "type": "process",
+      "command": "pwsh",
+      "detail": "build the windows installer",
+      "problemMatcher": [],
+      "dependsOrder": "sequence",
+      "dependsOn": ["Windows: build-windows-resources"],
+      "args": ["${workspaceFolder}/scripts/build_windows_installer.ps1"],
+      "group": {
+        "kind": "none"
+      }
+    },
+    {
+      "label": "Windows build-windows-all",
+      "type": "process",
+      "command": "echo",
+      "detail": "build the windows portable and installer",
+      "dependsOn": [
+        "Windows: build-windows-portable",
+        "Windows: build-windows-installer"
+      ],
+      "dependsOrder": "sequence",
+      "args": ["Done!"],
+      "group": {
+        "kind": "none"
+      }
+    },
+    {
+      "label": "macOS: release-build-arm-binary",
+      "type": "process",
+      "command": "cargo",
+      "detail": "build the macOS arm binary",
+      "options": {
+        "env": {
+          "BUILD_ARCH": "aarch64-apple-darwin"
+        }
+      },
+      "problemMatcher": ["$rustc"],
+      "args": [
+        "build",
+        "-p",
+        "espanso",
+        "--target=aarch64-apple-darwin",
+        "--release",
+        "--no-default-features",
+        "--features=native-tls,modulo"
+      ],
+      "group": {
+        "kind": "none"
+      }
+    },
+    {
+      "label": "macOS: release-build-x86-binary",
+      "type": "process",
+      "command": "cargo",
+      "detail": "build the macOS x86 binary",
+      "options": {
+        "env": {
+          "BUILD_ARCH": "x86_64-apple-darwin"
+        }
+      },
+      "problemMatcher": ["$rustc"],
+      "args": [
+        "build",
+        "-p",
+        "espanso",
+        "--target=x86_64-apple-darwin",
+        "--release",
+        "--no-default-features",
+        "--features=native-tls,modulo"
+      ],
+      "group": {
+        "kind": "none"
+      }
+    },
+    {
+      "label": "macOS: create .dmg image",
+      "type": "process",
+      "command": "ditto",
+      "args": [
+        "-c",
+        "-k",
+        "--sequesterRsrc",
+        "--keepParent",
+        "target/mac/Espanso.app",
+        "Espanso-Mac-Universal.zip"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "macOS: create-universal-bundle",
+      "type": "process",
+      "command": "bash",
+      "detail": "creates the macOS universal bundle",
+      "problemMatcher": [],
+      "args": ["${workspaceFolder}/scripts/create_bundle.sh"],
+      "dependsOn": [
+        "macOS: release-build-x86-binary",
+        "macOS: release-build-arm-binary",
+        "macOS: create .dmg image"
+      ],
+      "dependsOrder": "sequence"
+    },
+    {
+      "label": "give excecution permissions: create AppImage.sh",
+      "type": "shell",
+      "command": [
+        "chmod",
+        "+x",
+        "${workspaceFolder}/scripts/create_app_image.sh"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Linux: create AppImage",
+      "type": "shell",
+      "command": "${workspaceFolder}/scripts/create_app_image.sh",
+      "detail": "creates the AppImage for linux",
+      "group": {
+        "kind": "none"
+      },
+      "problemMatcher": [],
+      "dependsOn": ["give excecution permissions: create AppImage.sh"]
+    },
+    {
+      "label": "Build .deb package",
+      "detail": "Builds the deb package. It needs cargo-deb and a Debian based distro",
+      "type": "cargo",
+      "problemMatcher": [],
+      "command": "deb",
+      "args": [
+        "-p",
+        "espanso",
+        "--variant",
+        "wayland",
+        "--",
+        "--no-default-features",
+        "--features",
+        "modulo wayland vendored-tls"
+      ]
+    },
+    {
+      "label": "Build .deb - Docker image",
+      "detail": "Prepare the Docker image build the .deb file",
+      "type": "shell",
+      "problemMatcher": [],
+      "command": "sudo",
+      "args": [
+        "docker",
+        "build",
+        "-t",
+        "espanso-ubuntu",
+        ".",
+        "-f",
+        ".github/scripts/Dockerfile"
+      ]
+    },
+    {
+      "label": "Build .deb - Docker deb build",
+      "detail": "Build the .deb file from the Docker image",
+      "type": "shell",
+      "problemMatcher": [],
+      "command": "sudo",
+      "args": [
+        "docker",
+        "run",
+        "-v",
+        "\"$(pwd):/shared\"",
+        "espanso-ubuntu",
+        "espanso/.github/scripts/ubuntu/build_deb.sh"
+      ],
+      "dependsOn": ["Build .deb - Docker image"]
+    }
+  ]
 }
