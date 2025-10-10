@@ -162,6 +162,13 @@ pub trait Config: Send + Sync {
     // The maximum height that a form window can take.
     fn max_form_height(&self) -> usize;
 
+    /// The maximum number of characters to hold in the buffer for regex-based triggers.
+    /// This value determines the "memory" of the matcher, affecting the maximum length
+    /// of a trigger that can be detected.
+    /// A larger value allows for more complex and longer triggers, but it also increases
+    /// memory consumption. It's advisable to keep this value reasonably low.
+    fn max_regex_buffer_size(&self) -> usize;
+
     // The number of milliseconds to wait after the search bar has been closed.
     // This is useful to let the target application regain focus
     // after the search bar has been closed, otherwise the injection might
@@ -232,6 +239,8 @@ pub trait Config: Send + Sync {
         show_notifications: {:?}
         secure_input_notification: {:?}
 
+        max_regex_buffer_size: {:?}
+
         x11_use_xclip_backend: {:?}
         x11_use_xdotool_backend: {:?}
         win32_exclude_orphan_events: {:?}
@@ -268,6 +277,8 @@ pub trait Config: Send + Sync {
           self.show_icon(),
           self.show_notifications(),
           self.secure_input_notification(),
+
+          self.max_regex_buffer_size(),
 
           self.x11_use_xclip_backend(),
           self.x11_use_xdotool_backend(),
