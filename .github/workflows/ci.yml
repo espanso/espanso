@@ -30,9 +30,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@main
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          components: clippy, rustfmt
       - name: Format
         run: cargo fmt --all -- --check
       - name: Install Linux X11 dependencies
@@ -75,9 +72,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@main
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          components: clippy, rustfmt
       - name: Format
         run: cargo fmt --all -- --check
       - name: Install Linux wayland dependencies
@@ -116,15 +110,12 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@main
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          components: clippy, rustfmt
-          targets: aarch64-apple-darwin, x86_64-apple-darwin
       - name: Format
         run: cargo fmt --all -- --check
       - name: Build
         run: |
           cargo build --target aarch64-apple-darwin
+          rustup target add x86_64-apple-darwin
           cargo build --target x86_64-apple-darwin
       - name: Clippy
         run: |
@@ -135,9 +126,6 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@main
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          components: clippy, rustfmt
       - name: Format
         run: cargo fmt --all -- --check
       - name: Build

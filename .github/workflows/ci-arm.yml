@@ -15,9 +15,6 @@ jobs:
     runs-on: ubuntu-24.04-arm
     steps:
       - uses: actions/checkout@main
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          components: clippy, rustfmt
       #   - name: Format
       #     run: cargo fmt --all -- --check
       - name: Install Linux X11 dependencies
@@ -57,9 +54,6 @@ jobs:
     runs-on: windows-11-arm
     steps:
       - uses: actions/checkout@main
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          components: clippy, rustfmt
       #   - name: Format
       #     run: cargo fmt --all -- --check
       - name: Build

@@ -57,5 +57,6 @@ generate_patchable_config!(
   win32_keyboard_layout_cache_interval -> i64,
   x11_use_xclip_backend -> bool,
   x11_use_xdotool_backend -> bool,
+  max_regex_buffer_size -> usize,
   keyboard_layout -> Option<RMLVOConfig>
 );

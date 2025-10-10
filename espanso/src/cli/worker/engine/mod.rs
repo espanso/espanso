@@ -168,7 +168,7 @@ pub fn initialize_and_spawn(
             let regex_matcher = RegexMatcherAdapter::new(
                 &match_converter.get_regex_matches(),
                 &RegexMatcherAdapterOptions {
-                    max_buffer_size: 30, // TODO: load from configs
+                    max_buffer_size: default_config.max_regex_buffer_size(),
                 },
             );
             let matchers: Vec<

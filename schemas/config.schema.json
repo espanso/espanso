@@ -212,6 +212,11 @@
       "default": 500,
       "description": "Maximum height of a form window."
     },
+    "max_regex_buffer_size": {
+      "type": "number",
+      "default": 50,
+      "description": "The max number of characters held in memory for regex matching"
+    },
     "post_search_delay": {
       "type": "number",
       "default": 200,
