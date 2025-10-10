@@ -26,8 +26,8 @@ use espanso_config::{
 use log::{error, info, warn};
 use std::path::Path;
 
-const DEFAULT_CONFIG_FILE_CONTENT: &str = include_str!("./res/config/default.yaml");
-const DEFAULT_MATCH_FILE_CONTENT: &str = include_str!("./res/config/base.yaml");
+const DEFAULT_CONFIG_FILE_CONTENT: &str = include_str!("./res/config/default.yml");
+const DEFAULT_MATCH_FILE_CONTENT: &str = include_str!("./res/config/base.yml");
 
 pub fn populate_default_config(config_dir: &Path) -> Result<()> {
     if !config_dir.is_dir() {
@@ -53,19 +53,19 @@ pub fn populate_default_config(config_dir: &Path) -> Result<()> {
         std::fs::create_dir_all(&sub_match_dir)?;
     }
 
-    let default_file = sub_config_dir.join("default.yaml");
-    let match_file = sub_match_dir.join("base.yaml");
+    let default_file = sub_config_dir.join("default.yml");
+    let match_file = sub_match_dir.join("base.yml");
 
     if !default_file.is_file() {
         info!(
-            "populating default.yaml file with initial content: {}",
+            "populating default.yml file with initial content: {}",
             default_file.display()
         );
         std::fs::write(default_file, DEFAULT_CONFIG_FILE_CONTENT)?;
     }
     if !match_file.is_file() {
         info!(
-            "populating base.yaml file with initial content: {}",
+            "populating base.yml file with initial content: {}",
             match_file.display()
         );
         std::fs::write(match_file, DEFAULT_MATCH_FILE_CONTENT)?;

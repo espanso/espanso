@@ -47,7 +47,7 @@ fn path_main(args: CliModuleArgs) -> i32 {
             paths
                 .config
                 .join("config")
-                .join("default.yaml")
+                .join("default.yml")
                 .to_string_lossy()
         );
     } else if cli_args.subcommand_matches("base").is_some() {
@@ -56,7 +56,7 @@ fn path_main(args: CliModuleArgs) -> i32 {
             paths
                 .config
                 .join("match")
-                .join("base.yaml")
+                .join("base.yml")
                 .to_string_lossy()
         );
     } else {

@@ -35,7 +35,7 @@ use std::path::PathBuf;
 use std::{collections::HashSet, path::Path};
 use thiserror::Error;
 
-const STANDARD_INCLUDES: &[&str] = &["../match/**/[!_]*.yaml", "../match/**/[!_]*.yml"];
+const STANDARD_INCLUDES: &[&str] = &["../match/**/[!_]*.yml", "../match/**/[!_]*.yaml"];
 
 #[derive(Debug, Clone, Default)]
 pub struct ResolvedConfig {
@@ -528,8 +528,8 @@ mod tests {
         assert_eq!(
             ResolvedConfig::aggregate_includes(&ParsedConfig::default()),
             [
-                "../match/**/[!_]*.yaml".to_string(),
-                "../match/**/[!_]*.yml".to_string()
+                "../match/**/[!_]*.yml".to_string(),
+                "../match/**/[!_]*.yaml".to_string()
             ]
             .iter()
             .cloned()
@@ -556,8 +556,8 @@ mod tests {
                 ..Default::default()
             }),
             [
-                "../match/**/[!_]*.yaml".to_string(),
                 "../match/**/[!_]*.yml".to_string(),
+                "../match/**/[!_]*.yaml".to_string(),
                 "custom/*.yml".to_string()
             ]
             .iter()
@@ -574,8 +574,8 @@ mod tests {
                 ..Default::default()
             }),
             [
-                "../match/**/[!_]*.yaml".to_string(),
                 "../match/**/[!_]*.yml".to_string(),
+                "../match/**/[!_]*.yaml".to_string(),
                 "custom/*.yml".to_string()
             ]
             .iter()
@@ -593,8 +593,8 @@ mod tests {
                 ..Default::default()
             }),
             [
-                "../match/**/[!_]*.yaml".to_string(),
                 "../match/**/[!_]*.yml".to_string(),
+                "../match/**/[!_]*.yaml".to_string(),
                 "custom/*.yml".to_string(),
                 "sub/*.yml".to_string()
             ]

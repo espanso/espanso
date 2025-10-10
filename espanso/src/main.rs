@@ -145,10 +145,10 @@ fn main() {
     .subcommand(SubCommand::with_name("edit")
         .about("Shortcut to open the default text editor to edit config files")
         .arg(Arg::with_name("target_file")
-            .help(r#"Defaults to "match/base.yaml", it contains the relative path of the file you want to edit,
-such as 'config/default.yaml' or 'match/base.yaml'.
+            .help(r#"Defaults to "match/base.yml", it contains the relative path of the file you want to edit,
+such as 'config/default.yml' or 'match/base.yml'.
 For convenience, you can also specify the name directly and Espanso will figure out the path.
-For example, specifying 'email' is equivalent to 'match/email.yaml'."#))
+For example, specifying 'email' is equivalent to 'match/email.yml'."#))
     )
     .subcommand(
       SubCommand::with_name("daemon")

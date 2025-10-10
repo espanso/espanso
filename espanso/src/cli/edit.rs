@@ -138,8 +138,8 @@ fn edit_main(args: CliModuleArgs) -> i32 {
 fn determine_target_path(config_path: &Path, target_file: Option<&str>) -> PathBuf {
     if let Some(target_file) = target_file {
         match target_file {
-            "default" => config_path.join("config").join("default.yaml"),
-            "base" => config_path.join("match").join("base.yaml"),
+            "default" => config_path.join("config").join("default.yml"),
+            "base" => config_path.join("match").join("base.yml"),
             custom => {
                 if !std::path::Path::new(custom)
                     .extension()
@@ -148,14 +148,14 @@ fn determine_target_path(config_path: &Path, target_file: Option<&str>) -> PathB
                         .extension()
                         .is_some_and(|ext| ext.eq_ignore_ascii_case("yaml"))
                 {
-                    config_path.join("match").join(format!("{custom}.yaml"))
+                    config_path.join("match").join(format!("{custom}.yml"))
                 } else {
                     config_path.join(custom)
                 }
             }
         }
     } else {
-        config_path.join("match").join("base.yaml")
+        config_path.join("match").join("base.yml")
     }
 }
 

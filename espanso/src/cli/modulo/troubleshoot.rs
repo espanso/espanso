@@ -68,7 +68,7 @@ pub fn troubleshoot_main(paths: &Paths, icon_paths: &IconPaths) -> i32 {
         Err(err) => {
             let message = format!("{err:?}");
             let file_path = if message.contains("missing default config") {
-                let default_file_path = paths.config.join("config").join("default.yaml");
+                let default_file_path = paths.config.join("config").join("default.yml");
                 Some(default_file_path)
             } else {
                 None
