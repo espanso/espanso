@@ -21,7 +21,11 @@
     "filter_os": {
       "description": "OS specific filter",
       "type": "string",
-      "enum": ["linux", "macos", "windows"]
+      "enum": [
+        "linux",
+        "macos",
+        "windows"
+      ]
     },
     "extra_includes": {
       "type": "array",
@@ -151,7 +155,11 @@
     },
     "backend": {
       "type": "string",
-      "enum": ["clipboard", "inject", "auto"],
+      "enum": [
+        "clipboard",
+        "inject",
+        "auto"
+      ],
       "default": "auto",
       "description": "The mechanism used to perform the injection. Espanso can either inject text by simulating keypresses (Inject backend) or by using the clipboard (Clipboard backend). Both of them have pros and cons, so the Auto backend is used by default to automatically choose the most appropriate one based on the situation. If for whatever reason the Auto backend is not appropriate, you can change this option to override it."
     },
@@ -211,6 +219,11 @@
       "type": "number",
       "default": 500,
       "description": "Maximum height of a form window."
+    },
+    "max_regex_buffer_size": {
+      "type": "number",
+      "default": 50,
+      "description": "The max number of characters held in memory for regex matching"
     },
     "post_search_delay": {
       "type": "number",
