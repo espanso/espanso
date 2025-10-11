@@ -128,6 +128,9 @@ pub struct YAMLConfig {
     pub win32_keyboard_layout_cache_interval: Option<i64>,
 
     #[serde(default)]
+    pub max_regex_buffer_size: Option<usize>,
+
+    #[serde(default)]
     pub x11_use_xclip_backend: Option<bool>,
 
     #[serde(default)]
@@ -165,6 +168,9 @@ pub struct YAMLConfig {
 
 impl YAMLConfig {
     pub fn parse_from_str(yaml: &str) -> Result<Self> {
+        // Remove UTF-8 BOM if present (common in Windows editors like Notepad)
+        let yaml = yaml.trim_start_matches('\u{FEFF}');
+
         // Because an empty string is not valid YAML but we want to support it anyway
         if is_yaml_empty(yaml) {
             return Ok(serde_yaml::from_str(
@@ -225,6 +231,8 @@ impl TryFrom<YAMLConfig> for ParsedConfig {
             post_search_delay: yaml_config.post_search_delay,
 
             emulate_alt_codes: yaml_config.emulate_alt_codes,
+
+            max_regex_buffer_size: yaml_config.max_regex_buffer_size,
 
             win32_exclude_orphan_events: yaml_config.win32_exclude_orphan_events,
             win32_keyboard_layout_cache_interval: yaml_config.win32_keyboard_layout_cache_interval,
@@ -290,6 +298,7 @@ mod tests {
     max_form_height: 500
     post_search_delay: 400
     emulate_alt_codes: true
+    max_regex_buffer_size: 30
     win32_exclude_orphan_events: false
     win32_keyboard_layout_cache_interval: 300
     x11_use_xclip_backend: true
@@ -346,6 +355,7 @@ mod tests {
                 show_notifications: Some(false),
                 secure_input_notification: Some(false),
                 emulate_alt_codes: Some(true),
+                max_regex_buffer_size: Some(30),
                 post_form_delay: Some(300),
                 max_form_width: Some(700),
                 max_form_height: Some(500),

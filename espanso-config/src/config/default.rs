@@ -23,3 +23,4 @@ pub const DEFAULT_SHORTCUT_EVENT_DELAY: usize = 10;
 pub const DEFAULT_RESTORE_CLIPBOARD_DELAY: usize = 300;
 pub const DEFAULT_POST_FORM_DELAY: usize = 200;
 pub const DEFAULT_POST_SEARCH_DELAY: usize = 200;
+pub const DEFAULT_MAX_REGEX_BUFFER_SIZE: usize = 30;

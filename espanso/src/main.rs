@@ -20,7 +20,10 @@
 // This is needed to avoid showing a console window when starting espanso on Windows
 #![windows_subsystem = "windows"]
 
-use std::{path::PathBuf, process::Command};
+use std::path::PathBuf;
+
+#[cfg(target_os = "linux")]
+use std::process::Command;
 
 use clap::{App, AppSettings, Arg, ArgMatches, ErrorKind, SubCommand};
 use cli::{CliModule, CliModuleArgs};
@@ -84,7 +87,6 @@ fn main() {
     let processed_args = preprocess_aliases(args);
 
     let mut clap_instance = App::new("espanso")
-    .arg_required_else_help(true)
     .version(VERSION)
     .long_version(VERSION)
     .author("Federico Terzi and the espanso contributors")
@@ -441,7 +443,7 @@ SubCommand::with_name("install")
     {
         Ok(matches) => matches,
         Err(err) => match err.kind {
-            ErrorKind::DisplayHelpOnMissingArgumentOrSubcommand | ErrorKind::DisplayHelp => {
+            ErrorKind::DisplayHelp => {
                 err.exit();
             }
             ErrorKind::DisplayVersion => {
@@ -584,6 +586,7 @@ SubCommand::with_name("install")
         }
 
         // try to invoke `kdotool` to see if you have it or not.
+        #[cfg(target_os = "linux")]
         if Command::new("kdotool")
             .arg("getactivewindow")
             .arg("getwindowclassname")
@@ -601,6 +604,12 @@ SubCommand::with_name("install")
         let exit_code = (handler.entry)(cli_args);
 
         std::process::exit(exit_code);
+    } else {
+        // No handler at this point means subcommand was not provided. Could also use clap's
+        // `arg_required_else_help`, but that makes it more difficult to handle launching from app
+        // bundle on macos, which will not have a subcommand specified.
+        clap_instance.print_help().expect("unable to print help");
+        std::process::exit(1);
     }
 }
 

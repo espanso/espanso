@@ -19,8 +19,9 @@
 
 use super::{
     default::{
-        DEFAULT_CLIPBOARD_THRESHOLD, DEFAULT_POST_FORM_DELAY, DEFAULT_POST_SEARCH_DELAY,
-        DEFAULT_PRE_PASTE_DELAY, DEFAULT_RESTORE_CLIPBOARD_DELAY, DEFAULT_SHORTCUT_EVENT_DELAY,
+        DEFAULT_CLIPBOARD_THRESHOLD, DEFAULT_MAX_REGEX_BUFFER_SIZE, DEFAULT_POST_FORM_DELAY,
+        DEFAULT_POST_SEARCH_DELAY, DEFAULT_PRE_PASTE_DELAY, DEFAULT_RESTORE_CLIPBOARD_DELAY,
+        DEFAULT_SHORTCUT_EVENT_DELAY,
     },
     parse::ParsedConfig,
     path::calculate_paths,
@@ -35,7 +36,7 @@ use std::path::PathBuf;
 use std::{collections::HashSet, path::Path};
 use thiserror::Error;
 
-const STANDARD_INCLUDES: &[&str] = &["../match/**/[!_]*.yml"];
+const STANDARD_INCLUDES: &[&str] = &["../match/**/[!_]*.yml", "../match/**/[!_]*.yaml"];
 
 #[derive(Debug, Clone, Default)]
 pub struct ResolvedConfig {
@@ -324,6 +325,12 @@ impl Config for ResolvedConfig {
         self.parsed.max_form_height.unwrap_or(500)
     }
 
+    fn max_regex_buffer_size(&self) -> usize {
+        self.parsed
+            .max_regex_buffer_size
+            .unwrap_or(DEFAULT_MAX_REGEX_BUFFER_SIZE)
+    }
+
     fn post_search_delay(&self) -> usize {
         self.parsed
             .post_search_delay
@@ -437,6 +444,7 @@ impl ResolvedConfig {
             post_form_delay,
             max_form_width,
             max_form_height,
+            max_regex_buffer_size,
             post_search_delay,
             win32_exclude_orphan_events,
             win32_keyboard_layout_cache_interval,
@@ -527,9 +535,13 @@ mod tests {
     fn aggregate_includes_empty_config() {
         assert_eq!(
             ResolvedConfig::aggregate_includes(&ParsedConfig::default()),
-            std::iter::once(&"../match/**/[!_]*.yml".to_string())
-                .cloned()
-                .collect::<HashSet<_>>()
+            [
+                "../match/**/[!_]*.yml".to_string(),
+                "../match/**/[!_]*.yaml".to_string()
+            ]
+            .iter()
+            .cloned()
+            .collect::<HashSet<_>>()
         );
     }
 
@@ -553,6 +565,7 @@ mod tests {
             }),
             [
                 "../match/**/[!_]*.yml".to_string(),
+                "../match/**/[!_]*.yaml".to_string(),
                 "custom/*.yml".to_string()
             ]
             .iter()
@@ -570,6 +583,7 @@ mod tests {
             }),
             [
                 "../match/**/[!_]*.yml".to_string(),
+                "../match/**/[!_]*.yaml".to_string(),
                 "custom/*.yml".to_string()
             ]
             .iter()
@@ -588,6 +602,7 @@ mod tests {
             }),
             [
                 "../match/**/[!_]*.yml".to_string(),
+                "../match/**/[!_]*.yaml".to_string(),
                 "custom/*.yml".to_string(),
                 "sub/*.yml".to_string()
             ]
