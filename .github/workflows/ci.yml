@@ -4,18 +4,19 @@ on:
   pull_request:
     paths-ignore:
       - ".devcontainer/**"
-      - ".dockerignore"
-      - ".editorconfig"
       - ".github/workflows/nix-build.yml"
       - ".github/workflows/update-flake.yml"
       - ".vscode/**"
+      - "docs/**"
+      - "images/**"
+      - "schemas/**"
+      - ".dockerignore"
+      - ".editorconfig"
+      - ".gitignore"
       - "CONTRIBUTING.md"
       - "LICENSE"
       - "README.md"
       - "SECURITY.md"
-      - "docs/**"
-      - "images/**"
-      - "schemas/**"
       - "tarpaulin.toml"
 
 defaults:
