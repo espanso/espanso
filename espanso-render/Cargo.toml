@@ -5,12 +5,13 @@ authors = ["Federico Terzi <federico-terzi@users.noreply.github.com>"]
 edition = "2021"
 
 [dependencies]
-log.workspace = true
 anyhow.workspace = true
-thiserror.workspace = true
-regex.workspace = true
-chrono = { version = "0.4.41", features = ["unstable-locales"] }
+chrono-tz.workspace = true
+chrono.workspace = true
 enum-as-inner.workspace = true
+log.workspace = true
+regex.workspace = true
+thiserror.workspace = true
 rand = "0.8.3"
 sys-locale = "0.1.0"
 
