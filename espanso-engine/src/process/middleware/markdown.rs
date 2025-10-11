@@ -17,7 +17,7 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use log::error;
+use pulldown_cmark::{html, Parser};
 
 use super::super::Middleware;
 use crate::event::{effect::HtmlInjectRequest, Event, EventType};
@@ -38,25 +38,20 @@ impl Middleware for MarkdownMiddleware {
 
     fn next(&self, event: Event, _: &mut dyn FnMut(Event)) -> Event {
         if let EventType::MarkdownInject(m_event) = &event.etype {
-            // Render the markdown into HTML
-            // NOTE: we wrap the `to_html` call between catch_unwind because if the markdown is malformed,
-            // the library panics. Ideally, the library would return a Result::Err in that case, but
-            // for now it doesn't, so we employ that workaround.
-            // See also: https://github.com/espanso/espanso/issues/759
-            let html = std::panic::catch_unwind(|| markdown::to_html(&m_event.markdown));
-            if let Ok(html) = html {
-                let html = html.trim();
-                let html = remove_paragraph_tag_if_single_occurrence(html);
+            // Render the markdown into HTML using pulldown-cmark
+            let parser = Parser::new(&m_event.markdown);
+            let mut html_output = String::new();
+            html::push_html(&mut html_output, parser);
 
-                return Event::caused_by(
-                    event.source_id,
-                    EventType::HtmlInject(HtmlInjectRequest {
-                        html: html.to_owned(),
-                    }),
-                );
-            }
-            error!("unable to convert markdown to HTML, is it malformed?");
-            return Event::caused_by(event.source_id, EventType::NOOP);
+            let html = html_output.trim();
+            let html = remove_paragraph_tag_if_single_occurrence(html);
+
+            return Event::caused_by(
+                event.source_id,
+                EventType::HtmlInject(HtmlInjectRequest {
+                    html: html.to_owned(),
+                }),
+            );
         }
 
         event
