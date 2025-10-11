@@ -81,6 +81,16 @@ finished, it makes an HTML report in the root folder (gitignored)
 You can also `Ctrl + Shift + p` in vs code and select 
 `Tasks: Run Task: rust coverage`
 
+## Cargo mutants
+
+[espanso-mutants](https://github.com/espanso/espanso-mutants) is a repository
+where it holds the result of `cargo-mutants`, a mutational testing library.
+
+You can find more about what mutation testing is [on this blogpost](https://notashelf.dev/posts/on-mutation-testing)
+
+We would like to fix our tests, so it kills any living mutant left, and we have
+~3800 of them!
+
 ## format everything
 
 We added `cargo make fmt` to format everything, it requires some tools:
@@ -114,3 +124,33 @@ brew install clang-format
 ```
 
 - if you are in macOS or linux, we add `nix` to the list: [Download it](https://nixos.org/download/)
+
+## check for nested dependencies
+
+This script was written by n8henrie, and counts how many times you use a 
+dependency (if you don't have it on the root Cargo.toml).
+
+```python
+# parse_deps.py
+# needs python >= 3.11
+"""Quick script to find and parse all dependency versions in the workspace."""
+
+import tomllib
+from pathlib import Path
+from collections import Counter
+from pprint import pprint
+
+cargo_tomls = list(p for p in Path(".").glob("**/Cargo.toml") if len(p.parents) > 1)
+counter = Counter(
+    (name, str(version)) for  p in cargo_tomls for name, version in tomllib.loads(p.read_text())["dependencies"].items() if not ("path" in version or "workspace" in version))
+
+if __name__ == "__main__":
+    pprint(counter)
+```
+
+and you can run it with:
+
+```console
+# if you use uv
+uv run parse_deps.py
+```

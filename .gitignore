@@ -39,7 +39,9 @@ DerivedData
 
 *.snap
 
+.venv/
 venv/
+parse_deps.py
 
 *.profraw
 **/*.code-workspace
