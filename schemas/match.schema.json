@@ -263,6 +263,10 @@
                 "offset": {
                   "type": "number"
                 },
+                "tz": {
+                  "type": "string",
+                  "description": "Timezone name from the IANA timezone database (e.g., 'UTC', 'America/New_York', 'Europe/Paris')"
+                },
                 "locale": {
                   "type": "string",
                   "enum": [
