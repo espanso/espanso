@@ -261,7 +261,8 @@
                   "type": "string"
                 },
                 "offset": {
-                  "type": "number"
+                  "type": ["number", "string"],
+                  "description": "Time offset in seconds. Can be a number or a string (to support variable injection like {{hours_offset}})"
                 },
                 "tz": {
                   "type": "string",

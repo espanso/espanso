@@ -58,9 +58,17 @@ impl Extension for DateExtension<'_> {
 
         // Compute the given offset
         let offset = params.get("offset");
-        if let Some(Value::Number(Number::Integer(offset))) = offset {
-            let offset = Duration::seconds(*offset);
-            now += offset;
+        if let Some(offset_value) = offset {
+            let offset_seconds = match offset_value {
+                Value::Number(Number::Integer(n)) => Some(*n),
+                Value::String(s) => s.parse::<i64>().ok(),
+                _ => None,
+            };
+
+            if let Some(seconds) = offset_seconds {
+                let offset = Duration::seconds(seconds);
+                now += offset;
+            }
         }
 
         // Convert to target timezone if specified
@@ -752,5 +760,58 @@ mod tests {
             .unwrap();
 
         assert_eq!(result, ExtensionOutput::Single("09:10:11".to_string()));
+    }
+
+    #[test]
+    fn offset_with_string_works() {
+        let locale_provider = MockLocaleProvider::new();
+        let mut extension = DateExtension::new(&locale_provider);
+        extension.fixed_date = Some(
+            Local
+                .with_ymd_and_hms(2014, 7, 8, 9, 10, 11)
+                .single()
+                .unwrap(),
+        );
+
+        let param = vec![
+            ("format".to_string(), Value::String("%H:%M:%S".to_string())),
+            ("offset".to_string(), Value::String("3600".to_string())),
+        ]
+        .into_iter()
+        .collect::<Params>();
+        assert_eq!(
+            extension
+                .calculate(&crate::Context::default(), &HashMap::default(), &param)
+                .into_success()
+                .unwrap(),
+            ExtensionOutput::Single("10:10:11".to_string())
+        );
+    }
+
+    #[test]
+    fn offset_with_invalid_string_is_ignored() {
+        let locale_provider = MockLocaleProvider::new();
+        let mut extension = DateExtension::new(&locale_provider);
+        extension.fixed_date = Some(
+            Local
+                .with_ymd_and_hms(2014, 7, 8, 9, 10, 11)
+                .single()
+                .unwrap(),
+        );
+
+        let param = vec![
+            ("format".to_string(), Value::String("%H:%M:%S".to_string())),
+            ("offset".to_string(), Value::String("invalid".to_string())),
+        ]
+        .into_iter()
+        .collect::<Params>();
+        // Should return time without offset if offset is invalid
+        assert_eq!(
+            extension
+                .calculate(&crate::Context::default(), &HashMap::default(), &param)
+                .into_success()
+                .unwrap(),
+            ExtensionOutput::Single("09:10:11".to_string())
+        );
     }
 }
