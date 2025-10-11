@@ -311,7 +311,7 @@ void FormFrame::HandleMultilineFocus(wxFocusEvent &event) {
 
 void FormFrame::UpdateHelpText() {
     if (hasFocusedMultilineControl) {
-#ifdef __WXOSX__
+#ifdef __WXMAC__
         helpText->SetLabel("(or press CMD+Enter to submit, ESC to cancel)");
 #else
         helpText->SetLabel("(or press CTRL+Enter to submit, ESC to cancel)");
