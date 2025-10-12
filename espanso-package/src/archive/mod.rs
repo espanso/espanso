@@ -81,7 +81,7 @@ pub enum PackageSource {
 impl PackageSource {
     pub fn parse(source_path: &Path) -> Result<Self> {
         let source_str = std::fs::read_to_string(source_path)?;
-        Ok(serde_yaml::from_str(&source_str)?)
+        Ok(serde_norway::from_str(&source_str)?)
     }
 }
 
