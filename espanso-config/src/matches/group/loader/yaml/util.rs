@@ -88,7 +88,10 @@ mod tests {
 
     #[test]
     fn convert_value_null() {
-        assert_eq!(convert_value(serde_norway::Value::Null).unwrap(), Value::Null);
+        assert_eq!(
+            convert_value(serde_norway::Value::Null).unwrap(),
+            Value::Null
+        );
     }
 
     #[test]
