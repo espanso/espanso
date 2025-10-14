@@ -154,3 +154,191 @@ and you can run it with:
 # if you use uv
 uv run parse_deps.py
 ```
+
+## Benchmark script
+The script was written by [bladeacer](https://github.com/bladeacer), it
+benchmarks the run times of the various command line flags of the espanso binary.
+
+Ensure that espanso, [hyperfine](https://github.com/sharkdp/hyperfine) and [Python](https://python.org/downloads)
+has been installed before running the script.
+> For Linux or Mac users, it is recommended to use your package manager.
+
+```python
+#!/usr/bin/env python
+
+import shutil
+import subprocess
+import sys
+import shlex
+
+def run_hyperfine_benchmark(commands, **kwargs):
+    """
+    Checks for the 'hyperfine' binary and runs a benchmark if found.
+    """
+    hyperfine_path = shutil.which('hyperfine')
+    
+    if hyperfine_path:
+        benchmark_name = kwargs.get('name', 'Benchmark Set')
+        print(f"\n--- {benchmark_name} Benchmark Start ---")
+        
+        cmd = [hyperfine_path]
+        
+        if kwargs.get('warmup'):
+            cmd.extend(['--warmup', str(kwargs['warmup'])])
+        if kwargs.get('runs'):
+            cmd.extend(['--runs', str(kwargs['runs'])])
+
+        if kwargs.get('export_json'):
+            cmd.extend(['--export-json', str(kwargs['export_json'])])
+        if kwargs.get('export_markdown'):
+            cmd.extend(['--export-markdown', str(kwargs['export_markdown'])])
+        if kwargs.get('i'):
+            cmd.append('--ignore-failure')
+            
+        quoted_commands = [shlex.quote(c) for c in commands]
+        cmd.extend(quoted_commands)
+
+        print(f"Executing command: {' '.join(cmd)}")
+        
+        try:
+            result = subprocess.run(cmd, check=True, text=True, capture_output=False) 
+            
+            print("-----------------------------------")
+            print(f"{benchmark_name} finished successfully.")
+            
+        except subprocess.CalledProcessError as e:
+            print(f"Error during {benchmark_name} execution (non-zero exit code {e.returncode}):", file=sys.stderr)
+            sys.exit(1)
+        except OSError as e:
+            print(f"An OS error occurred during execution: {e}", file=sys.stderr)
+            sys.exit(1)
+        
+        print(f"--- {benchmark_name} End ---\n")
+
+    else:
+        print("Warning: 'hyperfine' is not installed or not found in your system's PATH.", file=sys.stderr)
+        print("Please install it to run the benchmarks. Exiting.", file=sys.stderr)
+        sys.exit(1)
+
+commands_set = [
+    'espanso',
+    'espanso cmd',
+    'espanso cmd enable',
+    'espanso cmd disable',
+    'espanso cmd toggle',
+    'espanso cmd search',
+    'espanso edit',
+    'espanso env-path',
+    'espanso env-path unregister',
+    'espanso env-path register',
+    'espanso help',
+    'espanso log',
+    'espanso match',
+    'espanso package',
+    'espanso package list',
+    'espanso path packages',
+    'espanso install',
+    'espanso install lorem',
+    'espanso package install lorem',
+    'espanso package uninstall lorem',
+    'espanso package update all',
+    'espanso package install',
+    'espanso package uninstall',
+    'espanso package update',
+    'espanso path',
+    'espanso path config',
+    'espanso path default',
+    'espanso path packages',
+    'espanso path runtime',
+    'espanso service',
+    'espanso service check',
+    'espanso service unregister',
+    'espanso service register',
+    'espanso service restart',
+    'espanso service status',
+    'espanso service stop',
+    'espanso service start',
+    'espanso service start --unmanaged',
+    'espanso workaround',
+    'espanso workaround secure-input',
+    'espanso status',
+    'espanso start',
+    'espanso start --unmanaged',
+    'espanso restart',
+    'espanso match list',
+    'espanso match list -j',
+    'espanso match list -t',
+    'espanso match list -n',
+    'espanso match exec',
+    'espanso match exec -t :espanso',
+    'espanso match exec -t :date',
+    'espanso match exec -t :shell'
+]
+
+hyperfine_args = {
+    'name': 'Standard',
+    'warmup': 2,
+    'runs': 50,
+    'i': True,
+    'export_markdown': "results.md",
+    'export_json': "results.json"
+}
+
+
+if __name__ == "__main__":
+    run_hyperfine_benchmark(commands_set, **hyperfine_args)
+```
+
+#### Running the benchmark script
+Name and save the script as `benchmarks.py`.
+
+Set file permissions if you are on Linux or MacOS.
+```bash
+sudo chmod +x ./benchmarks.py
+```
+
+Then call the script with the following
+```bash
+./benchmarks.py
+```
+
+Of if you are on Windows
+```bash
+python ./benchmarks.py
+```
+
+The script saves the benchmark results to `results.md` and `results.json`.
+
+#### Benchmark script: example output
+```md
+| Command | Mean [ms] | Min [ms] | Max [ms] | Relative |
+|:---|---:|---:|---:|---:|
+| `espanso` | 529.5 ± 73.2 | 410.6 | 675.0 | 6679.68 ± 15608.68 |
+| `'espanso cmd'` | 4.4 ± 4.3 | 0.0 | 14.8 | 55.17 ± 139.56 |
+| `'espanso cmd enable'` | 8.6 ± 4.6 | 0.0 | 16.3 | 108.08 ± 258.72 |
+
+...
+```
+
+```json
+{
+  "results": [
+    {
+      "command": "espanso",
+      "mean": 0.5294862457400001,
+      "stddev": 0.0731799752802901,
+      "median": 0.50886927814,
+      "user": 0.041466739999999974,
+      "system": 0.0514393,
+      "min": 0.41057140914000007,
+      "max": 0.67504138914,
+      "times": [...]
+    },
+    ...
+  ]
+}
+```
+
+#### Benchmark script: analysing results
+The JSON output is more useful for statistical analysis. The hyperfine
+repository has [scripts for this purpose](https://github.com/sharkdp/hyperfine/tree/master/scripts).
