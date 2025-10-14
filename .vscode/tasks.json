@@ -222,8 +222,9 @@
       }
     },
     {
-      "label": "macOS: create .dmg image",
+      "label": "macOS: create .zip file containing Espanso.app",
       "type": "process",
+      "detail": "creates the zip file to sign",
       "command": "ditto",
       "args": [
         "-c",
@@ -233,6 +234,7 @@
         "target/mac/Espanso.app",
         "Espanso-Mac-Universal.zip"
       ],
+      "dependsOn": ["macOS: create-universal-bundle"],
       "problemMatcher": []
     },
     {
@@ -244,8 +246,7 @@
       "args": ["${workspaceFolder}/scripts/create_bundle.sh"],
       "dependsOn": [
         "macOS: release-build-x86-binary",
-        "macOS: release-build-arm-binary",
-        "macOS: create .dmg image"
+        "macOS: release-build-arm-binary"
       ],
       "dependsOrder": "sequence"
     },
