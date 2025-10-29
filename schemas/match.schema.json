@@ -227,6 +227,10 @@
                   "items": {
                     "type": "string"
                   }
+                },
+                "trim": {
+                  "type": "boolean",
+                  "description": "Trim the output of the script. Useful if the script has an excess in spaces or newlines"
                 }
               }
             },
