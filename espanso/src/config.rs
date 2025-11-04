@@ -54,16 +54,18 @@ pub fn populate_default_config(config_dir: &Path) -> Result<()> {
     }
 
     let default_file = sub_config_dir.join("default.yml");
+    let default_file_yaml = sub_config_dir.join("default.yaml");
     let match_file = sub_match_dir.join("base.yml");
+    let match_file_yaml = sub_match_dir.join("base.yaml");
 
-    if !default_file.is_file() {
+    if !default_file.is_file() && !default_file_yaml.is_file() {
         info!(
             "populating default.yml file with initial content: {}",
             default_file.display()
         );
         std::fs::write(default_file, DEFAULT_CONFIG_FILE_CONTENT)?;
     }
-    if !match_file.is_file() {
+    if !match_file.is_file() && !match_file_yaml.is_file() {
         info!(
             "populating base.yml file with initial content: {}",
             match_file.display()
