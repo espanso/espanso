@@ -28,11 +28,9 @@ let
 in
 rustPlatform.buildRustPackage {
   pname = espansoCargo.package.name;
-  version = espansoCargo.package.version;
+  inherit (espansoCargo.package) version;
 
-  cargoLock = {
-    lockFile = ../Cargo.lock;
-  };
+  cargoLock.lockFile = ../Cargo.lock;
   src = lib.fileset.toSource {
     root = ../.;
     fileset = lib.fileset.unions [
@@ -43,7 +41,6 @@ rustPlatform.buildRustPackage {
       ../Cargo.toml
     ];
   };
-  doCheck = true;
 
   buildInputs = [
     libpng
