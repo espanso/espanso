@@ -16,6 +16,7 @@
   wxGTK32,
   xclip,
   xdotool,
+  xorg,
   waylandSupport ? false,
   buildType ? "release",
 }:
@@ -56,6 +57,7 @@ rustPlatform.buildRustPackage {
     wl-clipboard
   ]
   ++ lib.optionals x11Support [
+    xorg.libxcb.dev
     libX11
     libXi
     libXtst
