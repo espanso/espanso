@@ -305,6 +305,10 @@ impl Config for ResolvedConfig {
         self.parsed.secure_input_notification.unwrap_or(true)
     }
 
+    fn stats_enabled(&self) -> bool {
+        self.parsed.stats_enabled.unwrap_or(false)
+    }
+
     fn emulate_alt_codes(&self) -> bool {
         self.parsed
             .emulate_alt_codes
@@ -458,7 +462,8 @@ impl ResolvedConfig {
             filter_title,
             filter_class,
             filter_exec,
-            filter_os
+            filter_os,
+            stats_enabled
         );
     }
 

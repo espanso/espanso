@@ -26,6 +26,12 @@ use crate::util::is_yaml_empty;
 
 use super::ParsedConfig;
 
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct YAMLStatsConfig {
+    #[serde(default)]
+    pub enabled: Option<bool>,
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct YAMLConfig {
     #[serde(default)]
@@ -164,6 +170,10 @@ pub struct YAMLConfig {
 
     #[serde(default)]
     pub filter_os: Option<String>,
+
+    // Stats configuration
+    #[serde(default)]
+    pub stats: Option<YAMLStatsConfig>,
 }
 
 impl YAMLConfig {
@@ -249,6 +259,9 @@ impl TryFrom<YAMLConfig> for ParsedConfig {
             filter_exec: yaml_config.filter_exec,
             filter_os: yaml_config.filter_os,
             filter_title: yaml_config.filter_title,
+
+            // Stats
+            stats_enabled: yaml_config.stats.and_then(|s| s.enabled),
         })
     }
 }
@@ -354,6 +367,7 @@ mod tests {
                 show_icon: Some(false),
                 show_notifications: Some(false),
                 secure_input_notification: Some(false),
+                stats_enabled: None,
                 emulate_alt_codes: Some(true),
                 max_regex_buffer_size: Some(30),
                 post_form_delay: Some(300),

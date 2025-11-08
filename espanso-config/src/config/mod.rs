@@ -150,6 +150,9 @@ pub trait Config: Send + Sync {
     // If false, avoid showing the `SecureInput`` notification on macOS
     fn secure_input_notification(&self) -> bool;
 
+    // Stats: if false, disable recording expansions statistics.
+    fn stats_enabled(&self) -> bool;
+
     // The number of milliseconds to wait after a form has been closed.
     // This is useful to let the target application regain focus
     // after a form has been closed, otherwise the injection might

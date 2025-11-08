@@ -42,6 +42,7 @@ mod engine;
 mod ipc;
 mod match_cache;
 mod secure_input;
+mod stats_recorder;
 mod ui;
 
 pub fn new() -> CliModule {
@@ -92,6 +93,20 @@ fn worker_main(args: CliModuleArgs) -> i32 {
 
     let icon_paths =
         crate::icon::load_icon_paths(&paths.runtime).expect("unable to initialize icons");
+
+    // Initialize stats database and set recorder (configurable, default OFF)
+    if config_store.default().stats_enabled() {
+        if let Err(err) = crate::cli::stats::init_stats_db_in(&paths.config) {
+            error!("failed to initialize stats database: {}", err);
+        } else {
+            espanso_engine::process::set_global_recorder(Box::new(
+                stats_recorder::DefaultStatsRecorder,
+            ));
+            info!("stats recorder initialized");
+        }
+    } else {
+        info!("stats recorder disabled by config");
+    }
 
     let (remote, mut eventloop) = espanso_ui::create_ui(espanso_ui::UIOptions {
         show_icon: config_store.default().show_icon(),

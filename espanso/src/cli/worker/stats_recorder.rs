@@ -17,27 +17,12 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub mod action;
-pub mod alt_code_synthesizer;
-pub mod cause;
-pub mod context_menu;
-pub mod cursor_hint;
-pub mod delay_modifiers;
-pub mod disable;
-pub mod discard;
-pub mod exit;
-pub mod hotkey;
-pub mod icon_status;
-pub mod image_resolve;
-pub mod markdown;
-pub mod match_exec;
-pub mod match_select;
-pub mod matcher;
-pub mod multiplex;
-pub mod notification;
-pub mod open_config;
-pub mod render;
-pub mod search;
-pub mod stats;
-pub mod suppress;
-pub mod undo;
+use espanso_engine::process::{StatsRecord, StatsRecorder};
+
+pub struct DefaultStatsRecorder;
+
+impl StatsRecorder for DefaultStatsRecorder {
+    fn record(&self, record: StatsRecord) {
+        let _ = crate::cli::stats::record_stats(record);
+    }
+}

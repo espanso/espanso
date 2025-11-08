@@ -75,6 +75,9 @@ pub struct ParsedConfig {
     pub filter_class: Option<String>,
     pub filter_exec: Option<String>,
     pub filter_os: Option<String>,
+
+    // Stats
+    pub stats_enabled: Option<bool>,
 }
 
 impl ParsedConfig {

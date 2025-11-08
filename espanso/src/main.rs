@@ -65,6 +65,7 @@ static CLI_HANDLERS: LazyLock<Vec<CliModule>> = LazyLock::new(|| {
         cli::edit::new(),
         cli::launcher::new(),
         cli::log::new(),
+        cli::stats::new(),
         cli::worker::new(),
         cli::daemon::new(),
         cli::modulo::new(),
@@ -157,6 +158,48 @@ For example, specifying 'email' is equivalent to 'match/email.yml'."#))
     )
     .subcommand(SubCommand::with_name("launcher").setting(AppSettings::Hidden))
     .subcommand(SubCommand::with_name("log").about("Print the daemon logs."))
+    .subcommand(
+      SubCommand::with_name("stats")
+        .about("Show expansion statistics")
+        .arg(
+          Arg::with_name("period")
+            .long("period")
+            .takes_value(true)
+            .help("Limit to period: today|week|month|year|all (default all)")
+        )
+        .arg(
+          Arg::with_name("count")
+            .long("count")
+            .takes_value(true)
+            .help("Top N triggers to show (default 10)")
+        )
+        .arg(
+          Arg::with_name("json")
+            .long("json")
+            .takes_value(false)
+            .help("Output as JSON")
+        )
+        .arg(
+          Arg::with_name("grep")
+            .long("grep")
+            .takes_value(true)
+            .help("Filter triggers by SQL LIKE pattern, e.g., :td%")
+        )
+        .subcommand(
+          SubCommand::with_name("clear")
+            .about("Clear the stats database")
+        )
+        .subcommand(
+          SubCommand::with_name("prune")
+            .about("Delete records older than N days")
+            .arg(
+              Arg::with_name("days")
+                .long("days")
+                .takes_value(true)
+                .help("Days to keep (default 180)")
+            )
+        )
+    )
     .subcommand(
       SubCommand::with_name("modulo")
         .setting(AppSettings::Hidden)
