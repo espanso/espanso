@@ -94,7 +94,7 @@ impl Device {
     }
 
     pub fn get_path(&self) -> String {
-        self.path.to_string()
+        self.path.clone()
     }
 
     pub fn read(&self) -> Result<Vec<RawInputEvent>> {
