@@ -280,13 +280,13 @@ mod tests {
                 (params.get("name"), params.get("value"))
             {
                 let mut map = HashMap::new();
-                map.insert(name.to_string(), value.to_string());
+                map.insert(name.clone(), value.clone());
                 return ExtensionResult::Success(ExtensionOutput::Multiple(map));
             }
             // If the "read" param is present, echo the value of the corresponding result in the scope
             if let Some(Value::String(string)) = params.get("read") {
                 if let Some(ExtensionOutput::Single(value)) = scope.get(string.as_str()) {
-                    return ExtensionResult::Success(ExtensionOutput::Single(value.to_string()));
+                    return ExtensionResult::Success(ExtensionOutput::Single(value.clone()));
                 }
             }
             if params.get("abort").is_some() {
