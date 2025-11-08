@@ -64,3 +64,6 @@ Espanso-Mac-Universal.zip
 # rust
 mutants.out*
 tarpaulin-report.html
+
+# direnv
+.direnv/
