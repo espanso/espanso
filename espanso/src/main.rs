@@ -453,7 +453,7 @@ SubCommand::with_name("install")
                         .get_long_version()
                         .expect("Unable to print the long version")
                 );
-                std::process::exit(1);
+                std::process::exit(0);
             }
             _ => {
                 println!("error: Found argument {processed_args:?} which wasn't expected, or isn't valid in this context. Error: {:#?}", err.kind);
