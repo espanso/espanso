@@ -30,6 +30,13 @@ jobs:
   linux-x11:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/cache@main
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - uses: actions/checkout@main
       - name: Format
         run: cargo fmt --all -- --check
@@ -72,6 +79,13 @@ jobs:
   linux-wayland:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/cache@main
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - uses: actions/checkout@main
       - name: Format
         run: cargo fmt --all -- --check
@@ -110,6 +124,13 @@ jobs:
   macos:
     runs-on: macos-latest
     steps:
+      - uses: actions/cache@main
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - uses: actions/checkout@main
       - name: Format
         run: cargo fmt --all -- --check
@@ -126,6 +147,13 @@ jobs:
   windows:
     runs-on: windows-latest
     steps:
+      - uses: actions/cache@main
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - uses: actions/checkout@main
       - name: Format
         run: cargo fmt --all -- --check
