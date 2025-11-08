@@ -473,13 +473,13 @@ impl ResolvedConfig {
 
         if let Some(yaml_includes) = config.includes.as_ref() {
             for include in yaml_includes {
-                includes.insert(include.to_string());
+                includes.insert(include.clone());
             }
         }
 
         if let Some(extra_includes) = config.extra_includes.as_ref() {
             for include in extra_includes {
-                includes.insert(include.to_string());
+                includes.insert(include.clone());
             }
         }
 
@@ -491,13 +491,13 @@ impl ResolvedConfig {
 
         if let Some(yaml_excludes) = config.excludes.as_ref() {
             for exclude in yaml_excludes {
-                excludes.insert(exclude.to_string());
+                excludes.insert(exclude.clone());
             }
         }
 
         if let Some(extra_excludes) = config.extra_excludes.as_ref() {
             for exclude in extra_excludes {
-                excludes.insert(exclude.to_string());
+                excludes.insert(exclude.clone());
             }
         }
 

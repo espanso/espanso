@@ -220,7 +220,7 @@ impl Extension for ShellExtension {
                     shell
                 } else {
                     return ExtensionResult::Error(
-                        ShellExtensionError::InvalidShell(shell_param.to_string()).into(),
+                        ShellExtensionError::InvalidShell(shell_param.clone()).into(),
                     );
                 }
             } else {
@@ -286,7 +286,7 @@ impl Extension for ShellExtension {
                     ExtensionResult::Success(ExtensionOutput::Single(output))
                 }
                 Err(error) => ExtensionResult::Error(
-                    ShellExtensionError::ExecutionFailed(cmd.to_string(), error.into()).into(),
+                    ShellExtensionError::ExecutionFailed(cmd.clone(), error.into()).into(),
                 ),
             }
         } else {
