@@ -16,20 +16,18 @@
  * You should have received a copy of the GNU General Public License
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
+use std::process::Child;
 
 #[cfg(feature = "modulo")]
-pub fn show_welcome_screen() {
+pub fn show_welcome_screen() -> Option<Child> {
     let espanso_exe_path = std::env::current_exe().expect("unable to determine executable path");
     let mut command = std::process::Command::new(espanso_exe_path.to_string_lossy().to_string());
     command.args(["modulo", "welcome"]);
 
-    let _ = command
-        .spawn()
-        .expect("unable to show welcome screen")
-        .wait();
+    Some(command.spawn().expect("unable to show welcome screen"))
 }
 
 #[cfg(not(feature = "modulo"))]
-pub fn show_welcome_screen() {
-    // NOOP
+pub fn show_welcome_screen() -> Option<Child> {
+    None
 }
