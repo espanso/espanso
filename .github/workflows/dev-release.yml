@@ -201,3 +201,21 @@ jobs:
           name: MacOS Artifacts
           path: |
             Espanso-Mac-Universal.zip
+
+  snap:
+    runs-on: ubuntu-latest
+    outputs:
+      snap-file: ${{ steps.build-snap.outputs.snap }}
+    steps:
+    - uses: actions/checkout@v4
+    - uses: snapcore/action-build@v1
+      id: build-snap
+    - run: |
+        sudo snap install --classic --dangerous ${{ steps.build-snap.outputs.snap }}
+    - uses: snapcore/action-publish@v1
+      env:
+        SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.STORE_LOGIN }}
+      with:
+        snap: ${{ steps.build-snap.outputs.snap }}
+        release: ${{ startsWith(github.ref, 'refs/tags/') && 'candidate' || 'edge'}}
+
