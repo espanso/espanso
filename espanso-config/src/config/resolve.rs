@@ -247,7 +247,8 @@ impl Config for ResolvedConfig {
                 "\r".to_string(),
                 "\t".to_string(),
                 "\n".to_string(),
-                "\x0c".to_string(), // Form Feed
+                "\x0c".to_string(),     // Form Feed
+                "\u{00A0}".to_string(), // Non-breaking space
             ]
         })
     }
