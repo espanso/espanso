@@ -49,6 +49,7 @@ pub use middleware::notification::NotificationManager;
 pub use middleware::open_config::ConfigPathProvider;
 pub use middleware::render::{Renderer, RendererError};
 pub use middleware::search::MatchProvider;
+pub use middleware::stats::{set_global_recorder, StatsRecord, StatsRecorder};
 pub use middleware::suppress::EnabledStatusProvider;
 pub use middleware::undo::UndoEnabledProvider;
 
