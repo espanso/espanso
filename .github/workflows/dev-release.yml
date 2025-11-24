@@ -207,7 +207,7 @@ jobs:
     outputs:
       snap-file: ${{ steps.build-snap.outputs.snap }}
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - uses: snapcore/action-build@v1
       id: build-snap
     - run: |
