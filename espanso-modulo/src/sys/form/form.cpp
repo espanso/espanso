@@ -63,9 +63,11 @@ class ChoiceFieldWrapper {
 
 class ListFieldWrapper {
     wxListBox *control;
+    wxString separator;
 
   public:
-    explicit ListFieldWrapper(wxListBox *control) : control(control) {}
+    explicit ListFieldWrapper(wxListBox *control, wxString separator)
+        : control(control), separator(separator) {}
 
     virtual wxString getValue() {
       wxArrayInt selections;
@@ -73,7 +75,7 @@ class ListFieldWrapper {
 
       wxString value = "";
       for (unsigned int i = 0; i < selections.size(); i++) {
-        if (i > 0) value.Append(", ");
+        if (i > 0) value.Append(separator);
         value.Append(control->GetString(selections[i]));
       }
 
@@ -219,6 +221,7 @@ void FormFrame::AddComponent(wxPanel *parent, wxBoxSizer *sizer,
         }
 
         void *choice = nullptr;
+        wxString separator = wxString::FromUTF8(choiceMeta->separator);
         if (choiceMeta->choiceType == ChoiceType::DROPDOWN) {
             choice = (void *)new wxChoice(parent, wxID_ANY, wxDefaultPosition,
                                           wxDefaultSize, choices);
@@ -257,7 +260,8 @@ void FormFrame::AddComponent(wxPanel *parent, wxBoxSizer *sizer,
 
             // Create the field wrapper
             std::unique_ptr<FieldWrapper> field(
-                (FieldWrapper *)new ListFieldWrapper((wxListBox *)choice));
+                (FieldWrapper *)new ListFieldWrapper((wxListBox *)choice,
+                                                     separator));
             idMap[meta.id] = std::move(field);
         }
 

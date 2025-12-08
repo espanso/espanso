@@ -76,6 +76,11 @@ fn convert_fields(fields: &Params) -> HashMap<String, FormField> {
                         .get("values")
                         .and_then(|v| extract_values(v, params.get("trim_string_values")))
                         .unwrap_or_default(),
+                    separator: params
+                        .get("separator")
+                        .and_then(|val| val.as_string())
+                        .cloned()
+                        .unwrap_or(", ".to_string())
                 }),
                 // By default, it's considered type 'text'
                 _ => Some(FormField::Text {

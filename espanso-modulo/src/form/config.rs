@@ -96,6 +96,7 @@ pub struct ChoiceFieldConfig {
 pub struct ListFieldConfig {
     pub values: Vec<String>,
     pub default: String,
+    pub separator: String,
 }
 
 impl<'de> serde::Deserialize<'de> for FieldConfig {
@@ -144,6 +145,8 @@ impl<'a> From<&'a AutoFieldConfig> for FieldConfig {
                     config.default.clone_from(default);
                 }
 
+                config.separator = other.separator.clone();
+
                 FieldTypeConfig::List(config)
             }
             _ => {
@@ -171,6 +174,10 @@ fn default_values() -> Vec<String> {
     Vec::new()
 }
 
+fn default_separator() -> String {
+    ", ".to_owned()
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AutoFieldConfig {
     #[serde(rename = "type", default = "default_type")]
@@ -184,4 +191,7 @@ pub struct AutoFieldConfig {
 
     #[serde(default = "default_values")]
     pub values: Vec<String>,
+
+    #[serde(default = "default_separator")]
+    pub separator: String,
 }
