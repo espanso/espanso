@@ -80,7 +80,7 @@ fn convert_fields(fields: &Params) -> HashMap<String, FormField> {
                         .get("separator")
                         .and_then(|val| val.as_string())
                         .cloned()
-                        .unwrap_or(", ".to_string())
+                        .unwrap_or(", ".to_string()),
                 }),
                 // By default, it's considered type 'text'
                 _ => Some(FormField::Text {

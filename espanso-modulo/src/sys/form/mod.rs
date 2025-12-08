@@ -312,8 +312,8 @@ mod interop {
             let default_value = CString::new(metadata.default_value)
                 .expect("unable to convert default value to CString");
 
-            let separator = CString::new(metadata.separator)
-                .expect("unable to convert separator to CString");
+            let separator =
+                CString::new(metadata.separator).expect("unable to convert separator to CString");
 
             let interop = Box::new(ChoiceMetadata {
                 values: values_ptr_array.as_ptr(),
