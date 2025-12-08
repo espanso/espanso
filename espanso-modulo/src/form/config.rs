@@ -145,7 +145,7 @@ impl<'a> From<&'a AutoFieldConfig> for FieldConfig {
                     config.default.clone_from(default);
                 }
 
-                config.separator = other.separator.clone();
+                config.separator.clone_from(&other.separator);
 
                 FieldTypeConfig::List(config)
             }
