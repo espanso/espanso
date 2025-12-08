@@ -67,7 +67,18 @@ class ListFieldWrapper {
   public:
     explicit ListFieldWrapper(wxListBox *control) : control(control) {}
 
-    virtual wxString getValue() { return control->GetStringSelection(); }
+    virtual wxString getValue() {
+      wxArrayInt selections;
+      control->GetSelections(selections);
+
+      wxString value = "";
+      for (unsigned int i = 0; i < selections.size(); i++) {
+        if (i > 0) value.Append(", ");
+        value.Append(control->GetString(selections[i]));
+      }
+
+      return value;
+    }
 };
 
 // App Code
