@@ -226,7 +226,8 @@ void FormFrame::AddComponent(wxPanel *parent, wxBoxSizer *sizer,
             idMap[meta.id] = std::move(field);
         } else {
             choice = (void *)new wxListBox(parent, wxID_ANY, wxDefaultPosition,
-                                           wxDefaultSize, choices);
+                                           wxDefaultSize, choices,
+                                           wxLB_EXTENDED);
 
             if (selectedItem >= 0) {
                 ((wxListBox *)choice)->SetSelection(selectedItem);
