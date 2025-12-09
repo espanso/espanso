@@ -19,7 +19,7 @@
 
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
-use serde_yaml::Mapping;
+use serde_norway::Mapping;
 use std::convert::TryFrom;
 
 use crate::util::is_yaml_empty;
@@ -183,12 +183,12 @@ impl YAMLConfig {
 
         // Because an empty string is not valid YAML but we want to support it anyway
         if is_yaml_empty(yaml) {
-            return Ok(serde_yaml::from_str(
+            return Ok(serde_norway::from_str(
                 "arbitrary_field_that_will_not_block_the_parser: true",
             )?);
         }
 
-        Ok(serde_yaml::from_str(yaml)?)
+        Ok(serde_norway::from_str(yaml)?)
     }
 }
 

@@ -35,7 +35,7 @@ pub fn read_archived_package(containing_dir: &Path) -> Result<ArchivedPackage> {
     let source = if source_path.is_file() {
         let yaml = std::fs::read_to_string(&source_path)?;
         let source: PackageSource =
-            serde_yaml::from_str(&yaml).context("unable to parse package source file.")?;
+            serde_norway::from_str(&yaml).context("unable to parse package source file.")?;
         source
     } else {
         // Fallback to hub installation

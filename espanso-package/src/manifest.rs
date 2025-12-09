@@ -35,7 +35,7 @@ impl Manifest {
     pub fn parse(manifest_path: &Path) -> Result<Self> {
         let manifest_str = std::fs::read_to_string(manifest_path)?;
 
-        serde_yaml::from_str(&manifest_str).with_context(|| {
+        serde_norway::from_str(&manifest_str).with_context(|| {
             format!(
                 "Failed manifest parsing for path: {}",
                 manifest_path.display()

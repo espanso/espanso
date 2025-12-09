@@ -21,7 +21,7 @@ use std::path::Path;
 
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
-use serde_yaml::Mapping;
+use serde_norway::Mapping;
 
 use crate::util::is_yaml_empty;
 
@@ -44,12 +44,12 @@ impl YAMLMatchGroup {
 
         // Because an empty string is not valid YAML but we want to support it anyway
         if is_yaml_empty(yaml) {
-            return Ok(serde_yaml::from_str(
+            return Ok(serde_norway::from_str(
                 "arbitrary_field_that_will_not_block_the_parser: true",
             )?);
         }
 
-        Ok(serde_yaml::from_str(yaml)?)
+        Ok(serde_norway::from_str(yaml)?)
     }
 
     pub fn parse_from_file(path: &Path) -> Result<Self> {
