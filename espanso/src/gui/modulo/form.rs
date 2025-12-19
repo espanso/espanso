@@ -113,10 +113,15 @@ fn convert_fields_into_object(fields: &HashMap<String, FormField>) -> Map<String
               "default": default,
               "values": values,
             }),
-            FormField::List { default, values } => json!({
+            FormField::List {
+                default,
+                values,
+                separator,
+            } => json!({
               "type": "list",
               "default": default,
               "values": values,
+              "separator": separator,
             }),
         };
         obj.insert(name.clone(), value);
