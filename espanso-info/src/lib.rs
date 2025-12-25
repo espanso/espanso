@@ -91,6 +91,10 @@ pub fn get_provider() -> Result<Box<dyn AppInfoProvider>> {
                 info!("kdotool missing or not available for the current wayland DE.");
                 // since we dont have `kdotool` anyway, just output empty info
             }
+            "hyprland" => {
+                info!("using HyprlandAppInfoProvider");
+                return Ok(Box::new(wayland::HyprlandAppInfoProvider::new()));
+            }
             _ => {}
         }
     }

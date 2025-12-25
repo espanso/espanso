@@ -24,6 +24,7 @@ use std::process::Command;
 pub(crate) struct WaylandEmptyAppInfoProvider {}
 pub(crate) struct WaylandKDEAppInfoProvider {}
 pub(crate) struct WaylandNiriAppInfoProvider {}
+pub(crate) struct HyprlandAppInfoProvider {}
 
 fn empty_app_info() -> AppInfo {
     AppInfo {
@@ -166,6 +167,60 @@ impl AppInfoProvider for WaylandNiriAppInfoProvider {
                     }
                 }
             }
+
+            return AppInfo { title, exec, class };
+        }
+        empty_app_info()
+    }
+}
+
+// for Hyprland
+impl HyprlandAppInfoProvider {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+
+impl AppInfoProvider for HyprlandAppInfoProvider {
+    fn get_info(&self) -> AppInfo {
+        if let Ok(out) = Command::new("hyprctl")
+            .arg("activewindow")
+            .output()
+        {
+            let txt = String::from_utf8(out.stdout).expect("Error decoding from utf8");
+
+            let mut title = None;
+            let mut class = None;
+            let mut pid = None;
+
+            // Parse the output from `hyprctl activewindow`
+            for line in txt.lines() {
+                let trimmed = line.trim();
+
+                if let Some(rest) = trimmed.strip_prefix("class:") {
+                    class = Some(rest.trim().to_string());
+                } else if let Some(rest) = trimmed.strip_prefix("title:") {
+                    title = Some(rest.trim().to_string());
+                } else if let Some(rest) = trimmed.strip_prefix("pid:") {
+                    // We capture the PID as a string for use in the proc lookup
+                    pid = Some(rest.trim().to_string());
+                }
+            }
+
+            // Re-use Niri's logic to resolve the executable path (exec) from the PID
+            let exec = pid.and_then(|pid_str| {
+                Command::new("readlink")
+                    .arg(format!("/proc/{}/exe", pid_str))
+                    .output()
+                    .ok()
+                    .and_then(|out| {
+                        let mut __stdout = out.stdout;
+                        if !__stdout.is_empty() {
+                            __stdout.pop(); // Remove newline
+                        }
+                        String::from_utf8(__stdout).ok()
+                    })
+            });
 
             return AppInfo { title, exec, class };
         }
