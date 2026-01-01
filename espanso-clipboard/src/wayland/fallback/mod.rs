@@ -119,7 +119,15 @@ impl Clipboard for WaylandFallbackClipboard {
     }
 
     fn set_text(&self, text: &str, _: &ClipboardOperationOptions) -> anyhow::Result<()> {
-        self.invoke_command_with_timeout(&mut Command::new("wl-copy"), text.as_bytes(), "wl-copy")
+        // NOTE: Without explicit MIME type, wl-copy's auto-detection can give unexpected results
+        // making the text not paste-able in some programs.
+        self.invoke_command_with_timeout(
+            Command::new("wl-copy")
+                .arg("--type")
+                .arg("text/plain;charset=utf-8"),
+            text.as_bytes(),
+            "wl-copy",
+        )
     }
 
     fn set_image(
