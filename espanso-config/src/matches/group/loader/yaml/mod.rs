@@ -129,9 +129,15 @@ pub fn try_convert_into_match(
 ) -> Result<(Match, Vec<Warning>)> {
     let mut warnings = Vec::new();
 
-    if (yaml_match.uppercase_style.is_some() || defaults.and_then(|d| d.uppercase_style.as_ref()).is_some())
-       && yaml_match.propagate_case.is_none()
-       && defaults.and_then(|d| d.propagate_case).is_none() {
+    // Check if uppercase_style is specified but propagate_case won't be true
+    let has_uppercase_style = yaml_match.uppercase_style.is_some()
+        || defaults.and_then(|d| d.uppercase_style.as_ref()).is_some();
+    let final_propagate_case = yaml_match
+        .propagate_case
+        .or(defaults.and_then(|d| d.propagate_case))
+        .unwrap_or(false);
+
+    if has_uppercase_style && !final_propagate_case {
         warnings.push(anyhow!(
             "specifying the 'uppercase_style' option without 'propagate_case' has no effect"
         ));
@@ -207,9 +213,17 @@ pub fn try_convert_into_match(
         MatchCause::None
     };
 
-    let force_mode = if yaml_match.force_clipboard == Some(true) || (yaml_match.force_clipboard.is_none() && defaults.and_then(|d| d.force_clipboard) == Some(true)) {
+    let force_mode = if yaml_match.force_clipboard == Some(true) {
         Some(TextInjectMode::Clipboard)
-    } else if let Some(mode) = yaml_match.force_mode.or(defaults.and_then(|d| d.force_mode.clone())) {
+    } else if let Some(mode) = yaml_match.force_mode {
+        match mode.to_lowercase().as_str() {
+            "clipboard" => Some(TextInjectMode::Clipboard),
+            "keys" => Some(TextInjectMode::Keys),
+            _ => None,
+        }
+    } else if defaults.and_then(|d| d.force_clipboard) == Some(true) {
+        Some(TextInjectMode::Clipboard)
+    } else if let Some(mode) = defaults.and_then(|d| d.force_mode.clone()) {
         match mode.to_lowercase().as_str() {
             "clipboard" => Some(TextInjectMode::Clipboard),
             "keys" => Some(TextInjectMode::Keys),
@@ -1064,5 +1078,68 @@ matches:
         } else {
             panic!("Expected TriggerCause");
         }
+    }
+
+    #[test]
+    fn match_force_mode_overrides_default_force_clipboard() {
+        let yaml_group: YAMLMatchGroup = serde_norway::from_str(
+            r#"
+match_defaults:
+  force_clipboard: true
+matches:
+  - trigger: "test"
+    replace: "replacement"
+    force_mode: "keys"
+"#
+        ).unwrap();
+
+        let yaml_match = &yaml_group.matches.unwrap()[0];
+        let (m, _) = try_convert_into_match(yaml_match.clone(), false, yaml_group.match_defaults.as_ref()).unwrap();
+
+        if let MatchEffect::Text(effect) = m.effect {
+            assert_eq!(effect.force_mode, Some(TextInjectMode::Keys));
+        } else {
+            panic!("Expected TextEffect");
+        }
+    }
+
+    #[test]
+    fn uppercase_style_warning_with_defaults() {
+        // Warning when uppercase_style in defaults but propagate_case is false
+        let yaml_group: YAMLMatchGroup = serde_norway::from_str(
+            r#"
+match_defaults:
+  uppercase_style: "capitalize"
+matches:
+  - trigger: "test"
+    replace: "replacement"
+    propagate_case: false
+"#
+        ).unwrap();
+
+        let yaml_match = &yaml_group.matches.unwrap()[0];
+        let (_, warnings) = try_convert_into_match(yaml_match.clone(), false, yaml_group.match_defaults.as_ref()).unwrap();
+        assert_eq!(warnings.len(), 1);
+    }
+
+    #[test]
+    fn regex_matches_not_affected_by_trigger_defaults() {
+        // Regex matches should not be affected by trigger-specific defaults
+        let yaml_group: YAMLMatchGroup = serde_norway::from_str(
+            r#"
+match_defaults:
+  word: true
+  propagate_case: true
+matches:
+  - regex: "test\\d+"
+    replace: "matched"
+"#
+        ).unwrap();
+
+        let yaml_match = &yaml_group.matches.unwrap()[0];
+        let (m, _) = try_convert_into_match(yaml_match.clone(), false, yaml_group.match_defaults.as_ref()).unwrap();
+
+        // Regex matches should have RegexCause, not TriggerCause
+        assert!(matches!(m.cause, MatchCause::Regex(_)));
     }
 }
