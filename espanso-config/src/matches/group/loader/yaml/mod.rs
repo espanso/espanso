@@ -88,7 +88,7 @@ impl Importer for YAMLImporter {
 
         let mut matches = Vec::new();
         for yaml_match in yaml_group.matches.clone().unwrap_or_default() {
-            match try_convert_into_match(yaml_match, false) {
+            match try_convert_into_match(yaml_match, false, yaml_group.match_defaults.as_ref()) {
                 Ok((m, warnings)) => {
                     matches.push(m);
                     non_fatal_errors.extend(warnings.into_iter().map(ErrorRecord::warn));
@@ -125,10 +125,13 @@ impl Importer for YAMLImporter {
 pub fn try_convert_into_match(
     yaml_match: YAMLMatch,
     use_compatibility_mode: bool, // TODO: unused variable. Remove from the codebase
+    defaults: Option<&parse::YAMLMatchDefaults>,
 ) -> Result<(Match, Vec<Warning>)> {
     let mut warnings = Vec::new();
 
-    if yaml_match.uppercase_style.is_some() && yaml_match.propagate_case.is_none() {
+    if (yaml_match.uppercase_style.is_some() || defaults.and_then(|d| d.uppercase_style.as_ref()).is_some())
+       && yaml_match.propagate_case.is_none()
+       && defaults.and_then(|d| d.propagate_case).is_none() {
         warnings.push(anyhow!(
             "specifying the 'uppercase_style' option without 'propagate_case' has no effect"
         ));
@@ -160,6 +163,7 @@ pub fn try_convert_into_match(
 
     let uppercase_style = match yaml_match
         .uppercase_style
+        .or(defaults.and_then(|d| d.uppercase_style.clone()))
         .map(|s| s.to_lowercase())
         .as_deref()
     {
@@ -182,13 +186,18 @@ pub fn try_convert_into_match(
             left_word: yaml_match
                 .left_word
                 .or(yaml_match.word)
+                .or(defaults.and_then(|d| d.left_word))
+                .or(defaults.and_then(|d| d.word))
                 .unwrap_or(TriggerCause::default().left_word),
             right_word: yaml_match
                 .right_word
                 .or(yaml_match.word)
+                .or(defaults.and_then(|d| d.right_word))
+                .or(defaults.and_then(|d| d.word))
                 .unwrap_or(TriggerCause::default().right_word),
             propagate_case: yaml_match
                 .propagate_case
+                .or(defaults.and_then(|d| d.propagate_case))
                 .unwrap_or(TriggerCause::default().propagate_case),
             uppercase_style,
         })
@@ -198,9 +207,9 @@ pub fn try_convert_into_match(
         MatchCause::None
     };
 
-    let force_mode = if yaml_match.force_clipboard == Some(true) {
+    let force_mode = if yaml_match.force_clipboard == Some(true) || (yaml_match.force_clipboard.is_none() && defaults.and_then(|d| d.force_clipboard) == Some(true)) {
         Some(TextInjectMode::Clipboard)
-    } else if let Some(mode) = yaml_match.force_mode {
+    } else if let Some(mode) = yaml_match.force_mode.or(defaults.and_then(|d| d.force_mode.clone())) {
         match mode.to_lowercase().as_str() {
             "clipboard" => Some(TextInjectMode::Clipboard),
             "keys" => Some(TextInjectMode::Keys),
@@ -354,7 +363,7 @@ mod tests {
         use_compatibility_mode: bool,
     ) -> Result<(Match, Vec<Warning>)> {
         let yaml_match: YAMLMatch = serde_norway::from_str(yaml)?;
-        let (mut m, warnings) = try_convert_into_match(yaml_match, use_compatibility_mode)?;
+        let (mut m, warnings) = try_convert_into_match(yaml_match, use_compatibility_mode, None)?;
 
         // Reset the IDs to correctly compare them
         m.id = 0;
@@ -935,5 +944,125 @@ mod tests {
             let importer = YAMLImporter::new();
             assert!(importer.load_group(&base_file).is_err());
         });
+    }
+
+    #[test]
+    fn match_defaults_are_applied() {
+        let yaml_group: YAMLMatchGroup = serde_norway::from_str(
+            r#"
+match_defaults:
+  propagate_case: true
+  word: true
+matches:
+  - trigger: "test"
+    replace: "replacement"
+"#
+        ).unwrap();
+
+        let yaml_match = &yaml_group.matches.unwrap()[0];
+        let (m, _) = try_convert_into_match(yaml_match.clone(), false, yaml_group.match_defaults.as_ref()).unwrap();
+
+        if let MatchCause::Trigger(cause) = m.cause {
+            assert_eq!(cause.propagate_case, true);
+            assert_eq!(cause.left_word, true);
+            assert_eq!(cause.right_word, true);
+        } else {
+            panic!("Expected TriggerCause");
+        }
+    }
+
+    #[test]
+    fn match_options_override_defaults() {
+        let yaml_group: YAMLMatchGroup = serde_norway::from_str(
+            r#"
+match_defaults:
+  propagate_case: true
+  word: true
+matches:
+  - trigger: "test"
+    replace: "replacement"
+    propagate_case: false
+    left_word: false
+"#
+        ).unwrap();
+
+        let yaml_match = &yaml_group.matches.unwrap()[0];
+        let (m, _) = try_convert_into_match(yaml_match.clone(), false, yaml_group.match_defaults.as_ref()).unwrap();
+
+        if let MatchCause::Trigger(cause) = m.cause {
+            assert_eq!(cause.propagate_case, false);
+            assert_eq!(cause.left_word, false);
+            assert_eq!(cause.right_word, true); // Still from default
+        } else {
+            panic!("Expected TriggerCause");
+        }
+    }
+
+    #[test]
+    fn match_defaults_uppercase_style() {
+        let yaml_group: YAMLMatchGroup = serde_norway::from_str(
+            r#"
+match_defaults:
+  propagate_case: true
+  uppercase_style: "capitalize"
+matches:
+  - trigger: "test"
+    replace: "replacement"
+"#
+        ).unwrap();
+
+        let yaml_match = &yaml_group.matches.unwrap()[0];
+        let (m, _) = try_convert_into_match(yaml_match.clone(), false, yaml_group.match_defaults.as_ref()).unwrap();
+
+        if let MatchCause::Trigger(cause) = m.cause {
+            assert_eq!(cause.propagate_case, true);
+            assert_eq!(cause.uppercase_style, UpperCasingStyle::Capitalize);
+        } else {
+            panic!("Expected TriggerCause");
+        }
+    }
+
+    #[test]
+    fn match_defaults_force_mode() {
+        let yaml_group: YAMLMatchGroup = serde_norway::from_str(
+            r#"
+match_defaults:
+  force_clipboard: true
+matches:
+  - trigger: "test"
+    replace: "replacement"
+"#
+        ).unwrap();
+
+        let yaml_match = &yaml_group.matches.unwrap()[0];
+        let (m, _) = try_convert_into_match(yaml_match.clone(), false, yaml_group.match_defaults.as_ref()).unwrap();
+
+        if let MatchEffect::Text(effect) = m.effect {
+            assert_eq!(effect.force_mode, Some(TextInjectMode::Clipboard));
+        } else {
+            panic!("Expected TextEffect");
+        }
+    }
+
+    #[test]
+    fn no_match_defaults_works_as_before() {
+        let yaml_group: YAMLMatchGroup = serde_norway::from_str(
+            r#"
+matches:
+  - trigger: "test"
+    replace: "replacement"
+"#
+        ).unwrap();
+
+        let yaml_match = &yaml_group.matches.unwrap()[0];
+        let (m, _) = try_convert_into_match(yaml_match.clone(), false, None).unwrap();
+
+        if let MatchCause::Trigger(cause) = m.cause {
+            assert_eq!(cause.propagate_case, false);
+            assert_eq!(cause.left_word, false);
+            assert_eq!(cause.right_word, false);
+        } else {
+            panic!("Expected TriggerCause");
+        }
     }
 }
