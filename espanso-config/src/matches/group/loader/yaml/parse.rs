@@ -275,7 +275,11 @@ matches:
         let yaml = "\u{FEFF}match_defaults:\n  word: true\n";
 
         let result = YAMLMatchGroup::parse_from_str(yaml);
-        assert!(result.is_ok(), "Failed to parse YAML with BOM: {:?}", result.err());
+        assert!(
+            result.is_ok(),
+            "Failed to parse YAML with BOM: {:?}",
+            result.err()
+        );
 
         let group = result.unwrap();
         assert!(group.match_defaults.is_some());

@@ -970,11 +970,17 @@ match_defaults:
 matches:
   - trigger: "test"
     replace: "replacement"
-"#
-        ).unwrap();
+"#,
+        )
+        .unwrap();
 
         let yaml_match = &yaml_group.matches.unwrap()[0];
-        let (m, _) = try_convert_into_match(yaml_match.clone(), false, yaml_group.match_defaults.as_ref()).unwrap();
+        let (m, _) = try_convert_into_match(
+            yaml_match.clone(),
+            false,
+            yaml_group.match_defaults.as_ref(),
+        )
+        .unwrap();
 
         if let MatchCause::Trigger(cause) = m.cause {
             assert_eq!(cause.propagate_case, true);
@@ -997,11 +1003,17 @@ matches:
     replace: "replacement"
     propagate_case: false
     left_word: false
-"#
-        ).unwrap();
+"#,
+        )
+        .unwrap();
 
         let yaml_match = &yaml_group.matches.unwrap()[0];
-        let (m, _) = try_convert_into_match(yaml_match.clone(), false, yaml_group.match_defaults.as_ref()).unwrap();
+        let (m, _) = try_convert_into_match(
+            yaml_match.clone(),
+            false,
+            yaml_group.match_defaults.as_ref(),
+        )
+        .unwrap();
 
         if let MatchCause::Trigger(cause) = m.cause {
             assert_eq!(cause.propagate_case, false);
@@ -1022,11 +1034,17 @@ match_defaults:
 matches:
   - trigger: "test"
     replace: "replacement"
-"#
-        ).unwrap();
+"#,
+        )
+        .unwrap();
 
         let yaml_match = &yaml_group.matches.unwrap()[0];
-        let (m, _) = try_convert_into_match(yaml_match.clone(), false, yaml_group.match_defaults.as_ref()).unwrap();
+        let (m, _) = try_convert_into_match(
+            yaml_match.clone(),
+            false,
+            yaml_group.match_defaults.as_ref(),
+        )
+        .unwrap();
 
         if let MatchCause::Trigger(cause) = m.cause {
             assert_eq!(cause.propagate_case, true);
@@ -1045,11 +1063,17 @@ match_defaults:
 matches:
   - trigger: "test"
     replace: "replacement"
-"#
-        ).unwrap();
+"#,
+        )
+        .unwrap();
 
         let yaml_match = &yaml_group.matches.unwrap()[0];
-        let (m, _) = try_convert_into_match(yaml_match.clone(), false, yaml_group.match_defaults.as_ref()).unwrap();
+        let (m, _) = try_convert_into_match(
+            yaml_match.clone(),
+            false,
+            yaml_group.match_defaults.as_ref(),
+        )
+        .unwrap();
 
         if let MatchEffect::Text(effect) = m.effect {
             assert_eq!(effect.force_mode, Some(TextInjectMode::Clipboard));
@@ -1065,8 +1089,9 @@ matches:
 matches:
   - trigger: "test"
     replace: "replacement"
-"#
-        ).unwrap();
+"#,
+        )
+        .unwrap();
 
         let yaml_match = &yaml_group.matches.unwrap()[0];
         let (m, _) = try_convert_into_match(yaml_match.clone(), false, None).unwrap();
@@ -1090,11 +1115,17 @@ matches:
   - trigger: "test"
     replace: "replacement"
     force_mode: "keys"
-"#
-        ).unwrap();
+"#,
+        )
+        .unwrap();
 
         let yaml_match = &yaml_group.matches.unwrap()[0];
-        let (m, _) = try_convert_into_match(yaml_match.clone(), false, yaml_group.match_defaults.as_ref()).unwrap();
+        let (m, _) = try_convert_into_match(
+            yaml_match.clone(),
+            false,
+            yaml_group.match_defaults.as_ref(),
+        )
+        .unwrap();
 
         if let MatchEffect::Text(effect) = m.effect {
             assert_eq!(effect.force_mode, Some(TextInjectMode::Keys));
@@ -1114,11 +1145,17 @@ matches:
   - trigger: "test"
     replace: "replacement"
     propagate_case: false
-"#
-        ).unwrap();
+"#,
+        )
+        .unwrap();
 
         let yaml_match = &yaml_group.matches.unwrap()[0];
-        let (_, warnings) = try_convert_into_match(yaml_match.clone(), false, yaml_group.match_defaults.as_ref()).unwrap();
+        let (_, warnings) = try_convert_into_match(
+            yaml_match.clone(),
+            false,
+            yaml_group.match_defaults.as_ref(),
+        )
+        .unwrap();
         assert_eq!(warnings.len(), 1);
     }
 
@@ -1133,13 +1170,52 @@ match_defaults:
 matches:
   - regex: "test\\d+"
     replace: "matched"
-"#
-        ).unwrap();
+"#,
+        )
+        .unwrap();
 
         let yaml_match = &yaml_group.matches.unwrap()[0];
-        let (m, _) = try_convert_into_match(yaml_match.clone(), false, yaml_group.match_defaults.as_ref()).unwrap();
+        let (m, _) = try_convert_into_match(
+            yaml_match.clone(),
+            false,
+            yaml_group.match_defaults.as_ref(),
+        )
+        .unwrap();
 
         // Regex matches should have RegexCause, not TriggerCause
         assert!(matches!(m.cause, MatchCause::Regex(_)));
+    }
+
+    #[test]
+    fn test_match_defaults_propagate_case() {
+        // Test that propagate_case is correctly inherited from defaults
+        let yaml_group: YAMLMatchGroup = serde_norway::from_str(
+            r#"
+match_defaults:
+  propagate_case: true
+matches:
+  - trigger: ":test"
+    replace: "replacement"
+"#,
+        )
+        .unwrap();
+
+        let yaml_match = &yaml_group.matches.unwrap()[0];
+        let (m, _) = try_convert_into_match(
+            yaml_match.clone(),
+            false,
+            yaml_group.match_defaults.as_ref(),
+        )
+        .unwrap();
+
+        // Verify the match has propagate_case set to true from defaults
+        if let MatchCause::Trigger(cause) = m.cause {
+            assert_eq!(
+                cause.propagate_case, true,
+                "propagate_case should be true from defaults"
+            );
+        } else {
+            panic!("Expected TriggerCause");
+        }
     }
 }
