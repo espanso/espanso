@@ -420,9 +420,18 @@ impl ResolvedConfig {
         // Validate triggermarker configuration
         Self::validate_triggermarker(&config.triggermarker_prefix, "triggermarker_prefix")?;
         Self::validate_triggermarker(&config.triggermarker_suffix, "triggermarker_suffix")?;
-        Self::validate_triggermarker_mode(&config.triggermarker_replace_mode, "triggermarker_replace_mode")?;
-        Self::validate_triggermarker_mode(&config.triggermarker_prefix_replace_mode, "triggermarker_prefix_replace_mode")?;
-        Self::validate_triggermarker_mode(&config.triggermarker_suffix_replace_mode, "triggermarker_suffix_replace_mode")?;
+        Self::validate_triggermarker_mode(
+            &config.triggermarker_replace_mode,
+            "triggermarker_replace_mode",
+        )?;
+        Self::validate_triggermarker_mode(
+            &config.triggermarker_prefix_replace_mode,
+            "triggermarker_prefix_replace_mode",
+        )?;
+        Self::validate_triggermarker_mode(
+            &config.triggermarker_suffix_replace_mode,
+            "triggermarker_suffix_replace_mode",
+        )?;
 
         // Extract the base directory
         let base_dir = path
