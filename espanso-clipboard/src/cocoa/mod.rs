@@ -26,7 +26,6 @@ use std::{
 
 use crate::{Clipboard, ClipboardOperationOptions};
 use anyhow::Result;
-use log::error;
 use std::os::raw::c_char;
 use thiserror::Error;
 

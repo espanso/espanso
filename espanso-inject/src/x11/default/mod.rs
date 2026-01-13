@@ -30,7 +30,7 @@ use crate::x11::ffi::{
     XSendEvent, XSync, XTestFakeKeyEvent,
 };
 use libc::c_void;
-use log::{debug, error};
+use log::debug;
 
 use crate::{linux::raw_keys::convert_to_sym_array, x11::ffi::Xutf8LookupString};
 use anyhow::{bail, Result};
