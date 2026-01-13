@@ -31,13 +31,20 @@ pub mod yaml;
 
 trait Importer {
     fn is_supported(&self, extension: &str) -> bool;
-    fn load_group(&self, path: &Path) -> Result<(MatchGroup, Option<NonFatalErrorSet>)>;
+    fn load_group(
+        &self,
+        path: &Path,
+        config: &dyn crate::config::Config,
+    ) -> Result<(MatchGroup, Option<NonFatalErrorSet>)>;
 }
 
 static IMPORTERS: LazyLock<Vec<Box<dyn Importer + Sync + Send>>> =
     LazyLock::new(|| vec![Box::new(YAMLImporter::new())]);
 
-pub fn load_match_group(path: &Path) -> Result<(MatchGroup, Option<NonFatalErrorSet>)> {
+pub fn load_match_group(
+    path: &Path,
+    config: &dyn crate::config::Config,
+) -> Result<(MatchGroup, Option<NonFatalErrorSet>)> {
     if let Some(extension) = path.extension() {
         let extension = extension.to_string_lossy().to_lowercase();
 
@@ -46,7 +53,7 @@ pub fn load_match_group(path: &Path) -> Result<(MatchGroup, Option<NonFatalError
             .find(|importer| importer.is_supported(&extension));
 
         match importer {
-            Some(importer) => match importer.load_group(path) {
+            Some(importer) => match importer.load_group(path, config) {
                 Ok((group, non_fatal_error_set)) => Ok((group, non_fatal_error_set)),
                 Err(err) => Err(LoadError::ParsingError(err).into()),
             },
