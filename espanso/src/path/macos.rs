@@ -22,7 +22,7 @@ use std::{fs::create_dir_all, io::ErrorKind};
 use thiserror::Error;
 
 use anyhow::{bail, Context, Result};
-use log::{debug, error, warn};
+use log::{debug, warn};
 
 pub fn is_espanso_in_path() -> bool {
     PathBuf::from("/usr/local/bin/espanso").is_file()
