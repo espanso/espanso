@@ -122,6 +122,177 @@ impl Importer for YAMLImporter {
     }
 }
 
+// Helper function to apply both prefix and suffix to a trigger
+fn apply_triggermarkers(
+    trigger: &str,
+    prefix: Option<&str>,
+    suffix: Option<&str>,
+    prefix_mode: &str,
+    suffix_mode: &str,
+    smart_chars: &[String],
+    remove_multiple: bool,
+) -> String {
+    let mut result = trigger.to_string();
+
+    // Apply prefix
+    if let Some(prefix_str) = prefix {
+        result = apply_prefix(
+            &result,
+            prefix_str,
+            prefix_mode,
+            smart_chars,
+            remove_multiple,
+        );
+    }
+
+    // Apply suffix
+    if let Some(suffix_str) = suffix {
+        result = apply_suffix(
+            &result,
+            suffix_str,
+            suffix_mode,
+            smart_chars,
+            remove_multiple,
+        );
+    }
+
+    result
+}
+
+// Helper function to apply prefix to a trigger
+fn apply_prefix(
+    trigger: &str,
+    prefix: &str,
+    mode: &str,
+    smart_chars: &[String],
+    remove_multiple: bool,
+) -> String {
+    if mode == "agnostic" {
+        // Agnostic mode: Simply prepend
+        format!("{}{}", prefix, trigger)
+    } else {
+        // Smart mode: Remove existing smart chars, then add prefix
+        let mut cleaned = trigger.to_string();
+
+        // Remove leading smart chars if prefix is set or if smart char exists
+        if !prefix.is_empty() || cleaned.chars().next().map_or(false, |c| {
+            smart_chars.iter().any(|s| s.chars().next() == Some(c))
+        }) {
+            cleaned = remove_leading_smart_chars(&cleaned, smart_chars, remove_multiple);
+        }
+
+        // Add new prefix
+        format!("{}{}", prefix, cleaned)
+    }
+}
+
+// Helper function to apply suffix to a trigger
+fn apply_suffix(
+    trigger: &str,
+    suffix: &str,
+    mode: &str,
+    smart_chars: &[String],
+    remove_multiple: bool,
+) -> String {
+    if mode == "agnostic" {
+        // Agnostic mode: Simply append
+        format!("{}{}", trigger, suffix)
+    } else {
+        // Smart mode: Remove existing smart chars, then add suffix
+        let mut cleaned = trigger.to_string();
+
+        // Remove trailing smart chars if suffix is set or if smart char exists
+        if !suffix.is_empty() || cleaned.chars().next_back().map_or(false, |c| {
+            smart_chars.iter().any(|s| s.chars().next() == Some(c))
+        }) {
+            cleaned = remove_trailing_smart_chars(&cleaned, smart_chars, remove_multiple);
+        }
+
+        // Add new suffix
+        format!("{}{}", cleaned, suffix)
+    }
+}
+
+// Helper function to remove leading smart characters
+fn remove_leading_smart_chars(
+    trigger: &str,
+    smart_chars: &[String],
+    remove_multiple: bool,
+) -> String {
+    let mut chars: Vec<char> = trigger.chars().collect();
+
+    if chars.is_empty() {
+        return trigger.to_string();
+    }
+
+    // Get first character
+    let first_char = chars[0];
+
+    // Check if it's a smart char
+    let is_smart_char = smart_chars.iter().any(|s| {
+        s.chars().next() == Some(first_char)
+    });
+
+    if !is_smart_char {
+        return trigger.to_string();
+    }
+
+    // Remove characters
+    if remove_multiple {
+        // Remove all repeated identical leading characters
+        let mut pos = 0;
+        while pos < chars.len() && chars[pos] == first_char {
+            pos += 1;
+        }
+        chars.drain(0..pos);
+    } else {
+        // Remove only first character
+        chars.remove(0);
+    }
+
+    chars.into_iter().collect()
+}
+
+// Helper function to remove trailing smart characters
+fn remove_trailing_smart_chars(
+    trigger: &str,
+    smart_chars: &[String],
+    remove_multiple: bool,
+) -> String {
+    let mut chars: Vec<char> = trigger.chars().collect();
+
+    if chars.is_empty() {
+        return trigger.to_string();
+    }
+
+    // Get last character
+    let last_char = chars[chars.len() - 1];
+
+    // Check if it's a smart char
+    let is_smart_char = smart_chars.iter().any(|s| {
+        s.chars().next() == Some(last_char)
+    });
+
+    if !is_smart_char {
+        return trigger.to_string();
+    }
+
+    // Remove characters
+    if remove_multiple {
+        // Remove all repeated identical trailing characters
+        let mut pos = chars.len();
+        while pos > 0 && chars[pos - 1] == last_char {
+            pos -= 1;
+        }
+        chars.truncate(pos);
+    } else {
+        // Remove only last character
+        chars.pop();
+    }
+
+    chars.into_iter().collect()
+}
+
 pub fn try_convert_into_match(
     yaml_match: YAMLMatch,
     use_compatibility_mode: bool, // TODO: unused variable. Remove from the codebase

@@ -62,6 +62,27 @@ pub struct YAMLMatchDefaults {
 
     #[serde(default)]
     pub force_mode: Option<String>,
+
+    #[serde(default)]
+    pub triggermarker_prefix: Option<String>,
+
+    #[serde(default)]
+    pub triggermarker_suffix: Option<String>,
+
+    #[serde(default)]
+    pub triggermarker_replace_mode: Option<String>,
+
+    #[serde(default)]
+    pub triggermarker_prefix_replace_mode: Option<String>,
+
+    #[serde(default)]
+    pub triggermarker_suffix_replace_mode: Option<String>,
+
+    #[serde(default)]
+    pub triggermarker_smart_chars: Option<Vec<String>>,
+
+    #[serde(default)]
+    pub triggermarker_smart_remove_multiple: Option<bool>,
 }
 
 impl YAMLMatchGroup {
@@ -134,6 +155,27 @@ pub struct YAMLMatch {
 
     #[serde(default)]
     pub force_mode: Option<String>,
+
+    #[serde(default)]
+    pub triggermarker_prefix: Option<String>,
+
+    #[serde(default)]
+    pub triggermarker_suffix: Option<String>,
+
+    #[serde(default)]
+    pub triggermarker_replace_mode: Option<String>,
+
+    #[serde(default)]
+    pub triggermarker_prefix_replace_mode: Option<String>,
+
+    #[serde(default)]
+    pub triggermarker_suffix_replace_mode: Option<String>,
+
+    #[serde(default)]
+    pub triggermarker_smart_chars: Option<Vec<String>>,
+
+    #[serde(default)]
+    pub triggermarker_smart_remove_multiple: Option<bool>,
 
     #[serde(default)]
     pub markdown: Option<String>,
