@@ -409,6 +409,14 @@ mod tests {
                 x11_use_xclip_backend: Some(true),
                 x11_use_xdotool_backend: Some(true),
 
+                triggermarker_prefix: None,
+                triggermarker_suffix: None,
+                triggermarker_replace_mode: None,
+                triggermarker_prefix_replace_mode: None,
+                triggermarker_suffix_replace_mode: None,
+                triggermarker_smart_chars: None,
+                triggermarker_smart_remove_multiple: None,
+
                 pre_paste_delay: Some(300),
                 evdev_modifier_delay: Some(40),
 

@@ -327,4 +327,64 @@ matches:
         assert!(group.match_defaults.is_some());
         assert_eq!(group.match_defaults.unwrap().word, Some(true));
     }
+
+    #[test]
+    fn test_parse_triggermarker_defaults_basic() {
+        let yaml_group: YAMLMatchGroup = serde_norway::from_str(
+            r#"
+match_defaults:
+  triggermarker_prefix: ":"
+  triggermarker_suffix: ";"
+matches:
+  - trigger: "test"
+    replace: "replacement"
+"#,
+        )
+        .unwrap();
+
+        let defaults = yaml_group.match_defaults.as_ref().unwrap();
+        assert_eq!(defaults.triggermarker_prefix, Some(":".to_string()));
+        assert_eq!(defaults.triggermarker_suffix, Some(";".to_string()));
+    }
+
+    #[test]
+    fn test_parse_triggermarker_modes() {
+        let yaml_group: YAMLMatchGroup = serde_norway::from_str(
+            r#"
+match_defaults:
+  triggermarker_replace_mode: "smart"
+  triggermarker_prefix_replace_mode: "agnostic"
+  triggermarker_smart_chars: [":", ";"]
+  triggermarker_smart_remove_multiple: true
+matches:
+  - trigger: "test"
+    replace: "replacement"
+"#,
+        )
+        .unwrap();
+
+        let defaults = yaml_group.match_defaults.as_ref().unwrap();
+        assert_eq!(defaults.triggermarker_replace_mode, Some("smart".to_string()));
+        assert_eq!(defaults.triggermarker_prefix_replace_mode, Some("agnostic".to_string()));
+        assert_eq!(defaults.triggermarker_smart_chars, Some(vec![":".to_string(), ";".to_string()]));
+        assert_eq!(defaults.triggermarker_smart_remove_multiple, Some(true));
+    }
+
+    #[test]
+    fn test_parse_triggermarker_in_match() {
+        let yaml_group: YAMLMatchGroup = serde_norway::from_str(
+            r#"
+matches:
+  - trigger: "test"
+    replace: "replacement"
+    triggermarker_prefix: "!"
+    triggermarker_suffix: "."
+"#,
+        )
+        .unwrap();
+
+        let yaml_match = &yaml_group.matches.as_ref().unwrap()[0];
+        assert_eq!(yaml_match.triggermarker_prefix, Some("!".to_string()));
+        assert_eq!(yaml_match.triggermarker_suffix, Some(".".to_string()));
+    }
 }
