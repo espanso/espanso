@@ -983,9 +983,9 @@ matches:
         .unwrap();
 
         if let MatchCause::Trigger(cause) = m.cause {
-            assert_eq!(cause.propagate_case, true);
-            assert_eq!(cause.left_word, true);
-            assert_eq!(cause.right_word, true);
+            assert!(cause.propagate_case);
+            assert!(cause.left_word);
+            assert!(cause.right_word);
         } else {
             panic!("Expected TriggerCause");
         }
@@ -1016,9 +1016,9 @@ matches:
         .unwrap();
 
         if let MatchCause::Trigger(cause) = m.cause {
-            assert_eq!(cause.propagate_case, false);
-            assert_eq!(cause.left_word, false);
-            assert_eq!(cause.right_word, true); // Still from default
+            assert!(!cause.propagate_case);
+            assert!(!cause.left_word);
+            assert!(cause.right_word); // Still from default
         } else {
             panic!("Expected TriggerCause");
         }
@@ -1047,7 +1047,7 @@ matches:
         .unwrap();
 
         if let MatchCause::Trigger(cause) = m.cause {
-            assert_eq!(cause.propagate_case, true);
+            assert!(cause.propagate_case);
             assert_eq!(cause.uppercase_style, UpperCasingStyle::Capitalize);
         } else {
             panic!("Expected TriggerCause");
@@ -1097,9 +1097,9 @@ matches:
         let (m, _) = try_convert_into_match(yaml_match.clone(), false, None).unwrap();
 
         if let MatchCause::Trigger(cause) = m.cause {
-            assert_eq!(cause.propagate_case, false);
-            assert_eq!(cause.left_word, false);
-            assert_eq!(cause.right_word, false);
+            assert!(!cause.propagate_case);
+            assert!(!cause.left_word);
+            assert!(!cause.right_word);
         } else {
             panic!("Expected TriggerCause");
         }
@@ -1210,8 +1210,8 @@ matches:
 
         // Verify the match has propagate_case set to true from defaults
         if let MatchCause::Trigger(cause) = m.cause {
-            assert_eq!(
-                cause.propagate_case, true,
+            assert!(
+                cause.propagate_case,
                 "propagate_case should be true from defaults"
             );
         } else {
