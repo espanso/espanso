@@ -162,7 +162,7 @@ mod tests {
 
     impl crate::config::Config for MockConfig {
         fn id(&self) -> i32 { 0 }
-        fn label(&self) -> &str { "mock" }
+        fn label(&self) -> &'static str { "mock" }
         fn match_paths(&self) -> &[String] { &[] }
         fn backend(&self) -> crate::config::Backend { crate::config::Backend::Inject }
         fn enable(&self) -> bool { true }

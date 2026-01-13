@@ -391,12 +391,11 @@ impl Config for ResolvedConfig {
     fn triggermarker_smart_chars(&self) -> Vec<String> {
         self.parsed
             .triggermarker_smart_chars
-            .as_ref()
-            .map(|chars| chars.clone())
+            .clone()
             .unwrap_or_else(|| {
                 crate::config::default::DEFAULT_TRIGGERMARKER_SMART_CHARS
                     .iter()
-                    .map(|s| s.to_string())
+                    .map(ToString::to_string)
                     .collect()
             })
     }
@@ -418,11 +417,11 @@ impl ResolvedConfig {
         }
 
         // Validate triggermarker configuration
-        Self::validate_triggermarker(&config.triggermarker_prefix, "triggermarker_prefix")?;
-        Self::validate_triggermarker(&config.triggermarker_suffix, "triggermarker_suffix")?;
-        Self::validate_triggermarker_mode(&config.triggermarker_replace_mode, "triggermarker_replace_mode")?;
-        Self::validate_triggermarker_mode(&config.triggermarker_prefix_replace_mode, "triggermarker_prefix_replace_mode")?;
-        Self::validate_triggermarker_mode(&config.triggermarker_suffix_replace_mode, "triggermarker_suffix_replace_mode")?;
+        Self::validate_triggermarker(config.triggermarker_prefix.as_ref(), "triggermarker_prefix")?;
+        Self::validate_triggermarker(config.triggermarker_suffix.as_ref(), "triggermarker_suffix")?;
+        Self::validate_triggermarker_mode(config.triggermarker_replace_mode.as_ref(), "triggermarker_replace_mode")?;
+        Self::validate_triggermarker_mode(config.triggermarker_prefix_replace_mode.as_ref(), "triggermarker_prefix_replace_mode")?;
+        Self::validate_triggermarker_mode(config.triggermarker_suffix_replace_mode.as_ref(), "triggermarker_suffix_replace_mode")?;
 
         // Extract the base directory
         let base_dir = path
@@ -525,9 +524,9 @@ impl ResolvedConfig {
         );
     }
 
-    fn validate_triggermarker(marker: &Option<String>, name: &str) -> Result<()> {
+    fn validate_triggermarker(marker: Option<&String>, name: &str) -> Result<()> {
         if let Some(m) = marker {
-            if !m.is_empty() && m.chars().any(|c| c.is_alphanumeric()) {
+            if !m.is_empty() && m.chars().any(char::is_alphanumeric) {
                 return Err(anyhow::anyhow!(
                     "Configuration error: '{}' must not contain alphanumeric characters. Got: '{}'",
                     name,
@@ -538,7 +537,7 @@ impl ResolvedConfig {
         Ok(())
     }
 
-    fn validate_triggermarker_mode(mode: &Option<String>, name: &str) -> Result<()> {
+    fn validate_triggermarker_mode(mode: Option<&String>, name: &str) -> Result<()> {
         if let Some(m) = mode {
             if m != "agnostic" && m != "smart" {
                 return Err(anyhow::anyhow!(

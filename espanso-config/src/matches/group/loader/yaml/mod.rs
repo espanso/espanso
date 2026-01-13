@@ -170,20 +170,21 @@ fn apply_prefix(
 ) -> String {
     if mode == "agnostic" {
         // Agnostic mode: Simply prepend
-        format!("{}{}", prefix, trigger)
+        format!("{prefix}{trigger}")
     } else {
         // Smart mode: Remove existing smart chars, then add prefix
         let mut cleaned = trigger.to_string();
 
         // Remove leading smart chars if prefix is set or if smart char exists
-        if !prefix.is_empty() || cleaned.chars().next().map_or(false, |c| {
-            smart_chars.iter().any(|s| s.chars().next() == Some(c))
-        }) {
+        let has_leading_smart_char = cleaned.chars().next().is_some_and(|c| {
+            smart_chars.iter().any(|s| s.starts_with(c))
+        });
+        if !prefix.is_empty() || has_leading_smart_char {
             cleaned = remove_leading_smart_chars(&cleaned, smart_chars, remove_multiple);
         }
 
         // Add new prefix
-        format!("{}{}", prefix, cleaned)
+        format!("{prefix}{cleaned}")
     }
 }
 
@@ -197,20 +198,21 @@ fn apply_suffix(
 ) -> String {
     if mode == "agnostic" {
         // Agnostic mode: Simply append
-        format!("{}{}", trigger, suffix)
+        format!("{trigger}{suffix}")
     } else {
         // Smart mode: Remove existing smart chars, then add suffix
         let mut cleaned = trigger.to_string();
 
         // Remove trailing smart chars if suffix is set or if smart char exists
-        if !suffix.is_empty() || cleaned.chars().next_back().map_or(false, |c| {
-            smart_chars.iter().any(|s| s.chars().next() == Some(c))
-        }) {
+        let has_trailing_smart_char = cleaned.chars().next_back().is_some_and(|c| {
+            smart_chars.iter().any(|s| s.starts_with(c))
+        });
+        if !suffix.is_empty() || has_trailing_smart_char {
             cleaned = remove_trailing_smart_chars(&cleaned, smart_chars, remove_multiple);
         }
 
         // Add new suffix
-        format!("{}{}", cleaned, suffix)
+        format!("{cleaned}{suffix}")
     }
 }
 
@@ -230,9 +232,7 @@ fn remove_leading_smart_chars(
     let first_char = chars[0];
 
     // Check if it's a smart char
-    let is_smart_char = smart_chars.iter().any(|s| {
-        s.chars().next() == Some(first_char)
-    });
+    let is_smart_char = smart_chars.iter().any(|s| s.starts_with(first_char));
 
     if !is_smart_char {
         return trigger.to_string();
@@ -270,9 +270,7 @@ fn remove_trailing_smart_chars(
     let last_char = chars[chars.len() - 1];
 
     // Check if it's a smart char
-    let is_smart_char = smart_chars.iter().any(|s| {
-        s.chars().next() == Some(last_char)
-    });
+    let is_smart_char = smart_chars.iter().any(|s| s.starts_with(last_char));
 
     if !is_smart_char {
         return trigger.to_string();
@@ -396,7 +394,7 @@ pub fn try_convert_into_match(
 
     // Validate triggermarker configuration
     if let Some(ref prefix) = triggermarker_prefix {
-        if !prefix.is_empty() && prefix.chars().any(|c| c.is_alphanumeric()) {
+        if !prefix.is_empty() && prefix.chars().any(char::is_alphanumeric) {
             return Err(anyhow!(
                 "Match validation error: triggermarker_prefix must not contain alphanumeric characters. Got: '{}'",
                 prefix
@@ -405,7 +403,7 @@ pub fn try_convert_into_match(
     }
 
     if let Some(ref suffix) = triggermarker_suffix {
-        if !suffix.is_empty() && suffix.chars().any(|c| c.is_alphanumeric()) {
+        if !suffix.is_empty() && suffix.chars().any(char::is_alphanumeric) {
             return Err(anyhow!(
                 "Match validation error: triggermarker_suffix must not contain alphanumeric characters. Got: '{}'",
                 suffix
@@ -428,26 +426,22 @@ pub fn try_convert_into_match(
     }
 
     // Apply triggermarkers to all triggers
-    let triggers = if let Some(triggers) = triggers {
-        Some(
-            triggers
-                .into_iter()
-                .map(|trigger| {
-                    apply_triggermarkers(
-                        &trigger,
-                        triggermarker_prefix.as_deref(),
-                        triggermarker_suffix.as_deref(),
-                        &prefix_replace_mode,
-                        &suffix_replace_mode,
-                        &smart_chars,
-                        remove_multiple,
-                    )
-                })
-                .collect()
-        )
-    } else {
-        None
-    };
+    let triggers = triggers.map(|triggers| {
+        triggers
+            .into_iter()
+            .map(|trigger| {
+                apply_triggermarkers(
+                    &trigger,
+                    triggermarker_prefix.as_deref(),
+                    triggermarker_suffix.as_deref(),
+                    &prefix_replace_mode,
+                    &suffix_replace_mode,
+                    &smart_chars,
+                    remove_multiple,
+                )
+            })
+            .collect()
+    });
 
     let uppercase_style = match yaml_match
         .uppercase_style
@@ -681,7 +675,7 @@ mod tests {
 
     impl crate::config::Config for MockConfig {
         fn id(&self) -> i32 { 0 }
-        fn label(&self) -> &str { "mock" }
+        fn label(&self) -> &'static str { "mock" }
         fn match_paths(&self) -> &[String] { &[] }
         fn backend(&self) -> crate::config::Backend { crate::config::Backend::Inject }
         fn enable(&self) -> bool { true }
