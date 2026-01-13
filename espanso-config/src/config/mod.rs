@@ -206,6 +206,34 @@ pub trait Config: Send + Sync {
     // in this issue: https://github.com/espanso/espanso/issues/745
     fn win32_keyboard_layout_cache_interval(&self) -> i64;
 
+    // Configurable trigger prefix that can be applied to all triggers.
+    // This allows users to define a common prefix without repeating it in every match.
+    fn triggermarker_prefix(&self) -> Option<String>;
+
+    // Configurable trigger suffix that can be applied to all triggers.
+    // This allows users to define a common suffix without repeating it in every match.
+    fn triggermarker_suffix(&self) -> Option<String>;
+
+    // Mode for applying trigger markers: "agnostic" (mechanical append) or "smart" (replace existing markers).
+    // Applies to both prefix and suffix unless overridden by specific modes.
+    fn triggermarker_replace_mode(&self) -> String;
+
+    // Override mode specifically for prefix application.
+    // If set, takes precedence over triggermarker_replace_mode for prefix.
+    fn triggermarker_prefix_replace_mode(&self) -> Option<String>;
+
+    // Override mode specifically for suffix application.
+    // If set, takes precedence over triggermarker_replace_mode for suffix.
+    fn triggermarker_suffix_replace_mode(&self) -> Option<String>;
+
+    // List of characters recognized as potential markers in smart mode.
+    // These characters will be removed and replaced when smart mode is active.
+    fn triggermarker_smart_chars(&self) -> Vec<String>;
+
+    // If true, remove all repeated identical leading/trailing smart characters.
+    // If false, remove only the first/last character.
+    fn triggermarker_smart_remove_multiple(&self) -> bool;
+
     #[allow(clippy::elidable_lifetime_names)]
     fn is_match<'a>(&self, app: &AppProperties<'a>) -> bool;
 
@@ -249,6 +277,14 @@ pub trait Config: Send + Sync {
         win32_exclude_orphan_events: {:?}
         win32_keyboard_layout_cache_interval: {:?}
 
+        triggermarker_prefix: {:?}
+        triggermarker_suffix: {:?}
+        triggermarker_replace_mode: {:?}
+        triggermarker_prefix_replace_mode: {:?}
+        triggermarker_suffix_replace_mode: {:?}
+        triggermarker_smart_chars: {:?}
+        triggermarker_smart_remove_multiple: {:?}
+
         match_paths: {:#?}
       ",
           self.label(),
@@ -287,6 +323,14 @@ pub trait Config: Send + Sync {
           self.x11_use_xdotool_backend(),
           self.win32_exclude_orphan_events(),
           self.win32_keyboard_layout_cache_interval(),
+
+          self.triggermarker_prefix(),
+          self.triggermarker_suffix(),
+          self.triggermarker_replace_mode(),
+          self.triggermarker_prefix_replace_mode(),
+          self.triggermarker_suffix_replace_mode(),
+          self.triggermarker_smart_chars(),
+          self.triggermarker_smart_remove_multiple(),
 
           self.match_paths(),
         }

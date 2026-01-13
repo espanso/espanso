@@ -55,6 +55,15 @@ pub struct ParsedConfig {
     pub x11_use_xclip_backend: Option<bool>,
     pub x11_use_xdotool_backend: Option<bool>,
 
+    // Trigger marker configuration
+    pub triggermarker_prefix: Option<String>,
+    pub triggermarker_suffix: Option<String>,
+    pub triggermarker_replace_mode: Option<String>,
+    pub triggermarker_prefix_replace_mode: Option<String>,
+    pub triggermarker_suffix_replace_mode: Option<String>,
+    pub triggermarker_smart_chars: Option<Vec<String>>,
+    pub triggermarker_smart_remove_multiple: Option<bool>,
+
     pub pre_paste_delay: Option<usize>,
     pub restore_clipboard_delay: Option<usize>,
     pub paste_shortcut_event_delay: Option<usize>,

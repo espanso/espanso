@@ -142,6 +142,28 @@ pub struct YAMLConfig {
     #[serde(default)]
     pub x11_use_xdotool_backend: Option<bool>,
 
+    // Trigger marker configuration
+    #[serde(default)]
+    pub triggermarker_prefix: Option<String>,
+
+    #[serde(default)]
+    pub triggermarker_suffix: Option<String>,
+
+    #[serde(default)]
+    pub triggermarker_replace_mode: Option<String>,
+
+    #[serde(default)]
+    pub triggermarker_prefix_replace_mode: Option<String>,
+
+    #[serde(default)]
+    pub triggermarker_suffix_replace_mode: Option<String>,
+
+    #[serde(default)]
+    pub triggermarker_smart_chars: Option<Vec<String>>,
+
+    #[serde(default)]
+    pub triggermarker_smart_remove_multiple: Option<bool>,
+
     // Include/Exclude
     #[serde(default)]
     pub includes: Option<Vec<String>>,
@@ -248,6 +270,14 @@ impl TryFrom<YAMLConfig> for ParsedConfig {
             win32_keyboard_layout_cache_interval: yaml_config.win32_keyboard_layout_cache_interval,
             x11_use_xclip_backend: yaml_config.x11_use_xclip_backend,
             x11_use_xdotool_backend: yaml_config.x11_use_xdotool_backend,
+
+            triggermarker_prefix: yaml_config.triggermarker_prefix,
+            triggermarker_suffix: yaml_config.triggermarker_suffix,
+            triggermarker_replace_mode: yaml_config.triggermarker_replace_mode,
+            triggermarker_prefix_replace_mode: yaml_config.triggermarker_prefix_replace_mode,
+            triggermarker_suffix_replace_mode: yaml_config.triggermarker_suffix_replace_mode,
+            triggermarker_smart_chars: yaml_config.triggermarker_smart_chars,
+            triggermarker_smart_remove_multiple: yaml_config.triggermarker_smart_remove_multiple,
 
             use_standard_includes: yaml_config.use_standard_includes,
             includes: yaml_config.includes,
