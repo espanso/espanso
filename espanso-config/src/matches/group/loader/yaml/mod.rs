@@ -654,6 +654,81 @@ mod tests {
     };
     use std::fs::create_dir_all;
 
+    // MockConfig for testing triggermarker functionality
+    struct MockConfig {
+        triggermarker_prefix: Option<String>,
+        triggermarker_suffix: Option<String>,
+        triggermarker_replace_mode: String,
+        triggermarker_prefix_replace_mode: Option<String>,
+        triggermarker_suffix_replace_mode: Option<String>,
+        triggermarker_smart_chars: Vec<String>,
+        triggermarker_smart_remove_multiple: bool,
+    }
+
+    impl MockConfig {
+        fn default() -> Self {
+            Self {
+                triggermarker_prefix: None,
+                triggermarker_suffix: None,
+                triggermarker_replace_mode: "agnostic".to_string(),
+                triggermarker_prefix_replace_mode: None,
+                triggermarker_suffix_replace_mode: None,
+                triggermarker_smart_chars: vec![":".to_string(), ";".to_string(), "&".to_string(), "%".to_string()],
+                triggermarker_smart_remove_multiple: false,
+            }
+        }
+    }
+
+    impl crate::config::Config for MockConfig {
+        fn id(&self) -> i32 { 0 }
+        fn label(&self) -> &str { "mock" }
+        fn match_paths(&self) -> &[String] { &[] }
+        fn backend(&self) -> crate::config::Backend { crate::config::Backend::Inject }
+        fn enable(&self) -> bool { true }
+        fn clipboard_threshold(&self) -> usize { 100 }
+        fn pre_paste_delay(&self) -> usize { 100 }
+        fn paste_shortcut_event_delay(&self) -> usize { 10 }
+        fn paste_shortcut(&self) -> Option<String> { None }
+        fn disable_x11_fast_inject(&self) -> bool { false }
+        fn toggle_key(&self) -> Option<crate::config::ToggleKey> { None }
+        fn auto_restart(&self) -> bool { true }
+        fn preserve_clipboard(&self) -> bool { true }
+        fn restore_clipboard_delay(&self) -> usize { 300 }
+        fn inject_delay(&self) -> Option<usize> { None }
+        fn key_delay(&self) -> Option<usize> { None }
+        fn evdev_modifier_delay(&self) -> Option<usize> { None }
+        fn word_separators(&self) -> Vec<String> { vec![" ".to_string()] }
+        fn backspace_limit(&self) -> usize { 5 }
+        fn apply_patch(&self) -> bool { true }
+        fn keyboard_layout(&self) -> Option<crate::config::RMLVOConfig> { None }
+        fn search_trigger(&self) -> Option<String> { None }
+        fn search_shortcut(&self) -> Option<String> { None }
+        fn undo_backspace(&self) -> bool { true }
+        fn show_notifications(&self) -> bool { true }
+        fn show_icon(&self) -> bool { true }
+        fn secure_input_notification(&self) -> bool { true }
+        fn stats_enabled(&self) -> bool { true }
+        fn post_form_delay(&self) -> usize { 200 }
+        fn max_form_width(&self) -> usize { 800 }
+        fn max_form_height(&self) -> usize { 600 }
+        fn max_regex_buffer_size(&self) -> usize { 30 }
+        fn post_search_delay(&self) -> usize { 200 }
+        fn emulate_alt_codes(&self) -> bool { false }
+        fn x11_use_xclip_backend(&self) -> bool { false }
+        fn x11_use_xdotool_backend(&self) -> bool { false }
+        fn win32_exclude_orphan_events(&self) -> bool { true }
+        fn win32_keyboard_layout_cache_interval(&self) -> i64 { 2000 }
+        fn is_match(&self, _app: &crate::config::AppProperties) -> bool { true }
+
+        fn triggermarker_prefix(&self) -> Option<String> { self.triggermarker_prefix.clone() }
+        fn triggermarker_suffix(&self) -> Option<String> { self.triggermarker_suffix.clone() }
+        fn triggermarker_replace_mode(&self) -> String { self.triggermarker_replace_mode.clone() }
+        fn triggermarker_prefix_replace_mode(&self) -> Option<String> { self.triggermarker_prefix_replace_mode.clone() }
+        fn triggermarker_suffix_replace_mode(&self) -> Option<String> { self.triggermarker_suffix_replace_mode.clone() }
+        fn triggermarker_smart_chars(&self) -> Vec<String> { self.triggermarker_smart_chars.clone() }
+        fn triggermarker_smart_remove_multiple(&self) -> bool { self.triggermarker_smart_remove_multiple }
+    }
+
     fn create_match_with_warnings(
         yaml: &str,
         use_compatibility_mode: bool,
@@ -1187,7 +1262,8 @@ mod tests {
             std::fs::write(&sub_file, "").unwrap();
 
             let importer = YAMLImporter::new();
-            let (mut group, non_fatal_error_set) = importer.load_group(&base_file).unwrap();
+            let config = MockConfig::default();
+            let (mut group, non_fatal_error_set) = importer.load_group(&base_file, &config).unwrap();
             // The invalid import path should be reported as error
             assert_eq!(non_fatal_error_set.unwrap().errors.len(), 1);
 
@@ -1238,7 +1314,8 @@ mod tests {
             .unwrap();
 
             let importer = YAMLImporter::new();
-            assert!(importer.load_group(&base_file).is_err());
+            let config = MockConfig::default();
+            assert!(importer.load_group(&base_file, &config).is_err());
         });
     }
 
@@ -1504,6 +1581,195 @@ matches:
                 cause.propagate_case, true,
                 "propagate_case should be true from defaults"
             );
+        } else {
+            panic!("Expected TriggerCause");
+        }
+    }
+
+    #[test]
+    fn test_triggermarker_agnostic_mode() {
+        let yaml_group: YAMLMatchGroup = serde_norway::from_str(
+            r#"
+match_defaults:
+  triggermarker_prefix: "!"
+  triggermarker_suffix: "."
+  triggermarker_replace_mode: "agnostic"
+matches:
+  - trigger: ":hello"
+    replace: "world"
+"#,
+        )
+        .unwrap();
+
+        let yaml_match = &yaml_group.matches.as_ref().unwrap()[0];
+        let config = MockConfig::default();
+        let (m, _) = try_convert_into_match(
+            yaml_match.clone(),
+            false,
+            yaml_group.match_defaults.as_ref(),
+            Some(&config),
+        )
+        .unwrap();
+
+        if let crate::matches::MatchCause::Trigger(cause) = m.cause {
+            assert_eq!(cause.triggers[0], "!:hello.");
+        } else {
+            panic!("Expected TriggerCause");
+        }
+    }
+
+    #[test]
+    fn test_triggermarker_smart_mode_replace() {
+        let yaml_group: YAMLMatchGroup = serde_norway::from_str(
+            r#"
+match_defaults:
+  triggermarker_prefix: "!"
+  triggermarker_suffix: "."
+  triggermarker_replace_mode: "smart"
+  triggermarker_smart_chars: [":", ";"]
+matches:
+  - trigger: ":hello;"
+    replace: "world"
+"#,
+        )
+        .unwrap();
+
+        let yaml_match = &yaml_group.matches.as_ref().unwrap()[0];
+        let config = MockConfig::default();
+        let (m, _) = try_convert_into_match(
+            yaml_match.clone(),
+            false,
+            yaml_group.match_defaults.as_ref(),
+            Some(&config),
+        )
+        .unwrap();
+
+        if let crate::matches::MatchCause::Trigger(cause) = m.cause {
+            assert_eq!(cause.triggers[0], "!hello.");
+        } else {
+            panic!("Expected TriggerCause");
+        }
+    }
+
+    #[test]
+    fn test_triggermarker_smart_mode_remove_multiple() {
+        let yaml_group: YAMLMatchGroup = serde_norway::from_str(
+            r#"
+match_defaults:
+  triggermarker_prefix: "!"
+  triggermarker_replace_mode: "smart"
+  triggermarker_smart_chars: [":"]
+  triggermarker_smart_remove_multiple: true
+matches:
+  - trigger: ":::hello"
+    replace: "world"
+"#,
+        )
+        .unwrap();
+
+        let yaml_match = &yaml_group.matches.as_ref().unwrap()[0];
+        let config = MockConfig::default();
+        let (m, _) = try_convert_into_match(
+            yaml_match.clone(),
+            false,
+            yaml_group.match_defaults.as_ref(),
+            Some(&config),
+        )
+        .unwrap();
+
+        if let crate::matches::MatchCause::Trigger(cause) = m.cause {
+            assert_eq!(cause.triggers[0], "!hello");
+        } else {
+            panic!("Expected TriggerCause");
+        }
+    }
+
+    #[test]
+    fn test_triggermarker_empty_string_disables() {
+        let yaml_group: YAMLMatchGroup = serde_norway::from_str(
+            r#"
+match_defaults:
+  triggermarker_prefix: ":"
+matches:
+  - trigger: "hello"
+    replace: "world"
+    triggermarker_prefix: ""
+"#,
+        )
+        .unwrap();
+
+        let yaml_match = &yaml_group.matches.as_ref().unwrap()[0];
+        let config = MockConfig::default();
+        let (m, _) = try_convert_into_match(
+            yaml_match.clone(),
+            false,
+            yaml_group.match_defaults.as_ref(),
+            Some(&config),
+        )
+        .unwrap();
+
+        if let crate::matches::MatchCause::Trigger(cause) = m.cause {
+            assert_eq!(cause.triggers[0], "hello");
+        } else {
+            panic!("Expected TriggerCause");
+        }
+    }
+
+    #[test]
+    fn test_triggermarker_validation_alphanumeric_error() {
+        let yaml_group: YAMLMatchGroup = serde_norway::from_str(
+            r#"
+matches:
+  - trigger: "hello"
+    replace: "world"
+    triggermarker_prefix: "abc"
+"#,
+        )
+        .unwrap();
+
+        let yaml_match = &yaml_group.matches.as_ref().unwrap()[0];
+        let config = MockConfig::default();
+        let result = try_convert_into_match(
+            yaml_match.clone(),
+            false,
+            None,
+            Some(&config),
+        );
+
+        assert!(result.is_err());
+        assert!(result.unwrap_err().to_string().contains("alphanumeric"));
+    }
+
+    #[test]
+    fn test_triggermarker_mode_precedence() {
+        let yaml_group: YAMLMatchGroup = serde_norway::from_str(
+            r#"
+match_defaults:
+  triggermarker_prefix: "!"
+  triggermarker_suffix: "."
+  triggermarker_replace_mode: "agnostic"
+  triggermarker_prefix_replace_mode: "smart"
+  triggermarker_smart_chars: [":"]
+matches:
+  - trigger: ":hello;"
+    replace: "world"
+"#,
+        )
+        .unwrap();
+
+        let yaml_match = &yaml_group.matches.as_ref().unwrap()[0];
+        let config = MockConfig::default();
+        let (m, _) = try_convert_into_match(
+            yaml_match.clone(),
+            false,
+            yaml_group.match_defaults.as_ref(),
+            Some(&config),
+        )
+        .unwrap();
+
+        if let crate::matches::MatchCause::Trigger(cause) = m.cause {
+            // Prefix uses smart (: removed), suffix uses agnostic (; kept)
+            assert_eq!(cause.triggers[0], "!hello;.");
         } else {
             panic!("Expected TriggerCause");
         }
