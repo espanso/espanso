@@ -34,14 +34,14 @@ pub struct DefaultMatchStore {
 }
 
 impl DefaultMatchStore {
-    pub fn load(paths: &[String]) -> (Self, Vec<NonFatalErrorSet>) {
+    pub fn load(paths: &[String], config: &dyn crate::config::Config) -> (Self, Vec<NonFatalErrorSet>) {
         let mut groups = HashMap::new();
         let mut non_fatal_error_sets = Vec::new();
 
         // Because match groups can imports other match groups,
         // we have to load them recursively starting from the
         // top-level ones.
-        load_match_groups_recursively(&mut groups, paths, &mut non_fatal_error_sets);
+        load_match_groups_recursively(&mut groups, paths, &mut non_fatal_error_sets, config);
 
         (Self { groups }, non_fatal_error_sets)
     }
@@ -80,11 +80,12 @@ fn load_match_groups_recursively(
     groups: &mut HashMap<String, MatchGroup>,
     paths: &[String],
     non_fatal_error_sets: &mut Vec<NonFatalErrorSet>,
+    config: &dyn crate::config::Config,
 ) {
     for path in paths {
         if !groups.contains_key(path) {
             let group_path = PathBuf::from(path);
-            match MatchGroup::load(&group_path)
+            match MatchGroup::load(&group_path, config)
                 .with_context(|| format!("unable to load match group {}", group_path.display()))
             {
                 Ok((group, non_fatal_error_set)) => {
@@ -95,7 +96,7 @@ fn load_match_groups_recursively(
                         non_fatal_error_sets.push(non_fatal_error_set);
                     }
 
-                    load_match_groups_recursively(groups, &imports, non_fatal_error_sets);
+                    load_match_groups_recursively(groups, &imports, non_fatal_error_sets, config);
                 }
                 Err(err) => {
                     non_fatal_error_sets.push(NonFatalErrorSet::single_error(&group_path, err));

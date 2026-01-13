@@ -67,6 +67,7 @@ impl Importer for YAMLImporter {
     fn load_group(
         &self,
         path: &std::path::Path,
+        config: &dyn crate::config::Config,
     ) -> anyhow::Result<(crate::matches::group::MatchGroup, Option<NonFatalErrorSet>)> {
         let yaml_group =
             YAMLMatchGroup::parse_from_file(path).context("failed to parse YAML match group")?;
@@ -88,7 +89,7 @@ impl Importer for YAMLImporter {
 
         let mut matches = Vec::new();
         for yaml_match in yaml_group.matches.clone().unwrap_or_default() {
-            match try_convert_into_match(yaml_match, false, yaml_group.match_defaults.as_ref()) {
+            match try_convert_into_match(yaml_match, false, yaml_group.match_defaults.as_ref(), Some(config)) {
                 Ok((m, warnings)) => {
                     matches.push(m);
                     non_fatal_errors.extend(warnings.into_iter().map(ErrorRecord::warn));
@@ -297,6 +298,7 @@ pub fn try_convert_into_match(
     yaml_match: YAMLMatch,
     use_compatibility_mode: bool, // TODO: unused variable. Remove from the codebase
     defaults: Option<&parse::YAMLMatchDefaults>,
+    config: Option<&dyn crate::config::Config>,
 ) -> Result<(Match, Vec<Warning>)> {
     let mut warnings = Vec::new();
 
@@ -334,6 +336,115 @@ pub fn try_convert_into_match(
         } else {
             Some(triggers_vec)
         }
+    } else {
+        None
+    };
+
+    // Resolve triggermarker configuration (3-level precedence)
+    let (global_triggermarker_prefix, global_triggermarker_suffix, global_replace_mode,
+         global_prefix_mode, global_suffix_mode, global_smart_chars, global_remove_multiple) = if let Some(cfg) = config {
+        (
+            cfg.triggermarker_prefix(),
+            cfg.triggermarker_suffix(),
+            cfg.triggermarker_replace_mode(),
+            cfg.triggermarker_prefix_replace_mode(),
+            cfg.triggermarker_suffix_replace_mode(),
+            cfg.triggermarker_smart_chars(),
+            cfg.triggermarker_smart_remove_multiple(),
+        )
+    } else {
+        (None, None, "agnostic".to_string(), None, None, vec![], false)
+    };
+
+    // Match → defaults → global
+    let triggermarker_prefix = yaml_match
+        .triggermarker_prefix
+        .or(defaults.and_then(|d| d.triggermarker_prefix.clone()))
+        .or(global_triggermarker_prefix);
+
+    let triggermarker_suffix = yaml_match
+        .triggermarker_suffix
+        .or(defaults.and_then(|d| d.triggermarker_suffix.clone()))
+        .or(global_triggermarker_suffix);
+
+    let base_replace_mode = yaml_match
+        .triggermarker_replace_mode
+        .or(defaults.and_then(|d| d.triggermarker_replace_mode.clone()))
+        .unwrap_or(global_replace_mode);
+
+    let prefix_replace_mode = yaml_match
+        .triggermarker_prefix_replace_mode
+        .or(defaults.and_then(|d| d.triggermarker_prefix_replace_mode.clone()))
+        .or(global_prefix_mode)
+        .unwrap_or(base_replace_mode.clone());
+
+    let suffix_replace_mode = yaml_match
+        .triggermarker_suffix_replace_mode
+        .or(defaults.and_then(|d| d.triggermarker_suffix_replace_mode.clone()))
+        .or(global_suffix_mode)
+        .unwrap_or(base_replace_mode);
+
+    let smart_chars = yaml_match
+        .triggermarker_smart_chars
+        .or(defaults.and_then(|d| d.triggermarker_smart_chars.clone()))
+        .unwrap_or(global_smart_chars);
+
+    let remove_multiple = yaml_match
+        .triggermarker_smart_remove_multiple
+        .or(defaults.and_then(|d| d.triggermarker_smart_remove_multiple))
+        .unwrap_or(global_remove_multiple);
+
+    // Validate triggermarker configuration
+    if let Some(ref prefix) = triggermarker_prefix {
+        if !prefix.is_empty() && prefix.chars().any(|c| c.is_alphanumeric()) {
+            return Err(anyhow!(
+                "Match validation error: triggermarker_prefix must not contain alphanumeric characters. Got: '{}'",
+                prefix
+            ));
+        }
+    }
+
+    if let Some(ref suffix) = triggermarker_suffix {
+        if !suffix.is_empty() && suffix.chars().any(|c| c.is_alphanumeric()) {
+            return Err(anyhow!(
+                "Match validation error: triggermarker_suffix must not contain alphanumeric characters. Got: '{}'",
+                suffix
+            ));
+        }
+    }
+
+    if prefix_replace_mode != "agnostic" && prefix_replace_mode != "smart" {
+        return Err(anyhow!(
+            "Invalid triggermarker_prefix_replace_mode: '{}'. Must be 'agnostic' or 'smart'",
+            prefix_replace_mode
+        ));
+    }
+
+    if suffix_replace_mode != "agnostic" && suffix_replace_mode != "smart" {
+        return Err(anyhow!(
+            "Invalid triggermarker_suffix_replace_mode: '{}'. Must be 'agnostic' or 'smart'",
+            suffix_replace_mode
+        ));
+    }
+
+    // Apply triggermarkers to all triggers
+    let triggers = if let Some(triggers) = triggers {
+        Some(
+            triggers
+                .into_iter()
+                .map(|trigger| {
+                    apply_triggermarkers(
+                        &trigger,
+                        triggermarker_prefix.as_deref(),
+                        triggermarker_suffix.as_deref(),
+                        &prefix_replace_mode,
+                        &suffix_replace_mode,
+                        &smart_chars,
+                        remove_multiple,
+                    )
+                })
+                .collect()
+        )
     } else {
         None
     };
@@ -548,7 +659,7 @@ mod tests {
         use_compatibility_mode: bool,
     ) -> Result<(Match, Vec<Warning>)> {
         let yaml_match: YAMLMatch = serde_norway::from_str(yaml)?;
-        let (mut m, warnings) = try_convert_into_match(yaml_match, use_compatibility_mode, None)?;
+        let (mut m, warnings) = try_convert_into_match(yaml_match, use_compatibility_mode, None, None)?;
 
         // Reset the IDs to correctly compare them
         m.id = 0;
@@ -1150,6 +1261,7 @@ matches:
             yaml_match.clone(),
             false,
             yaml_group.match_defaults.as_ref(),
+            None,
         )
         .unwrap();
 
@@ -1183,6 +1295,7 @@ matches:
             yaml_match.clone(),
             false,
             yaml_group.match_defaults.as_ref(),
+            None,
         )
         .unwrap();
 
@@ -1214,6 +1327,7 @@ matches:
             yaml_match.clone(),
             false,
             yaml_group.match_defaults.as_ref(),
+            None,
         )
         .unwrap();
 
@@ -1243,6 +1357,7 @@ matches:
             yaml_match.clone(),
             false,
             yaml_group.match_defaults.as_ref(),
+            None,
         )
         .unwrap();
 
@@ -1265,7 +1380,7 @@ matches:
         .unwrap();
 
         let yaml_match = &yaml_group.matches.unwrap()[0];
-        let (m, _) = try_convert_into_match(yaml_match.clone(), false, None).unwrap();
+        let (m, _) = try_convert_into_match(yaml_match.clone(), false, None, None).unwrap();
 
         if let MatchCause::Trigger(cause) = m.cause {
             assert_eq!(cause.propagate_case, false);
@@ -1295,6 +1410,7 @@ matches:
             yaml_match.clone(),
             false,
             yaml_group.match_defaults.as_ref(),
+            None,
         )
         .unwrap();
 
@@ -1325,6 +1441,7 @@ matches:
             yaml_match.clone(),
             false,
             yaml_group.match_defaults.as_ref(),
+            None,
         )
         .unwrap();
         assert_eq!(warnings.len(), 1);
@@ -1350,6 +1467,7 @@ matches:
             yaml_match.clone(),
             false,
             yaml_group.match_defaults.as_ref(),
+            None,
         )
         .unwrap();
 
@@ -1376,6 +1494,7 @@ matches:
             yaml_match.clone(),
             false,
             yaml_group.match_defaults.as_ref(),
+            None,
         )
         .unwrap();
 

@@ -44,8 +44,11 @@ pub fn load(base_path: &Path) -> Result<LoadableConfig> {
     let (config_store, non_fatal_config_errors) = config::load_store(&config_dir)?;
     let root_paths = config_store.get_all_match_paths();
 
+    // Use the default config for loading matches
+    // TODO: This may need to be revisited to handle per-config triggermarker settings
+    let default_config = config_store.default();
     let (match_store, non_fatal_match_errors) =
-        matches::store::load(&root_paths.into_iter().collect::<Vec<String>>());
+        matches::store::load(&root_paths.into_iter().collect::<Vec<String>>(), default_config.as_ref());
 
     let mut non_fatal_errors = Vec::new();
     non_fatal_errors.extend(non_fatal_config_errors);
