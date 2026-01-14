@@ -19,7 +19,7 @@
 
 use std::{
     fs,
-    io::{self, BufRead, IsTerminal, Read, Write},
+    io::{self, Read, Write},
     path::{Component, Path, PathBuf},
     process::Command,
     time::{SystemTime, UNIX_EPOCH},
@@ -33,6 +33,46 @@ use walkdir::WalkDir;
 
 use super::{CliModule, CliModuleArgs, PathsOverrides};
 use crate::{cli::util::CommandExt, error_eprintln, path::Paths, util::set_command_flags};
+
+struct WhitespaceFilteringReader<R> {
+    inner: R,
+}
+
+impl<R> WhitespaceFilteringReader<R> {
+    fn new(inner: R) -> Self {
+        Self { inner }
+    }
+}
+
+impl<R: Read> Read for WhitespaceFilteringReader<R> {
+    fn read(&mut self, out: &mut [u8]) -> io::Result<usize> {
+        if out.is_empty() {
+            return Ok(0);
+        }
+
+        let mut total = 0;
+        let mut buf = [0u8; 8192];
+        while total == 0 {
+            let count = self.inner.read(&mut buf)?;
+            if count == 0 {
+                return Ok(0);
+            }
+
+            for &byte in &buf[..count] {
+                if byte.is_ascii_whitespace() {
+                    continue;
+                }
+                out[total] = byte;
+                total += 1;
+                if total == out.len() {
+                    break;
+                }
+            }
+        }
+
+        Ok(total)
+    }
+}
 
 pub fn new_export() -> CliModule {
     CliModule {
@@ -63,7 +103,7 @@ impl Scope {
     fn from_str(value: &str) -> Option<Self> {
         match value {
             "config" => Some(Scope::Config),
-            "matches" => Some(Scope::Matches),
+            "matches" | "match" => Some(Scope::Matches),
             "packages" => Some(Scope::Packages),
             _ => None,
         }
@@ -135,8 +175,9 @@ fn import_main(args: CliModuleArgs) -> i32 {
     };
 
     let convert_lb = sub_args.is_present("convert-lb");
+    let skip_confirmation = sub_args.is_present("yes");
 
-    if let Err(err) = confirm_import() {
+    if let Err(err) = confirm_import(skip_confirmation) {
         error_eprintln!("{err}");
         return 1;
     }
@@ -264,7 +305,11 @@ fn append_dir_to_archive<W: Write>(
     Ok(())
 }
 
-fn confirm_import() -> Result<()> {
+fn confirm_import(skip_confirmation: bool) -> Result<()> {
+    if skip_confirmation {
+        return Ok(());
+    }
+
     let prompt =
         "This will DELETE your existing Espanso data for the selected scope(s) and replace it. Continue? [y/N]";
     println!("{prompt}");
@@ -289,10 +334,12 @@ fn open_confirmation_reader() -> Result<Option<Box<dyn Read>>> {
         if let Ok(file) = fs::File::open("CONIN$") {
             return Ok(Some(Box::new(file)));
         }
-    }
 
-    if io::stdin().is_terminal() {
-        return Ok(Some(Box::new(io::stdin())));
+        // If we started without a console, try attaching to the parent console and retry.
+        let _ = crate::util::attach_console();
+        if let Ok(file) = fs::File::open("CONIN$") {
+            return Ok(Some(Box::new(file)));
+        }
     }
 
     Ok(None)
@@ -300,15 +347,25 @@ fn open_confirmation_reader() -> Result<Option<Box<dyn Read>>> {
 
 fn confirm_import_from_reader<R: Read>(reader: R) -> Result<()> {
     let mut reader = io::BufReader::new(reader);
-    let mut input = String::new();
-    reader.read_line(&mut input)?;
-
-    let confirmed = matches!(input.trim(), "y" | "Y");
-    if !confirmed {
-        bail!("aborted by user");
+    let mut buf = [0u8; 1];
+    loop {
+        let count = reader.read(&mut buf)?;
+        if count == 0 {
+            bail!("unable to read confirmation prompt");
+        }
+        let byte = buf[0];
+        if matches!(byte, b' ' | b'\t' | b'\r' | b'\n') {
+            continue;
+        }
+        if matches!(byte, b'y' | b'Y') {
+            return Ok(());
+        }
+        if matches!(byte, b'n' | b'N') {
+            bail!("aborted by user");
+        }
+        bail!("invalid confirmation input");
     }
 
-    Ok(())
 }
 
 fn import_payload_from_stdin(
@@ -319,7 +376,8 @@ fn import_payload_from_stdin(
 ) -> Result<()> {
     let stdin = io::stdin();
     let handle = stdin.lock();
-    let decoder = DecoderReader::new(handle, &STANDARD);
+    let filtered = WhitespaceFilteringReader::new(handle);
+    let decoder = DecoderReader::new(filtered, &STANDARD);
     let gzip = GzDecoder::new(decoder);
     let mut archive = Archive::new(gzip);
 
@@ -753,6 +811,24 @@ mod tests {
             }
         }
 
+        Ok(())
+    }
+
+    #[test]
+    fn import_accepts_legacy_match_scope_prefix() -> Result<()> {
+        let (scope, remainder) = split_scope_path(Path::new("match/base.yml"))?;
+        assert_eq!(scope, Scope::Matches);
+        assert_eq!(remainder, PathBuf::from("base.yml"));
+        Ok(())
+    }
+
+    #[test]
+    fn whitespace_filtering_reader_strips_whitespace() -> Result<()> {
+        let input = b"a b\nc\t";
+        let mut reader = WhitespaceFilteringReader::new(&input[..]);
+        let mut output = String::new();
+        reader.read_to_string(&mut output)?;
+        assert_eq!(output, "abc");
         Ok(())
     }
 

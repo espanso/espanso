@@ -180,6 +180,12 @@ For example, specifying 'email' is equivalent to 'match/email.yml'."#))
             .help("Comma-separated list of scopes: config,matches,packages (default all)"),
         )
         .arg(
+          Arg::with_name("yes")
+            .long("yes")
+            .takes_value(false)
+            .help("Skip confirmation prompt"),
+        )
+        .arg(
           Arg::with_name("convert-lb")
             .long("convert-lb")
             .takes_value(false)
