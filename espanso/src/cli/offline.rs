@@ -32,12 +32,7 @@ use tar::{Archive, Builder, EntryType};
 use walkdir::WalkDir;
 
 use super::{CliModule, CliModuleArgs, PathsOverrides};
-use crate::{
-    cli::util::CommandExt,
-    error_eprintln,
-    path::Paths,
-    util::set_command_flags,
-};
+use crate::{cli::util::CommandExt, error_eprintln, path::Paths, util::set_command_flags};
 
 pub fn new_export() -> CliModule {
     CliModule {
@@ -146,7 +141,8 @@ fn import_main(args: CliModuleArgs) -> i32 {
         return 1;
     }
 
-    if let Err(err) = import_payload_from_stdin(&paths, &paths_overrides, scope_selection, convert_lb)
+    if let Err(err) =
+        import_payload_from_stdin(&paths, &paths_overrides, scope_selection, convert_lb)
     {
         error_eprintln!("unable to import: {err}");
         return 1;
@@ -354,7 +350,10 @@ fn import_payload_from_stdin(
                 write_atomic(&target_path, &data)?;
             }
             _ => {
-                bail!("unsupported archive entry type for {}", entry_path.display());
+                bail!(
+                    "unsupported archive entry type for {}",
+                    entry_path.display()
+                );
             }
         }
     }
@@ -602,7 +601,12 @@ mod tests {
                 && packages_dir.starts_with(&matches_dir);
 
             if selection.config {
-                append_dir_to_archive(&mut builder, &paths.config.join("config"), Path::new("config"), None)?;
+                append_dir_to_archive(
+                    &mut builder,
+                    &paths.config.join("config"),
+                    Path::new("config"),
+                    None,
+                )?;
             }
             if selection.matches {
                 let skip_dir = if matches_skip_packages {
@@ -610,7 +614,12 @@ mod tests {
                 } else {
                     None
                 };
-                append_dir_to_archive(&mut builder, &paths.config.join("match"), Path::new("match"), skip_dir)?;
+                append_dir_to_archive(
+                    &mut builder,
+                    &paths.config.join("match"),
+                    Path::new("match"),
+                    skip_dir,
+                )?;
             }
             if selection.packages {
                 append_dir_to_archive(&mut builder, &packages_dir, Path::new("packages"), None)?;
@@ -661,7 +670,10 @@ mod tests {
                     write_atomic(&target_path, &data)?;
                 }
                 _ => {
-                    bail!("unsupported archive entry type for {}", entry_path.display());
+                    bail!(
+                        "unsupported archive entry type for {}",
+                        entry_path.display()
+                    );
                 }
             }
         }
@@ -794,11 +806,27 @@ mod tests {
         fs::write(&yaml_path, "line1\r\nline2\rline3")?;
         fs::write(&txt_path, "keep\r\nas-is")?;
 
-        let payload = export_to_vec(&paths, ScopeSelection { config: true, matches: false, packages: false })?;
+        let payload = export_to_vec(
+            &paths,
+            ScopeSelection {
+                config: true,
+                matches: false,
+                packages: false,
+            },
+        )?;
 
         let dest = TempDir::new("espanso-offline-dest")?;
         let dest_paths = create_sample_tree(dest.path())?;
-        import_from_bytes(&payload, &dest_paths, ScopeSelection { config: true, matches: false, packages: false }, true)?;
+        import_from_bytes(
+            &payload,
+            &dest_paths,
+            ScopeSelection {
+                config: true,
+                matches: false,
+                packages: false,
+            },
+            true,
+        )?;
 
         let yaml_result = fs::read_to_string(dest_paths.config.join("config").join("default.yml"))?;
         let txt_result = fs::read_to_string(dest_paths.config.join("config").join("notes.txt"))?;
