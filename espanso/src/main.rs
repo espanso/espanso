@@ -168,6 +168,12 @@ For example, specifying 'email' is equivalent to 'match/email.yml'."#))
             .long("scope")
             .takes_value(true)
             .help("Comma-separated list of scopes: config,matches,packages (default all)"),
+        )
+        .arg(
+          Arg::with_name("wrap")
+            .long("wrap")
+            .takes_value(true)
+            .help("Wrap base64 output at the given column width"),
         ),
     )
     .subcommand(

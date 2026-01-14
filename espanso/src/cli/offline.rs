@@ -74,6 +74,42 @@ impl<R: Read> Read for WhitespaceFilteringReader<R> {
     }
 }
 
+struct WrapWriter<W> {
+    inner: W,
+    wrap: usize,
+    col: usize,
+}
+
+impl<W> WrapWriter<W> {
+    fn new(inner: W, wrap: usize) -> Self {
+        Self {
+            inner,
+            wrap,
+            col: 0,
+        }
+    }
+}
+
+impl<W: Write> Write for WrapWriter<W> {
+    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+        let mut written = 0;
+        for &byte in buf {
+            self.inner.write_all(&[byte])?;
+            written += 1;
+            self.col += 1;
+            if self.col >= self.wrap {
+                self.inner.write_all(b"\n")?;
+                self.col = 0;
+            }
+        }
+        Ok(written)
+    }
+
+    fn flush(&mut self) -> io::Result<()> {
+        self.inner.flush()
+    }
+}
+
 pub fn new_export() -> CliModule {
     CliModule {
         requires_paths: true,
@@ -152,7 +188,15 @@ fn export_main(args: CliModuleArgs) -> i32 {
         }
     };
 
-    if let Err(err) = export_payload_to_stdout(&paths, scope_selection) {
+    let wrap = match parse_wrap_width(sub_args.value_of("wrap")) {
+        Ok(wrap) => wrap,
+        Err(err) => {
+            error_eprintln!("invalid wrap width: {err}");
+            return 1;
+        }
+    };
+
+    if let Err(err) = export_payload_to_stdout(&paths, scope_selection, wrap) {
         error_eprintln!("unable to export: {err}");
         return 1;
     }
@@ -225,10 +269,33 @@ fn parse_scope_selection(value: Option<&str>) -> Result<ScopeSelection> {
     Ok(selection)
 }
 
-fn export_payload_to_stdout(paths: &Paths, selection: ScopeSelection) -> Result<()> {
+fn parse_wrap_width(value: Option<&str>) -> Result<Option<usize>> {
+    let Some(value) = value else {
+        return Ok(None);
+    };
+    let parsed = value
+        .trim()
+        .parse::<usize>()
+        .context("wrap width must be a positive integer")?;
+    if parsed == 0 {
+        bail!("wrap width must be greater than zero");
+    }
+    Ok(Some(parsed))
+}
+
+fn export_payload_to_stdout(
+    paths: &Paths,
+    selection: ScopeSelection,
+    wrap: Option<usize>,
+) -> Result<()> {
     let stdout = io::stdout();
     let handle = stdout.lock();
-    let encoder = EncoderWriter::new(handle, &STANDARD);
+    let writer: Box<dyn Write + '_> = if let Some(width) = wrap {
+        Box::new(WrapWriter::new(handle, width))
+    } else {
+        Box::new(handle)
+    };
+    let encoder = EncoderWriter::new(writer, &STANDARD);
     let mut gzip = GzEncoder::new(encoder, Compression::default());
     let mut builder = Builder::new(&mut gzip);
 
