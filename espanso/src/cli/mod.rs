@@ -31,6 +31,7 @@ pub mod launcher;
 pub mod log;
 pub mod match_cli;
 pub mod modulo;
+pub mod offline;
 pub mod package;
 pub mod path;
 pub mod service;
