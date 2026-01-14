@@ -365,7 +365,6 @@ fn confirm_import_from_reader<R: Read>(reader: R) -> Result<()> {
         }
         bail!("invalid confirmation input");
     }
-
 }
 
 fn import_payload_from_stdin(
