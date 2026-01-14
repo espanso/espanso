@@ -313,58 +313,129 @@ fn confirm_import(skip_confirmation: bool) -> Result<()> {
     let prompt =
         "This will DELETE your existing Espanso data for the selected scope(s) and replace it. Continue? [y/N]";
     println!("{prompt}");
+    let _ = io::stdout().flush();
 
-    let Some(reader) = open_confirmation_reader()? else {
-        bail!("unable to read confirmation prompt");
-    };
-
-    confirm_import_from_reader(reader)
+    loop {
+        let byte = read_confirmation_byte()?;
+        if byte.is_ascii_whitespace() {
+            continue;
+        }
+        return confirm_import_from_byte(byte);
+    }
 }
 
-fn open_confirmation_reader() -> Result<Option<Box<dyn Read>>> {
+fn confirm_import_from_byte(byte: u8) -> Result<()> {
+    if matches!(byte, b'y' | b'Y') {
+        return Ok(());
+    }
+    if matches!(byte, b'n' | b'N') {
+        bail!("aborted by user");
+    }
+    bail!("invalid confirmation input");
+}
+
+fn read_confirmation_byte() -> Result<u8> {
     #[cfg(unix)]
     {
-        if let Ok(file) = fs::File::open("/dev/tty") {
-            return Ok(Some(Box::new(file)));
-        }
+        return read_confirmation_byte_unix();
     }
 
     #[cfg(windows)]
     {
-        if let Ok(file) = fs::File::open("CONIN$") {
-            return Ok(Some(Box::new(file)));
-        }
-
-        // If we started without a console, try attaching to the parent console and retry.
-        let _ = crate::util::attach_console();
-        if let Ok(file) = fs::File::open("CONIN$") {
-            return Ok(Some(Box::new(file)));
-        }
+        return read_confirmation_byte_windows();
     }
 
-    Ok(None)
+    #[cfg(not(any(unix, windows)))]
+    {
+        bail!("unsupported platform");
+    }
 }
 
-fn confirm_import_from_reader<R: Read>(reader: R) -> Result<()> {
-    let mut reader = io::BufReader::new(reader);
-    let mut buf = [0u8; 1];
-    loop {
-        let count = reader.read(&mut buf)?;
-        if count == 0 {
-            bail!("unable to read confirmation prompt");
-        }
-        let byte = buf[0];
-        if matches!(byte, b' ' | b'\t' | b'\r' | b'\n') {
-            continue;
-        }
-        if matches!(byte, b'y' | b'Y') {
-            return Ok(());
-        }
-        if matches!(byte, b'n' | b'N') {
-            bail!("aborted by user");
-        }
-        bail!("invalid confirmation input");
+#[cfg(unix)]
+fn read_confirmation_byte_unix() -> Result<u8> {
+    use std::mem;
+    use std::os::unix::io::AsRawFd;
+
+    let mut file = fs::File::open("/dev/tty")?;
+    let fd = file.as_raw_fd();
+    let mut termios: libc::termios = unsafe { mem::zeroed() };
+    if unsafe { libc::tcgetattr(fd, &mut termios) } != 0 {
+        return Err(io::Error::last_os_error().into());
     }
+    let original = termios;
+    termios.c_lflag &= !(libc::ICANON | libc::ECHO);
+    termios.c_cc[libc::VMIN] = 1;
+    termios.c_cc[libc::VTIME] = 0;
+    if unsafe { libc::tcsetattr(fd, libc::TCSANOW, &termios) } != 0 {
+        return Err(io::Error::last_os_error().into());
+    }
+
+    struct TermiosGuard {
+        fd: i32,
+        original: libc::termios,
+    }
+
+    impl Drop for TermiosGuard {
+        fn drop(&mut self) {
+            unsafe {
+                let _ = libc::tcsetattr(self.fd, libc::TCSANOW, &self.original);
+            }
+        }
+    }
+
+    let _guard = TermiosGuard { fd, original };
+    let mut buf = [0u8; 1];
+    file.read_exact(&mut buf)?;
+    Ok(buf[0])
+}
+
+#[cfg(windows)]
+fn read_confirmation_byte_windows() -> Result<u8> {
+    use std::os::windows::io::AsRawHandle;
+    use windows::Win32::Foundation::HANDLE;
+    use windows::Win32::System::Console::{
+        GetConsoleMode, ReadConsoleA, SetConsoleMode, ENABLE_ECHO_INPUT, ENABLE_LINE_INPUT,
+    };
+
+    let file = fs::File::open("CONIN$").or_else(|_| {
+        let _ = crate::util::attach_console();
+        fs::File::open("CONIN$")
+    })?;
+    let handle = HANDLE(file.as_raw_handle() as isize);
+    let mut mode = 0u32;
+    unsafe { GetConsoleMode(handle, &mut mode)? };
+    let raw_mode = mode & !(ENABLE_LINE_INPUT | ENABLE_ECHO_INPUT);
+    unsafe { SetConsoleMode(handle, raw_mode)? };
+
+    struct ConsoleModeGuard {
+        handle: HANDLE,
+        mode: u32,
+    }
+
+    impl Drop for ConsoleModeGuard {
+        fn drop(&mut self) {
+            unsafe {
+                let _ = SetConsoleMode(self.handle, self.mode);
+            }
+        }
+    }
+
+    let _guard = ConsoleModeGuard { handle, mode };
+    let mut buf = [0u8; 1];
+    let mut read = 0u32;
+    unsafe {
+        ReadConsoleA(
+            handle,
+            buf.as_mut_ptr().cast(),
+            1,
+            &mut read,
+            std::ptr::null_mut(),
+        )?;
+    }
+    if read == 0 {
+        bail!("unable to read confirmation prompt");
+    }
+    Ok(buf[0])
 }
 
 fn import_payload_from_stdin(
@@ -833,7 +904,7 @@ mod tests {
 
     #[test]
     fn import_aborts_without_confirmation() -> Result<()> {
-        let result = confirm_import_from_reader("n\n".as_bytes());
+        let result = confirm_import_from_byte(b'n');
         assert!(result.is_err());
         Ok(())
     }
