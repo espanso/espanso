@@ -17,7 +17,6 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use log::error;
 use std::{collections::HashMap, sync::LazyLock};
 use thiserror::Error;
 

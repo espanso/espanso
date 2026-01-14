@@ -57,6 +57,11 @@ jobs:
           cargo build \
             --no-default-features \
             --features modulo,vendored-tls
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: espanso-linux-x11
+          path: target/debug/espanso
       - name: Test
         run: |
           cargo test \
@@ -105,6 +110,11 @@ jobs:
           cargo build \
             --no-default-features \
             --features modulo,vendored-tls,wayland
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: espanso-linux-wayland
+          path: target/debug/espanso
       - name: Test
         run: |
           cargo test \
@@ -139,6 +149,13 @@ jobs:
           cargo build --target aarch64-apple-darwin
           rustup target add x86_64-apple-darwin
           cargo build --target x86_64-apple-darwin
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: espanso-macos
+          path: |
+            target/aarch64-apple-darwin/debug/espanso
+            target/x86_64-apple-darwin/debug/espanso
       - name: Clippy
         run: |
           cargo clippy --target=aarch64-apple-darwin -- --deny warnings
@@ -160,5 +177,10 @@ jobs:
       - name: Build
         run: |
           cargo build
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: espanso-windows
+          path: target/debug/espanso.exe
       - name: Clippy
         run: cargo clippy -- --deny warnings
