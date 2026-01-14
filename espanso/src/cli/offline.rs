@@ -207,7 +207,7 @@ fn export_payload_to_stdout(paths: &Paths, selection: ScopeSelection) -> Result<
         } else {
             None
         };
-        append_dir_to_archive(&mut builder, &matches_dir, Path::new("match"), skip_dir)?;
+        append_dir_to_archive(&mut builder, &matches_dir, Path::new("matches"), skip_dir)?;
     }
     if selection.packages {
         append_dir_to_archive(&mut builder, &packages_dir, Path::new("packages"), None)?;
@@ -617,7 +617,7 @@ mod tests {
                 append_dir_to_archive(
                     &mut builder,
                     &paths.config.join("match"),
-                    Path::new("match"),
+                    Path::new("matches"),
                     skip_dir,
                 )?;
             }
@@ -709,7 +709,7 @@ mod tests {
             let payload = export_to_vec(&paths, scope)?;
 
             let dest = TempDir::new("espanso-offline-dest")?;
-            let mut dest_paths = create_sample_tree(dest.path())?;
+            let dest_paths = create_sample_tree(dest.path())?;
             fs::write(dest_paths.config.join("config").join("default.yml"), "old")?;
             fs::write(dest_paths.config.join("match").join("base.yml"), "old")?;
             fs::write(dest_paths.packages.join("package.yml"), "old")?;
@@ -769,9 +769,15 @@ mod tests {
         {
             let mut builder = Builder::new(&mut raw);
             let mut header = tar::Header::new_gnu();
+            let name = b"matches/../evil";
+            let old = header.as_old_mut();
+            old.name = [0; 100];
+            old.name[..name.len()].copy_from_slice(name);
+            header.set_entry_type(EntryType::Regular);
+            header.set_mode(0o644);
             header.set_size(4);
             header.set_cksum();
-            builder.append_data(&mut header, Path::new("../evil"), "evil".as_bytes())?;
+            builder.append(&header, "evil".as_bytes())?;
             builder.finish()?;
         }
 
