@@ -757,7 +757,8 @@ fn read_confirmation_byte_windows() -> Result<u8> {
     use std::os::windows::io::AsRawHandle;
     use windows::Win32::Foundation::HANDLE;
     use windows::Win32::System::Console::{
-        GetConsoleMode, ReadConsoleA, SetConsoleMode, ENABLE_ECHO_INPUT, ENABLE_LINE_INPUT,
+        GetConsoleMode, ReadConsoleA, SetConsoleMode, CONSOLE_MODE, ENABLE_ECHO_INPUT,
+        ENABLE_LINE_INPUT,
     };
 
     // Try to open console input
@@ -770,15 +771,15 @@ fn read_confirmation_byte_windows() -> Result<u8> {
             fs::File::open("CONIN$")
         })
         .context("No console available. Running in non-interactive mode (service/scheduled task). Use --yes flag to skip confirmation.")?;
-    let handle = HANDLE(file.as_raw_handle() as isize);
-    let mut mode = 0u32;
+    let handle = HANDLE(file.as_raw_handle());
+    let mut mode = CONSOLE_MODE::default();
     unsafe { GetConsoleMode(handle, &mut mode)? };
-    let raw_mode = mode & !(ENABLE_LINE_INPUT | ENABLE_ECHO_INPUT);
+    let raw_mode = CONSOLE_MODE(mode.0 & !(ENABLE_LINE_INPUT.0 | ENABLE_ECHO_INPUT.0));
     unsafe { SetConsoleMode(handle, raw_mode)? };
 
     struct ConsoleModeGuard {
         handle: HANDLE,
-        mode: u32,
+        mode: CONSOLE_MODE,
     }
 
     impl Drop for ConsoleModeGuard {
@@ -793,13 +794,7 @@ fn read_confirmation_byte_windows() -> Result<u8> {
     let mut buf = [0u8; 1];
     let mut read = 0u32;
     unsafe {
-        ReadConsoleA(
-            handle,
-            buf.as_mut_ptr().cast(),
-            1,
-            &mut read,
-            std::ptr::null_mut(),
-        )?;
+        ReadConsoleA(handle, buf.as_mut_ptr().cast(), 1, &mut read, None)?;
     }
     if read == 0 {
         bail!("unable to read confirmation prompt");
