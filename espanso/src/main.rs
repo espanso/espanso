@@ -75,6 +75,8 @@ static CLI_HANDLERS: LazyLock<Vec<CliModule>> = LazyLock::new(|| {
         cli::package::new(),
         cli::match_cli::new(),
         cli::cmd::new(),
+        cli::offline::new_export(),
+        cli::offline::new_import(),
     ]
 });
 
@@ -158,6 +160,57 @@ For example, specifying 'email' is equivalent to 'match/email.yml'."#))
     )
     .subcommand(SubCommand::with_name("launcher").setting(AppSettings::Hidden))
     .subcommand(SubCommand::with_name("log").about("Print the daemon logs."))
+    .subcommand(
+      SubCommand::with_name("export")
+        .about("Export Espanso data as a base64 payload for offline transfer.")
+        .long_about("Export Espanso data as a base64 payload for offline transfer.\n\n\
+EXAMPLES:\n  \
+  espanso export > backup.txt\n  \
+  espanso export --scope config,matches > backup.txt\n  \
+  espanso export --scope packages > packages-only.txt\n  \
+  espanso export --wrap 76 > backup.txt")
+        .arg(
+          Arg::with_name("scope")
+            .long("scope")
+            .takes_value(true)
+            .help("Comma-separated list of scopes: config,matches,packages (default all)"),
+        )
+        .arg(
+          Arg::with_name("wrap")
+            .long("wrap")
+            .takes_value(true)
+            .help("Wrap base64 output at the given column width"),
+        ),
+    )
+    .subcommand(
+      SubCommand::with_name("import")
+        .about("Import Espanso data from a base64 payload for offline transfer.")
+        .long_about("Import Espanso data from a base64 payload for offline transfer.\n\n\
+EXAMPLES:\n  \
+  espanso import < backup.txt\n  \
+  espanso import --scope config < config-only.txt\n  \
+  espanso import --yes < backup.txt\n  \
+  espanso import --convert-lb < backup.txt\n  \
+  cat backup.txt | espanso import --yes")
+        .arg(
+          Arg::with_name("scope")
+            .long("scope")
+            .takes_value(true)
+            .help("Comma-separated list of scopes: config,matches,packages (default all)"),
+        )
+        .arg(
+          Arg::with_name("yes")
+            .long("yes")
+            .takes_value(false)
+            .help("Skip confirmation prompt"),
+        )
+        .arg(
+          Arg::with_name("convert-lb")
+            .long("convert-lb")
+            .takes_value(false)
+            .help("Convert line breaks to LF for YAML files (.yml/.yaml) during import"),
+        ),
+    )
     .subcommand(
       SubCommand::with_name("stats")
         .about("Show expansion statistics")

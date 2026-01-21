@@ -363,6 +363,48 @@ impl Config for ResolvedConfig {
     fn x11_use_xdotool_backend(&self) -> bool {
         self.parsed.x11_use_xdotool_backend.unwrap_or(false)
     }
+
+    fn triggermarker_prefix(&self) -> Option<String> {
+        self.parsed.triggermarker_prefix.clone()
+    }
+
+    fn triggermarker_suffix(&self) -> Option<String> {
+        self.parsed.triggermarker_suffix.clone()
+    }
+
+    fn triggermarker_replace_mode(&self) -> String {
+        self.parsed
+            .triggermarker_replace_mode
+            .as_deref()
+            .unwrap_or(crate::config::default::DEFAULT_TRIGGERMARKER_REPLACE_MODE)
+            .to_string()
+    }
+
+    fn triggermarker_prefix_replace_mode(&self) -> Option<String> {
+        self.parsed.triggermarker_prefix_replace_mode.clone()
+    }
+
+    fn triggermarker_suffix_replace_mode(&self) -> Option<String> {
+        self.parsed.triggermarker_suffix_replace_mode.clone()
+    }
+
+    fn triggermarker_smart_chars(&self) -> Vec<String> {
+        self.parsed
+            .triggermarker_smart_chars
+            .clone()
+            .unwrap_or_else(|| {
+                crate::config::default::DEFAULT_TRIGGERMARKER_SMART_CHARS
+                    .iter()
+                    .map(ToString::to_string)
+                    .collect()
+            })
+    }
+
+    fn triggermarker_smart_remove_multiple(&self) -> bool {
+        self.parsed
+            .triggermarker_smart_remove_multiple
+            .unwrap_or(crate::config::default::DEFAULT_TRIGGERMARKER_SMART_REMOVE_MULTIPLE)
+    }
 }
 
 impl ResolvedConfig {
@@ -373,6 +415,13 @@ impl ResolvedConfig {
         if let Some(parent) = parent {
             Self::merge_parsed(&mut config, &parent.parsed);
         }
+
+        // Validate triggermarker configuration
+        Self::validate_triggermarker(config.triggermarker_prefix.as_ref(), "triggermarker_prefix")?;
+        Self::validate_triggermarker(config.triggermarker_suffix.as_ref(), "triggermarker_suffix")?;
+        Self::validate_triggermarker_mode(config.triggermarker_replace_mode.as_ref(), "triggermarker_replace_mode")?;
+        Self::validate_triggermarker_mode(config.triggermarker_prefix_replace_mode.as_ref(), "triggermarker_prefix_replace_mode")?;
+        Self::validate_triggermarker_mode(config.triggermarker_suffix_replace_mode.as_ref(), "triggermarker_suffix_replace_mode")?;
 
         // Extract the base directory
         let base_dir = path
@@ -455,6 +504,13 @@ impl ResolvedConfig {
             win32_keyboard_layout_cache_interval,
             x11_use_xclip_backend,
             x11_use_xdotool_backend,
+            triggermarker_prefix,
+            triggermarker_suffix,
+            triggermarker_replace_mode,
+            triggermarker_prefix_replace_mode,
+            triggermarker_suffix_replace_mode,
+            triggermarker_smart_chars,
+            triggermarker_smart_remove_multiple,
             includes,
             excludes,
             extra_includes,
@@ -466,6 +522,32 @@ impl ResolvedConfig {
             filter_os,
             stats_enabled
         );
+    }
+
+    fn validate_triggermarker(marker: Option<&String>, name: &str) -> Result<()> {
+        if let Some(m) = marker {
+            if !m.is_empty() && m.chars().any(char::is_alphanumeric) {
+                return Err(anyhow::anyhow!(
+                    "Configuration error: '{}' must not contain alphanumeric characters. Got: '{}'",
+                    name,
+                    m
+                ));
+            }
+        }
+        Ok(())
+    }
+
+    fn validate_triggermarker_mode(mode: Option<&String>, name: &str) -> Result<()> {
+        if let Some(m) = mode {
+            if m != "agnostic" && m != "smart" {
+                return Err(anyhow::anyhow!(
+                    "Invalid {}: '{}'. Must be 'agnostic' or 'smart'",
+                    name,
+                    m
+                ));
+            }
+        }
+        Ok(())
     }
 
     fn aggregate_includes(config: &ParsedConfig) -> HashSet<String> {

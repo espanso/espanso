@@ -67,6 +67,7 @@ impl Importer for YAMLImporter {
     fn load_group(
         &self,
         path: &std::path::Path,
+        config: &dyn crate::config::Config,
     ) -> anyhow::Result<(crate::matches::group::MatchGroup, Option<NonFatalErrorSet>)> {
         let yaml_group =
             YAMLMatchGroup::parse_from_file(path).context("failed to parse YAML match group")?;
@@ -88,7 +89,7 @@ impl Importer for YAMLImporter {
 
         let mut matches = Vec::new();
         for yaml_match in yaml_group.matches.clone().unwrap_or_default() {
-            match try_convert_into_match(yaml_match, false) {
+            match try_convert_into_match(yaml_match, false, yaml_group.match_defaults.as_ref(), Some(config)) {
                 Ok((m, warnings)) => {
                     matches.push(m);
                     non_fatal_errors.extend(warnings.into_iter().map(ErrorRecord::warn));
@@ -122,13 +123,192 @@ impl Importer for YAMLImporter {
     }
 }
 
+// Helper function to apply both prefix and suffix to a trigger
+fn apply_triggermarkers(
+    trigger: &str,
+    prefix: Option<&str>,
+    suffix: Option<&str>,
+    prefix_mode: &str,
+    suffix_mode: &str,
+    smart_chars: &[String],
+    remove_multiple: bool,
+) -> String {
+    let mut result = trigger.to_string();
+
+    // Apply prefix
+    if let Some(prefix_str) = prefix {
+        result = apply_prefix(
+            &result,
+            prefix_str,
+            prefix_mode,
+            smart_chars,
+            remove_multiple,
+        );
+    }
+
+    // Apply suffix
+    if let Some(suffix_str) = suffix {
+        result = apply_suffix(
+            &result,
+            suffix_str,
+            suffix_mode,
+            smart_chars,
+            remove_multiple,
+        );
+    }
+
+    result
+}
+
+// Helper function to apply prefix to a trigger
+fn apply_prefix(
+    trigger: &str,
+    prefix: &str,
+    mode: &str,
+    smart_chars: &[String],
+    remove_multiple: bool,
+) -> String {
+    if mode == "agnostic" {
+        // Agnostic mode: Simply prepend
+        format!("{prefix}{trigger}")
+    } else {
+        // Smart mode: Remove existing smart chars, then add prefix
+        let mut cleaned = trigger.to_string();
+
+        // Remove leading smart chars if prefix is set or if smart char exists
+        let has_leading_smart_char = cleaned.chars().next().is_some_and(|c| {
+            smart_chars.iter().any(|s| s.starts_with(c))
+        });
+        if !prefix.is_empty() || has_leading_smart_char {
+            cleaned = remove_leading_smart_chars(&cleaned, smart_chars, remove_multiple);
+        }
+
+        // Add new prefix
+        format!("{prefix}{cleaned}")
+    }
+}
+
+// Helper function to apply suffix to a trigger
+fn apply_suffix(
+    trigger: &str,
+    suffix: &str,
+    mode: &str,
+    smart_chars: &[String],
+    remove_multiple: bool,
+) -> String {
+    if mode == "agnostic" {
+        // Agnostic mode: Simply append
+        format!("{trigger}{suffix}")
+    } else {
+        // Smart mode: Remove existing smart chars, then add suffix
+        let mut cleaned = trigger.to_string();
+
+        // Remove trailing smart chars if suffix is set or if smart char exists
+        let has_trailing_smart_char = cleaned.chars().next_back().is_some_and(|c| {
+            smart_chars.iter().any(|s| s.starts_with(c))
+        });
+        if !suffix.is_empty() || has_trailing_smart_char {
+            cleaned = remove_trailing_smart_chars(&cleaned, smart_chars, remove_multiple);
+        }
+
+        // Add new suffix
+        format!("{cleaned}{suffix}")
+    }
+}
+
+// Helper function to remove leading smart characters
+fn remove_leading_smart_chars(
+    trigger: &str,
+    smart_chars: &[String],
+    remove_multiple: bool,
+) -> String {
+    let mut chars: Vec<char> = trigger.chars().collect();
+
+    if chars.is_empty() {
+        return trigger.to_string();
+    }
+
+    // Get first character
+    let first_char = chars[0];
+
+    // Check if it's a smart char
+    let is_smart_char = smart_chars.iter().any(|s| s.starts_with(first_char));
+
+    if !is_smart_char {
+        return trigger.to_string();
+    }
+
+    // Remove characters
+    if remove_multiple {
+        // Remove all repeated identical leading characters
+        let mut pos = 0;
+        while pos < chars.len() && chars[pos] == first_char {
+            pos += 1;
+        }
+        chars.drain(0..pos);
+    } else {
+        // Remove only first character
+        chars.remove(0);
+    }
+
+    chars.into_iter().collect()
+}
+
+// Helper function to remove trailing smart characters
+fn remove_trailing_smart_chars(
+    trigger: &str,
+    smart_chars: &[String],
+    remove_multiple: bool,
+) -> String {
+    let mut chars: Vec<char> = trigger.chars().collect();
+
+    if chars.is_empty() {
+        return trigger.to_string();
+    }
+
+    // Get last character
+    let last_char = chars[chars.len() - 1];
+
+    // Check if it's a smart char
+    let is_smart_char = smart_chars.iter().any(|s| s.starts_with(last_char));
+
+    if !is_smart_char {
+        return trigger.to_string();
+    }
+
+    // Remove characters
+    if remove_multiple {
+        // Remove all repeated identical trailing characters
+        let mut pos = chars.len();
+        while pos > 0 && chars[pos - 1] == last_char {
+            pos -= 1;
+        }
+        chars.truncate(pos);
+    } else {
+        // Remove only last character
+        chars.pop();
+    }
+
+    chars.into_iter().collect()
+}
+
 pub fn try_convert_into_match(
     yaml_match: YAMLMatch,
     use_compatibility_mode: bool, // TODO: unused variable. Remove from the codebase
+    defaults: Option<&parse::YAMLMatchDefaults>,
+    config: Option<&dyn crate::config::Config>,
 ) -> Result<(Match, Vec<Warning>)> {
     let mut warnings = Vec::new();
 
-    if yaml_match.uppercase_style.is_some() && yaml_match.propagate_case.is_none() {
+    // Check if uppercase_style is specified but propagate_case won't be true
+    let has_uppercase_style = yaml_match.uppercase_style.is_some()
+        || defaults.and_then(|d| d.uppercase_style.as_ref()).is_some();
+    let final_propagate_case = yaml_match
+        .propagate_case
+        .or(defaults.and_then(|d| d.propagate_case))
+        .unwrap_or(false);
+
+    if has_uppercase_style && !final_propagate_case {
         warnings.push(anyhow!(
             "specifying the 'uppercase_style' option without 'propagate_case' has no effect"
         ));
@@ -158,8 +338,114 @@ pub fn try_convert_into_match(
         None
     };
 
+    // Resolve triggermarker configuration (3-level precedence)
+    let (global_triggermarker_prefix, global_triggermarker_suffix, global_replace_mode,
+         global_prefix_mode, global_suffix_mode, global_smart_chars, global_remove_multiple) = if let Some(cfg) = config {
+        (
+            cfg.triggermarker_prefix(),
+            cfg.triggermarker_suffix(),
+            cfg.triggermarker_replace_mode(),
+            cfg.triggermarker_prefix_replace_mode(),
+            cfg.triggermarker_suffix_replace_mode(),
+            cfg.triggermarker_smart_chars(),
+            cfg.triggermarker_smart_remove_multiple(),
+        )
+    } else {
+        (None, None, "agnostic".to_string(), None, None, vec![], false)
+    };
+
+    // Match → defaults → global
+    let triggermarker_prefix = yaml_match
+        .triggermarker_prefix
+        .or(defaults.and_then(|d| d.triggermarker_prefix.clone()))
+        .or(global_triggermarker_prefix);
+
+    let triggermarker_suffix = yaml_match
+        .triggermarker_suffix
+        .or(defaults.and_then(|d| d.triggermarker_suffix.clone()))
+        .or(global_triggermarker_suffix);
+
+    let base_replace_mode = yaml_match
+        .triggermarker_replace_mode
+        .or(defaults.and_then(|d| d.triggermarker_replace_mode.clone()))
+        .unwrap_or(global_replace_mode);
+
+    let prefix_replace_mode = yaml_match
+        .triggermarker_prefix_replace_mode
+        .or(defaults.and_then(|d| d.triggermarker_prefix_replace_mode.clone()))
+        .or(global_prefix_mode)
+        .unwrap_or(base_replace_mode.clone());
+
+    let suffix_replace_mode = yaml_match
+        .triggermarker_suffix_replace_mode
+        .or(defaults.and_then(|d| d.triggermarker_suffix_replace_mode.clone()))
+        .or(global_suffix_mode)
+        .unwrap_or(base_replace_mode);
+
+    let smart_chars = yaml_match
+        .triggermarker_smart_chars
+        .or(defaults.and_then(|d| d.triggermarker_smart_chars.clone()))
+        .unwrap_or(global_smart_chars);
+
+    let remove_multiple = yaml_match
+        .triggermarker_smart_remove_multiple
+        .or(defaults.and_then(|d| d.triggermarker_smart_remove_multiple))
+        .unwrap_or(global_remove_multiple);
+
+    // Validate triggermarker configuration
+    if let Some(ref prefix) = triggermarker_prefix {
+        if !prefix.is_empty() && prefix.chars().any(char::is_alphanumeric) {
+            return Err(anyhow!(
+                "Match validation error: triggermarker_prefix must not contain alphanumeric characters. Got: '{}'",
+                prefix
+            ));
+        }
+    }
+
+    if let Some(ref suffix) = triggermarker_suffix {
+        if !suffix.is_empty() && suffix.chars().any(char::is_alphanumeric) {
+            return Err(anyhow!(
+                "Match validation error: triggermarker_suffix must not contain alphanumeric characters. Got: '{}'",
+                suffix
+            ));
+        }
+    }
+
+    if prefix_replace_mode != "agnostic" && prefix_replace_mode != "smart" {
+        return Err(anyhow!(
+            "Invalid triggermarker_prefix_replace_mode: '{}'. Must be 'agnostic' or 'smart'",
+            prefix_replace_mode
+        ));
+    }
+
+    if suffix_replace_mode != "agnostic" && suffix_replace_mode != "smart" {
+        return Err(anyhow!(
+            "Invalid triggermarker_suffix_replace_mode: '{}'. Must be 'agnostic' or 'smart'",
+            suffix_replace_mode
+        ));
+    }
+
+    // Apply triggermarkers to all triggers
+    let triggers = triggers.map(|triggers| {
+        triggers
+            .into_iter()
+            .map(|trigger| {
+                apply_triggermarkers(
+                    &trigger,
+                    triggermarker_prefix.as_deref(),
+                    triggermarker_suffix.as_deref(),
+                    &prefix_replace_mode,
+                    &suffix_replace_mode,
+                    &smart_chars,
+                    remove_multiple,
+                )
+            })
+            .collect()
+    });
+
     let uppercase_style = match yaml_match
         .uppercase_style
+        .or(defaults.and_then(|d| d.uppercase_style.clone()))
         .map(|s| s.to_lowercase())
         .as_deref()
     {
@@ -182,13 +468,18 @@ pub fn try_convert_into_match(
             left_word: yaml_match
                 .left_word
                 .or(yaml_match.word)
+                .or(defaults.and_then(|d| d.left_word))
+                .or(defaults.and_then(|d| d.word))
                 .unwrap_or(TriggerCause::default().left_word),
             right_word: yaml_match
                 .right_word
                 .or(yaml_match.word)
+                .or(defaults.and_then(|d| d.right_word))
+                .or(defaults.and_then(|d| d.word))
                 .unwrap_or(TriggerCause::default().right_word),
             propagate_case: yaml_match
                 .propagate_case
+                .or(defaults.and_then(|d| d.propagate_case))
                 .unwrap_or(TriggerCause::default().propagate_case),
             uppercase_style,
         })
@@ -201,6 +492,14 @@ pub fn try_convert_into_match(
     let force_mode = if yaml_match.force_clipboard == Some(true) {
         Some(TextInjectMode::Clipboard)
     } else if let Some(mode) = yaml_match.force_mode {
+        match mode.to_lowercase().as_str() {
+            "clipboard" => Some(TextInjectMode::Clipboard),
+            "keys" => Some(TextInjectMode::Keys),
+            _ => None,
+        }
+    } else if defaults.and_then(|d| d.force_clipboard) == Some(true) {
+        Some(TextInjectMode::Clipboard)
+    } else if let Some(mode) = defaults.and_then(|d| d.force_mode.clone()) {
         match mode.to_lowercase().as_str() {
             "clipboard" => Some(TextInjectMode::Clipboard),
             "keys" => Some(TextInjectMode::Keys),
@@ -349,12 +648,87 @@ mod tests {
     };
     use std::fs::create_dir_all;
 
+    // MockConfig for testing triggermarker functionality
+    struct MockConfig {
+        triggermarker_prefix: Option<String>,
+        triggermarker_suffix: Option<String>,
+        triggermarker_replace_mode: String,
+        triggermarker_prefix_replace_mode: Option<String>,
+        triggermarker_suffix_replace_mode: Option<String>,
+        triggermarker_smart_chars: Vec<String>,
+        triggermarker_smart_remove_multiple: bool,
+    }
+
+    impl MockConfig {
+        fn default() -> Self {
+            Self {
+                triggermarker_prefix: None,
+                triggermarker_suffix: None,
+                triggermarker_replace_mode: "agnostic".to_string(),
+                triggermarker_prefix_replace_mode: None,
+                triggermarker_suffix_replace_mode: None,
+                triggermarker_smart_chars: vec![":".to_string(), ";".to_string(), "&".to_string(), "%".to_string()],
+                triggermarker_smart_remove_multiple: false,
+            }
+        }
+    }
+
+    impl crate::config::Config for MockConfig {
+        fn id(&self) -> i32 { 0 }
+        fn label(&self) -> &'static str { "mock" }
+        fn match_paths(&self) -> &[String] { &[] }
+        fn backend(&self) -> crate::config::Backend { crate::config::Backend::Inject }
+        fn enable(&self) -> bool { true }
+        fn clipboard_threshold(&self) -> usize { 100 }
+        fn pre_paste_delay(&self) -> usize { 100 }
+        fn paste_shortcut_event_delay(&self) -> usize { 10 }
+        fn paste_shortcut(&self) -> Option<String> { None }
+        fn disable_x11_fast_inject(&self) -> bool { false }
+        fn toggle_key(&self) -> Option<crate::config::ToggleKey> { None }
+        fn auto_restart(&self) -> bool { true }
+        fn preserve_clipboard(&self) -> bool { true }
+        fn restore_clipboard_delay(&self) -> usize { 300 }
+        fn inject_delay(&self) -> Option<usize> { None }
+        fn key_delay(&self) -> Option<usize> { None }
+        fn evdev_modifier_delay(&self) -> Option<usize> { None }
+        fn word_separators(&self) -> Vec<String> { vec![" ".to_string()] }
+        fn backspace_limit(&self) -> usize { 5 }
+        fn apply_patch(&self) -> bool { true }
+        fn keyboard_layout(&self) -> Option<crate::config::RMLVOConfig> { None }
+        fn search_trigger(&self) -> Option<String> { None }
+        fn search_shortcut(&self) -> Option<String> { None }
+        fn undo_backspace(&self) -> bool { true }
+        fn show_notifications(&self) -> bool { true }
+        fn show_icon(&self) -> bool { true }
+        fn secure_input_notification(&self) -> bool { true }
+        fn stats_enabled(&self) -> bool { true }
+        fn post_form_delay(&self) -> usize { 200 }
+        fn max_form_width(&self) -> usize { 800 }
+        fn max_form_height(&self) -> usize { 600 }
+        fn max_regex_buffer_size(&self) -> usize { 30 }
+        fn post_search_delay(&self) -> usize { 200 }
+        fn emulate_alt_codes(&self) -> bool { false }
+        fn x11_use_xclip_backend(&self) -> bool { false }
+        fn x11_use_xdotool_backend(&self) -> bool { false }
+        fn win32_exclude_orphan_events(&self) -> bool { true }
+        fn win32_keyboard_layout_cache_interval(&self) -> i64 { 2000 }
+        fn is_match(&self, _app: &crate::config::AppProperties) -> bool { true }
+
+        fn triggermarker_prefix(&self) -> Option<String> { self.triggermarker_prefix.clone() }
+        fn triggermarker_suffix(&self) -> Option<String> { self.triggermarker_suffix.clone() }
+        fn triggermarker_replace_mode(&self) -> String { self.triggermarker_replace_mode.clone() }
+        fn triggermarker_prefix_replace_mode(&self) -> Option<String> { self.triggermarker_prefix_replace_mode.clone() }
+        fn triggermarker_suffix_replace_mode(&self) -> Option<String> { self.triggermarker_suffix_replace_mode.clone() }
+        fn triggermarker_smart_chars(&self) -> Vec<String> { self.triggermarker_smart_chars.clone() }
+        fn triggermarker_smart_remove_multiple(&self) -> bool { self.triggermarker_smart_remove_multiple }
+    }
+
     fn create_match_with_warnings(
         yaml: &str,
         use_compatibility_mode: bool,
     ) -> Result<(Match, Vec<Warning>)> {
         let yaml_match: YAMLMatch = serde_norway::from_str(yaml)?;
-        let (mut m, warnings) = try_convert_into_match(yaml_match, use_compatibility_mode)?;
+        let (mut m, warnings) = try_convert_into_match(yaml_match, use_compatibility_mode, None, None)?;
 
         // Reset the IDs to correctly compare them
         m.id = 0;
@@ -882,7 +1256,8 @@ mod tests {
             std::fs::write(&sub_file, "").unwrap();
 
             let importer = YAMLImporter::new();
-            let (mut group, non_fatal_error_set) = importer.load_group(&base_file).unwrap();
+            let config = MockConfig::default();
+            let (mut group, non_fatal_error_set) = importer.load_group(&base_file, &config).unwrap();
             // The invalid import path should be reported as error
             assert_eq!(non_fatal_error_set.unwrap().errors.len(), 1);
 
@@ -933,7 +1308,464 @@ mod tests {
             .unwrap();
 
             let importer = YAMLImporter::new();
-            assert!(importer.load_group(&base_file).is_err());
+            let config = MockConfig::default();
+            assert!(importer.load_group(&base_file, &config).is_err());
         });
+    }
+
+    #[test]
+    fn match_defaults_are_applied() {
+        let yaml_group: YAMLMatchGroup = serde_norway::from_str(
+            r#"
+match_defaults:
+  propagate_case: true
+  word: true
+matches:
+  - trigger: "test"
+    replace: "replacement"
+"#,
+        )
+        .unwrap();
+
+        let yaml_match = &yaml_group.matches.unwrap()[0];
+        let (m, _) = try_convert_into_match(
+            yaml_match.clone(),
+            false,
+            yaml_group.match_defaults.as_ref(),
+            None,
+        )
+        .unwrap();
+
+        if let MatchCause::Trigger(cause) = m.cause {
+            assert!(cause.propagate_case);
+            assert!(cause.left_word);
+            assert!(cause.right_word);
+        } else {
+            panic!("Expected TriggerCause");
+        }
+    }
+
+    #[test]
+    fn match_options_override_defaults() {
+        let yaml_group: YAMLMatchGroup = serde_norway::from_str(
+            r#"
+match_defaults:
+  propagate_case: true
+  word: true
+matches:
+  - trigger: "test"
+    replace: "replacement"
+    propagate_case: false
+    left_word: false
+"#,
+        )
+        .unwrap();
+
+        let yaml_match = &yaml_group.matches.unwrap()[0];
+        let (m, _) = try_convert_into_match(
+            yaml_match.clone(),
+            false,
+            yaml_group.match_defaults.as_ref(),
+            None,
+        )
+        .unwrap();
+
+        if let MatchCause::Trigger(cause) = m.cause {
+            assert!(!cause.propagate_case);
+            assert!(!cause.left_word);
+            assert!(cause.right_word); // Still from default
+        } else {
+            panic!("Expected TriggerCause");
+        }
+    }
+
+    #[test]
+    fn match_defaults_uppercase_style() {
+        let yaml_group: YAMLMatchGroup = serde_norway::from_str(
+            r#"
+match_defaults:
+  propagate_case: true
+  uppercase_style: "capitalize"
+matches:
+  - trigger: "test"
+    replace: "replacement"
+"#,
+        )
+        .unwrap();
+
+        let yaml_match = &yaml_group.matches.unwrap()[0];
+        let (m, _) = try_convert_into_match(
+            yaml_match.clone(),
+            false,
+            yaml_group.match_defaults.as_ref(),
+            None,
+        )
+        .unwrap();
+
+        if let MatchCause::Trigger(cause) = m.cause {
+            assert!(cause.propagate_case);
+            assert_eq!(cause.uppercase_style, UpperCasingStyle::Capitalize);
+        } else {
+            panic!("Expected TriggerCause");
+        }
+    }
+
+    #[test]
+    fn match_defaults_force_mode() {
+        let yaml_group: YAMLMatchGroup = serde_norway::from_str(
+            r#"
+match_defaults:
+  force_clipboard: true
+matches:
+  - trigger: "test"
+    replace: "replacement"
+"#,
+        )
+        .unwrap();
+
+        let yaml_match = &yaml_group.matches.unwrap()[0];
+        let (m, _) = try_convert_into_match(
+            yaml_match.clone(),
+            false,
+            yaml_group.match_defaults.as_ref(),
+            None,
+        )
+        .unwrap();
+
+        if let MatchEffect::Text(effect) = m.effect {
+            assert_eq!(effect.force_mode, Some(TextInjectMode::Clipboard));
+        } else {
+            panic!("Expected TextEffect");
+        }
+    }
+
+    #[test]
+    fn no_match_defaults_works_as_before() {
+        let yaml_group: YAMLMatchGroup = serde_norway::from_str(
+            r#"
+matches:
+  - trigger: "test"
+    replace: "replacement"
+"#,
+        )
+        .unwrap();
+
+        let yaml_match = &yaml_group.matches.unwrap()[0];
+        let (m, _) = try_convert_into_match(yaml_match.clone(), false, None, None).unwrap();
+
+        if let MatchCause::Trigger(cause) = m.cause {
+            assert!(!cause.propagate_case);
+            assert!(!cause.left_word);
+            assert!(!cause.right_word);
+        } else {
+            panic!("Expected TriggerCause");
+        }
+    }
+
+    #[test]
+    fn match_force_mode_overrides_default_force_clipboard() {
+        let yaml_group: YAMLMatchGroup = serde_norway::from_str(
+            r#"
+match_defaults:
+  force_clipboard: true
+matches:
+  - trigger: "test"
+    replace: "replacement"
+    force_mode: "keys"
+"#,
+        )
+        .unwrap();
+
+        let yaml_match = &yaml_group.matches.unwrap()[0];
+        let (m, _) = try_convert_into_match(
+            yaml_match.clone(),
+            false,
+            yaml_group.match_defaults.as_ref(),
+            None,
+        )
+        .unwrap();
+
+        if let MatchEffect::Text(effect) = m.effect {
+            assert_eq!(effect.force_mode, Some(TextInjectMode::Keys));
+        } else {
+            panic!("Expected TextEffect");
+        }
+    }
+
+    #[test]
+    fn uppercase_style_warning_with_defaults() {
+        // Warning when uppercase_style in defaults but propagate_case is false
+        let yaml_group: YAMLMatchGroup = serde_norway::from_str(
+            r#"
+match_defaults:
+  uppercase_style: "capitalize"
+matches:
+  - trigger: "test"
+    replace: "replacement"
+    propagate_case: false
+"#,
+        )
+        .unwrap();
+
+        let yaml_match = &yaml_group.matches.unwrap()[0];
+        let (_, warnings) = try_convert_into_match(
+            yaml_match.clone(),
+            false,
+            yaml_group.match_defaults.as_ref(),
+            None,
+        )
+        .unwrap();
+        assert_eq!(warnings.len(), 1);
+    }
+
+    #[test]
+    fn regex_matches_not_affected_by_trigger_defaults() {
+        // Regex matches should not be affected by trigger-specific defaults
+        let yaml_group: YAMLMatchGroup = serde_norway::from_str(
+            r#"
+match_defaults:
+  word: true
+  propagate_case: true
+matches:
+  - regex: "test\\d+"
+    replace: "matched"
+"#,
+        )
+        .unwrap();
+
+        let yaml_match = &yaml_group.matches.unwrap()[0];
+        let (m, _) = try_convert_into_match(
+            yaml_match.clone(),
+            false,
+            yaml_group.match_defaults.as_ref(),
+            None,
+        )
+        .unwrap();
+
+        // Regex matches should have RegexCause, not TriggerCause
+        assert!(matches!(m.cause, MatchCause::Regex(_)));
+    }
+
+    #[test]
+    fn test_match_defaults_propagate_case() {
+        // Test that propagate_case is correctly inherited from defaults
+        let yaml_group: YAMLMatchGroup = serde_norway::from_str(
+            r#"
+match_defaults:
+  propagate_case: true
+matches:
+  - trigger: ":test"
+    replace: "replacement"
+"#,
+        )
+        .unwrap();
+
+        let yaml_match = &yaml_group.matches.unwrap()[0];
+        let (m, _) = try_convert_into_match(
+            yaml_match.clone(),
+            false,
+            yaml_group.match_defaults.as_ref(),
+            None,
+        )
+        .unwrap();
+
+        // Verify the match has propagate_case set to true from defaults
+        if let MatchCause::Trigger(cause) = m.cause {
+            assert!(
+                cause.propagate_case,
+                "propagate_case should be true from defaults"
+            );
+        } else {
+            panic!("Expected TriggerCause");
+        }
+    }
+
+    #[test]
+    fn test_triggermarker_agnostic_mode() {
+        let yaml_group: YAMLMatchGroup = serde_norway::from_str(
+            r#"
+match_defaults:
+  triggermarker_prefix: "!"
+  triggermarker_suffix: "."
+  triggermarker_replace_mode: "agnostic"
+matches:
+  - trigger: ":hello"
+    replace: "world"
+"#,
+        )
+        .unwrap();
+
+        let yaml_match = &yaml_group.matches.as_ref().unwrap()[0];
+        let config = MockConfig::default();
+        let (m, _) = try_convert_into_match(
+            yaml_match.clone(),
+            false,
+            yaml_group.match_defaults.as_ref(),
+            Some(&config),
+        )
+        .unwrap();
+
+        if let crate::matches::MatchCause::Trigger(cause) = m.cause {
+            assert_eq!(cause.triggers[0], "!:hello.");
+        } else {
+            panic!("Expected TriggerCause");
+        }
+    }
+
+    #[test]
+    fn test_triggermarker_smart_mode_replace() {
+        let yaml_group: YAMLMatchGroup = serde_norway::from_str(
+            r#"
+match_defaults:
+  triggermarker_prefix: "!"
+  triggermarker_suffix: "."
+  triggermarker_replace_mode: "smart"
+  triggermarker_smart_chars: [":", ";"]
+matches:
+  - trigger: ":hello;"
+    replace: "world"
+"#,
+        )
+        .unwrap();
+
+        let yaml_match = &yaml_group.matches.as_ref().unwrap()[0];
+        let config = MockConfig::default();
+        let (m, _) = try_convert_into_match(
+            yaml_match.clone(),
+            false,
+            yaml_group.match_defaults.as_ref(),
+            Some(&config),
+        )
+        .unwrap();
+
+        if let crate::matches::MatchCause::Trigger(cause) = m.cause {
+            assert_eq!(cause.triggers[0], "!hello.");
+        } else {
+            panic!("Expected TriggerCause");
+        }
+    }
+
+    #[test]
+    fn test_triggermarker_smart_mode_remove_multiple() {
+        let yaml_group: YAMLMatchGroup = serde_norway::from_str(
+            r#"
+match_defaults:
+  triggermarker_prefix: "!"
+  triggermarker_replace_mode: "smart"
+  triggermarker_smart_chars: [":"]
+  triggermarker_smart_remove_multiple: true
+matches:
+  - trigger: ":::hello"
+    replace: "world"
+"#,
+        )
+        .unwrap();
+
+        let yaml_match = &yaml_group.matches.as_ref().unwrap()[0];
+        let config = MockConfig::default();
+        let (m, _) = try_convert_into_match(
+            yaml_match.clone(),
+            false,
+            yaml_group.match_defaults.as_ref(),
+            Some(&config),
+        )
+        .unwrap();
+
+        if let crate::matches::MatchCause::Trigger(cause) = m.cause {
+            assert_eq!(cause.triggers[0], "!hello");
+        } else {
+            panic!("Expected TriggerCause");
+        }
+    }
+
+    #[test]
+    fn test_triggermarker_empty_string_disables() {
+        let yaml_group: YAMLMatchGroup = serde_norway::from_str(
+            r#"
+match_defaults:
+  triggermarker_prefix: ":"
+matches:
+  - trigger: "hello"
+    replace: "world"
+    triggermarker_prefix: ""
+"#,
+        )
+        .unwrap();
+
+        let yaml_match = &yaml_group.matches.as_ref().unwrap()[0];
+        let config = MockConfig::default();
+        let (m, _) = try_convert_into_match(
+            yaml_match.clone(),
+            false,
+            yaml_group.match_defaults.as_ref(),
+            Some(&config),
+        )
+        .unwrap();
+
+        if let crate::matches::MatchCause::Trigger(cause) = m.cause {
+            assert_eq!(cause.triggers[0], "hello");
+        } else {
+            panic!("Expected TriggerCause");
+        }
+    }
+
+    #[test]
+    fn test_triggermarker_validation_alphanumeric_error() {
+        let yaml_group: YAMLMatchGroup = serde_norway::from_str(
+            r#"
+matches:
+  - trigger: "hello"
+    replace: "world"
+    triggermarker_prefix: "abc"
+"#,
+        )
+        .unwrap();
+
+        let yaml_match = &yaml_group.matches.as_ref().unwrap()[0];
+        let config = MockConfig::default();
+        let result = try_convert_into_match(
+            yaml_match.clone(),
+            false,
+            None,
+            Some(&config),
+        );
+
+        assert!(result.is_err());
+        assert!(result.unwrap_err().to_string().contains("alphanumeric"));
+    }
+
+    #[test]
+    fn test_triggermarker_mode_precedence() {
+        let yaml_group: YAMLMatchGroup = serde_norway::from_str(
+            r#"
+match_defaults:
+  triggermarker_prefix: "!"
+  triggermarker_suffix: "."
+  triggermarker_replace_mode: "agnostic"
+  triggermarker_prefix_replace_mode: "smart"
+  triggermarker_smart_chars: [":"]
+matches:
+  - trigger: ":hello;"
+    replace: "world"
+"#,
+        )
+        .unwrap();
+
+        let yaml_match = &yaml_group.matches.as_ref().unwrap()[0];
+        let config = MockConfig::default();
+        let (m, _) = try_convert_into_match(
+            yaml_match.clone(),
+            false,
+            yaml_group.match_defaults.as_ref(),
+            Some(&config),
+        )
+        .unwrap();
+
+        if let crate::matches::MatchCause::Trigger(cause) = m.cause {
+            // Prefix uses smart (: removed), suffix uses agnostic (; kept)
+            assert_eq!(cause.triggers[0], "!hello;.");
+        } else {
+            panic!("Expected TriggerCause");
+        }
     }
 }
