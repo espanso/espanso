@@ -637,17 +637,17 @@ fn confirm_import_from_byte(byte: u8) -> Result<()> {
 fn read_confirmation_byte() -> Result<u8> {
     #[cfg(unix)]
     {
-        return read_confirmation_byte_unix();
+        read_confirmation_byte_unix()
     }
 
     #[cfg(windows)]
     {
-        return read_confirmation_byte_windows();
+        read_confirmation_byte_windows()
     }
 
     #[cfg(not(any(unix, windows)))]
     {
-        bail!("unsupported platform");
+        bail!("unsupported platform")
     }
 }
 
