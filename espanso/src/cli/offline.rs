@@ -150,7 +150,7 @@ impl<R: Read> Read for WhitespaceFilteringReader<R> {
 
         let mut total = 0;
         let mut buf = [0u8; 8192];
-        
+
         // Keep reading until we have at least one non-whitespace byte
         // or the underlying reader is exhausted
         while total == 0 {
@@ -505,16 +505,12 @@ fn parse_wrap_width(value: Option<&str>) -> Result<Option<usize>> {
 /// (default configuration). In this case, packages are skipped when exporting matches
 /// to avoid duplication, since they'll be exported separately if the packages scope
 /// is selected.
-fn build_archive<W: Write>(
-    writer: W,
-    paths: &Paths,
-    selection: ScopeSelection,
-) -> Result<()> {
+fn build_archive<W: Write>(writer: W, paths: &Paths, selection: ScopeSelection) -> Result<()> {
     let mut builder = Builder::new(writer);
 
     let matches_dir = paths.config.join("match");
     let packages_dir = paths.packages.clone();
-    
+
     // Check if packages directory is nested inside matches directory.
     // This happens with the default configuration where packages are stored
     // at config/match/packages. In this case, we need to skip the packages
@@ -557,9 +553,9 @@ fn export_payload_to_stdout(
     };
     let encoder = EncoderWriter::new(writer, &STANDARD);
     let mut gzip = GzEncoder::new(encoder, Compression::default());
-    
+
     build_archive(&mut gzip, paths, selection)?;
-    
+
     let mut encoder = gzip.finish()?;
     let mut handle = encoder.finish()?;
     handle.write_all(b"\n")?;
@@ -842,13 +838,15 @@ fn import_payload_from_stdin(
 
         match entry.header().entry_type() {
             EntryType::Directory => {
-                fs::create_dir_all(&target_path)
-                    .with_context(|| format!("failed to create directory: {}", target_path.display()))?;
+                fs::create_dir_all(&target_path).with_context(|| {
+                    format!("failed to create directory: {}", target_path.display())
+                })?;
             }
             EntryType::Regular => {
                 let mut data = Vec::new();
-                entry.read_to_end(&mut data)
-                    .with_context(|| format!("failed to read archive entry: {}", entry_path.display()))?;
+                entry.read_to_end(&mut data).with_context(|| {
+                    format!("failed to read archive entry: {}", entry_path.display())
+                })?;
                 let data = maybe_convert_line_breaks(&target_path, data, convert_lb)?;
                 write_atomic(&target_path, &data)
                     .with_context(|| format!("failed to import file: {}", target_path.display()))?;
@@ -1028,13 +1026,13 @@ fn write_atomic(path: &Path, data: &[u8]) -> Result<()> {
     }
 
     let tmp_path = temp_path_for(path);
-    
+
     // Guard to ensure temp file cleanup on error
     struct TempFileGuard {
         path: PathBuf,
         cleanup: bool,
     }
-    
+
     impl Drop for TempFileGuard {
         fn drop(&mut self) {
             if self.cleanup {
@@ -1042,17 +1040,18 @@ fn write_atomic(path: &Path, data: &[u8]) -> Result<()> {
             }
         }
     }
-    
+
     let mut guard = TempFileGuard {
         path: tmp_path.clone(),
         cleanup: true,
     };
-    
+
     {
         let mut file = fs::File::create(&tmp_path)
             .with_context(|| format!("failed to create temporary file: {}", tmp_path.display()))?;
-        file.write_all(data)
-            .with_context(|| format!("failed to write to temporary file: {}", tmp_path.display()))?;
+        file.write_all(data).with_context(|| {
+            format!("failed to write to temporary file: {}", tmp_path.display())
+        })?;
         file.sync_all()
             .with_context(|| format!("failed to sync temporary file: {}", tmp_path.display()))?;
     }
@@ -1061,13 +1060,13 @@ fn write_atomic(path: &Path, data: &[u8]) -> Result<()> {
         fs::remove_file(path)
             .with_context(|| format!("failed to remove existing file: {}", path.display()))?;
     }
-    
+
     fs::rename(&tmp_path, path)
         .with_context(|| format!("failed to rename temporary file to: {}", path.display()))?;
-    
+
     // Prevent cleanup on success
     guard.cleanup = false;
-    
+
     Ok(())
 }
 
@@ -1127,10 +1126,10 @@ mod tests {
         {
             let encoder = EncoderWriter::new(&mut output, &STANDARD);
             let mut gzip = GzEncoder::new(encoder, Compression::default());
-            
+
             // Use the shared build_archive function to eliminate duplication
             build_archive(&mut gzip, paths, selection)?;
-            
+
             let encoder = gzip.finish()?;
             encoder.finish()?;
         }
