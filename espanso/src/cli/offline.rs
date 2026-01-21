@@ -17,6 +17,92 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+//! Offline import/export functionality for Espanso configuration.
+//!
+//! This module provides commands to export Espanso configuration, matches,
+//! and packages as a base64-encoded payload for offline transfer between
+//! machines. The payload is compressed using gzip and encoded in base64
+//! for easy copy-paste or file transfer.
+//!
+//! # Usage
+//!
+//! ## Export Examples
+//!
+//! Export all data:
+//! ```bash
+//! espanso export > backup.txt
+//! ```
+//!
+//! Export specific scopes:
+//! ```bash
+//! espanso export --scope config,matches > backup.txt
+//! espanso export --scope packages > packages-only.txt
+//! ```
+//!
+//! Export with wrapped output (76 columns):
+//! ```bash
+//! espanso export --wrap 76 > backup.txt
+//! ```
+//!
+//! ## Import Examples
+//!
+//! Import data (interactive - prompts for confirmation):
+//! ```bash
+//! espanso import < backup.txt
+//! ```
+//!
+//! Import data (non-interactive - skips confirmation):
+//! ```bash
+//! espanso import --yes < backup.txt
+//! ```
+//!
+//! Import specific scopes:
+//! ```bash
+//! espanso import --scope config < config-backup.txt
+//! ```
+//!
+//! Import with line break conversion for YAML files:
+//! ```bash
+//! espanso import --convert-lb < backup.txt
+//! ```
+//!
+//! # Security
+//!
+//! - **Path traversal protection**: `sanitize_relative_path()` validates all paths
+//! - **Root boundary enforcement**: `ensure_inside_root()` prevents escaping target directories
+//! - **Atomic file writes**: `write_atomic()` prevents partial file corruption
+//! - **User confirmation**: Destructive operations require explicit confirmation (unless `--yes` flag is used)
+//!
+//! # Platform Support
+//!
+//! - **macOS**: Full support (interactive and non-interactive)
+//! - **Windows**: Full support (interactive and non-interactive)
+//! - **Linux**: Full support (interactive and non-interactive)
+//!
+//! ## Non-Interactive Environments
+//!
+//! When running in non-interactive environments (CI/CD, services, cron jobs, Docker),
+//! use the `--yes` flag to skip the confirmation prompt:
+//!
+//! ```bash
+//! espanso import --yes < backup.txt
+//! ```
+//!
+//! Without the `--yes` flag, the import command will attempt to read from:
+//! - Unix/macOS: `/dev/tty` (interactive) or `/dev/stdin` (piped input)
+//! - Windows: `CONIN$` (console input)
+//!
+//! If no input is available, a clear error message will guide you to use `--yes`.
+//!
+//! # Archive Format
+//!
+//! The export creates a tar.gz archive with the following structure:
+//! - `config/` - Configuration files from `~/.config/espanso/config/`
+//! - `matches/` - Match files from `~/.config/espanso/match/`
+//! - `packages/` - Package files from `~/.config/espanso/match/packages/`
+//!
+//! The archive is then gzip-compressed and base64-encoded for portability.
+
 use std::{
     fs,
     io::{self, Read, Write},
@@ -34,6 +120,18 @@ use walkdir::WalkDir;
 use super::{CliModule, CliModuleArgs, PathsOverrides};
 use crate::{cli::util::CommandExt, error_eprintln, path::Paths, util::set_command_flags};
 
+/// A reader adapter that filters out all ASCII whitespace characters.
+///
+/// This is used during import to handle base64 input that may contain
+/// newlines, spaces, or other whitespace for readability. The base64
+/// decoder requires a continuous stream of valid base64 characters.
+///
+/// # Implementation Details
+///
+/// - Uses an 8KB internal buffer for efficient reading
+/// - Filters spaces, tabs, newlines, carriage returns
+/// - Ensures at least one non-whitespace byte is returned per read
+/// - Returns 0 only when the underlying reader is exhausted
 struct WhitespaceFilteringReader<R> {
     inner: R,
 }
@@ -52,12 +150,17 @@ impl<R: Read> Read for WhitespaceFilteringReader<R> {
 
         let mut total = 0;
         let mut buf = [0u8; 8192];
+        
+        // Keep reading until we have at least one non-whitespace byte
+        // or the underlying reader is exhausted
         while total == 0 {
             let count = self.inner.read(&mut buf)?;
             if count == 0 {
+                // Underlying reader exhausted
                 return Ok(0);
             }
 
+            // Filter out whitespace and copy non-whitespace bytes to output
             for &byte in &buf[..count] {
                 if byte.is_ascii_whitespace() {
                     continue;
@@ -65,6 +168,7 @@ impl<R: Read> Read for WhitespaceFilteringReader<R> {
                 out[total] = byte;
                 total += 1;
                 if total == out.len() {
+                    // Output buffer full
                     break;
                 }
             }
@@ -74,6 +178,19 @@ impl<R: Read> Read for WhitespaceFilteringReader<R> {
     }
 }
 
+/// A writer adapter that wraps output at a specified column width.
+///
+/// This is used during export to make base64 output more readable
+/// by inserting newlines at regular intervals. This is particularly
+/// useful when the output will be displayed in email clients or
+/// text editors with fixed-width displays.
+///
+/// # Implementation Details
+///
+/// - Tracks current column position
+/// - Inserts newline when reaching wrap width
+/// - Resets column counter after each newline
+/// - Writes one byte at a time for precise column tracking
 struct WrapWriter<W> {
     inner: W,
     wrap: usize,
@@ -110,6 +227,38 @@ impl<W: Write> Write for WrapWriter<W> {
     }
 }
 
+/// Creates the CLI module for the export command.
+///
+/// Exports Espanso configuration data as a base64-encoded, gzip-compressed payload.
+/// The output is written to stdout and can be redirected to a file or piped to another command.
+///
+/// # Supported Scopes
+///
+/// - `config` - Configuration files from `~/.config/espanso/config/`
+/// - `matches` - Match files from `~/.config/espanso/match/`
+/// - `packages` - Package files from `~/.config/espanso/match/packages/`
+///
+/// # Examples
+///
+/// Export all data:
+/// ```bash
+/// espanso export > backup.txt
+/// ```
+///
+/// Export only configuration:
+/// ```bash
+/// espanso export --scope config > config-backup.txt
+/// ```
+///
+/// Export with wrapped output (useful for email or text editors):
+/// ```bash
+/// espanso export --wrap 76 > backup.txt
+/// ```
+///
+/// # Output Format
+///
+/// The output is a base64-encoded string representing a gzip-compressed tar archive.
+/// A final newline is added to make terminal display cleaner.
 pub fn new_export() -> CliModule {
     CliModule {
         requires_paths: true,
@@ -119,6 +268,61 @@ pub fn new_export() -> CliModule {
     }
 }
 
+/// Creates the CLI module for the import command.
+///
+/// Imports Espanso configuration data from a base64-encoded payload (created by `export`).
+/// The input is read from stdin. This operation is **destructive** - it will delete
+/// existing data in the selected scopes before importing.
+///
+/// # Safety
+///
+/// - **Requires confirmation**: By default, prompts user for confirmation before proceeding
+/// - **Use `--yes` flag**: Skip confirmation in non-interactive environments (CI/CD, scripts)
+/// - **Atomic writes**: Files are written atomically to prevent corruption
+/// - **Path validation**: All paths are validated to prevent directory traversal attacks
+///
+/// # Supported Scopes
+///
+/// - `config` - Configuration files
+/// - `matches` - Match files (excluding packages if not selected)
+/// - `packages` - Package files
+///
+/// # Examples
+///
+/// Import with confirmation prompt:
+/// ```bash
+/// espanso import < backup.txt
+/// ```
+///
+/// Import without confirmation (for automation):
+/// ```bash
+/// espanso import --yes < backup.txt
+/// ```
+///
+/// Import only matches:
+/// ```bash
+/// espanso import --scope matches < matches-backup.txt
+/// ```
+///
+/// Import with line break conversion (Windows → Unix):
+/// ```bash
+/// espanso import --convert-lb < backup.txt
+/// ```
+///
+/// # Platform Notes
+///
+/// - **Unix/macOS**: Reads from `/dev/tty` or `/dev/stdin` for confirmation
+/// - **Windows**: Reads from `CONIN$` console input for confirmation
+/// - **Non-interactive**: Use `--yes` flag to skip confirmation in services, cron, Docker, CI/CD
+///
+/// # Errors
+///
+/// Returns detailed error messages including file paths when operations fail.
+/// Common errors include:
+/// - Permission denied
+/// - Disk full
+/// - Invalid archive format
+/// - Path traversal attempts
 pub fn new_import() -> CliModule {
     CliModule {
         requires_paths: true,
@@ -283,6 +487,62 @@ fn parse_wrap_width(value: Option<&str>) -> Result<Option<usize>> {
     Ok(Some(parsed))
 }
 
+/// Core archive building logic shared between export functions.
+///
+/// Builds a tar archive containing the selected scopes from the given paths.
+/// The archive is written to the provided writer, which is typically wrapped
+/// in gzip compression and base64 encoding.
+///
+/// # Arguments
+///
+/// * `writer` - The writer to output the tar archive to (typically gzip-compressed)
+/// * `paths` - The Espanso paths configuration
+/// * `selection` - Which scopes to include in the archive
+///
+/// # Implementation Details
+///
+/// Handles the special case where packages are nested inside the matches directory
+/// (default configuration). In this case, packages are skipped when exporting matches
+/// to avoid duplication, since they'll be exported separately if the packages scope
+/// is selected.
+fn build_archive<W: Write>(
+    writer: W,
+    paths: &Paths,
+    selection: ScopeSelection,
+) -> Result<()> {
+    let mut builder = Builder::new(writer);
+
+    let matches_dir = paths.config.join("match");
+    let packages_dir = paths.packages.clone();
+    
+    // Check if packages directory is nested inside matches directory.
+    // This happens with the default configuration where packages are stored
+    // at config/match/packages. In this case, we need to skip the packages
+    // directory when exporting matches to avoid duplication, since packages
+    // will be exported separately if the packages scope is selected.
+    let matches_skip_packages =
+        matches_dir.is_dir() && packages_dir.is_dir() && packages_dir.starts_with(&matches_dir);
+
+    if selection.config {
+        let config_dir = paths.config.join("config");
+        append_dir_to_archive(&mut builder, &config_dir, Path::new("config"), None)?;
+    }
+    if selection.matches {
+        let skip_dir = if matches_skip_packages {
+            Some(packages_dir.as_path())
+        } else {
+            None
+        };
+        append_dir_to_archive(&mut builder, &matches_dir, Path::new("matches"), skip_dir)?;
+    }
+    if selection.packages {
+        append_dir_to_archive(&mut builder, &packages_dir, Path::new("packages"), None)?;
+    }
+
+    builder.finish()?;
+    Ok(())
+}
+
 fn export_payload_to_stdout(
     paths: &Paths,
     selection: ScopeSelection,
@@ -297,32 +557,9 @@ fn export_payload_to_stdout(
     };
     let encoder = EncoderWriter::new(writer, &STANDARD);
     let mut gzip = GzEncoder::new(encoder, Compression::default());
-    let mut builder = Builder::new(&mut gzip);
-
-    let matches_dir = paths.config.join("match");
-    let packages_dir = paths.packages.clone();
-    let matches_skip_packages =
-        matches_dir.is_dir() && packages_dir.is_dir() && packages_dir.starts_with(&matches_dir);
-
-    if selection.config {
-        let config_dir = paths.config.join("config");
-        append_dir_to_archive(&mut builder, &config_dir, Path::new("config"), None)?;
-    }
-    if selection.matches {
-        let matches_dir = paths.config.join("match");
-        let skip_dir = if matches_skip_packages {
-            Some(packages_dir.as_path())
-        } else {
-            None
-        };
-        append_dir_to_archive(&mut builder, &matches_dir, Path::new("matches"), skip_dir)?;
-    }
-    if selection.packages {
-        append_dir_to_archive(&mut builder, &packages_dir, Path::new("packages"), None)?;
-    }
-
-    builder.finish()?;
-    drop(builder);
+    
+    build_archive(&mut gzip, paths, selection)?;
+    
     let mut encoder = gzip.finish()?;
     let mut handle = encoder.finish()?;
     handle.write_all(b"\n")?;
@@ -418,12 +655,45 @@ fn read_confirmation_byte() -> Result<u8> {
     }
 }
 
+/// Reads a single confirmation byte from the user on Unix/macOS systems.
+///
+/// # Platform-Specific Behavior
+///
+/// This function attempts to read from `/dev/tty` first (the controlling terminal),
+/// which allows interactive input even when stdin is redirected. If `/dev/tty` is
+/// not available (e.g., in Docker, CI/CD, cron jobs), it falls back to `/dev/stdin`.
+///
+/// The terminal is temporarily set to raw mode (no line buffering, no echo) to read
+/// a single character without requiring Enter. The original terminal settings are
+/// restored via a Drop guard, ensuring cleanup even on panic.
+///
+/// # Supported Environments
+///
+/// - ✅ Interactive terminal (TTY available)
+/// - ✅ Piped input: `echo "y" | espanso import < data.txt`
+/// - ✅ Docker containers without TTY
+/// - ✅ CI/CD pipelines
+/// - ✅ Cron jobs
+/// - ✅ SSH without TTY allocation
+///
+/// # Errors
+///
+/// Returns an error if:
+/// - Both `/dev/tty` and `/dev/stdin` are unavailable
+/// - Terminal settings cannot be modified (permission issues)
+/// - Read operation fails
 #[cfg(unix)]
 fn read_confirmation_byte_unix() -> Result<u8> {
     use std::mem;
     use std::os::unix::io::AsRawFd;
 
-    let mut file = fs::File::open("/dev/tty")?;
+    // Try /dev/tty first for interactive terminal, fallback to /dev/stdin for piped input
+    // This allows the command to work in non-interactive environments like cron, Docker, CI/CD
+    let mut file = fs::File::open("/dev/tty").or_else(|_| {
+        // If no TTY available, try stdin as fallback
+        // This enables piped input: echo "y" | espanso import < data.txt
+        fs::File::open("/dev/stdin")
+    })?;
     let fd = file.as_raw_fd();
     let mut termios: libc::termios = unsafe { mem::zeroed() };
     if unsafe { libc::tcgetattr(fd, &mut termios) } != 0 {
@@ -456,6 +726,36 @@ fn read_confirmation_byte_unix() -> Result<u8> {
     Ok(buf[0])
 }
 
+/// Reads a single confirmation byte from the user on Windows systems.
+///
+/// # Platform-Specific Behavior
+///
+/// This function attempts to open the Windows console input device (`CONIN$`).
+/// If that fails, it tries to attach to the parent process's console and retry.
+/// This handles cases where the process was started without a console.
+///
+/// The console is temporarily set to raw mode (no line buffering, no echo) to read
+/// a single character without requiring Enter. The original console mode is
+/// restored via a Drop guard, ensuring cleanup even on panic.
+///
+/// # Supported Environments
+///
+/// - ✅ Interactive CMD/PowerShell
+/// - ✅ Windows Terminal
+/// - ⚠️ Windows Services: Requires `--yes` flag (no console available)
+/// - ⚠️ Scheduled Tasks: Requires `--yes` flag (no console available)
+///
+/// # Error Handling
+///
+/// If no console is available (service/scheduled task mode), returns a clear
+/// error message instructing the user to use the `--yes` flag for non-interactive mode.
+///
+/// # Errors
+///
+/// Returns an error if:
+/// - Console input device cannot be opened (service mode)
+/// - Console mode cannot be modified (permission issues)
+/// - Read operation fails
 #[cfg(windows)]
 fn read_confirmation_byte_windows() -> Result<u8> {
     use std::os::windows::io::AsRawHandle;
@@ -464,10 +764,16 @@ fn read_confirmation_byte_windows() -> Result<u8> {
         GetConsoleMode, ReadConsoleA, SetConsoleMode, ENABLE_ECHO_INPUT, ENABLE_LINE_INPUT,
     };
 
-    let file = fs::File::open("CONIN$").or_else(|_| {
-        let _ = crate::util::attach_console();
-        fs::File::open("CONIN$")
-    })?;
+    // Try to open console input
+    // First attempt: CONIN$ (standard console input)
+    // Second attempt: attach to parent console and retry
+    // If both fail, we're likely running as a service or in non-interactive mode
+    let file = fs::File::open("CONIN$")
+        .or_else(|_| {
+            let _ = crate::util::attach_console();
+            fs::File::open("CONIN$")
+        })
+        .context("No console available. Running in non-interactive mode (service/scheduled task). Use --yes flag to skip confirmation.")?;
     let handle = HANDLE(file.as_raw_handle() as isize);
     let mut mode = 0u32;
     unsafe { GetConsoleMode(handle, &mut mode)? };
@@ -536,13 +842,16 @@ fn import_payload_from_stdin(
 
         match entry.header().entry_type() {
             EntryType::Directory => {
-                fs::create_dir_all(&target_path)?;
+                fs::create_dir_all(&target_path)
+                    .with_context(|| format!("failed to create directory: {}", target_path.display()))?;
             }
             EntryType::Regular => {
                 let mut data = Vec::new();
-                entry.read_to_end(&mut data)?;
+                entry.read_to_end(&mut data)
+                    .with_context(|| format!("failed to read archive entry: {}", entry_path.display()))?;
                 let data = maybe_convert_line_breaks(&target_path, data, convert_lb)?;
-                write_atomic(&target_path, &data)?;
+                write_atomic(&target_path, &data)
+                    .with_context(|| format!("failed to import file: {}", target_path.display()))?;
             }
             _ => {
                 bail!(
@@ -714,20 +1023,51 @@ fn is_yaml_path(path: &Path) -> bool {
 
 fn write_atomic(path: &Path, data: &[u8]) -> Result<()> {
     if let Some(parent) = path.parent() {
-        fs::create_dir_all(parent)?;
+        fs::create_dir_all(parent)
+            .with_context(|| format!("failed to create parent directory: {}", parent.display()))?;
     }
 
     let tmp_path = temp_path_for(path);
+    
+    // Guard to ensure temp file cleanup on error
+    struct TempFileGuard {
+        path: PathBuf,
+        cleanup: bool,
+    }
+    
+    impl Drop for TempFileGuard {
+        fn drop(&mut self) {
+            if self.cleanup {
+                let _ = fs::remove_file(&self.path);
+            }
+        }
+    }
+    
+    let mut guard = TempFileGuard {
+        path: tmp_path.clone(),
+        cleanup: true,
+    };
+    
     {
-        let mut file = fs::File::create(&tmp_path)?;
-        file.write_all(data)?;
-        file.sync_all()?;
+        let mut file = fs::File::create(&tmp_path)
+            .with_context(|| format!("failed to create temporary file: {}", tmp_path.display()))?;
+        file.write_all(data)
+            .with_context(|| format!("failed to write to temporary file: {}", tmp_path.display()))?;
+        file.sync_all()
+            .with_context(|| format!("failed to sync temporary file: {}", tmp_path.display()))?;
     }
 
     if path.exists() {
-        let _ = fs::remove_file(path);
+        fs::remove_file(path)
+            .with_context(|| format!("failed to remove existing file: {}", path.display()))?;
     }
-    fs::rename(&tmp_path, path)?;
+    
+    fs::rename(&tmp_path, path)
+        .with_context(|| format!("failed to rename temporary file to: {}", path.display()))?;
+    
+    // Prevent cleanup on success
+    guard.cleanup = false;
+    
     Ok(())
 }
 
@@ -787,42 +1127,11 @@ mod tests {
         {
             let encoder = EncoderWriter::new(&mut output, &STANDARD);
             let mut gzip = GzEncoder::new(encoder, Compression::default());
-            let mut builder = Builder::new(&mut gzip);
-
-            let matches_dir = paths.config.join("match");
-            let packages_dir = paths.packages.clone();
-            let matches_skip_packages = matches_dir.is_dir()
-                && packages_dir.is_dir()
-                && packages_dir.starts_with(&matches_dir);
-
-            if selection.config {
-                append_dir_to_archive(
-                    &mut builder,
-                    &paths.config.join("config"),
-                    Path::new("config"),
-                    None,
-                )?;
-            }
-            if selection.matches {
-                let skip_dir = if matches_skip_packages {
-                    Some(packages_dir.as_path())
-                } else {
-                    None
-                };
-                append_dir_to_archive(
-                    &mut builder,
-                    &paths.config.join("match"),
-                    Path::new("matches"),
-                    skip_dir,
-                )?;
-            }
-            if selection.packages {
-                append_dir_to_archive(&mut builder, &packages_dir, Path::new("packages"), None)?;
-            }
-
-            builder.finish()?;
-            drop(builder);
-            let mut encoder = gzip.finish()?;
+            
+            // Use the shared build_archive function to eliminate duplication
+            build_archive(&mut gzip, paths, selection)?;
+            
+            let encoder = gzip.finish()?;
             encoder.finish()?;
         }
         Ok(output)

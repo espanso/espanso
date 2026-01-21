@@ -163,6 +163,12 @@ For example, specifying 'email' is equivalent to 'match/email.yml'."#))
     .subcommand(
       SubCommand::with_name("export")
         .about("Export Espanso data as a base64 payload for offline transfer.")
+        .long_about("Export Espanso data as a base64 payload for offline transfer.\n\n\
+EXAMPLES:\n  \
+  espanso export > backup.txt\n  \
+  espanso export --scope config,matches > backup.txt\n  \
+  espanso export --scope packages > packages-only.txt\n  \
+  espanso export --wrap 76 > backup.txt")
         .arg(
           Arg::with_name("scope")
             .long("scope")
@@ -179,6 +185,13 @@ For example, specifying 'email' is equivalent to 'match/email.yml'."#))
     .subcommand(
       SubCommand::with_name("import")
         .about("Import Espanso data from a base64 payload for offline transfer.")
+        .long_about("Import Espanso data from a base64 payload for offline transfer.\n\n\
+EXAMPLES:\n  \
+  espanso import < backup.txt\n  \
+  espanso import --scope config < config-only.txt\n  \
+  espanso import --yes < backup.txt\n  \
+  espanso import --convert-lb < backup.txt\n  \
+  cat backup.txt | espanso import --yes")
         .arg(
           Arg::with_name("scope")
             .long("scope")
