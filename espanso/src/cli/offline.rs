@@ -1130,7 +1130,7 @@ mod tests {
             // Use the shared build_archive function to eliminate duplication
             build_archive(&mut gzip, paths, selection)?;
 
-            let encoder = gzip.finish()?;
+            let mut encoder = gzip.finish()?;
             encoder.finish()?;
         }
         Ok(output)
