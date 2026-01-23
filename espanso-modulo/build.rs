@@ -130,6 +130,8 @@ fn build_native() {
 
     cc::Build::new()
         .cpp(true)
+        .file("src/sys/export_dialog/export_dialog.cpp")
+        .file("src/sys/import_dialog/import_dialog.cpp")
         .file("src/sys/form/form.cpp")
         .file("src/sys/search/search.cpp")
         .file("src/sys/common/common.cpp")
@@ -190,11 +192,12 @@ fn build_native() {
 
     let is_arm64_ci = std::env::var("CI").unwrap_or_default() == "true" && target_arch == "arm64";
 
+    let build_cocoa_dir = out_wx_dir.join("build-cocoa");
     if !out_wx_dir.is_dir()
-        || out_wx_dir
-            .join("build-cocoa")
+        || !build_cocoa_dir.exists()
+        || build_cocoa_dir
             .read_dir()
-            .expect("unable to read the `out_wx_dir` variable")
+            .expect("unable to read the `build-cocoa` directory")
             .next()
             .is_none()
     {
@@ -281,6 +284,8 @@ fn build_native() {
     let mut build = cc::Build::new();
     build
         .cpp(true)
+        .file("src/sys/export_dialog/export_dialog.cpp")
+        .file("src/sys/import_dialog/import_dialog.cpp")
         .file("src/sys/form/form.cpp")
         .file("src/sys/common/common.cpp")
         .file("src/sys/search/search.cpp")
@@ -476,6 +481,8 @@ fn build_native() {
     let mut build = cc::Build::new();
     build
         .cpp(true)
+        .file("src/sys/export_dialog/export_dialog.cpp")
+        .file("src/sys/import_dialog/import_dialog.cpp")
         .file("src/sys/form/form.cpp")
         .file("src/sys/search/search.cpp")
         .file("src/sys/common/common.cpp")

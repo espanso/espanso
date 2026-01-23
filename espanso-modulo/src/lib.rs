@@ -17,7 +17,9 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+pub mod export_dialog;
 pub mod form;
+pub mod import_dialog;
 pub mod search;
 mod sys;
 pub mod textview;

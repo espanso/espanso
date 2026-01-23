@@ -179,3 +179,27 @@ typedef struct TextViewMetadata {
     const char *title;
     const char *content;
 } TextViewMetadata;
+
+// Export Dialog
+
+typedef struct ExportDialogMetadata {
+    const char *window_icon_path;
+    const char *(*generate_export_code)(int export_config, int export_matches, int export_packages);
+} ExportDialogMetadata;
+
+// Import Dialog
+
+// Scope status constants
+const int SCOPE_STATUS_EMPTY = 0;      // No data pasted yet
+const int SCOPE_STATUS_PRESENT = 1;    // Scope found in archive
+const int SCOPE_STATUS_MISSING = 2;    // Scope not found (archive is valid but scope absent)
+const int SCOPE_STATUS_INVALID = 3;    // Archive is invalid
+
+typedef struct ImportDialogMetadata {
+    const char *window_icon_path;
+    // Returns 1 if valid, 0 if invalid. Sets scope status values.
+    int (*validate_import_data)(const char *data, int *config_status, int *matches_status, int *packages_status);
+    // Returns 1 on success, 0 on failure
+    int (*perform_import)(const char *data, int import_config, int import_matches, int import_packages,
+                          int clear_config, int clear_matches, int clear_packages);
+} ImportDialogMetadata;
