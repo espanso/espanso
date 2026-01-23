@@ -86,20 +86,21 @@ impl Middleware for ContextMenuMiddleware {
                         label: "Reload config".to_string(),
                     }),
                     MenuItem::Simple(SimpleMenuItem {
-                        id: CONTEXT_ITEM_EXPORT_CONFIG,
-                        label: "Export config".to_string(),
-                    }),
-                    MenuItem::Simple(SimpleMenuItem {
-                        id: CONTEXT_ITEM_IMPORT_CONFIG,
-                        label: "Import config".to_string(),
-                    }),
-                    MenuItem::Simple(SimpleMenuItem {
                         id: CONTEXT_ITEM_OPEN_CONFIG_FOLDER,
                         label: "Open config folder".to_string(),
                     }),
                     MenuItem::Simple(SimpleMenuItem {
                         id: CONTEXT_ITEM_SHOW_LOGS,
                         label: "Show logs".to_string(),
+                    }),
+                    MenuItem::Separator,
+                    MenuItem::Simple(SimpleMenuItem {
+                        id: CONTEXT_ITEM_EXPORT_CONFIG,
+                        label: "Export config".to_string(),
+                    }),
+                    MenuItem::Simple(SimpleMenuItem {
+                        id: CONTEXT_ITEM_IMPORT_CONFIG,
+                        label: "Import config".to_string(),
                     }),
                     MenuItem::Separator,
                     MenuItem::Simple(SimpleMenuItem {

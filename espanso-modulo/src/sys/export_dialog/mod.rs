@@ -33,8 +33,7 @@ pub fn show(
     let export_dialog_metadata = super::interop::ExportDialogMetadata {
         window_icon_path: icon_path_c
             .as_ref()
-            .map(|c| c.as_ptr())
-            .unwrap_or(std::ptr::null()),
+            .map_or(std::ptr::null(), |c| c.as_ptr()),
         generate_export_code,
     };
 
