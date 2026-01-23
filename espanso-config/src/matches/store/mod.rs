@@ -34,7 +34,10 @@ pub struct MatchSet<'a> {
     pub global_vars: Vec<&'a Variable>,
 }
 
-pub fn load(paths: &[String], config: &dyn crate::config::Config) -> (impl MatchStore, Vec<NonFatalErrorSet>) {
+pub fn load(
+    paths: &[String],
+    config: &dyn crate::config::Config,
+) -> (impl MatchStore, Vec<NonFatalErrorSet>) {
     // TODO: here we can replace the DefaultMatchStore with a caching wrapper
     // that returns the same response for the given "paths" query
     default::DefaultMatchStore::load(paths, config)

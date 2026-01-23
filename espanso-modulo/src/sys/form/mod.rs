@@ -97,8 +97,8 @@ mod interop {
 
     use super::super::interop::{
         ChoiceMetadata, ChoiceType_DROPDOWN, ChoiceType_LIST, FieldMetadata, FieldType,
-        FieldType_CHECKBOX, FieldType_CHOICE, FieldType_LABEL, FieldType_ROW, FieldType_TEXT, FormMetadata,
-        Interoperable, LabelMetadata, RowMetadata, TextMetadata,
+        FieldType_CHECKBOX, FieldType_CHOICE, FieldType_LABEL, FieldType_ROW, FieldType_TEXT,
+        FormMetadata, Interoperable, LabelMetadata, RowMetadata, TextMetadata,
     };
     use super::types;
     use std::ffi::{c_void, CString};
@@ -206,9 +206,7 @@ mod interop {
                     let owned_metadata: OwnedChoiceMetadata = metadata.into();
                     Box::new(owned_metadata)
                 }
-                types::FieldType::Checkbox(default_value) => {
-                    Box::new(default_value)
-                }
+                types::FieldType::Checkbox(default_value) => Box::new(default_value),
                 types::FieldType::Unknown => panic!("unknown field type"),
             };
 

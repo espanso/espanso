@@ -47,12 +47,14 @@ extern "C" fn generate_export_code_callback(
             export_packages != 0,
         ) {
             Ok(export_code) => {
-                let c_string = CString::new(export_code).unwrap_or_else(|_| CString::new("Error: Invalid export code").unwrap());
+                let c_string = CString::new(export_code)
+                    .unwrap_or_else(|_| CString::new("Error: Invalid export code").unwrap());
                 c_string.into_raw()
             }
             Err(err) => {
                 let error_msg = format!("Error: {}", err);
-                let c_string = CString::new(error_msg).unwrap_or_else(|_| CString::new("Error generating export code").unwrap());
+                let c_string = CString::new(error_msg)
+                    .unwrap_or_else(|_| CString::new("Error generating export code").unwrap());
                 c_string.into_raw()
             }
         }
@@ -77,8 +79,12 @@ pub fn export_dialog_main(args: &ArgMatches, icon_paths: &IconPaths) -> i32 {
 
     // Show the custom export dialog with checkboxes and live preview
     espanso_modulo::export_dialog::show(
-        icon_paths.wizard_icon.as_ref().map(|p| p.to_string_lossy().to_string()).as_deref(),
-        generate_export_code_callback
+        icon_paths
+            .wizard_icon
+            .as_ref()
+            .map(|p| p.to_string_lossy().to_string())
+            .as_deref(),
+        generate_export_code_callback,
     );
 
     // Clean up the context

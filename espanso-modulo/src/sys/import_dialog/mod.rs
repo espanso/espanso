@@ -37,8 +37,8 @@ pub fn show(
         clear_packages: std::os::raw::c_int,
     ) -> std::os::raw::c_int,
 ) {
-    let icon_path_c = icon_path
-        .map(|path| CString::new(path).expect("unable to create CString for icon path"));
+    let icon_path_c =
+        icon_path.map(|path| CString::new(path).expect("unable to create CString for icon path"));
 
     let import_dialog_metadata = super::interop::ImportDialogMetadata {
         window_icon_path: icon_path_c

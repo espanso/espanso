@@ -34,7 +34,10 @@ pub struct DefaultMatchStore {
 }
 
 impl DefaultMatchStore {
-    pub fn load(paths: &[String], config: &dyn crate::config::Config) -> (Self, Vec<NonFatalErrorSet>) {
+    pub fn load(
+        paths: &[String],
+        config: &dyn crate::config::Config,
+    ) -> (Self, Vec<NonFatalErrorSet>) {
         let mut groups = HashMap::new();
         let mut non_fatal_error_sets = Vec::new();
 
@@ -161,53 +164,145 @@ mod tests {
     struct MockConfig;
 
     impl crate::config::Config for MockConfig {
-        fn id(&self) -> i32 { 0 }
-        fn label(&self) -> &'static str { "mock" }
-        fn match_paths(&self) -> &[String] { &[] }
-        fn backend(&self) -> crate::config::Backend { crate::config::Backend::Inject }
-        fn enable(&self) -> bool { true }
-        fn clipboard_threshold(&self) -> usize { 100 }
-        fn pre_paste_delay(&self) -> usize { 100 }
-        fn paste_shortcut_event_delay(&self) -> usize { 10 }
-        fn paste_shortcut(&self) -> Option<String> { None }
-        fn disable_x11_fast_inject(&self) -> bool { false }
-        fn toggle_key(&self) -> Option<crate::config::ToggleKey> { None }
-        fn auto_restart(&self) -> bool { true }
-        fn preserve_clipboard(&self) -> bool { true }
-        fn restore_clipboard_delay(&self) -> usize { 300 }
-        fn inject_delay(&self) -> Option<usize> { None }
-        fn key_delay(&self) -> Option<usize> { None }
-        fn evdev_modifier_delay(&self) -> Option<usize> { None }
-        fn word_separators(&self) -> Vec<String> { vec![" ".to_string()] }
-        fn backspace_limit(&self) -> usize { 5 }
-        fn apply_patch(&self) -> bool { true }
-        fn keyboard_layout(&self) -> Option<crate::config::RMLVOConfig> { None }
-        fn search_trigger(&self) -> Option<String> { None }
-        fn search_shortcut(&self) -> Option<String> { None }
-        fn undo_backspace(&self) -> bool { true }
-        fn show_notifications(&self) -> bool { true }
-        fn show_icon(&self) -> bool { true }
-        fn secure_input_notification(&self) -> bool { true }
-        fn stats_enabled(&self) -> bool { true }
-        fn post_form_delay(&self) -> usize { 200 }
-        fn max_form_width(&self) -> usize { 800 }
-        fn max_form_height(&self) -> usize { 600 }
-        fn max_regex_buffer_size(&self) -> usize { 30 }
-        fn post_search_delay(&self) -> usize { 200 }
-        fn emulate_alt_codes(&self) -> bool { false }
-        fn x11_use_xclip_backend(&self) -> bool { false }
-        fn x11_use_xdotool_backend(&self) -> bool { false }
-        fn win32_exclude_orphan_events(&self) -> bool { true }
-        fn win32_keyboard_layout_cache_interval(&self) -> i64 { 2000 }
-        fn is_match(&self, _app: &crate::config::AppProperties) -> bool { true }
+        fn id(&self) -> i32 {
+            0
+        }
+        fn label(&self) -> &'static str {
+            "mock"
+        }
+        fn match_paths(&self) -> &[String] {
+            &[]
+        }
+        fn backend(&self) -> crate::config::Backend {
+            crate::config::Backend::Inject
+        }
+        fn enable(&self) -> bool {
+            true
+        }
+        fn clipboard_threshold(&self) -> usize {
+            100
+        }
+        fn pre_paste_delay(&self) -> usize {
+            100
+        }
+        fn paste_shortcut_event_delay(&self) -> usize {
+            10
+        }
+        fn paste_shortcut(&self) -> Option<String> {
+            None
+        }
+        fn disable_x11_fast_inject(&self) -> bool {
+            false
+        }
+        fn toggle_key(&self) -> Option<crate::config::ToggleKey> {
+            None
+        }
+        fn auto_restart(&self) -> bool {
+            true
+        }
+        fn preserve_clipboard(&self) -> bool {
+            true
+        }
+        fn restore_clipboard_delay(&self) -> usize {
+            300
+        }
+        fn inject_delay(&self) -> Option<usize> {
+            None
+        }
+        fn key_delay(&self) -> Option<usize> {
+            None
+        }
+        fn evdev_modifier_delay(&self) -> Option<usize> {
+            None
+        }
+        fn word_separators(&self) -> Vec<String> {
+            vec![" ".to_string()]
+        }
+        fn backspace_limit(&self) -> usize {
+            5
+        }
+        fn apply_patch(&self) -> bool {
+            true
+        }
+        fn keyboard_layout(&self) -> Option<crate::config::RMLVOConfig> {
+            None
+        }
+        fn search_trigger(&self) -> Option<String> {
+            None
+        }
+        fn search_shortcut(&self) -> Option<String> {
+            None
+        }
+        fn undo_backspace(&self) -> bool {
+            true
+        }
+        fn show_notifications(&self) -> bool {
+            true
+        }
+        fn show_icon(&self) -> bool {
+            true
+        }
+        fn secure_input_notification(&self) -> bool {
+            true
+        }
+        fn stats_enabled(&self) -> bool {
+            true
+        }
+        fn post_form_delay(&self) -> usize {
+            200
+        }
+        fn max_form_width(&self) -> usize {
+            800
+        }
+        fn max_form_height(&self) -> usize {
+            600
+        }
+        fn max_regex_buffer_size(&self) -> usize {
+            30
+        }
+        fn post_search_delay(&self) -> usize {
+            200
+        }
+        fn emulate_alt_codes(&self) -> bool {
+            false
+        }
+        fn x11_use_xclip_backend(&self) -> bool {
+            false
+        }
+        fn x11_use_xdotool_backend(&self) -> bool {
+            false
+        }
+        fn win32_exclude_orphan_events(&self) -> bool {
+            true
+        }
+        fn win32_keyboard_layout_cache_interval(&self) -> i64 {
+            2000
+        }
+        fn is_match(&self, _app: &crate::config::AppProperties) -> bool {
+            true
+        }
 
-        fn triggermarker_prefix(&self) -> Option<String> { None }
-        fn triggermarker_suffix(&self) -> Option<String> { None }
-        fn triggermarker_replace_mode(&self) -> String { "agnostic".to_string() }
-        fn triggermarker_prefix_replace_mode(&self) -> Option<String> { None }
-        fn triggermarker_suffix_replace_mode(&self) -> Option<String> { None }
-        fn triggermarker_smart_chars(&self) -> Vec<String> { vec![":".to_string(), ";".to_string()] }
-        fn triggermarker_smart_remove_multiple(&self) -> bool { false }
+        fn triggermarker_prefix(&self) -> Option<String> {
+            None
+        }
+        fn triggermarker_suffix(&self) -> Option<String> {
+            None
+        }
+        fn triggermarker_replace_mode(&self) -> String {
+            "agnostic".to_string()
+        }
+        fn triggermarker_prefix_replace_mode(&self) -> Option<String> {
+            None
+        }
+        fn triggermarker_suffix_replace_mode(&self) -> Option<String> {
+            None
+        }
+        fn triggermarker_smart_chars(&self) -> Vec<String> {
+            vec![":".to_string(), ";".to_string()]
+        }
+        fn triggermarker_smart_remove_multiple(&self) -> bool {
+            false
+        }
     }
 
     fn create_match(trigger: &str, replace: &str) -> Match {
@@ -647,10 +742,13 @@ mod tests {
             )
             .unwrap();
 
-            let (match_store, non_fatal_error_sets) = DefaultMatchStore::load(&[
-                base_file.to_string_lossy().to_string(),
-                sub_file.to_string_lossy().to_string(),
-            ], &MockConfig);
+            let (match_store, non_fatal_error_sets) = DefaultMatchStore::load(
+                &[
+                    base_file.to_string_lossy().to_string(),
+                    sub_file.to_string_lossy().to_string(),
+                ],
+                &MockConfig,
+            );
             assert_eq!(non_fatal_error_sets.len(), 0);
 
             let match_set = match_store.query(&[

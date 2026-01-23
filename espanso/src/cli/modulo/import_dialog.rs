@@ -80,9 +80,21 @@ extern "C" fn validate_import_data_callback(
     match validate_archive_and_detect_scopes(data_str) {
         Ok((has_config, has_matches, has_packages)) => {
             unsafe {
-                *config_status = if has_config { SCOPE_STATUS_PRESENT } else { SCOPE_STATUS_MISSING };
-                *matches_status = if has_matches { SCOPE_STATUS_PRESENT } else { SCOPE_STATUS_MISSING };
-                *packages_status = if has_packages { SCOPE_STATUS_PRESENT } else { SCOPE_STATUS_MISSING };
+                *config_status = if has_config {
+                    SCOPE_STATUS_PRESENT
+                } else {
+                    SCOPE_STATUS_MISSING
+                };
+                *matches_status = if has_matches {
+                    SCOPE_STATUS_PRESENT
+                } else {
+                    SCOPE_STATUS_MISSING
+                };
+                *packages_status = if has_packages {
+                    SCOPE_STATUS_PRESENT
+                } else {
+                    SCOPE_STATUS_MISSING
+                };
             }
             // Valid if at least one scope is present
             if has_config || has_matches || has_packages {
@@ -94,7 +106,15 @@ extern "C" fn validate_import_data_callback(
         Err(e) => {
             error!("Import validation error: {}", e);
             // Write error to a temp file for debugging
-            let _ = std::fs::write("/tmp/espanso_import_debug.txt", format!("Validation error: {}\nInput length: {}\nFirst 100 chars: {}", e, data_str.len(), &data_str[..data_str.len().min(100)]));
+            let _ = std::fs::write(
+                "/tmp/espanso_import_debug.txt",
+                format!(
+                    "Validation error: {}\nInput length: {}\nFirst 100 chars: {}",
+                    e,
+                    data_str.len(),
+                    &data_str[..data_str.len().min(100)]
+                ),
+            );
             0
         }
     }
@@ -105,12 +125,15 @@ fn validate_archive_and_detect_scopes(data: &str) -> Result<(bool, bool, bool)> 
     let filtered: String = data.chars().filter(|c| !c.is_whitespace()).collect();
 
     // Decode base64
-    let decoded = STANDARD.decode(&filtered).context("invalid base64 encoding")?;
+    let decoded = STANDARD
+        .decode(&filtered)
+        .context("invalid base64 encoding")?;
 
     // Decompress gzip
     let mut gzip = GzDecoder::new(&decoded[..]);
     let mut tar_data = Vec::new();
-    gzip.read_to_end(&mut tar_data).context("invalid gzip data")?;
+    gzip.read_to_end(&mut tar_data)
+        .context("invalid gzip data")?;
 
     // Read tar archive
     let mut archive = Archive::new(&tar_data[..]);
@@ -201,12 +224,15 @@ fn perform_import_internal(
     let filtered: String = data.chars().filter(|c| !c.is_whitespace()).collect();
 
     // Decode base64
-    let decoded = STANDARD.decode(&filtered).context("invalid base64 encoding")?;
+    let decoded = STANDARD
+        .decode(&filtered)
+        .context("invalid base64 encoding")?;
 
     // Decompress gzip
     let mut gzip = GzDecoder::new(&decoded[..]);
     let mut tar_data = Vec::new();
-    gzip.read_to_end(&mut tar_data).context("invalid gzip data")?;
+    gzip.read_to_end(&mut tar_data)
+        .context("invalid gzip data")?;
 
     // Prepare target directories
     let config_dir = config_path.join("config");
@@ -252,19 +278,23 @@ fn perform_import_internal(
 
     for entry in archive.entries().context("invalid tar archive")? {
         let mut entry = entry.context("failed to read archive entry")?;
-        let entry_path = entry.path().context("failed to read entry path")?.to_path_buf();
+        let entry_path = entry
+            .path()
+            .context("failed to read entry path")?
+            .to_path_buf();
         let path_str = entry_path.to_string_lossy();
 
         // Determine which scope this entry belongs to
-        let (target_root, should_import) = if path_str.starts_with("config/") || path_str == "config" {
-            (Some(&config_dir), import_config)
-        } else if path_str.starts_with("matches/") || path_str == "matches" {
-            (Some(&matches_dir), import_matches)
-        } else if path_str.starts_with("packages/") || path_str == "packages" {
-            (Some(&packages_dir), import_packages)
-        } else {
-            (None, false)
-        };
+        let (target_root, should_import) =
+            if path_str.starts_with("config/") || path_str == "config" {
+                (Some(&config_dir), import_config)
+            } else if path_str.starts_with("matches/") || path_str == "matches" {
+                (Some(&matches_dir), import_matches)
+            } else if path_str.starts_with("packages/") || path_str == "packages" {
+                (Some(&packages_dir), import_packages)
+            } else {
+                (None, false)
+            };
 
         if !should_import || target_root.is_none() {
             continue;
@@ -289,19 +319,22 @@ fn perform_import_internal(
 
         match entry.header().entry_type() {
             EntryType::Directory => {
-                fs::create_dir_all(&target_path)
-                    .with_context(|| format!("failed to create directory: {}", target_path.display()))?;
+                fs::create_dir_all(&target_path).with_context(|| {
+                    format!("failed to create directory: {}", target_path.display())
+                })?;
             }
             EntryType::Regular => {
                 // Ensure parent directory exists
                 if let Some(parent) = target_path.parent() {
-                    fs::create_dir_all(parent)
-                        .with_context(|| format!("failed to create parent directory: {}", parent.display()))?;
+                    fs::create_dir_all(parent).with_context(|| {
+                        format!("failed to create parent directory: {}", parent.display())
+                    })?;
                 }
 
                 let mut file_data = Vec::new();
-                entry.read_to_end(&mut file_data)
-                    .with_context(|| format!("failed to read archive entry: {}", entry_path.display()))?;
+                entry.read_to_end(&mut file_data).with_context(|| {
+                    format!("failed to read archive entry: {}", entry_path.display())
+                })?;
 
                 fs::write(&target_path, &file_data)
                     .with_context(|| format!("failed to write file: {}", target_path.display()))?;
@@ -363,7 +396,11 @@ pub fn import_dialog_main(args: &ArgMatches, icon_paths: &IconPaths) -> i32 {
 
     // Show the import dialog
     espanso_modulo::import_dialog::show(
-        icon_paths.wizard_icon.as_ref().map(|p| p.to_string_lossy().to_string()).as_deref(),
+        icon_paths
+            .wizard_icon
+            .as_ref()
+            .map(|p| p.to_string_lossy().to_string())
+            .as_deref(),
         validate_import_data_callback,
         perform_import_callback,
     );

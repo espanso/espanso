@@ -262,7 +262,12 @@ pub fn initialize_and_spawn(
             let icon_adapter = IconHandlerAdapter::new(&*ui_remote);
             let secure_input_adapter = SecureInputManagerAdapter::new();
             let text_ui_adapter = TextUIHandlerAdapter::new(&modulo_text_ui, &paths);
-            let export_import_adapter = dispatch::executor::export_import::ExportImportHandlerAdapter::new(&modulo_manager, &modulo_form_ui, &paths);
+            let export_import_adapter =
+                dispatch::executor::export_import::ExportImportHandlerAdapter::new(
+                    &modulo_manager,
+                    &modulo_form_ui,
+                    &paths,
+                );
             let dispatcher = espanso_engine::dispatch::default(
                 &event_injector,
                 &clipboard_injector,

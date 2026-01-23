@@ -18,7 +18,8 @@
  */
 
 use super::{
-    ContextMenuHandler, Event, ExportImportHandler, IconHandler, ImageInjector, SecureInputManager, TextUIHandler,
+    ContextMenuHandler, Event, ExportImportHandler, IconHandler, ImageInjector, SecureInputManager,
+    TextUIHandler,
 };
 use super::{Dispatcher, Executor, HtmlInjector, KeyInjector, ModeProvider, TextInjector};
 

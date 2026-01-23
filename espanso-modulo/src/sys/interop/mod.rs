@@ -199,7 +199,11 @@ pub struct TextViewMetadata {
 #[derive(Debug, Copy, Clone)]
 pub struct ExportDialogMetadata {
     pub window_icon_path: *const c_char,
-    pub generate_export_code: extern "C" fn(export_config: c_int, export_matches: c_int, export_packages: c_int) -> *const c_char,
+    pub generate_export_code: extern "C" fn(
+        export_config: c_int,
+        export_matches: c_int,
+        export_packages: c_int,
+    ) -> *const c_char,
 }
 
 // Scope status constants for import validation

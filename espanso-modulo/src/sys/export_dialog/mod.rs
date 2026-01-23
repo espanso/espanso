@@ -27,8 +27,8 @@ pub fn show(
         export_packages: std::os::raw::c_int,
     ) -> *const std::os::raw::c_char,
 ) {
-    let icon_path_c = icon_path
-        .map(|path| CString::new(path).expect("unable to create CString for icon path"));
+    let icon_path_c =
+        icon_path.map(|path| CString::new(path).expect("unable to create CString for icon path"));
 
     let export_dialog_metadata = super::interop::ExportDialogMetadata {
         window_icon_path: icon_path_c

@@ -89,7 +89,12 @@ impl Importer for YAMLImporter {
 
         let mut matches = Vec::new();
         for yaml_match in yaml_group.matches.clone().unwrap_or_default() {
-            match try_convert_into_match(yaml_match, false, yaml_group.match_defaults.as_ref(), Some(config)) {
+            match try_convert_into_match(
+                yaml_match,
+                false,
+                yaml_group.match_defaults.as_ref(),
+                Some(config),
+            ) {
                 Ok((m, warnings)) => {
                     matches.push(m);
                     non_fatal_errors.extend(warnings.into_iter().map(ErrorRecord::warn));
@@ -176,9 +181,10 @@ fn apply_prefix(
         let mut cleaned = trigger.to_string();
 
         // Remove leading smart chars if prefix is set or if smart char exists
-        let has_leading_smart_char = cleaned.chars().next().is_some_and(|c| {
-            smart_chars.iter().any(|s| s.starts_with(c))
-        });
+        let has_leading_smart_char = cleaned
+            .chars()
+            .next()
+            .is_some_and(|c| smart_chars.iter().any(|s| s.starts_with(c)));
         if !prefix.is_empty() || has_leading_smart_char {
             cleaned = remove_leading_smart_chars(&cleaned, smart_chars, remove_multiple);
         }
@@ -204,9 +210,10 @@ fn apply_suffix(
         let mut cleaned = trigger.to_string();
 
         // Remove trailing smart chars if suffix is set or if smart char exists
-        let has_trailing_smart_char = cleaned.chars().next_back().is_some_and(|c| {
-            smart_chars.iter().any(|s| s.starts_with(c))
-        });
+        let has_trailing_smart_char = cleaned
+            .chars()
+            .next_back()
+            .is_some_and(|c| smart_chars.iter().any(|s| s.starts_with(c)));
         if !suffix.is_empty() || has_trailing_smart_char {
             cleaned = remove_trailing_smart_chars(&cleaned, smart_chars, remove_multiple);
         }
@@ -339,8 +346,15 @@ pub fn try_convert_into_match(
     };
 
     // Resolve triggermarker configuration (3-level precedence)
-    let (global_triggermarker_prefix, global_triggermarker_suffix, global_replace_mode,
-         global_prefix_mode, global_suffix_mode, global_smart_chars, global_remove_multiple) = if let Some(cfg) = config {
+    let (
+        global_triggermarker_prefix,
+        global_triggermarker_suffix,
+        global_replace_mode,
+        global_prefix_mode,
+        global_suffix_mode,
+        global_smart_chars,
+        global_remove_multiple,
+    ) = if let Some(cfg) = config {
         (
             cfg.triggermarker_prefix(),
             cfg.triggermarker_suffix(),
@@ -351,7 +365,15 @@ pub fn try_convert_into_match(
             cfg.triggermarker_smart_remove_multiple(),
         )
     } else {
-        (None, None, "agnostic".to_string(), None, None, vec![], false)
+        (
+            None,
+            None,
+            "agnostic".to_string(),
+            None,
+            None,
+            vec![],
+            false,
+        )
     };
 
     // Match → defaults → global
@@ -667,60 +689,157 @@ mod tests {
                 triggermarker_replace_mode: "agnostic".to_string(),
                 triggermarker_prefix_replace_mode: None,
                 triggermarker_suffix_replace_mode: None,
-                triggermarker_smart_chars: vec![":".to_string(), ";".to_string(), "&".to_string(), "%".to_string()],
+                triggermarker_smart_chars: vec![
+                    ":".to_string(),
+                    ";".to_string(),
+                    "&".to_string(),
+                    "%".to_string(),
+                ],
                 triggermarker_smart_remove_multiple: false,
             }
         }
     }
 
     impl crate::config::Config for MockConfig {
-        fn id(&self) -> i32 { 0 }
-        fn label(&self) -> &'static str { "mock" }
-        fn match_paths(&self) -> &[String] { &[] }
-        fn backend(&self) -> crate::config::Backend { crate::config::Backend::Inject }
-        fn enable(&self) -> bool { true }
-        fn clipboard_threshold(&self) -> usize { 100 }
-        fn pre_paste_delay(&self) -> usize { 100 }
-        fn paste_shortcut_event_delay(&self) -> usize { 10 }
-        fn paste_shortcut(&self) -> Option<String> { None }
-        fn disable_x11_fast_inject(&self) -> bool { false }
-        fn toggle_key(&self) -> Option<crate::config::ToggleKey> { None }
-        fn auto_restart(&self) -> bool { true }
-        fn preserve_clipboard(&self) -> bool { true }
-        fn restore_clipboard_delay(&self) -> usize { 300 }
-        fn inject_delay(&self) -> Option<usize> { None }
-        fn key_delay(&self) -> Option<usize> { None }
-        fn evdev_modifier_delay(&self) -> Option<usize> { None }
-        fn word_separators(&self) -> Vec<String> { vec![" ".to_string()] }
-        fn backspace_limit(&self) -> usize { 5 }
-        fn apply_patch(&self) -> bool { true }
-        fn keyboard_layout(&self) -> Option<crate::config::RMLVOConfig> { None }
-        fn search_trigger(&self) -> Option<String> { None }
-        fn search_shortcut(&self) -> Option<String> { None }
-        fn undo_backspace(&self) -> bool { true }
-        fn show_notifications(&self) -> bool { true }
-        fn show_icon(&self) -> bool { true }
-        fn secure_input_notification(&self) -> bool { true }
-        fn stats_enabled(&self) -> bool { true }
-        fn post_form_delay(&self) -> usize { 200 }
-        fn max_form_width(&self) -> usize { 800 }
-        fn max_form_height(&self) -> usize { 600 }
-        fn max_regex_buffer_size(&self) -> usize { 30 }
-        fn post_search_delay(&self) -> usize { 200 }
-        fn emulate_alt_codes(&self) -> bool { false }
-        fn x11_use_xclip_backend(&self) -> bool { false }
-        fn x11_use_xdotool_backend(&self) -> bool { false }
-        fn win32_exclude_orphan_events(&self) -> bool { true }
-        fn win32_keyboard_layout_cache_interval(&self) -> i64 { 2000 }
-        fn is_match(&self, _app: &crate::config::AppProperties) -> bool { true }
+        fn id(&self) -> i32 {
+            0
+        }
+        fn label(&self) -> &'static str {
+            "mock"
+        }
+        fn match_paths(&self) -> &[String] {
+            &[]
+        }
+        fn backend(&self) -> crate::config::Backend {
+            crate::config::Backend::Inject
+        }
+        fn enable(&self) -> bool {
+            true
+        }
+        fn clipboard_threshold(&self) -> usize {
+            100
+        }
+        fn pre_paste_delay(&self) -> usize {
+            100
+        }
+        fn paste_shortcut_event_delay(&self) -> usize {
+            10
+        }
+        fn paste_shortcut(&self) -> Option<String> {
+            None
+        }
+        fn disable_x11_fast_inject(&self) -> bool {
+            false
+        }
+        fn toggle_key(&self) -> Option<crate::config::ToggleKey> {
+            None
+        }
+        fn auto_restart(&self) -> bool {
+            true
+        }
+        fn preserve_clipboard(&self) -> bool {
+            true
+        }
+        fn restore_clipboard_delay(&self) -> usize {
+            300
+        }
+        fn inject_delay(&self) -> Option<usize> {
+            None
+        }
+        fn key_delay(&self) -> Option<usize> {
+            None
+        }
+        fn evdev_modifier_delay(&self) -> Option<usize> {
+            None
+        }
+        fn word_separators(&self) -> Vec<String> {
+            vec![" ".to_string()]
+        }
+        fn backspace_limit(&self) -> usize {
+            5
+        }
+        fn apply_patch(&self) -> bool {
+            true
+        }
+        fn keyboard_layout(&self) -> Option<crate::config::RMLVOConfig> {
+            None
+        }
+        fn search_trigger(&self) -> Option<String> {
+            None
+        }
+        fn search_shortcut(&self) -> Option<String> {
+            None
+        }
+        fn undo_backspace(&self) -> bool {
+            true
+        }
+        fn show_notifications(&self) -> bool {
+            true
+        }
+        fn show_icon(&self) -> bool {
+            true
+        }
+        fn secure_input_notification(&self) -> bool {
+            true
+        }
+        fn stats_enabled(&self) -> bool {
+            true
+        }
+        fn post_form_delay(&self) -> usize {
+            200
+        }
+        fn max_form_width(&self) -> usize {
+            800
+        }
+        fn max_form_height(&self) -> usize {
+            600
+        }
+        fn max_regex_buffer_size(&self) -> usize {
+            30
+        }
+        fn post_search_delay(&self) -> usize {
+            200
+        }
+        fn emulate_alt_codes(&self) -> bool {
+            false
+        }
+        fn x11_use_xclip_backend(&self) -> bool {
+            false
+        }
+        fn x11_use_xdotool_backend(&self) -> bool {
+            false
+        }
+        fn win32_exclude_orphan_events(&self) -> bool {
+            true
+        }
+        fn win32_keyboard_layout_cache_interval(&self) -> i64 {
+            2000
+        }
+        fn is_match(&self, _app: &crate::config::AppProperties) -> bool {
+            true
+        }
 
-        fn triggermarker_prefix(&self) -> Option<String> { self.triggermarker_prefix.clone() }
-        fn triggermarker_suffix(&self) -> Option<String> { self.triggermarker_suffix.clone() }
-        fn triggermarker_replace_mode(&self) -> String { self.triggermarker_replace_mode.clone() }
-        fn triggermarker_prefix_replace_mode(&self) -> Option<String> { self.triggermarker_prefix_replace_mode.clone() }
-        fn triggermarker_suffix_replace_mode(&self) -> Option<String> { self.triggermarker_suffix_replace_mode.clone() }
-        fn triggermarker_smart_chars(&self) -> Vec<String> { self.triggermarker_smart_chars.clone() }
-        fn triggermarker_smart_remove_multiple(&self) -> bool { self.triggermarker_smart_remove_multiple }
+        fn triggermarker_prefix(&self) -> Option<String> {
+            self.triggermarker_prefix.clone()
+        }
+        fn triggermarker_suffix(&self) -> Option<String> {
+            self.triggermarker_suffix.clone()
+        }
+        fn triggermarker_replace_mode(&self) -> String {
+            self.triggermarker_replace_mode.clone()
+        }
+        fn triggermarker_prefix_replace_mode(&self) -> Option<String> {
+            self.triggermarker_prefix_replace_mode.clone()
+        }
+        fn triggermarker_suffix_replace_mode(&self) -> Option<String> {
+            self.triggermarker_suffix_replace_mode.clone()
+        }
+        fn triggermarker_smart_chars(&self) -> Vec<String> {
+            self.triggermarker_smart_chars.clone()
+        }
+        fn triggermarker_smart_remove_multiple(&self) -> bool {
+            self.triggermarker_smart_remove_multiple
+        }
     }
 
     fn create_match_with_warnings(
@@ -728,7 +847,8 @@ mod tests {
         use_compatibility_mode: bool,
     ) -> Result<(Match, Vec<Warning>)> {
         let yaml_match: YAMLMatch = serde_norway::from_str(yaml)?;
-        let (mut m, warnings) = try_convert_into_match(yaml_match, use_compatibility_mode, None, None)?;
+        let (mut m, warnings) =
+            try_convert_into_match(yaml_match, use_compatibility_mode, None, None)?;
 
         // Reset the IDs to correctly compare them
         m.id = 0;
@@ -1257,7 +1377,8 @@ mod tests {
 
             let importer = YAMLImporter::new();
             let config = MockConfig::default();
-            let (mut group, non_fatal_error_set) = importer.load_group(&base_file, &config).unwrap();
+            let (mut group, non_fatal_error_set) =
+                importer.load_group(&base_file, &config).unwrap();
             // The invalid import path should be reported as error
             assert_eq!(non_fatal_error_set.unwrap().errors.len(), 1);
 
@@ -1723,12 +1844,7 @@ matches:
 
         let yaml_match = &yaml_group.matches.as_ref().unwrap()[0];
         let config = MockConfig::default();
-        let result = try_convert_into_match(
-            yaml_match.clone(),
-            false,
-            None,
-            Some(&config),
-        );
+        let result = try_convert_into_match(yaml_match.clone(), false, None, Some(&config));
 
         assert!(result.is_err());
         assert!(result.unwrap_err().to_string().contains("alphanumeric"));

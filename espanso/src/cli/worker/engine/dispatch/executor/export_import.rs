@@ -40,7 +40,11 @@ pub struct ExportImportHandlerAdapter<'a> {
 }
 
 impl<'a> ExportImportHandlerAdapter<'a> {
-    pub fn new(modulo_manager: &'a ModuloManager, form_ui: &'a dyn FormUI, paths: &'a Paths) -> Self {
+    pub fn new(
+        modulo_manager: &'a ModuloManager,
+        form_ui: &'a dyn FormUI,
+        paths: &'a Paths,
+    ) -> Self {
         Self {
             modulo_manager,
             form_ui,
@@ -64,12 +68,14 @@ extern "C" fn generate_export_code_callback(
             export_packages != 0,
         ) {
             Ok(export_code) => {
-                let c_string = CString::new(export_code).unwrap_or_else(|_| CString::new("Error: Invalid export code").unwrap());
+                let c_string = CString::new(export_code)
+                    .unwrap_or_else(|_| CString::new("Error: Invalid export code").unwrap());
                 c_string.into_raw()
             }
             Err(err) => {
                 let error_msg = format!("Error: {}", err);
-                let c_string = CString::new(error_msg).unwrap_or_else(|_| CString::new("Error generating export code").unwrap());
+                let c_string = CString::new(error_msg)
+                    .unwrap_or_else(|_| CString::new("Error generating export code").unwrap());
                 c_string.into_raw()
             }
         }
@@ -83,11 +89,17 @@ impl ExportImportHandler for ExportImportHandlerAdapter<'_> {
     fn handle_export(&self) -> anyhow::Result<()> {
         let runtime_path = self.paths.runtime.to_string_lossy().to_string();
         let config_path = self.paths.config.to_string_lossy().to_string();
-        
+
         // Show the export dialog with paths passed as arguments (spawned as separate process)
         self.modulo_manager.spawn(
-            &["export_dialog", "--runtime-path", &runtime_path, "--config-path", &config_path],
-            ""
+            &[
+                "export_dialog",
+                "--runtime-path",
+                &runtime_path,
+                "--config-path",
+                &config_path,
+            ],
+            "",
         )?;
 
         Ok(())
@@ -97,10 +109,8 @@ impl ExportImportHandler for ExportImportHandlerAdapter<'_> {
         let config_path = self.paths.config.to_string_lossy().to_string();
 
         // Show the import dialog (spawned as separate process)
-        self.modulo_manager.spawn(
-            &["import_dialog", "--config-path", &config_path],
-            ""
-        )?;
+        self.modulo_manager
+            .spawn(&["import_dialog", "--config-path", &config_path], "")?;
 
         Ok(())
     }

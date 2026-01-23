@@ -112,7 +112,9 @@ use std::{
 };
 
 use anyhow::{bail, Context, Result};
-use base64::{engine::general_purpose::STANDARD, read::DecoderReader, write::EncoderWriter, Engine};
+use base64::{
+    engine::general_purpose::STANDARD, read::DecoderReader, write::EncoderWriter, Engine,
+};
 use flate2::{read::GzDecoder, write::GzEncoder, Compression};
 use tar::{Archive, Builder, EntryType};
 use walkdir::WalkDir;
@@ -1157,13 +1159,13 @@ pub fn export_config_to_string(
         packages: config_dir.join("match").join("packages"),
         is_portable_mode: false,
     };
-    
+
     let selection = ScopeSelection {
         config: export_config,
         matches: export_matches,
         packages: export_packages,
     };
-    
+
     let bytes = export_to_vec(&paths, selection)?;
     // bytes is already base64-encoded (export_to_vec writes through EncoderWriter)
     // so just convert to String
