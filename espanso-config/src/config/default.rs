@@ -24,3 +24,7 @@ pub const DEFAULT_RESTORE_CLIPBOARD_DELAY: usize = 300;
 pub const DEFAULT_POST_FORM_DELAY: usize = 200;
 pub const DEFAULT_POST_SEARCH_DELAY: usize = 200;
 pub const DEFAULT_MAX_REGEX_BUFFER_SIZE: usize = 30;
+
+pub const DEFAULT_TRIGGERMARKER_REPLACE_MODE: &str = "agnostic";
+pub const DEFAULT_TRIGGERMARKER_SMART_CHARS: &[&str] = &[":", ";", "&", "%"];
+pub const DEFAULT_TRIGGERMARKER_SMART_REMOVE_MULTIPLE: bool = false;

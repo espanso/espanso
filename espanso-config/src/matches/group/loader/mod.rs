@@ -31,13 +31,20 @@ pub mod yaml;
 
 trait Importer {
     fn is_supported(&self, extension: &str) -> bool;
-    fn load_group(&self, path: &Path) -> Result<(MatchGroup, Option<NonFatalErrorSet>)>;
+    fn load_group(
+        &self,
+        path: &Path,
+        config: &dyn crate::config::Config,
+    ) -> Result<(MatchGroup, Option<NonFatalErrorSet>)>;
 }
 
 static IMPORTERS: LazyLock<Vec<Box<dyn Importer + Sync + Send>>> =
     LazyLock::new(|| vec![Box::new(YAMLImporter::new())]);
 
-pub fn load_match_group(path: &Path) -> Result<(MatchGroup, Option<NonFatalErrorSet>)> {
+pub fn load_match_group(
+    path: &Path,
+    config: &dyn crate::config::Config,
+) -> Result<(MatchGroup, Option<NonFatalErrorSet>)> {
     if let Some(extension) = path.extension() {
         let extension = extension.to_string_lossy().to_lowercase();
 
@@ -46,7 +53,7 @@ pub fn load_match_group(path: &Path) -> Result<(MatchGroup, Option<NonFatalError
             .find(|importer| importer.is_supported(&extension));
 
         match importer {
-            Some(importer) => match importer.load_group(path) {
+            Some(importer) => match importer.load_group(path, config) {
                 Ok((group, non_fatal_error_set)) => Ok((group, non_fatal_error_set)),
                 Err(err) => Err(LoadError::ParsingError(err).into()),
             },
@@ -74,6 +81,59 @@ mod tests {
     use super::*;
     use crate::util::tests::use_test_directory;
 
+    // MockConfig for testing
+    struct MockConfig;
+
+    impl crate::config::Config for MockConfig {
+        fn id(&self) -> i32 { 0 }
+        fn label(&self) -> &'static str { "mock" }
+        fn match_paths(&self) -> &[String] { &[] }
+        fn backend(&self) -> crate::config::Backend { crate::config::Backend::Inject }
+        fn enable(&self) -> bool { true }
+        fn clipboard_threshold(&self) -> usize { 100 }
+        fn pre_paste_delay(&self) -> usize { 100 }
+        fn paste_shortcut_event_delay(&self) -> usize { 10 }
+        fn paste_shortcut(&self) -> Option<String> { None }
+        fn disable_x11_fast_inject(&self) -> bool { false }
+        fn toggle_key(&self) -> Option<crate::config::ToggleKey> { None }
+        fn auto_restart(&self) -> bool { true }
+        fn preserve_clipboard(&self) -> bool { true }
+        fn restore_clipboard_delay(&self) -> usize { 300 }
+        fn inject_delay(&self) -> Option<usize> { None }
+        fn key_delay(&self) -> Option<usize> { None }
+        fn evdev_modifier_delay(&self) -> Option<usize> { None }
+        fn word_separators(&self) -> Vec<String> { vec![" ".to_string()] }
+        fn backspace_limit(&self) -> usize { 5 }
+        fn apply_patch(&self) -> bool { true }
+        fn keyboard_layout(&self) -> Option<crate::config::RMLVOConfig> { None }
+        fn search_trigger(&self) -> Option<String> { None }
+        fn search_shortcut(&self) -> Option<String> { None }
+        fn undo_backspace(&self) -> bool { true }
+        fn show_notifications(&self) -> bool { true }
+        fn show_icon(&self) -> bool { true }
+        fn secure_input_notification(&self) -> bool { true }
+        fn stats_enabled(&self) -> bool { true }
+        fn post_form_delay(&self) -> usize { 200 }
+        fn max_form_width(&self) -> usize { 800 }
+        fn max_form_height(&self) -> usize { 600 }
+        fn max_regex_buffer_size(&self) -> usize { 30 }
+        fn post_search_delay(&self) -> usize { 200 }
+        fn emulate_alt_codes(&self) -> bool { false }
+        fn x11_use_xclip_backend(&self) -> bool { false }
+        fn x11_use_xdotool_backend(&self) -> bool { false }
+        fn win32_exclude_orphan_events(&self) -> bool { true }
+        fn win32_keyboard_layout_cache_interval(&self) -> i64 { 2000 }
+        fn is_match(&self, _app: &crate::config::AppProperties) -> bool { true }
+
+        fn triggermarker_prefix(&self) -> Option<String> { None }
+        fn triggermarker_suffix(&self) -> Option<String> { None }
+        fn triggermarker_replace_mode(&self) -> String { "agnostic".to_string() }
+        fn triggermarker_prefix_replace_mode(&self) -> Option<String> { None }
+        fn triggermarker_suffix_replace_mode(&self) -> Option<String> { None }
+        fn triggermarker_smart_chars(&self) -> Vec<String> { vec![":".to_string(), ";".to_string()] }
+        fn triggermarker_smart_remove_multiple(&self) -> bool { false }
+    }
+
     #[test]
     fn load_group_invalid_format() {
         use_test_directory(|_, match_dir, _| {
@@ -81,7 +141,7 @@ mod tests {
             std::fs::write(&file, "test").unwrap();
 
             assert!(matches!(
-                load_match_group(&file)
+                load_match_group(&file, &MockConfig)
                     .unwrap_err()
                     .downcast::<LoadError>()
                     .unwrap(),
@@ -97,7 +157,7 @@ mod tests {
             std::fs::write(&file, "test").unwrap();
 
             assert!(matches!(
-                load_match_group(&file)
+                load_match_group(&file, &MockConfig)
                     .unwrap_err()
                     .downcast::<LoadError>()
                     .unwrap(),
@@ -113,7 +173,7 @@ mod tests {
             std::fs::write(&file, "test").unwrap();
 
             assert!(matches!(
-                load_match_group(&file)
+                load_match_group(&file, &MockConfig)
                     .unwrap_err()
                     .downcast::<LoadError>()
                     .unwrap(),
@@ -136,7 +196,7 @@ mod tests {
             )
             .unwrap();
 
-            assert_eq!(load_match_group(&file).unwrap().0.matches.len(), 1);
+            assert_eq!(load_match_group(&file, &MockConfig).unwrap().0.matches.len(), 1);
         });
     }
 
@@ -154,7 +214,7 @@ mod tests {
             )
             .unwrap();
 
-            assert_eq!(load_match_group(&file).unwrap().0.matches.len(), 1);
+            assert_eq!(load_match_group(&file, &MockConfig).unwrap().0.matches.len(), 1);
         });
     }
 
@@ -172,7 +232,7 @@ mod tests {
             )
             .unwrap();
 
-            assert_eq!(load_match_group(&file).unwrap().0.matches.len(), 1);
+            assert_eq!(load_match_group(&file, &MockConfig).unwrap().0.matches.len(), 1);
         });
     }
 }
