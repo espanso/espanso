@@ -18,7 +18,7 @@
  */
 
 use anyhow::{bail, Result};
-use log::{error, info, warn};
+use log::{info, warn};
 use std::process::Command;
 use std::{fs::create_dir_all, process::ExitStatus};
 use thiserror::Error;

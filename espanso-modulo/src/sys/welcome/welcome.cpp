@@ -46,7 +46,7 @@ class DerivedWelcomeFrame : public WelcomeFrame {
 };
 
 DerivedWelcomeFrame::DerivedWelcomeFrame(wxWindow *parent)
-    : WelcomeFrame(parent) {
+    : WelcomeFrame(parent, wxID_ANY, wxT("Espanso is running!"), wxDefaultPosition, wxSize(521, 597), wxCAPTION | wxCLOSE_BOX | wxSYSTEM_MENU | wxSTAY_ON_TOP) {
     // Welcome images
 
     if (welcome_metadata->tray_image_path) {

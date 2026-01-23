@@ -48,7 +48,7 @@ class DerivedTextViewFrame : public TextViewFrame {
 };
 
 DerivedTextViewFrame::DerivedTextViewFrame(wxWindow *parent)
-    : TextViewFrame(parent) {
+    : TextViewFrame(parent, wxID_ANY, wxT("TextView"), wxDefaultPosition, wxSize(895, 545), wxDEFAULT_FRAME_STYLE | wxSTAY_ON_TOP) {
     this->text_content->SetValue(
         wxString::FromUTF8(text_view_metadata->content));
     this->SetTitle(wxString::FromUTF8(text_view_metadata->title));

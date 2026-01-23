@@ -18,7 +18,7 @@
  */
 
 use super::{
-    ContextMenuHandler, Event, IconHandler, ImageInjector, SecureInputManager, TextUIHandler,
+    ContextMenuHandler, Event, ExportImportHandler, IconHandler, ImageInjector, SecureInputManager, TextUIHandler,
 };
 use super::{Dispatcher, Executor, HtmlInjector, KeyInjector, ModeProvider, TextInjector};
 
@@ -39,6 +39,7 @@ impl<'a> DefaultDispatcher<'a> {
         icon_handler: &'a dyn IconHandler,
         secure_input_manager: &'a dyn SecureInputManager,
         text_ui_handler: &'a dyn TextUIHandler,
+        export_import_handler: &'a dyn ExportImportHandler,
     ) -> Self {
         Self {
             executors: vec![
@@ -67,6 +68,9 @@ impl<'a> DefaultDispatcher<'a> {
                 )),
                 Box::new(super::executor::text_ui::TextUIExecutor::new(
                     text_ui_handler,
+                )),
+                Box::new(super::executor::export_import::ExportImportExecutor::new(
+                    export_import_handler,
                 )),
             ],
         }

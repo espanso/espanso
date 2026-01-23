@@ -83,9 +83,22 @@ class ListFieldWrapper {
     }
 };
 
+class CheckboxFieldWrapper : public FieldWrapper {
+private:
+  wxCheckBox *control;
+
+public:
+  explicit CheckboxFieldWrapper(wxCheckBox *control) : control(control) {}
+
+  virtual wxString getValue() { 
+    return control->GetValue() ? wxString("true") : wxString("false"); 
+  }
+};
+
 // App Code
 
 class FormApp : public wxApp {
+
   public:
     virtual bool OnInit();
 };
@@ -267,6 +280,21 @@ void FormFrame::AddComponent(wxPanel *parent, wxBoxSizer *sizer,
 
         control = choice;
         fields.push_back(choice);
+        break;
+    }
+    case FieldType::CHECKBOX: {
+        bool defaultValue = *static_cast<const bool *>(meta.specific);
+        
+        auto checkBox = new wxCheckBox(parent, wxID_ANY, wxEmptyString);
+        checkBox->SetValue(defaultValue);
+        checkBox->Bind(wxEVT_SET_FOCUS, &FormFrame::HandleNormalFocus, this, wxID_ANY);
+        
+        // Create the field wrapper
+        std::unique_ptr<FieldWrapper> field(
+            (FieldWrapper *)new CheckboxFieldWrapper(checkBox));
+        idMap[meta.id] = std::move(field);
+        control = checkBox;
+        fields.push_back(checkBox);
         break;
     }
     case FieldType::ROW: {

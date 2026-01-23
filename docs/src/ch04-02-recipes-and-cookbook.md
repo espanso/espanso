@@ -342,3 +342,11 @@ The script saves the benchmark results to `results.md` and `results.json`.
 #### Benchmark script: analysing results
 The JSON output is more useful for statistical analysis. The hyperfine
 repository has [scripts for this purpose](https://github.com/sharkdp/hyperfine/tree/master/scripts).
+
+## Offline export/import
+
+Espanso can export its configuration as a base64 payload for air-gapped transfer
+using `espanso export` and restore it with `espanso import`.
+
+The `--convert-lb` flag is optional and only converts line breaks to LF for
+YAML files (`.yml`/`.yaml`) during import.
