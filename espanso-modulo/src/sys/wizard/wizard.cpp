@@ -112,7 +112,7 @@ class DerivedFrame : public WizardFrame {
     DerivedFrame(wxWindow *parent);
 };
 
-DerivedFrame::DerivedFrame(wxWindow *parent) : WizardFrame(parent) {
+DerivedFrame::DerivedFrame(wxWindow *parent) : WizardFrame(parent, wxID_ANY, wxT("Espanso"), wxDefaultPosition, wxSize(600, 577), wxCAPTION | wxCLOSE_BOX | wxRESIZE_BORDER | wxSYSTEM_MENU | wxSTAY_ON_TOP) {
     // Welcome images
 
     if (wizard_metadata->welcome_image_path) {

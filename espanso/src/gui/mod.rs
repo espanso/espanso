@@ -59,6 +59,9 @@ pub enum FormField {
         values: Vec<String>,
         separator: String,
     },
+    Checkbox {
+        default: bool,
+    },
 }
 
 pub trait TextUI {

@@ -78,6 +78,7 @@ pub enum FieldTypeConfig {
     Text(TextFieldConfig),
     Choice(ChoiceFieldConfig),
     List(ListFieldConfig),
+    Checkbox(CheckboxFieldConfig),
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -97,6 +98,11 @@ pub struct ListFieldConfig {
     pub values: Vec<String>,
     pub default: String,
     pub separator: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct CheckboxFieldConfig {
+    pub default: bool,
 }
 
 impl<'de> serde::Deserialize<'de> for FieldConfig {
@@ -148,6 +154,13 @@ impl<'a> From<&'a AutoFieldConfig> for FieldConfig {
                 config.separator.clone_from(&other.separator);
 
                 FieldTypeConfig::List(config)
+            }
+            "checkbox" => {
+                let config = CheckboxFieldConfig {
+                    default: other.default.as_deref().unwrap_or("false") == "true",
+                };
+
+                FieldTypeConfig::Checkbox(config)
             }
             _ => {
                 panic!("invalid field type: {}", other.field_type);

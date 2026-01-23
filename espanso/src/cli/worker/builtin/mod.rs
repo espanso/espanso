@@ -25,6 +25,7 @@ use espanso_engine::event::EventType;
 
 use super::context::Context;
 
+mod config_transfer;
 mod debug;
 mod process;
 mod search;
@@ -58,6 +59,8 @@ pub fn get_builtin_matches(config: &dyn Config) -> Vec<BuiltInMatch> {
         debug::create_match_show_active_config_info(),
         debug::create_match_show_active_app_info(),
         debug::create_match_show_logs(),
+        config_transfer::create_match_export_config(),
+        config_transfer::create_match_import_config(),
         process::create_match_exit(),
         process::create_match_restart(),
     ];

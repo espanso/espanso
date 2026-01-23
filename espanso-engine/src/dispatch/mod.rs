@@ -32,6 +32,7 @@ pub trait Dispatcher {
 
 // Re-export dependency injection entities
 pub use executor::context_menu::ContextMenuHandler;
+pub use executor::export_import::ExportImportHandler;
 pub use executor::html_inject::HtmlInjector;
 pub use executor::icon_update::IconHandler;
 pub use executor::image_inject::ImageInjector;
@@ -52,6 +53,7 @@ pub fn default<'a>(
     icon_handler: &'a dyn IconHandler,
     secure_input_manager: &'a dyn SecureInputManager,
     text_ui_handler: &'a dyn TextUIHandler,
+    export_import_handler: &'a dyn ExportImportHandler,
 ) -> impl Dispatcher + 'a {
     default::DefaultDispatcher::new(
         event_injector,
@@ -64,5 +66,6 @@ pub fn default<'a>(
         icon_handler,
         secure_input_manager,
         text_ui_handler,
+        export_import_handler,
     )
 }

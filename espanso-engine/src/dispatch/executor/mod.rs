@@ -18,6 +18,7 @@
  */
 
 pub mod context_menu;
+pub mod export_import;
 pub mod html_inject;
 pub mod icon_update;
 pub mod image_inject;

@@ -59,6 +59,7 @@ fn create_field(token: &Token, field_map: &HashMap<String, FieldConfig>) -> Fiel
                     default_value: config.default.clone(),
                     separator: config.separator.clone(),
                 }),
+                FieldTypeConfig::Checkbox(config) => FieldType::Checkbox(config.default),
             };
 
             Field {

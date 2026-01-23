@@ -20,7 +20,11 @@
 use super::{CliModule, CliModuleArgs};
 
 #[cfg(feature = "modulo")]
+mod export_dialog;
+#[cfg(feature = "modulo")]
 mod form;
+#[cfg(feature = "modulo")]
+mod import_dialog;
 #[cfg(feature = "modulo")]
 mod search;
 #[cfg(feature = "modulo")]
@@ -47,6 +51,14 @@ fn modulo_main(args: CliModuleArgs) -> i32 {
     let cli_args = args.cli_args.expect("missing cli_args in modulo main");
     let icon_paths =
         crate::icon::load_icon_paths(&paths.runtime).expect("unable to load icon paths");
+
+    if let Some(matches) = cli_args.subcommand_matches("export_dialog") {
+        return export_dialog::export_dialog_main(matches, &icon_paths);
+    }
+
+    if let Some(matches) = cli_args.subcommand_matches("import_dialog") {
+        return import_dialog::import_dialog_main(matches, &icon_paths);
+    }
 
     if let Some(matches) = cli_args.subcommand_matches("form") {
         return form::form_main(matches, &icon_paths);

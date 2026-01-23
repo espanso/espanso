@@ -17,18 +17,13 @@
  * along with modulo.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub mod export_dialog;
-pub mod form;
-pub mod import_dialog;
-pub mod search;
-pub mod textview;
-pub mod troubleshooting;
-pub mod welcome;
-pub mod wizard;
-
-#[allow(non_upper_case_globals)]
-#[allow(dead_code)]
-#[allow(non_snake_case)]
-pub mod interop;
-
-mod util;
+pub fn show(
+    icon_path: Option<&str>,
+    generate_export_code: extern "C" fn(
+        export_config: std::os::raw::c_int,
+        export_matches: std::os::raw::c_int,
+        export_packages: std::os::raw::c_int,
+    ) -> *const std::os::raw::c_char,
+) {
+    crate::sys::export_dialog::show(icon_path, generate_export_code);
+}

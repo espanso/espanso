@@ -140,7 +140,7 @@ class DerivedTroubleshootingFrame : public TroubleshootingFrame {
 };
 
 DerivedTroubleshootingFrame::DerivedTroubleshootingFrame(wxWindow *parent)
-    : TroubleshootingFrame(parent) {
+    : TroubleshootingFrame(parent, wxID_ANY, wxT("Troubleshooting"), wxDefaultPosition, wxSize(841, 544), wxDEFAULT_FRAME_STYLE | wxSTAY_ON_TOP) {
     if (troubleshooting_metadata->error_sets_count == 0) {
         dont_show_checkbox->Hide();
         ignore_button->Hide();

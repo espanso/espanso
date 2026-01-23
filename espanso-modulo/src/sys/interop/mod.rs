@@ -195,6 +195,40 @@ pub struct TextViewMetadata {
     pub content: *const c_char,
 }
 
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ExportDialogMetadata {
+    pub window_icon_path: *const c_char,
+    pub generate_export_code: extern "C" fn(export_config: c_int, export_matches: c_int, export_packages: c_int) -> *const c_char,
+}
+
+// Scope status constants for import validation
+pub const SCOPE_STATUS_EMPTY: c_int = 0;
+pub const SCOPE_STATUS_PRESENT: c_int = 1;
+pub const SCOPE_STATUS_MISSING: c_int = 2;
+pub const SCOPE_STATUS_INVALID: c_int = 3;
+
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ImportDialogMetadata {
+    pub window_icon_path: *const c_char,
+    pub validate_import_data: extern "C" fn(
+        data: *const c_char,
+        config_status: *mut c_int,
+        matches_status: *mut c_int,
+        packages_status: *mut c_int,
+    ) -> c_int,
+    pub perform_import: extern "C" fn(
+        data: *const c_char,
+        import_config: c_int,
+        import_matches: c_int,
+        import_packages: c_int,
+        clear_config: c_int,
+        clear_matches: c_int,
+        clear_packages: c_int,
+    ) -> c_int,
+}
+
 // Native bindings
 
 #[allow(improper_ctypes)]
@@ -233,4 +267,10 @@ extern "C" {
 
     // TEXTVIEW
     pub(crate) fn interop_show_text_view(metadata: *const TextViewMetadata);
+
+    // EXPORT DIALOG
+    pub(crate) fn interop_show_export_dialog(metadata: *const ExportDialogMetadata);
+
+    // IMPORT DIALOG
+    pub(crate) fn interop_show_import_dialog(metadata: *const ImportDialogMetadata);
 }
