@@ -192,12 +192,14 @@ extern "C" fn perform_import_callback(
     match perform_import_internal(
         data_str,
         &ctx.config_path,
-        import_config != 0,
-        import_matches != 0,
-        import_packages != 0,
-        clear_config != 0,
-        clear_matches != 0,
-        clear_packages != 0,
+        ImportOptions {
+            import_config: import_config != 0,
+            import_matches: import_matches != 0,
+            import_packages: import_packages != 0,
+            clear_config: clear_config != 0,
+            clear_matches: clear_matches != 0,
+            clear_packages: clear_packages != 0,
+        },
     ) {
         Ok(()) => 1,
         Err(e) => {
@@ -207,15 +209,19 @@ extern "C" fn perform_import_callback(
     }
 }
 
-fn perform_import_internal(
-    data: &str,
-    config_path: &PathBuf,
+struct ImportOptions {
     import_config: bool,
     import_matches: bool,
     import_packages: bool,
     clear_config: bool,
     clear_matches: bool,
     clear_packages: bool,
+}
+
+fn perform_import_internal(
+    data: &str,
+    config_path: &Path,
+    options: ImportOptions,
 ) -> Result<()> {
     use std::fs;
     use tar::EntryType;
@@ -240,35 +246,35 @@ fn perform_import_internal(
     let packages_dir = config_path.join("match").join("packages");
 
     // Clear directories if requested (clearing can happen even without importing)
-    if clear_config {
+    if options.clear_config {
         if config_dir.exists() {
             fs::remove_dir_all(&config_dir).context("failed to clear config directory")?;
         }
-        if import_config {
+        if options.import_config {
             fs::create_dir_all(&config_dir).context("failed to create config directory")?;
         }
     }
 
-    if clear_matches {
+    if options.clear_matches {
         // Be careful not to delete packages if we're not clearing them
         if matches_dir.exists() {
-            if clear_packages || !packages_dir.exists() {
+            if options.clear_packages || !packages_dir.exists() {
                 fs::remove_dir_all(&matches_dir).context("failed to clear matches directory")?;
             } else {
                 // Clear matches but preserve packages
                 clear_directory_except(&matches_dir, Some(&packages_dir))?;
             }
         }
-        if import_matches {
+        if options.import_matches {
             fs::create_dir_all(&matches_dir).context("failed to create matches directory")?;
         }
     }
 
-    if clear_packages {
+    if options.clear_packages {
         if packages_dir.exists() {
             fs::remove_dir_all(&packages_dir).context("failed to clear packages directory")?;
         }
-        if import_packages {
+        if options.import_packages {
             fs::create_dir_all(&packages_dir).context("failed to create packages directory")?;
         }
     }
@@ -287,11 +293,11 @@ fn perform_import_internal(
         // Determine which scope this entry belongs to
         let (target_root, should_import) =
             if path_str.starts_with("config/") || path_str == "config" {
-                (Some(&config_dir), import_config)
+                (Some(&config_dir), options.import_config)
             } else if path_str.starts_with("matches/") || path_str == "matches" {
-                (Some(&matches_dir), import_matches)
+                (Some(&matches_dir), options.import_matches)
             } else if path_str.starts_with("packages/") || path_str == "packages" {
-                (Some(&packages_dir), import_packages)
+                (Some(&packages_dir), options.import_packages)
             } else {
                 (None, false)
             };

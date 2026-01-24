@@ -26,8 +26,10 @@ use std::os::raw::c_char;
 use std::sync::Mutex;
 
 // Global state to pass paths to the C callback
+#[allow(dead_code)]
 static EXPORT_CONTEXT: Mutex<Option<ExportContext>> = Mutex::new(None);
 
+#[allow(dead_code)]
 struct ExportContext {
     runtime_path: String,
     config_path: String,
@@ -35,6 +37,7 @@ struct ExportContext {
 
 pub struct ExportImportHandlerAdapter<'a> {
     modulo_manager: &'a ModuloManager,
+    #[allow(dead_code)]
     form_ui: &'a dyn FormUI,
     paths: &'a Paths,
 }
@@ -53,6 +56,7 @@ impl<'a> ExportImportHandlerAdapter<'a> {
     }
 }
 
+#[allow(dead_code)]
 extern "C" fn generate_export_code_callback(
     export_config: std::os::raw::c_int,
     export_matches: std::os::raw::c_int,

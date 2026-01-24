@@ -113,7 +113,7 @@ use std::{
 
 use anyhow::{bail, Context, Result};
 use base64::{
-    engine::general_purpose::STANDARD, read::DecoderReader, write::EncoderWriter, Engine,
+    engine::general_purpose::STANDARD, read::DecoderReader, write::EncoderWriter,
 };
 use flate2::{read::GzDecoder, write::GzEncoder, Compression};
 use tar::{Archive, Builder, EntryType};
@@ -134,16 +134,19 @@ use crate::{error_eprintln, path::Paths};
 /// - Filters spaces, tabs, newlines, carriage returns
 /// - Ensures at least one non-whitespace byte is returned per read
 /// - Returns 0 only when the underlying reader is exhausted
+#[cfg(test)]
 struct WhitespaceFilteringReader<R> {
     inner: R,
 }
 
+#[cfg(test)]
 impl<R> WhitespaceFilteringReader<R> {
     fn new(inner: R) -> Self {
         Self { inner }
     }
 }
 
+#[cfg(test)]
 impl<R: Read> Read for WhitespaceFilteringReader<R> {
     fn read(&mut self, out: &mut [u8]) -> io::Result<usize> {
         if out.is_empty() {

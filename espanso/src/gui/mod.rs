@@ -59,6 +59,7 @@ pub enum FormField {
         values: Vec<String>,
         separator: String,
     },
+    #[allow(dead_code)]
     Checkbox {
         default: bool,
     },
