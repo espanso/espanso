@@ -344,13 +344,13 @@ mod interop {
 
     impl Interoperable for bool {
         fn as_ptr(&self) -> *const c_void {
-            self as *const bool as *const c_void
+            std::ptr::from_ref::<bool>(self) as *const c_void
         }
     }
 
     impl Interoperable for OwnedRowMetadata {
         fn as_ptr(&self) -> *const c_void {
-            &(*self.interop) as *const RowMetadata as *const c_void
+            std::ptr::from_ref::<RowMetadata>(&(*self.interop)) as *const c_void
         }
     }
 
