@@ -43,8 +43,7 @@ pub fn show(
     let import_dialog_metadata = super::interop::ImportDialogMetadata {
         window_icon_path: icon_path_c
             .as_ref()
-            .map(|c| c.as_ptr())
-            .unwrap_or(std::ptr::null()),
+            .map_or(std::ptr::null(), |c| c.as_ptr()),
         validate_import_data,
         perform_import,
     };
