@@ -17,7 +17,7 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use super::{MatchSet, MatchStore};
+use super::{MatchInfo, MatchSet, MatchStore};
 use crate::{
     counter::StructId,
     error::NonFatalErrorSet,
@@ -25,7 +25,7 @@ use crate::{
 };
 use anyhow::Context;
 use std::{
-    collections::{HashMap, HashSet},
+    collections::{BTreeMap, BTreeSet, HashMap, HashSet},
     path::PathBuf,
 };
 
@@ -73,6 +73,22 @@ impl MatchStore for DefaultMatchStore {
 
     fn loaded_paths(&self) -> Vec<String> {
         self.groups.keys().cloned().collect()
+    }
+
+    fn query_with_sources(&'_ self, paths: &[String]) -> Vec<MatchInfo<'_>> {
+        let mut result = Vec::new();
+        let mut visited_paths = HashSet::new();
+        let mut visited_matches = HashSet::new();
+
+        query_matches_with_sources(
+            &self.groups,
+            &mut visited_paths,
+            &mut visited_matches,
+            &mut result,
+            paths,
+        );
+
+        result
     }
 }
 
@@ -145,6 +161,82 @@ fn query_matches_for_paths<'a>(
             }
         }
     }
+}
+
+fn query_matches_with_sources<'a>(
+    groups: &'a HashMap<String, MatchGroup>,
+    visited_paths: &mut HashSet<String>,
+    visited_matches: &mut HashSet<StructId>,
+    result: &mut Vec<MatchInfo<'a>>,
+    paths: &[String],
+) {
+    for path in paths {
+        if !visited_paths.contains(path) {
+            visited_paths.insert(path.clone());
+
+            if let Some(group) = groups.get(path) {
+                // First process imports
+                query_matches_with_sources(
+                    groups,
+                    visited_paths,
+                    visited_matches,
+                    result,
+                    &group.imports,
+                );
+
+                // Then add matches from this group with source info
+                // We need to get the key from the groups map to have the correct lifetime
+                if let Some((source_file, _)) = groups.get_key_value(path) {
+                    for m in &group.matches {
+                        if !visited_matches.contains(&m.id) {
+                            result.push(MatchInfo { m, source_file });
+                            visited_matches.insert(m.id);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+fn warn_duplicate_triggers(groups: &HashMap<String, MatchGroup>) {
+    let duplicates = find_duplicate_triggers(groups);
+
+    for (trigger, paths) in duplicates {
+        eprintln!(
+            "warning: duplicate trigger '{}' found in: {}",
+            trigger,
+            paths.join(", ")
+        );
+    }
+}
+
+fn find_duplicate_triggers(groups: &HashMap<String, MatchGroup>) -> BTreeMap<String, Vec<String>> {
+    let mut triggers: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
+
+    for (path, group) in groups {
+        for m in &group.matches {
+            if let crate::matches::MatchCause::Trigger(cause) = &m.cause {
+                for trigger in &cause.triggers {
+                    triggers
+                        .entry(trigger.clone())
+                        .or_default()
+                        .insert(path.clone());
+                }
+            }
+        }
+    }
+
+    triggers
+        .into_iter()
+        .filter_map(|(trigger, paths)| {
+            if paths.len() > 1 {
+                Some((trigger, paths.into_iter().collect()))
+            } else {
+                None
+            }
+        })
+        .collect()
 }
 
 #[cfg(test)]
