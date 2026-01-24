@@ -218,11 +218,7 @@ struct ImportOptions {
     clear_packages: bool,
 }
 
-fn perform_import_internal(
-    data: &str,
-    config_path: &Path,
-    options: ImportOptions,
-) -> Result<()> {
+fn perform_import_internal(data: &str, config_path: &Path, options: ImportOptions) -> Result<()> {
     use std::fs;
     use tar::EntryType;
 

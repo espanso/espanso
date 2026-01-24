@@ -112,9 +112,7 @@ use std::{
 };
 
 use anyhow::{bail, Context, Result};
-use base64::{
-    engine::general_purpose::STANDARD, read::DecoderReader, write::EncoderWriter,
-};
+use base64::{engine::general_purpose::STANDARD, read::DecoderReader, write::EncoderWriter};
 use flate2::{read::GzDecoder, write::GzEncoder, Compression};
 use tar::{Archive, Builder, EntryType};
 use walkdir::WalkDir;

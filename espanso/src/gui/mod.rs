@@ -60,9 +60,7 @@ pub enum FormField {
         separator: String,
     },
     #[allow(dead_code)]
-    Checkbox {
-        default: bool,
-    },
+    Checkbox { default: bool },
 }
 
 pub trait TextUI {
