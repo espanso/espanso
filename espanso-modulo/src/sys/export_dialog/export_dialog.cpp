@@ -20,6 +20,8 @@
 #include "../common/common.h"
 #include "../interop/interop.h"
 #include <wx/clipbrd.h>
+#include <wx/filedlg.h>
+#include <fstream>
 
 #ifdef __WXMSW__
 #include <windows.h>
@@ -49,6 +51,7 @@ private:
     // Event handlers
     void OnCheckboxChanged(wxCommandEvent &event);
     void OnCopyButton(wxCommandEvent &event);
+    void OnExportToFileButton(wxCommandEvent &event);
     void OnCloseButton(wxCommandEvent &event);
     void OnClose(wxCloseEvent &event);
 
@@ -63,6 +66,7 @@ private:
     wxCheckBox *m_packagesCheckbox;
     wxTextCtrl *m_previewText;
     wxButton *m_copyButton;
+    wxButton *m_exportToFileButton;
     wxButton *m_closeButton;
 };
 
@@ -140,6 +144,10 @@ ExportFrame::ExportFrame(const wxString &title, const wxPoint &pos, const wxSize
     m_copyButton->Bind(wxEVT_BUTTON, &ExportFrame::OnCopyButton, this);
     buttonSizer->Add(m_copyButton, 0, wxRIGHT, 5);
 
+    m_exportToFileButton = new wxButton(m_panel, wxID_ANY, "Export to file");
+    m_exportToFileButton->Bind(wxEVT_BUTTON, &ExportFrame::OnExportToFileButton, this);
+    buttonSizer->Add(m_exportToFileButton, 0, wxRIGHT, 5);
+
     m_closeButton = new wxButton(m_panel, wxID_CLOSE, "Close");
     m_closeButton->Bind(wxEVT_BUTTON, &ExportFrame::OnCloseButton, this);
     buttonSizer->Add(m_closeButton, 0);
@@ -179,6 +187,44 @@ void ExportFrame::OnCopyButton(wxCommandEvent &event) {
 
         m_copyButton->SetLabel(originalLabel);
         m_copyButton->Refresh();
+    }
+}
+
+void ExportFrame::OnExportToFileButton(wxCommandEvent &event) {
+    wxString exportCode = m_previewText->GetValue();
+
+    if (exportCode.IsEmpty()) {
+        wxMessageBox("Nothing to export. Please select at least one option.",
+                    "Export", wxOK | wxICON_WARNING);
+        return;
+    }
+
+    wxFileDialog saveFileDialog(this, "Export to file", "", "espanso_export.espanso",
+        "Espanso Export files (*.espanso)|*.espanso|Text files (*.txt)|*.txt|All files (*.*)|*.*",
+        wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
+
+    if (saveFileDialog.ShowModal() == wxID_CANCEL) {
+        return;
+    }
+
+    std::ofstream file(saveFileDialog.GetPath().ToStdString());
+    if (file.is_open()) {
+        file << exportCode.ToUTF8().data();
+        file.close();
+
+        // Visual feedback
+        wxString originalLabel = m_exportToFileButton->GetLabel();
+        m_exportToFileButton->SetLabel("Saved!");
+        m_exportToFileButton->Refresh();
+        m_exportToFileButton->Update();
+
+        wxMilliSleep(800);
+
+        m_exportToFileButton->SetLabel(originalLabel);
+        m_exportToFileButton->Refresh();
+    } else {
+        wxMessageBox("Could not save to the selected file.",
+                    "Error", wxOK | wxICON_ERROR);
     }
 }
 

@@ -21,6 +21,9 @@
 #include "../interop/interop.h"
 #include <wx/clipbrd.h>
 #include <wx/statline.h>
+#include <wx/filedlg.h>
+#include <fstream>
+#include <sstream>
 
 #ifdef __WXMSW__
 #include <windows.h>
@@ -54,6 +57,7 @@ public:
 private:
     // Event handlers
     void OnPasteButton(wxCommandEvent &event);
+    void OnImportFromFileButton(wxCommandEvent &event);
     void OnCheckButton(wxCommandEvent &event);
     void OnImportButton(wxCommandEvent &event);
     void OnCloseButton(wxCommandEvent &event);
@@ -71,6 +75,7 @@ private:
     wxPanel *m_panel;
     wxTextCtrl *m_inputText;
     wxButton *m_pasteButton;
+    wxButton *m_importFromFileButton;
     wxButton *m_checkButton;
 
     // Row controls: import checkbox, status label, clear checkbox
@@ -155,11 +160,15 @@ ImportFrame::ImportFrame(const wxString &title, const wxPoint &pos, const wxSize
 
     mainSizer->Add(m_inputText, 1, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 10);
 
-    // Button row: Paste and Check buttons
+    // Button row: Paste, Import from file, and Check buttons
     wxBoxSizer *pasteRowSizer = new wxBoxSizer(wxHORIZONTAL);
     m_pasteButton = new wxButton(m_panel, wxID_ANY, "Paste from Clipboard");
     m_pasteButton->Bind(wxEVT_BUTTON, &ImportFrame::OnPasteButton, this);
     pasteRowSizer->Add(m_pasteButton, 0, wxRIGHT, 10);
+
+    m_importFromFileButton = new wxButton(m_panel, wxID_ANY, "Import from file");
+    m_importFromFileButton->Bind(wxEVT_BUTTON, &ImportFrame::OnImportFromFileButton, this);
+    pasteRowSizer->Add(m_importFromFileButton, 0, wxRIGHT, 10);
 
     m_checkButton = new wxButton(m_panel, wxID_ANY, "Check import code");
     m_checkButton->Bind(wxEVT_BUTTON, &ImportFrame::OnCheckButton, this);
@@ -282,6 +291,28 @@ void ImportFrame::OnPasteButton(wxCommandEvent &event) {
         wxTheClipboard->Close();
     }
     ValidateAndUpdateUI();
+}
+
+void ImportFrame::OnImportFromFileButton(wxCommandEvent &event) {
+    wxFileDialog openFileDialog(this, "Import from file", "", "",
+        "Espanso Export files (*.espanso)|*.espanso|Text files (*.txt)|*.txt|All files (*.*)|*.*",
+        wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+
+    if (openFileDialog.ShowModal() == wxID_CANCEL) {
+        return;
+    }
+
+    std::ifstream file(openFileDialog.GetPath().ToStdString());
+    if (file.is_open()) {
+        std::stringstream buffer;
+        buffer << file.rdbuf();
+        m_inputText->SetValue(wxString::FromUTF8(buffer.str()));
+        file.close();
+        ValidateAndUpdateUI();
+    } else {
+        wxMessageBox("Could not open the selected file.",
+                    "Error", wxOK | wxICON_ERROR);
+    }
 }
 
 void ImportFrame::OnCheckButton(wxCommandEvent &event) {
