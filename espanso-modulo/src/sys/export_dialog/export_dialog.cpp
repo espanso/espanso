@@ -166,6 +166,7 @@ void ExportFrame::OnCheckboxChanged(wxCommandEvent &event) {
 void ExportFrame::OnCopyButton(wxCommandEvent &event) {
     if (wxTheClipboard->Open()) {
         wxTheClipboard->SetData(new wxTextDataObject(m_previewText->GetValue()));
+        wxTheClipboard->Flush();  // Ensure clipboard data persists after app closes
         wxTheClipboard->Close();
 
         // Visual feedback
