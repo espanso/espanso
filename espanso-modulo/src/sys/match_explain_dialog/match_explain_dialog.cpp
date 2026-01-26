@@ -182,6 +182,7 @@ bool MatchExplainDialogApp::OnInit() {
 
     frame->Show(true);
     SetupWindowStyle(frame);
+    frame->CentreOnScreen();
     Activate(frame);
     if (match_explain_metadata && match_explain_metadata->on_focus_gained) {
         match_explain_metadata->on_focus_gained();

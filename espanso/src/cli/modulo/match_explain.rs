@@ -57,6 +57,15 @@ pub fn match_explain_main(
         let ipc_client = Arc::clone(&ipc_client);
         let previous_enabled = Arc::clone(&previous_enabled);
         move || {
+            {
+                let lock = previous_enabled
+                    .lock()
+                    .expect("unable to lock previous enabled state");
+                if lock.is_some() {
+                    return;
+                }
+            }
+
             let Ok(mut client) = ipc_client.lock() else {
                 warn!("unable to acquire ipc client lock for focus gained");
                 return;
