@@ -23,7 +23,7 @@
 #include "../interop/interop.h"
 
 #include <wx/clipbrd.h>
-#include <wx/hyperlink.h>
+#include <wx/richtext/richtextctrl.h>
 #include <wx/utils.h>
 
 #ifdef __WXMSW__
@@ -51,9 +51,7 @@ class MatchExplainDialogFrame : public wxFrame {
     wxTextCtrl *trigger_input = nullptr;
     wxButton *check_button = nullptr;
     wxButton *check_all_button = nullptr;
-    wxTextCtrl *output_box = nullptr;
-    wxStaticText *file_label = nullptr;
-    wxHyperlinkCtrl *file_link = nullptr;
+    wxRichTextCtrl *output_box = nullptr;
     wxCheckBox *json_checkbox = nullptr;
     wxButton *copy_button = nullptr;
     wxButton *close_button = nullptr;
@@ -65,12 +63,12 @@ class MatchExplainDialogFrame : public wxFrame {
     void OnActivate(wxActivateEvent &event);
     void OnClose(wxCloseEvent &event);
     void OnChar(wxKeyEvent &event);
-    void OnFileLink(wxHyperlinkEvent &event);
+    void OnTextUrl(wxTextUrlEvent &event);
 
     void NotifyFocusGained();
     void NotifyFocusLost();
     void RunCheck(bool show_all);
-    void UpdateFileLink(const wxString &output, bool json_output);
+    void UpdateOutput(const wxString &output, bool json_output);
 };
 
 MatchExplainDialogFrame::MatchExplainDialogFrame()
@@ -97,20 +95,15 @@ MatchExplainDialogFrame::MatchExplainDialogFrame()
 
     main_sizer->Add(top_sizer, 0, wxEXPAND | wxALL, 10);
 
-    output_box = new wxTextCtrl(panel, wxID_ANY, "", wxDefaultPosition,
-                                wxDefaultSize,
-                                wxTE_MULTILINE | wxTE_READONLY | wxTE_RICH2);
+    output_box = new wxRichTextCtrl(panel, wxID_ANY, "", wxDefaultPosition,
+                                    wxDefaultSize,
+                                    wxTE_MULTILINE | wxTE_READONLY);
     wxFont output_font = output_box->GetFont();
     output_font.SetFamily(wxFONTFAMILY_TELETYPE);
-    output_box->SetFont(output_font);
+    wxTextAttr output_attr;
+    output_attr.SetFont(output_font);
+    output_box->SetDefaultStyle(output_attr);
     main_sizer->Add(output_box, 1, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 10);
-
-    wxBoxSizer *file_sizer = new wxBoxSizer(wxHORIZONTAL);
-    file_label = new wxStaticText(panel, wxID_ANY, "Defined in:");
-    file_sizer->Add(file_label, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 6);
-    file_link = new wxHyperlinkCtrl(panel, wxID_ANY, " ", "about:blank");
-    file_sizer->Add(file_link, 1, wxALIGN_CENTER_VERTICAL);
-    main_sizer->Add(file_sizer, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 10);
 
     wxBoxSizer *bottom_sizer = new wxBoxSizer(wxHORIZONTAL);
     json_checkbox = new wxCheckBox(panel, wxID_ANY, "JSON output");
@@ -130,14 +123,12 @@ MatchExplainDialogFrame::MatchExplainDialogFrame()
                        this);
     trigger_input->Bind(wxEVT_TEXT_ENTER,
                         &MatchExplainDialogFrame::OnCheck, this);
-    file_link->Bind(wxEVT_HYPERLINK, &MatchExplainDialogFrame::OnFileLink, this);
+    output_box->Bind(wxEVT_TEXT_URL, &MatchExplainDialogFrame::OnTextUrl, this);
 
     Bind(wxEVT_ACTIVATE, &MatchExplainDialogFrame::OnActivate, this);
     Bind(wxEVT_CLOSE_WINDOW, &MatchExplainDialogFrame::OnClose, this);
     Bind(wxEVT_CHAR_HOOK, &MatchExplainDialogFrame::OnChar, this);
 
-    file_label->Hide();
-    file_link->Hide();
     Centre();
 }
 
@@ -198,11 +189,9 @@ void MatchExplainDialogFrame::RunCheck(bool show_all) {
                                          json_checkbox->IsChecked() ? 1 : 0);
     if (response) {
         wxString output = wxString::FromUTF8(response);
-        output_box->SetValue(output);
-        UpdateFileLink(output, json_checkbox->IsChecked());
+        UpdateOutput(output, json_checkbox->IsChecked());
     } else {
-        output_box->SetValue("");
-        UpdateFileLink("", json_checkbox->IsChecked());
+        UpdateOutput("", json_checkbox->IsChecked());
     }
 }
 
@@ -214,15 +203,20 @@ void MatchExplainDialogFrame::OnCopy(wxCommandEvent &event) {
     }
 }
 
-void MatchExplainDialogFrame::OnFileLink(wxHyperlinkEvent &event) {
-    wxString path = file_link->GetURL();
+void MatchExplainDialogFrame::OnTextUrl(wxTextUrlEvent &event) {
+    const long start = event.GetURLStart();
+    const long end = event.GetURLEnd();
+    wxString path;
+    if (start >= 0 && end > start) {
+        path = output_box->GetValue().Mid(start, end - start);
+    }
     if (!path.IsEmpty()) {
         wxLaunchDefaultApplication(path);
     }
 }
 
-void MatchExplainDialogFrame::UpdateFileLink(const wxString &output,
-                                             bool json_output) {
+void MatchExplainDialogFrame::UpdateOutput(const wxString &output,
+                                           bool json_output) {
     wxString source_path;
 
     if (json_output) {
@@ -250,17 +244,31 @@ void MatchExplainDialogFrame::UpdateFileLink(const wxString &output,
         }
     }
 
-    if (!source_path.IsEmpty()) {
-        file_link->SetLabel(source_path);
-        file_link->SetURL(source_path);
-        file_label->Show();
-        file_link->Show();
-    } else {
-        file_label->Hide();
-        file_link->Hide();
+    output_box->Freeze();
+    output_box->Clear();
+
+    if (source_path.IsEmpty()) {
+        output_box->WriteText(output);
+        output_box->Thaw();
+        return;
     }
 
-    Layout();
+    int link_pos = output.Find(source_path);
+    if (link_pos == wxNOT_FOUND) {
+        output_box->WriteText(output);
+        output_box->Thaw();
+        return;
+    }
+
+    wxString before = output.Left(link_pos);
+    wxString after = output.Mid(link_pos + source_path.Length());
+
+    output_box->WriteText(before);
+    output_box->BeginURL(source_path);
+    output_box->WriteText(source_path);
+    output_box->EndURL();
+    output_box->WriteText(after);
+    output_box->Thaw();
 }
 
 bool MatchExplainDialogApp::OnInit() {
