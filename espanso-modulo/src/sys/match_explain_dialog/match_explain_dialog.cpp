@@ -108,7 +108,7 @@ MatchExplainDialogFrame::MatchExplainDialogFrame()
     wxBoxSizer *file_sizer = new wxBoxSizer(wxHORIZONTAL);
     file_label = new wxStaticText(panel, wxID_ANY, "Defined in:");
     file_sizer->Add(file_label, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 6);
-    file_link = new wxHyperlinkCtrl(panel, wxID_ANY, "", "");
+    file_link = new wxHyperlinkCtrl(panel, wxID_ANY, " ", "about:blank");
     file_sizer->Add(file_link, 1, wxALIGN_CENTER_VERTICAL);
     main_sizer->Add(file_sizer, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 10);
 
