@@ -25,6 +25,7 @@ use log::error;
 pub trait TextUIHandler {
     fn show_text(&self, title: &str, text: &str) -> Result<()>;
     fn show_logs(&self) -> Result<()>;
+    fn show_match_explain_dialog(&self) -> Result<()>;
 }
 
 pub struct TextUIExecutor<'a> {
@@ -50,6 +51,12 @@ impl Executor for TextUIExecutor<'_> {
             return true;
         } else if matches!(&event.etype, EventType::ShowLogs) {
             if let Err(error) = self.handler.show_logs() {
+                error!("text UI handler reported an error: {error:?}");
+            }
+
+            return true;
+        } else if matches!(&event.etype, EventType::ShowMatchExplainDialog) {
+            if let Err(error) = self.handler.show_match_explain_dialog() {
                 error!("text UI handler reported an error: {error:?}");
             }
 

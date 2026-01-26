@@ -254,6 +254,10 @@ For example, specifying 'email' is equivalent to 'match/email.yml'."#))
                 .help("Window title to display"),
             ),
         )
+        .subcommand(
+          SubCommand::with_name("match-explain")
+            .about("Display the match explain dialog")
+        )
         .subcommand(SubCommand::with_name("troubleshoot").about("Display the troubleshooting GUI"))
         .subcommand(
           SubCommand::with_name("welcome")

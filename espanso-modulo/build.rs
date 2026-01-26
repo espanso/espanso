@@ -139,6 +139,7 @@ fn build_native() {
         .file("src/sys/welcome/welcome_gui.cpp")
         .file("src/sys/textview/textview.cpp")
         .file("src/sys/textview/textview_gui.cpp")
+        .file("src/sys/match_explain_dialog/match_explain_dialog.cpp")
         .file("src/sys/troubleshooting/troubleshooting.cpp")
         .file("src/sys/troubleshooting/troubleshooting_gui.cpp")
         .flag("/EHsc")
@@ -290,6 +291,7 @@ fn build_native() {
         .file("src/sys/welcome/welcome_gui.cpp")
         .file("src/sys/textview/textview.cpp")
         .file("src/sys/textview/textview_gui.cpp")
+        .file("src/sys/match_explain_dialog/match_explain_dialog.cpp")
         .file("src/sys/troubleshooting/troubleshooting.cpp")
         .file("src/sys/troubleshooting/troubleshooting_gui.cpp")
         .file("src/sys/common/mac.mm");
@@ -485,6 +487,7 @@ fn build_native() {
         .file("src/sys/welcome/welcome_gui.cpp")
         .file("src/sys/textview/textview.cpp")
         .file("src/sys/textview/textview_gui.cpp")
+        .file("src/sys/match_explain_dialog/match_explain_dialog.cpp")
         .file("src/sys/troubleshooting/troubleshooting.cpp")
         .file("src/sys/troubleshooting/troubleshooting_gui.cpp");
     build.flag("-std=c++17");

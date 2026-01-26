@@ -33,6 +33,9 @@ pub enum IPCEvent {
     OpenSearchBar,
     OpenConfigFolder,
 
+    QueryEnabledState,
+    EnabledState(bool),
+
     RequestMatchExpansion(RequestMatchExpansionPayload),
 }
 

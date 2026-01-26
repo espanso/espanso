@@ -20,6 +20,7 @@
 use crossbeam::channel::unbounded;
 use espanso_engine::event::ExitMode;
 use log::{debug, error, info};
+use std::sync::{atomic::AtomicBool, Arc};
 
 use crate::{
     cli::util::prevent_running_as_root_on_macos,
@@ -126,6 +127,7 @@ fn worker_main(args: CliModuleArgs) -> i32 {
     let (ipc_event_notify, ipc_event_receiver) = unbounded();
     let (engine_ui_event_sender, engine_ui_event_receiver) = unbounded();
     let (engine_secure_input_sender, engine_secure_input_receiver) = unbounded();
+    let enabled_state = Arc::new(AtomicBool::new(true));
 
     // Initialize the engine on another thread and start it
     let engine_handle = engine::initialize_and_spawn(
@@ -139,12 +141,18 @@ fn worker_main(args: CliModuleArgs) -> i32 {
         use_evdev_backend,
         start_reason,
         ipc_event_receiver,
+        Arc::clone(&enabled_state),
     )
     .expect("unable to initialize engine");
 
     // Setup the IPC server
-    ipc::initialize_and_spawn(&paths.runtime, engine_exit_notify.clone(), ipc_event_notify)
-        .expect("unable to initialize IPC server");
+    ipc::initialize_and_spawn(
+        &paths.runtime,
+        engine_exit_notify.clone(),
+        ipc_event_notify,
+        Arc::clone(&enabled_state),
+    )
+    .expect("unable to initialize IPC server");
 
     // If specified, automatically monitor the daemon status and
     // terminate the worker if the daemon terminates

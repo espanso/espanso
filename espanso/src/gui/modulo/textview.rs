@@ -46,4 +46,9 @@ impl TextUI for ModuloTextUI<'_> {
 
         Ok(())
     }
+
+    fn show_match_explain_dialog(&self) -> anyhow::Result<()> {
+        self.manager.spawn(&["match-explain"], "")?;
+        Ok(())
+    }
 }

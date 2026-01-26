@@ -22,6 +22,8 @@ use super::{CliModule, CliModuleArgs};
 #[cfg(feature = "modulo")]
 mod form;
 #[cfg(feature = "modulo")]
+mod match_explain;
+#[cfg(feature = "modulo")]
 mod search;
 #[cfg(feature = "modulo")]
 mod textview;
@@ -34,6 +36,7 @@ pub fn new() -> CliModule {
     #[allow(clippy::needless_update)]
     CliModule {
         requires_paths: true,
+        requires_config: true,
         enable_logs: false,
         subcommand: "modulo".to_string(),
         entry: modulo_main,
@@ -54,6 +57,22 @@ fn modulo_main(args: CliModuleArgs) -> i32 {
 
     if let Some(matches) = cli_args.subcommand_matches("search") {
         return search::search_main(matches, &icon_paths);
+    }
+
+    if let Some(matches) = cli_args.subcommand_matches("match-explain") {
+        let config_store = args
+            .config_store
+            .expect("missing config store in match-explain modulo main");
+        let match_store = args
+            .match_store
+            .expect("missing match store in match-explain modulo main");
+        return match_explain::match_explain_main(
+            matches,
+            &paths,
+            &icon_paths,
+            config_store,
+            match_store,
+        );
     }
 
     if let Some(matches) = cli_args.subcommand_matches("welcome") {

@@ -27,6 +27,7 @@ use super::{
         cursor_hint::CursorHintMiddleware,
         delay_modifiers::{DelayForModifierReleaseMiddleware, ModifierStatusProvider},
         discard::EventsDiscardMiddleware,
+        enabled_state::EnabledStateMiddleware,
         markdown::MarkdownMiddleware,
         match_select::MatchSelectMiddleware,
         matcher::MatcherMiddleware,
@@ -52,6 +53,7 @@ use crate::{
     },
 };
 use std::collections::VecDeque;
+use std::sync::{atomic::AtomicBool, Arc};
 
 pub struct DefaultProcessor<'a> {
     event_queue: VecDeque<Event>,
@@ -80,12 +82,14 @@ impl<'a> DefaultProcessor<'a> {
         match_resolver: &'a dyn MatchResolver,
         notification_manager: &'a dyn NotificationManager,
         alt_code_synth_enabled_provider: &'a dyn AltCodeSynthEnabledProvider,
+        enabled_state: Arc<AtomicBool>,
     ) -> Self {
         Self {
             event_queue: VecDeque::new(),
             middleware: vec![
                 Box::new(EventsDiscardMiddleware::new()),
                 Box::new(DisableMiddleware::new(disable_options)),
+                Box::new(EnabledStateMiddleware::new(enabled_state)),
                 Box::new(IconStatusMiddleware::new()),
                 Box::new(AltCodeSynthesizerMiddleware::new(
                     alt_code_synth_enabled_provider,

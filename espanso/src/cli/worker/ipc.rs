@@ -18,6 +18,10 @@
  */
 
 use std::path::Path;
+use std::sync::{
+    atomic::{AtomicBool, Ordering},
+    Arc,
+};
 
 use anyhow::Result;
 use crossbeam::channel::Sender;
@@ -31,6 +35,7 @@ pub fn initialize_and_spawn(
     runtime_dir: &Path,
     exit_notify: Sender<ExitMode>,
     event_notify: Sender<EventType>,
+    enabled_state: Arc<AtomicBool>,
 ) -> Result<()> {
     let server = crate::ipc::create_worker_ipc_server(runtime_dir)?;
 
@@ -65,6 +70,10 @@ pub fn initialize_and_spawn(
                     IPCEvent::OpenSearchBar => send_event(&event_notify, EventType::ShowSearchBar),
                     IPCEvent::OpenConfigFolder => {
                         send_event(&event_notify, EventType::ShowConfigFolder)
+                    }
+                    IPCEvent::QueryEnabledState => {
+                        let is_enabled = enabled_state.load(Ordering::SeqCst);
+                        EventHandlerResponse::Response(IPCEvent::EnabledState(is_enabled))
                     }
                     IPCEvent::RequestMatchExpansion(payload) => send_event(
                         &event_notify,

@@ -34,6 +34,7 @@ const CONTEXT_ITEM_SECURE_INPUT_TRIGGER_WORKAROUND: u32 = 5;
 const CONTEXT_ITEM_OPEN_SEARCH: u32 = 6;
 const CONTEXT_ITEM_SHOW_LOGS: u32 = 7;
 const CONTEXT_ITEM_OPEN_CONFIG_FOLDER: u32 = 8;
+const CONTEXT_ITEM_EXPLAIN_MATCH: u32 = 9;
 
 pub struct ContextMenuMiddleware {
     is_enabled: RefCell<bool>,
@@ -86,6 +87,10 @@ impl Middleware for ContextMenuMiddleware {
                     MenuItem::Simple(SimpleMenuItem {
                         id: CONTEXT_ITEM_OPEN_CONFIG_FOLDER,
                         label: "Open config folder".to_string(),
+                    }),
+                    MenuItem::Simple(SimpleMenuItem {
+                        id: CONTEXT_ITEM_EXPLAIN_MATCH,
+                        label: "Explain match".to_string(),
                     }),
                     MenuItem::Simple(SimpleMenuItem {
                         id: CONTEXT_ITEM_SHOW_LOGS,
@@ -175,7 +180,14 @@ impl Middleware for ContextMenuMiddleware {
                         ));
                         Event::caused_by(event.source_id, EventType::NOOP)
                     }
-                    9_u32..=u32::MAX => {
+                    CONTEXT_ITEM_EXPLAIN_MATCH => {
+                        dispatch(Event::caused_by(
+                            event.source_id,
+                            EventType::ShowMatchExplainDialog,
+                        ));
+                        Event::caused_by(event.source_id, EventType::NOOP)
+                    }
+                    10_u32..=u32::MAX => {
                         // Should be unreachable, given there are no other options
                         unreachable!()
                     }

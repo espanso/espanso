@@ -28,6 +28,7 @@ use espanso_config::{
     },
 };
 use serde::Serialize;
+use std::fmt::Write;
 
 pub fn explain_main(
     cli_args: &ArgMatches,
@@ -45,17 +46,40 @@ pub fn explain_main(
     let title = cli_args.value_of("title");
     let exec = cli_args.value_of("exec");
 
-    // Get active config based on app properties (if provided)
-    let config = config_store.active(&AppProperties { title, class, exec });
+    let output = explain_output(
+        ExplainOptions {
+            trigger,
+            show_all,
+            json_output,
+            app_properties: AppProperties { title, class, exec },
+        },
+        &*config_store,
+        &*match_store,
+    )?;
 
-    // Query all matches with source file information
+    print!("{output}");
+
+    Ok(())
+}
+
+pub(crate) struct ExplainOptions<'a> {
+    pub trigger: &'a str,
+    pub show_all: bool,
+    pub json_output: bool,
+    pub app_properties: AppProperties<'a>,
+}
+
+pub(crate) fn explain_output(
+    options: ExplainOptions<'_>,
+    config_store: &dyn ConfigStore,
+    match_store: &dyn MatchStore,
+) -> Result<String> {
+    let config = config_store.active(&options.app_properties);
     let matches_with_sources = match_store.query_with_sources(config.match_paths());
 
-    // Find all matches that have this trigger
     let mut candidates: Vec<MatchCandidate> = Vec::new();
-
     for info in &matches_with_sources {
-        if match_has_trigger(info.m, trigger) {
+        if match_has_trigger(info.m, options.trigger) {
             candidates.push(MatchCandidate {
                 info,
                 is_selected: false,
@@ -64,34 +88,31 @@ pub fn explain_main(
     }
 
     if candidates.is_empty() {
-        if json_output {
-            println!(
-                "{}",
-                serde_json::to_string_pretty(&ExplainOutputJson {
-                    trigger: trigger.to_string(),
-                    found: false,
-                    selected: None,
-                    candidates: vec![],
-                })?
-            );
-        } else {
-            println!("Trigger: \"{}\"", trigger);
-            println!();
-            println!("No matches found for this trigger.");
+        if options.json_output {
+            return Ok(serde_json::to_string_pretty(&ExplainOutputJson {
+                trigger: options.trigger.to_string(),
+                found: false,
+                selected: None,
+                candidates: vec![],
+            })?);
         }
-        return Ok(());
+
+        let mut output = String::new();
+        writeln!(output, "Trigger: \"{}\"", options.trigger)?;
+        writeln!(output)?;
+        writeln!(output, "No matches found for this trigger.")?;
+        return Ok(output);
     }
 
-    // The first match in the list is the "selected" one (matches the espanso resolution order)
     candidates[0].is_selected = true;
 
-    if json_output {
-        print_json_output(trigger, &candidates, show_all)?;
+    if options.json_output {
+        render_json_output(options.trigger, &candidates, options.show_all)
     } else {
-        print_human_output(trigger, &candidates, show_all);
+        let mut output = String::new();
+        render_human_output(&mut output, options.trigger, &candidates, options.show_all)?;
+        Ok(output)
     }
-
-    Ok(())
 }
 
 fn match_has_trigger(m: &Match, trigger: &str) -> bool {
@@ -111,83 +132,98 @@ struct MatchCandidate<'a> {
     is_selected: bool,
 }
 
-fn print_human_output(trigger: &str, candidates: &[MatchCandidate], show_all: bool) {
-    println!("Trigger: \"{}\"", trigger);
-    println!();
+fn render_human_output(
+    output: &mut String,
+    trigger: &str,
+    candidates: &[MatchCandidate],
+    show_all: bool,
+) -> std::fmt::Result {
+    writeln!(output, "Trigger: \"{}\"", trigger)?;
+    writeln!(output)?;
 
     // Print the selected match
     if let Some(selected) = candidates.iter().find(|c| c.is_selected) {
-        println!("Selected match:");
-        print_match_details(selected.info, "  ");
+        writeln!(output, "Selected match:")?;
+        render_match_details(output, selected.info, "  ")?;
     }
 
     // Print other candidates if --all flag is set
     if show_all && candidates.len() > 1 {
-        println!();
-        println!("Other candidates (not selected):");
+        writeln!(output)?;
+        writeln!(output, "Other candidates (not selected):")?;
         for candidate in candidates.iter().filter(|c| !c.is_selected) {
-            println!();
-            println!("  File: {}", candidate.info.source_file);
-            print_match_details(candidate.info, "    ");
-            println!("    Reason not selected: lower priority (appears later in resolution order)");
+            writeln!(output)?;
+            writeln!(output, "  File: {}", candidate.info.source_file)?;
+            render_match_details(output, candidate.info, "    ")?;
+            writeln!(
+                output,
+                "    Reason not selected: lower priority (appears later in resolution order)"
+            )?;
         }
     } else if candidates.len() > 1 {
-        println!();
-        println!(
+        writeln!(output)?;
+        writeln!(
+            output,
             "Note: {} other candidate(s) found. Use --all to see them.",
             candidates.len() - 1
-        );
+        )?;
     }
+
+    Ok(())
 }
 
-fn print_match_details(info: &MatchInfo, indent: &str) {
+fn render_match_details(output: &mut String, info: &MatchInfo, indent: &str) -> std::fmt::Result {
     let m = info.m;
 
-    println!("{}Defined in: {}", indent, info.source_file);
-    println!("{}Match ID: {}", indent, m.id);
+    writeln!(output, "{}Defined in: {}", indent, info.source_file)?;
+    writeln!(output, "{}Match ID: {}", indent, m.id)?;
 
     if let Some(label) = &m.label {
-        println!("{}Label: {}", indent, label);
+        writeln!(output, "{}Label: {}", indent, label)?;
     }
-
-    println!("{}Enabled: {}", indent, m.enabled);
 
     // Print cause details
     match &m.cause {
         MatchCause::Trigger(cause) => {
-            println!("{}Type: trigger", indent);
-            print_trigger_details(cause, indent);
+            writeln!(output, "{}Type: trigger", indent)?;
+            render_trigger_details(output, cause, indent)?;
         }
         MatchCause::Regex(cause) => {
-            println!("{}Type: regex", indent);
-            println!("{}Regex: {}", indent, cause.regex);
+            writeln!(output, "{}Type: regex", indent)?;
+            writeln!(output, "{}Regex: {}", indent, cause.regex)?;
         }
         MatchCause::None => {
-            println!("{}Type: none", indent);
+            writeln!(output, "{}Type: none", indent)?;
         }
     }
 
     // Print effect details
     match &m.effect {
         MatchEffect::Text(effect) => {
-            println!("{}Effect: text replacement", indent);
-            print_text_effect_details(effect, indent);
+            writeln!(output, "{}Effect: text replacement", indent)?;
+            render_text_effect_details(output, effect, indent)?;
         }
         MatchEffect::Image(effect) => {
-            println!("{}Effect: image", indent);
-            println!("{}Image path: {}", indent, effect.path);
+            writeln!(output, "{}Effect: image", indent)?;
+            writeln!(output, "{}Image path: {}", indent, effect.path)?;
         }
         MatchEffect::None => {
-            println!("{}Effect: none", indent);
+            writeln!(output, "{}Effect: none", indent)?;
         }
     }
+
+    Ok(())
 }
 
-fn print_trigger_details(cause: &TriggerCause, indent: &str) {
+fn render_trigger_details(
+    output: &mut String,
+    cause: &TriggerCause,
+    indent: &str,
+) -> std::fmt::Result {
     if cause.triggers.len() == 1 {
-        println!("{}Trigger: {}", indent, cause.triggers[0]);
+        writeln!(output, "{}Trigger: {}", indent, cause.triggers[0])?;
     } else {
-        println!("{}Triggers: {:?}", indent, cause.triggers);
+        writeln!(output, "{}Triggers: {:?}", indent, cause.triggers)?;
     }
 
     if cause.left_word || cause.right_word {
@@ -197,7 +233,7 @@ fn print_trigger_details(cause: &TriggerCause, indent: &str) {
             (false, true) => "right",
             _ => "none",
         };
-        println!("{}Word boundary: {}", indent, word_mode);
+        writeln!(output, "{}Word boundary: {}", indent, word_mode)?;
     }
 
     if cause.propagate_case {
@@ -206,11 +242,17 @@ fn print_trigger_details(cause: &TriggerCause, indent: &str) {
             UpperCasingStyle::Capitalize => "capitalize",
             UpperCasingStyle::CapitalizeWords => "capitalize_words",
         };
-        println!("{}Propagate case: yes (style: {})", indent, style);
+        writeln!(output, "{}Propagate case: yes (style: {})", indent, style)?;
     }
+
+    Ok(())
 }
 
-fn print_text_effect_details(effect: &TextEffect, indent: &str) {
+fn render_text_effect_details(
+    output: &mut String,
+    effect: &TextEffect,
+    indent: &str,
+) -> std::fmt::Result {
     // Truncate long replacements for display
     let replace_preview = if effect.replace.len() > 100 {
         format!("{}...", &effect.replace[..100])
@@ -218,7 +260,7 @@ fn print_text_effect_details(effect: &TextEffect, indent: &str) {
         effect.replace.clone()
     };
     let replace_display = replace_preview.replace('\n', "\\n");
-    println!("{}Replace: \"{}\"", indent, replace_display);
+    writeln!(output, "{}Replace: \"{}\"", indent, replace_display)?;
 
     let format_str = match effect.format {
         TextFormat::Plain => "plain",
@@ -226,7 +268,7 @@ fn print_text_effect_details(effect: &TextEffect, indent: &str) {
         TextFormat::Html => "html",
     };
     if effect.format != TextFormat::Plain {
-        println!("{}Format: {}", indent, format_str);
+        writeln!(output, "{}Format: {}", indent, format_str)?;
     }
 
     if let Some(mode) = &effect.force_mode {
@@ -234,27 +276,31 @@ fn print_text_effect_details(effect: &TextEffect, indent: &str) {
             TextInjectMode::Keys => "keys",
             TextInjectMode::Clipboard => "clipboard",
         };
-        println!("{}Force mode: {}", indent, mode_str);
+        writeln!(output, "{}Force mode: {}", indent, mode_str)?;
     }
 
     // Print variables
     if !effect.vars.is_empty() {
-        println!("{}Variables:", indent);
+        writeln!(output, "{}Variables:", indent)?;
         for var in &effect.vars {
-            print_variable_details(var, &format!("{}  ", indent));
+            render_variable_details(output, var, &format!("{}  ", indent))?;
         }
     }
+
+    Ok(())
 }
 
-fn print_variable_details(var: &Variable, indent: &str) {
-    println!("{}- name: {}", indent, var.name);
-    println!("{}  type: {}", indent, var.var_type);
+fn render_variable_details(output: &mut String, var: &Variable, indent: &str) -> std::fmt::Result {
+    writeln!(output, "{}- name: {}", indent, var.name)?;
+    writeln!(output, "{}  type: {}", indent, var.var_type)?;
     if !var.params.is_empty() {
-        println!("{}  params: {:?}", indent, var.params);
+        writeln!(output, "{}  params: {:?}", indent, var.params)?;
     }
     if !var.depends_on.is_empty() {
-        println!("{}  depends_on: {:?}", indent, var.depends_on);
+        writeln!(output, "{}  depends_on: {:?}", indent, var.depends_on)?;
     }
+
+    Ok(())
 }
 
 // JSON output structures
@@ -271,7 +317,6 @@ struct MatchDetailsJson {
     source_file: String,
     match_id: i32,
     label: Option<String>,
-    enabled: bool,
     cause_type: String,
     triggers: Option<Vec<String>>,
     regex: Option<String>,
@@ -288,7 +333,11 @@ struct VariableJson {
     var_type: String,
 }
 
-fn print_json_output(trigger: &str, candidates: &[MatchCandidate], show_all: bool) -> Result<()> {
+fn render_json_output(
+    trigger: &str,
+    candidates: &[MatchCandidate],
+    show_all: bool,
+) -> Result<String> {
     let selected = candidates.iter().find(|c| c.is_selected);
 
     let selected_json = selected.map(|c| match_to_json(c));
@@ -310,8 +359,7 @@ fn print_json_output(trigger: &str, candidates: &[MatchCandidate], show_all: boo
         candidates: candidates_json,
     };
 
-    println!("{}", serde_json::to_string_pretty(&output)?);
-    Ok(())
+    Ok(serde_json::to_string_pretty(&output)?)
 }
 
 fn match_to_json(candidate: &MatchCandidate) -> MatchDetailsJson {
@@ -347,7 +395,6 @@ fn match_to_json(candidate: &MatchCandidate) -> MatchDetailsJson {
         source_file: candidate.info.source_file.to_string(),
         match_id: m.id,
         label: m.label.clone(),
-        enabled: m.enabled,
         cause_type,
         triggers,
         regex,

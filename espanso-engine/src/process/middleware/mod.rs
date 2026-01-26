@@ -25,6 +25,7 @@ pub mod cursor_hint;
 pub mod delay_modifiers;
 pub mod disable;
 pub mod discard;
+pub mod enabled_state;
 pub mod exit;
 pub mod hotkey;
 pub mod icon_status;

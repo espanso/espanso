@@ -18,6 +18,7 @@
  */
 
 pub mod form;
+pub mod match_explain_dialog;
 pub mod search;
 mod sys;
 pub mod textview;

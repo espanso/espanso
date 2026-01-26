@@ -44,4 +44,9 @@ impl TextUIHandler for TextUIHandlerAdapter<'_> {
             .show_file("Espanso Logs", &self.paths.runtime.join("espanso.log"))?;
         Ok(())
     }
+
+    fn show_match_explain_dialog(&self) -> anyhow::Result<()> {
+        self.text_ui.show_match_explain_dialog()?;
+        Ok(())
+    }
 }

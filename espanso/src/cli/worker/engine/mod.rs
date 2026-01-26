@@ -17,7 +17,10 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::thread::JoinHandle;
+use std::{
+    sync::{atomic::AtomicBool, Arc},
+    thread::JoinHandle,
+};
 
 use crate::path::Paths;
 use anyhow::Result;
@@ -89,6 +92,7 @@ pub fn initialize_and_spawn(
     use_evdev_backend: bool,
     start_reason: Option<String>,
     ipc_event_receiver: Receiver<EventType>,
+    enabled_state: Arc<AtomicBool>,
 ) -> Result<JoinHandle<ExitMode>> {
     let handle = std::thread::Builder::new()
         .name("engine thread".to_string())
@@ -252,6 +256,7 @@ pub fn initialize_and_spawn(
                 &combined_match_cache,
                 &notification_manager,
                 &config_manager,
+                Arc::clone(&enabled_state),
             );
 
             let event_injector = EventInjectorAdapter::new(&*injector, &config_manager);

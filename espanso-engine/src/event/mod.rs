@@ -104,6 +104,7 @@ pub enum EventType {
     ShowSearchBar,
     ShowText(ui::ShowTextEvent),
     ShowLogs,
+    ShowMatchExplainDialog,
 
     // Other
     LaunchSecureInputAutoFix,

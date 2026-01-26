@@ -64,4 +64,5 @@ pub enum FormField {
 pub trait TextUI {
     fn show_text(&self, title: &str, text: &str) -> Result<()>;
     fn show_file(&self, title: &str, path: &Path) -> Result<()>;
+    fn show_match_explain_dialog(&self) -> Result<()>;
 }
