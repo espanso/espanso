@@ -18,6 +18,8 @@
  */
 
 use super::PathsOverrides;
+
+pub mod open_file;
 use std::process::Command;
 
 pub trait CommandExt {

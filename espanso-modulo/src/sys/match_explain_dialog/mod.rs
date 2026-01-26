@@ -71,6 +71,23 @@ pub fn show(options: MatchExplainDialogOptions) -> Result<()> {
             .as_ptr()
     }
 
+    extern "C" fn on_open_file(path: *const c_char) {
+        let path_str = if path.is_null() {
+            String::new()
+        } else {
+            unsafe { CStr::from_ptr(path) }
+                .to_string_lossy()
+                .to_string()
+        };
+
+        let lock = HANDLERS
+            .lock()
+            .expect("unable to acquire handlers lock in on_open_file");
+        let handlers_ref = (*lock).as_ref().expect("unable to unwrap handlers");
+
+        (handlers_ref.on_open_file)(&path_str);
+    }
+
     extern "C" fn on_focus_gained() {
         let lock = HANDLERS
             .lock()
@@ -95,6 +112,7 @@ pub fn show(options: MatchExplainDialogOptions) -> Result<()> {
     let metadata = MatchExplainDialogMetadata {
         window_icon_path: c_window_icon_path_ptr,
         on_check,
+        on_open_file,
         on_focus_gained,
         on_focus_lost,
     };

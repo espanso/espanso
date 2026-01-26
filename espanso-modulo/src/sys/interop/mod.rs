@@ -200,6 +200,7 @@ pub struct TextViewMetadata {
 pub struct MatchExplainDialogMetadata {
     pub window_icon_path: *const c_char,
     pub on_check: extern "C" fn(*const c_char, c_int, c_int) -> *const c_char,
+    pub on_open_file: extern "C" fn(*const c_char),
     pub on_focus_gained: extern "C" fn(),
     pub on_focus_lost: extern "C" fn(),
 }

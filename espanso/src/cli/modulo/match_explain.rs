@@ -17,6 +17,7 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use std::path::Path;
 use std::sync::{Arc, Mutex};
 
 use clap::ArgMatches;
@@ -29,6 +30,7 @@ use log::warn;
 
 use crate::{
     cli::match_cli::explain::{explain_output, ExplainOptions},
+    cli::util::open_file::open_file_with_preferred_editor,
     icon::IconPaths,
     ipc::{create_ipc_client_to_worker, IPCEvent},
     path::Paths,
@@ -52,6 +54,8 @@ pub fn match_explain_main(
     let ipc_client: Arc<Mutex<Box<dyn IPCClient<IPCEvent> + Send>>> =
         Arc::new(Mutex::new(Box::new(ipc_client)));
     let previous_enabled = Arc::new(Mutex::new(None::<bool>));
+    let config_store: Arc<dyn ConfigStore> = Arc::from(config_store);
+    let match_store: Arc<dyn MatchStore> = Arc::from(match_store);
 
     let on_focus_gained = {
         let ipc_client = Arc::clone(&ipc_client);
@@ -118,8 +122,8 @@ pub fn match_explain_main(
     };
 
     let on_check = {
-        let config_store = config_store;
-        let match_store = match_store;
+        let config_store = Arc::clone(&config_store);
+        let match_store = Arc::clone(&match_store);
         move |trigger: &str, show_all: bool, json_output: bool| -> String {
             let output = explain_output(
                 ExplainOptions {
@@ -143,6 +147,22 @@ pub fn match_explain_main(
         }
     };
 
+    let on_open_file = {
+        let config_store = Arc::clone(&config_store);
+        move |path: &str| {
+            if path.trim().is_empty() {
+                return;
+            }
+
+            let editor_path = config_store.default().open_file_menu_yaml_editor_path();
+            if let Err(err) =
+                open_file_with_preferred_editor(Path::new(path), editor_path.as_deref())
+            {
+                warn!("unable to open match explain file: {err:?}");
+            }
+        }
+    };
+
     let options = espanso_modulo::match_explain_dialog::MatchExplainDialogOptions {
         window_icon_path: icon_paths
             .wizard_icon
@@ -150,6 +170,7 @@ pub fn match_explain_main(
             .map(|path| path.to_string_lossy().to_string()),
         handlers: espanso_modulo::match_explain_dialog::MatchExplainDialogHandlers {
             on_check: Box::new(on_check),
+            on_open_file: Box::new(on_open_file),
             on_focus_gained: Box::new(on_focus_gained),
             on_focus_lost: Box::new(on_focus_lost),
         },

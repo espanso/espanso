@@ -211,7 +211,11 @@ void MatchExplainDialogFrame::OnTextUrl(wxTextUrlEvent &event) {
         path = output_box->GetValue().Mid(start, end - start);
     }
     if (!path.IsEmpty()) {
-        wxLaunchDefaultApplication(path);
+        if (match_explain_metadata && match_explain_metadata->on_open_file) {
+            match_explain_metadata->on_open_file(path.utf8_str());
+        } else {
+            wxLaunchDefaultApplication(path);
+        }
     }
 }
 
