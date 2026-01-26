@@ -18,7 +18,7 @@
  */
 
 use std::ffi::{CStr, CString};
-use std::os::raw::c_char;
+use std::os::raw::{c_char, c_int};
 use std::sync::{LazyLock, Mutex};
 
 use anyhow::Result;
@@ -35,7 +35,11 @@ pub fn show(options: MatchExplainDialogOptions) -> Result<()> {
     let (_c_window_icon_path, c_window_icon_path_ptr) =
         convert_to_cstring_or_null(options.window_icon_path);
 
-    extern "C" fn on_check(trigger: *const c_char) -> *const c_char {
+    extern "C" fn on_check(
+        trigger: *const c_char,
+        show_all: c_int,
+        json_output: c_int,
+    ) -> *const c_char {
         let trigger_str = if trigger.is_null() {
             String::new()
         } else {
@@ -44,12 +48,15 @@ pub fn show(options: MatchExplainDialogOptions) -> Result<()> {
                 .to_string()
         };
 
+        let show_all = show_all != 0;
+        let json_output = json_output != 0;
+
         let lock = HANDLERS
             .lock()
             .expect("unable to acquire handlers lock in on_check");
         let handlers_ref = (*lock).as_ref().expect("unable to unwrap handlers");
 
-        let output = (handlers_ref.on_check)(&trigger_str);
+        let output = (handlers_ref.on_check)(&trigger_str, show_all, json_output);
         let sanitized = output.replace('\0', "\\0");
         let c_output = CString::new(sanitized).unwrap_or_else(|_| CString::new("").unwrap());
 

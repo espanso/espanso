@@ -19,13 +19,15 @@
 
 pub use crate::sys::match_explain_dialog::show;
 
+pub type MatchExplainOnCheckHandler = Box<dyn Fn(&str, bool, bool) -> String + Send>;
+
 pub struct MatchExplainDialogOptions {
     pub window_icon_path: Option<String>,
     pub handlers: MatchExplainDialogHandlers,
 }
 
 pub struct MatchExplainDialogHandlers {
-    pub on_check: Box<dyn Fn(&str) -> String + Send>,
+    pub on_check: MatchExplainOnCheckHandler,
     pub on_focus_gained: Box<dyn Fn() + Send>,
     pub on_focus_lost: Box<dyn Fn() + Send>,
 }

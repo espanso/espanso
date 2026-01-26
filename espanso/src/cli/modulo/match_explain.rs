@@ -120,12 +120,12 @@ pub fn match_explain_main(
     let on_check = {
         let config_store = config_store;
         let match_store = match_store;
-        move |trigger: &str| -> String {
+        move |trigger: &str, show_all: bool, json_output: bool| -> String {
             let output = explain_output(
                 ExplainOptions {
                     trigger,
-                    show_all: false,
-                    json_output: false,
+                    show_all,
+                    json_output,
                     app_properties: AppProperties {
                         title: None,
                         class: None,

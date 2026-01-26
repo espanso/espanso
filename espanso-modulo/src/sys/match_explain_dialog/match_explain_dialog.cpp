@@ -23,6 +23,8 @@
 #include "../interop/interop.h"
 
 #include <wx/clipbrd.h>
+#include <wx/hyperlink.h>
+#include <wx/utils.h>
 
 #ifdef __WXMSW__
 const long DEFAULT_STYLE = wxDEFAULT_FRAME_STYLE | wxSTAY_ON_TOP;
@@ -48,19 +50,27 @@ class MatchExplainDialogFrame : public wxFrame {
   private:
     wxTextCtrl *trigger_input = nullptr;
     wxButton *check_button = nullptr;
+    wxButton *check_all_button = nullptr;
     wxTextCtrl *output_box = nullptr;
+    wxStaticText *file_label = nullptr;
+    wxHyperlinkCtrl *file_link = nullptr;
+    wxCheckBox *json_checkbox = nullptr;
     wxButton *copy_button = nullptr;
     wxButton *close_button = nullptr;
 
     void OnCheck(wxCommandEvent &event);
+    void OnCheckAll(wxCommandEvent &event);
     void OnCopy(wxCommandEvent &event);
     void OnCloseClick(wxCommandEvent &event);
     void OnActivate(wxActivateEvent &event);
     void OnClose(wxCloseEvent &event);
     void OnChar(wxKeyEvent &event);
+    void OnFileLink(wxHyperlinkEvent &event);
 
     void NotifyFocusGained();
     void NotifyFocusLost();
+    void RunCheck(bool show_all);
+    void UpdateFileLink(const wxString &output, bool json_output);
 };
 
 MatchExplainDialogFrame::MatchExplainDialogFrame()
@@ -82,6 +92,9 @@ MatchExplainDialogFrame::MatchExplainDialogFrame()
     check_button = new wxButton(panel, wxID_ANY, "Check");
     top_sizer->Add(check_button, 0);
 
+    check_all_button = new wxButton(panel, wxID_ANY, "Check all");
+    top_sizer->Add(check_all_button, 0, wxLEFT, 8);
+
     main_sizer->Add(top_sizer, 0, wxEXPAND | wxALL, 10);
 
     output_box = new wxTextCtrl(panel, wxID_ANY, "", wxDefaultPosition,
@@ -92,7 +105,16 @@ MatchExplainDialogFrame::MatchExplainDialogFrame()
     output_box->SetFont(output_font);
     main_sizer->Add(output_box, 1, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 10);
 
+    wxBoxSizer *file_sizer = new wxBoxSizer(wxHORIZONTAL);
+    file_label = new wxStaticText(panel, wxID_ANY, "Defined in:");
+    file_sizer->Add(file_label, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 6);
+    file_link = new wxHyperlinkCtrl(panel, wxID_ANY, "", "");
+    file_sizer->Add(file_link, 1, wxALIGN_CENTER_VERTICAL);
+    main_sizer->Add(file_sizer, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 10);
+
     wxBoxSizer *bottom_sizer = new wxBoxSizer(wxHORIZONTAL);
+    json_checkbox = new wxCheckBox(panel, wxID_ANY, "JSON output");
+    bottom_sizer->Add(json_checkbox, 0, wxALIGN_CENTER_VERTICAL);
     bottom_sizer->AddStretchSpacer(1);
     copy_button = new wxButton(panel, wxID_ANY, "Copy to Clipboard");
     close_button = new wxButton(panel, wxID_ANY, "Close");
@@ -101,15 +123,22 @@ MatchExplainDialogFrame::MatchExplainDialogFrame()
     main_sizer->Add(bottom_sizer, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 10);
 
     check_button->Bind(wxEVT_BUTTON, &MatchExplainDialogFrame::OnCheck, this);
+    check_all_button->Bind(wxEVT_BUTTON, &MatchExplainDialogFrame::OnCheckAll,
+                           this);
     copy_button->Bind(wxEVT_BUTTON, &MatchExplainDialogFrame::OnCopy, this);
     close_button->Bind(wxEVT_BUTTON, &MatchExplainDialogFrame::OnCloseClick,
                        this);
     trigger_input->Bind(wxEVT_TEXT_ENTER,
                         &MatchExplainDialogFrame::OnCheck, this);
+    file_link->Bind(wxEVT_HYPERLINK, &MatchExplainDialogFrame::OnFileLink, this);
 
     Bind(wxEVT_ACTIVATE, &MatchExplainDialogFrame::OnActivate, this);
     Bind(wxEVT_CLOSE_WINDOW, &MatchExplainDialogFrame::OnClose, this);
     Bind(wxEVT_CHAR_HOOK, &MatchExplainDialogFrame::OnChar, this);
+
+    file_label->Hide();
+    file_link->Hide();
+    Centre();
 }
 
 void MatchExplainDialogFrame::NotifyFocusGained() {
@@ -151,17 +180,29 @@ void MatchExplainDialogFrame::OnChar(wxKeyEvent &event) {
 }
 
 void MatchExplainDialogFrame::OnCheck(wxCommandEvent &event) {
+    RunCheck(false);
+}
+
+void MatchExplainDialogFrame::OnCheckAll(wxCommandEvent &event) {
+    RunCheck(true);
+}
+
+void MatchExplainDialogFrame::RunCheck(bool show_all) {
     if (!match_explain_metadata || !match_explain_metadata->on_check) {
         return;
     }
 
     wxString trigger = trigger_input->GetValue();
     const char *response =
-        match_explain_metadata->on_check(trigger.utf8_str());
+        match_explain_metadata->on_check(trigger.utf8_str(), show_all,
+                                         json_checkbox->IsChecked() ? 1 : 0);
     if (response) {
-        output_box->SetValue(wxString::FromUTF8(response));
+        wxString output = wxString::FromUTF8(response);
+        output_box->SetValue(output);
+        UpdateFileLink(output, json_checkbox->IsChecked());
     } else {
         output_box->SetValue("");
+        UpdateFileLink("", json_checkbox->IsChecked());
     }
 }
 
@@ -173,6 +214,55 @@ void MatchExplainDialogFrame::OnCopy(wxCommandEvent &event) {
     }
 }
 
+void MatchExplainDialogFrame::OnFileLink(wxHyperlinkEvent &event) {
+    wxString path = file_link->GetURL();
+    if (!path.IsEmpty()) {
+        wxLaunchDefaultApplication(path);
+    }
+}
+
+void MatchExplainDialogFrame::UpdateFileLink(const wxString &output,
+                                             bool json_output) {
+    wxString source_path;
+
+    if (json_output) {
+        const wxString marker = "\"source_file\": \"";
+        int pos = output.Find(marker);
+        if (pos != wxNOT_FOUND) {
+            pos += marker.Length();
+            wxString tail = output.Mid(pos);
+            int rel_end = tail.Find("\"");
+            if (rel_end != wxNOT_FOUND) {
+                int end = pos + rel_end;
+                source_path = output.Mid(pos, end - pos);
+            }
+        }
+    } else {
+        const wxString marker = "Defined in: ";
+        int pos = output.Find(marker);
+        if (pos != wxNOT_FOUND) {
+            pos += marker.Length();
+            wxString tail = output.Mid(pos);
+            int rel_end = tail.Find("\n");
+            int end = rel_end == wxNOT_FOUND ? output.Length() : pos + rel_end;
+            source_path =
+                output.Mid(pos, end - pos).Trim(true).Trim(false);
+        }
+    }
+
+    if (!source_path.IsEmpty()) {
+        file_link->SetLabel(source_path);
+        file_link->SetURL(source_path);
+        file_label->Show();
+        file_link->Show();
+    } else {
+        file_label->Hide();
+        file_link->Hide();
+    }
+
+    Layout();
+}
+
 bool MatchExplainDialogApp::OnInit() {
     MatchExplainDialogFrame *frame = new MatchExplainDialogFrame();
     if (match_explain_metadata && match_explain_metadata->window_icon_path) {
@@ -181,8 +271,6 @@ bool MatchExplainDialogApp::OnInit() {
     }
 
     frame->Show(true);
-    SetupWindowStyle(frame);
-    frame->CentreOnScreen();
     Activate(frame);
     if (match_explain_metadata && match_explain_metadata->on_focus_gained) {
         match_explain_metadata->on_focus_gained();
