@@ -21,10 +21,7 @@ use std::path::Path;
 use std::sync::{Arc, Mutex};
 
 use clap::ArgMatches;
-use espanso_config::{
-    config::{AppProperties, ConfigStore},
-    matches::store::MatchStore,
-};
+use espanso_config::{config::AppProperties, config::ConfigStore, matches::store::MatchStore};
 use espanso_ipc::IPCClient;
 use log::warn;
 
@@ -54,8 +51,8 @@ pub fn match_explain_main(
     let ipc_client: Arc<Mutex<Box<dyn IPCClient<IPCEvent> + Send>>> =
         Arc::new(Mutex::new(Box::new(ipc_client)));
     let previous_enabled = Arc::new(Mutex::new(None::<bool>));
-    let config_store: Arc<dyn ConfigStore> = Arc::from(config_store);
-    let match_store: Arc<dyn MatchStore> = Arc::from(match_store);
+    let config_store = Arc::new(Mutex::new(config_store));
+    let match_store = Arc::new(Mutex::new(match_store));
 
     let on_focus_gained = {
         let ipc_client = Arc::clone(&ipc_client);
@@ -125,6 +122,18 @@ pub fn match_explain_main(
         let config_store = Arc::clone(&config_store);
         let match_store = Arc::clone(&match_store);
         move |trigger: &str, show_all: bool, json_output: bool| -> String {
+            let config_store = match config_store.lock() {
+                Ok(store) => store,
+                Err(err) => {
+                    return format!("Error: unable to lock config store: {err:?}");
+                }
+            };
+            let match_store = match match_store.lock() {
+                Ok(store) => store,
+                Err(err) => {
+                    return format!("Error: unable to lock match store: {err:?}");
+                }
+            };
             let output = explain_output(
                 ExplainOptions {
                     trigger,
@@ -136,8 +145,8 @@ pub fn match_explain_main(
                         exec: None,
                     },
                 },
-                &*config_store,
-                &*match_store,
+                &**config_store,
+                &**match_store,
             );
 
             match output {
@@ -148,16 +157,13 @@ pub fn match_explain_main(
     };
 
     let on_open_file = {
-        let config_store = Arc::clone(&config_store);
         move |path: &str| {
             if path.trim().is_empty() {
                 return;
             }
 
-            let editor_path = config_store.default().open_file_menu_yaml_editor_path();
-            if let Err(err) =
-                open_file_with_preferred_editor(Path::new(path), editor_path.as_deref())
-            {
+            let editor_path: Option<&str> = None;
+            if let Err(err) = open_file_with_preferred_editor(Path::new(path), editor_path) {
                 warn!("unable to open match explain file: {err:?}");
             }
         }

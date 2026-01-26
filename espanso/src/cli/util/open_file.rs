@@ -21,10 +21,7 @@ use std::path::Path;
 
 use anyhow::{Context, Result};
 
-pub fn open_file_with_preferred_editor(
-    file_path: &Path,
-    editor_path: Option<&str>,
-) -> Result<()> {
+pub fn open_file_with_preferred_editor(file_path: &Path, editor_path: Option<&str>) -> Result<()> {
     let editor = editor_path.and_then(|path| {
         let trimmed = path.trim();
         (!trimmed.is_empty()).then_some(trimmed)

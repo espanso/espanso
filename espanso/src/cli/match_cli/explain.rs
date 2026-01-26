@@ -17,7 +17,7 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use clap::ArgMatches;
 use espanso_config::{
     config::{AppProperties, ConfigStore},
@@ -27,8 +27,13 @@ use espanso_config::{
         UpperCasingStyle, Variable,
     },
 };
+use espanso_render::{
+    CasingStyle, Context as RenderContext, RenderOptions, RenderResult, Renderer, Template,
+};
 use serde::Serialize;
 use std::fmt::Write;
+
+use crate::path::resolve_paths;
 
 pub fn explain_main(
     cli_args: &ArgMatches,
@@ -75,6 +80,7 @@ pub(crate) fn explain_output(
     match_store: &dyn MatchStore,
 ) -> Result<String> {
     let config = config_store.active(&options.app_properties);
+    let match_set = match_store.query(config.match_paths());
     let matches_with_sources = match_store.query_with_sources(config.match_paths());
 
     let mut candidates: Vec<MatchCandidate> = Vec::new();
@@ -106,11 +112,25 @@ pub(crate) fn explain_output(
 
     candidates[0].is_selected = true;
 
+    let paths = resolve_paths(None, None, None);
+    let render_support = build_render_support(&match_set, &paths).ok();
+
     if options.json_output {
-        render_json_output(options.trigger, &candidates, options.show_all)
+        render_json_output(
+            options.trigger,
+            &candidates,
+            options.show_all,
+            render_support.as_ref(),
+        )
     } else {
         let mut output = String::new();
-        render_human_output(&mut output, options.trigger, &candidates, options.show_all)?;
+        render_human_output(
+            &mut output,
+            options.trigger,
+            &candidates,
+            options.show_all,
+            render_support.as_ref(),
+        )?;
         Ok(output)
     }
 }
@@ -137,6 +157,7 @@ fn render_human_output(
     trigger: &str,
     candidates: &[MatchCandidate],
     show_all: bool,
+    render_support: Option<&RenderSupport>,
 ) -> std::fmt::Result {
     writeln!(output, "Trigger: \"{}\"", trigger)?;
     writeln!(output)?;
@@ -144,7 +165,7 @@ fn render_human_output(
     // Print the selected match
     if let Some(selected) = candidates.iter().find(|c| c.is_selected) {
         writeln!(output, "Selected match:")?;
-        render_match_details(output, selected.info, "  ")?;
+        render_match_details(output, selected.info, trigger, "  ", render_support)?;
     }
 
     // Print other candidates if --all flag is set
@@ -154,7 +175,7 @@ fn render_human_output(
         for candidate in candidates.iter().filter(|c| !c.is_selected) {
             writeln!(output)?;
             writeln!(output, "  File: {}", candidate.info.source_file)?;
-            render_match_details(output, candidate.info, "    ")?;
+            render_match_details(output, candidate.info, trigger, "    ", render_support)?;
             writeln!(
                 output,
                 "    Reason not selected: lower priority (appears later in resolution order)"
@@ -172,10 +193,22 @@ fn render_human_output(
     Ok(())
 }
 
-fn render_match_details(output: &mut String, info: &MatchInfo, indent: &str) -> std::fmt::Result {
+fn render_match_details(
+    output: &mut String,
+    info: &MatchInfo,
+    trigger: &str,
+    indent: &str,
+    render_support: Option<&RenderSupport>,
+) -> std::fmt::Result {
     let m = info.m;
+    let line_number = find_line_number(info, trigger);
 
     writeln!(output, "{}Defined in: {}", indent, info.source_file)?;
+    if let Some(line_number) = line_number {
+        writeln!(output, "{}Line number: {}", indent, line_number)?;
+    } else {
+        writeln!(output, "{}Line number: unknown", indent)?;
+    }
     writeln!(output, "{}Match ID: {}", indent, m.id)?;
 
     if let Some(label) = &m.label {
@@ -202,6 +235,12 @@ fn render_match_details(output: &mut String, info: &MatchInfo, indent: &str) -> 
         MatchEffect::Text(effect) => {
             writeln!(output, "{}Effect: text replacement", indent)?;
             render_text_effect_details(output, effect, indent)?;
+            if let Some(render_support) = render_support {
+                if let Some(current_output) = render_current_output(render_support, m, trigger) {
+                    let display = escape_for_display(&current_output);
+                    writeln!(output, "{}Current output: \"{}\"", indent, display)?;
+                }
+            }
         }
         MatchEffect::Image(effect) => {
             writeln!(output, "{}Effect: image", indent)?;
@@ -253,13 +292,7 @@ fn render_text_effect_details(
     effect: &TextEffect,
     indent: &str,
 ) -> std::fmt::Result {
-    // Truncate long replacements for display
-    let replace_preview = if effect.replace.len() > 100 {
-        format!("{}...", &effect.replace[..100])
-    } else {
-        effect.replace.clone()
-    };
-    let replace_display = replace_preview.replace('\n', "\\n");
+    let replace_display = escape_for_display(&effect.replace);
     writeln!(output, "{}Replace: \"{}\"", indent, replace_display)?;
 
     let format_str = match effect.format {
@@ -315,6 +348,7 @@ struct ExplainOutputJson {
 #[derive(Serialize)]
 struct MatchDetailsJson {
     source_file: String,
+    line_number: Option<usize>,
     match_id: i32,
     label: Option<String>,
     cause_type: String,
@@ -324,6 +358,7 @@ struct MatchDetailsJson {
     replace: Option<String>,
     image_path: Option<String>,
     variables: Vec<VariableJson>,
+    current_output: Option<String>,
     is_selected: bool,
 }
 
@@ -337,16 +372,17 @@ fn render_json_output(
     trigger: &str,
     candidates: &[MatchCandidate],
     show_all: bool,
+    render_support: Option<&RenderSupport>,
 ) -> Result<String> {
     let selected = candidates.iter().find(|c| c.is_selected);
 
-    let selected_json = selected.map(|c| match_to_json(c));
+    let selected_json = selected.map(|c| match_to_json(c, trigger, render_support));
 
     let candidates_json: Vec<MatchDetailsJson> = if show_all {
         candidates
             .iter()
             .filter(|c| !c.is_selected)
-            .map(match_to_json)
+            .map(|c| match_to_json(c, trigger, render_support))
             .collect()
     } else {
         vec![]
@@ -362,7 +398,11 @@ fn render_json_output(
     Ok(serde_json::to_string_pretty(&output)?)
 }
 
-fn match_to_json(candidate: &MatchCandidate) -> MatchDetailsJson {
+fn match_to_json(
+    candidate: &MatchCandidate,
+    trigger: &str,
+    render_support: Option<&RenderSupport>,
+) -> MatchDetailsJson {
     let m = candidate.info.m;
 
     let (cause_type, triggers, regex) = match &m.cause {
@@ -391,8 +431,12 @@ fn match_to_json(candidate: &MatchCandidate) -> MatchDetailsJson {
         MatchEffect::None => ("none".to_string(), None, None, vec![]),
     };
 
+    let current_output =
+        render_support.and_then(|support| render_current_output(support, m, trigger));
+
     MatchDetailsJson {
         source_file: candidate.info.source_file.to_string(),
+        line_number: find_line_number(candidate.info, trigger),
         match_id: m.id,
         label: m.label.clone(),
         cause_type,
@@ -402,6 +446,197 @@ fn match_to_json(candidate: &MatchCandidate) -> MatchDetailsJson {
         replace,
         image_path,
         variables,
+        current_output,
         is_selected: candidate.is_selected,
     }
+}
+
+struct RenderSupport {
+    templates: Vec<Template>,
+    global_vars: Vec<espanso_render::Variable>,
+    paths: crate::path::Paths,
+}
+
+fn build_render_support(
+    match_set: &espanso_config::matches::store::MatchSet<'_>,
+    paths: &crate::path::Paths,
+) -> Result<RenderSupport> {
+    let templates: Vec<Template> = match_set
+        .matches
+        .iter()
+        .filter_map(|m| convert_to_template(m))
+        .collect();
+
+    let global_vars: Vec<espanso_render::Variable> = match_set
+        .global_vars
+        .iter()
+        .copied()
+        .map(convert_var)
+        .collect();
+
+    Ok(RenderSupport {
+        templates,
+        global_vars,
+        paths: paths.clone(),
+    })
+}
+
+fn render_current_output(support: &RenderSupport, m: &Match, trigger: &str) -> Option<String> {
+    let template = convert_to_template(m)?;
+    let template_refs: Vec<&Template> = support.templates.iter().collect();
+    let global_var_refs: Vec<&espanso_render::Variable> = support.global_vars.iter().collect();
+    let context = RenderContext {
+        global_vars: global_var_refs,
+        templates: template_refs,
+    };
+    let locale_provider = espanso_render::extension::date::DefaultLocaleProvider::new();
+    let date_extension = espanso_render::extension::date::DateExtension::new(&locale_provider);
+    let echo_extension = espanso_render::extension::echo::EchoExtension::new();
+    let random_extension = espanso_render::extension::random::RandomExtension::new();
+    let home_path = dirs::home_dir()
+        .context("unable to obtain home dir path")
+        .ok()?;
+    let script_extension = espanso_render::extension::script::ScriptExtension::new(
+        &support.paths.config,
+        &home_path,
+        &support.paths.packages,
+    );
+    let shell_extension =
+        espanso_render::extension::shell::ShellExtension::new(&support.paths.config);
+    let renderer = espanso_render::create(vec![
+        &date_extension,
+        &echo_extension,
+        &random_extension,
+        &script_extension,
+        &shell_extension,
+    ]);
+    let options = RenderOptions {
+        casing_style: calculate_casing_style(m, trigger),
+    };
+    match renderer.render(&template, &context, &options) {
+        RenderResult::Success(body) => Some(body),
+        RenderResult::Aborted => Some("Rendering aborted".to_string()),
+        RenderResult::Error(err) => Some(format!("Rendering error: {err:?}")),
+    }
+}
+
+fn convert_to_template(m: &Match) -> Option<Template> {
+    if let MatchEffect::Text(text_effect) = &m.effect {
+        let ids = if let MatchCause::Trigger(cause) = &m.cause {
+            cause.triggers.clone()
+        } else {
+            Vec::new()
+        };
+
+        Some(Template {
+            ids,
+            body: text_effect.replace.clone(),
+            vars: text_effect.vars.iter().map(convert_var).collect(),
+        })
+    } else {
+        None
+    }
+}
+
+fn convert_var(var: &espanso_config::matches::Variable) -> espanso_render::Variable {
+    espanso_render::Variable {
+        name: var.name.clone(),
+        var_type: var.var_type.clone(),
+        params: convert_params(var.params.clone()),
+        inject_vars: var.inject_vars,
+        depends_on: var.depends_on.clone(),
+    }
+}
+
+fn convert_params(params: espanso_config::matches::Params) -> espanso_render::Params {
+    let mut new_params = espanso_render::Params::new();
+    for (key, value) in params {
+        new_params.insert(key, convert_value(value));
+    }
+    new_params
+}
+
+fn convert_value(value: espanso_config::matches::Value) -> espanso_render::Value {
+    match value {
+        espanso_config::matches::Value::Null => espanso_render::Value::Null,
+        espanso_config::matches::Value::Bool(v) => espanso_render::Value::Bool(v),
+        espanso_config::matches::Value::Number(n) => match n {
+            espanso_config::matches::Number::Integer(i) => {
+                espanso_render::Value::Number(espanso_render::Number::Integer(i))
+            }
+            espanso_config::matches::Number::Float(f) => {
+                espanso_render::Value::Number(espanso_render::Number::Float(f.into_inner()))
+            }
+        },
+        espanso_config::matches::Value::String(s) => espanso_render::Value::String(s),
+        espanso_config::matches::Value::Array(v) => {
+            espanso_render::Value::Array(v.into_iter().map(convert_value).collect())
+        }
+        espanso_config::matches::Value::Object(params) => {
+            espanso_render::Value::Object(convert_params(params))
+        }
+    }
+}
+
+fn calculate_casing_style(m: &Match, trigger: &str) -> CasingStyle {
+    let MatchCause::Trigger(cause) = &m.cause else {
+        return CasingStyle::None;
+    };
+
+    if !cause.propagate_case {
+        return CasingStyle::None;
+    }
+
+    let mut first_alphabetic = None;
+    let mut second_alphabetic = None;
+
+    for c in trigger.chars() {
+        if c.is_alphabetic() {
+            if first_alphabetic.is_none() {
+                first_alphabetic = Some(c);
+            } else if second_alphabetic.is_none() {
+                second_alphabetic = Some(c);
+            } else {
+                break;
+            }
+        }
+    }
+
+    match (first_alphabetic, second_alphabetic) {
+        (Some(first), Some(second)) => {
+            if first.is_uppercase() {
+                if second.is_uppercase() {
+                    CasingStyle::Uppercase
+                } else {
+                    CasingStyle::Capitalize
+                }
+            } else if second.is_uppercase() {
+                CasingStyle::CapitalizeWords
+            } else {
+                CasingStyle::None
+            }
+        }
+        _ => CasingStyle::None,
+    }
+}
+
+fn escape_for_display(value: &str) -> String {
+    value.replace('\n', "\\n").replace('\r', "\\r")
+}
+
+fn find_line_number(info: &MatchInfo, trigger: &str) -> Option<usize> {
+    let contents = std::fs::read_to_string(info.source_file).ok()?;
+    for (index, line) in contents.lines().enumerate() {
+        let trimmed = line.trim_start();
+        let has_trigger = line.contains(trigger)
+            && (line.contains("trigger") || line.contains("triggers") || trimmed.starts_with('-'));
+        let has_regex = matches!(info.m.cause, MatchCause::Regex(_))
+            && line.contains("regex")
+            && line.contains(trigger);
+
+        if has_trigger || has_regex {
+            return Some(index + 1);
+        }
+    }
+    None
 }
