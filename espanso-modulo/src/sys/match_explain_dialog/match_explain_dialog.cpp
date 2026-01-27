@@ -207,8 +207,8 @@ void MatchExplainDialogFrame::OnTextUrl(wxTextUrlEvent &event) {
     const long start = event.GetURLStart();
     const long end = event.GetURLEnd();
     wxString path;
-    if (start >= 0 && end > start) {
-        path = output_box->GetRange(start, end);
+    if (start >= 0 && end >= start) {
+        path = output_box->GetRange(start, end + 1);
     }
     path = path.Trim(true).Trim(false);
     if (!path.IsEmpty()) {
@@ -277,6 +277,7 @@ void MatchExplainDialogFrame::UpdateOutput(const wxString &output,
     output_box->WriteText(source_path);
     output_box->EndURL();
     output_box->EndStyle();
+    output_box->SetDefaultStyle(wxTextAttr());
     output_box->WriteText(after);
     output_box->Thaw();
 }
