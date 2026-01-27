@@ -24,6 +24,7 @@
 
 #include <wx/clipbrd.h>
 #include <wx/richtext/richtextctrl.h>
+#include <wx/tokenzr.h>
 #include <wx/utils.h>
 
 #ifdef __WXMSW__
@@ -237,15 +238,15 @@ void MatchExplainDialogFrame::UpdateOutput(const wxString &output,
             }
         }
     } else {
-        const wxString marker = "Defined in: ";
-        int pos = output.Find(marker);
-        if (pos != wxNOT_FOUND) {
-            pos += marker.Length();
-            wxString tail = output.Mid(pos);
-            int rel_end = tail.Find("\n");
-            int end = rel_end == wxNOT_FOUND ? output.Length() : pos + rel_end;
-            source_path =
-                output.Mid(pos, end - pos).Trim(true).Trim(false);
+        const wxString marker = "Defined in:";
+        wxStringTokenizer tokenizer(output, "\n", wxTOKEN_RET_EMPTY);
+        while (tokenizer.HasMoreTokens()) {
+            wxString line = tokenizer.GetNextToken();
+            wxString trimmed = line.Trim(true).Trim(false);
+            if (trimmed.StartsWith(marker)) {
+                source_path = trimmed.Mid(marker.Length()).Trim(true).Trim(false);
+                break;
+            }
         }
     }
 
@@ -268,6 +269,7 @@ void MatchExplainDialogFrame::UpdateOutput(const wxString &output,
     wxString before = output.Left(link_pos);
     wxString after = output.Mid(link_pos + source_path.Length());
 
+    output_box->SetDefaultStyle(wxTextAttr());
     output_box->WriteText(before);
     wxTextAttr link_style;
     link_style.SetFontWeight(wxFONTWEIGHT_BOLD);
