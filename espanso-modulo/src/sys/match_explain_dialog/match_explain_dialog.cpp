@@ -223,35 +223,69 @@ void MatchExplainDialogFrame::OnTextUrl(wxTextUrlEvent &event) {
 
 void MatchExplainDialogFrame::UpdateOutput(const wxString &output,
                                            bool json_output) {
-    wxString source_path;
+    output_box->Freeze();
+    output_box->Clear();
+    output_box->SetDefaultStyle(wxTextAttr());
 
-    if (json_output) {
-        const wxString marker = "\"source_file\": \"";
-        int pos = output.Find(marker);
-        if (pos != wxNOT_FOUND) {
-            pos += marker.Length();
-            wxString tail = output.Mid(pos);
-            int rel_end = tail.Find("\"");
-            if (rel_end != wxNOT_FOUND) {
-                int end = pos + rel_end;
-                source_path = output.Mid(pos, end - pos);
-            }
-        }
-    } else {
+    if (!json_output) {
         const wxString marker = "Defined in:";
         wxStringTokenizer tokenizer(output, "\n", wxTOKEN_RET_EMPTY);
         while (tokenizer.HasMoreTokens()) {
             wxString line = tokenizer.GetNextToken();
-            wxString trimmed = line.Trim(true).Trim(false);
-            if (trimmed.StartsWith(marker)) {
-                source_path = trimmed.Mid(marker.Length()).Trim(true).Trim(false);
-                break;
+            int marker_pos = line.Find(marker);
+            if (marker_pos != wxNOT_FOUND) {
+                wxString prefix = line.Left(marker_pos + marker.Length());
+                wxString remainder = line.Mid(marker_pos + marker.Length());
+                wxString trimmed_left = remainder;
+                trimmed_left.Trim(false);
+                size_t leading_len = remainder.Length() - trimmed_left.Length();
+                if (trimmed_left.IsEmpty()) {
+                    output_box->WriteText(line);
+                } else {
+                    wxString spacer = remainder.Left(leading_len);
+                    wxString path = trimmed_left;
+                    path.Trim(true).Trim(false);
+
+                    output_box->WriteText(prefix);
+                    output_box->WriteText(spacer);
+
+                    if (!path.IsEmpty()) {
+                        wxTextAttr link_style;
+                        link_style.SetFontWeight(wxFONTWEIGHT_BOLD);
+                        link_style.SetFontUnderlined(true);
+                        output_box->BeginStyle(link_style);
+                        output_box->BeginURL(path);
+                        output_box->WriteText(path);
+                        output_box->EndURL();
+                        output_box->EndStyle();
+                        output_box->SetDefaultStyle(wxTextAttr());
+                    } else {
+                        output_box->WriteText(remainder);
+                    }
+                }
+            } else {
+                output_box->WriteText(line);
+            }
+            if (tokenizer.HasMoreTokens()) {
+                output_box->WriteText("\n");
             }
         }
+        output_box->Thaw();
+        return;
     }
 
-    output_box->Freeze();
-    output_box->Clear();
+    wxString source_path;
+    const wxString marker = "\"source_file\": \"";
+    int pos = output.Find(marker);
+    if (pos != wxNOT_FOUND) {
+        pos += marker.Length();
+        wxString tail = output.Mid(pos);
+        int rel_end = tail.Find("\"");
+        if (rel_end != wxNOT_FOUND) {
+            int end = pos + rel_end;
+            source_path = output.Mid(pos, end - pos);
+        }
+    }
 
     if (source_path.IsEmpty()) {
         output_box->WriteText(output);
