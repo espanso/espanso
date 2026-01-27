@@ -208,8 +208,9 @@ void MatchExplainDialogFrame::OnTextUrl(wxTextUrlEvent &event) {
     const long end = event.GetURLEnd();
     wxString path;
     if (start >= 0 && end > start) {
-        path = output_box->GetValue().Mid(start, end - start);
+        path = output_box->GetRange(start, end);
     }
+    path = path.Trim(true).Trim(false);
     if (!path.IsEmpty()) {
         if (match_explain_metadata && match_explain_metadata->on_open_file) {
             match_explain_metadata->on_open_file(path.utf8_str());
@@ -268,9 +269,14 @@ void MatchExplainDialogFrame::UpdateOutput(const wxString &output,
     wxString after = output.Mid(link_pos + source_path.Length());
 
     output_box->WriteText(before);
+    wxTextAttr link_style;
+    link_style.SetFontWeight(wxFONTWEIGHT_BOLD);
+    link_style.SetFontUnderlined(true);
+    output_box->BeginStyle(link_style);
     output_box->BeginURL(source_path);
     output_box->WriteText(source_path);
     output_box->EndURL();
+    output_box->EndStyle();
     output_box->WriteText(after);
     output_box->Thaw();
 }
