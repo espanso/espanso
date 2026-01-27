@@ -274,47 +274,45 @@ void MatchExplainDialogFrame::UpdateOutput(const wxString &output,
         return;
     }
 
-    wxString source_path;
     const wxString marker = "\"source_file\": \"";
-    int pos = output.Find(marker);
-    if (pos != wxNOT_FOUND) {
-        pos += marker.Length();
-        wxString tail = output.Mid(pos);
-        int rel_end = tail.Find("\"");
-        if (rel_end != wxNOT_FOUND) {
-            int end = pos + rel_end;
-            source_path = output.Mid(pos, end - pos);
+    wxStringTokenizer tokenizer(output, "\n", wxTOKEN_RET_EMPTY_ALL);
+    output_box->SetDefaultStyle(wxTextAttr());
+    while (tokenizer.HasMoreTokens()) {
+        wxString line = tokenizer.GetNextToken();
+        int pos = line.Find(marker);
+        if (pos != wxNOT_FOUND) {
+            int start = pos + marker.Length();
+            wxString tail = line.Mid(start);
+            int rel_end = tail.Find("\"");
+            if (rel_end != wxNOT_FOUND) {
+                int end = start + rel_end;
+                wxString before = line.Left(start);
+                wxString path = line.Mid(start, end - start);
+                wxString after = line.Mid(end);
+
+                output_box->WriteText(before);
+                if (!path.IsEmpty()) {
+                    wxTextAttr link_style;
+                    link_style.SetFontWeight(wxFONTWEIGHT_BOLD);
+                    link_style.SetFontUnderlined(true);
+                    output_box->BeginStyle(link_style);
+                    output_box->BeginURL(path);
+                    output_box->WriteText(path);
+                    output_box->EndURL();
+                    output_box->EndStyle();
+                    output_box->SetDefaultStyle(wxTextAttr());
+                }
+                output_box->WriteText(after);
+            } else {
+                output_box->WriteText(line);
+            }
+        } else {
+            output_box->WriteText(line);
+        }
+        if (tokenizer.HasMoreTokens()) {
+            output_box->WriteText("\n");
         }
     }
-
-    if (source_path.IsEmpty()) {
-        output_box->WriteText(output);
-        output_box->Thaw();
-        return;
-    }
-
-    int link_pos = output.Find(source_path);
-    if (link_pos == wxNOT_FOUND) {
-        output_box->WriteText(output);
-        output_box->Thaw();
-        return;
-    }
-
-    wxString before = output.Left(link_pos);
-    wxString after = output.Mid(link_pos + source_path.Length());
-
-    output_box->SetDefaultStyle(wxTextAttr());
-    output_box->WriteText(before);
-    wxTextAttr link_style;
-    link_style.SetFontWeight(wxFONTWEIGHT_BOLD);
-    link_style.SetFontUnderlined(true);
-    output_box->BeginStyle(link_style);
-    output_box->BeginURL(source_path);
-    output_box->WriteText(source_path);
-    output_box->EndURL();
-    output_box->EndStyle();
-    output_box->SetDefaultStyle(wxTextAttr());
-    output_box->WriteText(after);
     output_box->Thaw();
 }
 
