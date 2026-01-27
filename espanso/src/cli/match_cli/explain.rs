@@ -201,7 +201,7 @@ fn render_match_details(
     render_support: Option<&RenderSupport>,
 ) -> std::fmt::Result {
     let m = info.m;
-    let line_number = find_line_number(info);
+    let line_number = find_line_number(info, trigger);
 
     writeln!(output, "{}Defined in: {}", indent, info.source_file)?;
     if let Some(line_number) = line_number {
@@ -436,7 +436,7 @@ fn match_to_json(
 
     MatchDetailsJson {
         source_file: candidate.info.source_file.to_string(),
-        line_number: find_line_number(candidate.info),
+        line_number: find_line_number(candidate.info, trigger),
         match_id: m.id,
         label: m.label.clone(),
         cause_type,
@@ -624,26 +624,16 @@ fn escape_for_display(value: &str) -> String {
     value.replace('\n', "\\n").replace('\r', "\\r")
 }
 
-fn find_line_number(info: &MatchInfo) -> Option<usize> {
+fn find_line_number(info: &MatchInfo, trigger: &str) -> Option<usize> {
     let contents = std::fs::read_to_string(info.source_file).ok()?;
-    let trigger_values: Vec<&str> = match &info.m.cause {
-        MatchCause::Trigger(cause) => cause.triggers.iter().map(String::as_str).collect(),
-        MatchCause::Regex(cause) => vec![cause.regex.as_str()],
-        MatchCause::None => Vec::new(),
-    };
-
-    if trigger_values.is_empty() {
-        return None;
-    }
 
     for (index, line) in contents.lines().enumerate() {
         let trimmed = line.trim_start();
-        let has_trigger = matches!(info.m.cause, MatchCause::Trigger(_))
-            && trigger_values.iter().any(|trigger| line.contains(trigger))
+        let has_trigger = line.contains(trigger)
             && (line.contains("trigger") || line.contains("triggers") || trimmed.starts_with('-'));
         let has_regex = matches!(info.m.cause, MatchCause::Regex(_))
-            && trigger_values.iter().any(|pattern| line.contains(pattern))
-            && line.contains("regex");
+            && line.contains("regex")
+            && line.contains(trigger);
 
         if has_trigger || has_regex {
             return Some(index + 1);
