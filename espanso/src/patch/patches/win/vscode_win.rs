@@ -28,7 +28,11 @@ pub fn patch() -> PatchDefinition {
     PatchDefinition {
         name: module_path!().split(':').next_back().unwrap_or("unknown"),
         is_enabled: || cfg!(target_os = "windows"),
-        should_patch: |app| app.exec.unwrap_or_default().contains("Code.exe"),
+        should_patch: |app| {
+            app.exec.is_some_and(|exec| {
+                exec.contains("Code.exe") || exec.contains("Code - Insiders.exe")
+            })
+        },
         apply: |base, name| {
             Arc::new(PatchedConfig::patch(
                 base,
