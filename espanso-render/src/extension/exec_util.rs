@@ -19,6 +19,7 @@
 
 pub enum MacShell {
     Bash,
+    Fish,
     Nu,
     Pwsh,
     Sh,
@@ -37,6 +38,7 @@ pub fn determine_path_env_variable_override(explicit_shell: Option<MacShell>) ->
             "bash",
             &["--login", "-c", "source ~/.bashrc; echo $PATH"],
         ),
+        MacShell::Fish => launch_command_and_get_output("fish", &["--login", "-c", "echo $PATH"]),
         MacShell::Nu => launch_command_and_get_output("nu", &["--login", "-c", "$env.PATH"]),
         MacShell::Pwsh => launch_command_and_get_output(
             "pwsh",
@@ -81,6 +83,8 @@ pub fn determine_default_macos_shell() -> Option<MacShell> {
 
     if shell.ends_with("/bash") {
         Some(MacShell::Bash)
+    } else if shell.ends_with("/fish") {
+        Some(MacShell::Fish)
     } else if shell.ends_with("/nu") {
         Some(MacShell::Nu)
     } else if shell.ends_with("/pwsh") {

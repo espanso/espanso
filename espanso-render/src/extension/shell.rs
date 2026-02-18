@@ -33,6 +33,7 @@ use thiserror::Error;
 pub enum Shell {
     Bash,
     Cmd,
+    Fish,
     Nu,
     Powershell, // Windows PowerShell (v1.0 - v5.1)
     Pwsh,       // PowerShell Core (v6.0+)
@@ -60,6 +61,11 @@ impl Shell {
             Self::Cmd => {
                 let mut command = Command::new("cmd");
                 command.args(["/C", cmd]);
+                command
+            }
+            Self::Fish => {
+                let mut command = Command::new("fish");
+                command.args(["-c", cmd]);
                 command
             }
             Self::Nu => {
@@ -119,6 +125,7 @@ impl Shell {
         if cfg!(target_os = "macos") && override_path_on_macos {
             let supported_mac_shell = match self {
                 Self::Bash => Some(MacShell::Bash),
+                Self::Fish => Some(MacShell::Fish),
                 Self::Nu => Some(MacShell::Nu),
                 Self::Pwsh => Some(MacShell::Pwsh),
                 Self::Sh => Some(MacShell::Sh),
@@ -155,6 +162,7 @@ impl Shell {
         match shell {
             "bash" => Some(Self::Bash),
             "cmd" => Some(Self::Cmd),
+            "fish" => Some(Self::Fish),
             "nu" => Some(Self::Nu),
             "powershell" => Some(Self::Powershell),
             "pwsh" => Some(Self::Pwsh),
@@ -177,6 +185,7 @@ impl Default for Shell {
 
             match &*DEFAULT_MACOS_SHELL {
                 Some(MacShell::Bash) => Self::Bash,
+                Some(MacShell::Fish) => Self::Fish,
                 Some(MacShell::Nu) => Self::Nu,
                 Some(MacShell::Pwsh) => Self::Pwsh,
                 Some(MacShell::Zsh) => Self::Zsh,

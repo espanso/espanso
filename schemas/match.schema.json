@@ -172,6 +172,7 @@
                   "enum": [
                     "bash",
                     "cmd",
+                    "fish",
                     "nu",
                     "powershell",
                     "pwsh",
