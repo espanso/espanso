@@ -86,15 +86,79 @@ pub struct TextFieldConfig {
     pub multiline: bool,
 }
 
+/// A choice/list value. `Plain` means label and id are the same string;
+/// `LabelId` separates the display text (`label`) from the output value (`id`).
+#[derive(Debug, Serialize, Clone)]
+pub enum ChoiceValue {
+    Plain(String),
+    LabelId { label: String, id: String },
+}
+
+impl ChoiceValue {
+    pub fn label(&self) -> &str {
+        match self {
+            ChoiceValue::Plain(s) => s,
+            ChoiceValue::LabelId { label, .. } => label,
+        }
+    }
+
+    pub fn id(&self) -> &str {
+        match self {
+            ChoiceValue::Plain(s) => s,
+            ChoiceValue::LabelId { id, .. } => id,
+        }
+    }
+}
+
+impl<'de> Deserialize<'de> for ChoiceValue {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        use serde::de;
+
+        struct ChoiceValueVisitor;
+
+        impl<'de> de::Visitor<'de> for ChoiceValueVisitor {
+            type Value = ChoiceValue;
+
+            fn expecting(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+                f.write_str("a string or an object with 'id' and 'label'")
+            }
+
+            fn visit_str<E: de::Error>(self, v: &str) -> Result<ChoiceValue, E> {
+                Ok(ChoiceValue::Plain(v.to_owned()))
+            }
+
+            fn visit_map<M: de::MapAccess<'de>>(self, mut map: M) -> Result<ChoiceValue, M::Error> {
+                let mut id = None;
+                let mut label = None;
+                while let Some(key) = map.next_key::<String>()? {
+                    match key.as_str() {
+                        "id" => id = Some(map.next_value()?),
+                        "label" => label = Some(map.next_value()?),
+                        _ => { let _ = map.next_value::<serde::de::IgnoredAny>()?; }
+                    }
+                }
+                let id: String = id.ok_or_else(|| de::Error::missing_field("id"))?;
+                let label: String = label.ok_or_else(|| de::Error::missing_field("label"))?;
+                Ok(ChoiceValue::LabelId { label, id })
+            }
+        }
+
+        deserializer.deserialize_any(ChoiceValueVisitor)
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct ChoiceFieldConfig {
-    pub values: Vec<String>,
+    pub values: Vec<ChoiceValue>,
     pub default: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct ListFieldConfig {
-    pub values: Vec<String>,
+    pub values: Vec<ChoiceValue>,
     pub default: String,
     pub separator: String,
 }
@@ -170,7 +234,7 @@ fn default_multiline() -> bool {
     false
 }
 
-fn default_values() -> Vec<String> {
+fn default_values() -> Vec<ChoiceValue> {
     Vec::new()
 }
 
@@ -190,7 +254,7 @@ pub struct AutoFieldConfig {
     pub multiline: bool,
 
     #[serde(default = "default_values")]
-    pub values: Vec<String>,
+    pub values: Vec<ChoiceValue>,
 
     #[serde(default = "default_separator")]
     pub separator: String,

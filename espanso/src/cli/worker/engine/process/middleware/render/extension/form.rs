@@ -23,9 +23,9 @@ use espanso_render::{
     extension::form::{FormProvider, FormProviderResult},
     Params, Value,
 };
-use log::error;
+use log::{error, warn};
 
-use crate::gui::{FormField, FormUI};
+use crate::gui::{ChoiceItem, FormField, FormUI};
 
 pub struct FormProviderAdapter<'a> {
     form_ui: &'a dyn FormUI,
@@ -106,7 +106,7 @@ fn convert_fields(fields: &Params) -> HashMap<String, FormField> {
     out
 }
 
-fn extract_values(value: &Value, trim_string_values: Option<&Value>) -> Option<Vec<String>> {
+fn extract_values(value: &Value, trim_string_values: Option<&Value>) -> Option<Vec<ChoiceItem>> {
     let trim_string_values = *trim_string_values
         .and_then(|v| v.as_bool())
         .unwrap_or(&true);
@@ -115,8 +115,21 @@ fn extract_values(value: &Value, trim_string_values: Option<&Value>) -> Option<V
         Value::Array(values) => Some(
             values
                 .iter()
-                .filter_map(|choice| choice.as_string())
-                .cloned()
+                .filter_map(|choice| match choice {
+                    Value::String(s) => Some(ChoiceItem::from(s.clone())),
+                    Value::Object(map) => {
+                        let id = map.get("id").and_then(|v| v.as_string()).cloned();
+                        let label = map.get("label").and_then(|v| v.as_string()).cloned();
+                        match (id, label) {
+                            (Some(id), Some(label)) => Some(ChoiceItem { id, label }),
+                            _ => {
+                                warn!("choice object missing 'id' or 'label', skipping: {:?}", map);
+                                None
+                            }
+                        }
+                    }
+                    _ => None,
+                })
                 .collect(),
         ),
         Value::String(values) => Some(
@@ -134,7 +147,7 @@ fn extract_values(value: &Value, trim_string_values: Option<&Value>) -> Option<V
                         Some(line)
                     }
                 })
-                .map(String::from)
+                .map(|s| ChoiceItem::from(String::from(s)))
                 .collect(),
         ),
         _ => None,
