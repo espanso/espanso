@@ -232,7 +232,8 @@ void FormFrame::AddComponent(wxPanel *parent, wxBoxSizer *sizer,
         for (int i = 0; i < choiceMeta->valueSize; i++) {
             choices.Add(wxString::FromUTF8(choiceMeta->values[i]));
 
-            if (strcmp(choiceMeta->values[i], choiceMeta->defaultValue) == 0) {
+            if (strcmp(choiceMeta->values[i], choiceMeta->defaultValue) == 0 ||
+                (choiceMeta->ids && strcmp(choiceMeta->ids[i], choiceMeta->defaultValue) == 0)) {
                 selectedItem = i;
             }
         }
