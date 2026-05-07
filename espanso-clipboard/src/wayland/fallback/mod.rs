@@ -21,7 +21,8 @@ use std::{
     io::{Read, Write},
     os::unix::net::UnixStream,
     path::PathBuf,
-    process::Stdio,
+    process::{Child, Stdio},
+    sync::Mutex,
 };
 
 use crate::{Clipboard, ClipboardOperationOptions, ClipboardOptions};
@@ -33,6 +34,9 @@ use wait_timeout::ChildExt;
 
 pub(crate) struct WaylandFallbackClipboard {
     command_timeout: u64,
+    // Keep the wl-copy process alive to maintain Wayland clipboard ownership.
+    // The clipboard owner must remain running to serve paste requests.
+    active_copy_process: Mutex<Option<Child>>,
 }
 
 impl WaylandFallbackClipboard {
@@ -71,6 +75,7 @@ impl WaylandFallbackClipboard {
 
         Ok(Self {
             command_timeout: options.wayland_command_timeout_ms,
+            active_copy_process: Mutex::new(None),
         })
     }
 }
@@ -119,7 +124,7 @@ impl Clipboard for WaylandFallbackClipboard {
     }
 
     fn set_text(&self, text: &str, _: &ClipboardOperationOptions) -> anyhow::Result<()> {
-        self.invoke_command_with_timeout(&mut Command::new("wl-copy"), text.as_bytes(), "wl-copy")
+        self.spawn_copy_command(&mut Command::new("wl-copy"), text.as_bytes(), "wl-copy")
     }
 
     fn set_image(
@@ -133,12 +138,11 @@ impl Clipboard for WaylandFallbackClipboard {
             );
         }
 
-        // Load the image data
         let mut file = std::fs::File::open(image_path)?;
         let mut data = Vec::new();
         file.read_to_end(&mut data)?;
 
-        self.invoke_command_with_timeout(
+        self.spawn_copy_command(
             Command::new("wl-copy").arg("--type").arg("image/png"),
             &data,
             "wl-copy",
@@ -151,7 +155,7 @@ impl Clipboard for WaylandFallbackClipboard {
         _fallback_text: Option<&str>,
         _: &ClipboardOperationOptions,
     ) -> anyhow::Result<()> {
-        self.invoke_command_with_timeout(
+        self.spawn_copy_command(
             Command::new("wl-copy").arg("--type").arg("text/html"),
             html.as_bytes(),
             "wl-copy",
@@ -160,37 +164,42 @@ impl Clipboard for WaylandFallbackClipboard {
 }
 
 impl WaylandFallbackClipboard {
-    fn invoke_command_with_timeout(
-        &self,
-        command: &mut Command,
-        data: &[u8],
-        name: &str,
-    ) -> Result<()> {
-        let timeout = std::time::Duration::from_millis(self.command_timeout);
+    fn spawn_copy_command(&self, command: &mut Command, data: &[u8], name: &str) -> Result<()> {
+        let startup_timeout = std::time::Duration::from_millis(200);
+
         match command.stdin(Stdio::piped()).spawn() {
             Ok(mut child) => {
-                if let Some(stdin) = child.stdin.as_mut() {
-                    stdin.write_all(data)?;
+                // Use take() to close the write end of the pipe after writing, sending
+                // EOF to wl-copy so it can finish reading and enter its event loop.
+                if let Some(mut stdin) = child.stdin.take() {
+                    if let Err(err) = stdin.write_all(data) {
+                        error!("error writing to {}: {}", name, err);
+                        let _ = child.kill();
+                        return Err(WaylandFallbackClipboardError::SetOperationFailed().into());
+                    }
                 }
-                match child.wait_timeout(timeout) {
-                    Ok(status_code) => {
-                        if let Some(status) = status_code {
-                            if status.success() {
-                                Ok(())
-                            } else {
-                                error!("error, {} exited with non-zero exit code", name);
-                                Err(WaylandFallbackClipboardError::SetOperationFailed().into())
-                            }
+
+                match child.wait_timeout(startup_timeout) {
+                    Ok(Some(status)) => {
+                        if status.success() {
+                            Ok(())
                         } else {
-                            error!("error, {} has timed-out, killing the process", name);
-                            if child.kill().is_err() {
-                                error!("unable to kill {}", name);
-                            }
+                            error!("error, {} exited with non-zero exit code", name);
                             Err(WaylandFallbackClipboardError::SetOperationFailed().into())
                         }
                     }
+                    Ok(None) => {
+                        // Still running as expected — store it to maintain clipboard ownership.
+                        let mut guard = self.active_copy_process.lock().unwrap();
+                        if let Some(mut old_child) = guard.take() {
+                            let _ = old_child.kill();
+                            let _ = old_child.wait();
+                        }
+                        *guard = Some(child);
+                        Ok(())
+                    }
                     Err(err) => {
-                        error!("error while executing '{}': {}", name, err);
+                        error!("error while waiting for '{}': {}", name, err);
                         Err(WaylandFallbackClipboardError::SetOperationFailed().into())
                     }
                 }
@@ -198,6 +207,17 @@ impl WaylandFallbackClipboard {
             Err(err) => {
                 error!("could not invoke '{}': {}", name, err);
                 Err(WaylandFallbackClipboardError::SetOperationFailed().into())
+            }
+        }
+    }
+}
+
+impl Drop for WaylandFallbackClipboard {
+    fn drop(&mut self) {
+        if let Ok(mut guard) = self.active_copy_process.lock() {
+            if let Some(mut child) = guard.take() {
+                let _ = child.kill();
+                let _ = child.wait();
             }
         }
     }
