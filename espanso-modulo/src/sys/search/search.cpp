@@ -31,6 +31,13 @@
 #include <unordered_map>
 #include <vector>
 
+#ifdef __WXOSX__
+// Implemented in search_mac.mm. Returns true if the key window's first
+// responder currently has marked (uncommitted) text from an IME
+// composition (e.g. selecting a CJK candidate).
+extern bool IsImeComposingInKeyWindow();
+#endif
+
 // Platform-specific styles
 #ifdef __WXMSW__
 const int SEARCH_BAR_FONT_SIZE = 16;
@@ -307,6 +314,16 @@ void SearchFrame::OnCharEvent(wxKeyEvent &event) {
     } else if (event.GetKeyCode() == 'P' && event.RawControlDown()) {
         SelectPrevious();
     } else if (event.GetKeyCode() == WXK_RETURN || event.GetKeyCode() == WXK_NUMPAD_ENTER) {
+#ifdef __WXOSX__
+        // Don't consume Enter while an IME composition is in progress —
+        // the user is committing a candidate (e.g. selecting a Chinese
+        // character), not confirming the highlighted match. Let the event
+        // propagate so the IME can finalize its selection.
+        if (IsImeComposingInKeyWindow()) {
+            event.Skip();
+            return;
+        }
+#endif
         Submit();
     } else {
         event.Skip();

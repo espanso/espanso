@@ -292,7 +292,8 @@ fn build_native() {
         .file("src/sys/textview/textview_gui.cpp")
         .file("src/sys/troubleshooting/troubleshooting.cpp")
         .file("src/sys/troubleshooting/troubleshooting_gui.cpp")
-        .file("src/sys/common/mac.mm");
+        .file("src/sys/common/mac.mm")
+        .file("src/sys/search/search_mac.mm");
     build.flag("-std=c++17");
 
     for flag in cpp_flags {
