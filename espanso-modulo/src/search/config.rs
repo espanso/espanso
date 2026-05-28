@@ -35,6 +35,10 @@ fn default_algorithm() -> String {
     "ikey".to_owned()
 }
 
+fn default_search_use_cursor_position() -> bool {
+    true
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SearchConfig {
     #[serde(default = "default_title")]
@@ -51,6 +55,9 @@ pub struct SearchConfig {
 
     #[serde(default)]
     pub hint: Option<String>,
+
+    #[serde(default = "default_search_use_cursor_position")]
+    pub search_use_cursor_position: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

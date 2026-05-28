@@ -178,6 +178,10 @@ pub trait Config: Send + Sync {
     // not be targeted to the right application.
     fn post_search_delay(&self) -> usize;
 
+    // If enabled, the search window is opened near the current mouse cursor position.
+    // If disabled, the search window uses the default fixed position.
+    fn search_use_cursor_position(&self) -> bool;
+
     // If enabled, Espanso emulates the Alt Code feature available on Windows
     // (keeping ALT pressed and then typing a char code with the numpad).
     // This feature is necessary on Windows because the mechanism used by Espanso
@@ -233,6 +237,7 @@ pub trait Config: Send + Sync {
         max_form_width: {:?}
         max_form_height: {:?}
         post_search_delay: {:?}
+        search_use_cursor_position: {:?}
         backspace_limit: {}
         search_trigger: {:?}
         search_shortcut: {:?}
@@ -272,6 +277,7 @@ pub trait Config: Send + Sync {
           self.max_form_width(),
           self.max_form_height(),
           self.post_search_delay(),
+          self.search_use_cursor_position(),
           self.backspace_limit(),
           self.search_trigger(),
           self.search_shortcut(),

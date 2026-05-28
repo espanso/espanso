@@ -109,6 +109,7 @@ pub struct SearchMetadata {
     pub windowTitle: *const ::std::os::raw::c_char,
     pub iconPath: *const ::std::os::raw::c_char,
     pub hintText: *const ::std::os::raw::c_char,
+    pub searchUseCursorPosition: ::std::os::raw::c_int,
 }
 
 pub const WIZARD_DETECTED_OS_UNKNOWN: i32 = 0;

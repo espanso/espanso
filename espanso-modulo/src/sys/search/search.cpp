@@ -218,10 +218,13 @@ class SearchFrame : public wxFrame {
 
 bool SearchApp::OnInit() {
     wxSize windowSize(450, 340);
+    wxPoint windowPosition =
+        searchMetadata->searchUseCursorPosition ? GetSearchWindowPosition(windowSize)
+                                                : wxPoint(50, 50);
 
     SearchFrame *frame =
         new SearchFrame(wxString::FromUTF8(searchMetadata->windowTitle),
-                        GetSearchWindowPosition(windowSize), windowSize);
+                        windowPosition, windowSize);
     frame->Show(true);
     SetupWindowStyle(frame);
     Activate(frame);

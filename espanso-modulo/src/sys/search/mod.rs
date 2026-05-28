@@ -35,6 +35,7 @@ pub mod types {
         pub title: String,
         pub icon: Option<String>,
         pub hint: Option<String>,
+        pub search_use_cursor_position: bool,
         pub items: Vec<SearchItem>,
     }
 }
@@ -107,6 +108,11 @@ mod interop {
                 iconPath: icon_path_ptr,
                 windowTitle: title.as_ptr(),
                 hintText: hint_ptr,
+                searchUseCursorPosition: if search.search_use_cursor_position {
+                    1
+                } else {
+                    0
+                },
             });
 
             Self {

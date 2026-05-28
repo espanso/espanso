@@ -216,6 +216,10 @@ impl crate::gui::modulo::search::ModuloSearchUIOptionProvider for ConfigManager<
     fn get_post_search_delay(&self) -> usize {
         self.active().post_search_delay()
     }
+
+    fn get_search_use_cursor_position(&self) -> bool {
+        self.active().search_use_cursor_position()
+    }
 }
 
 impl espanso_engine::process::AltCodeSynthEnabledProvider for ConfigManager<'_> {

@@ -122,6 +122,9 @@ pub struct YAMLConfig {
     pub post_search_delay: Option<usize>,
 
     #[serde(default)]
+    pub search_use_cursor_position: Option<bool>,
+
+    #[serde(default)]
     pub secure_input_notification: Option<bool>,
 
     #[serde(default)]
@@ -239,6 +242,7 @@ impl TryFrom<YAMLConfig> for ParsedConfig {
             max_form_width: yaml_config.max_form_width,
             max_form_height: yaml_config.max_form_height,
             post_search_delay: yaml_config.post_search_delay,
+            search_use_cursor_position: yaml_config.search_use_cursor_position,
 
             emulate_alt_codes: yaml_config.emulate_alt_codes,
 
@@ -310,6 +314,7 @@ mod tests {
     max_form_width: 700
     max_form_height: 500
     post_search_delay: 400
+    search_use_cursor_position: false
     emulate_alt_codes: true
     max_regex_buffer_size: 30
     win32_exclude_orphan_events: false
@@ -374,6 +379,7 @@ mod tests {
                 max_form_width: Some(700),
                 max_form_height: Some(500),
                 post_search_delay: Some(400),
+                search_use_cursor_position: Some(false),
                 win32_exclude_orphan_events: Some(false),
                 win32_keyboard_layout_cache_interval: Some(300),
                 x11_use_xclip_backend: Some(true),
