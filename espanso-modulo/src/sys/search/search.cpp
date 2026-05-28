@@ -26,6 +26,7 @@
 #include "../interop/interop.h"
 
 #include "wx/htmllbox.h"
+#include <wx/display.h>
 
 #include <memory>
 #include <unordered_map>
@@ -58,6 +59,42 @@ typedef void (*QueryCallback)(const char *query, void *app, void *data);
 typedef void (*ResultCallback)(const char *id, void *data);
 
 SearchMetadata *searchMetadata = nullptr;
+
+wxPoint GetSearchWindowPosition(const wxSize &windowSize) {
+    wxPoint cursor = wxGetMousePosition();
+
+    int displayIndex = wxDisplay::GetFromPoint(cursor);
+
+    if (displayIndex == wxNOT_FOUND) {
+        return wxPoint(50, 50);
+    }
+
+    wxDisplay display(displayIndex);
+    wxRect workArea = display.GetClientArea();
+
+    const int padding = 12;
+
+    int x = cursor.x + padding;
+    int y = cursor.y + padding;
+
+    if (x + windowSize.GetWidth() > workArea.GetRight()) {
+        x = cursor.x - windowSize.GetWidth() - padding;
+    }
+
+    if (y + windowSize.GetHeight() > workArea.GetBottom()) {
+        y = cursor.y - windowSize.GetHeight() - padding;
+    }
+
+    if (x < workArea.GetLeft()) {
+        x = workArea.GetLeft();
+    }
+
+    if (y < workArea.GetTop()) {
+        y = workArea.GetTop();
+    }
+
+    return wxPoint(x, y);
+}
 QueryCallback queryCallback = nullptr;
 ResultCallback resultCallback = nullptr;
 void *data = nullptr;
@@ -180,9 +217,11 @@ class SearchFrame : public wxFrame {
 };
 
 bool SearchApp::OnInit() {
+    wxSize windowSize(450, 340);
+
     SearchFrame *frame =
         new SearchFrame(wxString::FromUTF8(searchMetadata->windowTitle),
-                        wxPoint(50, 50), wxSize(450, 340));
+                        GetSearchWindowPosition(windowSize), windowSize);
     frame->Show(true);
     SetupWindowStyle(frame);
     Activate(frame);
