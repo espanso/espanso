@@ -108,11 +108,7 @@ mod interop {
                 iconPath: icon_path_ptr,
                 windowTitle: title.as_ptr(),
                 hintText: hint_ptr,
-                searchUseCursorPosition: if search.search_use_cursor_position {
-                    1
-                } else {
-                    0
-                },
+                searchUseCursorPosition: i32::from(search.search_use_cursor_position),
             });
 
             Self {
