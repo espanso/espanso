@@ -96,8 +96,8 @@
       "type": "string"
     },
     "search_use_cursor_position": {
-      "description": "If true, the Search UI opens on the display where the mouse cursor is located. If false, the previous fixed-position behavior is used. Default true",
-      "default": true,
+      "description": "If true, the Search UI opens on the display where the mouse cursor is located. If false, the previous fixed-position behavior is used. Default false",
+      "default": false,
       "type": "boolean"
     },
     "show_icon": {

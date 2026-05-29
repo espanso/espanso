@@ -36,7 +36,7 @@ fn default_algorithm() -> String {
 }
 
 fn default_search_use_cursor_position() -> bool {
-    true
+    false
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
