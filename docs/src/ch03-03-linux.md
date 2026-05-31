@@ -1,7 +1,19 @@
 # linux
 
 Espanso on Linux comes in two different flavors: one for X11 and one for Wayland.
-If you don't know which one to choose, follow [these steps to determine which one you are running](https://unix.stackexchange.com/a/325972).
+The variant you build or install **must match your active session**, otherwise Espanso may install but silently fail to work.
+
+#### Determining your session type
+
+Run the following command to check whether you are running X11 or Wayland:
+
+```console
+echo $XDG_SESSION_TYPE
+```
+
+This prints either `x11` or `wayland`. If the variable is empty, follow [these steps to determine which one you are running](https://unix.stackexchange.com/a/325972).
+
+If you are on Wayland (the default on Fedora and recent GNOME-based distributions), build or install the Wayland variant. If you are on X11, use the X11 variant.
 
 #### Necessary dependencies
 
