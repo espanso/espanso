@@ -44,3 +44,12 @@ For example, the Search bar or Forms are handled by it.
 If you don't want them, you can build without the `modulo` feature flag to remove support for it.
 
 Keep in mind that espanso was designed with modulo as a first class citizen, so the experience might be far from perfect without it.
+
+### Linux AppImage compatibility
+
+When producing the official Linux AppImage, two requirements must be respected to avoid breaking installations across different distributions:
+
+- The AppImage must be built against the oldest reasonably supported glibc (an older Ubuntu base). Since glibc is forward but not backward compatible, building on a newer base would prevent the AppImage from running on older systems.
+- Libraries that are tightly coupled to the host system stack must be excluded from the bundle so they resolve to the host at runtime. This includes `libsystemd.so.0`, `libudev.so.1`, `libmount.so.1`, `libblkid.so.1`, NSS modules, GL drivers, and glibc itself. Bundling them can break rolling-release distributions, which is why the cleanup step in `.github/scripts/ubuntu/build_appimage.sh` removes these libraries after packaging.
+
+For the full list of libraries that should never be bundled, refer to the upstream [AppImage excludelist](https://github.com/AppImage/AppImageKit/blob/master/excludelist).
