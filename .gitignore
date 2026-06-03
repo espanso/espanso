@@ -67,3 +67,4 @@ tarpaulin-report.html
 
 # direnv
 .direnv/
+.superpowers/

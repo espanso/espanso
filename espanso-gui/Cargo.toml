@@ -1,0 +1,62 @@
+[package]
+name = "espanso-gui"
+version = "0.1.0"
+authors = ["Federico Terzi <federicoterzi96@gmail.com>", "espanso contributors"]
+license = "GPL-3.0"
+description = "Management GUI for espanso text expander"
+repository = "https://github.com/espanso/espanso"
+edition = "2021"
+
+[features]
+default = ["glow"]
+# Use glow (OpenGL) backend for maximum cross-platform compatibility
+glow = ["eframe/glow"]
+# Use wgpu backend for modern GPU APIs (Metal/DX12/Vulkan)
+wgpu = ["eframe/wgpu"]
+
+[dependencies]
+# GUI framework
+egui = "0.30"
+eframe = { version = "0.30", default-features = false, features = ["default_fonts"] }
+
+# Platform abstraction
+rfd = "0.15"
+arboard = "3.4"
+dark-light = "1.1"
+
+# Image handling (thumbnails)
+image = "0.25"
+
+# i18n
+rust-i18n = "3"
+
+# Internal dependencies
+espanso-config = { path = "../espanso-config" }
+espanso-ipc = { path = "../espanso-ipc" }
+espanso-package = { path = "../espanso-package" }
+espanso-match = { path = "../espanso-match" }
+espanso-render = { path = "../espanso-render" }
+
+# Workspace dependencies
+anyhow.workspace = true
+log.workspace = true
+simplelog = "0.12.2"
+serde.workspace = true
+serde_json.workspace = true
+serde_norway.workspace = true
+thiserror.workspace = true
+dirs.workspace = true
+regex.workspace = true
+notify-rust.workspace = true
+
+# YAML config persistence (shared with espanso-config)
+walkdir.workspace = true
+
+[lints]
+workspace = true
+
+[target.'cfg(windows)'.dependencies]
+widestring.workspace = true
+
+[target.'cfg(windows)'.build-dependencies]
+winres = "0.1"

@@ -75,6 +75,7 @@ static CLI_HANDLERS: LazyLock<Vec<CliModule>> = LazyLock::new(|| {
         cli::package::new(),
         cli::match_cli::new(),
         cli::cmd::new(),
+        cli::gui::new(),
     ]
 });
 
@@ -455,6 +456,16 @@ SubCommand::with_name("install")
             .about("Attempt to disable secure input by automating the common steps."),
         )
         .about("A collection of workarounds to solve some common problems."),
+    )
+    .subcommand(
+      SubCommand::with_name("gui")
+        .setting(AppSettings::Hidden)
+        .about("Open the management GUI")
+        .arg(
+          Arg::with_name("module")
+            .value_name("MODULE")
+            .help("Open to a specific module: match, package, settings, test, stats"),
+        ),
     )
     .subcommand(
       SubCommand::with_name("worker")

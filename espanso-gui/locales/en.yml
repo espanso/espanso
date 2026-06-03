@@ -1,0 +1,243 @@
+_version: 1
+
+# Navigation
+_nav:
+  match_manager: "🔤 Matches"
+  package_manager: "📦 Packages"
+  settings: "⚙️ Settings"
+  trigger_tester: "🧪 Tester"
+  stats_dashboard: "📊 Stats"
+
+# Match Manager
+_match_manager:
+  title: "Match Manager"
+  search_placeholder: "Search matches..."
+  add_button: "+ New"
+  import_button: "Import"
+  export_button: "Export"
+  delete_selected: "Delete Selected"
+  select_all: "Select All"
+  type_filter_all: "All Types"
+  type_filter_text: "Text"
+  type_filter_image: "Image"
+  type_filter_markdown: "Markdown"
+  type_filter_regex: "Regex"
+  type_filter_script: "Script"
+  total_count: "{} matches · {} types"
+  no_matches: "No matches yet"
+  no_matches_hint: 'Click "+ New" to create your first match, or browse the Hub to get started.'
+  confirm_delete: "Delete this match?"
+  confirm_delete_multi: "Delete {} selected matches?"
+  confirm_delete_hint: "Deleted matches will be moved to trash and can be recovered."
+  moved_to_trash: "Moved to trash"
+
+  # Editor
+  editor_title_new: "New Match"
+  editor_title_edit: "Edit Match"
+  editor_type: "Type"
+  editor_trigger: "Trigger"
+  editor_replace: "Replacement"
+  editor_advanced: "Advanced Options"
+  editor_word_boundary: "Word boundary"
+  editor_propagate_case: "Propagate case"
+  editor_inject_mode: "Injection mode"
+  editor_inject_mode_auto: "Auto"
+  editor_inject_mode_keys: "Keys"
+  editor_inject_mode_clipboard: "Clipboard"
+  editor_label: "Label"
+  editor_search_terms: "Search terms"
+  editor_cancel: "Cancel"
+  editor_save: "Save"
+  editor_trigger_conflict: 'Trigger ":{}" already exists. Overwrite?'
+  editor_save_error: "Failed to save match: {}"
+  editor_save_success: "Match saved"
+
+  # Image
+  image_preview_title: "Image Preview"
+  image_dimensions: "{} × {}"
+  image_size_kb: "{} KB"
+  image_format: "Format: {}"
+  image_location: "File: {}"
+  image_open_location: "Open File Location"
+  image_lost: "Image Missing"
+  image_lost_hint: "The image file could not be found. Update the path in the editor."
+  image_drop_hint: "Drop image here or click to select"
+  image_copy_from_clipboard: "Paste from clipboard"
+
+# Package Manager
+_package_manager:
+  title: "Package Manager"
+  tab_installed: "Installed ({})"
+  tab_hub: "Hub Market"
+  tab_updates: "Updates ({})"
+  search_placeholder: "Search Hub packages..."
+  install_button: "Install"
+  uninstall_button: "Uninstall"
+  update_button: "Update"
+  update_all_button: "Update All"
+  version_label: "v{}"
+  installed_label: "Installed"
+  update_available: "v{} → v{} available"
+
+  # Details
+  detail_title: "Package Details"
+  detail_author: "Author: {}"
+  detail_stars: "⭐ {}"
+  detail_version: "Version: {}"
+  detail_preview: "Match Preview (partial):"
+  detail_total_matches: "... {} matches total"
+  detail_cancel: "Cancel"
+  detail_install: "Install"
+
+  # Status
+  installing: "Installing..."
+  uninstalling: "Uninstalling..."
+  updating: "Updating..."
+  install_done: "Installed successfully"
+  uninstall_done: "Uninstalled successfully"
+  update_done: "Updated successfully"
+  install_error: "Installation failed: {}"
+
+# Settings
+_settings:
+  title: "Settings"
+  tab_general: "General"
+  tab_injection: "Injection"
+  tab_shortcuts: "Shortcuts"
+  tab_advanced: "Advanced"
+  save_button: "Save Settings"
+  reset_button: "Reset to Defaults"
+  save_success: "Settings saved"
+  save_error: "Failed to save settings: {}"
+
+  # General settings
+  enable: "Enable espanso"
+  enable_desc: "Enable or disable text expansion globally"
+  show_icon: "Show tray icon"
+  show_icon_desc: "Display the espanso icon in the system tray"
+  show_notifications: "Show notifications"
+  show_notifications_desc: "Display desktop notifications on status changes"
+  auto_restart: "Auto restart"
+  auto_restart_desc: "Automatically restart when configuration changes"
+  stats_enabled: "Enable statistics"
+  stats_enabled_desc: "Record expansion frequency for the Stats dashboard"
+
+  # Injection settings
+  backend: "Injection backend"
+  backend_desc: "How text is injected into applications"
+  backend_auto: "Auto"
+  backend_inject: "Keys"
+  backend_clipboard: "Clipboard"
+  clipboard_threshold: "Clipboard threshold"
+  clipboard_threshold_desc: "Min characters to use clipboard injection (auto mode)"
+  inject_delay: "Injection delay"
+  inject_delay_desc: "Delay between keystroke injection (ms)"
+  key_delay: "Key delay"
+  key_delay_desc: "Delay between key events during trigger deletion (ms)"
+  pre_paste_delay: "Pre-paste delay"
+  pre_paste_delay_desc: "Delay before paste shortcut is pressed (ms)"
+  paste_shortcut: "Paste shortcut"
+  paste_shortcut_desc: "Custom paste key combination (e.g. CTRL+SHIFT+V)"
+  paste_shortcut_event_delay: "Paste shortcut event delay"
+  paste_shortcut_event_delay_desc: "Delay between keystrokes in paste shortcut (ms)"
+  preserve_clipboard: "Preserve clipboard"
+  preserve_clipboard_desc: "Restore original clipboard content after expansion"
+  restore_clipboard_delay: "Restore clipboard delay"
+  restore_clipboard_delay_desc: "Delay before clipboard restoration (ms)"
+
+  # Shortcut settings
+  toggle_key: "Toggle key"
+  toggle_key_desc: "Double-press this key to toggle espanso on/off"
+  search_trigger: "Search trigger"
+  search_trigger_desc: "Text trigger for the search bar"
+  search_shortcut: "Search shortcut"
+  search_shortcut_desc: "Hotkey to open the search bar"
+
+  # Advanced settings
+  word_separators: "Word separators"
+  word_separators_desc: "Characters that define word boundaries"
+  backspace_limit: "Backspace limit"
+  backspace_limit_desc: "Maximum number of backspaces tracked for undo"
+  undo_backspace: "Undo on backspace"
+  undo_backspace_desc: "Press backspace right after expansion to undo it"
+  apply_patch: "Apply app patches"
+  apply_patch_desc: "Enable built-in patches for specific applications"
+
+# Trigger Tester
+_trigger_tester:
+  title: "Trigger Tester"
+  input_label: "Type a trigger to test"
+  input_placeholder: ":hello"
+  app_context_label: "Application context (optional — test app-specific matches)"
+  app_context_title: "Window title..."
+  app_context_class: "Window class..."
+  app_context_exec: "Process name..."
+  test_button: "▶ Test Expansion"
+  match_result: "Match Result"
+  matched_rule: "Matched rule: {} ({}#{})"
+  match_type: "Match type: {}"
+  rendered_output: "Rendered output"
+  no_match: "No match found for this input"
+  variable_trace: "Variable Trace"
+  var_name: "Variable"
+  var_type: "Type"
+  var_params: "Params"
+  var_output: "Output"
+  elapsed: "Elapsed: {}"
+  script_warning: "Script/shell variables require a running Worker to execute"
+  worker_not_connected: "Worker not connected — only text matching is available"
+
+# Stats Dashboard
+_stats_dashboard:
+  title: "Stats Dashboard"
+  period_7d: "Past 7 Days"
+  period_30d: "This Month"
+  period_all: "All Time"
+  total_expansions: "Total Expansions"
+  active_matches: "Active Matches"
+  unused_matches: "Unused Matches"
+  top_triggers: "Top Triggers"
+  trigger: "Trigger"
+  count: "Count"
+  last_used: "Last Used"
+  never_used: "Never"
+  stats_disabled: "Statistics recording is disabled"
+  enable_stats: "⚡ Enable Statistics"
+  no_data: "No data yet. Start using espanso to collect statistics."
+
+# Common
+_common:
+  cancel: "Cancel"
+  confirm: "Confirm"
+  close: "Close"
+  save: "Save"
+  delete: "Delete"
+  edit: "Edit"
+  search: "Search"
+  loading: "Loading..."
+  error: "Error"
+  success: "Success"
+  warning: "Warning"
+  yes: "Yes"
+  no: "No"
+  ok: "OK"
+
+  # Worker status
+  worker_connected: "Worker connected"
+  worker_disconnected: "Worker not running — editing is available offline"
+  worker_restart_hint: "Start espanso service to enable real-time features"
+
+  # Theme
+  theme_system: "Follow System"
+  theme_light: "Light"
+  theme_dark: "Dark"
+
+  # Import/Export
+  import_success: "Imported {} matches successfully"
+  import_partial: "Imported {} matches ({} skipped)"
+  import_error: "Import failed: {}"
+  export_success: "Exported {} matches"
+  backup_success: "Backup saved to {}"
+
+  # Version
+  version: "espanso GUI v{}"
