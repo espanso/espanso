@@ -121,6 +121,9 @@ impl EspansoGuiApp {
             runtime_dir.clone(),
         );
 
+        let mut trigger_tester = crate::modules::trigger_tester::TriggerTesterState::new();
+        trigger_tester.set_config_dir(config_dir.clone());
+
         EspansoGuiApp {
             config_dir: config_dir.clone(),
             runtime_dir: runtime_dir.clone(),
@@ -131,7 +134,7 @@ impl EspansoGuiApp {
             match_manager: crate::modules::match_manager::MatchManagerState::new(config_dir.clone()),
             package_manager: package_mgr,
             settings: crate::modules::settings::SettingsState::new(config_dir),
-            trigger_tester: crate::modules::trigger_tester::TriggerTesterState::new(),
+            trigger_tester,
             stats_dashboard: crate::modules::stats_dashboard::StatsDashboardState::new(),
             show_about: false,
             show_theme_menu: false,

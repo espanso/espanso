@@ -19,22 +19,12 @@
 
 //! Module 4: Trigger Tester — test match expansion without leaving the GUI.
 
+use std::path::PathBuf;
+
+use crate::backend::tester::{test_expansion, TestResult};
 use crate::i18n::Translations;
 use crate::ipc::IpcClient;
 
-/// Result from a test expansion.
-#[derive(Debug, Clone)]
-pub struct TestResult {
-    pub matched: bool,
-    pub match_trigger: Option<String>,
-    pub match_file: Option<String>,
-    pub match_line: Option<u32>,
-    pub match_type: Option<String>,
-    pub rendered_output: Option<String>,
-    pub elapsed_us: u64,
-}
-
-/// State for the trigger tester module.
 pub struct TriggerTesterState {
     trigger_input: String,
     app_title: String,
@@ -42,6 +32,8 @@ pub struct TriggerTesterState {
     app_exec: String,
     test_result: Option<TestResult>,
     is_testing: bool,
+    config_dir: Option<PathBuf>,
+    error_msg: Option<String>,
 }
 
 impl TriggerTesterState {
@@ -53,11 +45,16 @@ impl TriggerTesterState {
             app_exec: String::new(),
             test_result: None,
             is_testing: false,
+            config_dir: None,
+            error_msg: None,
         }
+    }
+
+    pub fn set_config_dir(&mut self, dir: Option<PathBuf>) {
+        self.config_dir = dir;
     }
 }
 
-/// Render the trigger tester module.
 pub fn show(
     ui: &mut egui::Ui,
     state: &mut TriggerTesterState,
@@ -68,12 +65,11 @@ pub fn show(
 
     ui.vertical(|ui| {
         ui.heading(tt.map_or("Trigger Tester", |tt| tt.title.as_str()));
-
         ui.add_space(12.0);
 
-        // === Input area ===
-        ui.label(tt.map_or("Type a trigger to test", |tt| tt.input_label.as_str()));
-        ui.add(
+        // Input area
+        ui.label(tt.map_or("Type a trigger to test:", |tt| tt.input_label.as_str()));
+        let trigger_response = ui.add(
             egui::TextEdit::singleline(&mut state.trigger_input)
                 .hint_text(tt.map_or(":hello", |tt| tt.input_placeholder.as_str()))
                 .desired_width(f32::INFINITY)
@@ -82,7 +78,7 @@ pub fn show(
 
         ui.add_space(8.0);
 
-        // === App context (collapsible) ===
+        // App context (collapsible)
         egui::CollapsingHeader::new(
             tt.map_or("Application context (optional)", |tt| tt.app_context_label.as_str()),
         )
@@ -113,7 +109,7 @@ pub fn show(
 
         ui.add_space(12.0);
 
-        // === Test button ===
+        // Test button
         let test_btn = egui::Button::new(
             egui::RichText::new(tt.map_or("▶ Test Expansion", |tt| tt.test_button.as_str()))
                 .size(16.0),
@@ -123,64 +119,103 @@ pub fn show(
 
         if ui.add(test_btn).clicked() && !state.trigger_input.is_empty() {
             state.is_testing = true;
-            // TODO: Actually run the matching and rendering pipeline
-            // For now, simulate a result
-            state.test_result = Some(TestResult {
-                matched: true,
-                match_trigger: Some(state.trigger_input.clone()),
-                match_file: Some("base.yml".to_string()),
-                match_line: Some(15),
-                match_type: Some("Rolling (Trie)".to_string()),
-                rendered_output: Some("[rendered output will appear here]".to_string()),
-                elapsed_us: 42,
-            });
+            state.test_result = None;
+            state.error_msg = None;
+
+            if let Some(ref config_dir) = state.config_dir {
+                let result = test_expansion(
+                    config_dir,
+                    &state.trigger_input,
+                    if state.app_title.is_empty() { None } else { Some(state.app_title.as_str()) },
+                    if state.app_class.is_empty() { None } else { Some(state.app_class.as_str()) },
+                    if state.app_exec.is_empty() { None } else { Some(state.app_exec.as_str()) },
+                );
+                match result {
+                    Ok(r) => state.test_result = Some(r),
+                    Err(e) => state.error_msg = Some(format!("Test failed: {}", e)),
+                }
+            } else {
+                state.error_msg = Some("No config directory configured".to_string());
+            }
+            state.is_testing = false;
+        }
+
+        // Also test on Enter press in the trigger input
+        if trigger_response.lost_focus()
+            && ui.input(|i| i.key_pressed(egui::Key::Enter))
+            && !state.trigger_input.is_empty()
+        {
+            state.is_testing = true;
+            state.test_result = None;
+            state.error_msg = None;
+
+            if let Some(ref config_dir) = state.config_dir {
+                let result = test_expansion(
+                    config_dir,
+                    &state.trigger_input,
+                    None, None, None,
+                );
+                match result {
+                    Ok(r) => state.test_result = Some(r),
+                    Err(e) => state.error_msg = Some(format!("Test failed: {}", e)),
+                }
+            }
             state.is_testing = false;
         }
 
         ui.add_space(16.0);
 
-        // === Results area ===
+        // Loading state
+        if state.is_testing {
+            ui.horizontal(|ui| {
+                ui.spinner();
+                ui.label("Testing...");
+            });
+        }
+
+        // Error message
+        if let Some(ref err) = state.error_msg {
+            ui.colored_label(egui::Color32::from_rgb(255, 107, 107), err);
+        }
+
+        // Results area
         if let Some(ref result) = state.test_result {
             if result.matched {
-                // Match found
                 egui::Frame::none()
                     .fill(ui.visuals().extreme_bg_color)
                     .rounding(6.0)
                     .inner_margin(12.0)
                     .show(ui, |ui| {
                         ui.strong(tt.map_or("Match Result", |tt| tt.match_result.as_str()));
-
                         ui.add_space(4.0);
 
+                        // Match info
                         if let Some(ref trigger) = result.match_trigger {
-                            if let Some(ref file) = result.match_file {
-                                let rule_text = tt.map_or(
-                                    format!("Matched rule: {} ({}#{})", trigger, file, result.match_line.unwrap_or(0)),
-                                    |tt| tt.matched_rule
-                                        .replace("{}", trigger)
-                                        .replace("{}", file)
-                                        .replace("{}", &result.match_line.unwrap_or(0).to_string()),
-                                );
-                                ui.label(&rule_text);
-                            }
+                            ui.label(format!("Trigger: {}", trigger));
                         }
+                        ui.label(format!("Match type: {}", result.match_type));
 
-                        if let Some(ref mtype) = result.match_type {
-                            let type_text = tt.map_or(
-                                format!("Match type: {}", mtype),
-                                |tt| tt.match_type.replace("{}", mtype),
+                        if let Some(ref file) = result.match_file {
+                            let line = result.match_line.unwrap_or(0);
+                            let rule_text = tt.map_or(
+                                format!("Matched rule: {} ({}#{})", result.match_trigger.as_deref().unwrap_or("?"), file, line),
+                                |tt| tt.matched_rule
+                                    .replace("{}", result.match_trigger.as_deref().unwrap_or("?"))
+                                    .replace("{}", file)
+                                    .replace("{}", &line.to_string()),
                             );
-                            ui.label(&type_text);
+                            ui.label(&rule_text);
                         }
 
                         ui.add_space(8.0);
 
+                        // Rendered output
                         ui.strong(tt.map_or("Rendered output:", |tt| tt.rendered_output.as_str()));
                         if let Some(ref output) = result.rendered_output {
                             ui.add_space(4.0);
-                            let mut output_clone = output.clone();
+                            let mut output_display = output.clone();
                             ui.add(
-                                egui::TextEdit::multiline(&mut output_clone)
+                                egui::TextEdit::multiline(&mut output_display)
                                     .desired_width(f32::INFINITY)
                                     .desired_rows(2)
                                     .interactive(false)
@@ -189,6 +224,8 @@ pub fn show(
                         }
 
                         ui.add_space(8.0);
+
+                        // Timing
                         let elapsed_text = tt.map_or(
                             format!("Elapsed: {}µs", result.elapsed_us),
                             |tt| tt.elapsed.replace("{}", &format!("{}µs", result.elapsed_us)),
@@ -196,7 +233,6 @@ pub fn show(
                         ui.small(&elapsed_text);
                     });
             } else {
-                // No match
                 ui.add_space(20.0);
                 ui.vertical_centered(|ui| {
                     ui.label(egui::RichText::new("🔍").size(32.0));
@@ -216,12 +252,6 @@ pub fn show(
                 ))
                 .color(ui.visuals().warn_fg_color),
             );
-        }
-
-        // Loading state
-        if state.is_testing {
-            ui.add_space(8.0);
-            ui.spinner();
         }
     });
 }
