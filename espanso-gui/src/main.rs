@@ -59,11 +59,17 @@ fn main() {
                     i += 1;
                 }
             }
+            arg if arg.starts_with("--config_dir=") => {
+                config_dir = Some(PathBuf::from(&arg[13..]));
+            }
             "--runtime_dir" => {
                 if i + 1 < args.len() {
                     runtime_dir = Some(PathBuf::from(&args[i + 1]));
                     i += 1;
                 }
+            }
+            arg if arg.starts_with("--runtime_dir=") => {
+                runtime_dir = Some(PathBuf::from(&arg[14..]));
             }
             arg if !arg.starts_with("--") => {
                 initial_module = Module::from_str(arg);
