@@ -8,11 +8,14 @@ repository = "https://github.com/espanso/espanso"
 edition = "2021"
 
 [features]
-default = ["glow"]
+default = ["glow", "native-tls"]
 # Use glow (OpenGL) backend for maximum cross-platform compatibility
 glow = ["eframe/glow"]
 # Use wgpu backend for modern GPU APIs (Metal/DX12/Vulkan)
 wgpu = ["eframe/wgpu"]
+# TLS backend (must match what espanso-package uses)
+native-tls = ["reqwest/default-tls"]
+rustls-tls = ["reqwest/rustls-tls"]
 
 [dependencies]
 # GUI framework
@@ -41,6 +44,7 @@ espanso-render = { path = "../espanso-render" }
 anyhow.workspace = true
 log.workspace = true
 simplelog = "0.12.2"
+reqwest = { version = "0.11", features = ["blocking"], default-features = false }
 serde.workspace = true
 serde_json.workspace = true
 serde_norway.workspace = true
