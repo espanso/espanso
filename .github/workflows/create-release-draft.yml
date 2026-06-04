@@ -264,15 +264,13 @@ jobs:
             --no-default-features \
             --features native-tls,modulo
           bash ./scripts/create_bundle.sh
-      - name: Create ZIP archive
+      - name: Create DMG archive
         run: |
-          ditto -c -k --sequesterRsrc --keepParent target/mac/Espanso.app Espanso-Mac-Universal.zip
+          hdiutil create -volname "Espanso" \
+            -srcfolder target/mac/Espanso.app \
+            -ov -format UDZO \
+            Espanso-Mac-Universal.dmg
 
-      # This doesn't work:
-      #
-      # - name: Upload artifacts to Github Releases
-      #   run: |
-      #     gh release upload ${{ needs.extract-version.outputs.espanso_version }} Espanso-Mac-Universal.zip
-      #
-      # The problem with this is that it's not signed, only ziiped into `Espanso-Mac-Universal.zip`
-      # so when you try to install it, macOS refuses to excecute from the Applications folder
+      - name: Upload artifacts to Github Releases
+        run: |
+          gh release upload ${{ needs.extract-version.outputs.espanso_version }} Espanso-Mac-Universal.dmg
