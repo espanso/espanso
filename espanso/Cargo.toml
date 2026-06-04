@@ -50,6 +50,7 @@ espanso-modulo = { path = "../espanso-modulo", optional = true }
 espanso-kvs = { path = "../espanso-kvs" }
 espanso-engine = { path = "../espanso-engine" }
 espanso-package = { path = "../espanso-package" }
+espanso-gui = { path = "../espanso-gui" }
 simplelog = "0.12.2"
 log.workspace = true
 anyhow.workspace = true

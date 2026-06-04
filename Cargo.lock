@@ -1373,6 +1373,7 @@ dependencies = [
  "espanso-config",
  "espanso-detect",
  "espanso-engine",
+ "espanso-gui",
  "espanso-info",
  "espanso-inject",
  "espanso-ipc",
