@@ -31,6 +31,11 @@ pub mod event;
 pub mod funnel;
 pub mod process;
 
+// Re-export the management panel callback so the worker can register it directly.
+pub use process::middleware::context_menu::{
+    init_management_panel_callback, ManagementPanelCallback,
+};
+
 pub struct Engine<'a> {
     funnel: &'a dyn Funnel,
     processor: &'a mut dyn Processor,

@@ -19,13 +19,16 @@
 
 use std::path::PathBuf;
 use std::process::Command;
+use std::sync::Mutex;
 
-use espanso_engine::dispatch::ManagementPanelHandler;
+use espanso_engine::ManagementPanelCallback;
 use log::{error, info};
 
 pub struct ManagementPanelHandlerAdapter {
     config_dir: PathBuf,
     runtime_dir: PathBuf,
+    /// Track the spawned child so we can kill it on exit (avoids zombie processes).
+    child: Mutex<Option<std::process::Child>>,
 }
 
 impl ManagementPanelHandlerAdapter {
@@ -33,14 +36,31 @@ impl ManagementPanelHandlerAdapter {
         Self {
             config_dir,
             runtime_dir,
+            child: Mutex::new(None),
+        }
+    }
+
+    /// Kill the GUI child process if it's still running.
+    pub fn kill_child(&self) {
+        if let Some(mut child) = self.child.lock().unwrap().take() {
+            info!("killing espanso gui subprocess (pid {})", child.id());
+            let _ = child.kill();
+            let _ = child.wait();
         }
     }
 }
 
-impl ManagementPanelHandler for ManagementPanelHandlerAdapter {
+impl Drop for ManagementPanelHandlerAdapter {
+    fn drop(&mut self) {
+        self.kill_child();
+    }
+}
+
+impl ManagementPanelCallback for ManagementPanelHandlerAdapter {
     fn open_management_panel(&self) {
-        // macOS requires winit EventLoop on the main thread, so we spawn
-        // a separate process (same binary, `espanso gui` subcommand).
+        // Kill any previously running GUI instance first
+        self.kill_child();
+
         let exe = match std::env::current_exe() {
             Ok(p) => p,
             Err(e) => {
@@ -61,8 +81,9 @@ impl ManagementPanelHandler for ManagementPanelHandlerAdapter {
             .arg(format!("--runtime_dir={}", self.runtime_dir.display()))
             .spawn()
         {
-            Ok(_child) => {
-                info!("espanso gui subprocess spawned successfully");
+            Ok(child) => {
+                info!("espanso gui subprocess spawned (pid {})", child.id());
+                *self.child.lock().unwrap() = Some(child);
             }
             Err(e) => {
                 error!("failed to spawn espanso gui subprocess: {}", e);

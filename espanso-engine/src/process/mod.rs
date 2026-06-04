@@ -20,7 +20,7 @@
 use super::Event;
 
 mod default;
-mod middleware;
+pub mod middleware;
 
 pub trait Middleware {
     fn name(&self) -> &'static str;

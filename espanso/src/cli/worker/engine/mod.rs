@@ -263,11 +263,19 @@ pub fn initialize_and_spawn(
             let icon_adapter = IconHandlerAdapter::new(&*ui_remote);
             let secure_input_adapter = SecureInputManagerAdapter::new();
             let text_ui_adapter = TextUIHandlerAdapter::new(&modulo_text_ui, &paths);
-            let management_panel_adapter = ManagementPanelHandlerAdapter::new(
-                paths.config.clone(),
-                paths.runtime.clone(),
-            );
-            let dispatcher = espanso_engine::dispatch::default_with_management_panel(
+
+            // Register the management panel callback before the processor starts.
+            // This bypasses the engine dispatch pipeline entirely — clicking the
+            // tray menu item spawns the GUI subprocess directly via a global callback.
+            {
+                let config = paths.config.clone();
+                let runtime = paths.runtime.clone();
+                espanso_engine::init_management_panel_callback(
+                    Box::new(ManagementPanelHandlerAdapter::new(config, runtime)),
+                );
+            }
+
+            let dispatcher = espanso_engine::dispatch::default(
                 &event_injector,
                 &clipboard_injector,
                 &config_manager,
@@ -278,7 +286,6 @@ pub fn initialize_and_spawn(
                 &icon_adapter,
                 &secure_input_adapter,
                 &text_ui_adapter,
-                &management_panel_adapter,
             );
 
             // Disable previously granted linux capabilities if not needed anymore

@@ -25,6 +25,17 @@ use crate::event::{
     Event, EventType, ExitMode,
 };
 
+/// Callback invoked when the user clicks "Open Management Panel".
+/// The engine provides a trait so the worker can supply the appropriate spawn logic.
+pub trait ManagementPanelCallback {
+    fn open_management_panel(&self);
+}
+
+struct NoopManagementPanelCallback;
+impl ManagementPanelCallback for NoopManagementPanelCallback {
+    fn open_management_panel(&self) {}
+}
+
 const CONTEXT_ITEM_EXIT: u32 = 0;
 const CONTEXT_ITEM_RELOAD: u32 = 1;
 const CONTEXT_ITEM_ENABLE: u32 = 2;
@@ -35,6 +46,15 @@ const CONTEXT_ITEM_OPEN_SEARCH: u32 = 6;
 const CONTEXT_ITEM_SHOW_LOGS: u32 = 7;
 const CONTEXT_ITEM_OPEN_CONFIG_FOLDER: u32 = 8;
 const CONTEXT_ITEM_OPEN_MANAGEMENT_PANEL: u32 = 9;
+
+/// Global callback for "Open Management Panel" — set by worker during init.
+static MGMT_PANEL_CB: std::sync::Mutex<Option<Box<dyn ManagementPanelCallback + Send + Sync>>> =
+    std::sync::Mutex::new(None);
+
+/// Initialize the management panel callback from the worker.
+pub fn init_management_panel_callback(cb: Box<dyn ManagementPanelCallback + Send + Sync + 'static>) {
+    *MGMT_PANEL_CB.lock().unwrap() = Some(cb);
+}
 
 pub struct ContextMenuMiddleware {
     is_enabled: RefCell<bool>,
@@ -182,10 +202,10 @@ impl Middleware for ContextMenuMiddleware {
                         Event::caused_by(event.source_id, EventType::NOOP)
                     }
                     CONTEXT_ITEM_OPEN_MANAGEMENT_PANEL => {
-                        dispatch(Event::caused_by(
-                            event.source_id,
-                            EventType::OpenManagementPanel,
-                        ));
+                        // Invoke directly via global callback — skip engine dispatch pipeline.
+                        if let Some(ref cb) = *MGMT_PANEL_CB.lock().unwrap() {
+                            cb.open_management_panel();
+                        }
                         Event::caused_by(event.source_id, EventType::NOOP)
                     }
                     10_u32..=u32::MAX => {
