@@ -78,7 +78,7 @@ fn main() {
         i += 1;
     }
 
-    let config_dir = config_dir.or_else(|| dirs::config_dir().map(|d| d.join("espanso")));
+    let config_dir = config_dir.or_else(|| find_default_config_dir());
     let runtime_dir = runtime_dir.or_else(|| dirs::cache_dir().map(|d| d.join("espanso")));
 
     info!("espanso-gui v{} starting...", VERSION);
@@ -227,4 +227,45 @@ fn find_cjk_font_paths() -> Vec<(String, String)> {
     }
 
     paths
+}
+
+/// Find the default config directory, matching espanso main's resolution order.
+/// Priority (macOS): portable(.espanso beside exe) → ~/.espanso → ~/.config/espanso
+///   → ~/Library/Preferences/espanso (legacy) → ~/Library/Application Support/espanso
+fn find_default_config_dir() -> Option<PathBuf> {
+    // 1. Portable mode — .espanso next to the executable
+    if let Ok(exe) = std::env::current_exe() {
+        if let Some(parent) = exe.parent() {
+            let portable = parent.join(".espanso");
+            if portable.is_dir() {
+                return Some(portable);
+            }
+        }
+    }
+
+    // 2. $HOME/.espanso
+    if let Some(home) = dirs::home_dir() {
+        let dot_espanso = home.join(".espanso");
+        if dot_espanso.is_dir() {
+            return Some(dot_espanso);
+        }
+
+        // 3. $HOME/.config/espanso
+        let config_espanso = home.join(".config").join("espanso");
+        if config_espanso.is_dir() {
+            return Some(config_espanso);
+        }
+
+        // 4. Legacy macOS: ~/Library/Preferences/espanso
+        #[cfg(target_os = "macos")]
+        {
+            let legacy = home.join("Library").join("Preferences").join("espanso");
+            if legacy.is_dir() {
+                return Some(legacy);
+            }
+        }
+    }
+
+    // 5. Default: dirs::config_dir()/espanso
+    dirs::config_dir().map(|d| d.join("espanso"))
 }

@@ -20,6 +20,22 @@ members = [
   "espanso-gui",
 ]
 
+# === 编译速度优化 ===
+# Debug 构建：减少调试信息加速编译，链接速度提升显著
+[profile.dev]
+debug = 1            # 仅行级调试信息（默认 2 会生成完整 debuginfo，链接极慢）
+incremental = true   # 增量编译
+codegen-units = 256  # 更多并行编译单元（默认 16）
+
+# 对依赖包可以稍微优化以减少运行时开销（不影响编译速度）
+[profile.dev.package."*"]
+opt-level = 0        # 依赖也用 0，最快编译
+
+# Release 构建（保持默认，只做编译速度优化）
+[profile.release]
+codegen-units = 16   # 默认 1，增加到 16 加速并行（略微牺牲运行时性能）
+lto = false          # 关闭 LTO（默认），开发期间的 release 构建不需要
+
 [workspace.lints.clippy]
 enum_glob_use = "deny"
 semicolon_if_nothing_returned = "deny"

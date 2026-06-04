@@ -1,0 +1,19 @@
+# === 编译速度优化配置 ===
+# 适用于 macOS / espanso 项目
+
+[build]
+# sccache 编译缓存 — 切换分支/clean后大幅加速重复编译
+# 首次编译后，后续相似编译可提速 50-80%
+rustc-wrapper = "sccache"
+# 并行编译任务数（8核已自动 -j8）
+# jobs = 8
+
+# === sccache 本地缓存配置 ===
+[env]
+SCCACHE_CACHE_SIZE = "10G"
+
+# === macOS 使用 lld 快速链接器（暂时禁用） ===
+# lld 22+ 改变了 macOS linker CLI 接口，与当前 Rust 1.96.0 不兼容。
+# 等 Rust 适配后可启用。brew 安装: brew install lld@21 或等 clang/rustc 更新支持 lld 22+
+# [target.aarch64-apple-darwin]
+# linker = "/opt/homebrew/opt/lld@21/bin/ld64.lld"

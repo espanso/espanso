@@ -142,7 +142,13 @@ impl MatchManagerState {
             if t.is_empty() { ":untitled".to_string() } else { t }
         };
 
-        let replace = self.editor.replace.clone();
+        let replace = if self.editor.match_type == MatchType::Image {
+            self.editor.image_path.clone()
+        } else {
+            self.editor.replace.clone()
+        };
+
+        let is_image = self.editor.match_type == MatchType::Image;
 
         let match_dir = config_dir.join("match");
         if let Err(e) = fs::create_dir_all(&match_dir) {
@@ -166,10 +172,17 @@ impl MatchManagerState {
         // Append the new match as a properly formatted YAML entry
         let escaped_trigger = yaml_escape(&trigger);
         let escaped_replace = yaml_escape(&replace);
-        let yaml_fragment = format!(
-            "  - trigger: \"{}\"\n    replace: \"{}\"\n",
-            escaped_trigger, escaped_replace
-        );
+        let yaml_fragment = if is_image {
+            format!(
+                "  - trigger: \"{}\"\n    image_path: \"{}\"\n",
+                escaped_trigger, escaped_replace
+            )
+        } else {
+            format!(
+                "  - trigger: \"{}\"\n    replace: \"{}\"\n",
+                escaped_trigger, escaped_replace
+            )
+        };
 
         // Ensure the file ends with a newline before appending
         if !current.ends_with('\n') {

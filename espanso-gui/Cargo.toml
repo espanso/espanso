@@ -28,7 +28,12 @@ arboard = "3.4"
 dark-light = "1.1"
 
 # Image handling (thumbnails)
-image = "0.25"
+# thumbnails — disable default features to skip avif/webp/hdr and
+# their heavy native-compile dependencies (rav1e, libavif, etc.)
+# while cutting ~10 seconds of wall-clock build time.
+image = { version = "0.25", default-features = false, features = [
+  "png", "jpeg", "gif", "bmp", "ico",
+] }
 
 # i18n
 rust-i18n = "3"

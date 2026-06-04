@@ -30,7 +30,7 @@ use cli::{CliModule, CliModuleArgs};
 use log::{error, info, warn};
 use logging::FileProxy;
 use simplelog::{
-    CombinedLogger, ConfigBuilder, LevelFilter, SharedLogger, TermLogger, TerminalMode, WriteLogger,
+    CombinedLogger, ConfigBuilder, ColorChoice, LevelFilter, SharedLogger, TermLogger, TerminalMode, WriteLogger,
 };
 use std::sync::LazyLock;
 
@@ -551,12 +551,6 @@ SubCommand::with_name("install")
         let log_proxy = FileProxy::new();
         if handler.enable_logs {
             let config = ConfigBuilder::new()
-                .set_time_to_local(true)
-                .set_time_format(format!(
-                    "%H:%M:%S [{}({})]",
-                    handler.subcommand,
-                    std::process::id()
-                ))
                 .set_location_level(LevelFilter::Off)
                 .add_filter_ignore_str("html5ever")
                 .build();
@@ -568,7 +562,7 @@ SubCommand::with_name("install")
             )];
 
             if !handler.disable_logs_terminal_output {
-                outputs.insert(0, TermLogger::new(log_level, config, TerminalMode::Mixed));
+                outputs.insert(0, TermLogger::new(log_level, config, TerminalMode::Mixed, ColorChoice::Auto));
             }
 
             CombinedLogger::init(outputs).expect("unable to initialize logs");

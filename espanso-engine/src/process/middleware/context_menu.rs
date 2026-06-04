@@ -34,6 +34,7 @@ const CONTEXT_ITEM_SECURE_INPUT_TRIGGER_WORKAROUND: u32 = 5;
 const CONTEXT_ITEM_OPEN_SEARCH: u32 = 6;
 const CONTEXT_ITEM_SHOW_LOGS: u32 = 7;
 const CONTEXT_ITEM_OPEN_CONFIG_FOLDER: u32 = 8;
+const CONTEXT_ITEM_OPEN_MANAGEMENT_PANEL: u32 = 9;
 
 pub struct ContextMenuMiddleware {
     is_enabled: RefCell<bool>,
@@ -74,6 +75,11 @@ impl Middleware for ContextMenuMiddleware {
                             label: "Enable".to_string(),
                         }
                     }),
+                    MenuItem::Simple(SimpleMenuItem {
+                        id: CONTEXT_ITEM_OPEN_MANAGEMENT_PANEL,
+                        label: "Open Management Panel".to_string(),
+                    }),
+                    MenuItem::Separator,
                     MenuItem::Simple(SimpleMenuItem {
                         id: CONTEXT_ITEM_OPEN_SEARCH,
                         label: "Open search bar".to_string(),
@@ -175,7 +181,14 @@ impl Middleware for ContextMenuMiddleware {
                         ));
                         Event::caused_by(event.source_id, EventType::NOOP)
                     }
-                    9_u32..=u32::MAX => {
+                    CONTEXT_ITEM_OPEN_MANAGEMENT_PANEL => {
+                        dispatch(Event::caused_by(
+                            event.source_id,
+                            EventType::OpenManagementPanel,
+                        ));
+                        Event::caused_by(event.source_id, EventType::NOOP)
+                    }
+                    10_u32..=u32::MAX => {
                         // Should be unreachable, given there are no other options
                         unreachable!()
                     }
