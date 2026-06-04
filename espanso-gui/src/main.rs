@@ -27,6 +27,7 @@ mod widgets;
 
 use std::path::PathBuf;
 use std::env;
+use std::sync::Arc;
 
 use app::{EspansoGuiApp, Module};
 use log::info;
@@ -42,10 +43,8 @@ fn main() {
     )
     .ok();
 
-    // Parse args manually for simplicity (no clap dependency)
     let args: Vec<String> = env::args().collect();
 
-    // Look for --config_dir and --runtime_dir flags
     let mut config_dir: Option<PathBuf> = None;
     let mut runtime_dir: Option<PathBuf> = None;
     let mut initial_module = Module::MatchManager;
@@ -79,7 +78,6 @@ fn main() {
         i += 1;
     }
 
-    // Default paths
     let config_dir = config_dir.or_else(|| dirs::config_dir().map(|d| d.join("espanso")));
     let runtime_dir = runtime_dir.or_else(|| dirs::cache_dir().map(|d| d.join("espanso")));
 
@@ -96,20 +94,137 @@ fn main() {
         "espanso",
         native_options,
         Box::new(|cc| {
-            // Set up fonts
-            let mut fonts = egui::FontDefinitions::default();
-            for font_data in fonts.font_data.values_mut() {
-                std::sync::Arc::make_mut(font_data).tweak.scale = 1.05;
-            }
-            cc.egui_ctx.set_fonts(fonts);
-
-            // Apply system theme
+            setup_fonts(&cc.egui_ctx);
             theme::apply_system_theme(&cc.egui_ctx);
-
-            let app_state = EspansoGuiApp::new(cc, config_dir.clone(), runtime_dir.clone(), initial_module);
-
+            let app_state = EspansoGuiApp::new(
+                cc,
+                config_dir.clone(),
+                runtime_dir.clone(),
+                initial_module,
+            );
             Ok(Box::new(app_state))
         }),
     )
     .expect("Failed to start espanso GUI");
+}
+
+/// Load system CJK fonts so Chinese/Japanese/Korean text renders correctly.
+fn setup_fonts(ctx: &egui::Context) {
+    let mut fonts = egui::FontDefinitions::default();
+
+    // Try to find and load a CJK font from common system locations
+    let cjk_paths = find_cjk_font_paths();
+
+    for (family_name, font_path) in &cjk_paths {
+        match std::fs::read(font_path) {
+            Ok(bytes) => {
+                info!("Loaded CJK font '{}' from {}", family_name, font_path);
+                fonts.font_data.insert(
+                    family_name.clone(),
+                    Arc::new(egui::FontData::from_owned(bytes).tweak(
+                        egui::FontTweak {
+                            scale: 1.0,
+                            ..Default::default()
+                        },
+                    )),
+                );
+                // Insert this family right after the default proportional family
+                fonts
+                    .families
+                    .entry(egui::FontFamily::Proportional)
+                    .or_default()
+                    .push(family_name.clone());
+            }
+            Err(e) => {
+                log::warn!("Could not load CJK font at {}: {}", font_path, e);
+            }
+        }
+    }
+
+    // Slightly larger default font
+    for font_data in fonts.font_data.values_mut() {
+        std::sync::Arc::make_mut(font_data).tweak.scale = 1.05;
+    }
+
+    ctx.set_fonts(fonts);
+}
+
+/// Search common system paths for CJK fonts.
+/// Returns Vec of (family_name, file_path) for fonts found.
+fn find_cjk_font_paths() -> Vec<(String, String)> {
+    let mut paths = Vec::new();
+
+    // macOS CJK fonts
+    #[cfg(target_os = "macos")]
+    {
+        let candidates = [
+            // PingFang (modern Chinese UI font, preferred)
+            "/System/Library/Fonts/PingFang.ttc",
+            // STHeiti (Chinese, Japanese-capable)
+            "/System/Library/Fonts/STHeiti Medium.ttc",
+            "/System/Library/Fonts/STHeiti Light.ttc",
+            // Songti (Chinese serif)
+            "/System/Library/Fonts/Supplemental/Songti.ttc",
+            // Apple SD Gothic Neo (Korean-capable)
+            "/System/Library/Fonts/AppleSDGothicNeo.ttc",
+            // Hiragino Sans (Japanese)
+            "/System/Library/Fonts/ヒラギノ角ゴシック W3.ttc",
+            "/System/Library/Fonts/ヒラギノ角ゴシック W4.ttc",
+        ];
+        for path in &candidates {
+            if std::path::Path::new(path).exists() {
+                // Extract a clean family name from the path
+                let name = std::path::Path::new(path)
+                    .file_stem()
+                    .unwrap_or_default()
+                    .to_string_lossy()
+                    .replace(" Medium", "")
+                    .replace(" Light", "")
+                    .replace(" W3", "")
+                    .replace(" W4", "");
+                paths.push((format!("cjk_{}", name), path.to_string()));
+            }
+        }
+    }
+
+    // Windows CJK fonts
+    #[cfg(target_os = "windows")]
+    {
+        let windir = std::env::var("WINDIR").unwrap_or_else(|_| "C:\\Windows".to_string());
+        let candidates = [
+            format!("{}\\Fonts\\msyh.ttc", windir),   // Microsoft YaHei
+            format!("{}\\Fonts\\simsun.ttc", windir),  // SimSun
+            format!("{}\\Fonts\\msgothic.ttc", windir), // MS Gothic (Japanese)
+        ];
+        for path in &candidates {
+            if std::path::Path::new(path).exists() {
+                let name = std::path::Path::new(path)
+                    .file_stem()
+                    .unwrap_or_default()
+                    .to_string_lossy();
+                paths.push((format!("cjk_{}", name), path.clone()));
+            }
+        }
+    }
+
+    // Linux CJK fonts
+    #[cfg(target_os = "linux")]
+    {
+        let candidates = [
+            "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
+            "/usr/share/fonts/noto-cjk/NotoSansCJK-Regular.ttc",
+            "/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc",
+            "/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc",
+            "/usr/share/fonts/truetype/droid/DroidSansFallbackFull.ttf",
+            "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
+        ];
+        for path in &candidates {
+            if std::path::Path::new(path).exists() {
+                paths.push(("cjk_sans".to_string(), path.to_string()));
+                break; // One is enough
+            }
+        }
+    }
+
+    paths
 }

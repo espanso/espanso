@@ -2,11 +2,11 @@ _version: 1
 
 # Navigation
 _nav:
-  match_manager: "🔤 Matches"
-  package_manager: "📦 Packages"
-  settings: "⚙️ Settings"
-  trigger_tester: "🧪 Tester"
-  stats_dashboard: "📊 Stats"
+  match_manager: "Matches"
+  package_manager: "Packages"
+  settings: "Settings"
+  trigger_tester: "Tester"
+  stats_dashboard: "Stats"
 
 # Match Manager
 _match_manager:

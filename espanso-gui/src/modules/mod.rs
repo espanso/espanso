@@ -21,4 +21,3 @@ pub mod match_manager;
 pub mod package_manager;
 pub mod settings;
 pub mod stats_dashboard;
-pub mod trigger_tester;

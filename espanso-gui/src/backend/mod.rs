@@ -23,4 +23,3 @@ pub mod config_io;
 pub mod match_store;
 pub mod package_io;
 pub mod stats_io;
-pub mod tester;
