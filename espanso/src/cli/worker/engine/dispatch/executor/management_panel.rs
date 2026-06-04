@@ -18,9 +18,10 @@
  */
 
 use std::path::PathBuf;
-use std::thread;
+use std::process::Command;
 
 use espanso_engine::dispatch::ManagementPanelHandler;
+use log::{error, info};
 
 pub struct ManagementPanelHandlerAdapter {
     config_dir: PathBuf,
@@ -38,16 +39,34 @@ impl ManagementPanelHandlerAdapter {
 
 impl ManagementPanelHandler for ManagementPanelHandlerAdapter {
     fn open_management_panel(&self) {
-        let config_dir = self.config_dir.clone();
-        let runtime_dir = self.runtime_dir.clone();
+        // macOS requires winit EventLoop on the main thread, so we spawn
+        // a separate process (same binary, `espanso gui` subcommand).
+        let exe = match std::env::current_exe() {
+            Ok(p) => p,
+            Err(e) => {
+                error!("cannot find current exe path: {}", e);
+                return;
+            }
+        };
 
-        // Run the GUI on a dedicated thread so it doesn't block the engine
-        thread::spawn(move || {
-            espanso_gui::run(
-                Some(config_dir),
-                Some(runtime_dir),
-                espanso_gui::app::Module::MatchManager,
-            );
-        });
+        info!(
+            "spawning espanso gui subprocess: {} gui --config_dir={}",
+            exe.display(),
+            self.config_dir.display(),
+        );
+
+        match Command::new(&exe)
+            .arg("gui")
+            .arg(format!("--config_dir={}", self.config_dir.display()))
+            .arg(format!("--runtime_dir={}", self.runtime_dir.display()))
+            .spawn()
+        {
+            Ok(_child) => {
+                info!("espanso gui subprocess spawned successfully");
+            }
+            Err(e) => {
+                error!("failed to spawn espanso gui subprocess: {}", e);
+            }
+        }
     }
 }

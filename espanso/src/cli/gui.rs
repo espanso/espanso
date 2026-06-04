@@ -17,8 +17,6 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::thread;
-
 use log::info;
 
 use super::{CliModule, CliModuleArgs};
@@ -52,12 +50,8 @@ fn gui_main(args: CliModuleArgs) -> i32 {
         config_dir.display()
     );
 
-    // Run the GUI on a dedicated thread so it doesn't block the CLI.
-    // The egui event loop will drive its own run loop.
-    thread::spawn(move || {
-        espanso_gui::run(Some(config_dir), Some(runtime_dir), initial_module);
-    });
-
-    // Return immediately — the GUI runs in the background
+    // macOS requires winit EventLoop on the main thread.
+    // When called from `espanso gui` CLI, we ARE on the main thread.
+    espanso_gui::run(Some(config_dir), Some(runtime_dir), initial_module);
     0
 }
