@@ -109,26 +109,31 @@ impl EspansoGuiApp {
         let lang = Language::detect_system();
         info!("Detected system language: {:?}", lang);
 
+        let config_dir2 = config_dir.clone();
+
         let mut package_mgr = crate::modules::package_manager::PackageManagerState::new();
         package_mgr.set_paths(
             config_dir.clone(),
-            None, // packages_dir — will be derived from config_dir
+            None,
             runtime_dir.clone(),
         );
 
+        let mut stats = crate::modules::stats_dashboard::StatsDashboardState::new();
+        stats.set_config_dir(config_dir);
+
         EspansoGuiApp {
-            config_dir: config_dir.clone(),
+            config_dir: config_dir2.clone(),
             runtime_dir: runtime_dir.clone(),
             current_module: initial_module,
             theme_mode: ThemeMode::System,
             language: lang,
             ipc_client: IpcClient::new(runtime_dir),
             match_manager: crate::modules::match_manager::MatchManagerState::new(
-                config_dir.clone(),
+                config_dir2.clone(),
             ),
             package_manager: package_mgr,
-            settings: crate::modules::settings::SettingsState::new(config_dir),
-            stats_dashboard: crate::modules::stats_dashboard::StatsDashboardState::new(),
+            settings: crate::modules::settings::SettingsState::new(config_dir2),
+            stats_dashboard: stats,
             show_about: false,
             show_theme_menu: false,
             show_lang_menu: false,

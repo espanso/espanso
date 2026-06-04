@@ -17,15 +17,14 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-//! Module 2: Package Manager — install, update, and remove packages.
-
 use std::path::PathBuf;
+use std::sync::mpsc;
 
 use crate::backend::package_io::{
-    check_updates, install_from_hub, list_installed, load_hub_index, uninstall_package,
-    HubPackageInfo, InstalledPackageInfo,
+    poll_bg_result, start_check_updates, start_install, start_list_installed,
+    start_load_hub_index, start_uninstall, BgOpResult, HubPackageInfo, InstalledPackageInfo,
 };
-use crate::i18n::{PackageManagerTranslations, Translations};
+use crate::i18n::Translations;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum PackageTab {
@@ -34,19 +33,32 @@ enum PackageTab {
     Updates,
 }
 
+enum LoadState {
+    Idle,
+    Loading,
+    Loaded,
+    Error(String),
+}
+
 pub struct PackageManagerState {
     active_tab: PackageTab,
     search_query: String,
-    config_dir: Option<PathBuf>,
     packages_dir: Option<PathBuf>,
     runtime_dir: Option<PathBuf>,
     // Cached data
     installed: Vec<InstalledPackageInfo>,
     hub_packages: Vec<HubPackageInfo>,
     updates: Vec<(InstalledPackageInfo, String)>,
-    needs_reload: bool,
-    loading: bool,
-    status_message: Option<String>,
+    // Async loading
+    hub_load_state: LoadState,
+    installed_load_state: LoadState,
+    updates_load_state: LoadState,
+    op_state: LoadState, // for install/uninstall
+    // Background channels
+    hub_rx: Option<mpsc::Receiver<BgOpResult>>,
+    installed_rx: Option<mpsc::Receiver<BgOpResult>>,
+    update_rx: Option<mpsc::Receiver<BgOpResult>>,
+    op_rx: Option<mpsc::Receiver<BgOpResult>>,
 }
 
 impl PackageManagerState {
@@ -54,130 +66,147 @@ impl PackageManagerState {
         PackageManagerState {
             active_tab: PackageTab::Installed,
             search_query: String::new(),
-            config_dir: None,
             packages_dir: None,
             runtime_dir: None,
             installed: Vec::new(),
             hub_packages: Vec::new(),
             updates: Vec::new(),
-            needs_reload: true,
-            loading: false,
-            status_message: None,
+            hub_load_state: LoadState::Idle,
+            installed_load_state: LoadState::Idle,
+            updates_load_state: LoadState::Idle,
+            op_state: LoadState::Idle,
+            hub_rx: None,
+            installed_rx: None,
+            update_rx: None,
+            op_rx: None,
         }
     }
 
-    pub fn set_paths(
-        &mut self,
-        config_dir: Option<PathBuf>,
-        packages_dir: Option<PathBuf>,
-        runtime_dir: Option<PathBuf>,
-    ) {
-        self.config_dir = config_dir;
+    pub fn set_paths(&mut self, _config_dir: Option<PathBuf>, packages_dir: Option<PathBuf>, runtime_dir: Option<PathBuf>) {
         self.packages_dir = packages_dir.or_else(|| {
-            self.config_dir
-                .as_ref()
-                .map(|d| d.join("match").join("packages"))
+            _config_dir.as_ref().map(|d| d.join("match").join("packages"))
         });
         self.runtime_dir = runtime_dir;
-        self.needs_reload = true;
     }
 
-    fn reload(&mut self) {
-        self.loading = true;
-        self.installed.clear();
-        self.updates.clear();
-
-        if let Some(ref pkgs_dir) = self.packages_dir {
-            match list_installed(pkgs_dir) {
-                Ok(list) => self.installed = list,
-                Err(e) => {
-                    self.status_message = Some(format!("Failed to list packages: {}", e));
+    fn poll_tasks(&mut self) {
+        // Poll Hub
+        if let Some(ref rx) = self.hub_rx {
+            match poll_bg_result(rx) {
+                Some(BgOpResult::HubIndexLoaded(pkgs)) => {
+                    self.hub_packages = pkgs;
+                    self.hub_load_state = LoadState::Loaded;
+                    self.hub_rx = None;
                 }
-            }
-
-            if let Some(ref rt_dir) = self.runtime_dir {
-                match check_updates(pkgs_dir, rt_dir) {
-                    Ok(list) => self.updates = list,
-                    Err(_) => {} // Non-critical; updates check can fail silently
+                Some(BgOpResult::Error(e)) => {
+                    self.hub_load_state = LoadState::Error(e);
+                    self.hub_rx = None;
                 }
+                _ => {}
             }
         }
+        // Poll installed
+        if let Some(ref rx) = self.installed_rx {
+            match poll_bg_result(rx) {
+                Some(BgOpResult::InstalledList(list)) => {
+                    self.installed = list;
+                    self.installed_load_state = LoadState::Loaded;
+                    self.installed_rx = None;
+                }
+                Some(BgOpResult::Error(e)) => {
+                    self.installed_load_state = LoadState::Error(e);
+                    self.installed_rx = None;
+                }
+                _ => {}
+            }
+        }
+        // Poll updates
+        if let Some(ref rx) = self.update_rx {
+            match poll_bg_result(rx) {
+                Some(BgOpResult::UpdatesCheck(list)) => {
+                    self.updates = list;
+                    self.updates_load_state = LoadState::Loaded;
+                    self.update_rx = None;
+                }
+                Some(BgOpResult::Error(e)) => {
+                    self.updates_load_state = LoadState::Error(e);
+                    self.update_rx = None;
+                }
+                _ => {}
+            }
+        }
+        // Poll op
+        if let Some(ref rx) = self.op_rx {
+            match poll_bg_result(rx) {
+                Some(BgOpResult::InstallDone(_) | BgOpResult::UninstallDone(_)) => {
+                    self.op_state = LoadState::Loaded;
+                    self.op_rx = None;
+                    // Refresh installed list
+                    self.reload_installed();
+                    // Refresh updates
+                    self.reload_updates();
+                }
+                Some(BgOpResult::Error(e)) => {
+                    self.op_state = LoadState::Error(e);
+                    self.op_rx = None;
+                }
+                _ => {}
+            }
+        }
+    }
 
-        self.loading = false;
-        self.needs_reload = false;
+    fn reload_installed(&mut self) {
+        if self.packages_dir.is_some() && self.installed_rx.is_none() {
+            self.installed_load_state = LoadState::Loading;
+            self.installed_rx = Some(start_list_installed(self.packages_dir.clone().unwrap()));
+        }
     }
 
     fn reload_hub(&mut self) {
-        if self.runtime_dir.is_none() {
-            return;
+        if self.runtime_dir.is_some() && self.hub_rx.is_none() {
+            self.hub_load_state = LoadState::Loading;
+            self.hub_rx = Some(start_load_hub_index(self.runtime_dir.clone().unwrap()));
         }
-        self.loading = true;
-        match load_hub_index(self.runtime_dir.as_ref().unwrap()) {
-            Ok(pkgs) => {
-                self.hub_packages = pkgs;
-                self.hub_packages.sort_by(|a, b| a.name.cmp(&b.name));
-            }
-            Err(e) => {
-                self.status_message = Some(format!("Failed to load Hub: {}", e));
-            }
+    }
+
+    fn reload_updates(&mut self) {
+        if self.packages_dir.is_some() && self.runtime_dir.is_some() && self.update_rx.is_none() {
+            self.updates_load_state = LoadState::Loading;
+            self.update_rx = Some(start_check_updates(
+                self.packages_dir.clone().unwrap(),
+                self.runtime_dir.clone().unwrap(),
+            ));
         }
-        self.loading = false;
     }
 
     fn do_install(&mut self, name: &str) {
-        let pkgs_dir = match self.packages_dir.clone() {
-            Some(d) => d,
-            None => {
-                self.status_message = Some("No packages directory configured".into());
-                return;
-            }
-        };
-        let rt_dir = match self.runtime_dir.clone() {
-            Some(d) => d,
-            None => {
-                self.status_message = Some("No runtime directory configured".into());
-                return;
-            }
-        };
-
-        let name = name.to_string();
-        self.loading = true;
-        match install_from_hub(&pkgs_dir, &rt_dir, &name) {
-            Ok(msg) => {
-                self.status_message = Some(msg);
-                self.needs_reload = true;
-            }
-            Err(e) => {
-                self.status_message = Some(format!("Install failed: {}", e));
-            }
+        if self.packages_dir.is_some() && self.runtime_dir.is_some() && self.op_rx.is_none() {
+            self.op_state = LoadState::Loading;
+            self.op_rx = Some(start_install(
+                self.packages_dir.clone().unwrap(),
+                self.runtime_dir.clone().unwrap(),
+                name.to_string(),
+            ));
         }
-        self.loading = false;
     }
 
     fn do_uninstall(&mut self, name: &str) {
-        let pkgs_dir = match self.packages_dir.clone() {
-            Some(d) => d,
-            None => return,
-        };
-        match uninstall_package(&pkgs_dir, name) {
-            Ok(msg) => {
-                self.status_message = Some(msg);
-                self.needs_reload = true;
-            }
-            Err(e) => {
-                self.status_message = Some(format!("Uninstall failed: {}", e));
-            }
+        if self.packages_dir.is_some() && self.op_rx.is_none() {
+            self.op_state = LoadState::Loading;
+            self.op_rx = Some(start_uninstall(
+                self.packages_dir.clone().unwrap(),
+                name.to_string(),
+            ));
         }
     }
 }
 
 pub fn show(ui: &mut egui::Ui, state: &mut PackageManagerState, t: &Translations) {
-    let pm = t.package_manager.as_ref();
+    let pm_wrapper = t.package_manager.clone();
+    let pm = pm_wrapper.as_ref();
 
-    // Ensure data is loaded
-    if state.needs_reload && !state.loading {
-        state.reload();
-    }
+    // Poll background tasks every frame
+    state.poll_tasks();
 
     ui.vertical(|ui| {
         ui.heading(pm.map_or("Package Manager", |p| p.title.as_str()));
@@ -205,8 +234,22 @@ pub fn show(ui: &mut egui::Ui, state: &mut PackageManagerState, t: &Translations
             ] {
                 if ui.selectable_label(state.active_tab == tab, label).clicked() {
                     state.active_tab = tab;
-                    if tab == PackageTab::Hub && state.hub_packages.is_empty() {
-                        state.reload_hub();
+                    match tab {
+                        PackageTab::Hub => {
+                            if state.hub_packages.is_empty() && matches!(state.hub_load_state, LoadState::Idle) {
+                                state.reload_hub();
+                            }
+                        }
+                        PackageTab::Installed => {
+                            if state.installed.is_empty() && matches!(state.installed_load_state, LoadState::Idle) {
+                                state.reload_installed();
+                            }
+                        }
+                        PackageTab::Updates => {
+                            if state.updates.is_empty() && matches!(state.updates_load_state, LoadState::Idle) {
+                                state.reload_updates();
+                            }
+                        }
                     }
                 }
             }
@@ -214,50 +257,57 @@ pub fn show(ui: &mut egui::Ui, state: &mut PackageManagerState, t: &Translations
 
         ui.add_space(8.0);
 
-        // Loading spinner
-        if state.loading {
-            ui.horizontal(|ui| {
-                ui.spinner();
-                ui.label("Loading...");
-            });
-        }
-
         match state.active_tab {
             PackageTab::Installed => show_installed(ui, state, pm),
             PackageTab::Hub => show_hub(ui, state, pm),
             PackageTab::Updates => show_updates(ui, state, pm),
         }
 
-        // Status message
-        if let Some(ref msg) = state.status_message.clone() {
-            if msg.starts_with("Failed") || msg.starts_with("Install failed") || msg.starts_with("Uninstall failed") {
-                ui.colored_label(egui::Color32::from_rgb(255, 107, 107), msg);
-            } else {
-                ui.colored_label(egui::Color32::from_rgb(72, 199, 142), msg);
+        // Operation status
+        match &state.op_state {
+            LoadState::Loading => {
+                ui.horizontal(|ui| {
+                    ui.spinner();
+                    ui.label("Working...");
+                });
             }
+            LoadState::Error(e) => {
+                ui.colored_label(egui::Color32::from_rgb(255, 107, 107), e);
+            }
+            LoadState::Loaded => {
+                ui.colored_label(egui::Color32::from_rgb(72, 199, 142), "Done");
+            }
+            _ => {}
         }
     });
 }
 
-fn show_installed(
-    ui: &mut egui::Ui,
-    state: &mut PackageManagerState,
-    pm: Option<&PackageManagerTranslations>,
-) {
-    if state.installed.is_empty() && !state.loading {
+fn show_installed(ui: &mut egui::Ui, state: &mut PackageManagerState, pm: Option<&crate::i18n::PackageManagerTranslations>) {
+    match &state.installed_load_state {
+        LoadState::Loading => {
+            ui.horizontal(|ui| { ui.spinner(); ui.label("Loading..."); });
+            return;
+        }
+        LoadState::Error(e) => {
+            ui.colored_label(egui::Color32::from_rgb(255, 107, 107), e);
+            if ui.button("Retry").clicked() { state.reload_installed(); }
+            return;
+        }
+        LoadState::Idle => {
+            state.reload_installed();
+            ui.spinner();
+            return;
+        }
+        _ => {}
+    }
+
+    if state.installed.is_empty() {
         ui.add_space(40.0);
         ui.vertical_centered(|ui| {
-            ui.label(egui::RichText::new("📦").size(48.0));
+            ui.label(egui::RichText::new("No packages installed").size(16.0));
+            ui.small("Browse the Hub tab to find packages");
             ui.add_space(8.0);
-            ui.strong("No packages installed");
-            ui.small("Browse the Hub tab to find useful packages");
-            ui.add_space(8.0);
-            if ui.button("📦 Browse Hub").clicked() {
-                state.active_tab = PackageTab::Hub;
-                if state.hub_packages.is_empty() {
-                    state.reload_hub();
-                }
-            }
+            if ui.button("Browse Hub").clicked() { state.active_tab = PackageTab::Hub; }
         });
         return;
     }
@@ -265,26 +315,12 @@ fn show_installed(
     egui::ScrollArea::vertical().show(ui, |ui| {
         for pkg in &state.installed.clone() {
             ui.horizontal(|ui| {
-                ui.label("📦");
                 ui.vertical(|ui| {
                     ui.strong(&pkg.title);
-                    let desc = pm.map_or(
-                        format!("v{} — {} — by {}", pkg.version, pkg.description, pkg.author),
-                        |p| format!(
-                            "{} — {} — {} {}",
-                            p.version_label.as_str().replace("{}", &pkg.version),
-                            &pkg.description,
-                            &p.detail_author.as_str().replace("{}", &pkg.author),
-                            &pkg.source
-                        ),
-                    );
-                    ui.small(&desc);
+                    ui.small(format!("v{} — {}", pkg.version, pkg.description));
                 });
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    if ui
-                        .small_button(pm.map_or("Uninstall", |p| p.uninstall_button.as_str()))
-                        .clicked()
-                    {
+                    if ui.small_button(pm.map_or("Uninstall", |p| p.uninstall_button.as_str())).clicked() {
                         state.do_uninstall(&pkg.name);
                     }
                 });
@@ -294,50 +330,47 @@ fn show_installed(
     });
 }
 
-fn show_hub(
-    ui: &mut egui::Ui,
-    state: &mut PackageManagerState,
-    pm: Option<&PackageManagerTranslations>,
-) {
-    // Search bar
+fn show_hub(ui: &mut egui::Ui, state: &mut PackageManagerState, pm: Option<&crate::i18n::PackageManagerTranslations>) {
     ui.horizontal(|ui| {
         ui.add(
             egui::TextEdit::singleline(&mut state.search_query)
                 .hint_text(pm.map_or("Search Hub packages...", |p| p.search_placeholder.as_str()))
                 .desired_width(300.0),
         );
-
-        if ui.button("🔄 Refresh").clicked() {
-            state.hub_packages.clear();
-            state.reload_hub();
-        }
+        if ui.button("Refresh").clicked() { state.reload_hub(); }
     });
 
     ui.add_space(8.0);
 
-    if state.hub_packages.is_empty() && !state.loading {
-        ui.add_space(40.0);
+    match &state.hub_load_state {
+        LoadState::Loading => {
+            ui.horizontal(|ui| { ui.spinner(); ui.label("Fetching Hub index..."); });
+            return;
+        }
+        LoadState::Error(e) => {
+            ui.colored_label(egui::Color32::from_rgb(255, 107, 107), e);
+            if ui.button("Retry").clicked() { state.reload_hub(); }
+            return;
+        }
+        LoadState::Idle => { return; }
+        _ => {}
+    }
+
+    if state.hub_packages.is_empty() {
         ui.vertical_centered(|ui| {
-            ui.label(egui::RichText::new("🛒").size(48.0));
-            ui.add_space(8.0);
-            ui.strong("No packages loaded");
-            ui.small("Click 'Refresh' to fetch the Hub index");
+            ui.label("No packages on Hub");
+            if ui.button("Retry").clicked() { state.reload_hub(); }
         });
         return;
     }
 
     let query = state.search_query.to_lowercase();
-    let filtered: Vec<HubPackageInfo> = state
-        .hub_packages
-        .iter()
+    let filtered: Vec<HubPackageInfo> = state.hub_packages.iter()
         .filter(|p| {
-            if query.is_empty() {
-                return true;
-            }
+            if query.is_empty() { return true; }
             p.name.to_lowercase().contains(&query)
                 || p.title.to_lowercase().contains(&query)
                 || p.description.to_lowercase().contains(&query)
-                || p.author.to_lowercase().contains(&query)
         })
         .cloned()
         .collect();
@@ -345,28 +378,15 @@ fn show_hub(
     egui::ScrollArea::vertical().show(ui, |ui| {
         for pkg in &filtered {
             let installed = state.installed.iter().any(|i| i.name == pkg.name);
-            let has_update = state
-                .updates
-                .iter()
-                .any(|(i, _)| i.name == pkg.name);
-
             ui.horizontal(|ui| {
-                ui.label("📦");
                 ui.vertical(|ui| {
                     ui.strong(&pkg.title);
                     ui.small(format!("v{} — {} — by {}", pkg.version, pkg.description, pkg.author));
                 });
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    if has_update {
-                        if ui.small_button(pm.map_or("Update", |p| p.update_button.as_str())).clicked() {
-                            state.do_install(&pkg.name);
-                        }
-                    } else if installed {
-                        ui.small(pm.map_or("Installed", |p| p.installed_label.as_str()));
-                    } else if ui
-                        .small_button(pm.map_or("Install", |p| p.install_button.as_str()))
-                        .clicked()
-                    {
+                    if installed {
+                        ui.label("Installed");
+                    } else if ui.small_button(pm.map_or("Install", |p| p.install_button.as_str())).clicked() {
                         state.do_install(&pkg.name);
                     }
                 });
@@ -376,55 +396,41 @@ fn show_hub(
     });
 }
 
-fn show_updates(
-    ui: &mut egui::Ui,
-    state: &mut PackageManagerState,
-    pm: Option<&PackageManagerTranslations>,
-) {
+fn show_updates(ui: &mut egui::Ui, state: &mut PackageManagerState, pm: Option<&crate::i18n::PackageManagerTranslations>) {
+    match &state.updates_load_state {
+        LoadState::Loading => { ui.spinner(); return; }
+        LoadState::Error(e) => {
+            ui.colored_label(egui::Color32::from_rgb(255, 107, 107), e);
+            return;
+        }
+        LoadState::Idle => { state.reload_updates(); ui.spinner(); return; }
+        _ => {}
+    }
+
     if state.updates.is_empty() {
-        ui.add_space(40.0);
         ui.vertical_centered(|ui| {
-            ui.label(egui::RichText::new("✅").size(48.0));
-            ui.add_space(8.0);
-            ui.strong("All packages are up to date");
+            ui.add_space(20.0);
+            ui.strong("All packages up to date");
         });
         return;
     }
 
     ui.horizontal(|ui| {
-        if ui
-            .button(pm.map_or("Update All", |p| p.update_all_button.as_str()))
-            .clicked()
-        {
-            for (pkg, _) in state.updates.clone() {
-                state.do_install(&pkg.name);
-            }
+        if ui.button(pm.map_or("Update All", |p| p.update_all_button.as_str())).clicked() {
+            for (pkg, _) in state.updates.clone() { state.do_install(&pkg.name); }
         }
     });
-
     ui.add_space(4.0);
 
     egui::ScrollArea::vertical().show(ui, |ui| {
         for (pkg, latest) in &state.updates.clone() {
             ui.horizontal(|ui| {
-                ui.label("📦");
                 ui.vertical(|ui| {
                     ui.strong(&pkg.title);
-                    let update_text = pm.map_or(
-                        format!("v{} → v{} available", pkg.version, latest),
-                        |p| {
-                            p.update_available
-                                .replace("{}", &pkg.version)
-                                .replace("{}", latest)
-                        },
-                    );
-                    ui.small(&update_text);
+                    ui.small(format!("v{} → v{}", pkg.version, latest));
                 });
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    if ui
-                        .small_button(pm.map_or("Update", |p| p.update_button.as_str()))
-                        .clicked()
-                    {
+                    if ui.small_button(pm.map_or("Update", |p| p.update_button.as_str())).clicked() {
                         state.do_install(&pkg.name);
                     }
                 });
