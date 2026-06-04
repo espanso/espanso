@@ -38,6 +38,7 @@ use crate::{
                 clipboard_injector::ClipboardInjectorAdapter,
                 context_menu::ContextMenuHandlerAdapter, event_injector::EventInjectorAdapter,
                 icon::IconHandlerAdapter, key_injector::KeyInjectorAdapter,
+                management_panel::ManagementPanelHandlerAdapter,
                 secure_input::SecureInputManagerAdapter, text_ui::TextUIHandlerAdapter,
             },
             process::middleware::{
@@ -262,7 +263,11 @@ pub fn initialize_and_spawn(
             let icon_adapter = IconHandlerAdapter::new(&*ui_remote);
             let secure_input_adapter = SecureInputManagerAdapter::new();
             let text_ui_adapter = TextUIHandlerAdapter::new(&modulo_text_ui, &paths);
-            let dispatcher = espanso_engine::dispatch::default(
+            let management_panel_adapter = ManagementPanelHandlerAdapter::new(
+                paths.config.clone(),
+                paths.runtime.clone(),
+            );
+            let dispatcher = espanso_engine::dispatch::default_with_management_panel(
                 &event_injector,
                 &clipboard_injector,
                 &config_manager,
@@ -273,6 +278,7 @@ pub fn initialize_and_spawn(
                 &icon_adapter,
                 &secure_input_adapter,
                 &text_ui_adapter,
+                &management_panel_adapter,
             );
 
             // Disable previously granted linux capabilities if not needed anymore

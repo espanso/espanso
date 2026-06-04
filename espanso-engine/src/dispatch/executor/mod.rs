@@ -22,6 +22,7 @@ pub mod html_inject;
 pub mod icon_update;
 pub mod image_inject;
 pub mod key_inject;
+pub mod management_panel;
 pub mod secure_input;
 pub mod text_inject;
 pub mod text_ui;

@@ -36,6 +36,7 @@ pub use executor::html_inject::HtmlInjector;
 pub use executor::icon_update::IconHandler;
 pub use executor::image_inject::ImageInjector;
 pub use executor::key_inject::KeyInjector;
+pub use executor::management_panel::ManagementPanelHandler;
 pub use executor::secure_input::SecureInputManager;
 pub use executor::text_inject::{Mode, ModeProvider, TextInjector};
 pub use executor::text_ui::{TextUIExecutor, TextUIHandler};
@@ -64,5 +65,33 @@ pub fn default<'a>(
         icon_handler,
         secure_input_manager,
         text_ui_handler,
+    )
+}
+
+pub fn default_with_management_panel<'a>(
+    event_injector: &'a dyn TextInjector,
+    clipboard_injector: &'a dyn TextInjector,
+    mode_provider: &'a dyn ModeProvider,
+    key_injector: &'a dyn KeyInjector,
+    html_injector: &'a dyn HtmlInjector,
+    image_injector: &'a dyn ImageInjector,
+    context_menu_handler: &'a dyn ContextMenuHandler,
+    icon_handler: &'a dyn IconHandler,
+    secure_input_manager: &'a dyn SecureInputManager,
+    text_ui_handler: &'a dyn TextUIHandler,
+    management_panel_handler: &'a dyn ManagementPanelHandler,
+) -> impl Dispatcher + 'a {
+    default::DefaultDispatcher::new_with_management_panel(
+        event_injector,
+        clipboard_injector,
+        mode_provider,
+        key_injector,
+        html_injector,
+        image_injector,
+        context_menu_handler,
+        icon_handler,
+        secure_input_manager,
+        text_ui_handler,
+        management_panel_handler,
     )
 }

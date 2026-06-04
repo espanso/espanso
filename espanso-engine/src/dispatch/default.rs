@@ -18,7 +18,8 @@
  */
 
 use super::{
-    ContextMenuHandler, Event, IconHandler, ImageInjector, SecureInputManager, TextUIHandler,
+    ContextMenuHandler, Event, IconHandler, ImageInjector, ManagementPanelHandler,
+    SecureInputManager, TextUIHandler,
 };
 use super::{Dispatcher, Executor, HtmlInjector, KeyInjector, ModeProvider, TextInjector};
 
@@ -67,6 +68,52 @@ impl<'a> DefaultDispatcher<'a> {
                 )),
                 Box::new(super::executor::text_ui::TextUIExecutor::new(
                     text_ui_handler,
+                )),
+            ],
+        }
+    }
+
+    pub fn new_with_management_panel(
+        event_injector: &'a dyn TextInjector,
+        clipboard_injector: &'a dyn TextInjector,
+        mode_provider: &'a dyn ModeProvider,
+        key_injector: &'a dyn KeyInjector,
+        html_injector: &'a dyn HtmlInjector,
+        image_injector: &'a dyn ImageInjector,
+        context_menu_handler: &'a dyn ContextMenuHandler,
+        icon_handler: &'a dyn IconHandler,
+        secure_input_manager: &'a dyn SecureInputManager,
+        text_ui_handler: &'a dyn TextUIHandler,
+        management_panel_handler: &'a dyn ManagementPanelHandler,
+    ) -> Self {
+        Self {
+            executors: vec![
+                Box::new(super::executor::text_inject::TextInjectExecutor::new(
+                    event_injector, clipboard_injector, mode_provider,
+                )),
+                Box::new(super::executor::key_inject::KeyInjectExecutor::new(
+                    key_injector,
+                )),
+                Box::new(super::executor::html_inject::HtmlInjectExecutor::new(
+                    html_injector,
+                )),
+                Box::new(super::executor::image_inject::ImageInjectExecutor::new(
+                    image_injector,
+                )),
+                Box::new(super::executor::context_menu::ContextMenuExecutor::new(
+                    context_menu_handler,
+                )),
+                Box::new(super::executor::icon_update::IconUpdateExecutor::new(
+                    icon_handler,
+                )),
+                Box::new(super::executor::secure_input::SecureInputExecutor::new(
+                    secure_input_manager,
+                )),
+                Box::new(super::executor::text_ui::TextUIExecutor::new(
+                    text_ui_handler,
+                )),
+                Box::new(super::executor::management_panel::ManagementPanelExecutor::new(
+                    management_panel_handler,
                 )),
             ],
         }

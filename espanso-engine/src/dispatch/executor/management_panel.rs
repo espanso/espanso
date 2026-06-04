@@ -17,23 +17,29 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub mod clipboard_injector;
-pub mod context_menu;
-pub mod event_injector;
-pub mod icon;
-pub mod key_injector;
-pub mod management_panel;
-pub mod secure_input;
-pub mod text_ui;
+use crate::dispatch::Executor;
+use crate::event::{Event, EventType};
 
-pub trait InjectParamsProvider {
-    fn get(&self) -> InjectParams;
+pub trait ManagementPanelHandler {
+    fn open_management_panel(&self);
 }
 
-pub struct InjectParams {
-    pub inject_delay: Option<usize>,
-    pub key_delay: Option<usize>,
-    pub disable_x11_fast_inject: bool,
-    pub evdev_modifier_delay: Option<usize>,
-    pub x11_use_xdotool_backend: bool,
+pub struct ManagementPanelExecutor<'a> {
+    handler: &'a dyn ManagementPanelHandler,
+}
+
+impl<'a> ManagementPanelExecutor<'a> {
+    pub fn new(handler: &'a dyn ManagementPanelHandler) -> Self {
+        Self { handler }
+    }
+}
+
+impl Executor for ManagementPanelExecutor<'_> {
+    fn execute(&self, event: &Event) -> bool {
+        if matches!(event.etype, EventType::OpenManagementPanel) {
+            self.handler.open_management_panel();
+            return true;
+        }
+        false
+    }
 }
