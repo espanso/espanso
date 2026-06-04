@@ -189,7 +189,11 @@ impl eframe::App for EspansoGuiApp {
             .show(ctx, |ui| {
                 ui.horizontal(|ui| {
                     // App heading
-                    ui.label(egui::RichText::new("espanso").size(16.0).strong());
+                    ui.label(
+                        egui::RichText::new("快捷文本输入")
+                            .size(16.0)
+                            .strong(),
+                    );
 
                     ui.add_space(8.0);
 
@@ -331,12 +335,7 @@ impl eframe::App for EspansoGuiApp {
                     ui.horizontal(|ui| {
                         ui.spacing_mut().item_spacing.x = 4.0;
                         ui.label(
-                            egui::RichText::new(
-                                t.common
-                                    .as_ref()
-                                    .map_or("GUI v0.1", |c| c.version.as_str())
-                                    .replace("{}", "0.1"),
-                            )
+                            egui::RichText::new("v0.1")
                             .size(11.0)
                             .color(ui.visuals().weak_text_color()),
                         );
@@ -420,7 +419,7 @@ impl eframe::App for EspansoGuiApp {
 
         // === About dialog ===
         if self.show_about {
-            egui::Window::new("About espanso")
+            egui::Window::new("关于")
                 .collapsible(false)
                 .resizable(false)
                 .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
@@ -428,53 +427,21 @@ impl eframe::App for EspansoGuiApp {
                     ui.vertical_centered(|ui| {
                         ui.add_space(8.0);
 
-                        ui.label(egui::RichText::new("espanso").size(22.0).strong());
+                        ui.label(egui::RichText::new("快捷文本输入").size(22.0).strong());
 
                         ui.add_space(4.0);
 
                         ui.label(
-                            egui::RichText::new("A Privacy-first, Cross-platform Text Expander")
+                            egui::RichText::new("帮你更快地输入常用内容")
                                 .size(13.0)
                                 .color(ui.visuals().weak_text_color()),
                         );
-
-                        ui.add_space(12.0);
-
-                        ui.label(
-                            egui::RichText::new(format!(
-                                "espanso GUI v{}",
-                                env!("CARGO_PKG_VERSION")
-                            ))
-                            .size(12.0),
-                        );
-
-                        ui.add_space(4.0);
-
-                        ui.label(
-                            egui::RichText::new("Built with egui")
-                                .size(12.0)
-                                .color(ui.visuals().weak_text_color()),
-                        );
-
-                        ui.add_space(12.0);
-
-                        ui.label(
-                            egui::RichText::new(
-                                "\u{00A9} 2019-2021 Federico Terzi and contributors",
-                            )
-                            .size(11.0)
-                            .color(ui.visuals().weak_text_color()),
-                        );
-
-                        ui.add_space(4.0);
-
-                        ui.hyperlink_to("espanso.org", "https://espanso.org");
 
                         ui.add_space(16.0);
 
                         if ui
                             .add(
-                                egui::Button::new(egui::RichText::new("Close").size(14.0))
+                                egui::Button::new(egui::RichText::new("关闭").size(14.0))
                                     .min_size(egui::vec2(100.0, 32.0))
                                     .rounding(egui::Rounding::same(8.0)),
                             )

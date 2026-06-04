@@ -53,7 +53,7 @@ pub fn run(config_dir: Option<PathBuf>, runtime_dir: Option<PathBuf>, initial_mo
     };
 
     eframe::run_native(
-        "espanso",
+        "文本扩展管理",
         native_options,
         Box::new(move |cc| {
             setup_fonts(&cc.egui_ctx);

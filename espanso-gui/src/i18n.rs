@@ -287,9 +287,7 @@ impl Language {
             .or_else(|_| std::env::var("LC_ALL"))
             .unwrap_or_default();
 
-        if locale.starts_with("zh_CN") || locale.starts_with("zh-Hans") {
-            Language::ChineseSimplified
-        } else if locale.starts_with("ja") {
+        if locale.starts_with("ja") {
             Language::Japanese
         } else if locale.starts_with("ko") {
             Language::Korean
@@ -297,8 +295,11 @@ impl Language {
             Language::German
         } else if locale.starts_with("fr") {
             Language::French
-        } else {
+        } else if locale.starts_with("en") || locale.starts_with("en_") {
             Language::English
+        } else {
+            // Default to 简体中文 for all other locales (including zh_*)
+            Language::ChineseSimplified
         }
     }
 
