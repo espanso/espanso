@@ -340,6 +340,10 @@ pub struct AccentColors {
     pub warning: Color32,
     pub danger: Color32,
     pub info: Color32,
+    /// Start color of the signature brand gradient (top / left).
+    pub brand_start: Color32,
+    /// End color of the signature brand gradient (bottom / right).
+    pub brand_end: Color32,
 }
 
 impl AccentColors {
@@ -351,6 +355,8 @@ impl AccentColors {
                 warning: Color32::from_rgb(251, 191, 36),
                 danger: Color32::from_rgb(248, 113, 113),
                 info: Color32::from_rgb(147, 197, 253),
+                brand_start: Color32::from_rgb(99, 102, 241), // indigo-500
+                brand_end: Color32::from_rgb(56, 189, 248),   // sky-400
             }
         } else {
             AccentColors {
@@ -359,7 +365,54 @@ impl AccentColors {
                 warning: Color32::from_rgb(245, 158, 11),
                 danger: Color32::from_rgb(239, 68, 68),
                 info: Color32::from_rgb(59, 130, 246),
+                brand_start: Color32::from_rgb(79, 70, 229), // indigo-600
+                brand_end: Color32::from_rgb(14, 165, 233),  // sky-500
             }
         }
     }
+}
+
+/// Linearly interpolate between two colors. `t` is clamped to `[0, 1]`.
+pub fn lerp_color(a: Color32, b: Color32, t: f32) -> Color32 {
+    let t = t.clamp(0.0, 1.0);
+    let l = |x: u8, y: u8| (x as f32 + (y as f32 - x as f32) * t).round() as u8;
+    Color32::from_rgba_unmultiplied(
+        l(a.r(), b.r()),
+        l(a.g(), b.g()),
+        l(a.b(), b.b()),
+        l(a.a(), b.a()),
+    )
+}
+
+/// Paint a smooth horizontal gradient inside `rect` using a vertex-colored mesh.
+/// No corner rounding (use for full-width bands / accent lines).
+pub fn paint_h_gradient(painter: &egui::Painter, rect: egui::Rect, left: Color32, right: Color32) {
+    use egui::epaint::{Mesh, Vertex};
+    let mut mesh = Mesh::default();
+    let uv = egui::epaint::WHITE_UV;
+    mesh.vertices.push(Vertex { pos: rect.left_top(), uv, color: left });
+    mesh.vertices.push(Vertex { pos: rect.right_top(), uv, color: right });
+    mesh.vertices.push(Vertex { pos: rect.right_bottom(), uv, color: right });
+    mesh.vertices.push(Vertex { pos: rect.left_bottom(), uv, color: left });
+    mesh.indices.extend_from_slice(&[0, 1, 2, 0, 2, 3]);
+    painter.add(egui::Shape::mesh(mesh));
+}
+
+/// Paint a smooth diagonal gradient inside `rect` (top-left → bottom-right).
+pub fn paint_diagonal_gradient(
+    painter: &egui::Painter,
+    rect: egui::Rect,
+    start: Color32,
+    end: Color32,
+) {
+    use egui::epaint::{Mesh, Vertex};
+    let mid = lerp_color(start, end, 0.5);
+    let mut mesh = Mesh::default();
+    let uv = egui::epaint::WHITE_UV;
+    mesh.vertices.push(Vertex { pos: rect.left_top(), uv, color: start });
+    mesh.vertices.push(Vertex { pos: rect.right_top(), uv, color: mid });
+    mesh.vertices.push(Vertex { pos: rect.right_bottom(), uv, color: end });
+    mesh.vertices.push(Vertex { pos: rect.left_bottom(), uv, color: mid });
+    mesh.indices.extend_from_slice(&[0, 1, 2, 0, 2, 3]);
+    painter.add(egui::Shape::mesh(mesh));
 }

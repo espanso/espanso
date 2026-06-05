@@ -382,6 +382,12 @@ fn show_hub(ui: &mut egui::Ui, state: &mut PackageManagerState, pm: Option<&crat
                 ui.vertical(|ui| {
                     ui.strong(&pkg.title);
                     ui.small(format!("v{} — {} — by {}", pkg.version, pkg.description, pkg.author));
+                    // Link to the package's page on the espanso Hub.
+                    ui.hyperlink_to(
+                        egui::RichText::new("\u{1F517} 查看主页").size(11.0),
+                        format!("https://hub.espanso.org/packages/{}", pkg.name),
+                    )
+                    .on_hover_text(format!("hub.espanso.org/packages/{}", pkg.name));
                 });
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     if installed {
