@@ -89,6 +89,9 @@ pub struct EspansoGuiApp {
     module_changed_at: std::time::Instant,
     // Animation: timestamp the About dialog was opened (drives its fade-in).
     about_opened_at: std::time::Instant,
+
+    // Ctrl/Cmd+K command palette.
+    command_palette: crate::command_palette::CommandPalette,
 }
 
 struct Toast {
@@ -146,6 +149,7 @@ impl EspansoGuiApp {
             worker_connected: false,
             module_changed_at: std::time::Instant::now(),
             about_opened_at: std::time::Instant::now(),
+            command_palette: crate::command_palette::CommandPalette::new(),
         }
     }
 
@@ -313,6 +317,21 @@ impl eframe::App for EspansoGuiApp {
                         {
                             self.show_about = true;
                             self.about_opened_at = std::time::Instant::now();
+                        }
+
+                        ui.add_space(4.0);
+
+                        // Command palette launcher (Ctrl/Cmd + K)
+                        if ui
+                            .add(
+                                egui::Button::new(egui::RichText::new("\u{1F50D}").size(13.0))
+                                    .rounding(egui::Rounding::same(6.0))
+                                    .min_size(egui::vec2(32.0, 28.0)),
+                            )
+                            .on_hover_text("命令面板  ·  Ctrl/⌘ K")
+                            .clicked()
+                        {
+                            self.command_palette.open();
                         }
                     });
                 });
@@ -700,6 +719,25 @@ impl eframe::App for EspansoGuiApp {
             }
         }
 
+        // === Command palette (Ctrl/Cmd + K) ===
+        if let Some(action) = self.command_palette.show(ctx, self.language, &accent) {
+            use crate::command_palette::PaletteAction;
+            match action {
+                PaletteAction::Goto(module) => self.switch_module(module),
+                PaletteAction::NewMatch => {
+                    self.match_manager.show_editor = true;
+                    self.match_manager.editing_match_id = None;
+                    self.switch_module(Module::MatchManager);
+                }
+                PaletteAction::SetTheme(mode) => self.theme_mode = mode,
+                PaletteAction::SetLanguage(lang) => self.language = lang,
+                PaletteAction::ShowAbout => {
+                    self.show_about = true;
+                    self.about_opened_at = std::time::Instant::now();
+                }
+            }
+        }
+
         // Keep animating while the worker is connected (for the pulsing dot).
         if self.worker_connected {
             ctx.request_repaint_after(std::time::Duration::from_millis(40));
@@ -707,6 +745,11 @@ impl eframe::App for EspansoGuiApp {
 
         // === Keybindings ===
         ctx.input(|i| {
+            // Ctrl/Cmd+K: toggle the command palette.
+            if i.modifiers.command && i.key_pressed(egui::Key::K) {
+                self.command_palette.toggle();
+            }
+
             // Ctrl+1..5: switch modules
             if i.modifiers.ctrl {
                 if i.key_pressed(egui::Key::Num1) {

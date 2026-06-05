@@ -23,6 +23,7 @@
 
 pub mod app;
 pub mod backend;
+pub mod command_palette;
 pub mod i18n;
 pub mod ipc;
 pub mod modules;
