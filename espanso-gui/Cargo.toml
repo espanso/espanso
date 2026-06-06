@@ -24,7 +24,6 @@ eframe = { version = "0.30", default-features = false, features = ["default_font
 
 # Platform abstraction
 rfd = "0.15"
-arboard = "3.4"
 dark-light = "1.1"
 
 # Image handling (thumbnails)
@@ -70,6 +69,3 @@ workspace = true
 
 [target.'cfg(windows)'.dependencies]
 widestring.workspace = true
-
-[target.'cfg(windows)'.build-dependencies]
-winres = "0.1"

@@ -17,23 +17,9 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-fn main() {
-    #[cfg(windows)]
-    {
-        let mut res = winres::WindowsResource::new();
-        res.set_manifest(
-            r#"
-<assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
-<trustInfo xmlns="urn:schemas-microsoft-com:asm.v3">
-    <security>
-        <requestedPrivileges>
-            <requestedExecutionLevel level="asInvoker" uiAccess="false" />
-        </requestedPrivileges>
-    </security>
-</trustInfo>
-</assembly>
-"#,
-        );
-        res.compile().expect("unable to compile Windows resource file");
-    }
-}
+// espanso-gui is an embedded library, not a standalone binary. Windows
+// resources (manifest / version info / icon) must be owned by the final
+// binary crate (`espanso`) instead — embedding them here links a second copy
+// of those resources into espanso.exe and breaks the build with duplicate
+// VERSION resource errors (CVT1100 / LNK1123). So this build script is a no-op.
+fn main() {}
