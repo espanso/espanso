@@ -38,6 +38,10 @@ image = { version = "0.25", default-features = false, features = [
 # i18n
 rust-i18n = "3"
 
+# Normalize fancy Unicode (e.g. mathematical script letters) in package
+# metadata down to plain text so it renders with the bundled fonts.
+unicode-normalization = "0.1"
+
 # Internal dependencies
 espanso-config = { path = "../espanso-config" }
 espanso-ipc = { path = "../espanso-ipc" }

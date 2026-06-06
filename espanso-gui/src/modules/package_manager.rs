@@ -25,6 +25,16 @@ use crate::backend::package_io::{
     start_load_hub_index, start_uninstall, BgOpResult, HubPackageInfo, InstalledPackageInfo,
 };
 use crate::i18n::Translations;
+use unicode_normalization::UnicodeNormalization;
+
+/// Normalize "fancy" Unicode (mathematical script/bold letters, full-width
+/// forms, ligatures, …) down to plain text via NFKC so it renders with the
+/// bundled fonts instead of showing as blank/tofu glyphs.
+///
+/// e.g. "𝒮𝒸𝓇𝒾𝓅𝓉 𝓁ℯ𝓉𝓉ℯ𝓇𝓈" → "Script letters".
+fn display(s: &str) -> String {
+    s.nfkc().collect()
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum PackageTab {
@@ -316,8 +326,8 @@ fn show_installed(ui: &mut egui::Ui, state: &mut PackageManagerState, pm: Option
         for pkg in &state.installed.clone() {
             ui.horizontal(|ui| {
                 ui.vertical(|ui| {
-                    ui.strong(&pkg.title);
-                    ui.small(format!("v{} — {}", pkg.version, pkg.description));
+                    ui.strong(display(&pkg.title));
+                    ui.small(format!("v{} — {}", pkg.version, display(&pkg.description)));
                 });
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     if ui.small_button(pm.map_or("Uninstall", |p| p.uninstall_button.as_str())).clicked() {
@@ -369,8 +379,8 @@ fn show_hub(ui: &mut egui::Ui, state: &mut PackageManagerState, pm: Option<&crat
         .filter(|p| {
             if query.is_empty() { return true; }
             p.name.to_lowercase().contains(&query)
-                || p.title.to_lowercase().contains(&query)
-                || p.description.to_lowercase().contains(&query)
+                || display(&p.title).to_lowercase().contains(&query)
+                || display(&p.description).to_lowercase().contains(&query)
         })
         .cloned()
         .collect();
@@ -380,14 +390,19 @@ fn show_hub(ui: &mut egui::Ui, state: &mut PackageManagerState, pm: Option<&crat
             let installed = state.installed.iter().any(|i| i.name == pkg.name);
             ui.horizontal(|ui| {
                 ui.vertical(|ui| {
-                    ui.strong(&pkg.title);
-                    ui.small(format!("v{} — {} — by {}", pkg.version, pkg.description, pkg.author));
+                    ui.strong(display(&pkg.title));
+                    ui.small(format!(
+                        "v{} — {} — by {}",
+                        pkg.version,
+                        display(&pkg.description),
+                        display(&pkg.author),
+                    ));
                     // Link to the package's page on the espanso Hub.
                     ui.hyperlink_to(
                         egui::RichText::new("\u{1F517} 查看主页").size(11.0),
-                        format!("https://hub.espanso.org/packages/{}", pkg.name),
+                        format!("https://hub.espanso.org/{}", pkg.name),
                     )
-                    .on_hover_text(format!("hub.espanso.org/packages/{}", pkg.name));
+                    .on_hover_text(format!("hub.espanso.org/{}", pkg.name));
                 });
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     if installed {
@@ -432,7 +447,7 @@ fn show_updates(ui: &mut egui::Ui, state: &mut PackageManagerState, pm: Option<&
         for (pkg, latest) in &state.updates.clone() {
             ui.horizontal(|ui| {
                 ui.vertical(|ui| {
-                    ui.strong(&pkg.title);
+                    ui.strong(display(&pkg.title));
                     ui.small(format!("v{} → v{}", pkg.version, latest));
                 });
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
