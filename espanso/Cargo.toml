@@ -79,9 +79,6 @@ windows.workspace = true
 named_pipe = "0.4.1"
 winreg = "0.9.0"
 
-[target.'cfg(windows)'.build-dependencies]
-winres = "0.1"
-
 [target.'cfg(unix)'.dependencies]
 libc = "0.2.98"
 

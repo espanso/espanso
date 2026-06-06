@@ -17,3 +17,12 @@ SCCACHE_CACHE_SIZE = "10G"
 # 等 Rust 适配后可启用。brew 安装: brew install lld@21 或等 clang/rustc 更新支持 lld 22+
 # [target.aarch64-apple-darwin]
 # linker = "/opt/homebrew/opt/lld@21/bin/ld64.lld"
+
+# === Windows (MSVC) 链接修复 ===
+# 嵌入 espanso-gui (eframe/egui) 后，依赖图里同时存在多个版本的 windows-targets
+# 伞形导入库（windows.0.48/0.52/0.53.lib），它们各自都导出全部 gdiplus.dll 符号
+# （GdipAlloc 等）；而 espanso-modulo 里的 wxWidgets 也带 GDI+ flat API。两者重复
+# 定义同名符号导致 LNK2005 "already defined"。这些定义最终都指向同一个系统
+# gdiplus.dll，因此让链接器在重复时取其一即可（/FORCE:MULTIPLE）。
+[target.x86_64-pc-windows-msvc]
+rustflags = ["-C", "link-arg=/FORCE:MULTIPLE"]
