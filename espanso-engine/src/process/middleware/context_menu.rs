@@ -19,6 +19,8 @@
 
 use std::cell::RefCell;
 
+use log::info;
+
 use super::super::Middleware;
 use crate::event::{
     ui::{MenuItem, ShowContextMenuEvent, SimpleMenuItem},
@@ -155,6 +157,10 @@ impl Middleware for ContextMenuMiddleware {
                 )
             }
             EventType::ContextMenuClicked(context_click_event) => {
+                info!(
+                    "context menu clicked: item_id={}",
+                    context_click_event.context_item_id
+                );
                 match context_click_event.context_item_id {
                     CONTEXT_ITEM_EXIT => Event::caused_by(
                         event.source_id,
@@ -202,9 +208,14 @@ impl Middleware for ContextMenuMiddleware {
                         Event::caused_by(event.source_id, EventType::NOOP)
                     }
                     CONTEXT_ITEM_OPEN_MANAGEMENT_PANEL => {
+                        info!("Open Management Panel clicked, invoking callback...");
                         // Invoke directly via global callback — skip engine dispatch pipeline.
-                        if let Some(ref cb) = *MGMT_PANEL_CB.lock().unwrap() {
+                        let cb_guard = MGMT_PANEL_CB.lock().unwrap();
+                        if let Some(ref cb) = *cb_guard {
+                            info!("Management panel callback is registered, opening...");
                             cb.open_management_panel();
+                        } else {
+                            info!("WARNING: Management panel callback is NOT registered (None)");
                         }
                         Event::caused_by(event.source_id, EventType::NOOP)
                     }

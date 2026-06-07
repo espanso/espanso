@@ -46,7 +46,8 @@ pub struct NavTranslations {
     pub match_manager: String,
     pub package_manager: String,
     pub settings: String,
-    pub trigger_tester: String,
+    #[serde(default)]
+    pub trigger_tester: Option<String>,
     pub stats_dashboard: String,
 }
 

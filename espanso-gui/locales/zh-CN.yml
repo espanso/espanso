@@ -5,6 +5,7 @@ _nav:
   match_manager: "匹配管理"
   package_manager: "包管理"
   settings: "设置"
+  trigger_tester: "触发测试"
   stats_dashboard: "统计"
 
 # 匹配管理器

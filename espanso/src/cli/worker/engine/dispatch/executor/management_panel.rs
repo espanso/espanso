@@ -58,75 +58,60 @@ impl Drop for ManagementPanelHandlerAdapter {
 
 impl ManagementPanelCallback for ManagementPanelHandlerAdapter {
     fn open_management_panel(&self) {
+        info!("=== ManagementPanelHandlerAdapter::open_management_panel() called ===");
+        info!(
+            "config_dir={}, runtime_dir={}",
+            self.config_dir.display(),
+            self.runtime_dir.display()
+        );
+
         // Kill any previously running GUI instance first
         self.kill_child();
 
         let exe = match std::env::current_exe() {
-            Ok(p) => p,
+            Ok(p) => {
+                info!("current_exe = {}", p.display());
+                p
+            }
             Err(e) => {
                 error!("cannot find current exe path: {}", e);
                 return;
             }
         };
 
+        // Always spawn the binary directly. Even inside an .app bundle with
+        // LSUIElement=1, direct Command::new() spawns a plain process that
+        // bypasses LaunchServices — so the Info.plist background-only flag
+        // does NOT apply. Using `open -a` would go through LaunchServices
+        // which reads LSUIElement=1 and prevents GUI windows from appearing.
+        // NOTE: `--config_dir` and `--runtime_dir` are top-level (global) options,
+        // so they MUST appear BEFORE the `gui` subcommand. Placing them after `gui`
+        // makes clap parse them with the `gui` subcommand parser (which only knows
+        // the `module` positional), causing an UnknownArgument error and an
+        // immediate exit — the window never appears even though spawn() succeeds.
         info!(
-            "spawning espanso gui subprocess: {} gui --config_dir={}",
+            "spawning: {} --config_dir={} --runtime_dir={} gui",
             exe.display(),
             self.config_dir.display(),
+            self.runtime_dir.display()
         );
 
-        // On macOS, when packaged as .app with LSUIElement=1, the subprocess
-        // inherits the same Info.plist and can't open GUI windows properly.
-        // Use `open -a AppBundle.app --args` to let macOS handle the launch.
-        #[cfg(target_os = "macos")]
-        let spawn_result = {
-            // Detect if we're inside an .app bundle
-            let is_bundle = exe.to_string_lossy().contains(".app/Contents/MacOS/");
-            if is_bundle {
-                // Find the .app bundle root
-                let app_bundle = exe
-                    .ancestors()
-                    .find(|p| p.extension().map(|e| e == "app").unwrap_or(false));
-                if let Some(bundle) = app_bundle {
-                    info!("detected app bundle, using 'open -a' for GUI launch");
-                    Command::new("open")
-                        .arg("-a")
-                        .arg(bundle)
-                        .arg("--args")
-                        .arg("gui")
-                        .arg(format!("--config_dir={}", self.config_dir.display()))
-                        .arg(format!("--runtime_dir={}", self.runtime_dir.display()))
-                        .spawn()
-                } else {
-                    Command::new(&exe)
-                        .arg("gui")
-                        .arg(format!("--config_dir={}", self.config_dir.display()))
-                        .arg(format!("--runtime_dir={}", self.runtime_dir.display()))
-                        .spawn()
-                }
-            } else {
-                Command::new(&exe)
-                    .arg("gui")
-                    .arg(format!("--config_dir={}", self.config_dir.display()))
-                    .arg(format!("--runtime_dir={}", self.runtime_dir.display()))
-                    .spawn()
-            }
-        };
-
-        #[cfg(not(target_os = "macos"))]
         let spawn_result = Command::new(&exe)
-            .arg("gui")
             .arg(format!("--config_dir={}", self.config_dir.display()))
             .arg(format!("--runtime_dir={}", self.runtime_dir.display()))
+            .arg("gui")
             .spawn();
 
         match spawn_result {
             Ok(child) => {
-                info!("espanso gui subprocess spawned (pid {})", child.id());
+                info!(
+                    "SUCCESS: espanso gui subprocess spawned (pid {})",
+                    child.id()
+                );
                 *self.child.lock().unwrap() = Some(child);
             }
             Err(e) => {
-                error!("failed to spawn espanso gui subprocess: {}", e);
+                error!("FAILED to spawn espanso gui subprocess: {}", e);
             }
         }
     }

@@ -270,9 +270,15 @@ pub fn initialize_and_spawn(
             {
                 let config = paths.config.clone();
                 let runtime = paths.runtime.clone();
+                info!(
+                    "Registering management panel callback: config={}, runtime={}",
+                    config.display(),
+                    runtime.display()
+                );
                 espanso_engine::init_management_panel_callback(
                     Box::new(ManagementPanelHandlerAdapter::new(config, runtime)),
                 );
+                info!("Management panel callback registered successfully");
             }
 
             let dispatcher = espanso_engine::dispatch::default(
