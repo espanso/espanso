@@ -19,6 +19,7 @@
 
 #include "native.h"
 #include <array>
+#include <cstring>
 #include <iostream>
 #include <memory>
 #include <stdio.h>
@@ -123,9 +124,15 @@ int32_t clipboard_set_image(wchar_t *path) {
 
     Gdiplus::Bitmap *gdibmp = Gdiplus::Bitmap::FromFile(path);
     if (gdibmp) {
-        HBITMAP hbitmap;
-        gdibmp->GetHBITMAP(0, &hbitmap);
-        if (OpenClipboard(NULL)) {
+        // GetHBITMAP alpha-blends transparent pixels onto the given
+        // background color, and CF_BITMAP (a DDB) cannot carry alpha.
+        // The background must be white: with the previous value (0 =
+        // transparent black) every PNG with an alpha channel came out
+        // black wherever it was transparent.
+        HBITMAP hbitmap = NULL;
+        Gdiplus::Status status =
+            gdibmp->GetHBITMAP(Gdiplus::Color(255, 255, 255, 255), &hbitmap);
+        if (status == Gdiplus::Ok && OpenClipboard(NULL)) {
             EmptyClipboard();
             DIBSECTION ds;
             if (GetObject(hbitmap, sizeof(DIBSECTION), &ds)) {
@@ -135,14 +142,58 @@ int32_t clipboard_set_image(wchar_t *path) {
                     CreateDIBitmap(hdc, &ds.dsBmih, CBM_INIT, ds.dsBm.bmBits,
                                    (BITMAPINFO *)&ds.dsBmih, DIB_RGB_COLORS);
                 ReleaseDC(HWND_DESKTOP, hdc);
-                SetClipboardData(CF_BITMAP, hbitmap_ddb);
-                DeleteObject(hbitmap_ddb);
-                result = 1;
+                if (SetClipboardData(CF_BITMAP, hbitmap_ddb)) {
+                    result = 1;
+                } else {
+                    // Ownership only transfers to the clipboard on success.
+                    DeleteObject(hbitmap_ddb);
+                }
             }
+
+            // Additionally publish the raw bytes under the registered "PNG"
+            // clipboard format: alpha-aware targets (browsers, Office,
+            // Telegram, ...) prefer it and keep the transparency intact.
+            FILE *file = _wfopen(path, L"rb");
+            if (file) {
+                fseek(file, 0, SEEK_END);
+                long file_size = ftell(file);
+                fseek(file, 0, SEEK_SET);
+                if (file_size > 8) {
+                    HGLOBAL hPng =
+                        GlobalAlloc(GMEM_MOVEABLE, (SIZE_T)file_size);
+                    if (hPng) {
+                        bool is_png = false;
+                        void *dst = GlobalLock(hPng);
+                        if (dst) {
+                            size_t read_bytes =
+                                fread(dst, 1, (size_t)file_size, file);
+                            const unsigned char png_magic[8] = {
+                                0x89, 'P', 'N', 'G', '\r', '\n', 0x1A, '\n'};
+                            is_png = read_bytes == (size_t)file_size &&
+                                     memcmp(dst, png_magic, 8) == 0;
+                            GlobalUnlock(hPng);
+                        }
+                        static UINT png_format = 0;
+                        if (!png_format) {
+                            png_format = RegisterClipboardFormat(L"PNG");
+                        }
+                        if (is_png && png_format &&
+                            SetClipboardData(png_format, hPng)) {
+                            result = 1;
+                        } else {
+                            GlobalFree(hPng);
+                        }
+                    }
+                }
+                fclose(file);
+            }
+
             CloseClipboard();
         }
 
-        DeleteObject(hbitmap);
+        if (hbitmap) {
+            DeleteObject(hbitmap);
+        }
         delete gdibmp;
     }
 
