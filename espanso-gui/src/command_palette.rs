@@ -165,7 +165,7 @@ impl CommandPalette {
                 ui.painter().rect_filled(
                     screen,
                     egui::Rounding::ZERO,
-                    egui::Color32::from_black_alpha((110.0 * anim) as u8),
+                    egui::Color32::from_black_alpha((90.0 * anim) as u8),
                 );
                 if resp.clicked() {
                     self.open = false;
@@ -182,13 +182,13 @@ impl CommandPalette {
                 ui.set_opacity(anim);
                 egui::Frame {
                     fill: visuals.window_fill,
-                    rounding: egui::Rounding::same(14.0),
+                    rounding: egui::Rounding::same(12.0),
                     stroke: egui::Stroke::new(1.0, visuals.window_stroke.color),
                     shadow: egui::Shadow {
-                        offset: egui::Vec2::new(0.0, 18.0),
-                        blur: 48.0,
+                        offset: egui::Vec2::new(0.0, 10.0),
+                        blur: 32.0,
                         spread: 0.0,
-                        color: egui::Color32::from_rgba_premultiplied(0, 0, 0, 90),
+                        color: egui::Color32::from_rgba_premultiplied(0, 0, 0, 55),
                     },
                     inner_margin: egui::Margin::same(10.0),
                     outer_margin: egui::Margin::ZERO,
@@ -221,17 +221,7 @@ impl CommandPalette {
                     });
 
                     ui.add_space(6.0);
-                    // Brand gradient divider.
-                    let (line, _) = ui.allocate_exact_size(
-                        egui::vec2(ui.available_width(), 1.5),
-                        egui::Sense::hover(),
-                    );
-                    theme::paint_h_gradient(
-                        ui.painter(),
-                        line,
-                        accent.brand_start.gamma_multiply(0.8),
-                        accent.brand_end.gamma_multiply(0.8),
-                    );
+                    ui.separator();
                     ui.add_space(6.0);
 
                     if filtered.is_empty() {
@@ -297,26 +287,21 @@ impl CommandPalette {
         let hover_t = ui
             .ctx()
             .animate_bool_with_time(resp.id.with("hov"), resp.hovered(), 0.10);
-        let highlight = if is_sel { 1.0 } else { hover_t * 0.6 };
+        let highlight = if is_sel { 1.0 } else { hover_t * 0.55 };
 
+        let is_dark = ui.visuals().dark_mode;
+        let tint = if is_dark { 0.22 } else { 0.13 };
         let painter = ui.painter().clone();
         if highlight > 0.001 {
             painter.rect_filled(
                 rect,
-                egui::Rounding::same(9.0),
-                ui.visuals().selection.bg_fill.gamma_multiply(highlight),
+                egui::Rounding::same(8.0),
+                accent.primary.gamma_multiply(tint * highlight),
             );
-        }
-        if is_sel {
-            let bar = egui::Rect::from_center_size(
-                egui::pos2(rect.left() + 5.0, rect.center().y),
-                egui::vec2(3.0, 18.0),
-            );
-            painter.rect_filled(bar, egui::Rounding::same(2.0), accent.brand_end);
         }
 
         let text_color =
-            theme::lerp_color(ui.visuals().text_color(), egui::Color32::WHITE, highlight);
+            theme::lerp_color(ui.visuals().text_color(), accent.primary, highlight);
         painter.text(
             egui::pos2(rect.left() + 18.0, rect.center().y),
             egui::Align2::LEFT_CENTER,

@@ -100,16 +100,14 @@ fn apply_light_visuals(style: &mut Style) {
     *v = Visuals::light();
 
     let primary = Color32::from_rgb(67, 97, 238); // #4361EE
-    let primary_hover = Color32::from_rgb(56, 86, 222); // #3856DE
-    let primary_active = Color32::from_rgb(48, 70, 184); // #3046B8
-    let text_primary = Color32::from_rgb(26, 27, 47); // #1A1B2F
-    let text_secondary = Color32::from_rgb(107, 114, 128); // #6B7280
+    let text_primary = Color32::from_rgb(28, 30, 38); // #1C1E26
+    let text_secondary = Color32::from_rgb(110, 116, 128); // #6E7480
     let bg_window = Color32::from_rgb(255, 255, 255); // #FFFFFF
-    let bg_panel = Color32::from_rgb(245, 246, 250); // #F5F6FA
-    let bg_faint = Color32::from_rgb(241, 243, 247); // #F1F3F7
-    let bg_extreme = Color32::from_rgb(249, 250, 251); // #F9FAFB
-    let border = Color32::from_rgb(226, 232, 240); // #E2E8F0
-    let border_strong = Color32::from_rgb(203, 213, 225); // #CBD5E1
+    let bg_panel = Color32::from_rgb(248, 249, 251); // #F8F9FB
+    let bg_faint = Color32::from_rgb(243, 244, 247); // #F3F4F7
+    let bg_extreme = Color32::from_rgb(250, 250, 252); // #FAFAFC
+    let border = Color32::from_rgb(232, 235, 239); // #E8EBEF
+    let border_strong = Color32::from_rgb(217, 221, 227); // #D9DDE3
 
     v.dark_mode = false;
 
@@ -118,7 +116,7 @@ fn apply_light_visuals(style: &mut Style) {
     v.hyperlink_color = primary;
     v.warn_fg_color = Color32::from_rgb(245, 158, 11); // #F59E0B  amber
     v.error_fg_color = Color32::from_rgb(239, 68, 68); // #EF4444  red
-    v.code_bg_color = Color32::from_rgb(233, 236, 239);
+    v.code_bg_color = bg_faint;
     v.faint_bg_color = bg_faint;
     v.extreme_bg_color = bg_extreme;
 
@@ -127,12 +125,12 @@ fn apply_light_visuals(style: &mut Style) {
     v.selection.stroke = Stroke::new(1.0, primary);
 
     // ── Window ───────────────────────────────────────────────────────────────
-    v.window_rounding = Rounding::same(12.0);
+    v.window_rounding = Rounding::same(10.0);
     v.window_shadow = Shadow {
-        offset: Vec2::new(0.0, 4.0),
-        blur: 24.0,
+        offset: Vec2::new(0.0, 3.0),
+        blur: 18.0,
         spread: 0.0,
-        color: Color32::from_rgba_premultiplied(0, 0, 0, 25),
+        color: Color32::from_rgba_premultiplied(0, 0, 0, 16),
     };
     v.window_fill = bg_window;
     v.window_stroke = Stroke::new(1.0, border);
@@ -141,14 +139,17 @@ fn apply_light_visuals(style: &mut Style) {
     // ── Menu ─────────────────────────────────────────────────────────────────
     v.menu_rounding = Rounding::same(8.0);
     v.popup_shadow = Shadow {
-        offset: Vec2::new(0.0, 10.0),
-        blur: 25.0,
+        offset: Vec2::new(0.0, 6.0),
+        blur: 18.0,
         spread: 0.0,
-        color: Color32::from_rgba_premultiplied(0, 0, 0, 20),
+        color: Color32::from_rgba_premultiplied(0, 0, 0, 14),
     };
 
     // ── Panel fill ───────────────────────────────────────────────────────────
     v.panel_fill = bg_panel;
+
+    // Quiet widget states: neutral grays only — color is reserved for
+    // selection and semantic states, never for hover chrome.
 
     // ── Widgets: non-interactive ─────────────────────────────────────────────
     v.widgets.noninteractive = WidgetVisuals {
@@ -156,47 +157,47 @@ fn apply_light_visuals(style: &mut Style) {
         bg_fill: bg_panel,
         bg_stroke: Stroke::new(1.0, border),
         fg_stroke: Stroke::new(1.0, text_secondary),
-        rounding: Rounding::same(6.0),
+        rounding: Rounding::same(8.0),
         expansion: 0.0,
     };
 
     // ── Widgets: inactive ────────────────────────────────────────────────────
     v.widgets.inactive = WidgetVisuals {
         weak_bg_fill: bg_window,
-        bg_fill: Color32::from_rgb(226, 232, 240),
-        bg_stroke: Stroke::new(1.0, border_strong),
+        bg_fill: Color32::from_rgb(238, 241, 244), // #EEF1F4
+        bg_stroke: Stroke::new(1.0, border),
         fg_stroke: Stroke::new(1.0, text_primary),
-        rounding: Rounding::same(6.0),
+        rounding: Rounding::same(8.0),
         expansion: 0.0,
     };
 
     // ── Widgets: hovered ─────────────────────────────────────────────────────
     v.widgets.hovered = WidgetVisuals {
-        weak_bg_fill: Color32::from_rgb(238, 242, 255), // light blue tint
-        bg_fill: Color32::from_rgb(226, 232, 240),
-        bg_stroke: Stroke::new(1.0, primary_hover),
-        fg_stroke: Stroke::new(1.5, text_primary),
-        rounding: Rounding::same(6.0),
+        weak_bg_fill: Color32::from_rgb(241, 243, 246), // #F1F3F6
+        bg_fill: Color32::from_rgb(231, 234, 238), // #E7EAEE
+        bg_stroke: Stroke::new(1.0, border_strong),
+        fg_stroke: Stroke::new(1.0, text_primary),
+        rounding: Rounding::same(8.0),
         expansion: 0.0,
     };
 
     // ── Widgets: active ──────────────────────────────────────────────────────
     v.widgets.active = WidgetVisuals {
-        weak_bg_fill: Color32::from_rgb(224, 231, 255),
-        bg_fill: Color32::from_rgb(196, 210, 245),
-        bg_stroke: Stroke::new(1.0, primary_active),
-        fg_stroke: Stroke::new(2.0, text_primary),
-        rounding: Rounding::same(4.0),
+        weak_bg_fill: Color32::from_rgb(234, 237, 241),
+        bg_fill: Color32::from_rgb(224, 228, 233), // #E0E4E9
+        bg_stroke: Stroke::new(1.0, border_strong),
+        fg_stroke: Stroke::new(1.5, text_primary),
+        rounding: Rounding::same(8.0),
         expansion: 0.0,
     };
 
     // ── Widgets: open menu ───────────────────────────────────────────────────
     v.widgets.open = WidgetVisuals {
-        weak_bg_fill: Color32::from_rgb(238, 242, 255),
+        weak_bg_fill: Color32::from_rgb(241, 243, 246),
         bg_fill: bg_panel,
-        bg_stroke: Stroke::new(1.0, primary_hover),
+        bg_stroke: Stroke::new(1.0, border_strong),
         fg_stroke: Stroke::new(1.0, text_primary),
-        rounding: Rounding::same(6.0),
+        rounding: Rounding::same(8.0),
         expansion: 0.0,
     };
 
@@ -220,16 +221,14 @@ fn apply_dark_visuals(style: &mut Style) {
     *v = Visuals::dark();
 
     let primary = Color32::from_rgb(96, 165, 250); // #60A5FA
-    let primary_hover = Color32::from_rgb(85, 141, 224); // #558DE0
-    let primary_active = Color32::from_rgb(74, 120, 200); // #4A78C8
-    let text_primary = Color32::from_rgb(229, 231, 235); // #E5E7EB
-    let text_secondary = Color32::from_rgb(156, 163, 175); // #9CA3AF
-    let bg_window = Color32::from_rgb(30, 31, 51); // #1E1F33
-    let bg_panel = Color32::from_rgb(26, 27, 47); // #1A1B2F
-    let bg_faint = Color32::from_rgb(34, 35, 58); // #22233A
-    let bg_extreme = Color32::from_rgb(19, 20, 34); // #131422
-    let border = Color32::from_rgb(49, 50, 74); // #31324A
-    let border_strong = Color32::from_rgb(66, 68, 94); // #42445E
+    let text_primary = Color32::from_rgb(226, 228, 233); // #E2E4E9
+    let text_secondary = Color32::from_rgb(148, 153, 163); // #9499A3
+    let bg_window = Color32::from_rgb(29, 30, 38); // #1D1E26
+    let bg_panel = Color32::from_rgb(24, 25, 32); // #181920
+    let bg_faint = Color32::from_rgb(35, 36, 45); // #23242D
+    let bg_extreme = Color32::from_rgb(18, 19, 25); // #121319
+    let border = Color32::from_rgb(45, 47, 58); // #2D2F3A
+    let border_strong = Color32::from_rgb(60, 63, 76); // #3C3F4C
 
     v.dark_mode = true;
 
@@ -238,7 +237,7 @@ fn apply_dark_visuals(style: &mut Style) {
     v.hyperlink_color = primary;
     v.warn_fg_color = Color32::from_rgb(251, 191, 36); // #FBBF24  amber
     v.error_fg_color = Color32::from_rgb(248, 113, 113); // #F87171  red
-    v.code_bg_color = Color32::from_rgb(45, 46, 68);
+    v.code_bg_color = bg_faint;
     v.faint_bg_color = bg_faint;
     v.extreme_bg_color = bg_extreme;
 
@@ -247,12 +246,12 @@ fn apply_dark_visuals(style: &mut Style) {
     v.selection.stroke = Stroke::new(1.0, primary);
 
     // ── Window ───────────────────────────────────────────────────────────────
-    v.window_rounding = Rounding::same(12.0);
+    v.window_rounding = Rounding::same(10.0);
     v.window_shadow = Shadow {
-        offset: Vec2::new(0.0, 4.0),
-        blur: 24.0,
+        offset: Vec2::new(0.0, 3.0),
+        blur: 18.0,
         spread: 0.0,
-        color: Color32::from_rgba_premultiplied(0, 0, 0, 60),
+        color: Color32::from_rgba_premultiplied(0, 0, 0, 45),
     };
     v.window_fill = bg_window;
     v.window_stroke = Stroke::new(1.0, border);
@@ -261,14 +260,17 @@ fn apply_dark_visuals(style: &mut Style) {
     // ── Menu ─────────────────────────────────────────────────────────────────
     v.menu_rounding = Rounding::same(8.0);
     v.popup_shadow = Shadow {
-        offset: Vec2::new(0.0, 10.0),
-        blur: 25.0,
+        offset: Vec2::new(0.0, 6.0),
+        blur: 18.0,
         spread: 0.0,
-        color: Color32::from_rgba_premultiplied(0, 0, 0, 60),
+        color: Color32::from_rgba_premultiplied(0, 0, 0, 45),
     };
 
     // ── Panel fill ───────────────────────────────────────────────────────────
     v.panel_fill = bg_panel;
+
+    // Quiet widget states: neutral grays only — color is reserved for
+    // selection and semantic states, never for hover chrome.
 
     // ── Widgets: non-interactive ─────────────────────────────────────────────
     v.widgets.noninteractive = WidgetVisuals {
@@ -276,47 +278,47 @@ fn apply_dark_visuals(style: &mut Style) {
         bg_fill: bg_panel,
         bg_stroke: Stroke::new(1.0, border),
         fg_stroke: Stroke::new(1.0, text_secondary),
-        rounding: Rounding::same(6.0),
+        rounding: Rounding::same(8.0),
         expansion: 0.0,
     };
 
     // ── Widgets: inactive ────────────────────────────────────────────────────
     v.widgets.inactive = WidgetVisuals {
-        weak_bg_fill: Color32::from_rgb(42, 43, 65), // #2A2B41
-        bg_fill: Color32::from_rgb(49, 50, 74),
-        bg_stroke: Stroke::new(1.0, border_strong),
+        weak_bg_fill: Color32::from_rgb(38, 39, 49), // #262731
+        bg_fill: Color32::from_rgb(44, 46, 57), // #2C2E39
+        bg_stroke: Stroke::new(1.0, border),
         fg_stroke: Stroke::new(1.0, text_primary),
-        rounding: Rounding::same(6.0),
+        rounding: Rounding::same(8.0),
         expansion: 0.0,
     };
 
     // ── Widgets: hovered ─────────────────────────────────────────────────────
     v.widgets.hovered = WidgetVisuals {
-        weak_bg_fill: Color32::from_rgb(34, 40, 65), // subtle blue tint
-        bg_fill: Color32::from_rgb(49, 50, 74),
-        bg_stroke: Stroke::new(1.0, primary_hover),
-        fg_stroke: Stroke::new(1.5, text_primary),
-        rounding: Rounding::same(6.0),
+        weak_bg_fill: Color32::from_rgb(42, 44, 54), // #2A2C36
+        bg_fill: Color32::from_rgb(52, 54, 66), // #343642
+        bg_stroke: Stroke::new(1.0, border_strong),
+        fg_stroke: Stroke::new(1.0, text_primary),
+        rounding: Rounding::same(8.0),
         expansion: 0.0,
     };
 
     // ── Widgets: active ──────────────────────────────────────────────────────
     v.widgets.active = WidgetVisuals {
-        weak_bg_fill: Color32::from_rgb(30, 36, 60),
-        bg_fill: Color32::from_rgb(55, 56, 84),
-        bg_stroke: Stroke::new(1.0, primary_active),
-        fg_stroke: Stroke::new(2.0, text_primary),
-        rounding: Rounding::same(4.0),
+        weak_bg_fill: Color32::from_rgb(46, 48, 59),
+        bg_fill: Color32::from_rgb(58, 60, 73), // #3A3C49
+        bg_stroke: Stroke::new(1.0, border_strong),
+        fg_stroke: Stroke::new(1.5, text_primary),
+        rounding: Rounding::same(8.0),
         expansion: 0.0,
     };
 
     // ── Widgets: open menu ───────────────────────────────────────────────────
     v.widgets.open = WidgetVisuals {
-        weak_bg_fill: Color32::from_rgb(34, 40, 65),
+        weak_bg_fill: Color32::from_rgb(42, 44, 54),
         bg_fill: bg_panel,
-        bg_stroke: Stroke::new(1.0, primary_hover),
+        bg_stroke: Stroke::new(1.0, border_strong),
         fg_stroke: Stroke::new(1.0, text_primary),
-        rounding: Rounding::same(6.0),
+        rounding: Rounding::same(8.0),
         expansion: 0.0,
     };
 
@@ -334,16 +336,13 @@ fn apply_dark_visuals(style: &mut Style) {
 }
 
 /// Accent colors used throughout the GUI.
+/// One primary accent; everything else is reserved for semantic states.
 pub struct AccentColors {
     pub primary: Color32,
     pub success: Color32,
     pub warning: Color32,
     pub danger: Color32,
     pub info: Color32,
-    /// Start color of the signature brand gradient (top / left).
-    pub brand_start: Color32,
-    /// End color of the signature brand gradient (bottom / right).
-    pub brand_end: Color32,
 }
 
 impl AccentColors {
@@ -355,8 +354,6 @@ impl AccentColors {
                 warning: Color32::from_rgb(251, 191, 36),
                 danger: Color32::from_rgb(248, 113, 113),
                 info: Color32::from_rgb(147, 197, 253),
-                brand_start: Color32::from_rgb(99, 102, 241), // indigo-500
-                brand_end: Color32::from_rgb(56, 189, 248),   // sky-400
             }
         } else {
             AccentColors {
@@ -365,8 +362,6 @@ impl AccentColors {
                 warning: Color32::from_rgb(245, 158, 11),
                 danger: Color32::from_rgb(239, 68, 68),
                 info: Color32::from_rgb(59, 130, 246),
-                brand_start: Color32::from_rgb(79, 70, 229), // indigo-600
-                brand_end: Color32::from_rgb(14, 165, 233),  // sky-500
             }
         }
     }
@@ -382,37 +377,4 @@ pub fn lerp_color(a: Color32, b: Color32, t: f32) -> Color32 {
         l(a.b(), b.b()),
         l(a.a(), b.a()),
     )
-}
-
-/// Paint a smooth horizontal gradient inside `rect` using a vertex-colored mesh.
-/// No corner rounding (use for full-width bands / accent lines).
-pub fn paint_h_gradient(painter: &egui::Painter, rect: egui::Rect, left: Color32, right: Color32) {
-    use egui::epaint::{Mesh, Vertex};
-    let mut mesh = Mesh::default();
-    let uv = egui::epaint::WHITE_UV;
-    mesh.vertices.push(Vertex { pos: rect.left_top(), uv, color: left });
-    mesh.vertices.push(Vertex { pos: rect.right_top(), uv, color: right });
-    mesh.vertices.push(Vertex { pos: rect.right_bottom(), uv, color: right });
-    mesh.vertices.push(Vertex { pos: rect.left_bottom(), uv, color: left });
-    mesh.indices.extend_from_slice(&[0, 1, 2, 0, 2, 3]);
-    painter.add(egui::Shape::mesh(mesh));
-}
-
-/// Paint a smooth diagonal gradient inside `rect` (top-left → bottom-right).
-pub fn paint_diagonal_gradient(
-    painter: &egui::Painter,
-    rect: egui::Rect,
-    start: Color32,
-    end: Color32,
-) {
-    use egui::epaint::{Mesh, Vertex};
-    let mid = lerp_color(start, end, 0.5);
-    let mut mesh = Mesh::default();
-    let uv = egui::epaint::WHITE_UV;
-    mesh.vertices.push(Vertex { pos: rect.left_top(), uv, color: start });
-    mesh.vertices.push(Vertex { pos: rect.right_top(), uv, color: mid });
-    mesh.vertices.push(Vertex { pos: rect.right_bottom(), uv, color: end });
-    mesh.vertices.push(Vertex { pos: rect.left_bottom(), uv, color: mid });
-    mesh.indices.extend_from_slice(&[0, 1, 2, 0, 2, 3]);
-    painter.add(egui::Shape::mesh(mesh));
 }

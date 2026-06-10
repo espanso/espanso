@@ -199,7 +199,7 @@ impl eframe::App for EspansoGuiApp {
         let accent = theme::AccentColors::for_theme(visuals.dark_mode);
 
         // === Top bar ===
-        let top_resp = egui::TopBottomPanel::top("top_bar")
+        egui::TopBottomPanel::top("top_bar")
             .frame(egui::Frame {
                 fill: window_fill,
                 inner_margin: egui::Margin::symmetric(14.0, 8.0),
@@ -208,24 +208,18 @@ impl eframe::App for EspansoGuiApp {
             })
             .show(ctx, |ui| {
                 ui.horizontal(|ui| {
-                    // Brand logo mark — a small two-tone gradient tile with a "T".
+                    // Brand mark — a small flat tile with a "T". One accent
+                    // color only; no gradients.
                     let (logo_rect, _) =
-                        ui.allocate_exact_size(egui::vec2(26.0, 26.0), egui::Sense::hover());
+                        ui.allocate_exact_size(egui::vec2(22.0, 22.0), egui::Sense::hover());
                     {
                         let p = ui.painter();
-                        let r = egui::Rounding::same(7.0);
-                        p.rect_filled(logo_rect, r, accent.brand_end);
-                        let top_half = egui::Rect::from_min_max(
-                            logo_rect.min,
-                            egui::pos2(logo_rect.max.x, logo_rect.center().y),
-                        );
-                        p.with_clip_rect(top_half)
-                            .rect_filled(logo_rect, r, accent.brand_start);
+                        p.rect_filled(logo_rect, egui::Rounding::same(6.0), accent.primary);
                         p.text(
                             logo_rect.center(),
                             egui::Align2::CENTER_CENTER,
                             "T",
-                            egui::FontId::proportional(15.0),
+                            egui::FontId::proportional(13.0),
                             egui::Color32::WHITE,
                         );
                     }
@@ -259,13 +253,13 @@ impl eframe::App for EspansoGuiApp {
                         egui::Color32::from_rgb(156, 163, 175)
                     };
                     let (dot_rect, _) =
-                        ui.allocate_exact_size(egui::vec2(14.0, 14.0), egui::Sense::hover());
+                        ui.allocate_exact_size(egui::vec2(12.0, 12.0), egui::Sense::hover());
                     let dc = dot_rect.center();
                     if connected {
                         ui.painter()
-                            .circle_filled(dc, 4.5 + 2.5 * pulse, dot_color.gamma_multiply(0.22));
+                            .circle_filled(dc, 3.5 + 1.5 * pulse, dot_color.gamma_multiply(0.12));
                     }
-                    ui.painter().circle_filled(dc, 4.0, dot_color);
+                    ui.painter().circle_filled(dc, 3.5, dot_color);
                     ui.add_space(2.0);
                     if connected {
                         ui.small(
@@ -337,20 +331,6 @@ impl eframe::App for EspansoGuiApp {
                 });
             });
 
-        // Brand gradient accent line under the top bar.
-        {
-            let r = top_resp.response.rect;
-            let line = egui::Rect::from_min_max(
-                egui::pos2(r.left(), r.bottom() - 2.0),
-                egui::pos2(r.right(), r.bottom()),
-            );
-            let painter = ctx.layer_painter(egui::LayerId::new(
-                egui::Order::Foreground,
-                egui::Id::new("brand_accent_line"),
-            ));
-            theme::paint_h_gradient(&painter, line, accent.brand_start, accent.brand_end);
-        }
-
         // === Navigation sidebar ===
         egui::SidePanel::left("nav_panel")
             .resizable(false)
@@ -390,7 +370,7 @@ impl eframe::App for EspansoGuiApp {
                 for (module, icon, label) in &modules {
                     let selected = self.current_module == *module;
 
-                    let desired = egui::vec2(ui.available_width(), 40.0);
+                    let desired = egui::vec2(ui.available_width(), 38.0);
                     let (rect, resp) =
                         ui.allocate_exact_size(desired, egui::Sense::click());
                     let resp = resp.on_hover_cursor(egui::CursorIcon::PointingHand);
@@ -401,50 +381,41 @@ impl eframe::App for EspansoGuiApp {
                     let sel_t =
                         ui.ctx().animate_bool_with_time(resp.id.with("sel"), selected, 0.18);
 
-                    let sel_fill = ui.visuals().selection.bg_fill;
+                    let is_dark = ui.visuals().dark_mode;
                     let base_text = ui.visuals().text_color();
                     let painter = ui.painter().clone();
 
-                    // Subtle hover background (suppressed as selection takes over).
+                    // Quiet neutral hover (suppressed as selection takes over).
                     let hov_strength = hover_t * (1.0 - sel_t);
                     if hov_strength > 0.001 {
                         painter.rect_filled(
                             rect,
-                            egui::Rounding::same(10.0),
-                            accent.primary.gamma_multiply(0.10 * hov_strength),
+                            egui::Rounding::same(8.0),
+                            base_text.gamma_multiply(0.05 * hov_strength),
                         );
                     }
 
-                    // Selected pill + leading accent bar that grows in.
+                    // Selected state: a soft accent tint instead of a solid fill.
                     if sel_t > 0.001 {
+                        let tint = if is_dark { 0.20 } else { 0.12 };
                         painter.rect_filled(
                             rect,
-                            egui::Rounding::same(10.0),
-                            sel_fill.gamma_multiply(sel_t),
-                        );
-                        let bar_h = 20.0 * sel_t;
-                        let bar = egui::Rect::from_center_size(
-                            egui::pos2(rect.left() + 5.0, rect.center().y),
-                            egui::vec2(3.0, bar_h),
-                        );
-                        painter.rect_filled(
-                            bar,
-                            egui::Rounding::same(2.0),
-                            egui::Color32::WHITE.gamma_multiply(0.85 * sel_t),
+                            egui::Rounding::same(8.0),
+                            accent.primary.gamma_multiply(tint * sel_t),
                         );
                     }
 
-                    // Icon + label, color tweening toward white when selected.
-                    let text_color = theme::lerp_color(base_text, egui::Color32::WHITE, sel_t);
+                    // Icon + label, tweening toward the accent color when selected.
+                    let text_color = theme::lerp_color(base_text, accent.primary, sel_t);
                     painter.text(
-                        egui::pos2(rect.left() + 20.0, rect.center().y),
+                        egui::pos2(rect.left() + 16.0, rect.center().y),
                         egui::Align2::LEFT_CENTER,
                         *icon,
-                        egui::FontId::proportional(15.0),
+                        egui::FontId::proportional(14.0),
                         text_color,
                     );
                     painter.text(
-                        egui::pos2(rect.left() + 46.0, rect.center().y),
+                        egui::pos2(rect.left() + 42.0, rect.center().y),
                         egui::Align2::LEFT_CENTER,
                         *label,
                         egui::FontId::proportional(14.0),
@@ -455,7 +426,7 @@ impl eframe::App for EspansoGuiApp {
                         self.switch_module(*module);
                     }
 
-                    ui.add_space(4.0);
+                    ui.add_space(2.0);
                 }
 
                 ui.add_space(16.0);
@@ -477,17 +448,7 @@ impl eframe::App for EspansoGuiApp {
                         );
                     });
                     ui.add_space(2.0);
-                    // Slim brand gradient divider above the footer.
-                    let (line_rect, _) = ui.allocate_exact_size(
-                        egui::vec2(ui.available_width(), 2.0),
-                        egui::Sense::hover(),
-                    );
-                    theme::paint_h_gradient(
-                        ui.painter(),
-                        line_rect,
-                        accent.brand_start.gamma_multiply(0.7),
-                        accent.brand_end.gamma_multiply(0.7),
-                    );
+                    ui.separator();
                 });
             });
 
@@ -559,13 +520,13 @@ impl eframe::App for EspansoGuiApp {
                     ui.set_opacity(vis);
                     egui::Frame {
                         fill: toast_visuals.window_fill,
-                        rounding: egui::Rounding::same(12.0),
+                        rounding: egui::Rounding::same(10.0),
                         stroke: egui::Stroke::new(1.0, toast_visuals.window_stroke.color),
                         shadow: egui::Shadow {
-                            offset: egui::Vec2::new(0.0, 6.0),
-                            blur: 20.0,
+                            offset: egui::Vec2::new(0.0, 4.0),
+                            blur: 16.0,
                             spread: 0.0,
-                            color: egui::Color32::from_rgba_premultiplied(0, 0, 0, 50),
+                            color: egui::Color32::from_rgba_premultiplied(0, 0, 0, 35),
                         },
                         inner_margin: egui::Margin::symmetric(16.0, 12.0),
                         outer_margin: egui::Margin::default(),
@@ -575,10 +536,10 @@ impl eframe::App for EspansoGuiApp {
                         ui.horizontal(|ui| {
                             // Colored leading accent bar.
                             let (bar, _) = ui.allocate_exact_size(
-                                egui::vec2(4.0, 22.0),
+                                egui::vec2(3.0, 20.0),
                                 egui::Sense::hover(),
                             );
-                            ui.painter().rect_filled(bar, egui::Rounding::same(2.0), color);
+                            ui.painter().rect_filled(bar, egui::Rounding::same(1.5), color);
                             ui.add_space(10.0);
                             ui.label(egui::RichText::new(icon).color(color).size(16.0));
                             ui.add_space(8.0);
@@ -599,67 +560,49 @@ impl eframe::App for EspansoGuiApp {
                 .collapsible(false)
                 .resizable(false)
                 .title_bar(false)
-                .fixed_size(egui::vec2(360.0, 0.0))
+                .fixed_size(egui::vec2(340.0, 0.0))
                 .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
                 .frame(egui::Frame {
                     fill: window_fill,
-                    rounding: egui::Rounding::same(16.0),
+                    rounding: egui::Rounding::same(12.0),
                     stroke: egui::Stroke::new(1.0, border.color),
                     shadow: egui::Shadow {
-                        offset: egui::Vec2::new(0.0, 12.0),
-                        blur: 40.0,
+                        offset: egui::Vec2::new(0.0, 8.0),
+                        blur: 28.0,
                         spread: 0.0,
-                        color: egui::Color32::from_rgba_premultiplied(0, 0, 0, 70),
+                        color: egui::Color32::from_rgba_premultiplied(0, 0, 0, 45),
                     },
-                    inner_margin: egui::Margin::ZERO,
+                    inner_margin: egui::Margin::symmetric(24.0, 0.0),
                     outer_margin: egui::Margin::ZERO,
                 })
                 .show(ctx, |ui| {
                     ui.set_opacity(about_t);
 
-                    // ── Gradient banner with logo + app name ──
-                    let banner_h = 104.0;
-                    let (banner, _) = ui.allocate_exact_size(
-                        egui::vec2(ui.available_width(), banner_h),
-                        egui::Sense::hover(),
-                    );
-                    {
-                        let p = ui.painter().clone();
-                        theme::paint_diagonal_gradient(
-                            &p,
-                            banner,
-                            accent.brand_start,
-                            accent.brand_end,
+                    ui.vertical_centered(|ui| {
+                        ui.add_space(28.0);
+
+                        // Flat brand tile.
+                        let (logo, _) = ui.allocate_exact_size(
+                            egui::vec2(44.0, 44.0),
+                            egui::Sense::hover(),
                         );
-                        // Logo tile
-                        let logo = egui::Rect::from_center_size(
-                            egui::pos2(banner.center().x, banner.top() + 38.0),
-                            egui::vec2(46.0, 46.0),
-                        );
-                        p.rect_filled(
+                        ui.painter().rect_filled(
                             logo,
-                            egui::Rounding::same(12.0),
-                            egui::Color32::from_white_alpha(48),
+                            egui::Rounding::same(10.0),
+                            accent.primary,
                         );
-                        p.text(
+                        ui.painter().text(
                             logo.center(),
                             egui::Align2::CENTER_CENTER,
                             "T",
-                            egui::FontId::proportional(26.0),
+                            egui::FontId::proportional(24.0),
                             egui::Color32::WHITE,
                         );
-                        // App name
-                        p.text(
-                            egui::pos2(banner.center().x, banner.top() + 80.0),
-                            egui::Align2::CENTER_CENTER,
-                            "快捷文本输入",
-                            egui::FontId::proportional(19.0),
-                            egui::Color32::WHITE,
-                        );
-                    }
 
-                    ui.add_space(16.0);
-                    ui.vertical_centered(|ui| {
+                        ui.add_space(14.0);
+                        ui.label(egui::RichText::new("快捷文本输入").size(18.0).strong());
+
+                        ui.add_space(6.0);
                         ui.label(
                             egui::RichText::new("帮你更快地输入常用内容")
                                 .size(13.0)
