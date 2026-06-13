@@ -24,7 +24,7 @@ pub mod echo;
 mod exec_util;
 pub mod form;
 pub mod random;
+pub mod regex_transform;
 pub mod script;
 pub mod shell;
-pub mod regex_transform;
 mod util;

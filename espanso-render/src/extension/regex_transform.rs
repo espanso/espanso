@@ -99,11 +99,6 @@ impl Extension for RegexTransformExtension {
         };
 
         let result = regex.replace_all(source, |caps: &regex::Captures| {
-            // Because replace_all closure doesn't have a direct way to build the replacement string
-            // with mapped capture groups while easily substituting them into the `replace` template,
-            // we will expand the `replace` template manually using the captured groups.
-            
-            // To do this simply, we parse the `replace` string for $N or ${N} and substitute them.
             let mut expanded = String::new();
             let mut chars = replace.chars().peekable();
 
@@ -114,7 +109,7 @@ impl Extension for RegexTransformExtension {
 
                     if let Some(&'{') = chars.peek() {
                         is_braced = true;
-                        chars.next(); // consume '{'
+                        chars.next();
                     }
 
                     while let Some(&next_c) = chars.peek() {
@@ -128,33 +123,35 @@ impl Extension for RegexTransformExtension {
 
                     if is_braced {
                         if let Some(&'}') = chars.peek() {
-                            chars.next(); // consume '}'
+                            chars.next();
                         }
                     }
 
                     if let Ok(group_idx) = group_idx_str.parse::<usize>() {
                         if let Some(matched_group) = caps.get(group_idx) {
                             let mut group_val = matched_group.as_str().to_string();
-                            
-                            // Apply modifier if configured
+
                             if let Some(modifier) = modifiers.get(&group_idx) {
-                                match modifier.as_str() {
-                                    "lowercase" => group_val = group_val.to_lowercase(),
-                                    "uppercase" => group_val = group_val.to_uppercase(),
-                                    "capitalize" => {
-                                        let mut c = group_val.chars();
-                                        group_val = match c.next() {
-                                            None => String::new(),
-                                            Some(f) => f.to_uppercase().collect::<String>() + c.as_str(),
+                                let mut lookup: HashMap<&str, fn(&str) -> String> = HashMap::new();
+                                lookup.insert("lowercase", |s| s.to_lowercase());
+                                lookup.insert("uppercase", |s| s.to_uppercase());
+                                lookup.insert("capitalize", |s| {
+                                    let mut c = s.chars();
+                                    match c.next() {
+                                        None => String::new(),
+                                        Some(f) => {
+                                            f.to_uppercase().collect::<String>() + c.as_str()
                                         }
                                     }
-                                    _ => {} // Unknown modifier, ignore
+                                });
+
+                                if let Some(func) = lookup.get(modifier.as_str()) {
+                                    group_val = func(&group_val);
                                 }
                             }
                             expanded.push_str(&group_val);
                         }
                     } else {
-                        // Not a valid group ref, just output what we consumed
                         expanded.push('$');
                         if is_braced {
                             expanded.push('{');
@@ -198,7 +195,10 @@ mod tests {
         let extension = RegexTransformExtension::new();
 
         let param = vec![
-            ("source".to_string(), Value::String("hello world".to_string())),
+            (
+                "source".to_string(),
+                Value::String("hello world".to_string()),
+            ),
             ("find".to_string(), Value::String("(hello)".to_string())),
             ("replace".to_string(), Value::String("$1!".to_string())),
         ]
@@ -213,7 +213,7 @@ mod tests {
             ExtensionOutput::Single("hello! world".to_string())
         );
     }
-    
+
     #[test]
     fn regex_transform_with_modifiers() {
         let extension = RegexTransformExtension::new();
@@ -224,9 +224,18 @@ mod tests {
         modifiers.insert("3".to_string(), Value::String("lowercase".to_string()));
 
         let param = vec![
-            ("source".to_string(), Value::String("BAnk noteS".to_string())),
-            ("find".to_string(), Value::String("^([A-Z])([A-Z])([a-z]+ note[A-Z])".to_string())),
-            ("replace".to_string(), Value::String("${1}${2}${3}".to_string())),
+            (
+                "source".to_string(),
+                Value::String("BAnk noteS".to_string()),
+            ),
+            (
+                "find".to_string(),
+                Value::String("^([A-Z])([A-Z])([a-z]+ note[A-Z])".to_string()),
+            ),
+            (
+                "replace".to_string(),
+                Value::String("${1}${2}${3}".to_string()),
+            ),
             ("modifiers".to_string(), Value::Object(modifiers)),
         ]
         .into_iter()
@@ -243,7 +252,7 @@ mod tests {
             ExtensionOutput::Single("BAnk notes".to_string())
         );
     }
-    
+
     #[test]
     fn regex_transform_double_caps_autocorrect() {
         let extension = RegexTransformExtension::new();
@@ -253,7 +262,10 @@ mod tests {
 
         let param = vec![
             ("source".to_string(), Value::String("BAnk".to_string())),
-            ("find".to_string(), Value::String("^([A-Z])([A-Z])(.+)".to_string())),
+            (
+                "find".to_string(),
+                Value::String("^([A-Z])([A-Z])(.+)".to_string()),
+            ),
             ("replace".to_string(), Value::String("$1$2$3".to_string())),
             ("modifiers".to_string(), Value::Object(modifiers)),
         ]
