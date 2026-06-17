@@ -135,7 +135,7 @@ fn edit_main(args: CliModuleArgs) -> i32 {
     0
 }
 
-fn determine_target_path(config_path: &Path, target_file: Option<&str>) -> PathBuf {
+pub(crate) fn determine_target_path(config_path: &Path, target_file: Option<&str>) -> PathBuf {
     if let Some(target_file) = target_file {
         match target_file {
             "default" => config_path.join("config").join("default.yml"),
