@@ -27,7 +27,7 @@
       in
       {
         checks.espanso = self.packages.${system}.espanso.override { buildType = "debug"; };
-        formatter = pkgs.nixfmt-rfc-style;
+        formatter = pkgs.nixfmt;
         packages = {
           espanso = pkgs.callPackage ./nix/espanso.nix { };
           default = self.packages.${system}.espanso;
@@ -54,7 +54,7 @@
                   clang-tools
                   rustfmt
                 ]
-                ++ lib.optional (stdenv.isx86_64 && stdenv.isLinux) [ cargo-tarpaulin ];
+                ++ lib.optionals (stdenv.isx86_64 && stdenv.isLinux) [ cargo-tarpaulin ];
               shellHook = ''
                 export RUST_BACKTRACE="1"
                 export RUSTFLAGS="''${RUSTFLAGS:-""} ${commonRustFlagsEnv}";

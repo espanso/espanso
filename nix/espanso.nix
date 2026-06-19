@@ -7,16 +7,16 @@
   libpng,
   libX11,
   libXi,
+  libxcb,
   libxkbcommon,
   libXtst,
   openssl,
   pkg-config,
   setxkbmap,
   wl-clipboard,
-  wxGTK32,
+  wxwidgets_3_2,
   xclip,
   xdotool,
-  xorg,
   waylandSupport ? false,
   buildType ? "release",
 }:
@@ -45,7 +45,7 @@ rustPlatform.buildRustPackage {
 
   buildInputs = [
     libpng
-    wxGTK32
+    wxwidgets_3_2
   ]
   ++ lib.optionals stdenv.hostPlatform.isLinux [
     dbus
@@ -57,7 +57,7 @@ rustPlatform.buildRustPackage {
     wl-clipboard
   ]
   ++ lib.optionals x11Support [
-    xorg.libxcb.dev
+    libxcb.dev
     libX11
     libXi
     libXtst
@@ -66,7 +66,7 @@ rustPlatform.buildRustPackage {
   ];
   nativeBuildInputs = [
     pkg-config
-    wxGTK32
+    wxwidgets_3_2
   ];
 
   inherit buildType;
