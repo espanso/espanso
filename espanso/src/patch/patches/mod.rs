@@ -52,6 +52,7 @@ generate_patchable_config!(
   max_form_width -> usize,
   max_form_height -> usize,
   post_search_delay -> usize,
+  search_use_cursor_position -> bool,
   emulate_alt_codes -> bool,
   win32_exclude_orphan_events -> bool,
   win32_keyboard_layout_cache_interval -> i64,

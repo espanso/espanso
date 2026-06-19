@@ -95,6 +95,11 @@
       "description": "Trigger used to show the Search UI.",
       "type": "string"
     },
+    "search_use_cursor_position": {
+      "description": "If true, the Search UI opens on the display where the mouse cursor is located. If false, the previous fixed-position behavior is used. Default false",
+      "default": false,
+      "type": "boolean"
+    },
     "show_icon": {
       "description": "Hide the Espanso status icon on the macOS menu bar or the Windows system tray",
       "type": "boolean"

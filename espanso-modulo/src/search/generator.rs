@@ -40,5 +40,6 @@ pub fn generate(config: SearchConfig) -> types::Search {
         items,
         icon: config.icon,
         hint: config.hint,
+        search_use_cursor_position: config.search_use_cursor_position,
     }
 }

@@ -48,6 +48,7 @@ pub struct ParsedConfig {
     pub max_form_width: Option<usize>,
     pub max_form_height: Option<usize>,
     pub post_search_delay: Option<usize>,
+    pub search_use_cursor_position: Option<bool>,
     pub max_regex_buffer_size: Option<usize>,
     pub emulate_alt_codes: Option<bool>,
     pub win32_exclude_orphan_events: Option<bool>,

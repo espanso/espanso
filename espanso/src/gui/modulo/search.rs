@@ -27,6 +27,7 @@ use super::manager::ModuloManager;
 
 pub trait ModuloSearchUIOptionProvider {
     fn get_post_search_delay(&self) -> usize;
+    fn get_search_use_cursor_position(&self) -> bool;
 }
 
 pub struct ModuloSearchUI<'a> {
@@ -51,6 +52,7 @@ impl SearchUI for ModuloSearchUI<'_> {
         let modulo_config = ModuloSearchConfig {
             title: "espanso",
             hint,
+            search_use_cursor_position: self.option_provider.get_search_use_cursor_position(),
             items: convert_items(items),
         };
 
@@ -85,6 +87,7 @@ impl SearchUI for ModuloSearchUI<'_> {
 struct ModuloSearchConfig<'a> {
     title: &'a str,
     hint: Option<&'a str>,
+    search_use_cursor_position: bool,
     items: Vec<ModuloSearchItemConfig<'a>>,
 }
 

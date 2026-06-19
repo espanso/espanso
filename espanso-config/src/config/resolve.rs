@@ -21,7 +21,7 @@ use super::{
     default::{
         DEFAULT_CLIPBOARD_THRESHOLD, DEFAULT_MAX_REGEX_BUFFER_SIZE, DEFAULT_POST_FORM_DELAY,
         DEFAULT_POST_SEARCH_DELAY, DEFAULT_PRE_PASTE_DELAY, DEFAULT_RESTORE_CLIPBOARD_DELAY,
-        DEFAULT_SHORTCUT_EVENT_DELAY,
+        DEFAULT_SEARCH_USE_CURSOR_POSITION, DEFAULT_SHORTCUT_EVENT_DELAY,
     },
     parse::ParsedConfig,
     path::calculate_paths,
@@ -342,6 +342,12 @@ impl Config for ResolvedConfig {
             .unwrap_or(DEFAULT_POST_SEARCH_DELAY)
     }
 
+    fn search_use_cursor_position(&self) -> bool {
+        self.parsed
+            .search_use_cursor_position
+            .unwrap_or(DEFAULT_SEARCH_USE_CURSOR_POSITION)
+    }
+
     fn win32_exclude_orphan_events(&self) -> bool {
         self.parsed.win32_exclude_orphan_events.unwrap_or(true)
     }
@@ -451,6 +457,7 @@ impl ResolvedConfig {
             max_form_height,
             max_regex_buffer_size,
             post_search_delay,
+            search_use_cursor_position,
             win32_exclude_orphan_events,
             win32_keyboard_layout_cache_interval,
             x11_use_xclip_backend,
