@@ -77,45 +77,13 @@ impl WaylandFallbackClipboard {
 
 impl Clipboard for WaylandFallbackClipboard {
     fn get_text(&self, _: &ClipboardOperationOptions) -> Option<String> {
-        let timeout = std::time::Duration::from_millis(self.command_timeout);
-        match Command::new("wl-paste")
-            .arg("--no-newline")
-            .stdout(Stdio::piped())
-            .spawn()
-        {
-            Ok(mut child) => match child.wait_timeout(timeout) {
-                Ok(status_code) => {
-                    if let Some(status) = status_code {
-                        if status.success() {
-                            if let Some(mut io) = child.stdout {
-                                let mut output = Vec::new();
-                                io.read_to_end(&mut output).ok()?;
-                                Some(String::from_utf8_lossy(&output).to_string())
-                            } else {
-                                None
-                            }
-                        } else {
-                            error!("error, wl-paste exited with non-zero exit code");
-                            None
-                        }
-                    } else {
-                        error!("error, wl-paste has timed-out, killing the process");
-                        if child.kill().is_err() {
-                            error!("unable to kill wl-paste");
-                        }
-                        None
-                    }
-                }
-                Err(err) => {
-                    error!("error while executing 'wl-paste': {}", err);
-                    None
-                }
-            },
-            Err(err) => {
-                error!("could not invoke 'wl-paste': {}", err);
-                None
-            }
-        }
+        // FIXME: I want to use invoke_command_with_timeout (or similar) to run the program without input & get output
+        let cmd = Command::new("wl-paste").arg("--no-newline").stdout(Stdio::piped());
+        self.invoke_command_with_timeout(
+            &mut cmd,
+            None,
+            "wl-paste",
+        ).ok()
     }
 
     fn set_text(&self, text: &str, _: &ClipboardOperationOptions) -> anyhow::Result<()> {
@@ -125,9 +93,9 @@ impl Clipboard for WaylandFallbackClipboard {
             Command::new("wl-copy")
                 .arg("--type")
                 .arg("text/plain;charset=utf-8"),
-            text.as_bytes(),
+            Some(text.as_bytes()),
             "wl-copy",
-        )
+        ).map(|_| ())
     }
 
     fn set_image(
@@ -148,9 +116,9 @@ impl Clipboard for WaylandFallbackClipboard {
 
         self.invoke_command_with_timeout(
             Command::new("wl-copy").arg("--type").arg("image/png"),
-            &data,
+            Some(&data),
             "wl-copy",
-        )
+        ).map(|_| ())
     }
 
     fn set_html(
@@ -161,30 +129,48 @@ impl Clipboard for WaylandFallbackClipboard {
     ) -> anyhow::Result<()> {
         self.invoke_command_with_timeout(
             Command::new("wl-copy").arg("--type").arg("text/html"),
-            html.as_bytes(),
+            Some(html.as_bytes()),
             "wl-copy",
-        )
+        ).map(|_| ())
     }
 }
 
 impl WaylandFallbackClipboard {
     fn invoke_command_with_timeout(
         &self,
-        command: &mut Command,
-        data: &[u8],
+        mut command: &mut Command,
+        // IDEA: (input_data, output_data): (Option<&[u8]>, Option<&mut String>) 🤔
+        // BUT then we no longer need the output in Result 🤔
+        // .. OR DO SOMETHING ELSE ENTIRELY 🤔
+        input_data: Option<&[u8]>,
         name: &str,
-    ) -> Result<()> {
+    ) -> Result<String> {
         let timeout = std::time::Duration::from_millis(self.command_timeout);
-        match command.stdin(Stdio::piped()).spawn() {
+
+        if input_data.is_some() {
+            command = command.stdin(Stdio::piped());
+        } else {
+            command = command.stdout(Stdio::piped());
+        }
+
+        match command.spawn() {
             Ok(mut child) => {
-                if let Some(stdin) = child.stdin.as_mut() {
+                if let Some(data) = input_data {
+                    let stdin = child.stdin.as_mut().ok_or_else(|| anyhow::anyhow!("Unable to open stdin"))?;
                     stdin.write_all(data)?;
                 }
                 match child.wait_timeout(timeout) {
                     Ok(status_code) => {
                         if let Some(status) = status_code {
                             if status.success() {
-                                Ok(())
+                                // TODO: check if output expected
+                                if let Some(mut io) = child.stdout {
+                                    let mut output = Vec::new();
+                                    io.read_to_end(&mut output)?;
+                                    Ok(String::from_utf8_lossy(&output).to_string())
+                                } else {
+                                    Ok(String::new())
+                                }
                             } else {
                                 error!("error, {} exited with non-zero exit code", name);
                                 Err(WaylandFallbackClipboardError::SetOperationFailed().into())
@@ -194,6 +180,7 @@ impl WaylandFallbackClipboard {
                             if child.kill().is_err() {
                                 error!("unable to kill {}", name);
                             }
+                            // FIXME: might not be a 'Set' operation that failed anymore 🤔
                             Err(WaylandFallbackClipboardError::SetOperationFailed().into())
                         }
                     }
