@@ -8,11 +8,11 @@ build = "build.rs"
 [features]
 # If the wayland feature is enabled, all X11 dependencies will be dropped
 # and only EVDEV-based methods will be supported.
-wayland = ["sctk"]
+wayland = []
 
 [dependencies]
 espanso-info = { path = "../espanso-info" }
-nix = { version = "0.29.0", features = ["socket"] }
+nix = { version = "0.29.0", features = ["socket", "ioctl"] }
 log.workspace = true
 lazycell.workspace = true
 anyhow.workspace = true
@@ -32,7 +32,6 @@ widestring.workspace = true
 wayland-client = "0.31.6"
 libc = "0.2.85"
 scopeguard = "1.1.0"
-sctk = { package = "smithay-client-toolkit", version = "0.18.1", optional = true }
 
 [build-dependencies]
 cc.workspace = true
