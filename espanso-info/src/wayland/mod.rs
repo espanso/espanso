@@ -24,6 +24,7 @@ use std::process::Command;
 pub(crate) struct WaylandEmptyAppInfoProvider {}
 pub(crate) struct WaylandKDEAppInfoProvider {}
 pub(crate) struct WaylandNiriAppInfoProvider {}
+pub(crate) struct WaylandWlrootsAppInfoProvider {}
 
 fn empty_app_info() -> AppInfo {
     AppInfo {
@@ -118,6 +119,40 @@ impl AppInfoProvider for WaylandKDEAppInfoProvider {
         };
 
         AppInfo { title, exec, class }
+    }
+}
+
+// for wlroots-based compositors (sway, Hyprland, labwc, wayfire, etc.) via wlrctl
+impl WaylandWlrootsAppInfoProvider {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+
+impl AppInfoProvider for WaylandWlrootsAppInfoProvider {
+    fn get_info(&self) -> AppInfo {
+        let Ok(out) = Command::new("wlrctl")
+            .arg("toplevel")
+            .arg("list")
+            .arg("state:active")
+            .output()
+        else {
+            return empty_app_info();
+        };
+
+        let Ok(txt) = String::from_utf8(out.stdout) else {
+            return empty_app_info();
+        };
+
+        if let Some((app_id, title)) = txt.trim().split_once(": ") {
+            return AppInfo {
+                title: Some(title.to_string()),
+                exec: None,
+                class: Some(app_id.to_string()),
+            };
+        }
+
+        empty_app_info()
     }
 }
 

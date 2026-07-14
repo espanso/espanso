@@ -69,16 +69,22 @@ pub fn get_provider() -> Result<Box<dyn AppInfoProvider>> {
 #[allow(clippy::match_str_case_mismatch)]
 pub fn get_provider() -> Result<Box<dyn AppInfoProvider>> {
     use std::env;
+    use std::process::Command;
 
-    if let Ok(value) = env::var("XDG_SESSION_DESKTOP") {
-        match value.to_lowercase().as_str() {
+    let session_desktop = env::var("XDG_SESSION_DESKTOP")
+        .unwrap_or_default()
+        .to_lowercase();
+    let current_desktop = env::var("XDG_CURRENT_DESKTOP")
+        .unwrap_or_default()
+        .to_lowercase();
+
+    for value in [&session_desktop, &current_desktop] {
+        match value.as_str() {
             "niri" => {
                 info!("using WaylandNiriAppInfoProvider");
                 return Ok(Box::new(wayland::WaylandNiriAppInfoProvider::new()));
             }
             "kde" => {
-                // try to invoke `kdotool` to see if you have it or not.
-                use std::process::Command;
                 if Command::new("kdotool")
                     .arg("getactivewindow")
                     .arg("getwindowclassname")
@@ -89,10 +95,33 @@ pub fn get_provider() -> Result<Box<dyn AppInfoProvider>> {
                     return Ok(Box::new(wayland::WaylandKDEAppInfoProvider::new()));
                 }
                 info!("kdotool missing or not available for the current wayland DE.");
-                // since we dont have `kdotool` anyway, just output empty info
             }
+            "sway" | "hyprland" | "labwc" | "wayfire" | "budgie" => {
+                if Command::new("wlrctl")
+                    .arg("toplevel")
+                    .arg("list")
+                    .output()
+                    .is_ok()
+                {
+                    info!("using WaylandWlrootsAppInfoProvider");
+                    return Ok(Box::new(wayland::WaylandWlrootsAppInfoProvider::new()));
+                }
+                info!("wlrctl missing or not available for the current wayland DE.");
+            }
+            "" => continue,
             _ => {}
         }
+    }
+
+    // Fallback: try wlrctl for unknown wlroots-based compositors
+    if Command::new("wlrctl")
+        .arg("toplevel")
+        .arg("list")
+        .output()
+        .is_ok()
+    {
+        info!("using WaylandWlrootsAppInfoProvider (detected via wlrctl availability)");
+        return Ok(Box::new(wayland::WaylandWlrootsAppInfoProvider::new()));
     }
 
     info!("no appropriate WaylandAppInfoProvider found for current DE/WM");
