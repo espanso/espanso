@@ -359,7 +359,7 @@ fn convert_fat_libraries_to_arm(lib_dir: &Path) {
 
 #[cfg(not(target_os = "windows"))]
 fn get_cpp_flags(wx_config_path: &Path) -> Vec<String> {
-    println!("using {}", &wx_config_path.display());
+    println!("using {}", wx_config_path.display());
     let config_output = std::process::Command::new(wx_config_path)
         .arg("--cxxflags")
         .output()

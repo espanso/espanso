@@ -45,7 +45,7 @@ impl PackageProvider for GitLabPackageProvider {
     fn download(&self, package: &PackageSpecifier) -> Result<Box<dyn Package>> {
         let download_url = format!(
             "https://gitlab.com/{}/{}/-/archive/{}/{}-{}.zip",
-            &self.author, &self.name, &self.branch, &self.name, &self.branch
+            self.author, self.name, self.branch, self.name, self.branch
         );
 
         let temp_dir = tempdir::TempDir::new("espanso-package-download")?;

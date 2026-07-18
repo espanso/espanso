@@ -58,10 +58,7 @@ fn edit_main(args: CliModuleArgs) -> i32 {
     let target_file = cli_args.value_of("target_file");
     let target_path = determine_target_path(&paths.config, target_file);
 
-    println!(
-        "Editing file: {}",
-        &target_path.to_string_lossy().to_string()
-    );
+    println!("Editing file: {}", target_path.to_string_lossy());
 
     open_editor(&target_path);
 
@@ -195,7 +192,7 @@ pub fn open_editor(file_path: &Path) -> bool {
             false
         }
     } else {
-        println!("Error: could not start editor at: {}", &editor);
+        println!("Error: could not start editor at: {}", editor);
         false
     }
 }
