@@ -41,56 +41,62 @@ int32_t clipboard_get_text(char * buffer, int32_t buffer_size) {
 }
 
 int32_t clipboard_set_text(char * text) {
-  NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
-  NSArray *array = @[NSPasteboardTypeString];
-  [pasteboard declareTypes:array owner:nil];
+  @autoreleasepool {
+    NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
+    NSArray *array = @[NSPasteboardTypeString];
+    [pasteboard declareTypes:array owner:nil];
 
-  NSString *nsText = [NSString stringWithUTF8String:text];
-  if (![pasteboard setString:nsText forType:NSPasteboardTypeString]) {
-    return 0;
+    NSString *nsText = [NSString stringWithUTF8String:text];
+    if (![pasteboard setString:nsText forType:NSPasteboardTypeString]) {
+      return 0;
+    }
+
+    return 1;
   }
-
-  return 1;
 }
 
 int32_t clipboard_set_image(char * image_path) {
-  NSString *pathString = [NSString stringWithUTF8String:image_path];
-  NSImage *image = [[NSImage alloc] initWithContentsOfFile:pathString];
-  int result = 0;
+  @autoreleasepool {
+    NSString *pathString = [NSString stringWithUTF8String:image_path];
+    NSImage *image = [[NSImage alloc] initWithContentsOfFile:pathString];
+    int result = 0;
 
-  if (image != nil) {
-      NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
-      [pasteboard clearContents];
-      NSArray *copiedObjects = [NSArray arrayWithObject:image];
-      [pasteboard writeObjects:copiedObjects];
-      result = 1;
+    if (image != nil) {
+        NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
+        [pasteboard clearContents];
+        NSArray *copiedObjects = [NSArray arrayWithObject:image];
+        [pasteboard writeObjects:copiedObjects];
+        result = 1;
+    }
+    [image release];
+
+    return result;
   }
-  [image release];
-
-  return result;
 }
 
 int32_t clipboard_set_html(char * html, char * fallback_text) {
-  NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
-  NSArray *array = @[NSRTFPboardType, NSPasteboardTypeString];
-  [pasteboard declareTypes:array owner:nil];
+  @autoreleasepool {
+    NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
+    NSArray *array = @[NSRTFPboardType, NSPasteboardTypeString];
+    [pasteboard declareTypes:array owner:nil];
 
-  NSString *nsHtml = [NSString stringWithUTF8String:html];
-  NSDictionary *documentAttributes = [NSDictionary dictionaryWithObjectsAndKeys:NSHTMLTextDocumentType, NSDocumentTypeDocumentAttribute, NSCharacterEncodingDocumentAttribute,[NSNumber numberWithInt:NSUTF8StringEncoding], nil];
-  NSAttributedString* atr = [[NSAttributedString alloc] initWithData:[nsHtml dataUsingEncoding:NSUTF8StringEncoding] options:documentAttributes documentAttributes:nil error:nil];
+    NSString *nsHtml = [NSString stringWithUTF8String:html];
+    NSDictionary *documentAttributes = [NSDictionary dictionaryWithObjectsAndKeys:NSHTMLTextDocumentType, NSDocumentTypeDocumentAttribute, NSCharacterEncodingDocumentAttribute,[NSNumber numberWithInt:NSUTF8StringEncoding], nil];
+    NSAttributedString* atr = [[NSAttributedString alloc] initWithData:[nsHtml dataUsingEncoding:NSUTF8StringEncoding] options:documentAttributes documentAttributes:nil error:nil];
 
-  NSData *rtf = [atr RTFFromRange:NSMakeRange(0, [atr length])
-                                  documentAttributes:nil];
+    NSData *rtf = [atr RTFFromRange:NSMakeRange(0, [atr length])
+                                    documentAttributes:nil];
 
-  [pasteboard setData:rtf forType:NSRTFPboardType];
-  [pasteboard setString:nsHtml forType:NSHTMLPboardType];
-  
-  if (fallback_text) {
-    NSString *nsText = [NSString stringWithUTF8String:fallback_text];
-    [pasteboard setString:nsText forType:NSPasteboardTypeString];
+    [pasteboard setData:rtf forType:NSRTFPboardType];
+    [pasteboard setString:nsHtml forType:NSHTMLPboardType];
+
+    if (fallback_text) {
+      NSString *nsText = [NSString stringWithUTF8String:fallback_text];
+      [pasteboard setString:nsText forType:NSPasteboardTypeString];
+    }
+
+    return 1;
   }
-  
-  return 1;
 }
 
 int32_t clipboard_get_length() {

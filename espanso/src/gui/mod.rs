@@ -57,6 +57,7 @@ pub enum FormField {
     List {
         default: Option<String>,
         values: Vec<String>,
+        separator: String,
     },
 }
 

@@ -27,51 +27,67 @@
 
 void ui_initialize(void *_self, UIOptions _options)
 {
-  AppDelegate *delegate = [[AppDelegate alloc] init];
-  delegate->options = _options;
-  delegate->rust_instance = _self;
+  @autoreleasepool {
+    AppDelegate *delegate = [[AppDelegate alloc] init];
+    delegate->options = _options;
+    delegate->rust_instance = _self;
 
-  NSApplication * application = [NSApplication sharedApplication];
-  [application setDelegate:delegate];
+    NSApplication * application = [NSApplication sharedApplication];
+    [application setDelegate:delegate];
+  }
 }
 
 int32_t ui_eventloop(EventCallback _callback)
 {
-  AppDelegate *delegate = (AppDelegate*)[[NSApplication sharedApplication] delegate];
-  delegate->event_callback = _callback;
+  @autoreleasepool {
+    AppDelegate *delegate = (AppDelegate*)[[NSApplication sharedApplication] delegate];
+    delegate->event_callback = _callback;
 
-  [NSApp run];
+    [NSApp run];
 
-  return 1;
+    return 1;
+  }
 }
 
 void ui_exit() {
-  [NSApp stop:nil];
-  [NSApp abortModal];
+  @autoreleasepool {
+    [NSApp stop:nil];
+    [NSApp abortModal];
+  }
 }
 
 void ui_update_tray_icon(int32_t index)
 {
   dispatch_async(dispatch_get_main_queue(), ^(void) {
-    AppDelegate *delegate = (AppDelegate*)[[NSApplication sharedApplication] delegate];
-    [delegate setIcon: index];
+    @autoreleasepool {
+      AppDelegate *delegate = (AppDelegate*)[[NSApplication sharedApplication] delegate];
+      [delegate setIcon: index];
+    }
   });
 }
 
 void ui_show_notification(char *message, double delay)
 {
-  NSString *nsMessage = [NSString stringWithUTF8String:message];
-  dispatch_async(dispatch_get_main_queue(), ^(void) {
-    AppDelegate *delegate = (AppDelegate*)[[NSApplication sharedApplication] delegate];
-    [delegate showNotification: nsMessage withDelay: delay];
-  });
+  @autoreleasepool {
+    NSString *nsMessage = [NSString stringWithUTF8String:message];
+    dispatch_async(dispatch_get_main_queue(), ^(void) {
+      @autoreleasepool {
+        AppDelegate *delegate = (AppDelegate*)[[NSApplication sharedApplication] delegate];
+        [delegate showNotification: nsMessage withDelay: delay];
+      }
+    });
+  }
 }
 
 void ui_show_context_menu(char *payload)
 {
-  NSString *nsPayload = [NSString stringWithUTF8String:payload];
-  dispatch_async(dispatch_get_main_queue(), ^(void) {
-    AppDelegate *delegate = (AppDelegate*)[[NSApplication sharedApplication] delegate];
-    [delegate popupMenu: nsPayload];
-  });
+  @autoreleasepool {
+    NSString *nsPayload = [NSString stringWithUTF8String:payload];
+    dispatch_async(dispatch_get_main_queue(), ^(void) {
+      @autoreleasepool {
+        AppDelegate *delegate = (AppDelegate*)[[NSApplication sharedApplication] delegate];
+        [delegate popupMenu: nsPayload];
+      }
+    });
+  }
 }

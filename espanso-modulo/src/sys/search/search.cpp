@@ -34,7 +34,7 @@
 // Platform-specific styles
 #ifdef __WXMSW__
 const int SEARCH_BAR_FONT_SIZE = 16;
-const long DEFAULT_STYLE = wxSTAY_ON_TOP | wxFRAME_TOOL_WINDOW;
+const long DEFAULT_STYLE = wxSTAY_ON_TOP | wxFRAME_TOOL_WINDOW | wxRESIZE_BORDER;
 #endif
 #ifdef __WXOSX__
 const int SEARCH_BAR_FONT_SIZE = 20;
@@ -42,7 +42,7 @@ const long DEFAULT_STYLE = wxSTAY_ON_TOP | wxRESIZE_BORDER;
 #endif
 #ifdef __LINUX__
 const int SEARCH_BAR_FONT_SIZE = 20;
-const long DEFAULT_STYLE = wxSTAY_ON_TOP;
+const long DEFAULT_STYLE = wxSTAY_ON_TOP | wxRESIZE_BORDER;
 #endif
 
 const int HELP_TEXT_FONT_SIZE = 10;
@@ -271,7 +271,9 @@ SearchFrame::SearchFrame(const wxString &title, const wxPoint &pos,
         Bind(wxEVT_LEAVE_WINDOW, &SearchFrame::OnMouseLeave, this);
     }
 
-    this->SetClientSize(panel->GetBestSize());
+    wxSize bestSize = panel->GetBestSize();
+    this->SetClientSize(bestSize);
+    this->SetSizeHints(MIN_WIDTH, MIN_HEIGHT);
     this->CentreOnScreen();
 
     // Trigger the first data update

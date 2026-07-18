@@ -53,7 +53,7 @@ pub fn copy_dir_without_dot_files(source_dir: &Path, inside_dir: &Path) -> Resul
 
 pub fn create_package_source_file(specifier: &PackageSpecifier, target_dir: &Path) -> Result<()> {
     let source: PackageSource = specifier.into();
-    let yaml = serde_yaml::to_string(&source)?;
+    let yaml = serde_norway::to_string(&source)?;
     std::fs::write(target_dir.join(PACKAGE_SOURCE_FILE), yaml)?;
     Ok(())
 }

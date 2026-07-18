@@ -31,7 +31,7 @@ use std::{
 
 use context::Context;
 use keymap::Keymap;
-use log::{error, warn};
+use log::warn;
 use uinput::UInputDevice;
 
 use crate::{

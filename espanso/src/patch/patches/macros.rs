@@ -94,6 +94,10 @@ macro_rules! generate_patchable_config {
         fn secure_input_notification(&self) -> bool {
           self.base.secure_input_notification()
         }
+
+        fn stats_enabled(&self) -> bool {
+          self.base.stats_enabled()
+        }
       }
   };
 }

@@ -18,6 +18,9 @@
  */
 
 use chrono::{DateTime, Duration, Local, Locale};
+use chrono_tz::Tz;
+use std::fmt::Write;
+use thiserror::Error;
 
 use crate::{Extension, ExtensionOutput, ExtensionResult, Number, Params, Value};
 
@@ -55,10 +58,21 @@ impl Extension for DateExtension<'_> {
 
         // Compute the given offset
         let offset = params.get("offset");
-        if let Some(Value::Number(Number::Integer(offset))) = offset {
-            let offset = Duration::seconds(*offset);
-            now += offset;
+        if let Some(offset_value) = offset {
+            let offset_seconds = match offset_value {
+                Value::Number(Number::Integer(n)) => Some(*n),
+                Value::String(s) => s.parse::<i64>().ok(),
+                _ => None,
+            };
+
+            if let Some(seconds) = offset_seconds {
+                let offset = Duration::seconds(seconds);
+                now += offset;
+            }
         }
+
+        // Convert to target timezone if specified
+        let tz_param = params.get("tz").and_then(|val| val.as_string());
 
         let format = params.get("format");
         let locale = params
@@ -66,10 +80,40 @@ impl Extension for DateExtension<'_> {
             .and_then(|val| val.as_string())
             .map_or_else(|| self.locale_provider.get_system_locale(), String::from);
 
-        let date = if let Some(Value::String(format)) = format {
-            DateExtension::format_date_with_locale_string(now, format, &locale)
+        let date = if let Some(tz_str) = tz_param {
+            // Try to parse the timezone string
+            if let Ok(tz) = tz_str.parse::<Tz>() {
+                let converted = now.with_timezone(&tz);
+                if let Some(Value::String(format)) = format {
+                    match DateExtension::format_date_with_locale_and_tz(converted, format, &locale)
+                    {
+                        Ok(formatted) => formatted,
+                        Err(err) => return ExtensionResult::Error(err.into()),
+                    }
+                } else {
+                    converted.to_rfc2822()
+                }
+            } else {
+                // Invalid timezone, fallback to local time
+                if let Some(Value::String(format)) = format {
+                    match DateExtension::format_date_with_locale_string(now, format, &locale) {
+                        Ok(formatted) => formatted,
+                        Err(err) => return ExtensionResult::Error(err.into()),
+                    }
+                } else {
+                    now.to_rfc2822()
+                }
+            }
         } else {
-            now.to_rfc2822()
+            // No timezone specified, use local time
+            if let Some(Value::String(format)) = format {
+                match DateExtension::format_date_with_locale_string(now, format, &locale) {
+                    Ok(formatted) => formatted,
+                    Err(err) => return ExtensionResult::Error(err.into()),
+                }
+            } else {
+                now.to_rfc2822()
+            }
         };
 
         ExtensionResult::Success(ExtensionOutput::Single(date))
@@ -85,17 +129,36 @@ impl DateExtension<'_> {
         }
     }
 
-    fn format_date_with_locale(date: DateTime<Local>, format: &str, locale: Locale) -> String {
-        date.format_localized(format, locale).to_string()
+    fn format_date_with_locale(
+        date: DateTime<Local>,
+        format: &str,
+        locale: Locale,
+    ) -> Result<String, DateExtensionError> {
+        let mut output = String::new();
+        write!(output, "{}", date.format_localized(format, locale))
+            .map_err(|_| DateExtensionError::InvalidFormat(format.to_string()))?;
+        Ok(output)
     }
 
     fn format_date_with_locale_string(
         date: DateTime<Local>,
         format: &str,
         locale_str: &str,
-    ) -> String {
+    ) -> Result<String, DateExtensionError> {
         let locale = convert_locale_string_to_locale(locale_str).unwrap_or(Locale::en_US);
         Self::format_date_with_locale(date, format, locale)
+    }
+
+    fn format_date_with_locale_and_tz(
+        date: DateTime<Tz>,
+        format: &str,
+        locale_str: &str,
+    ) -> Result<String, DateExtensionError> {
+        let locale = convert_locale_string_to_locale(locale_str).unwrap_or(Locale::en_US);
+        let mut output = String::new();
+        write!(output, "{}", date.format_localized(format, locale))
+            .map_err(|_| DateExtensionError::InvalidFormat(format.to_string()))?;
+        Ok(output)
     }
 }
 
@@ -420,6 +483,12 @@ impl DefaultLocaleProvider {
     }
 }
 
+#[derive(Error, Debug)]
+pub enum DateExtensionError {
+    #[error("invalid date format: `{0}`")]
+    InvalidFormat(String),
+}
+
 #[cfg(test)]
 mod tests {
     use std::collections::HashMap;
@@ -565,6 +634,184 @@ mod tests {
                 .into_success()
                 .unwrap(),
             ExtensionOutput::Single("martedì".to_string())
+        );
+    }
+
+    #[test]
+    fn invalid_format_should_return_error() {
+        let locale_provider = MockLocaleProvider::new();
+        let extension = DateExtension::new(&locale_provider);
+
+        // Test with the format from issue #993
+        let param = vec![(
+            "format".to_string(),
+            Value::String("%Y-%m-%dT%H:%i:%s%Q".to_string()),
+        )]
+        .into_iter()
+        .collect::<Params>();
+
+        assert!(matches!(
+            extension.calculate(&crate::Context::default(), &HashMap::default(), &param),
+            ExtensionResult::Error(_)
+        ));
+    }
+
+    #[test]
+    fn utc_timezone_works() {
+        let locale_provider = MockLocaleProvider::new();
+        let mut extension = DateExtension::new(&locale_provider);
+        extension.fixed_date = Some(
+            Local
+                .with_ymd_and_hms(2014, 7, 8, 12, 0, 0)
+                .single()
+                .unwrap(),
+        );
+
+        let param = vec![
+            (
+                "format".to_string(),
+                Value::String("%Y-%m-%d %H:%M:%S".to_string()),
+            ),
+            ("tz".to_string(), Value::String("UTC".to_string())),
+        ]
+        .into_iter()
+        .collect::<Params>();
+
+        let result = extension
+            .calculate(&crate::Context::default(), &HashMap::default(), &param)
+            .into_success()
+            .unwrap();
+
+        // The result should be formatted in UTC timezone
+        // Just verify we got a Single output with a valid datetime string
+        match result {
+            ExtensionOutput::Single(s) => {
+                assert!(s.contains("2014"));
+                assert!(s.contains("07"));
+            }
+            ExtensionOutput::Multiple(_) => panic!("Expected Single output"),
+        }
+    }
+
+    #[test]
+    fn named_timezone_works() {
+        let locale_provider = MockLocaleProvider::new();
+        let mut extension = DateExtension::new(&locale_provider);
+        extension.fixed_date = Some(
+            Local
+                .with_ymd_and_hms(2014, 7, 8, 12, 0, 0)
+                .single()
+                .unwrap(),
+        );
+
+        let param = vec![
+            (
+                "format".to_string(),
+                Value::String("%Y-%m-%d %H:%M:%S".to_string()),
+            ),
+            (
+                "tz".to_string(),
+                Value::String("America/New_York".to_string()),
+            ),
+        ]
+        .into_iter()
+        .collect::<Params>();
+
+        let result = extension
+            .calculate(&crate::Context::default(), &HashMap::default(), &param)
+            .into_success()
+            .unwrap();
+
+        // The result should be formatted in America/New_York timezone
+        match result {
+            ExtensionOutput::Single(s) => {
+                assert!(s.contains("2014"));
+                assert!(s.contains("07"));
+            }
+            ExtensionOutput::Multiple(_) => panic!("Expected Single output"),
+        }
+    }
+
+    #[test]
+    fn invalid_timezone_fallback_to_local() {
+        let locale_provider = MockLocaleProvider::new();
+        let mut extension = DateExtension::new(&locale_provider);
+        extension.fixed_date = Some(
+            Local
+                .with_ymd_and_hms(2014, 7, 8, 9, 10, 11)
+                .single()
+                .unwrap(),
+        );
+
+        let param = vec![
+            ("format".to_string(), Value::String("%H:%M:%S".to_string())),
+            (
+                "tz".to_string(),
+                Value::String("Invalid/Timezone".to_string()),
+            ),
+        ]
+        .into_iter()
+        .collect::<Params>();
+
+        // Should fallback to local time without crashing
+        let result = extension
+            .calculate(&crate::Context::default(), &HashMap::default(), &param)
+            .into_success()
+            .unwrap();
+
+        assert_eq!(result, ExtensionOutput::Single("09:10:11".to_string()));
+    }
+
+    #[test]
+    fn offset_with_string_works() {
+        let locale_provider = MockLocaleProvider::new();
+        let mut extension = DateExtension::new(&locale_provider);
+        extension.fixed_date = Some(
+            Local
+                .with_ymd_and_hms(2014, 7, 8, 9, 10, 11)
+                .single()
+                .unwrap(),
+        );
+
+        let param = vec![
+            ("format".to_string(), Value::String("%H:%M:%S".to_string())),
+            ("offset".to_string(), Value::String("3600".to_string())),
+        ]
+        .into_iter()
+        .collect::<Params>();
+        assert_eq!(
+            extension
+                .calculate(&crate::Context::default(), &HashMap::default(), &param)
+                .into_success()
+                .unwrap(),
+            ExtensionOutput::Single("10:10:11".to_string())
+        );
+    }
+
+    #[test]
+    fn offset_with_invalid_string_is_ignored() {
+        let locale_provider = MockLocaleProvider::new();
+        let mut extension = DateExtension::new(&locale_provider);
+        extension.fixed_date = Some(
+            Local
+                .with_ymd_and_hms(2014, 7, 8, 9, 10, 11)
+                .single()
+                .unwrap(),
+        );
+
+        let param = vec![
+            ("format".to_string(), Value::String("%H:%M:%S".to_string())),
+            ("offset".to_string(), Value::String("invalid".to_string())),
+        ]
+        .into_iter()
+        .collect::<Params>();
+        // Should return time without offset if offset is invalid
+        assert_eq!(
+            extension
+                .calculate(&crate::Context::default(), &HashMap::default(), &param)
+                .into_success()
+                .unwrap(),
+            ExtensionOutput::Single("09:10:11".to_string())
         );
     }
 }

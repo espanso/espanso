@@ -18,7 +18,7 @@
  */
 
 use anyhow::Result;
-use log::error;
+// use log::error;
 use thiserror::Error;
 
 use crate::{Extension, ExtensionOutput, ExtensionResult, Params, Value};

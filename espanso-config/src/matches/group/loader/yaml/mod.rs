@@ -353,7 +353,7 @@ mod tests {
         yaml: &str,
         use_compatibility_mode: bool,
     ) -> Result<(Match, Vec<Warning>)> {
-        let yaml_match: YAMLMatch = serde_yaml::from_str(yaml)?;
+        let yaml_match: YAMLMatch = serde_norway::from_str(yaml)?;
         let (mut m, warnings) = try_convert_into_match(yaml_match, use_compatibility_mode)?;
 
         // Reset the IDs to correctly compare them

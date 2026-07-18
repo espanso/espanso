@@ -1,0 +1,112 @@
+name: espanso
+version: 2.2.4
+summary: A Cross-platform Text Expander written in Rust
+description: |
+  espanso is a Cross-platform, Text Expander written in Rust.
+
+  ## What is a Text Expander?
+
+  A text expander* is a program that detects when you type
+  a specific keyword and replaces it with something else.
+  This is useful in many ways:
+
+  * Save a lot of typing, expanding common sentences.
+  * Create system-wide code snippets.
+  * Execute custom scripts
+  * Use emojis like a pro.
+
+  ## Key Features
+
+  * Works on Windows, macOS and Linux
+  * Works with almost any program
+  * Works with Emojis ¯\_(ツ)_/¯
+  * Works with Images
+  * Includes a powerful Search Bar 🔎
+  * Date expansion support
+  * Custom scripts support
+  * Shell commands support
+  * App-specific configurations
+  * Support Forms: https://espanso.org/docs/matches/forms/
+  * Expandable with packages
+  * Built-in package manager for espanso hub: https://hub.espanso.org/
+  * File based configuration
+  * Support Regex triggers
+  * Experimental Wayland support
+
+  ## Get Started
+
+  Visit the official documentation: https://espanso.org/docs/
+
+  If you need some help to setup espanso, want to ask a question or simply get involved
+  in the community, you can join the official Subreddit (https://www.reddit.com/r/espanso/)
+   or join the official Discord (https://discord.gg/DFcCNDg7bB)!
+
+
+confinement: classic
+base: core24
+
+parts:
+  espanso:
+    plugin: rust
+    source: .
+    rust-no-default-features: true
+    rust-features:
+      - modulo
+      - vendored-tls
+    build-attributes:
+     - enable-patchelf
+    build-packages:
+     - libdbus-1-dev
+     - libwxgtk3.2-dev
+     - libxkbcommon-dev
+     - libxtst-dev
+     - libx11-dev
+    stage-packages:
+     - liblerc4
+     - libxcomposite1
+     - libxcursor1
+     - libxdamage1
+     - libxfixes3
+     - libxi6
+     - libxinerama1
+     - libxrandr2
+     - libxrender1
+     - libxtst6
+     - libatk1.0-0t64
+     - libatk-bridge2.0-0t64
+     - libatspi2.0-0t64
+     - libcairo-gobject2
+     - libcairo2
+     - libdatrie1
+     - libdeflate0
+     - libepoxy0
+     - libfontconfig1
+     - libfribidi0
+     - libgtk-3-0t64
+     - libgdk-pixbuf-2.0-0
+     - libgraphite2-3
+     - libharfbuzz0b
+     - libjbig0
+     - libjpeg-turbo8
+     - libnotify4
+     - libpango-1.0-0
+     - libpangocairo-1.0-0
+     - libpangoft2-1.0-0
+     - libpcre2-32-0
+     - libpixman-1-0
+     - libsharpyuv0
+     - libthai0
+     - libtiff6
+     - libwayland-client0
+     - libwayland-cursor0
+     - libwayland-egl1
+     - libwebp7
+     - libwxbase3.2-1t64
+     - libwxgtk3.2-1t64
+     - libxcb-render0
+     - libxcb-shm0
+     - xclip
+
+apps:
+  espanso:
+    command: espanso

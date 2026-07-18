@@ -19,12 +19,18 @@
 
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
-use serde_yaml::Mapping;
+use serde_norway::Mapping;
 use std::convert::TryFrom;
 
 use crate::util::is_yaml_empty;
 
 use super::ParsedConfig;
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct YAMLStatsConfig {
+    #[serde(default)]
+    pub enabled: Option<bool>,
+}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct YAMLConfig {
@@ -164,6 +170,10 @@ pub struct YAMLConfig {
 
     #[serde(default)]
     pub filter_os: Option<String>,
+
+    // Stats configuration
+    #[serde(default)]
+    pub stats: Option<YAMLStatsConfig>,
 }
 
 impl YAMLConfig {
@@ -173,12 +183,12 @@ impl YAMLConfig {
 
         // Because an empty string is not valid YAML but we want to support it anyway
         if is_yaml_empty(yaml) {
-            return Ok(serde_yaml::from_str(
+            return Ok(serde_norway::from_str(
                 "arbitrary_field_that_will_not_block_the_parser: true",
             )?);
         }
 
-        Ok(serde_yaml::from_str(yaml)?)
+        Ok(serde_norway::from_str(yaml)?)
     }
 }
 
@@ -249,6 +259,9 @@ impl TryFrom<YAMLConfig> for ParsedConfig {
             filter_exec: yaml_config.filter_exec,
             filter_os: yaml_config.filter_os,
             filter_title: yaml_config.filter_title,
+
+            // Stats
+            stats_enabled: yaml_config.stats.and_then(|s| s.enabled),
         })
     }
 }
@@ -354,6 +367,7 @@ mod tests {
                 show_icon: Some(false),
                 show_notifications: Some(false),
                 secure_input_notification: Some(false),
+                stats_enabled: None,
                 emulate_alt_codes: Some(true),
                 max_regex_buffer_size: Some(30),
                 post_form_delay: Some(300),

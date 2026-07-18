@@ -46,6 +46,7 @@ typedef struct ChoiceMetadata {
     const int valueSize;
     const char *defaultValue;
     const ChoiceType choiceType;
+    const char *separator;
 } ChoiceMetadata;
 
 typedef struct FieldMetadata {

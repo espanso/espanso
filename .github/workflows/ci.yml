@@ -4,18 +4,19 @@ on:
   pull_request:
     paths-ignore:
       - ".devcontainer/**"
-      - ".dockerignore"
-      - ".editorconfig"
       - ".github/workflows/nix-build.yml"
       - ".github/workflows/update-flake.yml"
       - ".vscode/**"
+      - "docs/**"
+      - "images/**"
+      - "schemas/**"
+      - ".dockerignore"
+      - ".editorconfig"
+      - ".gitignore"
       - "CONTRIBUTING.md"
       - "LICENSE"
       - "README.md"
       - "SECURITY.md"
-      - "docs/**"
-      - "images/**"
-      - "schemas/**"
       - "tarpaulin.toml"
 
 defaults:
@@ -29,6 +30,13 @@ jobs:
   linux-x11:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/cache@main
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - uses: actions/checkout@main
       - name: Format
         run: cargo fmt --all -- --check
@@ -71,6 +79,13 @@ jobs:
   linux-wayland:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/cache@main
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - uses: actions/checkout@main
       - name: Format
         run: cargo fmt --all -- --check
@@ -109,6 +124,13 @@ jobs:
   macos:
     runs-on: macos-latest
     steps:
+      - uses: actions/cache@main
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - uses: actions/checkout@main
       - name: Format
         run: cargo fmt --all -- --check
@@ -117,6 +139,8 @@ jobs:
           cargo build --target aarch64-apple-darwin
           rustup target add x86_64-apple-darwin
           cargo build --target x86_64-apple-darwin
+      - name: Test
+        run: cargo test --workspace
       - name: Clippy
         run: |
           cargo clippy --target=aarch64-apple-darwin -- --deny warnings
@@ -125,6 +149,13 @@ jobs:
   windows:
     runs-on: windows-latest
     steps:
+      - uses: actions/cache@main
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - uses: actions/checkout@main
       - name: Format
         run: cargo fmt --all -- --check

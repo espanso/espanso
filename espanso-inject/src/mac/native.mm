@@ -33,58 +33,60 @@ void inject_string(char *string, int32_t default_delay, int32_t delay)
 
   char * stringCopy = strdup(string);
   dispatch_async(dispatch_get_main_queue(), ^(void) {
-    // Convert the c string to a UniChar array as required by the CGEventKeyboardSetUnicodeString method
-    NSString *nsString = [NSString stringWithUTF8String:stringCopy];
-    CFStringRef cfString = (__bridge CFStringRef) nsString;
-    std::vector <UniChar> buffer(nsString.length);
-    CFStringGetCharacters(cfString, CFRangeMake(0, nsString.length), buffer.data());
+    @autoreleasepool {
+      // Convert the c string to a UniChar array as required by the CGEventKeyboardSetUnicodeString method
+      NSString *nsString = [NSString stringWithUTF8String:stringCopy];
+      CFStringRef cfString = (__bridge CFStringRef) nsString;
+      std::vector <UniChar> buffer(nsString.length);
+      CFStringGetCharacters(cfString, CFRangeMake(0, nsString.length), buffer.data());
 
-    free(stringCopy);
+      free(stringCopy);
 
-    // Send the event
+      // Send the event
 
-    // Check if the shift key is down, and if so, release it
-    // To see why: https://github.com/espanso/espanso/issues/279
-    if (CGEventSourceKeyState(kCGEventSourceStateHIDSystemState, 0x38)) {
-      CGEventRef e2 = CGEventCreateKeyboardEvent(NULL, 0x38, false);
-      CGEventSetLocation(e2, ESPANSO_POINT_MARKER);
-      CGEventPost(kCGHIDEventTap, e2);
-      CFRelease(e2);
+      // Check if the shift key is down, and if so, release it
+      // To see why: https://github.com/espanso/espanso/issues/279
+      if (CGEventSourceKeyState(kCGEventSourceStateHIDSystemState, 0x38)) {
+        CGEventRef e2 = CGEventCreateKeyboardEvent(NULL, 0x38, false);
+        CGEventSetLocation(e2, ESPANSO_POINT_MARKER);
+        CGEventPost(kCGHIDEventTap, e2);
+        CFRelease(e2);
 
-      usleep(udelay);
-    }
-
-    // Because of a bug ( or undocumented limit ) of the CGEventKeyboardSetUnicodeString method
-    // the string gets truncated after 20 characters, so we need to send multiple events.
-
-    int i = 0;
-    // If delay is equal to the default one, then issue in chunks,
-    // otherwise, inject a keystroke at a time and respect the delay between keystrokes.
-    int chunk_size = delay == default_delay ? 20 : 1;
-    while (i < buffer.size()) {
-      if ((i+chunk_size) >  buffer.size()) {
-        chunk_size = buffer.size() - i;
+        usleep(udelay);
       }
 
-      UniChar * offset_buffer = buffer.data() + i;
-      CGEventRef e = CGEventCreateKeyboardEvent(NULL, 0x31, true);
-      CGEventSetLocation(e, ESPANSO_POINT_MARKER);
-      CGEventKeyboardSetUnicodeString(e, chunk_size, offset_buffer);
-      CGEventPost(kCGHIDEventTap, e);
-      CFRelease(e);
+      // Because of a bug ( or undocumented limit ) of the CGEventKeyboardSetUnicodeString method
+      // the string gets truncated after 20 characters, so we need to send multiple events.
 
-      usleep(udelay);
+      int i = 0;
+      // If delay is equal to the default one, then issue in chunks,
+      // otherwise, inject a keystroke at a time and respect the delay between keystrokes.
+      int chunk_size = delay == default_delay ? 20 : 1;
+      while (i < buffer.size()) {
+        if ((i+chunk_size) >  buffer.size()) {
+          chunk_size = buffer.size() - i;
+        }
 
-      // Some applications require an explicit release of the space key
-      // For more information: https://github.com/espanso/espanso/issues/159
-      CGEventRef e2 = CGEventCreateKeyboardEvent(NULL, 0x31, false);
-      CGEventSetLocation(e2, ESPANSO_POINT_MARKER);
-      CGEventPost(kCGHIDEventTap, e2);
-      CFRelease(e2);
+        UniChar * offset_buffer = buffer.data() + i;
+        CGEventRef e = CGEventCreateKeyboardEvent(NULL, 0x31, true);
+        CGEventSetLocation(e, ESPANSO_POINT_MARKER);
+        CGEventKeyboardSetUnicodeString(e, chunk_size, offset_buffer);
+        CGEventPost(kCGHIDEventTap, e);
+        CFRelease(e);
 
-      usleep(udelay);
+        usleep(udelay);
 
-      i += chunk_size;
+        // Some applications require an explicit release of the space key
+        // For more information: https://github.com/espanso/espanso/issues/159
+        CGEventRef e2 = CGEventCreateKeyboardEvent(NULL, 0x31, false);
+        CGEventSetLocation(e2, ESPANSO_POINT_MARKER);
+        CGEventPost(kCGHIDEventTap, e2);
+        CFRelease(e2);
+
+        usleep(udelay);
+
+        i += chunk_size;
+      }
     }
   });
 }
@@ -98,25 +100,27 @@ void inject_separate_vkeys(int32_t *_vkey_array, int32_t vkey_count, int32_t del
   memcpy(vkey_array, _vkey_array, sizeof(int32_t)*vkey_count);
 
   dispatch_async(dispatch_get_main_queue(), ^(void) {
-    for (int i = 0; i<vkey_count; i++) {
-      CGEventRef keydown;
-      keydown = CGEventCreateKeyboardEvent(NULL, vkey_array[i], true);
-      CGEventSetLocation(keydown, ESPANSO_POINT_MARKER);
-      CGEventPost(kCGHIDEventTap, keydown);
-      CFRelease(keydown);
+    @autoreleasepool {
+      for (int i = 0; i<vkey_count; i++) {
+        CGEventRef keydown;
+        keydown = CGEventCreateKeyboardEvent(NULL, vkey_array[i], true);
+        CGEventSetLocation(keydown, ESPANSO_POINT_MARKER);
+        CGEventPost(kCGHIDEventTap, keydown);
+        CFRelease(keydown);
 
-      usleep(udelay);
+        usleep(udelay);
 
-      CGEventRef keyup;
-      keyup = CGEventCreateKeyboardEvent(NULL, vkey_array[i], false);
-      CGEventSetLocation(keyup, ESPANSO_POINT_MARKER);
-      CGEventPost(kCGHIDEventTap, keyup);
-      CFRelease(keyup);
+        CGEventRef keyup;
+        keyup = CGEventCreateKeyboardEvent(NULL, vkey_array[i], false);
+        CGEventSetLocation(keyup, ESPANSO_POINT_MARKER);
+        CGEventPost(kCGHIDEventTap, keyup);
+        CFRelease(keyup);
 
-      usleep(udelay);
+        usleep(udelay);
+      }
+
+      free(vkey_array);
     }
-
-    free(vkey_array);
   });
 }
 
@@ -129,30 +133,32 @@ void inject_vkeys_combination(int32_t *_vkey_array, int32_t vkey_count, int32_t 
   memcpy(vkey_array, _vkey_array, sizeof(int32_t)*vkey_count);
 
   dispatch_async(dispatch_get_main_queue(), ^(void) {
-    // First send the presses
-    for (int i = 0; i < vkey_count; i++)
-    {
-      CGEventRef keydown;
-      keydown = CGEventCreateKeyboardEvent(NULL, vkey_array[i], true);
-      CGEventSetLocation(keydown, ESPANSO_POINT_MARKER);
-      CGEventPost(kCGHIDEventTap, keydown);
-      CFRelease(keydown);
+    @autoreleasepool {
+      // First send the presses
+      for (int i = 0; i < vkey_count; i++)
+      {
+        CGEventRef keydown;
+        keydown = CGEventCreateKeyboardEvent(NULL, vkey_array[i], true);
+        CGEventSetLocation(keydown, ESPANSO_POINT_MARKER);
+        CGEventPost(kCGHIDEventTap, keydown);
+        CFRelease(keydown);
 
-      usleep(udelay);
+        usleep(udelay);
+      }
+
+      // Then the releases
+      for (int i = (vkey_count - 1); i >= 0; i--)
+      {
+        CGEventRef keyup;
+        keyup = CGEventCreateKeyboardEvent(NULL, vkey_array[i], false);
+        CGEventSetLocation(keyup, ESPANSO_POINT_MARKER);
+        CGEventPost(kCGHIDEventTap, keyup);
+        CFRelease(keyup);
+
+        usleep(udelay);
+      }
+
+      free(vkey_array);
     }
-
-    // Then the releases
-    for (int i = (vkey_count - 1); i >= 0; i--)
-    {
-      CGEventRef keyup;
-      keyup = CGEventCreateKeyboardEvent(NULL, vkey_array[i], false);
-      CGEventSetLocation(keyup, ESPANSO_POINT_MARKER);
-      CGEventPost(kCGHIDEventTap, keyup);
-      CFRelease(keyup);
-
-      usleep(udelay);
-    }
-    
-    free(vkey_array);
   });
 }

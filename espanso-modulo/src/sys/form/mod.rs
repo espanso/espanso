@@ -84,6 +84,7 @@ pub mod types {
         pub values: Vec<String>,
         pub choice_type: ChoiceType,
         pub default_value: String,
+        pub separator: String,
     }
 }
 
@@ -282,6 +283,7 @@ mod interop {
         values: Vec<CString>,
         values_ptr_array: Vec<*const c_char>,
         default_value: CString,
+        separator: CString,
         interop: Box<ChoiceMetadata>,
     }
 
@@ -310,16 +312,21 @@ mod interop {
             let default_value = CString::new(metadata.default_value)
                 .expect("unable to convert default value to CString");
 
+            let separator =
+                CString::new(metadata.separator).expect("unable to convert separator to CString");
+
             let interop = Box::new(ChoiceMetadata {
                 values: values_ptr_array.as_ptr(),
                 valueSize: values.len() as c_int,
                 choiceType: choice_type,
                 defaultValue: default_value.as_ptr(),
+                separator: separator.as_ptr(),
             });
             Self {
                 values,
                 values_ptr_array,
                 default_value,
+                separator,
                 interop,
             }
         }

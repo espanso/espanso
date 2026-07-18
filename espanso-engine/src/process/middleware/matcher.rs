@@ -182,31 +182,25 @@ impl<State> Middleware for MatcherMiddleware<'_, State> {
 
 fn is_event_of_interest(event_type: &EventType) -> bool {
     match event_type {
-        EventType::Keyboard(keyboard_event) => {
-            if keyboard_event.status == Status::Pressed {
-                // Skip linux Keyboard (XKB) Extension function and modifier keys
-                // In hex, they have the byte 3 = 0xfe
-                // See list in "keysymdef.h" file
-                if cfg!(target_os = "linux") {
-                    if let (Key::Other(raw_code), None) =
-                        (&keyboard_event.key, &keyboard_event.value)
-                    {
-                        if (65025..=65276).contains(raw_code) {
-                            return false;
-                        }
+        EventType::Keyboard(keyboard_event) if keyboard_event.status == Status::Pressed => {
+            // Skip linux Keyboard (XKB) Extension function and modifier keys
+            // In hex, they have the byte 3 = 0xfe
+            // See list in "keysymdef.h" file
+            if cfg!(target_os = "linux") {
+                if let (Key::Other(raw_code), None) = (&keyboard_event.key, &keyboard_event.value) {
+                    if (65025..=65276).contains(raw_code) {
+                        return false;
                     }
                 }
-
-                // Skip modifier keys
-                !matches!(
-                    keyboard_event.key,
-                    Key::Alt | Key::Shift | Key::CapsLock | Key::Meta | Key::NumLock | Key::Control
-                )
-            } else {
-                // Skip non-press events
-                false
             }
+
+            // Skip modifier keys
+            !matches!(
+                keyboard_event.key,
+                Key::Alt | Key::Shift | Key::CapsLock | Key::Meta | Key::NumLock | Key::Control
+            )
         }
+        EventType::Keyboard(_) => false,
         EventType::Mouse(mouse_event) => mouse_event.status == Status::Pressed,
         EventType::MatchInjected => true,
         _ => false,

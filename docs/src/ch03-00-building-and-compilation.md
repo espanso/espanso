@@ -2,6 +2,10 @@
 
 This chapter explains the various steps needed to build espanso.
 
+### Cross-compilation
+
+At the time of writing, cross-compilation is not guaranteed to be supported. In other words, if you wish to build the `exe` files for Windows, you _must_ do this on a PC running Windows. For Windows, this means WSL cannot be used to compile Espanso.
+
 ### Prerequisites
 
 These are the basic tools required to build espanso:
@@ -12,7 +16,9 @@ espanso officially supports the following:
   - On Windows, you should use the MSVC compiler. The easiest way to install
   it is by downloading [Visual Studio](https://visualstudio.microsoft.com/) and checking "Desktop development with C++" in the installer.
   Note that [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/)
-  alone doesn't fulfill all the requirements for espanso.
+  alone doesn't fulfill all the requirements for espanso - it's recommended to download Visual Studio.
+    - As of the time of writing, you can NOT build in WSL. You _must_ do the build natively in Windows. You must
+    first install Rust for Windows, which requires you to install Microsoft Visual Studio (_Not_ VsCode!).
   - On macOS, you should use the official build tools that come with Xcode. If
   you don't want to install Xcode, you should be able to download only the
   build tools by executing `xcode-select —install` and following the
@@ -23,8 +29,8 @@ espanso officially supports the following:
 
 ### Installing the app
 
-After installing the prerequisites, the following chapters (linux, macos and 
-windows) will guide you on how to install the app with the commandline
+After installing the prerequisites, the following chapters (Linux, macOS and 
+Windows) will guide you on how to install the app with the command line.
 
 ### Advanced compilation
 

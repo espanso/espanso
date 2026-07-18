@@ -19,7 +19,7 @@
 
 mod raw_keys;
 
-use log::error;
+//use log::error;
 use raw_keys::convert_key_to_vkey;
 
 use anyhow::Result;

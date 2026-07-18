@@ -81,7 +81,7 @@ pub enum PackageSource {
 impl PackageSource {
     pub fn parse(source_path: &Path) -> Result<Self> {
         let source_str = std::fs::read_to_string(source_path)?;
-        Ok(serde_yaml::from_str(&source_str)?)
+        Ok(serde_norway::from_str(&source_str)?)
     }
 }
 
@@ -116,7 +116,7 @@ impl From<&ArchivedPackage> for PackageSpecifier {
     fn from(package: &ArchivedPackage) -> Self {
         match &package.source {
             PackageSource::Hub => Self {
-                name: package.manifest.name.to_string(),
+                name: package.manifest.name.clone(),
                 ..Default::default()
             },
             PackageSource::Git {
@@ -124,8 +124,8 @@ impl From<&ArchivedPackage> for PackageSpecifier {
                 repo_branch,
                 use_native_git,
             } => Self {
-                name: package.manifest.name.to_string(),
-                git_repo_url: Some(repo_url.to_string()),
+                name: package.manifest.name.clone(),
+                git_repo_url: Some(repo_url.clone()),
                 git_branch: repo_branch.clone(),
                 use_native_git: *use_native_git,
                 ..Default::default()

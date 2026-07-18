@@ -1,5 +1,6 @@
 [Desktop Entry]
 Name=Espanso
+Comment=Cross-platform Text Expander written in Rust
 Exec=espanso launcher
 Icon=icon
 Type=Application

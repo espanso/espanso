@@ -34,6 +34,7 @@ pub mod modulo;
 pub mod package;
 pub mod path;
 pub mod service;
+pub mod stats;
 pub mod util;
 pub mod workaround;
 pub mod worker;

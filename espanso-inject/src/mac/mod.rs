@@ -21,7 +21,7 @@ mod raw_keys;
 
 use std::{ffi::CString, os::raw::c_char};
 
-use log::error;
+//use log::error;
 use raw_keys::convert_key_to_vkey;
 
 use anyhow::Result;

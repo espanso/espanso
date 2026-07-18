@@ -14,7 +14,7 @@ regex.workspace = true
 [build-dependencies]
 cc.workspace = true
 regex.workspace = true
-zip = "0.5.12"
+zip = { version = "0.5.12", default-features = false, features = ["deflate", "bzip2"] }
 winres = "0.1.11"
 glob.workspace = true
 

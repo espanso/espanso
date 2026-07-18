@@ -337,7 +337,7 @@ fn convert_fat_libraries_to_arm(lib_dir: &Path) {
             continue;
         }
 
-        println!("converting {} to arm", path.to_string_lossy(),);
+        println!("converting {} to arm", path.to_string_lossy());
 
         let result = std::process::Command::new("lipo")
             .args([

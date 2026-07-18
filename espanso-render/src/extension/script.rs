@@ -154,7 +154,7 @@ impl Extension for ScriptExtension {
                     ExtensionResult::Success(ExtensionOutput::Single(output))
                 }
                 Err(error) => ExtensionResult::Error(
-                    ScriptExtensionError::ExecutionFailed(args[0].to_string(), error.into()).into(),
+                    ScriptExtensionError::ExecutionFailed(args[0].clone(), error.into()).into(),
                 ),
             }
         } else {

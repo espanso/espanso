@@ -51,11 +51,13 @@ fn create_field(token: &Token, field_map: &HashMap<String, FieldConfig>) -> Fiel
                     values: config.values.clone(),
                     choice_type: ChoiceType::Dropdown,
                     default_value: config.default.clone(),
+                    separator: String::new(),
                 }),
                 FieldTypeConfig::List(config) => FieldType::Choice(ChoiceMetadata {
                     values: config.values.clone(),
                     choice_type: ChoiceType::List,
                     default_value: config.default.clone(),
+                    separator: config.separator.clone(),
                 }),
             };
 

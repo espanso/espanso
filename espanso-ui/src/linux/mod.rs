@@ -103,23 +103,23 @@ impl UIEventLoop for LinuxEventLoop {
     fn run(&self, callback: crate::UIEventCallback) -> Result<()> {
         loop {
             select! {
-              recv(self.rx) -> result => {
-                // We don't run an event loop on Linux as there is no tray icon or application window needed.
-                // Thad said, we still need a way to block this method, and thus we use a channel
-                match result {
-                  Ok(()) => {
-                    // remote.exit() called
-                    return Ok(());
-                  }
-                  Err(error) => {
-                    error!("Unable to block the LinuxEventLoop: {}", error);
-                    return Err(error.into());
-                  }
+                recv(self.rx) -> result => {
+                    // We don't run an event loop on Linux as there is no tray icon or application window needed.
+                    // Thad said, we still need a way to block this method, and thus we use a channel
+                    match result {
+                        Ok(()) => {
+                            // remote.exit() called
+                            return Ok(());
+                        }
+                        Err(error) => {
+                            error!("Unable to block the LinuxEventLoop: {}", error);
+                            return Err(error.into());
+                        }
+                    }
+                },
+                default(Duration::from_secs(1)) => {
+                    (*callback)(UIEvent::Heartbeat);
                 }
-              },
-              default(Duration::from_millis(1000)) => {
-                (*callback)(UIEvent::Heartbeat);
-              }
             }
         }
     }

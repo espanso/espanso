@@ -23,7 +23,7 @@ use std::{ffi::CString, path::PathBuf};
 
 use crate::{Clipboard, ClipboardOperationOptions};
 use anyhow::Result;
-use log::error;
+//use log::error;
 use thiserror::Error;
 use widestring::{U16CStr, U16CString};
 

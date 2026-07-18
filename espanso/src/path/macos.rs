@@ -22,7 +22,7 @@ use std::{fs::create_dir_all, io::ErrorKind};
 use thiserror::Error;
 
 use anyhow::{bail, Context, Result};
-use log::{debug, error, warn};
+use log::{debug, warn};
 
 pub fn is_espanso_in_path() -> bool {
     PathBuf::from("/usr/local/bin/espanso").is_file()
@@ -116,28 +116,24 @@ pub fn remove_espanso_from_path(prompt_when_necessary: bool) -> Result<()> {
 
     if let Err(error) = std::fs::remove_file(&target_link_path) {
         match error.kind() {
-            ErrorKind::PermissionDenied => {
-                if prompt_when_necessary {
-                    warn!("target link file can't be accessed with current permissions, requesting elevated ones through AppleScript.");
+            ErrorKind::PermissionDenied if prompt_when_necessary => {
+                warn!("target link file can't be accessed with current permissions, requesting elevated ones through AppleScript.");
 
-                    let params = format!(
-                        r#"do shell script "rm '{}'" with administrator privileges"#,
-                        target_link_path.to_string_lossy(),
-                    );
+                let params = format!(
+                    r#"do shell script "rm '{}'" with administrator privileges"#,
+                    target_link_path.to_string_lossy(),
+                );
 
-                    let mut child = std::process::Command::new("osascript")
-                        .args(["-e", &params])
-                        .spawn()?;
+                let mut child = std::process::Command::new("osascript")
+                    .args(["-e", &params])
+                    .spawn()?;
 
-                    let result = child.wait()?;
-                    if !result.success() {
-                        return Err(PathError::ElevationRequestFailure.into());
-                    }
-                } else {
-                    return Err(PathError::SymlinkError(error).into());
+                let result = child.wait()?;
+                if !result.success() {
+                    return Err(PathError::ElevationRequestFailure.into());
                 }
             }
-            _other_error => {
+            _ => {
                 return Err(PathError::SymlinkError(error).into());
             }
         }

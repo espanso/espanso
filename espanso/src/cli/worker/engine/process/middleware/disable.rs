@@ -53,6 +53,6 @@ pub fn extract_disable_options(config: &dyn Config) -> DisableOptions {
     DisableOptions {
         toggle_key,
         toggle_key_variant: variant,
-        toggle_key_maximum_window: Duration::from_millis(1000),
+        toggle_key_maximum_window: Duration::from_secs(1),
     }
 }

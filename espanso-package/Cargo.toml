@@ -10,12 +10,12 @@ anyhow.workspace = true
 thiserror.workspace = true
 serde.workspace = true
 serde_json.workspace = true
-serde_yaml.workspace = true
+serde_norway.workspace = true
 tempdir.workspace = true
 glob.workspace = true
 natord = "1.0.9"
 regex.workspace = true
-zip = "0.5.13"
+zip = { version = "0.5.13", default-features = false, features = ["deflate", "bzip2"] }
 scopeguard = "1.1.0"
 fs_extra.workspace = true
 sha2 = "0.9.6"

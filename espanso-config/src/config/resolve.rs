@@ -247,7 +247,8 @@ impl Config for ResolvedConfig {
                 "\r".to_string(),
                 "\t".to_string(),
                 "\n".to_string(),
-                "\x0c".to_string(), // Form Feed
+                "\x0c".to_string(),     // Form Feed
+                "\u{00A0}".to_string(), // Non-breaking space
             ]
         })
     }
@@ -303,6 +304,10 @@ impl Config for ResolvedConfig {
 
     fn secure_input_notification(&self) -> bool {
         self.parsed.secure_input_notification.unwrap_or(true)
+    }
+
+    fn stats_enabled(&self) -> bool {
+        self.parsed.stats_enabled.unwrap_or(false)
     }
 
     fn emulate_alt_codes(&self) -> bool {
@@ -458,7 +463,8 @@ impl ResolvedConfig {
             filter_title,
             filter_class,
             filter_exec,
-            filter_os
+            filter_os,
+            stats_enabled
         );
     }
 
@@ -473,13 +479,13 @@ impl ResolvedConfig {
 
         if let Some(yaml_includes) = config.includes.as_ref() {
             for include in yaml_includes {
-                includes.insert(include.to_string());
+                includes.insert(include.clone());
             }
         }
 
         if let Some(extra_includes) = config.extra_includes.as_ref() {
             for include in extra_includes {
-                includes.insert(include.to_string());
+                includes.insert(include.clone());
             }
         }
 
@@ -491,13 +497,13 @@ impl ResolvedConfig {
 
         if let Some(yaml_excludes) = config.excludes.as_ref() {
             for exclude in yaml_excludes {
-                excludes.insert(exclude.to_string());
+                excludes.insert(exclude.clone());
             }
         }
 
         if let Some(extra_excludes) = config.extra_excludes.as_ref() {
             for exclude in extra_excludes {
-                excludes.insert(exclude.to_string());
+                excludes.insert(exclude.clone());
             }
         }
 
