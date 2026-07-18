@@ -108,7 +108,6 @@ pub fn get_provider() -> Result<Box<dyn AppInfoProvider>> {
                 }
                 info!("wlrctl missing or not available for the current wayland DE.");
             }
-            "" => continue,
             _ => {}
         }
     }
