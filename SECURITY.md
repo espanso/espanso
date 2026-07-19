@@ -1,13 +1,10 @@
 > TODO: this document is relative to version 1 and will be updated soon for changes introduced in version 2
 >
-> Despite significant architectural differences, the following points are still a good approximation
-> of the internals.
+> Despite significant architectural differences, the following points are still a good approximation of the internals.
 
 # Security
 
-Espanso has always been designed with a strong focus on security. 
-In the following section, there is an overview of the critical security
-components.
+Espanso has always been designed with a strong focus on security. In the following section, there is an overview of the critical security components.
 
 If you have any doubt, don't hesitate to contact me.
 
@@ -15,28 +12,17 @@ If you have any doubt, don't hesitate to contact me.
 
 In its most basic form, a text expander is composed of two parts:
 
-* A **global key detector** that intercepts the keys pressed by the user, 
-in order to determine if a trigger was typed.
+* A **global key detector** that intercepts the keys pressed by the user, in order to determine if a trigger was typed.
 
-* A **key injection mechanism** that injects the
-final text into the current application, a process known as *expansion*.
+* A **key injection mechanism** that injects the final text into the current application, a process known as *expansion*.
 
-At this point, some of you may think that espanso is acting as a keylogger,
-due to the *global key detector* we mentioned before. The good news is, **it's not!**
+At this point, some of you may think that espanso is acting as a key-logger, due to the *global key detector* we mentioned before. The good news is, **it's not!**
 
-While espanso detects key presses as a keylogger would do,
-**it doesn't log anything**. Moreover, to further reduce risks, espanso only
-stores in memory the last 3 chars by default (you can change this amount by
-setting the `backspace_limit` parameter in the config) and this is needed
-to allow the user to correct wrongly typed triggers by pressing backspace,
-up to 3 characters.
+While espanso detects key presses as a keylogger would do, **it doesn't log anything**. Moreover, to further reduce risks, for regular matches, espanso only stores in memory the last five chars by default (you can change this amount by setting the `backspace_limit` parameter in the config), and this is needed to allow the user to correct wrongly typed triggers by pressing backspace, up to 5 characters. For `regex` matches the system can store up to 30 characters by default.
 
-The matching part is implemented with an efficient [data structure](https://github.com/federico-terzi/espanso/blob/master/src/matcher/scrolling.rs) 
-that keeps track of the compatible matches in a "rolling" basis. So that in the worst case scenario,
-the longest sequence of chars kept in memory would be equal to the longest trigger.
+The matching part is implemented with an efficient [data structure](https://github.com/espanso/espanso/blob/master/src/matcher/scrolling.rs) that keeps track of the compatible matches in a "rolling" basis. So that in the worst case scenario, the longest sequence of chars kept in memory would be equal to the longest trigger.
 
-And of course, if you don't trust me you can examine all the code! That's
-the wonderful thing about open source :)
+And of course, if you don't trust me you can examine all the code! That's the wonderful thing about open source :)
 
 ### Implementation
 

@@ -28,4 +28,4 @@ unsigned long ui_set_keybit();
 int setup_uinput_device(int fd);
 void uinput_emit(int fd, unsigned int code, int pressed);
 
-#endif //ESPANSO_INJECT_EV_CONSTANTS_H
+#endif // ESPANSO_INJECT_EV_CONSTANTS_H

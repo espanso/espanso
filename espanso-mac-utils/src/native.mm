@@ -25,38 +25,40 @@
 
 // Taken (with a few modifications) from the MagicKeys project: https://github.com/zsszatmari/MagicKeys
 int32_t mac_utils_get_secure_input_process(int64_t *pid) {
-  NSArray *consoleUsersArray;
-  io_service_t rootService;
-  int32_t result = 0;
+  @autoreleasepool {
+    NSArray *consoleUsersArray;
+    io_service_t rootService;
+    int32_t result = 0;
 
-  if ((rootService = IORegistryGetRootEntry(kIOMasterPortDefault)) != 0)
-  {
-    if ((consoleUsersArray = (NSArray *)IORegistryEntryCreateCFProperty((io_registry_entry_t)rootService, CFSTR("IOConsoleUsers"), kCFAllocatorDefault, 0)) != nil)
+    if ((rootService = IORegistryGetRootEntry(kIOMasterPortDefault)) != 0)
     {
-      if ([consoleUsersArray isKindOfClass:[NSArray class]])  // Be careful - ensure this really is an array
+      if ((consoleUsersArray = (NSArray *)IORegistryEntryCreateCFProperty((io_registry_entry_t)rootService, CFSTR("IOConsoleUsers"), kCFAllocatorDefault, 0)) != nil)
       {
-        for (NSDictionary *consoleUserDict in consoleUsersArray) {
-          NSNumber *secureInputPID;
+        if ([consoleUsersArray isKindOfClass:[NSArray class]])  // Be careful - ensure this really is an array
+        {
+          for (NSDictionary *consoleUserDict in consoleUsersArray) {
+            NSNumber *secureInputPID;
 
-          if ((secureInputPID = [consoleUserDict objectForKey:@"kCGSSessionSecureInputPID"]) != nil)
-          {
-            if ([secureInputPID isKindOfClass:[NSNumber class]])
+            if ((secureInputPID = [consoleUserDict objectForKey:@"kCGSSessionSecureInputPID"]) != nil)
             {
-              *pid = ((UInt64) [secureInputPID intValue]);
-              result = 1;
-              break;
+              if ([secureInputPID isKindOfClass:[NSNumber class]])
+              {
+                *pid = ((UInt64) [secureInputPID intValue]);
+                result = 1;
+                break;
+              }
             }
           }
         }
+
+        CFRelease((CFTypeRef)consoleUsersArray);
       }
 
-      CFRelease((CFTypeRef)consoleUsersArray);
+      IOObjectRelease((io_object_t) rootService);
     }
 
-    IOObjectRelease((io_object_t) rootService);
+    return result;
   }
-
-  return result;
 }
 
 int32_t mac_utils_get_path_from_pid(int64_t pid, char *buff, int buff_size) {
@@ -69,30 +71,40 @@ int32_t mac_utils_get_path_from_pid(int64_t pid, char *buff, int buff_size) {
 }
 
 int32_t mac_utils_check_accessibility() {
-  NSDictionary* opts = @{(__bridge id)kAXTrustedCheckOptionPrompt: @NO};
-  return AXIsProcessTrustedWithOptions((__bridge CFDictionaryRef)opts);
+  @autoreleasepool {
+    NSDictionary* opts = @{(__bridge id)kAXTrustedCheckOptionPrompt: @NO};
+    return AXIsProcessTrustedWithOptions((__bridge CFDictionaryRef)opts);
+  }
 }
 
 int32_t mac_utils_prompt_accessibility() {
-  NSDictionary* opts = @{(__bridge id)kAXTrustedCheckOptionPrompt: @YES};
-  return AXIsProcessTrustedWithOptions((__bridge CFDictionaryRef)opts);
+  @autoreleasepool {
+    NSDictionary* opts = @{(__bridge id)kAXTrustedCheckOptionPrompt: @YES};
+    return AXIsProcessTrustedWithOptions((__bridge CFDictionaryRef)opts);
+  }
 }
 
 void mac_utils_transition_to_foreground_app() {
-  ProcessSerialNumber psn = { 0, kCurrentProcess };
-  TransformProcessType(&psn, kProcessTransformToForegroundApplication);
+  @autoreleasepool {
+    ProcessSerialNumber psn = { 0, kCurrentProcess };
+    TransformProcessType(&psn, kProcessTransformToForegroundApplication);
 
-  [[NSApplication sharedApplication] activateIgnoringOtherApps : YES];
+    [[NSApplication sharedApplication] activateIgnoringOtherApps : YES];
+  }
 }
 
 void mac_utils_transition_to_background_app() {
-  ProcessSerialNumber psn = { 0, kCurrentProcess };
-  TransformProcessType(&psn, kProcessTransformToUIElementApplication);
+  @autoreleasepool {
+    ProcessSerialNumber psn = { 0, kCurrentProcess };
+    TransformProcessType(&psn, kProcessTransformToUIElementApplication);
+  }
 }
 
 void mac_utils_start_headless_eventloop() {
-  NSApplication * application = [NSApplication sharedApplication];
-  [NSApp run];
+  @autoreleasepool {
+    NSApplication * application = [NSApplication sharedApplication];
+    [NSApp run];
+  }
 }
 
 void mac_utils_exit_headless_eventloop() {

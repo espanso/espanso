@@ -21,24 +21,24 @@ use crate::search::config::SearchConfig;
 use crate::sys::search::types;
 
 pub fn generate(config: SearchConfig) -> types::Search {
-  let mut items: Vec<types::SearchItem> = config
-    .items
-    .into_iter()
-    .map(|item| types::SearchItem {
-      id: item.id,
-      label: item.label,
-      trigger: item.trigger,
-      search_terms: item.search_terms,
-      is_builtin: item.is_builtin,
-    })
-    .collect();
+    let mut items: Vec<types::SearchItem> = config
+        .items
+        .into_iter()
+        .map(|item| types::SearchItem {
+            id: item.id,
+            label: item.label,
+            trigger: item.trigger,
+            search_terms: item.search_terms,
+            is_builtin: item.is_builtin,
+        })
+        .collect();
 
-  items.sort_by(|a, b| a.label.as_str().cmp(b.label.as_str()));
+    items.sort_by(|a, b| a.label.as_str().cmp(b.label.as_str()));
 
-  types::Search {
-    title: config.title,
-    items,
-    icon: config.icon,
-    hint: config.hint,
-  }
+    types::Search {
+        title: config.title,
+        items,
+        icon: config.icon,
+        hint: config.hint,
+    }
 }

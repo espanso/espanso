@@ -1,34 +1,28 @@
-# Huge thanks to Alacritty, as their configuration served as a starting point for this one!
-# See: https://github.com/alacritty/alacritty
-
 name: Dev Release
 
 on:
   push:
+    paths-ignore:
+      - '.devcontainer/**'
+      - '.github/ISSUE_TEMPLATE/**'
+      - '.vscode/**'
+      - 'docs/**'
+      - 'images/**'
+      - 'schema/**'
+      - 'README.md'
     branches:
       - dev
+
+defaults:
+  run:
+    shell: bash
 
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   CARGO_TERM_COLOR: always
 
 jobs:
-  extract-version:
-    name: extract-version
-    runs-on: ubuntu-latest
-    outputs:
-      espanso_version: ${{ steps.version.outputs.version }}
-    steps:
-      - uses: actions/checkout@v2
-      - name: "Extract version"
-        id: "version"
-        run: |
-          ESPANSO_VERSION=$(grep '^version' espanso/Cargo.toml | awk -F '"' '{ print $2 }')
-          echo version: $ESPANSO_VERSION
-          echo "::set-output name=version::v$ESPANSO_VERSION"
-
   windows:
-    needs: ["extract-version"]
     runs-on: windows-latest
 
     defaults:
@@ -36,151 +30,192 @@ jobs:
         shell: bash
 
     steps:
-      - uses: actions/checkout@v2
-      - name: Print target version
+      - uses: actions/cache@main
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - uses: actions/checkout@main
+      - name: Build
         run: |
-          echo Using version ${{ needs.extract-version.outputs.espanso_version }}
-      - name: Install rust-script and cargo-make
-        run: |
-          cargo install rust-script --version "0.7.0"
-          cargo install --force cargo-make --version 0.34.0
+          cargo build --release
       - name: Test
-        run: cargo make test-binary --profile release
+        run: |
+          cargo test \
+            --release \
+            --workspace \
+            --exclude espanso-modulo \
+            --exclude espanso-ipc \
+            --no-default-features \
+            --features native-tls
       - name: Build resources
-        run: cargo make build-windows-resources --profile release
+        shell: pwsh
+        run: |
+            $env:EXEC_PATH = "target\release\espanso.exe"
+            scripts\build_windows_resources.ps1
+      - name: Download and install Inno Setup (missing in Windows Server 2025)
+        run: choco install innosetup --no-progress
       - name: Build installer
-        run: cargo make build-windows-installer --profile release --skip-tasks build-windows-resources
-      - name: Build portable mode archive 
-        run: cargo make build-windows-portable --profile release --skip-tasks build-windows-resources
-      - name: Create portable mode archive
-        shell: powershell
+        shell: pwsh
         run: |
-          Rename-Item target/windows/portable espanso-portable
-          Compress-Archive target/windows/espanso-portable target/windows/Espanso-Win-Portable-x86_64.zip
-      - name: Calculate hashes
-        shell: powershell
+            Install-Module -Name 'PSTOML' -Force
+            scripts\build_windows_installer.ps1
+      - name: Build portable mode archive
+        shell: pwsh
         run: |
-          Get-FileHash target/windows/Espanso-Win-Portable-x86_64.zip -Algorithm SHA256 | select-object -ExpandProperty Hash > target/windows/Espanso-Win-Portable-x86_64.zip.sha256.txt
-          Get-FileHash target/windows/installer/Espanso-Win-Installer-x86_64.exe -Algorithm SHA256 | select-object -ExpandProperty Hash > target/windows/installer/Espanso-Win-Installer-x86_64.exe.sha256.txt
-      - uses: actions/upload-artifact@v2
+            scripts\build_windows_portable.ps1
+      - uses: actions/upload-artifact@main
         name: "Upload artifacts"
         with:
           name: Windows Artifacts
           path: |
-            target/windows/installer/Espanso-Win-Installer-x86_64.exe
+            target/windows/Espanso-Win-Installer-x86_64.exe
             target/windows/Espanso-Win-Portable-x86_64.zip
-            target/windows/installer/Espanso-Win-Installer-x86_64.exe.sha256.txt
-            target/windows/Espanso-Win-Portable-x86_64.zip.sha256.txt
-  
+
   linux-x11:
-    needs: ["extract-version"]
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
-      - name: Print target version
+      - uses: actions/cache@main
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - uses: actions/checkout@main
+      - name: Install Linux dependencies
         run: |
-          echo Using version ${{ needs.extract-version.outputs.espanso_version }}
+          sudo apt-get update
+          sudo apt-get install -y libx11-dev libxtst-dev libxkbcommon-dev libdbus-1-dev libwxgtk3.2-dev
       - name: Build docker image
         run: |
-          sudo docker build -t espanso-ubuntu . -f .github/scripts/ubuntu/Dockerfile
+          sudo docker build -t espanso-ubuntu . -f .github/scripts/Dockerfile
+      - name: Build
+        run: |
+          cargo build \
+            -p espanso \
+            --release \
+            --no-default-features \
+            --features vendored-tls,modulo
       - name: Build AppImage
         run: |
-          sudo docker run --rm -v "$(pwd):/shared" espanso-ubuntu espanso/.github/scripts/ubuntu/build_appimage.sh
-      - uses: actions/upload-artifact@v2
+          sudo docker run \
+            --rm \
+            -v "$(pwd):/shared" \
+            espanso-ubuntu \
+            espanso/.github/scripts/ubuntu/build_appimage.sh
+      - uses: actions/upload-artifact@main
         name: "Upload artifacts"
         with:
-          name: Linux X11 Artifacts
+          name: Linux X11 AppImage Artifact
           path: |
             Espanso-X11.AppImage
-            Espanso-X11.AppImage.sha256.txt
-  
+
   linux-deb:
-    needs: ["extract-version"]
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
-      - name: Print target version
+      - uses: actions/cache@main
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - uses: actions/checkout@main
+      - name: Install Linux dependencies
         run: |
-          echo Using version ${{ needs.extract-version.outputs.espanso_version }}
+          sudo apt-get update
+          sudo apt-get install -y libx11-dev libxtst-dev libxkbcommon-dev libdbus-1-dev libwxgtk3.2-dev
+      - name: Build
+        run: |
+          cargo build \
+            -p espanso \
+            --release \
+            --no-default-features \
+            --features vendored-tls,modulo
       - name: Build docker image
         run: |
-          sudo docker build -t espanso-ubuntu . -f .github/scripts/ubuntu/Dockerfile
+          sudo docker build -t espanso-ubuntu . -f .github/scripts/Dockerfile
       - name: Build Deb packages
         run: |
           sudo docker run --rm -v "$(pwd):/shared" espanso-ubuntu espanso/.github/scripts/ubuntu/build_deb.sh
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@main
         name: "Upload artifacts"
         with:
-          name: Ubuntu-Debian Artifacts
+          name: Linux Deb Artifacts
           path: |
             espanso-debian-x11-amd64.deb
             espanso-debian-wayland-amd64.deb
 
-
-  macos-intel:
-    needs: ["extract-version"]
-    runs-on: macos-11
+  macos:
+    runs-on: macos-latest
 
     steps:
-      - uses: actions/checkout@v2
-      - name: Print target version
-        run: |
-          echo Using version ${{ needs.extract-version.outputs.espanso_version }}
-      - name: Install rust-script and cargo-make
-        run: |
-          cargo install rust-script --version "0.7.0"
-          cargo install --force cargo-make --version 0.34.0
+      - uses: actions/cache@main
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - uses: actions/checkout@main
       - name: Test
-        run: cargo make test-binary --profile release
-        env:
-          MACOSX_DEPLOYMENT_TARGET: "10.13"
+        run: |
+          rustup target add x86_64-apple-darwin
+          cargo test \
+            -p espanso \
+            --target x86_64-apple-darwin \
+            --no-default-features \
+            --features native-tls,modulo
+          cargo test \
+            -p espanso \
+            --target aarch64-apple-darwin \
+            --no-default-features \
+            --features native-tls,modulo
       - name: Build
-        run: cargo make create-bundle --profile release
-        env:
-          MACOSX_DEPLOYMENT_TARGET: "10.13"
+        run: |
+          rustup target add x86_64-apple-darwin
+          cargo build \
+            -p espanso \
+            --target x86_64-apple-darwin \
+            --release \
+            --no-default-features \
+            --features native-tls,modulo
+          cargo build \
+            -p espanso \
+            --target aarch64-apple-darwin \
+            --release \
+            --no-default-features \
+            --features native-tls,modulo
+          bash ./scripts/create_bundle.sh
       - name: Create ZIP archive
         run: |
-          ditto -c -k --sequesterRsrc --keepParent target/mac/Espanso.app Espanso-Mac-Intel.zip
-      - name: Calculate hashes
-        run: |
-          shasum -a 256 Espanso-Mac-Intel.zip > Espanso-Mac-Intel.zip.sha256.txt
-      - uses: actions/upload-artifact@v2
+          ditto -c -k --sequesterRsrc --keepParent target/mac/Espanso.app Espanso-Mac-Universal.zip
+      - uses: actions/upload-artifact@main
         name: "Upload artifacts"
         with:
-          name: Mac Intel Artifacts
+          name: MacOS Artifacts
           path: |
-            Espanso-Mac-Intel.zip
-            Espanso-Mac-Intel.zip.sha256.txt
-  
-  macos-m1:
-    needs: ["extract-version"]
-    runs-on: macos-11
+            Espanso-Mac-Universal.zip
 
+  snap:
+    runs-on: ubuntu-latest
+    outputs:
+      snap-file: ${{ steps.build-snap.outputs.snap }}
     steps:
-      - uses: actions/checkout@v2
-      - name: Print target version
-        run: |
-          echo Using version ${{ needs.extract-version.outputs.espanso_version }}
-      - name: Install rust target
-        run: rustup update && rustup target add aarch64-apple-darwin
-      - name: Install rust-script and cargo-make
-        run: |
-          cargo install rust-script --version "0.7.0"
-          cargo install --force cargo-make --version 0.34.0
-      - name: Build
-        run: cargo make create-bundle --profile release --env BUILD_ARCH=aarch64-apple-darwin
-      - name: Create ZIP archive
-        run: |
-          ditto -c -k --sequesterRsrc --keepParent target/mac/Espanso.app Espanso-Mac-M1.zip
-      - name: Calculate hashes
-        run: |
-          shasum -a 256 Espanso-Mac-M1.zip > Espanso-Mac-M1.zip.sha256.txt
-      - uses: actions/upload-artifact@v2
-        name: "Upload artifacts"
-        with:
-          name: Mac M1 Artifacts
-          path: |
-            Espanso-Mac-M1.zip
-            Espanso-Mac-M1.zip.sha256.txt
+    - uses: actions/checkout@v7
+    - uses: snapcore/action-build@v1
+      id: build-snap
+    - run: |
+        sudo snap install --classic --dangerous ${{ steps.build-snap.outputs.snap }}
+    - uses: snapcore/action-publish@v1
+      if: startsWith(github.ref, 'refs/tags/')
+      env:
+        SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.STORE_LOGIN }}
+      with:
+        snap: ${{ steps.build-snap.outputs.snap }}
+        release: candidate

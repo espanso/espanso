@@ -1,0 +1,276 @@
+name: Create release draft
+
+on: workflow_dispatch
+
+env:
+  GH_TOKEN: ${{ github.token }}
+
+jobs:
+  set-context:
+    continue-on-error: false
+    env:
+      GITHUB_REF: ${{ github.ref_name }}
+      GITHUB_CONTEXT: ${{ toJson(github) }}
+      SET_RELEASE_VERSION: ${{ github.event.inputs.set-release-version }}
+    name: set-context
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check trigger branch
+        run: |
+          if [ $(echo "${GITHUB_REF}" | grep -Ec "^refs/heads/dev$") -eq 1 ] ; then
+            echo "  - ✅ The branch triggering this workflow is ${GITHUB_REF}."
+          else
+            echo "  - ❌ The branch triggering this workflow is ${GITHUB_REF} instead of refs/heads/dev"
+            exit 1
+          fi
+  extract-version:
+    name: extract-version
+    needs: "set-context"
+    continue-on-error: false
+    runs-on: ubuntu-latest
+    outputs:
+      espanso_version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/cache@main
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - uses: actions/checkout@main
+      - name: "Extract version"
+        id: "version"
+        run: |
+          ESPANSO_VERSION=$(grep '^version' espanso/Cargo.toml | awk -F '"' '{ print $2 }')
+          echo version: $ESPANSO_VERSION
+          echo "version=v${ESPANSO_VERSION}" >> "${GITHUB_OUTPUT}"
+        # example output: v2.2.1
+
+  create-release:
+    name: create-release
+    needs: ["extract-version"]
+    runs-on: ubuntu-latest
+    continue-on-error: false
+    steps:
+      - uses: actions/cache@main
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - uses: actions/checkout@main
+      - name: Create new release
+        # gh release create docs: https://cli.github.com/manual/gh_release_create
+        run: |
+          COMMIT_HASH=$(git rev-list --max-count=1 HEAD)
+          echo "Creating release: ${{ needs.extract-version.outputs.espanso_version }}"
+          echo "for hash: $COMMIT_HASH"
+          gh release create ${{ needs.extract-version.outputs.espanso_version }} \
+            --title ${{ needs.extract-version.outputs.espanso_version }} \
+            --notes "Automatically released by CI" \
+            --verify-tag \
+            --prerelease \
+            --target $COMMIT_HASH
+
+  windows:
+    needs: ["extract-version", "create-release"]
+    runs-on: windows-latest
+    continue-on-error: false
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - uses: actions/cache@main
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - uses: actions/checkout@main
+      - name: Print target version
+        run: |
+          echo Using version ${{ needs.extract-version.outputs.espanso_version }}
+      - name: Build
+        run: |
+          cargo build \
+            -p espanso \
+            --no-default-features \
+            --features modulo,native-tls \
+            --release
+      - name: Test
+        run: |
+          cargo test \
+            --release \
+            --workspace \
+            --exclude espanso-modulo \
+            --exclude espanso-ipc \
+            --no-default-features \
+            --features native-tls
+      - name: Build resources
+        shell: pwsh
+        run: |
+          $env:EXEC_PATH = "target\release\espanso.exe"
+          scripts\build_windows_resources.ps1
+      - name: Download and install Inno Setup (missing in Windows Server 2025)
+        run: choco install innosetup --no-progress
+      - name: Build installer
+        shell: pwsh
+        run: |
+          Install-Module -Name 'PSTOML' -Force
+          scripts\build_windows_installer.ps1
+      - name: Build portable mode archive
+        shell: pwsh
+        run: |
+          scripts\build_windows_portable.ps1
+      - uses: actions/upload-artifact@main
+        id: upload-artifact-windows
+        name: upload-unsigned-artifact
+        with:
+          name: Windows Artifacts
+          path: |
+            target/windows/Espanso-Win-Installer-x86_64.exe
+            target/windows/Espanso-Win-Portable-x86_64.zip
+      - id: sign-windows-release
+        uses: signpath/github-action-submit-signing-request@v2
+        with:
+          api-token: "${{ secrets.SIGNPATH_API_TOKEN }}"
+          organization-id: "e86b1459-62fc-4c7c-aac9-185d60749a03"
+          project-slug: "espanso"
+          signing-policy-slug: "release-signing"
+          github-artifact-id: ${{ steps.upload-artifact-windows.outputs.artifact-id }}
+          wait-for-completion: true
+          output-artifact-directory: "."
+          parameters: |
+            version: "${{ needs.extract-version.outputs.espanso_version }}"
+      - name: Upload artifacts to Github Releases
+        run: |
+          gh release upload ${{ needs.extract-version.outputs.espanso_version }} Espanso-Win-Installer-x86_64.exe Espanso-Win-Portable-x86_64.zip
+
+  linux-x11:
+    needs: ["extract-version", "create-release"]
+    runs-on: ubuntu-latest
+    continue-on-error: false
+
+    steps:
+      - uses: actions/cache@main
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - uses: actions/checkout@main
+      - name: Print target version
+        run: |
+          echo Using version ${{ needs.extract-version.outputs.espanso_version }}
+      - name: Build docker image
+        run: |
+          sudo docker build -t espanso-ubuntu . -f .github/scripts/Dockerfile
+      - name: Build AppImage
+        run: |
+          sudo docker run --rm -v "$(pwd):/shared" espanso-ubuntu espanso/.github/scripts/ubuntu/build_appimage.sh
+      - uses: actions/upload-artifact@main
+        name: upload-unsigned-artifact
+        with:
+          name: Linux X11 AppImage Artifact
+          path: |
+            Espanso-X11.AppImage
+      - name: Upload artifacts to Github Releases
+        run: |
+          gh release upload ${{ needs.extract-version.outputs.espanso_version }} Espanso-X11.AppImage
+
+  linux-deb:
+    needs: ["extract-version", "create-release"]
+    runs-on: ubuntu-latest
+    continue-on-error: false
+
+    steps:
+      - uses: actions/cache@main
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - uses: actions/checkout@main
+      - name: Print target version
+        run: |
+          echo Using version ${{ needs.extract-version.outputs.espanso_version }}
+      - name: Build docker image
+        run: |
+          sudo docker build -t espanso-ubuntu . -f .github/scripts/Dockerfile
+      - name: Build Deb packages
+        run: |
+          sudo docker run --rm -v "$(pwd):/shared" espanso-ubuntu espanso/.github/scripts/ubuntu/build_deb.sh
+      - uses: actions/upload-artifact@main
+        name: upload-unsigned-artifact
+        with:
+          name: Linux Deb Artifacts
+          path: |
+            espanso-debian-x11-amd64.deb
+            espanso-debian-wayland-amd64.deb
+      - name: Upload artifacts to Github Releases
+        run: |
+          gh release upload ${{ needs.extract-version.outputs.espanso_version }} espanso-debian-x11-amd64.deb espanso-debian-wayland-amd64.deb
+
+  macos:
+    needs: ["extract-version", "create-release"]
+    runs-on: macos-latest
+    continue-on-error: false
+
+    steps:
+      - uses: actions/cache@main
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - uses: actions/checkout@main
+      - name: Print target version
+        run: |
+          echo Using version ${{ needs.extract-version.outputs.espanso_version }}
+      - name: Test
+        run: |
+          rustup target add x86_64-apple-darwin
+          cargo test \
+            -p espanso \
+            --target x86_64-apple-darwin \
+            --no-default-features \
+            --features native-tls,modulo
+          cargo test \
+            -p espanso \
+            --target aarch64-apple-darwin \
+            --no-default-features \
+            --features native-tls,modulo
+      - name: Build
+        run: |
+          rustup target add x86_64-apple-darwin
+          cargo build \
+            -p espanso \
+            --target x86_64-apple-darwin \
+            --release \
+            --no-default-features \
+            --features native-tls,modulo
+          cargo build \
+            -p espanso \
+            --target aarch64-apple-darwin \
+            --release \
+            --no-default-features \
+            --features native-tls,modulo
+          bash ./scripts/create_bundle.sh
+      - name: Create DMG archive
+        run: |
+          hdiutil create -volname "Espanso" \
+            -srcfolder target/mac/Espanso.app \
+            -ov -format UDZO \
+            Espanso-Mac-Universal.dmg
+
+      - name: Upload artifacts to Github Releases
+        run: |
+          gh release upload ${{ needs.extract-version.outputs.espanso_version }} Espanso-Mac-Universal.dmg

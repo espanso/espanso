@@ -1,0 +1,17 @@
+# Summary
+
+- [Introduction](./ch01-introduction.md)
+- [General guidelines](./ch02-00-general-guidelines.md)
+  - [Platform support](./ch02-01-platform-tiers.md)
+  - [Triage method](./ch02-02-triage-method.md)
+- [Building and compilation](./ch03-00-building-and-compilation.md)
+  - [Windows](./ch03-01-windows.md)
+  - [macOS](./ch03-02-macos.md)
+  - [linux](./ch03-03-linux.md)
+- [General documentation](./ch04-00-general-documentation.md)
+  - [Creating a PR](./ch04-01-creating-a-pr.md)
+  - [Dev recipes and cookbook](./ch04-02-recipes-and-cookbook.md)
+  - [Creating a release](./ch04-03-creating-a-release.md)
+- [Extra](./ch05-00-extra.md)
+  - [Manual testing](./ch05-01-manual-testing.md)
+  - [Schemas](./ch05-02-schemas.md)

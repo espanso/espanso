@@ -22,7 +22,7 @@
 
 #include <stdint.h>
 
-extern "C" int32_t info_get_title(wchar_t * buffer, int32_t buffer_size);
-extern "C" int32_t info_get_exec(wchar_t * buffer, int32_t buffer_size);
+extern "C" int32_t info_get_title(wchar_t *buffer, int32_t buffer_size);
+extern "C" int32_t info_get_exec(wchar_t *buffer, int32_t buffer_size);
 
-#endif //ESPANSO_INFO_H
+#endif // ESPANSO_INFO_H

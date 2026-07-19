@@ -21,7 +21,7 @@ use std::sync::atomic::{AtomicI32, Ordering};
 
 thread_local! {
   // TODO: if thread local, we probably don't need an atomic
-  static STRUCT_COUNTER: AtomicI32 = AtomicI32::new(0);
+  static STRUCT_COUNTER: AtomicI32 = const { AtomicI32::new(0) };
 }
 
 pub type StructId = i32;
@@ -30,5 +30,5 @@ pub type StructId = i32;
 /// In order to generate it, we use an atomic static variable
 /// that is incremented for each struct.
 pub fn next_id() -> StructId {
-  STRUCT_COUNTER.with(|count| count.fetch_add(1, Ordering::SeqCst))
+    STRUCT_COUNTER.with(|count| count.fetch_add(1, Ordering::SeqCst))
 }

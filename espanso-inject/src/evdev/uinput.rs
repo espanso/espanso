@@ -27,86 +27,86 @@ use log::error;
 use thiserror::Error;
 
 use super::ffi::{
-  setup_uinput_device, ui_dev_create, ui_dev_destroy, ui_set_evbit, ui_set_keybit, uinput_emit,
-  EV_KEY,
+    setup_uinput_device, ui_dev_create, ui_dev_destroy, ui_set_evbit, ui_set_keybit, uinput_emit,
+    EV_KEY,
 };
 
 pub struct UInputDevice {
-  fd: i32,
+    fd: i32,
 }
 
 impl UInputDevice {
-  pub fn new() -> Result<UInputDevice> {
-    let uinput_path = CString::new("/dev/uinput").expect("unable to generate /dev/uinput path");
-    let raw_fd = unsafe { open(uinput_path.as_ptr(), O_WRONLY | O_NONBLOCK) };
-    if raw_fd < 0 {
-      error!("Error: could not open uinput device");
-      error!("This might be due to a recent kernel update, please restart your PC so that the uinput module can be loaded correctly.");
+    pub fn new() -> Result<UInputDevice> {
+        let uinput_path = CString::new("/dev/uinput").expect("unable to generate /dev/uinput path");
+        let raw_fd = unsafe { open(uinput_path.as_ptr(), O_WRONLY | O_NONBLOCK) };
+        if raw_fd < 0 {
+            error!("Error: could not open uinput device");
+            error!("This might be due to a recent kernel update, please restart your PC so that the uinput module can be loaded correctly.");
 
-      return Err(UInputDeviceError::Open().into());
+            return Err(UInputDeviceError::Open().into());
+        }
+        let fd = scopeguard::guard(raw_fd, |raw_fd| unsafe {
+            close(raw_fd);
+        });
+
+        // Enable keyboard events
+        if unsafe { ioctl(*fd, ui_set_evbit(), EV_KEY as c_uint) } != 0 {
+            return Err(UInputDeviceError::KeyEVBit().into());
+        }
+
+        // Register all keycodes
+        for key_code in 0..256 {
+            if unsafe { ioctl(*fd, ui_set_keybit(), key_code) } != 0 {
+                return Err(UInputDeviceError::KeyBit().into());
+            }
+        }
+
+        // Register the virtual device
+        if unsafe { setup_uinput_device(*fd) } != 0 {
+            return Err(UInputDeviceError::DeviceSetup().into());
+        }
+
+        // Create the device
+        if unsafe { ioctl(*fd, ui_dev_create()) } != 0 {
+            return Err(UInputDeviceError::DeviceCreate().into());
+        }
+
+        Ok(Self {
+            fd: ScopeGuard::into_inner(fd),
+        })
     }
-    let fd = scopeguard::guard(raw_fd, |raw_fd| unsafe {
-      close(raw_fd);
-    });
 
-    // Enable keyboard events
-    if unsafe { ioctl(*fd, ui_set_evbit(), EV_KEY as c_uint) } != 0 {
-      return Err(UInputDeviceError::KeyEVBit().into());
+    pub fn emit(&self, key_code: u32, pressed: bool) {
+        let pressed = i32::from(pressed);
+        unsafe {
+            uinput_emit(self.fd, key_code, pressed);
+        }
     }
-
-    // Register all keycodes
-    for key_code in 0..256 {
-      if unsafe { ioctl(*fd, ui_set_keybit(), key_code) } != 0 {
-        return Err(UInputDeviceError::KeyBit().into());
-      }
-    }
-
-    // Register the virtual device
-    if unsafe { setup_uinput_device(*fd) } != 0 {
-      return Err(UInputDeviceError::DeviceSetup().into());
-    }
-
-    // Create the device
-    if unsafe { ioctl(*fd, ui_dev_create()) } != 0 {
-      return Err(UInputDeviceError::DeviceCreate().into());
-    }
-
-    Ok(Self {
-      fd: ScopeGuard::into_inner(fd),
-    })
-  }
-
-  pub fn emit(&self, key_code: u32, pressed: bool) {
-    let pressed = i32::from(pressed);
-    unsafe {
-      uinput_emit(self.fd, key_code, pressed);
-    }
-  }
 }
 
 impl Drop for UInputDevice {
-  fn drop(&mut self) {
-    unsafe {
-      ioctl(self.fd, ui_dev_destroy());
-      close(self.fd);
+    fn drop(&mut self) {
+        unsafe {
+            ioctl(self.fd, ui_dev_destroy());
+            close(self.fd);
+        }
     }
-  }
 }
 
 #[derive(Error, Debug)]
 pub enum UInputDeviceError {
-  #[error("could not open uinput device")]
-  Open(),
+    #[error("could not open uinput device")]
+    Open(),
 
-  #[error("could not set keyboard evbit")]
-  KeyEVBit(),
+    #[error("could not set keyboard evbit")]
+    KeyEVBit(),
 
-  #[error("could not set keyboard keybit")]
-  KeyBit(),
+    #[error("could not set keyboard keybit")]
+    KeyBit(),
 
-  #[error("could not register virtual device")]
-  DeviceSetup(),
+    #[error("could not register virtual device")]
+    DeviceSetup(),
 
-  #[error("could not create uinput device")]
-  DeviceCreate(),
+    #[error("could not create uinput device")]
+    DeviceCreate(),
 }

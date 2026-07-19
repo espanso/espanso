@@ -29,49 +29,48 @@
 #define INPUT_STATUS_PRESSED 1
 #define INPUT_STATUS_RELEASED 2
 
-typedef struct
-{
-  // Keyboard, Mouse or Hotkey event
-  int32_t event_type;
+typedef struct {
+    // Keyboard, Mouse or Hotkey event
+    int32_t event_type;
 
-  // Contains the string corresponding to the key, if any
-  char buffer[24];
-  // Length of the extracted string. Equals 0 if no string is extracted
-  int32_t buffer_len;
+    // Contains the string corresponding to the key, if any
+    char buffer[24];
+    // Length of the extracted string. Equals 0 if no string is extracted
+    int32_t buffer_len;
 
-  // Code of the pressed key.
-  int32_t key_sym;
+    // Code of the pressed key.
+    int32_t key_sym;
 
-  // Virtual key code of the pressed key in case of keyboard events
-  // Mouse button code for mouse events.
-  int32_t key_code;
+    // Virtual key code of the pressed key in case of keyboard events
+    // Mouse button code for mouse events.
+    int32_t key_code;
 
-  // Pressed or Released status
-  int32_t status;
+    // Pressed or Released status
+    int32_t status;
 
-  // Keycode state (modifiers) in a Hotkey event
-  uint32_t state;
+    // Keycode state (modifiers) in a Hotkey event
+    uint32_t state;
 } InputEvent;
 
 typedef struct {
-  int32_t key_sym;
-  int32_t ctrl;
-  int32_t alt;
-  int32_t shift;
-  int32_t meta;
+    int32_t key_sym;
+    int32_t ctrl;
+    int32_t alt;
+    int32_t shift;
+    int32_t meta;
 } HotKeyRequest;
 
 typedef struct {
-  int32_t success;
-  int32_t key_code;
-  uint32_t state;
+    int32_t success;
+    int32_t key_code;
+    uint32_t state;
 } HotKeyResult;
 
 typedef struct {
-  int32_t ctrl;
-  int32_t alt;
-  int32_t shift;
-  int32_t meta;
+    int32_t ctrl;
+    int32_t alt;
+    int32_t shift;
+    int32_t meta;
 } ModifierIndexes;
 
 typedef void (*EventCallback)(void *rust_istance, InputEvent data);
@@ -86,7 +85,9 @@ extern "C" void *detect_initialize(void *rust_istance, int32_t *error_code);
 extern "C" ModifierIndexes detect_get_modifier_indexes(void *context);
 
 // Register the given hotkey
-extern "C" HotKeyResult detect_register_hotkey(void *context, HotKeyRequest request, ModifierIndexes mod_indexes);
+extern "C" HotKeyResult detect_register_hotkey(void *context,
+                                               HotKeyRequest request,
+                                               ModifierIndexes mod_indexes);
 
 // Run the event loop. Blocking call.
 extern "C" int32_t detect_eventloop(void *context, EventCallback callback);
@@ -94,4 +95,4 @@ extern "C" int32_t detect_eventloop(void *context, EventCallback callback);
 // Unregister from the XRecord API and destroy the context.
 extern "C" int32_t detect_destroy(void *context);
 
-#endif //ESPANSO_DETECT_H
+#endif // ESPANSO_DETECT_H

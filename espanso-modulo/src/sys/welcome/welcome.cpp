@@ -23,94 +23,86 @@
 #include "../interop/interop.h"
 #include "./welcome_gui.h"
 
-#include <vector>
 #include <memory>
 #include <unordered_map>
+#include <vector>
 
 WelcomeMetadata *welcome_metadata = nullptr;
 
 // App Code
 
-class WelcomeApp : public wxApp
-{
-public:
-  virtual bool OnInit();
+class WelcomeApp : public wxApp {
+  public:
+    virtual bool OnInit();
 };
 
-class DerivedWelcomeFrame : public WelcomeFrame
-{
-protected:
-  void on_dont_show_change( wxCommandEvent& event );
-  void on_complete( wxCommandEvent& event );
+class DerivedWelcomeFrame : public WelcomeFrame {
+  protected:
+    void on_dont_show_change(wxCommandEvent &event);
+    void on_complete(wxCommandEvent &event);
 
-public:
-  DerivedWelcomeFrame(wxWindow *parent);
+  public:
+    DerivedWelcomeFrame(wxWindow *parent);
 };
 
 DerivedWelcomeFrame::DerivedWelcomeFrame(wxWindow *parent)
-    : WelcomeFrame(parent)
-{
-  // Welcome images
+    : WelcomeFrame(parent) {
+    // Welcome images
 
-  if (welcome_metadata->tray_image_path)
-  {
-    wxBitmap trayBitmap = wxBitmap(wxString::FromUTF8(welcome_metadata->tray_image_path), wxBITMAP_TYPE_PNG);
-    this->tray_bitmap->SetBitmap(trayBitmap);
-    #ifdef __WXOSX__
-      this->tray_info_label->SetLabel("You should see the espanso icon on the status bar:");
-    #endif
-  }
-  else 
-  {
-    this->tray_info_label->Hide();
-  }
+    if (welcome_metadata->tray_image_path) {
+        wxBitmap trayBitmap =
+            wxBitmap(wxString::FromUTF8(welcome_metadata->tray_image_path),
+                     wxBITMAP_TYPE_PNG);
+        this->tray_bitmap->SetBitmap(trayBitmap);
+#ifdef __WXOSX__
+        this->tray_info_label->SetLabel(
+            "You should see the espanso icon on the status bar:");
+#endif
+    } else {
+        this->tray_info_label->Hide();
+    }
 
-  this->dont_show_checkbox->Hide();
+    this->dont_show_checkbox->Hide();
 
-  if (welcome_metadata->already_running) {  
-    this->title_label->SetLabel("Espanso is already running!");
-  }
+    if (welcome_metadata->already_running) {
+        this->title_label->SetLabel("Espanso is already running!");
+    }
 }
 
-void DerivedWelcomeFrame::on_dont_show_change( wxCommandEvent& event ) {
-  if (welcome_metadata->dont_show_again_changed) {
-    int value = this->dont_show_checkbox->IsChecked() ? 1 : 0;
-    welcome_metadata->dont_show_again_changed(value);
-  }
+void DerivedWelcomeFrame::on_dont_show_change(wxCommandEvent &event) {
+    if (welcome_metadata->dont_show_again_changed) {
+        int value = this->dont_show_checkbox->IsChecked() ? 1 : 0;
+        welcome_metadata->dont_show_again_changed(value);
+    }
 }
 
-void DerivedWelcomeFrame::on_complete( wxCommandEvent& event ) {
-  Close(true);
+void DerivedWelcomeFrame::on_complete(wxCommandEvent &event) { Close(true); }
+
+bool WelcomeApp::OnInit() {
+    wxInitAllImageHandlers();
+    DerivedWelcomeFrame *frame = new DerivedWelcomeFrame(NULL);
+
+    if (welcome_metadata->window_icon_path) {
+        setFrameIcon(wxString::FromUTF8(welcome_metadata->window_icon_path),
+                     frame);
+    }
+
+    frame->Show(true);
+
+    Activate(frame);
+
+    return true;
 }
 
-
-bool WelcomeApp::OnInit()
-{
-  wxInitAllImageHandlers();
-  DerivedWelcomeFrame *frame = new DerivedWelcomeFrame(NULL);
-
-  if (welcome_metadata->window_icon_path)
-  {
-    setFrameIcon(wxString::FromUTF8(welcome_metadata->window_icon_path), frame);
-  }
-
-  frame->Show(true);
-
-  Activate(frame);
-
-  return true;
-}
-
-extern "C" void interop_show_welcome(WelcomeMetadata *_metadata)
-{
+extern "C" void interop_show_welcome(WelcomeMetadata *_metadata) {
 // Setup high DPI support on Windows
 #ifdef __WXMSW__
-  SetProcessDPIAware();
+    SetProcessDPIAware();
 #endif
 
-  welcome_metadata = _metadata;
+    welcome_metadata = _metadata;
 
-  wxApp::SetInstance(new WelcomeApp());
-  int argc = 0;
-  wxEntry(argc, (char **)nullptr);
+    wxApp::SetInstance(new WelcomeApp());
+    int argc = 0;
+    wxEntry(argc, (char **)nullptr);
 }

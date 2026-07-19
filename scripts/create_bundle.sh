@@ -1,24 +1,41 @@
-set -e
+#!/usr/bin/env bash
 
-FINAL_EXEC_PATH=$EXEC_PATH
+# Creates an app bundle for MacOS
+#
+# Optionally accepts a path to an espanso executable as the first argument: if
+# not provided, by default it expects to find release binaries for both
+# x86_64-darwin and aarch64-darwin and package these in a universal binary for
+# the app bundle
 
-if [ $BUILD_ARCH != "current" ]; then
-  FINAL_EXEC_PATH=$(echo $EXEC_PATH | sed "s/target\//target\/$BUILD_ARCH\//g")
-fi
+set -Eeuf -o pipefail
 
-TARGET_DIR=target/mac/Espanso.app
+readonly TARGET_DIR=target/mac/Espanso.app
 
-rm -Rf $TARGET_DIR
+main() {
+  # Pass in the binary to bundle as "$1"; default to universal
+  local espanso_bin=${1:-universal}
 
-VERSION=$(cat espanso/Cargo.toml | grep version | head -1 | awk -F '"' '{ print $2 }')
+  rm -rf -- "${TARGET_DIR}"
 
-mkdir -p $TARGET_DIR/Contents
-mkdir -p $TARGET_DIR/Contents/MacOS
-mkdir -p $TARGET_DIR/Contents/Resources
+  local VERSION=$(awk -F '"' '/^version/ { print $2; exit }' espanso/Cargo.toml)
 
-sed	-e "s/VERSION/$VERSION/" espanso/src/res/macos/Info.plist > $TARGET_DIR/Contents/Info.plist
+  mkdir -p "${TARGET_DIR}"/Contents
+  mkdir -p "${TARGET_DIR}"/Contents/MacOS
+  mkdir -p "${TARGET_DIR}"/Contents/Resources
 
-/bin/echo "APPL????" > $TARGET_DIR/Contents/PkgInfo
+  sed -e "s/VERSION/${VERSION}/" espanso/src/res/macos/Info.plist > "${TARGET_DIR}"/Contents/Info.plist
 
-cp -f espanso/src/res/macos/icon.icns $TARGET_DIR/Contents/Resources/icon.icns
-cp -f $FINAL_EXEC_PATH $TARGET_DIR/Contents/MacOS/espanso
+  /bin/echo "APPL????" > "${TARGET_DIR}"/Contents/PkgInfo
+
+  cp -f espanso/src/res/macos/icon.icns "${TARGET_DIR}"/Contents/Resources/icon.icns
+
+  if [[ "${espanso_bin}" != universal ]]; then
+    cp "${espanso_bin}" "${TARGET_DIR}/Contents/MacOS/espanso"
+    return
+  fi
+
+  lipo -create \
+    -output "${TARGET_DIR}/Contents/MacOS/espanso" \
+    target/aarch64-apple-darwin/release/espanso target/x86_64-apple-darwin/release/espanso
+}
+main "$@"
