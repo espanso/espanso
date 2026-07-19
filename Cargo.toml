@@ -71,6 +71,7 @@ tempdir = "0.3.7"
 thiserror = "1.0.23"
 walkdir = "2.3.1"
 widestring = "0.4.3"
+zbus = "5.9.0"
 windows = { version = "0.61.1", features = [
   "Win32_UI_WindowsAndMessaging",
   "Win32_System_Console",

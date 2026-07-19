@@ -21,8 +21,12 @@ use crate::{AppInfo, AppInfoProvider};
 
 use std::process::Command;
 
+pub(crate) mod kde_dbus;
+
 pub(crate) struct WaylandEmptyAppInfoProvider {}
-pub(crate) struct WaylandKDEAppInfoProvider {}
+pub(crate) struct WaylandKDEAppInfoProvider {
+    client: kde_dbus::KwinScriptingClient,
+}
 pub(crate) struct WaylandNiriAppInfoProvider {}
 pub(crate) struct WaylandWlrootsAppInfoProvider {}
 
@@ -47,78 +51,36 @@ impl AppInfoProvider for WaylandEmptyAppInfoProvider {
     }
 }
 
-// for KDE with kdotool
+// for KDE, natively over KWin's scripting D-Bus interface
 impl WaylandKDEAppInfoProvider {
-    pub fn new() -> Self {
-        Self {}
+    pub fn new() -> anyhow::Result<Self> {
+        Ok(Self {
+            client: kde_dbus::KwinScriptingClient::new()?,
+        })
     }
 }
 
 impl AppInfoProvider for WaylandKDEAppInfoProvider {
     fn get_info(&self) -> AppInfo {
-        let class = if let Ok(out) = Command::new("kdotool")
-            .arg("getactivewindow")
-            .arg("getwindowclassname")
-            .output()
-        {
-            let mut __stdout = out.stdout;
-            if !__stdout.is_empty() {
-                __stdout.pop();
+        let info = match self.client.get_active_window_info() {
+            Ok(info) => info,
+            Err(err) => {
+                log::warn!("could not query the active window from KWin: {err:?}");
+                return empty_app_info();
             }
-            let class_ = String::from_utf8(__stdout).expect("Error decoding from utf8");
-            Some(class_)
-        } else {
-            // kdotool is checked once in the startup of main.rs
-            // we do not need to log it here again
-            return empty_app_info();
         };
 
-        let title = match Command::new("kdotool")
-            .arg("getactivewindow")
-            .arg("getwindowname")
-            .output()
-        {
-            Ok(out) => {
-                let mut __stdout = out.stdout;
-                if !__stdout.is_empty() {
-                    __stdout.pop();
-                }
-                let title_ = String::from_utf8(__stdout).expect("Error decoding from utf8");
-                Some(title_)
-            }
-            Err(_) => None,
-        };
+        let exec = info.pid.and_then(|pid| {
+            std::fs::read_link(format!("/proc/{pid}/exe"))
+                .ok()
+                .map(|path| path.to_string_lossy().into_owned())
+        });
 
-        let exec = match Command::new("kdotool")
-            .arg("getactivewindow")
-            .arg("getwindowpid")
-            .output()
-        {
-            Ok(out) => {
-                let mut __stdout = out.stdout;
-                if !__stdout.is_empty() {
-                    __stdout.pop();
-                }
-                let pid_ = String::from_utf8(__stdout).expect("Error decoding from utf8");
-                match Command::new("readlink")
-                    .arg(format!("/proc/{pid_}/exe"))
-                    .output()
-                {
-                    Ok(out) => {
-                        let mut __stdout = out.stdout;
-                        if !__stdout.is_empty() {
-                            __stdout.pop();
-                        }
-                        let exec_ = String::from_utf8(__stdout).expect("Error decoding from utf8");
-                        Some(exec_)
-                    }
-                    Err(_) => None,
-                }
-            }
-            Err(_) => None,
-        };
-
-        AppInfo { title, exec, class }
+        AppInfo {
+            title: info.title,
+            exec,
+            class: info.class_name,
+        }
     }
 }
 
