@@ -76,8 +76,8 @@ matches:
 
 [Federico Terzi](https://github.com/federico-terzi) (Creator of espanso)<br />
 Rest of team in Alphabetical Order<br />
-[Archigos](https://github.com/Archigos) (Lead Maintainer)<br />
-[Auca](https://github.com/AucaCoyan) (Previous Lead Maintainer)<br />
+[Archigos](https://github.com/Archigos) (Maintainer)<br />
+[Auca](https://github.com/AucaCoyan) (Lead Maintainer)<br />
 [n8henrie](https://github.com/n8henrie)<br />
 [smeech](https://github.com/smeech)<br />
 
