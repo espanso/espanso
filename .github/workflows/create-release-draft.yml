@@ -264,12 +264,39 @@ jobs:
             --no-default-features \
             --features native-tls,modulo
           bash ./scripts/create_bundle.sh
+      - name: Codesign app bundle
+        env:
+          MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
+          MACOS_CERTIFICATE_PWD: ${{ secrets.MACOS_CERTIFICATE_PWD }}
+          MACOS_CERTIFICATE_NAME: ${{ secrets.MACOS_CERTIFICATE_NAME }}
+          MACOS_CI_KEYCHAIN_PWD: ${{ secrets.MACOS_CI_KEYCHAIN_PWD }}
+        run: |
+          echo "$MACOS_CERTIFICATE" | base64 --decode > certificate.p12
+          security create-keychain -p "$MACOS_CI_KEYCHAIN_PWD" buildespanso.keychain
+          security default-keychain -s buildespanso.keychain
+          security unlock-keychain -p "$MACOS_CI_KEYCHAIN_PWD" buildespanso.keychain
+          security import certificate.p12 -k buildespanso.keychain -P "$MACOS_CERTIFICATE_PWD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$MACOS_CI_KEYCHAIN_PWD" buildespanso.keychain
+          rm -f certificate.p12
+          /usr/bin/codesign --force --deep --options runtime --timestamp -s "$MACOS_CERTIFICATE_NAME" target/mac/Espanso.app -v
       - name: Create DMG archive
         run: |
           hdiutil create -volname "Espanso" \
             -srcfolder target/mac/Espanso.app \
             -ov -format UDZO \
             Espanso-Mac-Universal.dmg
+      - name: Notarize DMG
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          xcrun notarytool submit Espanso-Mac-Universal.dmg \
+            --apple-id "$APPLE_ID" \
+            --password "$APPLE_APP_SPECIFIC_PASSWORD" \
+            --team-id "$APPLE_TEAM_ID" \
+            --wait
+          xcrun stapler staple Espanso-Mac-Universal.dmg
 
       - name: Upload artifacts to Github Releases
         run: |
