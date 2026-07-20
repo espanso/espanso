@@ -276,7 +276,9 @@ jobs:
           security unlock-keychain -p "$MACOS_CI_KEYCHAIN_PWD" buildespanso.keychain
           security import certificate.p12 -k buildespanso.keychain -P "$MACOS_CERTIFICATE_PWD" -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$MACOS_CI_KEYCHAIN_PWD" buildespanso.keychain
+          security list-keychains -d user -s buildespanso.keychain $(security list-keychains -d user | sed 's/"//g')
           rm -f certificate.p12
+          security find-identity -v -p codesigning buildespanso.keychain
           /usr/bin/codesign --force --deep --options runtime --timestamp -s "$MACOS_CERTIFICATE_NAME" target/mac/Espanso.app -v
       - name: Create DMG archive
         run: |
