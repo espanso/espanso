@@ -6,26 +6,26 @@ env:
   GH_TOKEN: ${{ github.token }}
 
 jobs:
-  set-context:
-    continue-on-error: false
-    env:
-      GITHUB_REF: ${{ github.ref_name }}
-      GITHUB_CONTEXT: ${{ toJson(github) }}
-      SET_RELEASE_VERSION: ${{ github.event.inputs.set-release-version }}
-    name: set-context
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check trigger branch
-        run: |
-          if [ $(echo "${GITHUB_REF}" | grep -Ec "^refs/heads/dev$") -eq 1 ] ; then
-            echo "  - ✅ The branch triggering this workflow is ${GITHUB_REF}."
-          else
-            echo "  - ❌ The branch triggering this workflow is ${GITHUB_REF} instead of refs/heads/dev"
-            exit 1
-          fi
+  # set-context:
+  #   continue-on-error: false
+  #   env:
+  #     GITHUB_REF: ${{ github.ref_name }}
+  #     GITHUB_CONTEXT: ${{ toJson(github) }}
+  #     SET_RELEASE_VERSION: ${{ github.event.inputs.set-release-version }}
+  #   name: set-context
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Check trigger branch
+  #       run: |
+  #         if [ $(echo "${GITHUB_REF}" | grep -Ec "^refs/heads/dev$") -eq 1 ] ; then
+  #           echo "  - ✅ The branch triggering this workflow is ${GITHUB_REF}."
+  #         else
+  #           echo "  - ❌ The branch triggering this workflow is ${GITHUB_REF} instead of refs/heads/dev"
+  #           exit 1
+  #         fi
   extract-version:
     name: extract-version
-    needs: "set-context"
+    # needs: "set-context"
     continue-on-error: false
     runs-on: ubuntu-latest
     outputs:
