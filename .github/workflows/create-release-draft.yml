@@ -73,149 +73,149 @@ jobs:
             --prerelease \
             --target $COMMIT_HASH
 
-  # windows:
-  #   needs: ["extract-version", "create-release"]
-  #   runs-on: windows-latest
-  #   continue-on-error: false
+  windows:
+    needs: ["extract-version", "create-release"]
+    runs-on: windows-latest
+    continue-on-error: false
 
-  #   defaults:
-  #     run:
-  #       shell: bash
+    defaults:
+      run:
+        shell: bash
 
-  #   steps:
-  #     - uses: actions/cache@main
-  #       with:
-  #         path: |
-  #           ~/.cargo/registry
-  #           ~/.cargo/git
-  #           target
-  #         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-  #     - uses: actions/checkout@main
-  #     - name: Print target version
-  #       run: |
-  #         echo Using version ${{ needs.extract-version.outputs.espanso_version }}
-  #     - name: Build
-  #       run: |
-  #         cargo build \
-  #           -p espanso \
-  #           --no-default-features \
-  #           --features modulo,native-tls \
-  #           --release
-  #     - name: Test
-  #       run: |
-  #         cargo test \
-  #           --release \
-  #           --workspace \
-  #           --exclude espanso-modulo \
-  #           --exclude espanso-ipc \
-  #           --no-default-features \
-  #           --features native-tls
-  #     - name: Build resources
-  #       shell: pwsh
-  #       run: |
-  #         $env:EXEC_PATH = "target\release\espanso.exe"
-  #         scripts\build_windows_resources.ps1
-  #     - name: Download and install Inno Setup (missing in Windows Server 2025)
-  #       run: choco install innosetup --no-progress
-  #     - name: Build installer
-  #       shell: pwsh
-  #       run: |
-  #         Install-Module -Name 'PSTOML' -Force
-  #         scripts\build_windows_installer.ps1
-  #     - name: Build portable mode archive
-  #       shell: pwsh
-  #       run: |
-  #         scripts\build_windows_portable.ps1
-  #     - uses: actions/upload-artifact@main
-  #       id: upload-artifact-windows
-  #       name: upload-unsigned-artifact
-  #       with:
-  #         name: Windows Artifacts
-  #         path: |
-  #           target/windows/Espanso-Win-Installer-x86_64.exe
-  #           target/windows/Espanso-Win-Portable-x86_64.zip
-  #     - id: sign-windows-release
-  #       uses: signpath/github-action-submit-signing-request@v2
-  #       with:
-  #         api-token: "${{ secrets.SIGNPATH_API_TOKEN }}"
-  #         organization-id: "e86b1459-62fc-4c7c-aac9-185d60749a03"
-  #         project-slug: "espanso"
-  #         signing-policy-slug: "release-signing"
-  #         github-artifact-id: ${{ steps.upload-artifact-windows.outputs.artifact-id }}
-  #         wait-for-completion: true
-  #         output-artifact-directory: "."
-  #         parameters: |
-  #           version: "${{ needs.extract-version.outputs.espanso_version }}"
-  #     - name: Upload artifacts to Github Releases
-  #       run: |
-  #         gh release upload ${{ needs.extract-version.outputs.espanso_version }} Espanso-Win-Installer-x86_64.exe Espanso-Win-Portable-x86_64.zip
+    steps:
+      - uses: actions/cache@main
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - uses: actions/checkout@main
+      - name: Print target version
+        run: |
+          echo Using version ${{ needs.extract-version.outputs.espanso_version }}
+      - name: Build
+        run: |
+          cargo build \
+            -p espanso \
+            --no-default-features \
+            --features modulo,native-tls \
+            --release
+      - name: Test
+        run: |
+          cargo test \
+            --release \
+            --workspace \
+            --exclude espanso-modulo \
+            --exclude espanso-ipc \
+            --no-default-features \
+            --features native-tls
+      - name: Build resources
+        shell: pwsh
+        run: |
+          $env:EXEC_PATH = "target\release\espanso.exe"
+          scripts\build_windows_resources.ps1
+      - name: Download and install Inno Setup (missing in Windows Server 2025)
+        run: choco install innosetup --no-progress
+      - name: Build installer
+        shell: pwsh
+        run: |
+          Install-Module -Name 'PSTOML' -Force
+          scripts\build_windows_installer.ps1
+      - name: Build portable mode archive
+        shell: pwsh
+        run: |
+          scripts\build_windows_portable.ps1
+      - uses: actions/upload-artifact@main
+        id: upload-artifact-windows
+        name: upload-unsigned-artifact
+        with:
+          name: Windows Artifacts
+          path: |
+            target/windows/Espanso-Win-Installer-x86_64.exe
+            target/windows/Espanso-Win-Portable-x86_64.zip
+      - id: sign-windows-release
+        uses: signpath/github-action-submit-signing-request@v2
+        with:
+          api-token: "${{ secrets.SIGNPATH_API_TOKEN }}"
+          organization-id: "e86b1459-62fc-4c7c-aac9-185d60749a03"
+          project-slug: "espanso"
+          signing-policy-slug: "release-signing"
+          github-artifact-id: ${{ steps.upload-artifact-windows.outputs.artifact-id }}
+          wait-for-completion: true
+          output-artifact-directory: "."
+          parameters: |
+            version: "${{ needs.extract-version.outputs.espanso_version }}"
+      - name: Upload artifacts to Github Releases
+        run: |
+          gh release upload ${{ needs.extract-version.outputs.espanso_version }} Espanso-Win-Installer-x86_64.exe Espanso-Win-Portable-x86_64.zip
 
-  # linux-x11:
-  #   needs: ["extract-version", "create-release"]
-  #   runs-on: ubuntu-latest
-  #   continue-on-error: false
+  linux-x11:
+    needs: ["extract-version", "create-release"]
+    runs-on: ubuntu-latest
+    continue-on-error: false
 
-  #   steps:
-  #     - uses: actions/cache@main
-  #       with:
-  #         path: |
-  #           ~/.cargo/registry
-  #           ~/.cargo/git
-  #           target
-  #         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-  #     - uses: actions/checkout@main
-  #     - name: Print target version
-  #       run: |
-  #         echo Using version ${{ needs.extract-version.outputs.espanso_version }}
-  #     - name: Build docker image
-  #       run: |
-  #         sudo docker build -t espanso-ubuntu . -f .github/scripts/Dockerfile
-  #     - name: Build AppImage
-  #       run: |
-  #         sudo docker run --rm -v "$(pwd):/shared" espanso-ubuntu espanso/.github/scripts/ubuntu/build_appimage.sh
-  #     - uses: actions/upload-artifact@main
-  #       name: upload-unsigned-artifact
-  #       with:
-  #         name: Linux X11 AppImage Artifact
-  #         path: |
-  #           Espanso-X11.AppImage
-  #     - name: Upload artifacts to Github Releases
-  #       run: |
-  #         gh release upload ${{ needs.extract-version.outputs.espanso_version }} Espanso-X11.AppImage
+    steps:
+      - uses: actions/cache@main
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - uses: actions/checkout@main
+      - name: Print target version
+        run: |
+          echo Using version ${{ needs.extract-version.outputs.espanso_version }}
+      - name: Build docker image
+        run: |
+          sudo docker build -t espanso-ubuntu . -f .github/scripts/Dockerfile
+      - name: Build AppImage
+        run: |
+          sudo docker run --rm -v "$(pwd):/shared" espanso-ubuntu espanso/.github/scripts/ubuntu/build_appimage.sh
+      - uses: actions/upload-artifact@main
+        name: upload-unsigned-artifact
+        with:
+          name: Linux X11 AppImage Artifact
+          path: |
+            Espanso-X11.AppImage
+      - name: Upload artifacts to Github Releases
+        run: |
+          gh release upload ${{ needs.extract-version.outputs.espanso_version }} Espanso-X11.AppImage
 
-  # linux-deb:
-  #   needs: ["extract-version", "create-release"]
-  #   runs-on: ubuntu-latest
-  #   continue-on-error: false
+  linux-deb:
+    needs: ["extract-version", "create-release"]
+    runs-on: ubuntu-latest
+    continue-on-error: false
 
-  #   steps:
-  #     - uses: actions/cache@main
-  #       with:
-  #         path: |
-  #           ~/.cargo/registry
-  #           ~/.cargo/git
-  #           target
-  #         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-  #     - uses: actions/checkout@main
-  #     - name: Print target version
-  #       run: |
-  #         echo Using version ${{ needs.extract-version.outputs.espanso_version }}
-  #     - name: Build docker image
-  #       run: |
-  #         sudo docker build -t espanso-ubuntu . -f .github/scripts/Dockerfile
-  #     - name: Build Deb packages
-  #       run: |
-  #         sudo docker run --rm -v "$(pwd):/shared" espanso-ubuntu espanso/.github/scripts/ubuntu/build_deb.sh
-  #     - uses: actions/upload-artifact@main
-  #       name: upload-unsigned-artifact
-  #       with:
-  #         name: Linux Deb Artifacts
-  #         path: |
-  #           espanso-debian-x11-amd64.deb
-  #           espanso-debian-wayland-amd64.deb
-  #     - name: Upload artifacts to Github Releases
-  #       run: |
-  #         gh release upload ${{ needs.extract-version.outputs.espanso_version }} espanso-debian-x11-amd64.deb espanso-debian-wayland-amd64.deb
+    steps:
+      - uses: actions/cache@main
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - uses: actions/checkout@main
+      - name: Print target version
+        run: |
+          echo Using version ${{ needs.extract-version.outputs.espanso_version }}
+      - name: Build docker image
+        run: |
+          sudo docker build -t espanso-ubuntu . -f .github/scripts/Dockerfile
+      - name: Build Deb packages
+        run: |
+          sudo docker run --rm -v "$(pwd):/shared" espanso-ubuntu espanso/.github/scripts/ubuntu/build_deb.sh
+      - uses: actions/upload-artifact@main
+        name: upload-unsigned-artifact
+        with:
+          name: Linux Deb Artifacts
+          path: |
+            espanso-debian-x11-amd64.deb
+            espanso-debian-wayland-amd64.deb
+      - name: Upload artifacts to Github Releases
+        run: |
+          gh release upload ${{ needs.extract-version.outputs.espanso_version }} espanso-debian-x11-amd64.deb espanso-debian-wayland-amd64.deb
 
   macos:
     needs: ["extract-version", "create-release"]
