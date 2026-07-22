@@ -21,8 +21,15 @@ use anyhow::Result;
 use fs2::FileExt;
 use std::{
     fs::{File, OpenOptions},
-    path::Path,
+    path::{Path, PathBuf},
 };
+
+const DAEMON_LOCK_NAME: &str = "espanso-daemon";
+const WORKER_LOCK_NAME: &str = "espanso-worker";
+
+fn lock_file_path(runtime_dir: &Path, name: &str) -> PathBuf {
+    runtime_dir.join(format!("{name}.lock"))
+}
 
 pub struct Lock {
     lock_file: File,
@@ -36,7 +43,7 @@ impl Lock {
     }
 
     fn acquire(runtime_dir: &Path, name: &str) -> Option<Lock> {
-        let lock_file_path = runtime_dir.join(format!("{name}.lock"));
+        let lock_file_path = lock_file_path(runtime_dir, name);
         let lock_file = OpenOptions::new()
             .read(true)
             .write(true)
@@ -65,9 +72,47 @@ impl Drop for Lock {
 }
 
 pub fn acquire_daemon_lock(runtime_dir: &Path) -> Option<Lock> {
-    Lock::acquire(runtime_dir, "espanso-daemon")
+    Lock::acquire(runtime_dir, DAEMON_LOCK_NAME)
 }
 
 pub fn acquire_worker_lock(runtime_dir: &Path) -> Option<Lock> {
-    Lock::acquire(runtime_dir, "espanso-worker")
+    Lock::acquire(runtime_dir, WORKER_LOCK_NAME)
+}
+
+#[cfg(target_os = "macos")]
+pub fn clear_daemon_lock(runtime_dir: &Path) -> Result<()> {
+    let lock_file_path = lock_file_path(runtime_dir, DAEMON_LOCK_NAME);
+    if lock_file_path.exists() {
+        std::fs::remove_file(&lock_file_path)?;
+    }
+    Ok(())
+}
+
+#[cfg(all(test, target_os = "macos"))]
+mod tests {
+    use super::*;
+    use tempdir::TempDir;
+
+    #[test]
+    fn clear_daemon_lock_allows_takeover_while_stale_lock_is_held() {
+        let dir = TempDir::new("espansolock").unwrap();
+        let runtime = dir.path();
+
+        // An orphaned daemon acquires the lock and keeps holding it.
+        let orphan = acquire_daemon_lock(runtime);
+        assert!(orphan.is_some());
+
+        // A new daemon can't acquire the lock while the orphan holds it.
+        assert!(acquire_daemon_lock(runtime).is_none());
+
+        // Clearing the stale lock file lets the new daemon take over, even
+        // though the orphan is still holding its (now unlinked) lock file.
+        clear_daemon_lock(runtime).unwrap();
+        let takeover = acquire_daemon_lock(runtime);
+        assert!(takeover.is_some());
+
+        // Keep the orphan alive until the end so the assertion above proves
+        // the inode swap works, not that the orphan simply released.
+        drop(orphan);
+    }
 }

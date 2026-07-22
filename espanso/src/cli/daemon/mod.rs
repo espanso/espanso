@@ -68,6 +68,14 @@ fn daemon_main(args: CliModuleArgs) -> i32 {
 
     // Make sure only one instance of the daemon is running
     let lock_file = acquire_daemon_lock(&paths.runtime);
+
+    // On macOS, a daemon from a previous login session can survive a
+    // logout/login (see GitHub issue #1492), keeping the daemon lock held while
+    // no longer serving the current session. In that case, try to take over
+    // from the stale daemon instead of giving up.
+    #[cfg(target_os = "macos")]
+    let lock_file = lock_file.or_else(|| reclaim_stale_daemon_lock(&paths.runtime));
+
     if lock_file.is_none() {
         error!("daemon is already running!");
         return DAEMON_ALREADY_RUNNING;
@@ -192,6 +200,50 @@ fn daemon_main(args: CliModuleArgs) -> i32 {
     }
 
     DAEMON_SUCCESS
+}
+
+// Take over the daemon lock from a stale daemon that survived a previous login
+// session (macOS, GitHub issue #1492). We first ask the existing daemon to
+// exit so it releases the lock cleanly (which also tears down its worker); if
+// it does not release within a short window (e.g. it is wedged), we clear the
+// stale lock file so a fresh daemon can acquire a new one.
+#[cfg(target_os = "macos")]
+fn reclaim_stale_daemon_lock(runtime_dir: &Path) -> Option<crate::lock::Lock> {
+    warn!("daemon lock is held, attempting to take over from a possibly stale daemon...");
+
+    // Ask the existing daemon to exit. A live, responsive daemon releases the
+    // lock (and shuts down its worker); a duplicate launch simply hands off.
+    match crate::ipc::create_ipc_client_to_daemon(runtime_dir) {
+        Ok(mut daemon_ipc) => {
+            if let Err(err) = daemon_ipc.send_async(IPCEvent::Exit) {
+                error!("unable to send termination signal to daemon process: {err}");
+            }
+        }
+        Err(err) => {
+            error!("could not establish IPC connection with daemon: {err}");
+        }
+    }
+
+    // Wait for the stale daemon to release the lock.
+    let now = Instant::now();
+    while now.elapsed() < std::time::Duration::from_secs(3) {
+        if let Some(lock) = acquire_daemon_lock(runtime_dir) {
+            return Some(lock);
+        }
+
+        std::thread::sleep(std::time::Duration::from_millis(200));
+    }
+
+    // The holder did not release the lock (e.g. an unresponsive orphan). Clear
+    // the stale lock file so a fresh daemon can acquire a new one; the orphan
+    // keeps its now-unlinked lock file and no longer blocks us.
+    warn!("stale daemon did not release the lock, clearing the stale lock file");
+    if let Err(err) = crate::lock::clear_daemon_lock(runtime_dir) {
+        error!("unable to clear stale daemon lock file: {err}");
+        return None;
+    }
+
+    acquire_daemon_lock(runtime_dir)
 }
 
 fn terminate_worker_if_already_running(runtime_dir: &Path) {

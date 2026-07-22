@@ -54,6 +54,11 @@ pub fn create_ipc_client_to_worker(runtime_dir: &Path) -> Result<impl IPCClient<
     create_ipc_client(runtime_dir, "workerv2")
 }
 
+#[cfg(target_os = "macos")]
+pub fn create_ipc_client_to_daemon(runtime_dir: &Path) -> Result<impl IPCClient<IPCEvent>> {
+    create_ipc_client(runtime_dir, "daemonv2")
+}
+
 fn create_ipc_server(runtime_dir: &Path, name: &str) -> Result<impl IPCServer<IPCEvent>> {
     espanso_ipc::server(&format!("espanso{name}"), runtime_dir)
 }
