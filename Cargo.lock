@@ -960,7 +960,6 @@ dependencies = [
  "rusqlite",
  "serde",
  "serde_json",
- "serde_norway",
  "simplelog",
  "sysinfo",
  "tempdir",
@@ -968,6 +967,7 @@ dependencies = [
  "widestring",
  "windows",
  "winreg 0.9.0",
+ "yaml_serde",
 ]
 
 [[package]]
@@ -996,11 +996,11 @@ dependencies = [
  "ordered-float",
  "regex",
  "serde",
- "serde_norway",
  "tempdir",
  "tempfile",
  "thiserror 1.0.56",
  "walkdir",
+ "yaml_serde",
 ]
 
 [[package]]
@@ -1133,10 +1133,10 @@ dependencies = [
  "scopeguard",
  "serde",
  "serde_json",
- "serde_norway",
  "sha2",
  "tempdir",
  "thiserror 1.0.56",
+ "yaml_serde",
  "zip",
 ]
 
@@ -1847,6 +1847,12 @@ dependencies = [
  "pkg-config",
  "vcpkg",
 ]
+
+[[package]]
+name = "libyaml-rs"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2e126dda6f34391ab7b444f9922055facc83c07a910da3eb16f1e4d9c45dc777"
 
 [[package]]
 name = "link-cplusplus"
@@ -3076,19 +3082,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "serde_norway"
-version = "0.9.42"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e408f29489b5fd500fab51ff1484fc859bb655f32c671f307dcd733b72e8168c"
-dependencies = [
- "indexmap 2.10.0",
- "itoa 1.0.6",
- "ryu",
- "serde",
- "unsafe-libyaml-norway",
-]
-
-[[package]]
 name = "serde_repr"
 version = "0.1.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3656,12 +3649,6 @@ name = "unindent"
 version = "0.1.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f14ee04d9415b52b3aeab06258a3f07093182b88ba0f9b8d203f211a7a7d41c7"
-
-[[package]]
-name = "unsafe-libyaml-norway"
-version = "0.2.15"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b39abd59bf32521c7f2301b52d05a6a2c975b6003521cbd0c6dc1582f0a22104"
 
 [[package]]
 name = "untrusted"
@@ -4471,6 +4458,18 @@ dependencies = [
  "log",
  "mac",
  "markup5ever",
+]
+
+[[package]]
+name = "yaml_serde"
+version = "0.10.4"
+source = "git+https://github.com/aucacoyan/yaml-serde?tag=0.10.5#b594d6e765ca830378bb2dcf6e098073f240987f"
+dependencies = [
+ "indexmap 2.10.0",
+ "itoa 1.0.6",
+ "libyaml-rs",
+ "ryu",
+ "serde",
 ]
 
 [[package]]

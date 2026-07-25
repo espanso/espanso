@@ -20,7 +20,7 @@
 use std::convert::TryInto;
 
 use anyhow::Result;
-use serde_norway::Mapping;
+use yaml_serde::Mapping;
 use thiserror::Error;
 
 use crate::matches::{Number, Params, Value};
@@ -37,11 +37,11 @@ pub fn convert_params(m: Mapping) -> Result<Params> {
     Ok(params)
 }
 
-fn convert_value(value: serde_norway::Value) -> Result<Value> {
+fn convert_value(value: yaml_serde::Value) -> Result<Value> {
     Ok(match value {
-        serde_norway::Value::Null => Value::Null,
-        serde_norway::Value::Bool(val) => Value::Bool(val),
-        serde_norway::Value::Number(n) => {
+        yaml_serde::Value::Null => Value::Null,
+        yaml_serde::Value::Bool(val) => Value::Bool(val),
+        yaml_serde::Value::Number(n) => {
             if n.is_i64() {
                 Value::Number(Number::Integer(
                     n.as_i64().ok_or(ConversionError::InvalidNumberFormat)?,
@@ -62,14 +62,14 @@ fn convert_value(value: serde_norway::Value) -> Result<Value> {
                 return Err(ConversionError::InvalidNumberFormat.into());
             }
         }
-        serde_norway::Value::String(s) => Value::String(s),
-        serde_norway::Value::Sequence(arr) => Value::Array(
+        yaml_serde::Value::String(s) => Value::String(s),
+        yaml_serde::Value::Sequence(arr) => Value::Array(
             arr.into_iter()
                 .map(convert_value)
                 .collect::<Result<Vec<Value>>>()?,
         ),
-        serde_norway::Value::Mapping(m) => Value::Object(convert_params(m)?),
-        serde_norway::Value::Tagged(tagged) => convert_value(tagged.value)?,
+        yaml_serde::Value::Mapping(m) => Value::Object(convert_params(m)?),
+        yaml_serde::Value::Tagged(tagged) => convert_value(tagged.value)?,
     })
 }
 
@@ -89,7 +89,7 @@ mod tests {
     #[test]
     fn convert_value_null() {
         assert_eq!(
-            convert_value(serde_norway::Value::Null).unwrap(),
+            convert_value(yaml_serde::Value::Null).unwrap(),
             Value::Null
         );
     }
@@ -97,11 +97,11 @@ mod tests {
     #[test]
     fn convert_value_bool() {
         assert_eq!(
-            convert_value(serde_norway::Value::Bool(true)).unwrap(),
+            convert_value(yaml_serde::Value::Bool(true)).unwrap(),
             Value::Bool(true)
         );
         assert_eq!(
-            convert_value(serde_norway::Value::Bool(false)).unwrap(),
+            convert_value(yaml_serde::Value::Bool(false)).unwrap(),
             Value::Bool(false)
         );
     }
@@ -109,31 +109,31 @@ mod tests {
     #[test]
     fn convert_value_number() {
         assert_eq!(
-            convert_value(serde_norway::Value::Number(0.into())).unwrap(),
+            convert_value(yaml_serde::Value::Number(0.into())).unwrap(),
             Value::Number(Number::Integer(0))
         );
         assert_eq!(
-            convert_value(serde_norway::Value::Number((-100).into())).unwrap(),
+            convert_value(yaml_serde::Value::Number((-100).into())).unwrap(),
             Value::Number(Number::Integer(-100))
         );
         assert_eq!(
-            convert_value(serde_norway::Value::Number(1.5.into())).unwrap(),
+            convert_value(yaml_serde::Value::Number(1.5.into())).unwrap(),
             Value::Number(Number::Float(1.5.into()))
         );
     }
     #[test]
     fn convert_value_string() {
         assert_eq!(
-            convert_value(serde_norway::Value::String("hello".to_string())).unwrap(),
+            convert_value(yaml_serde::Value::String("hello".to_string())).unwrap(),
             Value::String("hello".to_string())
         );
     }
     #[test]
     fn convert_value_array() {
         assert_eq!(
-            convert_value(serde_norway::Value::Sequence(vec![
-                serde_norway::Value::Bool(true),
-                serde_norway::Value::Null,
+            convert_value(yaml_serde::Value::Sequence(vec![
+                yaml_serde::Value::Bool(true),
+                yaml_serde::Value::Null,
             ]))
             .unwrap(),
             Value::Array(vec![Value::Bool(true), Value::Null,])
@@ -142,26 +142,26 @@ mod tests {
 
     #[test]
     fn convert_value_params() {
-        let mut mapping = serde_norway::Mapping::new();
+        let mut mapping = yaml_serde::Mapping::new();
         mapping.insert(
-            serde_norway::Value::String("test".to_string()),
-            serde_norway::Value::Null,
+            yaml_serde::Value::String("test".to_string()),
+            yaml_serde::Value::Null,
         );
 
         let mut expected = Params::new();
         expected.insert("test".to_string(), Value::Null);
         assert_eq!(
-            convert_value(serde_norway::Value::Mapping(mapping)).unwrap(),
+            convert_value(yaml_serde::Value::Mapping(mapping)).unwrap(),
             Value::Object(expected)
         );
     }
 
     #[test]
     fn convert_params_works_correctly() {
-        let mut mapping = serde_norway::Mapping::new();
+        let mut mapping = yaml_serde::Mapping::new();
         mapping.insert(
-            serde_norway::Value::String("test".to_string()),
-            serde_norway::Value::Null,
+            yaml_serde::Value::String("test".to_string()),
+            yaml_serde::Value::Null,
         );
 
         let mut expected = Params::new();
@@ -171,8 +171,8 @@ mod tests {
 
     #[test]
     fn convert_params_invalid_key_type() {
-        let mut mapping = serde_norway::Mapping::new();
-        mapping.insert(serde_norway::Value::Null, serde_norway::Value::Null);
+        let mut mapping = yaml_serde::Mapping::new();
+        mapping.insert(yaml_serde::Value::Null, yaml_serde::Value::Null);
 
         assert!(convert_params(mapping).is_err());
     }
