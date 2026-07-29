@@ -26,7 +26,7 @@ main() {
   )
   "${linuxdeploy}" --appimage-extract-and-run -e "${espanso_bin}" \
     -d "${BASE_DIR}"/espanso/src/res/linux/espanso.desktop \
-    -i "${BASE_DIR}"/espanso/src/res/linux/icon.png \
+    -i "${BASE_DIR}"/espanso/src/res/linux/espanso.png \
     --appdir "${BUILD_DIR}" \
     --output appimage
 

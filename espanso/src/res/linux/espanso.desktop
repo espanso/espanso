@@ -2,6 +2,6 @@
 Name=Espanso
 Comment=Cross-platform Text Expander written in Rust
 Exec=espanso launcher
-Icon=icon
+Icon=espanso
 Type=Application
 Categories=Utility;

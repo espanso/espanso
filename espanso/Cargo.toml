@@ -94,6 +94,13 @@ maintainer = "Auca Coyan <aucacoyan@gmail.com>"
 depends = "$auto"
 section = "utility"
 license-file = ["../LICENSE", "1"]
+assets = [
+    ["target/release/espanso", "usr/bin/espanso", "755"],
+    ["src/res/linux/espanso.desktop", "usr/share/applications/espanso.desktop", "644"],
+    ["src/res/linux/espanso.png", "usr/share/pixmaps/espanso.png", "644"],
+]
+# If not set uses the entire README as a description
+extended-description = "Cross-platform Text Expander written in Rust"
 
 [package.metadata.deb.variants.wayland]
 depends = ["wl-clipboard", "$auto"]
@@ -101,6 +108,7 @@ maintainer-scripts = "scripts/debian/"
 
 [package.metadata.generate-rpm]
 assets = [
-    { source = "target/release/espanso", dest = "/usr/local/bin/espanso", mode = "755" },
+    { source = "target/release/espanso", dest = "/usr/bin/espanso", mode = "755", caps = "cap_dac_override=p" },
+    { source = "src/res/linux/espanso.desktop", dest = "/usr/share/applications/espanso.desktop", mode = "644" },
+    { source = "src/res/linux/espanso.png", dest = "/usr/share/pixmaps/espanso.png", mode = "644" },
 ]
-post_install_script = "setcap 'cap_dac_override+p' /usr/local/bin/espanso"
