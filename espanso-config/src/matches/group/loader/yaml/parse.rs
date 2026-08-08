@@ -23,7 +23,7 @@ use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use serde_norway::Mapping;
 
-use crate::util::is_yaml_empty;
+use crate::util::{is_yaml_empty, parse_lenient};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct YAMLMatchGroup {
@@ -49,7 +49,7 @@ impl YAMLMatchGroup {
             )?);
         }
 
-        Ok(serde_norway::from_str(yaml)?)
+        Ok(parse_lenient(yaml)?)
     }
 
     pub fn parse_from_file(path: &Path) -> Result<Self> {
@@ -140,4 +140,55 @@ pub struct YAMLVariable {
 
 fn default_params() -> Mapping {
     Mapping::new()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // Regression for https://github.com/espanso/espanso/issues/2748
+    // On v2.4.0 (serde_yaml -> serde_norway swap, PR #2532) an unquoted flow value
+    // whose first character is a YAML flow indicator (`:`, `>`, ...) is rejected by
+    // libyaml: "did not find expected node content ... while parsing a flow node".
+    #[test]
+    fn parse_unquoted_flow_triggers_issue_2748() {
+        let yaml = "matches:\n  - triggers: [:->,:>-]\n    replace: smile\n";
+        let group = YAMLMatchGroup::parse_from_str(yaml).unwrap();
+        let matches = group.matches.expect("expected matches");
+        assert_eq!(matches.len(), 1);
+        assert_eq!(
+            matches[0].triggers,
+            Some(vec![":->".to_string(), ":>-".to_string()])
+        );
+        assert_eq!(matches[0].replace.as_deref(), Some("smile"));
+    }
+
+    #[test]
+    fn parse_unquoted_flow_triggers_spaced_emoticons() {
+        let yaml = "matches:\n  - triggers: [:-), :-D]\n    replace: smile\n";
+        let group = YAMLMatchGroup::parse_from_str(yaml).unwrap();
+        let triggers = group.matches.unwrap().remove(0).triggers.unwrap();
+        assert_eq!(triggers, vec![":-)", ":-D"]);
+    }
+
+    #[test]
+    fn parse_unquoted_flow_arrow_value() {
+        let yaml = "matches:\n  - triggers: [:>hello]\n    replace: hi\n";
+        let group = YAMLMatchGroup::parse_from_str(yaml).unwrap();
+        let triggers = group.matches.unwrap().remove(0).triggers.unwrap();
+        assert_eq!(triggers, vec![":>hello"]);
+    }
+
+    // Regression: a #2748 trigger combined with a `replace: |` block scalar whose
+    // literal body contains flow-like text (`[ :>x ]`). The lenient transform must fix
+    // the trigger WITHOUT touching the block-scalar body byte-for-byte.
+    #[test]
+    fn parse_unquoted_flow_trigger_with_block_scalar_body() {
+        let yaml =
+            "matches:\n  - triggers: [:-)]\n    replace: |\n      if [ :>x ]; then echo hi; fi\n";
+        let group = YAMLMatchGroup::parse_from_str(yaml).unwrap();
+        let m = group.matches.unwrap().remove(0);
+        assert_eq!(m.triggers, Some(vec![":-)".to_string()]));
+        assert_eq!(m.replace.as_deref(), Some("if [ :>x ]; then echo hi; fi\n"));
+    }
 }

@@ -22,7 +22,7 @@ use serde::{Deserialize, Serialize};
 use serde_norway::Mapping;
 use std::convert::TryFrom;
 
-use crate::util::is_yaml_empty;
+use crate::util::{is_yaml_empty, parse_lenient};
 
 use super::ParsedConfig;
 
@@ -188,7 +188,7 @@ impl YAMLConfig {
             )?);
         }
 
-        Ok(serde_norway::from_str(yaml)?)
+        Ok(parse_lenient(yaml)?)
     }
 }
 
@@ -270,6 +270,20 @@ impl TryFrom<YAMLConfig> for ParsedConfig {
 mod tests {
     use super::*;
     use std::{collections::BTreeMap, convert::TryInto};
+
+    // Sibling regression for #2748 on the config-parser path: the same
+    // serde_yaml -> serde_norway flow-indicator rule (PR #2532) also rejects
+    // unquoted flow values in config YAML, e.g. an indicator-led `word_separators`
+    // entry. It must parse after the fix.
+    #[test]
+    fn parse_unquoted_flow_value_in_config_issue_2748() {
+        let yaml = "word_separators: [:->, :>-]\n";
+        let config = YAMLConfig::parse_from_str(yaml).unwrap();
+        assert_eq!(
+            config.word_separators,
+            Some(vec![":->".to_string(), ":>-".to_string()])
+        );
+    }
 
     #[test]
     fn conversion_to_parsed_config_works_correctly() {
