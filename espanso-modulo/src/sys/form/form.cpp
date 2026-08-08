@@ -109,10 +109,20 @@ class FormFrame : public wxFrame {
     void UpdateHelpText();
     void HandleNormalFocus(wxFocusEvent &event);
     void HandleMultilineFocus(wxFocusEvent &event);
+
+#ifdef __WXMSW__
+    // Re-theme live when the system colour scheme changes.
+    WXLRESULT MSWWindowProc(WXUINT message, WXWPARAM wParam, WXLPARAM lParam);
+    void ApplyTheme();
+#endif
 };
 enum { ID_Submit = 20000 };
 
 bool FormApp::OnInit() {
+#ifdef __WXMSW__
+    // Opt into Windows immersive dark mode before any window is created.
+    enableAppDarkMode();
+#endif
     const wxSize &maxFormSize =
         wxSize(formMetadata->maxWindowWidth, formMetadata->maxWindowHeight);
     FormFrame *frame =
@@ -156,7 +166,30 @@ FormFrame::FormFrame(const wxString &title, const wxPoint &pos,
 
     this->SetClientSize(panel->GetBestSize());
     this->CentreOnScreen();
+
+#ifdef __WXMSW__
+    // Apply dark mode up-front; live changes handled in MSWWindowProc.
+    applyDarkModeToWindow(GetHandle(), isSystemDark());
+    applyThemeColors(this, isSystemDark());
+#endif
 }
+
+#ifdef __WXMSW__
+void FormFrame::ApplyTheme() {
+    bool dark = isSystemDark();
+    applyDarkModeToWindow(GetHandle(), dark);
+    applyThemeColors(this, dark);
+    this->Refresh();
+}
+
+WXLRESULT FormFrame::MSWWindowProc(WXUINT message, WXWPARAM wParam,
+                                   WXLPARAM lParam) {
+    if (isColorSchemeChange(message, lParam)) {
+        ApplyTheme();
+    }
+    return wxFrame::MSWWindowProc(message, wParam, lParam);
+}
+#endif
 
 void FormFrame::AddComponent(wxPanel *parent, wxBoxSizer *sizer,
                              FieldMetadata meta) {

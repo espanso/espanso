@@ -85,6 +85,7 @@ class ResultListBox : public wxHtmlListBox {
     ResultListBox() {}
     ResultListBox(wxWindow *parent, bool isDark, const wxWindowID id,
                   const wxPoint &pos, const wxSize &size);
+    void SetDark(bool dark);
 
   protected:
     // override this method to return data to be shown in the listbox (this is
@@ -105,25 +106,28 @@ wxIMPLEMENT_DYNAMIC_CLASS(ResultListBox, wxHtmlListBox);
 
 ResultListBox::ResultListBox(wxWindow *parent, bool isDark, const wxWindowID id,
                              const wxPoint &pos, const wxSize &size)
-    : wxHtmlListBox(parent, id, pos, size, 0) {
+    : wxHtmlListBox(parent, id, pos, size, wxBORDER_NONE) {
     this->isDark = isDark;
     SetMargins(5, 5);
     Refresh();
 }
 
+void ResultListBox::SetDark(bool dark) {
+    isDark = dark;
+    RefreshAll();
+}
+
 void ResultListBox::OnDrawBackground(wxDC &dc, const wxRect &rect,
                                      size_t n) const {
     if (IsSelected(n)) {
-        if (isDark) {
-            dc.SetBrush(wxBrush(SELECTION_DARK_BG));
-        } else {
-            dc.SetBrush(wxBrush(SELECTION_LIGHT_BG));
-        }
+        dc.SetBrush(wxBrush(isDark ? SELECTION_DARK_BG : SELECTION_LIGHT_BG));
     } else {
-        dc.SetBrush(*wxTRANSPARENT_BRUSH);
+        dc.SetBrush(
+            wxBrush(isDark ? DARK_BG
+                           : wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW)));
     }
     dc.SetPen(*wxTRANSPARENT_PEN);
-    dc.DrawRectangle(0, 0, rect.GetRight(), rect.GetBottom());
+    dc.DrawRectangle(rect.x, rect.y, rect.width, rect.height);
 }
 
 // Helper function to escape HTML special characters
@@ -138,6 +142,18 @@ wxString EscapeHtml(const wxString &str) {
 
 wxString ResultListBox::OnGetItem(size_t n) const {
     wxString textColor = isDark ? "white" : "";
+    // Set the cell background explicitly: the HTML renderer paints its own
+    // white background before the theme is applied (startup flash), and for
+    // the selected row it must match the highlight colour or it overpaints the
+    // centre. Derived from the shared palette so the two can't drift apart.
+    wxColour bg =
+        isDark ? DARK_BG : wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW);
+    if (IsSelected(n)) {
+        bg = isDark ? SELECTION_DARK_BG : SELECTION_LIGHT_BG;
+    }
+    wxString bgColor = bg.GetAsString(wxC2S_HTML_SYNTAX);
+    // Shortcut hint: lighter on dark, upstream grey on light.
+    wxString shortcutColor = isDark ? "#9aa6ad" : "#636e72";
     wxString shortcut =
         (n < 8) ? wxString::Format(wxT("Alt+%i"), (int)n + 1) : " ";
 
@@ -147,10 +163,12 @@ wxString ResultListBox::OnGetItem(size_t n) const {
     wxString escapedTrigger = EscapeHtml(wxTriggers[n]);
 
     wxString result = wxString::Format(
-        wxT("<font color='%s'><table width='100%%'><tr><td>%s</td><td "
-            "align='right'><b>%s</b> <font color='#636e72'> "
+        wxT("<font color='%s'><table width='100%%' bgcolor='%s'><tr><td>%s</"
+            "td><td "
+            "align='right'><b>%s</b> <font color='%s'> "
             "%s</font></td></tr></table></font>"),
-        textColor, escapedLabel, escapedTrigger, shortcut);
+        textColor, bgColor, escapedLabel, escapedTrigger, shortcutColor,
+        shortcut);
 
     return result;
 }
@@ -172,6 +190,19 @@ class SearchFrame : public wxFrame {
     void OnItemClickEvent(wxCommandEvent &event);
     void OnActivate(wxActivateEvent &event);
 
+    // Paint the background on erase so the default white brush never flashes.
+    void OnEraseBackground(wxEraseEvent &event);
+
+    // Hide before destroy so the final white repaint is never seen.
+    void OnClose(wxCloseEvent &event);
+
+#ifdef __WXMSW__
+    // Re-theme live when the system colour scheme changes.
+    WXLRESULT MSWWindowProc(WXUINT message, WXWPARAM wParam, WXLPARAM lParam);
+    void ApplyTheme();
+#endif
+    void SetTheme(bool dark);
+
     // Mouse events
     void OnMouseCaptureLost(wxMouseCaptureLostEvent &event);
     void OnMouseLeave(wxMouseEvent &event);
@@ -180,6 +211,9 @@ class SearchFrame : public wxFrame {
     void OnMouseLDown(wxMouseEvent &event);
     wxPoint mLastPt;
 
+    // Current theme; used by OnEraseBackground to avoid a white flash.
+    bool m_dark = false;
+
     // Selection
     void SelectNext();
     void SelectPrevious();
@@ -187,10 +221,18 @@ class SearchFrame : public wxFrame {
 };
 
 bool SearchApp::OnInit() {
+#ifdef __WXMSW__
+    // Opt into Windows immersive dark mode before any window is created.
+    enableAppDarkMode();
+#endif
+
     SearchFrame *frame =
         new SearchFrame(wxString::FromUTF8(searchMetadata->windowTitle),
                         wxPoint(50, 50), wxSize(450, 340));
     frame->Show(true);
+    // Pre-paint synchronously so the window is fully drawn (dark) before the
+    // compositor presents it; otherwise the first frame can flash white.
+    frame->Update();
     SetupWindowStyle(frame);
     Activate(frame);
     return true;
@@ -200,7 +242,10 @@ SearchFrame::SearchFrame(const wxString &title, const wxPoint &pos,
     : wxFrame(NULL, wxID_ANY, title, pos, size, DEFAULT_STYLE) {
     wxInitAllImageHandlers();
 
-#if wxCHECK_VERSION(3, 1, 3)
+#ifdef __WXMSW__
+    // Read the registry directly; matches what PowerToys Light Switch flips.
+    bool isDark = isSystemDark();
+#elif wxCHECK_VERSION(3, 1, 3)
     bool isDark = wxSystemSettings::GetAppearance().IsDark();
 #else
     // Workaround needed for previous versions of wxWidgets
@@ -210,6 +255,8 @@ SearchFrame::SearchFrame(const wxString &title, const wxPoint &pos,
     unsigned int fgSum = (fg.Red() + fg.Blue() + fg.Green());
     bool isDark = fgSum > bgSum;
 #endif
+
+    m_dark = isDark;
 
     panel = new wxPanel(this, wxID_ANY);
     wxBoxSizer *vbox = new wxBoxSizer(wxVERTICAL);
@@ -266,6 +313,28 @@ SearchFrame::SearchFrame(const wxString &title, const wxPoint &pos,
     Bind(wxEVT_TEXT, &SearchFrame::OnQueryChange, this, textId);
     Bind(wxEVT_LISTBOX_DCLICK, &SearchFrame::OnItemClickEvent, this, resultId);
     Bind(wxEVT_ACTIVATE, &SearchFrame::OnActivate, this, wxID_ANY);
+
+    // Paint on erase so the white brush never flashes (worst on close and first
+    // show). NOTE: a wxHtmlListBox owns an internal viewport that receives
+    // WM_ERASEBKGND and does not bubble it up, so we must bind to the viewport
+    // itself.
+    Bind(wxEVT_ERASE_BACKGROUND, &SearchFrame::OnEraseBackground, this);
+    panel->Bind(wxEVT_ERASE_BACKGROUND, &SearchFrame::OnEraseBackground, this);
+    resultBox->Bind(wxEVT_ERASE_BACKGROUND, &SearchFrame::OnEraseBackground,
+                    this);
+    if (wxWindow *viewport = resultBox->GetTargetWindow()) {
+        viewport->Bind(wxEVT_ERASE_BACKGROUND, &SearchFrame::OnEraseBackground,
+                       this);
+    }
+
+    // Hide before destroy so the final white repaint on close is never seen.
+    Bind(wxEVT_CLOSE_WINDOW, &SearchFrame::OnClose, this);
+
+#ifdef __WXMSW__
+    // Apply dark mode up-front; live changes handled in MSWWindowProc.
+    applyDarkModeToWindow(GetHandle(), isDark);
+    SetTheme(isDark);
+#endif
 
     // Events to handle the mouse drag
     if (iconPanel) {
@@ -355,6 +424,66 @@ void SearchFrame::OnActivate(wxActivateEvent &event) {
     }
     event.Skip();
 }
+
+void SearchFrame::SetTheme(bool dark) {
+    // wxWidgets 3.1.5 does not auto-darken the client area, so we set the
+    // colours explicitly on the frame and every child control. The result
+    // list box additionally needs its internal isDark flag (it draws its own
+    // HTML text + selection colours).
+    m_dark = dark;
+#ifdef __WXMSW__
+    applyThemeColors(this, dark);
+#endif
+    if (resultBox != nullptr) {
+        resultBox->SetDark(dark);
+    }
+}
+
+#ifdef __WXMSW__
+void SearchFrame::ApplyTheme() {
+    bool dark = isSystemDark();
+    applyDarkModeToWindow(GetHandle(), dark);
+    SetTheme(dark);
+}
+#endif
+
+void SearchFrame::OnEraseBackground(wxEraseEvent &event) {
+    // Erase with the theme-aware background colour instead of the default white
+    // brush. We deliberately do NOT call event.Skip(), so the native white
+    // erase never runs. This removes the white flash seen on window close (when
+    // the panel is destroyed and the frame's client area gets a final
+    // WM_ERASEBKGND) and on first show (the list box viewport erases before its
+    // first paint).
+    //
+    // We use m_dark rather than the target window's GetBackgroundColour()
+    // because wxHtmlListBox's internal viewport does not reliably surface the
+    // colour we set on the list box, so reading it back could still be white.
+    wxDC *dc = event.GetDC();
+    if (dc != nullptr) {
+        wxColour bg = m_dark ? DARK_BG
+                             : wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW);
+        dc->SetBackground(wxBrush(bg));
+        dc->Clear();
+    }
+}
+
+void SearchFrame::OnClose(wxCloseEvent &event) {
+    // Hide first: when the window is destroyed, native controls (the search
+    // box, the icon) repaint white for their final frame under dark mode. As
+    // long as the window is already hidden, that flash is never shown.
+    Hide();
+    event.Skip();
+}
+
+#ifdef __WXMSW__
+WXLRESULT SearchFrame::MSWWindowProc(WXUINT message, WXWPARAM wParam,
+                                     WXLPARAM lParam) {
+    if (isColorSchemeChange(message, lParam)) {
+        ApplyTheme();
+    }
+    return wxFrame::MSWWindowProc(message, wParam, lParam);
+}
+#endif
 
 void SearchFrame::OnMouseMove(wxMouseEvent &event) {
     if (event.LeftIsDown() && event.Dragging()) {
