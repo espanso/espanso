@@ -96,9 +96,17 @@ rustPlatform.buildRustPackage {
       --replace-fail '"/usr/local/bin/espanso"' '"${placeholder "out"}/bin/espanso"'
   '';
 
-  postInstall = lib.optionalString stdenv.hostPlatform.isDarwin ''
-    ${stdenv.shell} ./scripts/create_bundle.sh $out/bin/espanso
-  '';
+  postInstall =
+    if stdenv.hostPlatform.isDarwin then
+        ''
+            ${stdenv.shell} ./scripts/create_bundle.sh $out/bin/espanso
+        ''
+        else
+      ''
+            install -Dm644 espanso/src/res/linux/espanso.desktop $out/share/applications/espanso.desktop
+            install -Dm644 espanso/src/res/linux/espanso.png $out/share/pixmaps/espanso.png
+      '';
+
 
   meta = {
     description = "A cross-platform Text Expander written in Rust";
