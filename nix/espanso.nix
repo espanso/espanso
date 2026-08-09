@@ -98,15 +98,14 @@ rustPlatform.buildRustPackage {
 
   postInstall =
     if stdenv.hostPlatform.isDarwin then
-        ''
-            ${stdenv.shell} ./scripts/create_bundle.sh $out/bin/espanso
-        ''
-        else
       ''
-            install -Dm644 espanso/src/res/linux/espanso.desktop $out/share/applications/espanso.desktop
-            install -Dm644 espanso/src/res/linux/espanso.png $out/share/pixmaps/espanso.png
+        ${stdenv.shell} ./scripts/create_bundle.sh $out/bin/espanso
+      ''
+    else
+      ''
+        install -Dm644 espanso/src/res/linux/espanso.desktop $out/share/applications/espanso.desktop
+        install -Dm644 espanso/src/res/linux/espanso.png $out/share/pixmaps/espanso.png
       '';
-
 
   meta = {
     description = "A cross-platform Text Expander written in Rust";
