@@ -92,7 +92,13 @@ where
         }
 
         // Keep the buffer length in check
-        if buffer.len() > self.max_buffer_size {
+        // A single event can deliver several characters at once (for example a
+        // composed-key or pasted input), so trimming just one character can
+        // leave the buffer well above `max_buffer_size` for many subsequent
+        // events, holding stale content and causing missed/spurious matches.
+        // `remove(0)` always operates on a valid char boundary (index 0), so
+        // this stays UTF-8 safe while shrinking the buffer back under the cap.
+        while buffer.len() > self.max_buffer_size {
             buffer.remove(0);
         }
 
@@ -173,6 +179,7 @@ impl<Id: Clone> RegexMatcher<Id> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::event::Key;
     use crate::util::tests::get_matches_after_str;
 
     fn match_result<Id: Default>(id: Id, trigger: &str, vars: &[(&str, &str)]) -> MatchResult<Id> {
@@ -263,5 +270,34 @@ mod tests {
             get_matches_after_str("hello(very long name over buffer)", &matcher),
             vec![]
         );
+    }
+
+    #[test]
+    fn matcher_truncates_buffer_after_multichar_event() {
+        // A single event can carry multiple characters (composed-key, paste,
+        // IME). The buffer must be capped back to `max_buffer_size` in one go,
+        // otherwise it stays over the limit and holds stale content.
+        let matcher = RegexMatcher::new(
+            &[RegexMatch::new(1, "hello")],
+            RegexMatcherOptions { max_buffer_size: 5 },
+        );
+
+        let (state, matches) = matcher.process(
+            None,
+            Event::Key {
+                key: Key::Other,
+                chars: Some("abcdefghij".to_string()),
+            },
+        );
+
+        // No match, so the buffer is carried by the returned state.
+        assert!(matches.is_empty());
+        assert!(
+            state.buffer.len() <= 5,
+            "buffer should be capped to max_buffer_size, was: {}",
+            state.buffer.len()
+        );
+        // Only the most recent characters are kept.
+        assert_eq!(state.buffer, "fghij");
     }
 }
