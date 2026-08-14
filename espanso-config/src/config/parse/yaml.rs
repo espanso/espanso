@@ -104,6 +104,9 @@ pub struct YAMLConfig {
     pub undo_backspace: Option<bool>,
 
     #[serde(default)]
+    pub support_virtual_keyboard: Option<bool>,
+
+    #[serde(default)]
     pub show_notifications: Option<bool>,
 
     #[serde(default)]
@@ -227,6 +230,7 @@ impl TryFrom<YAMLConfig> for ParsedConfig {
             search_trigger: yaml_config.search_trigger,
             search_shortcut: yaml_config.search_shortcut,
             undo_backspace: yaml_config.undo_backspace,
+            support_virtual_keyboard: yaml_config.support_virtual_keyboard,
 
             show_icon: yaml_config.show_icon,
             show_notifications: yaml_config.show_notifications,
@@ -303,6 +307,7 @@ mod tests {
     search_trigger: "search"
     search_shortcut: "CTRL+SPACE"
     undo_backspace: false
+    support_virtual_keyboard: true
     show_icon: false
     show_notifications: false
     secure_input_notification: false
@@ -364,6 +369,7 @@ mod tests {
                 search_trigger: Some("search".to_owned()),
                 search_shortcut: Some("CTRL+SPACE".to_owned()),
                 undo_backspace: Some(false),
+                support_virtual_keyboard: Some(true),
                 show_icon: Some(false),
                 show_notifications: Some(false),
                 secure_input_notification: Some(false),

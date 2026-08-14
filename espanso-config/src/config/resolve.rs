@@ -294,6 +294,10 @@ impl Config for ResolvedConfig {
         self.parsed.undo_backspace.unwrap_or(true)
     }
 
+    fn support_virtual_keyboard(&self) -> bool {
+        self.parsed.support_virtual_keyboard.unwrap_or(false)
+    }
+
     fn show_icon(&self) -> bool {
         self.parsed.show_icon.unwrap_or(true)
     }
@@ -442,6 +446,7 @@ impl ResolvedConfig {
             search_trigger,
             search_shortcut,
             undo_backspace,
+            support_virtual_keyboard,
             show_icon,
             show_notifications,
             secure_input_notification,
@@ -536,6 +541,25 @@ mod tests {
     use super::*;
     use crate::util::tests::use_test_directory;
     use std::fs::create_dir_all;
+
+    #[test]
+    fn support_virtual_keyboard_defaults_to_false() {
+        let config = ResolvedConfig::default();
+        assert!(!config.support_virtual_keyboard());
+    }
+
+    #[test]
+    fn support_virtual_keyboard_can_be_enabled() {
+        let config = ResolvedConfig {
+            parsed: ParsedConfig {
+                support_virtual_keyboard: Some(true),
+                ..Default::default()
+            },
+            ..Default::default()
+        };
+
+        assert!(config.support_virtual_keyboard());
+    }
 
     #[test]
     fn aggregate_includes_empty_config() {
