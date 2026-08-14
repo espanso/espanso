@@ -32,15 +32,23 @@ pub fn determine_path_env_variable_override(explicit_shell: Option<MacShell>) ->
         return None;
     }
     let shell: MacShell = explicit_shell.or_else(determine_default_macos_shell)?;
+    let (command, args) = path_query_command(&shell);
 
+    launch_command_and_get_output(command, args)
+}
+
+// The command (and its arguments) used to print the PATH of a login shell as a
+// POSIX colon-separated string.
+fn path_query_command(shell: &MacShell) -> (&'static str, &'static [&'static str]) {
     match shell {
-        MacShell::Bash => launch_command_and_get_output(
-            "bash",
-            &["--login", "-c", "source ~/.bashrc; echo $PATH"],
-        ),
-        MacShell::Fish => launch_command_and_get_output("fish", &["--login", "-c", "echo $PATH"]),
-        MacShell::Nu => launch_command_and_get_output("nu", &["--login", "-c", "$env.PATH"]),
-        MacShell::Pwsh => launch_command_and_get_output(
+        MacShell::Bash => ("bash", &["--login", "-c", "source ~/.bashrc; echo $PATH"]),
+        // In fish, PATH is a list variable, so `echo $PATH` would print its entries
+        // separated by spaces instead of colons. We ask fish to join them explicitly.
+        // `--` keeps entries starting with a hyphen from being read as flags, and
+        // `; true` absorbs the exit code 1 `string join` returns for a single entry.
+        MacShell::Fish => ("fish", &["--login", "-c", "string join -- : $PATH; true"]),
+        MacShell::Nu => ("nu", &["--login", "-c", "$env.PATH"]),
+        MacShell::Pwsh => (
             "pwsh",
             &[
                 "-Login",
@@ -48,10 +56,8 @@ pub fn determine_path_env_variable_override(explicit_shell: Option<MacShell>) ->
                 "if(Test-Path \"$PROFILE\") { . \"$PROFILE\" }; Write-Host $env:PATH",
             ],
         ),
-        MacShell::Sh => launch_command_and_get_output("sh", &["--login", "-c", "echo $PATH"]),
-        MacShell::Zsh => {
-            launch_command_and_get_output("zsh", &["--login", "-c", "source ~/.zshrc; echo $PATH"])
-        }
+        MacShell::Sh => ("sh", &["--login", "-c", "echo $PATH"]),
+        MacShell::Zsh => ("zsh", &["--login", "-c", "source ~/.zshrc; echo $PATH"]),
     }
 }
 
@@ -107,6 +113,47 @@ fn launch_command_and_get_output(command: &str, args: &[&str]) -> Option<String>
         return None;
     }
 
+    // without trimming, the shell's trailing newline lands inside the last PATH
+    // entry, making it unresolvable
     let output_str = String::from_utf8_lossy(&output.stdout);
+    let output_str = output_str.trim();
+    if output_str.is_empty() {
+        return None;
+    }
     Some(output_str.to_string())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn fish_joins_path_with_colons() {
+        // fish stores PATH as a list, so it must be joined with colons explicitly,
+        // otherwise the resulting PATH is a single bogus space-separated entry.
+        let (command, args) = path_query_command(&MacShell::Fish);
+        assert_eq!(command, "fish");
+        assert!(args.last().unwrap().starts_with("string join -- : $PATH"));
+    }
+
+    #[test]
+    fn every_shell_query_is_unchanged_except_fish() {
+        for (shell, expected) in [
+            (MacShell::Bash, "source ~/.bashrc; echo $PATH"),
+            (MacShell::Nu, "$env.PATH"),
+            (MacShell::Sh, "echo $PATH"),
+            (MacShell::Zsh, "source ~/.zshrc; echo $PATH"),
+        ] {
+            assert_eq!(*path_query_command(&shell).1.last().unwrap(), expected);
+        }
+    }
+
+    #[test]
+    fn trailing_newline_would_corrupt_the_last_entry() {
+        // guards the trim in launch_command_and_get_output: a shell prints a
+        // trailing newline, and PATH is split on ':' only
+        let raw = "/usr/local/bin:/usr/bin\n";
+        assert_eq!(raw.split(':').next_back(), Some("/usr/bin\n"));
+        assert_eq!(raw.trim().split(':').next_back(), Some("/usr/bin"));
+    }
 }
