@@ -378,7 +378,15 @@ pub fn show(form: types::Form) -> HashMap<String, String> {
     let mut value_map: HashMap<String, String> = HashMap::new();
 
     extern "C" fn callback(values: *const ValuePair, size: c_int, map: *mut c_void) {
-        let values: &[ValuePair] = unsafe { std::slice::from_raw_parts(values, size as usize) };
+        // When the form is canceled (Escape or the close button), the C++ side
+        // invokes the callback with an empty vector, whose `data()` is null.
+        // Creating a slice from a null pointer is UB (and panics in debug
+        // builds), so guard against it and treat it as an empty result.
+        let values: &[ValuePair] = if size <= 0 || values.is_null() {
+            &[]
+        } else {
+            unsafe { std::slice::from_raw_parts(values, size as usize) }
+        };
         let map = map as *mut HashMap<String, String>;
         let map = unsafe { &mut (*map) };
         for pair in values {
