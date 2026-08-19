@@ -5,6 +5,7 @@
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/espanso/espanso)
 ![Maintenance](https://img.shields.io/badge/Maintained-yes-green.svg)
 ![Language](https://img.shields.io/badge/language-rust-orange)
+[![inspect.software](https://raw.githubusercontent.com/inspect-software/badges/main/v1/e/espanso/espanso.svg)](https://inspect.software/software/espanso/espanso)
 ![License](https://img.shields.io/github/license/espanso/espanso)
 
 ![Platforms](https://img.shields.io/badge/platforms-Windows%2C%20macOS%20and%20Linux-blue)
