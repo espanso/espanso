@@ -260,7 +260,7 @@ fn copy_comment(chars: &[char], start: usize, out: &mut String) -> usize {
 /// Whether the `:` at `chars[i]` acts as a key/value indicator: it must be followed by
 /// whitespace, a flow separator/terminator, or end-of-input.
 fn is_value_indicator(chars: &[char], i: usize) -> bool {
-    debug_assert!(chars.get(i) == Some(&':'));
+    debug_assert_eq!(chars.get(i), Some(&':'));
     match chars.get(i + 1) {
         None => true,
         Some(next) => matches!(next, ' ' | '\t' | '\n' | '\r' | ',' | ']' | '}'),
@@ -270,7 +270,7 @@ fn is_value_indicator(chars: &[char], i: usize) -> bool {
 /// Whether the `#` at `chars[i]` begins a comment: it is at a line start or preceded
 /// by whitespace.
 fn comment_starts_here(chars: &[char], i: usize) -> bool {
-    debug_assert!(chars.get(i) == Some(&'#'));
+    debug_assert_eq!(chars.get(i), Some(&'#'));
     if i == 0 {
         return true;
     }
