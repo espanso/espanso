@@ -3,7 +3,7 @@
 use super::ModifiersState;
 use anyhow::Result;
 use log::debug;
-use std::{convert::TryInto, time::Duration};
+use std::time::Duration;
 
 use sctk::activation::RequestData;
 use sctk::reexports::calloop::EventLoop;
@@ -422,8 +422,7 @@ impl SimpleWindow {
                     let b = u32::min(((width - x) * 0xFF) / width, (y * 0xFF) / height);
                     let color = (a << 24) + (r << 16) + (g << 8) + b;
 
-                    let array: &mut [u8; 4] = chunk.try_into().unwrap();
-                    *array = color.to_le_bytes();
+                    *chunk = color.to_le_bytes();
                 });
 
             if let Some(shift) = &mut self.shift {
