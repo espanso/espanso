@@ -410,7 +410,7 @@ impl SimpleWindow {
             canvas
                 .as_chunks_mut::<4>()
                 .0
-                .iter()
+                .iter_mut()
                 .enumerate()
                 .for_each(|(index, chunk)| {
                     let x = ((index + shift as usize) % width as usize) as u32;
