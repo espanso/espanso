@@ -1,6 +1,6 @@
 [package]
 name = "espanso"
-version = "2.4.0"
+version = "2.4.1"
 authors = ["Federico Terzi <federicoterzi96@gmail.com>"]
 license = "GPL-3.0"
 description = "Cross-platform Text Expander written in Rust"
@@ -95,9 +95,21 @@ depends = "$auto"
 section = "utility"
 license-file = ["../LICENSE", "1"]
 assets = [
-    ["target/release/espanso", "usr/bin/espanso", "755"],
-    ["src/res/linux/espanso.desktop", "usr/share/applications/espanso.desktop", "644"],
-    ["src/res/linux/espanso.png", "usr/share/pixmaps/espanso.png", "644"],
+    [
+        "target/release/espanso",
+        "usr/bin/espanso",
+        "755",
+    ],
+    [
+        "src/res/linux/espanso.desktop",
+        "usr/share/applications/espanso.desktop",
+        "644",
+    ],
+    [
+        "src/res/linux/espanso.png",
+        "usr/share/pixmaps/espanso.png",
+        "644",
+    ],
 ]
 # If not set uses the entire README as a description
 extended-description = "Cross-platform Text Expander written in Rust"
