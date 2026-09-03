@@ -17,7 +17,7 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::{Extension, ExtensionOutput, ExtensionResult, Params, Value};
+use crate::{Extension, ExtensionOutput, ExtensionResult, Number, Params, Value};
 use thiserror::Error;
 
 pub struct EchoExtension {
@@ -49,10 +49,19 @@ impl Extension for EchoExtension {
         _: &crate::Scope,
         params: &Params,
     ) -> crate::ExtensionResult {
-        if let Some(Value::String(echo)) = params.get("echo") {
-            ExtensionResult::Success(ExtensionOutput::Single(echo.clone()))
-        } else {
-            ExtensionResult::Error(EchoExtensionError::MissingEchoParameter.into())
+        // YAML scalars arrive unquoted as numbers and booleans, so coerce them
+        // rather than making users quote every value
+        let echo = match params.get("echo") {
+            Some(Value::String(value)) => Some(value.clone()),
+            Some(Value::Number(Number::Integer(value))) => Some(value.to_string()),
+            Some(Value::Number(Number::Float(value))) => Some(value.to_string()),
+            Some(Value::Bool(value)) => Some(value.to_string()),
+            _ => None,
+        };
+
+        match echo {
+            Some(echo) => ExtensionResult::Success(ExtensionOutput::Single(echo)),
+            None => ExtensionResult::Error(EchoExtensionError::MissingEchoParameter.into()),
         }
     }
 }
@@ -69,6 +78,14 @@ mod tests {
 
     use super::*;
 
+    fn echo(value: Value) -> ExtensionResult {
+        let extension = EchoExtension::new();
+        let param = vec![("echo".to_string(), value)]
+            .into_iter()
+            .collect::<Params>();
+        extension.calculate(&crate::Context::default(), &HashMap::default(), &param)
+    }
+
     #[test]
     fn echo_works_correctly() {
         let extension = EchoExtension::new();
@@ -83,6 +100,34 @@ mod tests {
                 .unwrap(),
             ExtensionOutput::Single("test".to_string())
         );
+    }
+
+    #[test]
+    fn echo_coerces_scalars() {
+        for (value, expected) in [
+            (Value::Number(Number::Integer(12345)), "12345"),
+            (Value::Number(Number::Integer(-1)), "-1"),
+            (Value::Number(Number::Float(1.0)), "1"),
+            (Value::Number(Number::Float(1.5)), "1.5"),
+            (Value::Bool(true), "true"),
+            (Value::Bool(false), "false"),
+        ] {
+            assert_eq!(
+                echo(value).into_success().unwrap(),
+                ExtensionOutput::Single(expected.to_string())
+            );
+        }
+    }
+
+    #[test]
+    fn echo_rejects_non_scalars() {
+        for value in [
+            Value::Null,
+            Value::Array(vec![Value::Bool(true)]),
+            Value::Object(HashMap::new()),
+        ] {
+            assert!(matches!(echo(value), ExtensionResult::Error(_)));
+        }
     }
 
     #[test]
