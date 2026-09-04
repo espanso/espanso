@@ -193,11 +193,12 @@ impl Source for X11Source {
                         "unable to register hotkey: {} (X11 error code: {}); the shortcut may conflict with another application",
                         hk, result.error_code
                     );
+                } else {
+                    debug!("registered hotkey: {}", hk);
                 }
                 // The mapping is inserted even when the grab failed: XRecord-based
                 // detection is unaffected by grab ownership, so the hotkey keeps working.
                 raw_hotkey_mapping.insert((result.key_code, result.state), hk.id);
-                debug!("registered hotkey: {}", hk);
             } else {
                 error!("unable to generate raw hotkey mapping: {}", hk);
             }

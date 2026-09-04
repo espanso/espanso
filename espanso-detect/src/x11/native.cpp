@@ -80,8 +80,8 @@ int detect_error_callback(Display *display, XErrorEvent *error);
 // installed around hotkey registration to detect BadAccess reliably.
 static int grab_error_code = 0;
 static int detect_grab_error_handler(Display *, XErrorEvent *error) {
-  grab_error_code = error->error_code;
-  return 0;
+    grab_error_code = error->error_code;
+    return 0;
 }
 
 int32_t detect_check_x11() {
@@ -240,7 +240,8 @@ HotKeyResult detect_register_hotkey(void *_context, HotKeyRequest request,
     // modifiers, such as the NumLock, as the XGrabKey method wants an exact
     // match.
     grab_error_code = 0;
-    XErrorHandler previous_handler = XSetErrorHandler(&detect_grab_error_handler);
+    XErrorHandler previous_handler =
+        XSetErrorHandler(&detect_grab_error_handler);
 
     for (uint state = 0; state < 256; state++) {
         // Check if the current state includes a "useless modifier" but none of
@@ -249,8 +250,8 @@ HotKeyResult detect_register_hotkey(void *_context, HotKeyRequest request,
             (state & valid_modifiers) == 0) {
             uint final_modifiers = state | target_modifiers;
 
-            XGrabKey(context->ctrl_disp, key_code, final_modifiers,
-                               root, False, GrabModeAsync, GrabModeAsync);
+            XGrabKey(context->ctrl_disp, key_code, final_modifiers, root, False,
+                     GrabModeAsync, GrabModeAsync);
         }
     }
 
