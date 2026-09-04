@@ -1,10 +1,24 @@
 [Unit]
 Description=espanso
+# Order the start after the graphical session: the display server may not be
+# reachable yet when default.target is reached, which made the worker panic
+# with "failed to initialize detector module" (exit status 101) and cycle
+# via Restart=on-failure until the display appeared.
+After=graphical-session.target
+# Stop espanso when the graphical session stops, so it does not outlive
+# logout as an orphaned daemon.
+PartOf=graphical-session.target
 
 [Service]
 ExecStart={{{espanso_path}}} launcher 
 Restart=on-failure
 RestartSec=3
+# A slow boot can exceed the default restart budget (5 starts within 10s),
+# after which systemd marks the unit failed and gives up until manual reset.
+# Widen the budget so slow displays never permanently disable espanso.
+StartLimitIntervalSec=60
+StartLimitBurst=10
 
 [Install]
+# Start with the graphical session instead of racing the display server.
 WantedBy=graphical-session.target
