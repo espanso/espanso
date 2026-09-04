@@ -8,16 +8,16 @@ After=graphical-session.target
 # Stop espanso when the graphical session stops, so it does not outlive
 # logout as an orphaned daemon.
 PartOf=graphical-session.target
-
-[Service]
-ExecStart={{{espanso_path}}} launcher 
-Restart=on-failure
-RestartSec=3
 # A slow boot can exceed the default restart budget (5 starts within 10s),
 # after which systemd marks the unit failed and gives up until manual reset.
 # Widen the budget so slow displays never permanently disable espanso.
 StartLimitIntervalSec=60
 StartLimitBurst=10
+
+[Service]
+ExecStart={{{espanso_path}}} launcher 
+Restart=on-failure
+RestartSec=3
 
 [Install]
 # Start with the graphical session instead of racing the display server.
