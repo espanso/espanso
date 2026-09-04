@@ -100,6 +100,7 @@ pub struct RawHotKeyResult {
     pub success: i32,
     pub key_code: i32,
     pub state: u32,
+    pub error_code: i32,
 }
 
 #[allow(improper_ctypes)]
@@ -187,12 +188,16 @@ impl Source for X11Source {
             let raw = convert_hotkey_to_raw(hk);
             if let Some(raw_hk) = raw {
                 let result = unsafe { detect_register_hotkey(handle, raw_hk, mod_indexes) };
-                if result.success == 0 {
-                    error!("unable to register hotkey: {}", hk);
-                } else {
-                    raw_hotkey_mapping.insert((result.key_code, result.state), hk.id);
-                    debug!("registered hotkey: {}", hk);
+                if result.error_code != 0 {
+                    warn!(
+                        "unable to register hotkey: {} (X11 error code: {}); the shortcut may conflict with another application",
+                        hk, result.error_code
+                    );
                 }
+                // The mapping is inserted even when the grab failed: XRecord-based
+                // detection is unaffected by grab ownership, so the hotkey keeps working.
+                raw_hotkey_mapping.insert((result.key_code, result.state), hk.id);
+                debug!("registered hotkey: {}", hk);
             } else {
                 error!("unable to generate raw hotkey mapping: {}", hk);
             }

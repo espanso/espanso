@@ -64,6 +64,10 @@ typedef struct {
     int32_t success;
     int32_t key_code;
     uint32_t state;
+    // X11 error code reported during registration (0 = no error). The grab
+    // may still have failed for some modifier variants even when success is 1;
+    // XRecord-based detection is unaffected by grab failures.
+    int32_t error_code;
 } HotKeyResult;
 
 typedef struct {

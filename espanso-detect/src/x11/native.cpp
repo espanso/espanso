@@ -259,9 +259,10 @@ HotKeyResult detect_register_hotkey(void *_context, HotKeyRequest request,
     XSync(context->ctrl_disp, False);
     XSetErrorHandler(previous_handler);
 
-    if (grab_error_code != 0) {
-        result.success = 0;
-    }
+    // Report the error without failing: XRecord-based detection works
+    // regardless of grab ownership, and dropping the hotkey would silently
+    // disable a working shortcut.
+    result.error_code = grab_error_code;
 
     return result;
 }
