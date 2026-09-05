@@ -82,6 +82,7 @@ pub mod types {
     #[derive(Debug)]
     pub struct ChoiceMetadata {
         pub values: Vec<String>,
+        pub ids: Vec<String>,
         pub choice_type: ChoiceType,
         pub default_value: String,
         pub separator: String,
@@ -282,6 +283,8 @@ mod interop {
     struct OwnedChoiceMetadata {
         values: Vec<CString>,
         values_ptr_array: Vec<*const c_char>,
+        ids: Vec<CString>,
+        ids_ptr_array: Vec<*const c_char>,
         default_value: CString,
         separator: CString,
         interop: Box<ChoiceMetadata>,
@@ -295,6 +298,8 @@ mod interop {
 
     impl From<types::ChoiceMetadata> for OwnedChoiceMetadata {
         fn from(metadata: types::ChoiceMetadata) -> Self {
+            debug_assert_eq!(metadata.values.len(), metadata.ids.len(), "ChoiceMetadata: values and ids length mismatch");
+
             let values: Vec<CString> = metadata
                 .values
                 .into_iter()
@@ -303,6 +308,15 @@ mod interop {
 
             let values_ptr_array: Vec<*const c_char> =
                 values.iter().map(|value| value.as_ptr()).collect();
+
+            let ids: Vec<CString> = metadata
+                .ids
+                .into_iter()
+                .map(|id| CString::new(id).expect("unable to convert choice id to string"))
+                .collect();
+
+            let ids_ptr_array: Vec<*const c_char> =
+                ids.iter().map(|id| id.as_ptr()).collect();
 
             let choice_type = match metadata.choice_type {
                 types::ChoiceType::Dropdown => ChoiceType_DROPDOWN,
@@ -318,13 +332,16 @@ mod interop {
             let interop = Box::new(ChoiceMetadata {
                 values: values_ptr_array.as_ptr(),
                 valueSize: values.len() as c_int,
-                choiceType: choice_type,
                 defaultValue: default_value.as_ptr(),
+                choiceType: choice_type,
                 separator: separator.as_ptr(),
+                ids: ids_ptr_array.as_ptr(),
             });
             Self {
                 values,
                 values_ptr_array,
+                ids,
+                ids_ptr_array,
                 default_value,
                 separator,
                 interop,

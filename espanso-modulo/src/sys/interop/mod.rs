@@ -53,6 +53,7 @@ pub struct ChoiceMetadata {
     pub defaultValue: *const ::std::os::raw::c_char,
     pub choiceType: ChoiceType,
     pub separator: *const ::std::os::raw::c_char,
+    pub ids: *const *const ::std::os::raw::c_char,
 }
 
 #[repr(C)]
