@@ -20,7 +20,8 @@
 use super::config::{FieldConfig, FieldTypeConfig, FormConfig};
 use super::parser::layout::Token;
 use crate::sys::form::types::{
-    ChoiceMetadata, ChoiceType, Field, FieldType, Form, LabelMetadata, RowMetadata, TextMetadata,
+    CheckboxMetadata, ChoiceMetadata, ChoiceType, Field, FieldType, Form, LabelMetadata,
+    RowMetadata, TextMetadata,
 };
 use std::collections::HashMap;
 
@@ -58,6 +59,12 @@ fn create_field(token: &Token, field_map: &HashMap<String, FieldConfig>) -> Fiel
                     choice_type: ChoiceType::List,
                     default_value: config.default.clone(),
                     separator: config.separator.clone(),
+                }),
+                FieldTypeConfig::Checkbox(config) => FieldType::Checkbox(CheckboxMetadata {
+                    values: config.values.clone(),
+                    defaults: config.default.clone().unwrap_or_default(),
+                    separator: config.separator.clone(),
+                    prefix: config.prefix.clone(),
                 }),
             };
 

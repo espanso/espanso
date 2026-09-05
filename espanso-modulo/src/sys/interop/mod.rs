@@ -57,6 +57,17 @@ pub struct ChoiceMetadata {
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+pub struct CheckboxMetadata {
+    pub values: *const *const ::std::os::raw::c_char,
+    pub valueSize: ::std::os::raw::c_int,
+    pub defaults: *const *const ::std::os::raw::c_char,
+    pub defaultSize: ::std::os::raw::c_int,
+    pub separator: *const ::std::os::raw::c_char,
+    pub prefix: *const ::std::os::raw::c_char,
+}
+
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
 pub struct FieldMetadata {
     pub id: *const ::std::os::raw::c_char,
     pub fieldType: FieldType,
