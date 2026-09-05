@@ -71,6 +71,17 @@ matches:
   - triggers: [":test1", ":test2"]
     replace: "These both expand to the same thing"
 ```
+
+You can also add matches from the CLI without manually editing YAML:
+```bash
+espanso match add --trigger ":hello" --replace "Hi There!"
+```
+
+For a desktop editing experience, this repository also includes a Tauri app:
+```bash
+cargo run -p espanso-gui
+```
+It provides a GitHub-inspired UI to add, update, and remove matches from your YAML match files.
 ## Team Members and Contributors
 
 ### Team
