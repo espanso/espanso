@@ -85,16 +85,19 @@ pub fn get_provider() -> Result<Box<dyn AppInfoProvider>> {
                 return Ok(Box::new(wayland::WaylandNiriAppInfoProvider::new()));
             }
             "kde" => {
-                if Command::new("kdotool")
-                    .arg("getactivewindow")
-                    .arg("getwindowclassname")
-                    .output()
-                    .is_ok()
-                {
-                    info!("using WaylandKDEAppInfoProvider");
-                    return Ok(Box::new(wayland::WaylandKDEAppInfoProvider::new()));
+                if wayland::kde_dbus::is_kwin_available() {
+                    match wayland::WaylandKDEAppInfoProvider::new() {
+                        Ok(provider) => {
+                            info!("using WaylandKDEAppInfoProvider");
+                            return Ok(Box::new(provider));
+                        }
+                        Err(err) => {
+                            info!("could not initialize the KWin D-Bus connection: {err:?}");
+                        }
+                    }
+                } else {
+                    info!("KWin D-Bus service (org.kde.KWin) not available on the session bus.");
                 }
-                info!("kdotool missing or not available for the current wayland DE.");
             }
             "sway" | "hyprland" | "labwc" | "wayfire" | "budgie" => {
                 if Command::new("wlrctl")

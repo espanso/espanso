@@ -22,9 +22,6 @@
 
 use std::path::PathBuf;
 
-#[cfg(target_os = "linux")]
-use std::process::Command;
-
 use clap::{App, AppSettings, Arg, ArgMatches, ErrorKind, SubCommand};
 use cli::{CliModule, CliModuleArgs};
 use log::{error, info, warn};
@@ -626,18 +623,6 @@ SubCommand::with_name("install")
             }
 
             cli_args.paths = Some(paths);
-        }
-
-        // try to invoke `kdotool` to see if you have it or not.
-        #[cfg(target_os = "linux")]
-        if Command::new("kdotool")
-            .arg("getactivewindow")
-            .arg("getwindowclassname")
-            .output()
-            .is_ok()
-        {
-        } else {
-            info!("kdotool missing or not available for the current wayland DE.");
         }
 
         if let Some(args) = matches.subcommand_matches(&handler.subcommand) {

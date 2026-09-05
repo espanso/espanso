@@ -7,7 +7,7 @@ build = "build.rs"
 
 [features]
 # If the wayland feature is enabled, all X11 dependencies will be dropped
-wayland = []
+wayland = ["dep:zbus", "dep:serde_json"]
 
 [dependencies]
 log.workspace = true
@@ -19,6 +19,10 @@ workspace = true
 
 [target.'cfg(windows)'.dependencies]
 widestring.workspace = true
+
+[target.'cfg(target_os = "linux")'.dependencies]
+zbus = { workspace = true, optional = true }
+serde_json = { workspace = true, optional = true }
 
 [build-dependencies]
 cc.workspace = true

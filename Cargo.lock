@@ -1044,7 +1044,9 @@ dependencies = [
  "cc",
  "espanso-package",
  "log",
+ "serde_json",
  "widestring",
+ "zbus",
 ]
 
 [[package]]
