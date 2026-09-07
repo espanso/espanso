@@ -101,6 +101,39 @@ pub struct RawHotKeyResult {
     pub key_code: i32,
     pub state: u32,
     pub error_code: i32,
+    pub error_request_code: i32,
+}
+
+// X11 protocol error-code names (Xlib); unknown codes fall back to the raw
+// number.
+fn x11_error_name(code: i32) -> String {
+    match code {
+        1 => "BadRequest".to_string(),
+        2 => "BadValue".to_string(),
+        3 => "BadWindow".to_string(),
+        4 => "BadPixmap".to_string(),
+        5 => "BadAtom".to_string(),
+        6 => "BadCursor".to_string(),
+        7 => "BadFont".to_string(),
+        8 => "BadMatch".to_string(),
+        9 => "BadDrawable".to_string(),
+        10 => "BadAccess".to_string(),
+        11 => "BadAlloc".to_string(),
+        12 => "BadColor".to_string(),
+        13 => "BadGC".to_string(),
+        14 => "BadIDChoice".to_string(),
+        15 => "BadName".to_string(),
+        16 => "BadLength".to_string(),
+        17 => "BadImplementation".to_string(),
+        _ => format!("code {}", code),
+    }
+}
+
+fn x11_request_name(code: i32) -> String {
+    match code {
+        33 => "X_GrabKey".to_string(),
+        _ => format!("request {}", code),
+    }
 }
 
 #[allow(improper_ctypes)]
@@ -189,9 +222,18 @@ impl Source for X11Source {
             if let Some(raw_hk) = raw {
                 let result = unsafe { detect_register_hotkey(handle, raw_hk, mod_indexes) };
                 if result.error_code != 0 {
+                    let hint = if result.error_code == 10 {
+                        "; the shortcut may conflict with another application"
+                    } else {
+                        ""
+                    };
                     warn!(
-                        "unable to register hotkey: {} (X11 error code: {}); the shortcut may conflict with another application",
-                        hk, result.error_code
+                        "unable to register hotkey: {} (X11 error {}: {} on {}){}",
+                        hk,
+                        result.error_code,
+                        x11_error_name(result.error_code),
+                        x11_request_name(result.error_request_code),
+                        hint
                     );
                 } else {
                     debug!("registered hotkey: {}", hk);

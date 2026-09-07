@@ -79,8 +79,10 @@ int detect_error_callback(Display *display, XErrorEvent *error);
 // handler (not as XGrabKey's return value), so a request-scoped handler is
 // installed around hotkey registration to detect BadAccess reliably.
 static int grab_error_code = 0;
+static int grab_error_request_code = 0;
 static int detect_grab_error_handler(Display *, XErrorEvent *error) {
     grab_error_code = error->error_code;
+    grab_error_request_code = error->request_code;
     return 0;
 }
 
@@ -240,6 +242,7 @@ HotKeyResult detect_register_hotkey(void *_context, HotKeyRequest request,
     // modifiers, such as the NumLock, as the XGrabKey method wants an exact
     // match.
     grab_error_code = 0;
+    grab_error_request_code = 0;
     XErrorHandler previous_handler =
         XSetErrorHandler(&detect_grab_error_handler);
 
@@ -264,6 +267,7 @@ HotKeyResult detect_register_hotkey(void *_context, HotKeyRequest request,
     // regardless of grab ownership, and dropping the hotkey would silently
     // disable a working shortcut.
     result.error_code = grab_error_code;
+    result.error_request_code = grab_error_request_code;
 
     return result;
 }
