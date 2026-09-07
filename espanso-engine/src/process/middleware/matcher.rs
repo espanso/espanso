@@ -19,7 +19,7 @@
 
 use log::trace;
 use std::{
-    cell::RefCell,
+    cell::{Cell, RefCell},
     collections::{HashMap, VecDeque},
 };
 
@@ -55,6 +55,7 @@ pub struct MatchResult {
 
 pub trait MatcherMiddlewareConfigProvider {
     fn max_history_size(&self) -> usize;
+    fn support_virtual_keyboard(&self) -> bool;
 }
 
 pub trait ModifierStateProvider {
@@ -74,6 +75,10 @@ pub struct MatcherMiddleware<'a, State> {
     matcher_states: RefCell<VecDeque<Vec<State>>>,
 
     max_history_size: usize,
+    support_virtual_keyboard: bool,
+
+    mouse_buttons_down: Cell<u32>,
+    key_seen_while_mouse_down: Cell<bool>,
 
     modifier_status_provider: &'a dyn ModifierStateProvider,
 }
@@ -85,12 +90,61 @@ impl<'a, State> MatcherMiddleware<'a, State> {
         modifier_status_provider: &'a dyn ModifierStateProvider,
     ) -> Self {
         let max_history_size = options_provider.max_history_size();
+        let support_virtual_keyboard = options_provider.support_virtual_keyboard();
 
         Self {
             matchers,
             matcher_states: RefCell::new(VecDeque::new()),
             max_history_size,
+            support_virtual_keyboard,
+            mouse_buttons_down: Cell::new(0),
+            key_seen_while_mouse_down: Cell::new(false),
             modifier_status_provider,
+        }
+    }
+
+    fn handle_virtual_keyboard_event(&self, event_type: &EventType) -> bool {
+        match event_type {
+            EventType::Mouse(mouse_event) => {
+                match mouse_event.status {
+                    Status::Pressed => {
+                        self.mouse_buttons_down
+                            .set(self.mouse_buttons_down.get().saturating_add(1));
+                    }
+                    Status::Released => {
+                        let buttons_down = self.mouse_buttons_down.get();
+
+                        // Ignore unmatched release events.
+                        if buttons_down == 0 {
+                            return true;
+                        }
+
+                        let remaining = buttons_down - 1;
+                        self.mouse_buttons_down.set(remaining);
+
+                        if remaining == 0 {
+                            if !self.key_seen_while_mouse_down.get() {
+                                trace!(
+                                    "mouse click without keyboard event, clearing matching state"
+                                );
+                                self.matcher_states.borrow_mut().clear();
+                            }
+
+                            self.key_seen_while_mouse_down.set(false);
+                        }
+                    }
+                }
+
+                true
+            }
+            EventType::Keyboard(keyboard_event)
+                if keyboard_event.status == Status::Pressed
+                    && self.mouse_buttons_down.get() > 0 =>
+            {
+                self.key_seen_while_mouse_down.set(true);
+                false
+            }
+            _ => false,
         }
     }
 }
@@ -101,6 +155,10 @@ impl<State> Middleware for MatcherMiddleware<'_, State> {
     }
 
     fn next(&self, event: Event, _: &mut dyn FnMut(Event)) -> Event {
+        if self.support_virtual_keyboard && self.handle_virtual_keyboard_event(&event.etype) {
+            return event;
+        }
+
         if is_event_of_interest(&event.etype) {
             let mut matcher_states = self.matcher_states.borrow_mut();
             let prev_states = if matcher_states.is_empty() {
@@ -247,5 +305,158 @@ fn should_skip_key_event_due_to_modifier_press(modifier_state: &ModifierState) -
         modifier_state.is_alt_down || modifier_state.is_meta_down
     } else {
         unreachable!()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::event::input::{KeyboardEvent, MouseButton, MouseEvent};
+
+    struct TestConfig {
+        support_virtual_keyboard: bool,
+    }
+
+    impl MatcherMiddlewareConfigProvider for TestConfig {
+        fn max_history_size(&self) -> usize {
+            10
+        }
+
+        fn support_virtual_keyboard(&self) -> bool {
+            self.support_virtual_keyboard
+        }
+    }
+
+    struct TestModifierStateProvider;
+
+    impl ModifierStateProvider for TestModifierStateProvider {
+        fn get_modifier_state(&self) -> ModifierState {
+            ModifierState {
+                is_ctrl_down: false,
+                is_alt_down: false,
+                is_meta_down: false,
+            }
+        }
+    }
+
+    struct TestMatcher;
+
+    impl<'a> Matcher<'a, String> for TestMatcher {
+        fn process(
+            &'a self,
+            prev_state: Option<&String>,
+            event: &MatcherEvent,
+        ) -> (String, Vec<MatchResult>) {
+            let mut state = prev_state.cloned().unwrap_or_default();
+
+            if let MatcherEvent::Key {
+                chars: Some(chars), ..
+            } = event
+            {
+                state.push_str(chars);
+            }
+
+            (state, Vec::new())
+        }
+    }
+
+    fn key_event(chars: &str) -> Event {
+        Event {
+            source_id: 0,
+            etype: EventType::Keyboard(KeyboardEvent {
+                key: Key::Other(0),
+                value: Some(chars.to_string()),
+                status: Status::Pressed,
+                variant: None,
+            }),
+        }
+    }
+
+    fn mouse_event(status: Status) -> Event {
+        Event {
+            source_id: 0,
+            etype: EventType::Mouse(MouseEvent {
+                button: MouseButton::Left,
+                status,
+            }),
+        }
+    }
+
+    fn current_state(middleware: &MatcherMiddleware<'_, String>) -> Option<String> {
+        middleware
+            .matcher_states
+            .borrow()
+            .back()
+            .and_then(|states| states.first())
+            .cloned()
+    }
+
+    #[test]
+    fn virtual_keyboard_disabled_keeps_legacy_mouse_invalidation() {
+        let matcher = TestMatcher;
+        let matchers: [&dyn Matcher<'_, String>; 1] = [&matcher];
+        let config = TestConfig {
+            support_virtual_keyboard: false,
+        };
+        let modifiers = TestModifierStateProvider;
+
+        let middleware = MatcherMiddleware::new(&matchers, &config, &modifiers);
+        let mut dispatch = |_| {};
+
+        middleware.next(key_event("a"), &mut dispatch);
+        assert_eq!(current_state(&middleware).as_deref(), Some("a"));
+
+        middleware.next(mouse_event(Status::Pressed), &mut dispatch);
+
+        assert!(middleware.matcher_states.borrow().is_empty());
+    }
+
+    #[test]
+    fn virtual_keyboard_enabled_invalidates_pointer_only_click_on_release() {
+        let matcher = TestMatcher;
+        let matchers: [&dyn Matcher<'_, String>; 1] = [&matcher];
+        let config = TestConfig {
+            support_virtual_keyboard: true,
+        };
+        let modifiers = TestModifierStateProvider;
+
+        let middleware = MatcherMiddleware::new(&matchers, &config, &modifiers);
+        let mut dispatch = |_| {};
+
+        middleware.next(key_event("a"), &mut dispatch);
+
+        middleware.next(mouse_event(Status::Pressed), &mut dispatch);
+
+        // Invalidation is delayed until we know whether the click generated a key.
+        assert_eq!(current_state(&middleware).as_deref(), Some("a"));
+
+        middleware.next(mouse_event(Status::Released), &mut dispatch);
+
+        assert!(middleware.matcher_states.borrow().is_empty());
+    }
+
+    #[test]
+    fn virtual_keyboard_enabled_preserves_state_across_key_clicks() {
+        let matcher = TestMatcher;
+        let matchers: [&dyn Matcher<'_, String>; 1] = [&matcher];
+        let config = TestConfig {
+            support_virtual_keyboard: true,
+        };
+        let modifiers = TestModifierStateProvider;
+
+        let middleware = MatcherMiddleware::new(&matchers, &config, &modifiers);
+        let mut dispatch = |_| {};
+
+        middleware.next(mouse_event(Status::Pressed), &mut dispatch);
+        middleware.next(key_event("a"), &mut dispatch);
+        middleware.next(mouse_event(Status::Released), &mut dispatch);
+
+        assert_eq!(current_state(&middleware).as_deref(), Some("a"));
+
+        middleware.next(mouse_event(Status::Pressed), &mut dispatch);
+        middleware.next(key_event("b"), &mut dispatch);
+        middleware.next(mouse_event(Status::Released), &mut dispatch);
+
+        assert_eq!(current_state(&middleware).as_deref(), Some("ab"));
     }
 }
