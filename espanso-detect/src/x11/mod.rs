@@ -224,7 +224,10 @@ impl Source for X11Source {
             if let Some(raw_hk) = raw {
                 let result = unsafe { detect_register_hotkey(handle, raw_hk, mod_indexes) };
                 if result.success == 0 {
-                    error!("unable to register hotkey: {}", hk);
+                    error!(
+                        "no keycode resolved for hotkey: {}; it will not be registered",
+                        hk
+                    );
                 } else if result.error_code != 0 {
                     // Any failing lock-mask variant sets error_code, so the warning
                     // can fire even when the plain combo registered fine; the hint
