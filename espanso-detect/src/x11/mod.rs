@@ -223,10 +223,12 @@ impl Source for X11Source {
             let raw = convert_hotkey_to_raw(hk);
             if let Some(raw_hk) = raw {
                 let result = unsafe { detect_register_hotkey(handle, raw_hk, mod_indexes) };
-                // Any failing lock-mask variant sets error_code, so the warning
-                // can fire even when the plain combo registered fine; the hint
-                // covers the still-works case.
-                if result.error_code != 0 {
+                if result.success == 0 {
+                    error!("unable to register hotkey: {}", hk);
+                } else if result.error_code != 0 {
+                    // Any failing lock-mask variant sets error_code, so the warning
+                    // can fire even when the plain combo registered fine; the hint
+                    // covers the still-works case.
                     let hint = if result.error_code == BAD_ACCESS {
                         "; the shortcut will still work but may also trigger that application"
                     } else {
@@ -245,7 +247,10 @@ impl Source for X11Source {
                 }
                 // The mapping is inserted even when the grab failed: XRecord-based
                 // detection is unaffected by grab ownership, so the hotkey keeps working.
-                raw_hotkey_mapping.insert((result.key_code, result.state), hk.id);
+                // It is skipped only when no keycode resolved (success 0).
+                if result.success != 0 {
+                    raw_hotkey_mapping.insert((result.key_code, result.state), hk.id);
+                }
             } else {
                 error!("unable to generate raw hotkey mapping: {}", hk);
             }
