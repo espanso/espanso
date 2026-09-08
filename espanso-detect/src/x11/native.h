@@ -68,7 +68,8 @@ typedef struct {
     // registration (0 = no error). minor_code is omitted: it is always 0 for
     // core-protocol requests such as X_GrabKey. The grab may still have failed
     // for some modifier variants even when success is 1; XRecord-based
-    // detection is unaffected by grab failures.
+    // detection is unaffected by grab failures. success is retained for
+    // struct-layout compatibility only: consumers rely on error_code.
     int32_t error_code;
     int32_t error_request_code;
 } HotKeyResult;

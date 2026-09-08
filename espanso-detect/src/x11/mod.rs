@@ -136,6 +136,8 @@ fn x11_request_name(code: i32) -> String {
     }
 }
 
+const BAD_ACCESS: i32 = 10;
+
 #[allow(improper_ctypes)]
 #[link(name = "espansodetect", kind = "static")]
 extern "C" {
@@ -221,8 +223,11 @@ impl Source for X11Source {
             let raw = convert_hotkey_to_raw(hk);
             if let Some(raw_hk) = raw {
                 let result = unsafe { detect_register_hotkey(handle, raw_hk, mod_indexes) };
+                // Any failing lock-mask variant sets error_code, so the warning
+                // can fire even when the plain combo registered fine; the hint
+                // covers the still-works case.
                 if result.error_code != 0 {
-                    let hint = if result.error_code == 10 {
+                    let hint = if result.error_code == BAD_ACCESS {
                         "; the shortcut will still work but may also trigger that application"
                     } else {
                         ""
@@ -594,5 +599,19 @@ mod tests {
         let result: Option<InputEvent> =
             convert_raw_input_event_to_input_event(raw, &HashMap::new(), 0);
         assert!(result.is_none());
+    }
+
+    #[test]
+    fn x11_error_name_translates_known_codes() {
+        assert_eq!(x11_error_name(10), "BadAccess");
+        assert_eq!(x11_error_name(1), "BadRequest");
+        assert_eq!(x11_error_name(17), "BadImplementation");
+        assert_eq!(x11_error_name(999), "code 999");
+    }
+
+    #[test]
+    fn x11_request_name_translates_known_opcodes() {
+        assert_eq!(x11_request_name(33), "X_GrabKey");
+        assert_eq!(x11_request_name(99), "request 99");
     }
 }

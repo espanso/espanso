@@ -78,6 +78,10 @@ int detect_error_callback(Display *display, XErrorEvent *error);
 // X protocol errors are delivered asynchronously through the current error
 // handler (not as XGrabKey's return value), so a request-scoped handler is
 // installed around hotkey registration to detect BadAccess reliably.
+// Registration is single-threaded (worker init, one X11Source); these
+// request-scoped statics are not safe for concurrent use. The handler
+// overwrites the codes, so with multiple failing grabs only the most recent
+// error is reported — adequate for a warning.
 static int grab_error_code = 0;
 static int grab_error_request_code = 0;
 static int detect_grab_error_handler(Display *, XErrorEvent *error) {
