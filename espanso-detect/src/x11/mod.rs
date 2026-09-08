@@ -223,7 +223,7 @@ impl Source for X11Source {
                 let result = unsafe { detect_register_hotkey(handle, raw_hk, mod_indexes) };
                 if result.error_code != 0 {
                     let hint = if result.error_code == 10 {
-                        "; the shortcut may conflict with another application"
+                        "; the shortcut will still work but may also trigger that application"
                     } else {
                         ""
                     };
