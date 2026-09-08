@@ -100,7 +100,43 @@ pub struct RawHotKeyResult {
     pub success: i32,
     pub key_code: i32,
     pub state: u32,
+    pub error_code: i32,
+    pub error_request_code: i32,
 }
+
+// X11 protocol error-code names (Xlib); unknown codes fall back to the raw
+// number.
+fn x11_error_name(code: i32) -> String {
+    match code {
+        1 => "BadRequest".to_string(),
+        2 => "BadValue".to_string(),
+        3 => "BadWindow".to_string(),
+        4 => "BadPixmap".to_string(),
+        5 => "BadAtom".to_string(),
+        6 => "BadCursor".to_string(),
+        7 => "BadFont".to_string(),
+        8 => "BadMatch".to_string(),
+        9 => "BadDrawable".to_string(),
+        10 => "BadAccess".to_string(),
+        11 => "BadAlloc".to_string(),
+        12 => "BadColor".to_string(),
+        13 => "BadGC".to_string(),
+        14 => "BadIDChoice".to_string(),
+        15 => "BadName".to_string(),
+        16 => "BadLength".to_string(),
+        17 => "BadImplementation".to_string(),
+        _ => format!("code {}", code),
+    }
+}
+
+fn x11_request_name(code: i32) -> String {
+    match code {
+        33 => "X_GrabKey".to_string(),
+        _ => format!("request {}", code),
+    }
+}
+
+const BAD_ACCESS: i32 = 10;
 
 #[allow(improper_ctypes)]
 #[link(name = "espansodetect", kind = "static")]
@@ -188,10 +224,35 @@ impl Source for X11Source {
             if let Some(raw_hk) = raw {
                 let result = unsafe { detect_register_hotkey(handle, raw_hk, mod_indexes) };
                 if result.success == 0 {
-                    error!("unable to register hotkey: {}", hk);
+                    error!(
+                        "no keycode resolved for hotkey: {}; it will not be registered",
+                        hk
+                    );
+                } else if result.error_code != 0 {
+                    // Any failing lock-mask variant sets error_code, so the warning
+                    // can fire even when the plain combo registered fine; the hint
+                    // covers the still-works case.
+                    let hint = if result.error_code == BAD_ACCESS {
+                        "; the shortcut will still work but may also trigger that application"
+                    } else {
+                        ""
+                    };
+                    warn!(
+                        "unable to register hotkey: {} (X11 error {}: {} on {}){}",
+                        hk,
+                        result.error_code,
+                        x11_error_name(result.error_code),
+                        x11_request_name(result.error_request_code),
+                        hint
+                    );
                 } else {
-                    raw_hotkey_mapping.insert((result.key_code, result.state), hk.id);
                     debug!("registered hotkey: {}", hk);
+                }
+                // The mapping is inserted even when the grab failed: XRecord-based
+                // detection is unaffected by grab ownership, so the hotkey keeps working.
+                // It is skipped only when no keycode resolved (success 0).
+                if result.success != 0 {
+                    raw_hotkey_mapping.insert((result.key_code, result.state), hk.id);
                 }
             } else {
                 error!("unable to generate raw hotkey mapping: {}", hk);
@@ -546,5 +607,19 @@ mod tests {
         let result: Option<InputEvent> =
             convert_raw_input_event_to_input_event(raw, &HashMap::new(), 0);
         assert!(result.is_none());
+    }
+
+    #[test]
+    fn x11_error_name_translates_known_codes() {
+        assert_eq!(x11_error_name(10), "BadAccess");
+        assert_eq!(x11_error_name(1), "BadRequest");
+        assert_eq!(x11_error_name(17), "BadImplementation");
+        assert_eq!(x11_error_name(999), "code 999");
+    }
+
+    #[test]
+    fn x11_request_name_translates_known_opcodes() {
+        assert_eq!(x11_request_name(33), "X_GrabKey");
+        assert_eq!(x11_request_name(99), "request 99");
     }
 }

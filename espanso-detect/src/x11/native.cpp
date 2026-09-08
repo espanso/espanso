@@ -75,6 +75,21 @@ typedef struct {
 void detect_event_callback(XPointer, XRecordInterceptData *);
 int detect_error_callback(Display *display, XErrorEvent *error);
 
+// X protocol errors are delivered asynchronously through the current error
+// handler (not as XGrabKey's return value), so a request-scoped handler is
+// installed around hotkey registration to detect BadAccess reliably.
+// Registration is single-threaded (worker init, one X11Source); these
+// request-scoped statics are not safe for concurrent use. The handler
+// overwrites the codes, so with multiple failing grabs only the most recent
+// error is reported — adequate for a warning.
+static int grab_error_code = 0;
+static int grab_error_request_code = 0;
+static int detect_grab_error_handler(Display *, XErrorEvent *error) {
+    grab_error_code = error->error_code;
+    grab_error_request_code = error->request_code;
+    return 0;
+}
+
 int32_t detect_check_x11() {
     Display *check_disp = XOpenDisplay(NULL);
 
@@ -230,6 +245,11 @@ HotKeyResult detect_register_hotkey(void *_context, HotKeyRequest request,
     // We need to register an hotkey for all combinations of "useless"
     // modifiers, such as the NumLock, as the XGrabKey method wants an exact
     // match.
+    grab_error_code = 0;
+    grab_error_request_code = 0;
+    XErrorHandler previous_handler =
+        XSetErrorHandler(&detect_grab_error_handler);
+
     for (uint state = 0; state < 256; state++) {
         // Check if the current state includes a "useless modifier" but none of
         // the valid ones
@@ -237,13 +257,21 @@ HotKeyResult detect_register_hotkey(void *_context, HotKeyRequest request,
             (state & valid_modifiers) == 0) {
             uint final_modifiers = state | target_modifiers;
 
-            int res = XGrabKey(context->ctrl_disp, key_code, final_modifiers,
-                               root, False, GrabModeAsync, GrabModeAsync);
-            if (res == BadAccess || res == BadValue) {
-                result.success = 0;
-            }
+            XGrabKey(context->ctrl_disp, key_code, final_modifiers, root, False,
+                     GrabModeAsync, GrabModeAsync);
         }
     }
+
+    // Force delivery of any asynchronous BadAccess errors collected above;
+    // XGrabKey's return value does not report them.
+    XSync(context->ctrl_disp, False);
+    XSetErrorHandler(previous_handler);
+
+    // Report the error without failing: XRecord-based detection works
+    // regardless of grab ownership, and dropping the hotkey would silently
+    // disable a working shortcut.
+    result.error_code = grab_error_code;
+    result.error_request_code = grab_error_request_code;
 
     return result;
 }
