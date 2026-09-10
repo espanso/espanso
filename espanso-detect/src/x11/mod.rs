@@ -318,7 +318,15 @@ fn convert_raw_input_event_to_input_event(
                         }
                     }
                     Err(err) => {
-                        trace!("Received malformed char: {}", err);
+                        // A lone NUL byte is what XLookupString returns for
+                        // NUL-producing keys (e.g. Ctrl-Space): legitimate
+                        // input, not corruption. Longer interiors cannot come
+                        // from well-formed detector output, so keep those loud.
+                        if raw.buffer_len == 1 {
+                            trace!("Received malformed char: {}", err);
+                        } else {
+                            warn!("Received malformed char: {}", err);
+                        }
                         None
                     }
                 }
@@ -447,7 +455,9 @@ fn raw_to_mouse_button(raw: i32) -> Option<MouseButton> {
 
 #[cfg(test)]
 mod tests {
+    use log::{Level, LevelFilter, Log, Metadata, Record};
     use std::ffi::CString;
+    use std::sync::{Mutex, OnceLock};
 
     use super::*;
 
@@ -539,36 +549,56 @@ mod tests {
         assert!(result.unwrap().into_keyboard().unwrap().value.is_none());
     }
 
-    #[test]
-    fn nul_key_does_not_warn() {
-        use log::{Level, LevelFilter, Log, Metadata, Record};
-        use std::sync::{Mutex, OnceLock};
+    #[derive(Default)]
+    struct Capture {
+        records: Mutex<Vec<(std::thread::ThreadId, Level)>>,
+    }
 
-        struct Capture {
-            records: Mutex<Vec<(std::thread::ThreadId, Level)>>,
-        }
-        impl Log for Capture {
-            fn enabled(&self, _: &Metadata) -> bool {
-                true
-            }
-            fn log(&self, record: &Record) {
-                self.records.lock().unwrap().push((
-                    std::thread::current().id(),
-                    record.level(),
-                ));
-            }
-            fn flush(&self) {}
+    impl Log for Capture {
+        fn enabled(&self, _: &Metadata) -> bool { true }
+
+        fn log(&self, record: &Record) {
+            let thread = std::thread::current().id();
+            let level = record.level();
+            self.records.lock().unwrap().push((thread, level));
         }
 
-        static LOGGER: OnceLock<Capture> = OnceLock::new();
-        let logger = LOGGER.get_or_init(|| Capture {
-            records: Mutex::new(Vec::new()),
-        });
-        // A logger can only be set once per test process; reuse it if so.
+        fn flush(&self) {}
+    }
+
+    static LOGGER: OnceLock<Capture> = OnceLock::new();
+
+    /// Installs the thread-filtered capturing logger (once per test
+    /// process) and drops records captured so far. Assertions filter to
+    /// the calling thread, so tests stay independent despite cargo
+    /// running them on multiple threads. Raising the global max level is
+    /// harmless to the other tests: none of them assert on logs, and this
+    /// is the only `set_logger` call in the crate, so capture cannot be
+    /// silently stolen by a foreign logger.
+    fn capture_thread_logs() {
+        let logger = LOGGER.get_or_init(Capture::default);
         let _ = log::set_logger(logger);
         log::set_max_level(LevelFilter::Trace);
-
         logger.records.lock().unwrap().clear();
+    }
+
+    /// True if the calling thread logged at `min_level` or above since
+    /// the last `capture_thread_logs` call.
+    fn thread_logged_at_or_above(min_level: Level) -> bool {
+        let me = std::thread::current().id();
+        LOGGER
+            .get()
+            .unwrap()
+            .records
+            .lock()
+            .unwrap()
+            .iter()
+            .any(|(thread, level)| thread == &me && *level >= min_level)
+    }
+
+    #[test]
+    fn nul_key_does_not_warn() {
+        capture_thread_logs();
 
         // NUL-producing key (e.g. Ctrl-Space): XLookupString returns a
         // single NUL byte. This is legitimate input, not corruption.
@@ -581,20 +611,27 @@ mod tests {
         let result: Option<InputEvent> =
             convert_raw_input_event_to_input_event(raw, &HashMap::new(), 0);
         assert!(result.unwrap().into_keyboard().unwrap().value.is_none());
+        assert!(!thread_logged_at_or_above(Level::Warn));
+    }
 
-        // Other tests log on their own threads; only records from this
-        // thread belong to the conversion above.
-        let me = std::thread::current().id();
-        let warned = logger
-            .records
-            .lock()
-            .unwrap()
-            .iter()
-            .any(|(thread, level)| thread == &me && *level >= Level::Warn);
-        assert!(
-            !warned,
-            "NUL-producing keys must not log at warn level or above"
-        );
+    #[test]
+    fn corrupt_buffer_still_warns() {
+        capture_thread_logs();
+
+        // An interior NUL past the first byte cannot come from well-formed
+        // XLookupString output, so it must stay loud.
+        let mut buffer = [0; 24];
+        buffer[0] = b'a';
+        let mut raw = default_raw_input_event();
+        raw.buffer = buffer;
+        raw.buffer_len = 2;
+        raw.key_sym = 0x41;
+        raw.key_code = 38;
+
+        let result: Option<InputEvent> =
+            convert_raw_input_event_to_input_event(raw, &HashMap::new(), 0);
+        assert!(result.unwrap().into_keyboard().unwrap().value.is_none());
+        assert!(thread_logged_at_or_above(Level::Warn));
     }
 
     #[test]
