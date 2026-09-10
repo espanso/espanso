@@ -318,7 +318,7 @@ fn convert_raw_input_event_to_input_event(
                         }
                     }
                     Err(err) => {
-                        warn!("Received malformed char: {}", err);
+                        trace!("Received malformed char: {}", err);
                         None
                     }
                 }
@@ -537,6 +537,64 @@ mod tests {
         let result: Option<InputEvent> =
             convert_raw_input_event_to_input_event(raw, &HashMap::new(), 0);
         assert!(result.unwrap().into_keyboard().unwrap().value.is_none());
+    }
+
+    #[test]
+    fn nul_key_does_not_warn() {
+        use log::{Level, LevelFilter, Log, Metadata, Record};
+        use std::sync::{Mutex, OnceLock};
+
+        struct Capture {
+            records: Mutex<Vec<(std::thread::ThreadId, Level)>>,
+        }
+        impl Log for Capture {
+            fn enabled(&self, _: &Metadata) -> bool {
+                true
+            }
+            fn log(&self, record: &Record) {
+                self.records.lock().unwrap().push((
+                    std::thread::current().id(),
+                    record.level(),
+                ));
+            }
+            fn flush(&self) {}
+        }
+
+        static LOGGER: OnceLock<Capture> = OnceLock::new();
+        let logger = LOGGER.get_or_init(|| Capture {
+            records: Mutex::new(Vec::new()),
+        });
+        // A logger can only be set once per test process; reuse it if so.
+        let _ = log::set_logger(logger);
+        log::set_max_level(LevelFilter::Trace);
+
+        logger.records.lock().unwrap().clear();
+
+        // NUL-producing key (e.g. Ctrl-Space): XLookupString returns a
+        // single NUL byte. This is legitimate input, not corruption.
+        let mut raw = default_raw_input_event();
+        raw.buffer = [0; 24];
+        raw.buffer_len = 1;
+        raw.key_sym = 0x20;
+        raw.key_code = 65;
+
+        let result: Option<InputEvent> =
+            convert_raw_input_event_to_input_event(raw, &HashMap::new(), 0);
+        assert!(result.unwrap().into_keyboard().unwrap().value.is_none());
+
+        // Other tests log on their own threads; only records from this
+        // thread belong to the conversion above.
+        let me = std::thread::current().id();
+        let warned = logger
+            .records
+            .lock()
+            .unwrap()
+            .iter()
+            .any(|(thread, level)| thread == &me && *level >= Level::Warn);
+        assert!(
+            !warned,
+            "NUL-producing keys must not log at warn level or above"
+        );
     }
 
     #[test]
