@@ -17,7 +17,7 @@
  * along with modulo.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use super::config::{FieldConfig, FieldTypeConfig, FormConfig};
+use super::config::{ChoiceValue, FieldConfig, FieldTypeConfig, FormConfig};
 use super::parser::layout::Token;
 use crate::sys::form::types::{
     ChoiceMetadata, ChoiceType, Field, FieldType, Form, LabelMetadata, RowMetadata, TextMetadata,
@@ -27,6 +27,12 @@ use std::collections::HashMap;
 pub fn generate(config: FormConfig) -> Form {
     let structure = super::parser::layout::parse_layout(&config.layout);
     build_form(config, structure)
+}
+
+fn split_labels_ids(values: &[ChoiceValue]) -> (Vec<String>, Vec<String>) {
+    let labels = values.iter().map(|v| v.label().to_owned()).collect();
+    let ids = values.iter().map(|v| v.id().to_owned()).collect();
+    (labels, ids)
 }
 
 fn create_field(token: &Token, field_map: &HashMap<String, FieldConfig>) -> Field {
@@ -47,18 +53,26 @@ fn create_field(token: &Token, field_map: &HashMap<String, FieldConfig>) -> Fiel
                     default_text: config.default.clone(),
                     multiline: config.multiline,
                 }),
-                FieldTypeConfig::Choice(config) => FieldType::Choice(ChoiceMetadata {
-                    values: config.values.clone(),
-                    choice_type: ChoiceType::Dropdown,
-                    default_value: config.default.clone(),
-                    separator: String::new(),
-                }),
-                FieldTypeConfig::List(config) => FieldType::Choice(ChoiceMetadata {
-                    values: config.values.clone(),
-                    choice_type: ChoiceType::List,
-                    default_value: config.default.clone(),
-                    separator: config.separator.clone(),
-                }),
+                FieldTypeConfig::Choice(config) => {
+                    let (labels, ids) = split_labels_ids(&config.values);
+                    FieldType::Choice(ChoiceMetadata {
+                        values: labels,
+                        ids,
+                        choice_type: ChoiceType::Dropdown,
+                        default_value: config.default.clone(),
+                        separator: String::new(),
+                    })
+                }
+                FieldTypeConfig::List(config) => {
+                    let (labels, ids) = split_labels_ids(&config.values);
+                    FieldType::Choice(ChoiceMetadata {
+                        values: labels,
+                        ids,
+                        choice_type: ChoiceType::List,
+                        default_value: config.default.clone(),
+                        separator: config.separator.clone(),
+                    })
+                },
             };
 
             Field {
