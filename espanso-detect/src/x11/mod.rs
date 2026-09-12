@@ -318,12 +318,14 @@ fn convert_raw_input_event_to_input_event(
                         }
                     }
                     Err(err) => {
-                        // A lone NUL byte is what XLookupString returns for
-                        // NUL-producing keys (e.g. Ctrl-Space): legitimate
-                        // input, not corruption. Longer interiors cannot come
-                        // from well-formed detector output, so keep those loud.
+                        // XLookupString(3): with the Control modifier on, the
+                        // KeySym is mapped "to an ASCII control character, and
+                        // that character is stored in the buffer" — so a lone
+                        // NUL byte (e.g. Ctrl-Space) is legitimate input, not
+                        // corruption. Longer interiors cannot come from
+                        // well-formed detector output, so keep those loud.
                         if raw.buffer_len == 1 {
-                            trace!("Received malformed char: {}", err);
+                            trace!("NUL-producing key, no text to convert");
                         } else {
                             warn!("Received malformed char: {}", err);
                         }
