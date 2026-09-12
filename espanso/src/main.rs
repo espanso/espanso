@@ -23,6 +23,7 @@
 use std::path::PathBuf;
 
 #[cfg(target_os = "linux")]
+#[allow(unused_imports)] // only used when wayland feature is enabled
 use std::process::Command;
 
 use clap::{App, AppSettings, Arg, ArgMatches, ErrorKind, SubCommand};
