@@ -125,14 +125,14 @@ fn x11_error_name(code: i32) -> String {
         15 => "BadName".to_string(),
         16 => "BadLength".to_string(),
         17 => "BadImplementation".to_string(),
-        _ => format!("code {}", code),
+        _ => format!("code {code}"),
     }
 }
 
 fn x11_request_name(code: i32) -> String {
     match code {
         33 => "X_GrabKey".to_string(),
-        _ => format!("request {}", code),
+        _ => format!("request {code}"),
     }
 }
 
