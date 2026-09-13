@@ -184,7 +184,9 @@ impl Renderer for DefaultRenderer<'_> {
             CasingStyle::Capitalize => {
                 // Capitalize the first letter
                 let mut v: Vec<char> = body.chars().collect();
-                v[0] = v[0].to_uppercase().next().unwrap();
+                if let Some(first) = v.first_mut() {
+                    *first = first.to_uppercase().next().unwrap();
+                }
                 v.into_iter().collect()
             }
             CasingStyle::CapitalizeWords => {
@@ -354,6 +356,26 @@ mod tests {
             },
         );
         assert!(matches!(res, RenderResult::Success(str) if str == "Plain body"));
+    }
+
+    #[test]
+    fn capitalize_empty_body_does_not_panic() {
+        // The casing style is derived from the typed trigger (propagate_case),
+        // which is independent of the rendered body. A match whose body
+        // resolves to an empty string (e.g. `replace: ""`, or a variable that
+        // yields an empty result) used to index an empty Vec and panic.
+        let renderer = get_renderer();
+        let res = renderer.render(
+            &template_for_str(""),
+            &Context::default(),
+            &RenderOptions {
+                casing_style: CasingStyle::Capitalize,
+            },
+        );
+        let RenderResult::Success(rendered) = res else {
+            panic!("expected success, got {res:?}");
+        };
+        assert!(rendered.is_empty());
     }
 
     #[test]
