@@ -41,6 +41,7 @@ pub struct ParsedConfig {
     pub search_trigger: Option<String>,
     pub search_shortcut: Option<String>,
     pub undo_backspace: Option<bool>,
+    pub support_virtual_keyboard: Option<bool>,
     pub show_notifications: Option<bool>,
     pub show_icon: Option<bool>,
     pub secure_input_notification: Option<bool>,

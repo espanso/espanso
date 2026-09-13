@@ -140,6 +140,13 @@ pub trait Config: Send + Sync {
     // presses the Backspace key afterwards.
     fn undo_backspace(&self) -> bool;
 
+    // If true, preserve the matcher state for pointer-operated virtual
+    // keyboards that emit keyboard events between mouse press and release.
+    // Disabled by default to preserve the existing mouse invalidation behavior.
+    fn support_virtual_keyboard(&self) -> bool {
+        false
+    }
+
     // If false, disable all notifications
     fn show_notifications(&self) -> bool;
 

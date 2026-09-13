@@ -172,6 +172,10 @@ impl espanso_engine::process::MatcherMiddlewareConfigProvider for ConfigManager<
     fn max_history_size(&self) -> usize {
         self.default().backspace_limit()
     }
+
+    fn support_virtual_keyboard(&self) -> bool {
+        self.default().support_virtual_keyboard()
+    }
 }
 
 impl espanso_engine::process::UndoEnabledProvider for ConfigManager<'_> {
