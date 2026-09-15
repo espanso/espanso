@@ -29,23 +29,24 @@ If compiling on a version of Ubuntu X11 after 22.04:
 sudo apt install libx11-dev libxtst-dev libxkbcommon-dev libdbus-1-dev libwxgtk3.*-dev
 ```
 
-#### Compiling for X11
+#### Compiling on X11
 
 ##### X11 AppImage
 
 The AppImage is a convenient format to distribute Linux applications, as besides the binary,
 it also bundles all the required libraries.
 
-You can create the AppImage by running (this will work on X11 systems):
+You can create the AppImage by running the following commands from the repository root
+(build the X11 variant; run it on an X11 session):
 
 ```console
 cargo build --release --no-default-features --features modulo,vendored-tls
-./scripts/create_app_image.sh
+./scripts/create_app_image.sh target/release/espanso Espanso-X11
 ```
 
-You will find the resulting AppImage in the `target/linux/AppImage/out` folder.
+You will find `Espanso-X11.AppImage` in the `target/linux/AppImage/out` folder.
 
-##### Binary
+##### X11 binary
 
 You can build the Espanso binary on X11 by running the following command:
 
@@ -57,9 +58,28 @@ You'll then find the `espanso` binary in the `target/release` directory.
 
 #### Compiling on Wayland
 
-You can build Espanso on Wayland by running:
+##### Wayland AppImage
 
-```bash
+To create the Wayland AppImage, run the following commands from the repository root,
+building with the `wayland` feature and passing a
+custom output name to avoid clashing with the X11 one:
+
+```console
+cargo build --release --no-default-features --features wayland,modulo,vendored-tls
+./scripts/create_app_image.sh target/release/espanso Espanso-Wayland
+```
+
+You will find `Espanso-Wayland.AppImage` in the `target/linux/AppImage/out` folder.
+
+> **Note:** Each run of `create_app_image.sh` clears `target/linux/AppImage/`
+> (including `out/`), so copy the X11 AppImage elsewhere before building
+> the Wayland one if you need both.
+
+##### Wayland binary
+
+You can build the Espanso binary on Wayland by running the following command:
+
+```console
 cargo build --release --no-default-features --features wayland,modulo,vendored-tls
 ```
 

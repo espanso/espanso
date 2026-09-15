@@ -132,7 +132,7 @@ jobs:
         run: |
           gh release upload ${{ needs.extract-version.outputs.espanso_version }} Espanso-Win-Installer-x86_64.exe Espanso-Win-Portable-x86_64.zip
 
-  linux-x11:
+  linux-appimage:
     needs: ["extract-version", "create-release"]
     runs-on: ubuntu-latest
     continue-on-error: false
@@ -156,14 +156,20 @@ jobs:
         run: |
           sudo docker run --rm -v "$(pwd):/shared" espanso-ubuntu espanso/.github/scripts/ubuntu/build_appimage.sh
       - uses: actions/upload-artifact@main
-        name: upload-unsigned-artifact
+        name: Upload X11 AppImage artifact
         with:
           name: Linux X11 AppImage Artifact
           path: |
             Espanso-X11.AppImage
+      - uses: actions/upload-artifact@main
+        name: Upload Wayland AppImage artifact
+        with:
+          name: Linux Wayland AppImage Artifact
+          path: |
+            Espanso-Wayland.AppImage
       - name: Upload artifacts to Github Releases
         run: |
-          gh release upload ${{ needs.extract-version.outputs.espanso_version }} Espanso-X11.AppImage
+          gh release upload ${{ needs.extract-version.outputs.espanso_version }} Espanso-X11.AppImage Espanso-Wayland.AppImage
 
   linux-deb:
     needs: ["extract-version", "create-release"]

@@ -74,7 +74,7 @@ jobs:
             target/windows/Espanso-Win-Installer-x86_64.exe
             target/windows/Espanso-Win-Portable-x86_64.zip
 
-  linux-x11:
+  linux-appimage:
     runs-on: ubuntu-latest
 
     steps:
@@ -108,11 +108,17 @@ jobs:
             espanso-ubuntu \
             espanso/.github/scripts/ubuntu/build_appimage.sh
       - uses: actions/upload-artifact@main
-        name: "Upload artifacts"
+        name: "Upload X11 AppImage artifact"
         with:
           name: Linux X11 AppImage Artifact
           path: |
             Espanso-X11.AppImage
+      - uses: actions/upload-artifact@main
+        name: "Upload Wayland AppImage artifact"
+        with:
+          name: Linux Wayland AppImage Artifact
+          path: |
+            Espanso-Wayland.AppImage
 
   linux-deb:
     runs-on: ubuntu-latest
