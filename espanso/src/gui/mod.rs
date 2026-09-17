@@ -44,6 +44,20 @@ pub trait FormUI {
     ) -> Result<Option<HashMap<String, String>>>;
 }
 
+/// A choice/list option. `label` is the text shown to the user;
+/// `id` is the value actually output when selected.
+#[derive(Debug, Clone)]
+pub struct ChoiceItem {
+    pub id: String,
+    pub label: String,
+}
+
+impl From<String> for ChoiceItem {
+    fn from(s: String) -> Self {
+        Self { id: s.clone(), label: s }
+    }
+}
+
 #[derive(Debug)]
 pub enum FormField {
     Text {
@@ -52,11 +66,11 @@ pub enum FormField {
     },
     Choice {
         default: Option<String>,
-        values: Vec<String>,
+        values: Vec<ChoiceItem>,
     },
     List {
         default: Option<String>,
-        values: Vec<String>,
+        values: Vec<ChoiceItem>,
         separator: String,
     },
 }
