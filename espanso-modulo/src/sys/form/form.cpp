@@ -26,12 +26,49 @@
 #include <unordered_map>
 #include <vector>
 
+#ifdef __WXMSW__
+#include <dwmapi.h>
+#include <windows.h>
+#ifndef DWMWA_USE_IMMERSIVE_DARK_MODE
+#define DWMWA_USE_IMMERSIVE_DARK_MODE 20
+#endif
+#pragma comment(lib, "dwmapi.lib")
+#endif
+
 // https://docs.wxwidgets.org/stable/classwx_frame.html
 const long DEFAULT_STYLE = wxSTAY_ON_TOP | wxCLOSE_BOX | wxCAPTION;
 
 const int PADDING = 5;
 const int MULTILINE_MIN_HEIGHT = 100;
 const int MULTILINE_MIN_WIDTH = 100;
+
+// Dark mode palette, applied when the OS is in dark mode
+const wxColour DARK_MODE_BG = wxColour(30, 30, 30);
+const wxColour DARK_MODE_FG = wxColour(230, 230, 230);
+const wxColour DARK_MODE_HINT_FG = wxColour(160, 160, 160);
+
+#ifdef __WXMSW__
+// On Windows, wxWidgets' GetAppearance() doesn't reflect the OS-level dark
+// mode setting unless the app opts in, so we read it directly from the
+// registry instead. AppsUseLightTheme is 0 when dark mode is enabled.
+bool IsWindowsDarkModeEnabled() {
+    HKEY key;
+    if (RegOpenKeyExW(HKEY_CURRENT_USER,
+                      L"Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+                      0, KEY_READ, &key) != ERROR_SUCCESS) {
+        return false;
+    }
+
+    DWORD value = 1; // Default to light mode when the value is missing
+    DWORD size = sizeof(value);
+    LONG result = RegQueryValueExW(key, L"AppsUseLightTheme", nullptr, nullptr,
+                                   reinterpret_cast<LPBYTE>(&value), &size);
+    RegCloseKey(key);
+
+    // 0 => dark mode, 1 => light mode
+    return result == ERROR_SUCCESS && value == 0;
+}
+#endif
 
 FormMetadata *formMetadata = nullptr;
 std::vector<ValuePair> values;
@@ -99,6 +136,7 @@ class FormFrame : public wxFrame {
     wxButton *submit;
     wxStaticText *helpText;
     bool hasFocusedMultilineControl;
+    bool isDark;
 
   private:
     void AddComponent(wxPanel *parent, wxBoxSizer *sizer, FieldMetadata meta);
@@ -131,7 +169,34 @@ FormFrame::FormFrame(const wxString &title, const wxPoint &pos,
     : wxFrame(NULL, wxID_ANY, title, pos, size, DEFAULT_STYLE) {
     hasFocusedMultilineControl = false;
 
+#if wxCHECK_VERSION(3, 1, 3)
+    isDark = wxSystemSettings::GetAppearance().IsDark();
+#else
+    // Workaround needed for previous versions of wxWidgets
+    const wxColour bg = wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW);
+    const wxColour fg = wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOWTEXT);
+    unsigned int bgSum = (bg.Red() + bg.Blue() + bg.Green());
+    unsigned int fgSum = (fg.Red() + fg.Blue() + fg.Green());
+    isDark = fgSum > bgSum;
+#endif
+#ifdef __WXMSW__
+    // wxSystemSettings::GetAppearance() doesn't detect dark mode on Windows
+    // unless the app opts in, so read the OS setting from the registry.
+    isDark = IsWindowsDarkModeEnabled();
+#endif
+
     panel = new wxPanel(this, wxID_ANY);
+    if (isDark) {
+        panel->SetBackgroundColour(DARK_MODE_BG);
+        SetBackgroundColour(DARK_MODE_BG);
+#ifdef __WXMSW__
+        // Darken the title bar as well (supported on Windows 10 1809+)
+        HWND hwnd = GetHWND();
+        BOOL dark = TRUE;
+        DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE, &dark,
+                              sizeof(dark));
+#endif
+    }
     wxBoxSizer *vbox = new wxBoxSizer(wxVERTICAL);
     panel->SetSizer(vbox);
 
@@ -148,6 +213,9 @@ FormFrame::FormFrame(const wxString &title, const wxPoint &pos,
     wxFont helpFont = helpText->GetFont();
     helpFont.SetPointSize(8);
     helpText->SetFont(helpFont);
+    if (isDark) {
+        helpText->SetForegroundColour(DARK_MODE_HINT_FG);
+    }
     vbox->Add(helpText, 0, wxLEFT | wxRIGHT | wxBOTTOM, PADDING);
     UpdateHelpText();
 
@@ -171,6 +239,9 @@ void FormFrame::AddComponent(wxPanel *parent, wxBoxSizer *sizer,
                                       wxString::FromUTF8(labelMeta->text),
                                       wxDefaultPosition, wxDefaultSize, style);
 
+        if (isDark) {
+            label->SetForegroundColour(DARK_MODE_FG);
+        }
         label->Wrap(this->GetClientSize().GetWidth());
         control = label;
         fields.push_back(label);
@@ -187,6 +258,11 @@ void FormFrame::AddComponent(wxPanel *parent, wxBoxSizer *sizer,
         auto textControl = new wxTextCtrl(
             parent, NewControlId(), wxString::FromUTF8(textMeta->defaultText),
             wxDefaultPosition, wxDefaultSize, style);
+
+        if (isDark) {
+            textControl->SetBackgroundColour(DARK_MODE_BG);
+            textControl->SetForegroundColour(DARK_MODE_FG);
+        }
 
         if (textMeta->multiline) {
             textControl->SetMinSize(
@@ -226,6 +302,11 @@ void FormFrame::AddComponent(wxPanel *parent, wxBoxSizer *sizer,
             choice = (void *)new wxChoice(parent, wxID_ANY, wxDefaultPosition,
                                           wxDefaultSize, choices);
 
+            if (isDark) {
+                ((wxChoice *)choice)->SetBackgroundColour(DARK_MODE_BG);
+                ((wxChoice *)choice)->SetForegroundColour(DARK_MODE_FG);
+            }
+
             if (selectedItem >= 0) {
                 ((wxChoice *)choice)->SetSelection(selectedItem);
             }
@@ -242,6 +323,11 @@ void FormFrame::AddComponent(wxPanel *parent, wxBoxSizer *sizer,
             choice = (void *)new wxListBox(parent, wxID_ANY, wxDefaultPosition,
                                            wxDefaultSize, choices,
                                            wxLB_EXTENDED);
+
+            if (isDark) {
+                ((wxListBox *)choice)->SetBackgroundColour(DARK_MODE_BG);
+                ((wxListBox *)choice)->SetForegroundColour(DARK_MODE_FG);
+            }
 
             if (selectedItem >= 0) {
                 ((wxListBox *)choice)->SetSelection(selectedItem);
@@ -274,6 +360,9 @@ void FormFrame::AddComponent(wxPanel *parent, wxBoxSizer *sizer,
             static_cast<const RowMetadata *>(meta.specific);
 
         auto innerPanel = new wxPanel(panel, wxID_ANY);
+        if (isDark) {
+            innerPanel->SetBackgroundColour(DARK_MODE_BG);
+        }
         wxBoxSizer *hbox = new wxBoxSizer(wxHORIZONTAL);
         innerPanel->SetSizer(hbox);
         sizer->Add(innerPanel, 0, wxEXPAND | wxALL, 0);
