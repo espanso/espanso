@@ -18,3 +18,4 @@
  */
 
 pub(crate) mod fallback;
+pub(crate) mod native;

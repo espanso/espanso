@@ -8,7 +8,7 @@ build = "build.rs"
 [features]
 # If the wayland feature is enabled, all X11 dependencies will be dropped
 # and wayland support will be enabled
-wayland = ["wait-timeout"]
+wayland = ["wait-timeout", "wl-clipboard-rs"]
 
 # If enabled, avoid linking with the gdiplus library on Windows, which
 # might conflict with wxWidgets
@@ -27,6 +27,7 @@ widestring.workspace = true
 
 [target.'cfg(target_os = "linux")'.dependencies]
 wait-timeout = { version = "0.2.0", optional = true }
+wl-clipboard-rs = { version = "0.9.3", optional = true }
 
 [build-dependencies]
 cc.workspace = true
