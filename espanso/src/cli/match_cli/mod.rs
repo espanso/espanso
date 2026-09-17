@@ -19,6 +19,7 @@
 
 use super::{CliModule, CliModuleArgs};
 
+mod add;
 mod exec;
 mod list;
 
@@ -34,13 +35,18 @@ pub fn new() -> CliModule {
 
 fn match_main(args: CliModuleArgs) -> i32 {
     let cli_args = args.cli_args.expect("missing cli_args");
-    let config_store = args.config_store.expect("missing config_store");
-    let match_store = args.match_store.expect("missing match_store");
     let paths = args.paths.expect("missing paths");
 
     if let Some(sub_args) = cli_args.subcommand_matches("list") {
+        let config_store = args.config_store.expect("missing config_store");
+        let match_store = args.match_store.expect("missing match_store");
         if let Err(err) = list::list_main(sub_args, config_store, match_store) {
             eprintln!("unable to list matches: {err:?}");
+            return 1;
+        }
+    } else if let Some(sub_args) = cli_args.subcommand_matches("add") {
+        if let Err(err) = add::add_main(sub_args, &paths.config) {
+            eprintln!("unable to add match: {err:?}");
             return 1;
         }
     } else if let Some(sub_args) = cli_args.subcommand_matches("exec") {

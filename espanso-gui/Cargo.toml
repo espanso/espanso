@@ -1,0 +1,20 @@
+[package]
+name = "espanso-gui"
+version = "0.1.0"
+edition = "2021"
+description = "Tauri desktop GUI for managing espanso matches"
+license = "GPL-3.0"
+
+[build-dependencies]
+tauri-build = { version = "1.5.6", features = [] }
+
+[dependencies]
+anyhow.workspace = true
+dirs.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+serde_norway.workspace = true
+tauri = { version = "1.5.6", features = ["dialog-all", "path-all"] }
+
+[lints]
+workspace = true
