@@ -191,6 +191,7 @@ impl<'a> ClipboardRestoreGuard<'a> {
         restore_delay: u64,
         clipboard_operation_options: ClipboardOperationOptions,
     ) -> Self {
+        // note: `get_text` called here, to restore the clipboard later on
         let clipboard_content = clipboard.get_text(&clipboard_operation_options);
 
         Self {
@@ -209,6 +210,7 @@ impl Drop for ClipboardRestoreGuard<'_> {
             // A delay is needed to mitigate the problem
             std::thread::sleep(std::time::Duration::from_millis(self.restore_delay));
 
+            // note: `set_text` called here to restore the clipboard
             if let Err(error) = self
                 .clipboard
                 .set_text(&content, &self.clipboard_operation_options)
