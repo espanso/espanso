@@ -32,7 +32,7 @@ use crate::{
     common_flags::*,
     exit_code::{
         DAEMON_ALREADY_RUNNING, DAEMON_FATAL_CONFIG_ERROR, DAEMON_GENERAL_ERROR, DAEMON_SUCCESS,
-        WORKER_ERROR_EXIT_NO_CODE, WORKER_EXIT_ALL_PROCESSES, WORKER_RESTART, WORKER_SUCCESS,
+        WORKER_ERROR_EXIT_NO_CODE, WORKER_EXIT_ALL_PROCESSES, WORKER_RESTART,
     },
     ipc::{create_ipc_client_to_worker, IPCEvent},
     lock::{acquire_daemon_lock, acquire_worker_lock},
@@ -45,6 +45,15 @@ mod ipc;
 mod keyboard_layout_watcher;
 mod troubleshoot;
 mod watcher;
+
+/// Maximum number of times the daemon will automatically respawn a worker that
+/// keeps dying in quick succession before giving up, to avoid a tight
+/// crash-loop (e.g. when the worker can't start due to missing permissions).
+const MAX_WORKER_AUTO_RESTARTS: u32 = 5;
+
+/// If a worker stays alive at least this long before dying, it is considered to
+/// have run successfully and the auto-restart counter is reset.
+const WORKER_HEALTHY_RUNTIME: std::time::Duration = std::time::Duration::from_secs(60);
 
 pub fn new() -> CliModule {
     #[allow(clippy::needless_update)]
@@ -137,6 +146,16 @@ fn daemon_main(args: CliModuleArgs) -> i32 {
     ipc::initialize_and_spawn(&paths.runtime, exit_notify.clone())
         .expect("unable to initialize ipc server for daemon");
 
+    // Bookkeeping for automatic worker respawn (see issue #2530).
+    // `last_worker_spawn` tracks how long the current worker has been alive, so
+    // a healthy worker resets the crash-loop counter. `worker_auto_restart_count`
+    // counts consecutive rapid respawns. `expected_worker_exits` counts worker
+    // exits the daemon initiated itself (during a restart) and must therefore
+    // NOT be treated as unexpected deaths.
+    let mut last_worker_spawn = Instant::now();
+    let mut worker_auto_restart_count: u32 = 0;
+    let mut expected_worker_exits: u32 = 0;
+
     loop {
         select! {
           recv(watcher_signal) -> _ => {
@@ -164,13 +183,23 @@ fn daemon_main(args: CliModuleArgs) -> i32 {
               }
             };
 
-            if should_restart_worker {
-              restart_worker(&paths, &paths_overrides, exit_notify.clone(), Some(WORKER_START_REASON_CONFIG_CHANGED.to_string()));
+            if should_restart_worker
+              && restart_worker(&paths, &paths_overrides, exit_notify.clone(), Some(WORKER_START_REASON_CONFIG_CHANGED.to_string()))
+            {
+              // We deliberately terminated the previous worker and spawned a
+              // replacement; expect (and ignore) the old worker's exit.
+              expected_worker_exits += 1;
+              last_worker_spawn = Instant::now();
+              worker_auto_restart_count = 0;
             }
           }
           recv(keyboard_layout_watcher_signal) -> _ => {
             info!("keyboard layout change detected, restarting worker...");
-            restart_worker(&paths, &paths_overrides, exit_notify.clone(), Some(WORKER_START_REASON_KEYBOARD_LAYOUT_CHANGED.to_string()));
+            if restart_worker(&paths, &paths_overrides, exit_notify.clone(), Some(WORKER_START_REASON_KEYBOARD_LAYOUT_CHANGED.to_string())) {
+              expected_worker_exits += 1;
+              last_worker_spawn = Instant::now();
+              worker_auto_restart_count = 0;
+            }
           }
           recv(exit_signal) -> code => {
             match code {
@@ -183,10 +212,38 @@ fn daemon_main(args: CliModuleArgs) -> i32 {
                   WORKER_RESTART => {
                     info!("worker requested a restart, spawning a new one...");
                     spawn_worker(&paths_overrides, exit_notify.clone(), Some(WORKER_START_REASON_MANUAL.to_string()));
+                    last_worker_spawn = Instant::now();
+                    worker_auto_restart_count = 0;
                   }
                   _ => {
-                    error!("received unexpected exit code from worker {code}, exiting");
-                    return code;
+                    if expected_worker_exits > 0 {
+                      // This exit was triggered by a restart we initiated; the
+                      // replacement worker has already been spawned.
+                      expected_worker_exits -= 1;
+                      continue;
+                    }
+
+                    warn!("worker exited unexpectedly with code {code}");
+
+                    // Reset the crash-loop counter if the worker had been
+                    // running for a healthy amount of time before dying.
+                    if last_worker_spawn.elapsed() >= WORKER_HEALTHY_RUNTIME {
+                      worker_auto_restart_count = 0;
+                    }
+
+                    if worker_auto_restart_count >= MAX_WORKER_AUTO_RESTARTS {
+                      error!("worker died {worker_auto_restart_count} times in quick succession; giving up to avoid a crash-loop");
+                      return code;
+                    }
+
+                    worker_auto_restart_count += 1;
+                    let backoff =
+                      std::time::Duration::from_millis(500 * u64::from(worker_auto_restart_count));
+                    warn!("respawning worker (attempt {worker_auto_restart_count}/{MAX_WORKER_AUTO_RESTARTS}) after {backoff:?}");
+                    std::thread::sleep(backoff);
+
+                    spawn_worker(&paths_overrides, exit_notify.clone(), Some(WORKER_START_REASON_MANUAL.to_string()));
+                    last_worker_spawn = Instant::now();
                   }
                 }
               },
@@ -302,24 +359,29 @@ fn spawn_worker(
 
     let mut child = command.spawn().expect("unable to spawn worker process");
 
-    // Create a monitor thread that will exit with the same non-zero code if
-    // the worker thread exits
+    // Create a monitor thread that forwards the worker's exit code to the
+    // daemon when the worker process terminates. The daemon uses this to decide
+    // whether to shut down, restart, or respawn the worker.
+    //
+    // IMPORTANT: forward *every* exit, including a successful exit
+    // (WORKER_SUCCESS) and the case where the exit status can't be obtained.
+    // Previously a WORKER_SUCCESS exit (and a failed `wait()`) was dropped
+    // silently, which left the daemon blocked in its `select!` loop with a dead
+    // worker that was never respawned (the "half-dead" state). See issue #2530.
     std::thread::Builder::new()
         .name("worker-status-monitor".to_string())
-        .spawn(move || {
-            let result = child.wait();
-            if let Ok(status) = result {
-                if let Some(code) = status.code() {
-                    if code != WORKER_SUCCESS {
-                        exit_notify
-                            .send(code)
-                            .expect("unable to forward worker exit code");
-                    }
-                } else {
-                    exit_notify
-                        .send(WORKER_ERROR_EXIT_NO_CODE)
-                        .expect("unable to forward worker exit code");
-                }
+        .spawn(move || match child.wait() {
+            Ok(status) => {
+                let code = status.code().unwrap_or(WORKER_ERROR_EXIT_NO_CODE);
+                exit_notify
+                    .send(code)
+                    .expect("unable to forward worker exit code");
+            }
+            Err(err) => {
+                error!("unable to wait for worker process: {err}");
+                exit_notify
+                    .send(WORKER_ERROR_EXIT_NO_CODE)
+                    .expect("unable to forward worker exit code");
             }
         })
         .expect("Unable to spawn worker monitor thread");
@@ -330,7 +392,7 @@ fn restart_worker(
     paths_overrides: &PathsOverrides,
     exit_notify: Sender<i32>,
     start_reason: Option<String>,
-) {
+) -> bool {
     match create_ipc_client_to_worker(&paths.runtime) {
         Ok(mut worker_ipc) => {
             if let Err(err) = worker_ipc.send_async(IPCEvent::Exit) {
@@ -357,7 +419,9 @@ fn restart_worker(
 
     if has_timed_out {
         error!("could not restart worker, as the exit process has timed out");
+        false
     } else {
         spawn_worker(paths_overrides, exit_notify, start_reason);
+        true
     }
 }
