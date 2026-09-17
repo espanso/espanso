@@ -23,15 +23,16 @@ use std::path::PathBuf;
 use thiserror::Error;
 
 pub fn is_espanso_in_path() -> bool {
-    PathBuf::from("/usr/local/bin/espanso").is_file()
+    PathBuf::from("/usr/bin/espanso").is_file() || PathBuf::from("/usr/local/bin/espanso").is_file()
 }
 
 pub fn add_espanso_to_path(_: bool) -> Result<()> {
-    let target_link_dir = PathBuf::from("/usr/local/bin");
+    let target_link_dir = dirs::executable_dir().expect("Could not get executables directory");
+
     let exec_path = get_binary_path()?;
 
     if !target_link_dir.is_dir() {
-        return Err(PathError::UsrLocalBinDirDoesNotExist.into());
+        return Err(PathError::LocalBinDirDoesNotExist.into());
     }
 
     let target_link_path = target_link_dir.join("espanso");
@@ -42,7 +43,7 @@ pub fn add_espanso_to_path(_: bool) -> Result<()> {
     }
 
     if let Err(error) = std::os::unix::fs::symlink(exec_path, target_link_path) {
-        debug!("creating the symlink from executable to /usr/local/bin");
+        debug!("creating the symlink from executable to $HOME/.local/bin");
         return Err(PathError::SymlinkError(error).into());
     }
 
@@ -50,7 +51,8 @@ pub fn add_espanso_to_path(_: bool) -> Result<()> {
 }
 
 pub fn remove_espanso_from_path(_: bool) -> Result<()> {
-    let target_link_path = PathBuf::from("/usr/local/bin/espanso");
+    let target_link_dir = dirs::executable_dir().expect("Could not get executables directory");
+    let target_link_path = target_link_dir.join("espanso");
 
     if std::fs::symlink_metadata(&target_link_path).is_err() {
         return Err(PathError::SymlinkNotFound.into());
@@ -65,8 +67,8 @@ pub fn remove_espanso_from_path(_: bool) -> Result<()> {
 
 #[derive(Error, Debug)]
 pub enum PathError {
-    #[error("/usr/local/bin directory doesn't exist")]
-    UsrLocalBinDirDoesNotExist,
+    #[error("$HOME/.local/bin directory doesn't exist")]
+    LocalBinDirDoesNotExist,
 
     #[error("symlink error: `{0}`")]
     SymlinkError(std::io::Error),
