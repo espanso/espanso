@@ -144,6 +144,11 @@
       "type": "boolean",
       "default": true
     },
+    "support_virtual_keyboard": {
+      "description": "Preserve matcher state for pointer-operated virtual keyboards that emit keyboard events between mouse press and release. Default false.",
+      "type": "boolean",
+      "default": false
+    },
     "apply_patch": {
       "type": "boolean",
       "default": true,
