@@ -41,27 +41,28 @@ std::vector<ValuePair> values;
 class FieldWrapper {
   public:
     virtual wxString getValue() = 0;
+    virtual ~FieldWrapper() = default;
 };
 
-class TextFieldWrapper {
+class TextFieldWrapper : public FieldWrapper {
     wxTextCtrl *control;
 
   public:
     explicit TextFieldWrapper(wxTextCtrl *control) : control(control) {}
 
-    virtual wxString getValue() { return control->GetValue(); }
+    wxString getValue() override { return control->GetValue(); }
 };
 
-class ChoiceFieldWrapper {
+class ChoiceFieldWrapper : public FieldWrapper {
     wxChoice *control;
 
   public:
     explicit ChoiceFieldWrapper(wxChoice *control) : control(control) {}
 
-    virtual wxString getValue() { return control->GetStringSelection(); }
+    wxString getValue() override { return control->GetStringSelection(); }
 };
 
-class ListFieldWrapper {
+class ListFieldWrapper : public FieldWrapper {
     wxListBox *control;
     wxString separator;
 
@@ -69,7 +70,7 @@ class ListFieldWrapper {
     explicit ListFieldWrapper(wxListBox *control, wxString separator)
         : control(control), separator(separator) {}
 
-    virtual wxString getValue() {
+    wxString getValue() override {
       wxArrayInt selections;
       control->GetSelections(selections);
 
@@ -80,6 +81,32 @@ class ListFieldWrapper {
       }
 
       return value;
+    }
+};
+
+class CheckboxFieldWrapper : public FieldWrapper {
+    std::vector<wxCheckBox *> checkboxes;
+    std::vector<wxString> values;
+    wxString separator;
+    wxString prefix;
+
+  public:
+    CheckboxFieldWrapper(std::vector<wxCheckBox *> cbs, std::vector<wxString> vals,
+                         wxString sep, wxString pre)
+        : checkboxes(cbs), values(vals), separator(sep), prefix(pre) {}
+
+    wxString getValue() override {
+        wxString result = "";
+        bool first = true;
+        for (size_t i = 0; i < checkboxes.size(); i++) {
+            if (checkboxes[i]->IsChecked()) {
+                if (!first) result.Append(separator);
+                result.Append(prefix);
+                result.Append(values[i]);
+                first = false;
+            }
+        }
+        return result;
     }
 };
 
@@ -199,8 +226,7 @@ void FormFrame::AddComponent(wxPanel *parent, wxBoxSizer *sizer,
         }
 
         // Create the field wrapper
-        std::unique_ptr<FieldWrapper> field(
-            (FieldWrapper *)new TextFieldWrapper(textControl));
+        std::unique_ptr<FieldWrapper> field(new TextFieldWrapper(textControl));
         idMap[meta.id] = std::move(field);
         control = textControl;
         fields.push_back(textControl);
@@ -236,7 +262,7 @@ void FormFrame::AddComponent(wxPanel *parent, wxBoxSizer *sizer,
 
             // Create the field wrapper
             std::unique_ptr<FieldWrapper> field(
-                (FieldWrapper *)new ChoiceFieldWrapper((wxChoice *)choice));
+                new ChoiceFieldWrapper((wxChoice *)choice));
             idMap[meta.id] = std::move(field);
         } else {
             choice = (void *)new wxListBox(parent, wxID_ANY, wxDefaultPosition,
@@ -260,13 +286,54 @@ void FormFrame::AddComponent(wxPanel *parent, wxBoxSizer *sizer,
 
             // Create the field wrapper
             std::unique_ptr<FieldWrapper> field(
-                (FieldWrapper *)new ListFieldWrapper((wxListBox *)choice,
-                                                     separator));
+                new ListFieldWrapper((wxListBox *)choice, separator));
             idMap[meta.id] = std::move(field);
         }
 
         control = choice;
         fields.push_back(choice);
+        break;
+    }
+    case FieldType::CHECKBOX: {
+        const CheckboxMetadata *checkboxMeta =
+            static_cast<const CheckboxMetadata *>(meta.specific);
+
+        wxString separator = wxString::FromUTF8(checkboxMeta->separator);
+        wxString prefix = wxString::FromUTF8(checkboxMeta->prefix);
+
+        auto checkboxPanel = new wxPanel(parent, wxID_ANY);
+        wxBoxSizer *checkboxSizer = new wxBoxSizer(wxVERTICAL);
+        checkboxPanel->SetSizer(checkboxSizer);
+
+        std::vector<wxCheckBox *> checkboxes;
+        std::vector<wxString> cbValues;
+
+        for (int i = 0; i < checkboxMeta->valueSize; i++) {
+            wxString label = wxString::FromUTF8(checkboxMeta->values[i]);
+            auto checkbox = new wxCheckBox(checkboxPanel, wxID_ANY, label);
+
+            bool isDefault = false;
+            for (int d = 0; d < checkboxMeta->defaultSize; d++) {
+                if (strcmp(checkboxMeta->defaults[d], checkboxMeta->values[i]) == 0) {
+                    isDefault = true;
+                    break;
+                }
+            }
+            if (isDefault) {
+                checkbox->SetValue(true);
+            }
+
+            checkboxSizer->Add(checkbox, 0, wxALL, PADDING);
+            checkboxes.push_back(checkbox);
+            cbValues.push_back(label);
+        }
+
+        std::unique_ptr<FieldWrapper> field(
+            new CheckboxFieldWrapper(checkboxes, cbValues, separator, prefix));
+        idMap[meta.id] = std::move(field);
+
+        control = checkboxPanel;
+        fields.push_back(checkboxPanel);
         break;
     }
     case FieldType::ROW: {
@@ -298,7 +365,7 @@ void FormFrame::AddComponent(wxPanel *parent, wxBoxSizer *sizer,
 
 void FormFrame::Submit() {
     for (auto &field : idMap) {
-        FieldWrapper *fieldWrapper = (FieldWrapper *)field.second.get();
+        FieldWrapper *fieldWrapper = field.second.get();
         wxString value{fieldWrapper->getValue()};
         wxCharBuffer buffer{value.ToUTF8()};
         char *id = strdup(field.first);

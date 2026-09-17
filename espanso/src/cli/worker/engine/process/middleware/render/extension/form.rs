@@ -82,6 +82,25 @@ fn convert_fields(fields: &Params) -> HashMap<String, FormField> {
                         .cloned()
                         .unwrap_or(", ".to_string()),
                 }),
+                Some(Value::String(field_type)) if field_type == "checkbox" => {
+                    Some(FormField::Checkbox {
+                        default: None,
+                        values: params
+                            .get("values")
+                            .and_then(|v| extract_values(v, params.get("trim_string_values")))
+                            .unwrap_or_default(),
+                        separator: params
+                            .get("separator")
+                            .and_then(|val| val.as_string())
+                            .cloned()
+                            .unwrap_or_else(|| "\n".to_string()),
+                        prefix: params
+                            .get("prefix")
+                            .and_then(|val| val.as_string())
+                            .cloned()
+                            .unwrap_or_else(|| "- ".to_string()),
+                    })
+                }
                 // By default, it's considered type 'text'
                 _ => Some(FormField::Text {
                     default: params

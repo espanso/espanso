@@ -123,6 +123,17 @@ fn convert_fields_into_object(fields: &HashMap<String, FormField>) -> Map<String
               "values": values,
               "separator": separator,
             }),
+            FormField::Checkbox {
+                values,
+                separator,
+                prefix,
+                ..
+            } => json!({
+              "type": "checkbox",
+              "values": values,
+              "separator": separator,
+              "prefix": prefix,
+            }),
         };
         obj.insert(name.clone(), value);
     }
