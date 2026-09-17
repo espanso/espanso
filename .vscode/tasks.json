@@ -247,6 +247,7 @@
       "dependsOn": [
         "macOS: release-build-x86-binary",
         "macOS: release-build-arm-binary"
+        // "macOS: create .dmg image"
       ],
       "dependsOrder": "sequence"
     },
