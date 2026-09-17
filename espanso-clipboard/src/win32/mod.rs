@@ -55,7 +55,7 @@ impl Clipboard for Win32Clipboard {
     }
 
     fn set_text(&self, text: &str, _: &ClipboardOperationOptions) -> Result<()> {
-        let string = U16CString::from_str(text)?;
+        let string = U16CString::from_str(sanitize_text(text))?;
         let native_result = unsafe { ffi::clipboard_set_text(string.as_ptr()) };
         if native_result > 0 {
             Ok(())
@@ -152,6 +152,10 @@ fn generate_html_descriptor(html: &str) -> String {
     render
 }
 
+fn sanitize_text(text: &str) -> String {
+    text.replace('\0', "")
+}
+
 #[derive(Error, Debug)]
 pub enum Win32ClipboardError {
     #[error("clipboard set operation failed")]
@@ -159,4 +163,24 @@ pub enum Win32ClipboardError {
 
     #[error("image not found: `{0}`")]
     ImageNotFound(PathBuf),
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn sanitize_text_removes_interior_nul_bytes() {
+        assert_eq!(sanitize_text("hello\0world"), "helloworld");
+    }
+
+    #[test]
+    fn sanitize_text_leaves_clean_text_unchanged() {
+        assert_eq!(sanitize_text("hello world"), "hello world");
+    }
+
+    #[test]
+    fn sanitize_text_removes_leading_trailing_and_repeated_nul_bytes() {
+        assert_eq!(sanitize_text("\0a\0\0b\0"), "ab");
+    }
 }
