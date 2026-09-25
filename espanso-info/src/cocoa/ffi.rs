@@ -21,6 +21,8 @@ use std::os::raw::c_char;
 
 #[link(name = "espansoinfo", kind = "static")]
 extern "C" {
+    pub fn info_get_frontmost_application_pid() -> i32;
+    pub fn info_activate_application(pid: i32) -> i32;
     pub fn info_get_title(buffer: *mut c_char, buffer_size: i32) -> i32;
     pub fn info_get_title_fallback(buffer: *mut c_char, buffer_size: i32) -> i32;
     pub fn info_get_exec(buffer: *mut c_char, buffer_size: i32) -> i32;
