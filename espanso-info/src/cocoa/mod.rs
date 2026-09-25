@@ -25,6 +25,19 @@ use self::ffi::{info_get_class, info_get_exec, info_get_title, info_get_title_fa
 
 mod ffi;
 
+/// Returns the frontmost application's process ID, if one is available.
+pub fn get_frontmost_application_pid() -> Option<i32> {
+    let pid = unsafe { ffi::info_get_frontmost_application_pid() };
+    (pid > 0).then_some(pid)
+}
+
+/// Requests activation of an existing application without launching it.
+///
+/// Returns whether macOS accepted the request. Activation is asynchronous.
+pub fn activate_application(pid: i32) -> bool {
+    unsafe { ffi::info_activate_application(pid) > 0 }
+}
+
 pub struct CocoaAppInfoProvider {}
 
 impl CocoaAppInfoProvider {
@@ -102,6 +115,18 @@ impl CocoaAppInfoProvider {
             }
         } else {
             None
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::activate_application;
+
+    #[test]
+    fn activate_application_rejects_invalid_process_ids() {
+        for pid in [-1, 0, i32::MAX] {
+            assert!(!activate_application(pid));
         }
     }
 }
