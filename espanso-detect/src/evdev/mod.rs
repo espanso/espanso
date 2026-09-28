@@ -26,12 +26,11 @@ mod ffi;
 mod hotkey;
 mod keymap;
 mod state;
-mod sync;
 
 use std::cell::RefCell;
 use std::collections::HashMap;
 
-use anyhow::{Context as AnyhowContext, Result};
+use anyhow::Result;
 use context::Context;
 use device::{get_devices, Device};
 use keymap::Keymap;
@@ -64,7 +63,7 @@ use crate::{
 };
 
 use self::{
-    device::{DeviceError, RawInputEvent, KEY_STATE_PRESS, KEY_STATE_RELEASE},
+    device::{DeviceError, ModifiersState, RawInputEvent, KEY_STATE_PRESS, KEY_STATE_RELEASE},
     hotkey::HotKeyFilter,
     state::State,
 };
@@ -79,12 +78,10 @@ const BTN_EXTRA: u16 = 0x114;
 // keycode set (where ESC is 9).
 const EVDEV_OFFSET: u32 = 8;
 
-// List of modifier keycodes, as defined in the "input-event-codes.h" header
+// Lock keycodes, as defined in the "input-event-codes.h" header. The momentary
+// modifiers (ctrl/shift/alt/meta, left and right) are seeded directly from their
+// evdev codes in `device::MODIFIER_KEYS`; only the locks still go through the map.
 // TODO: create an option to override them if needed
-const KEY_CTRL: u32 = 29;
-const KEY_SHIFT: u32 = 42;
-const KEY_ALT: u32 = 56;
-const KEY_META: u32 = 125;
 const KEY_CAPSLOCK: u32 = 58;
 const KEY_NUMLOCK: u32 = 69;
 
@@ -102,10 +99,6 @@ pub struct EVDEVSource {
 impl EVDEVSource {
     pub fn new(options: SourceCreationOptions) -> EVDEVSource {
         let mut modifiers_map = HashMap::new();
-        modifiers_map.insert("ctrl".to_string(), KEY_CTRL + EVDEV_OFFSET);
-        modifiers_map.insert("shift".to_string(), KEY_SHIFT + EVDEV_OFFSET);
-        modifiers_map.insert("alt".to_string(), KEY_ALT + EVDEV_OFFSET);
-        modifiers_map.insert("meta".to_string(), KEY_META + EVDEV_OFFSET);
         modifiers_map.insert("caps_lock".to_string(), KEY_CAPSLOCK + EVDEV_OFFSET);
         modifiers_map.insert("num_lock".to_string(), KEY_NUMLOCK + EVDEV_OFFSET);
 
@@ -146,8 +139,11 @@ impl Source for EVDEVSource {
         let state = State::new(&keymap)?;
 
         info!("Querying modifier status...");
-        if let Some(modifiers_state) =
-            sync::get_modifiers_state().context("EVDEV modifier context state synchronization")?
+        if let Some(modifiers_state) = self
+            .devices
+            .iter()
+            .map(Device::get_modifiers)
+            .reduce(ModifiersState::merge)
         {
             debug!("Updating device modifier state: {:?}", modifiers_state);
 
