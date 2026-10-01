@@ -22,7 +22,11 @@ use std::collections::HashMap;
 use log::error;
 
 use super::super::Middleware;
-use crate::event::{effect::TextInjectRequest, internal::RenderedEvent, Event, EventType};
+use crate::event::{
+    effect::TextInjectRequest,
+    internal::{ImageRequestedEvent, RenderedEvent},
+    Event, EventType, SourceId,
+};
 use anyhow::Result;
 use thiserror::Error;
 
@@ -85,28 +89,112 @@ impl Middleware for RenderMiddleware<'_> {
                         }),
                     );
                 }
-                Err(err) => {
+                Err(err) => return handle_render_error(event.source_id, &err, dispatch),
+            }
+        }
+
+        // Image paths containing variables have to be rendered too
+        if let EventType::ImageRequested(m_event) = &event.etype {
+            match self
+                .renderer
+                .render(m_event.match_id, m_event.trigger.as_deref(), HashMap::new())
+            {
+                Ok(image_path) => {
+                    return Event::caused_by(
+                        event.source_id,
+                        EventType::ImageRequested(ImageRequestedEvent {
+                            image_path,
+                            ..m_event.clone()
+                        }),
+                    );
+                }
+                // Image matches without variables have no template
+                Err(err)
                     if matches!(
                         err.downcast_ref::<RendererError>(),
-                        Some(RendererError::Aborted)
-                    ) {
-                        return Event::caused_by(event.source_id, EventType::NOOP);
-                    }
-                    error!("error during rendering: {err:?}");
-
-                    dispatch(Event::caused_by(
-                    event.source_id,
-                    EventType::TextInject(TextInjectRequest {
-                      text: "[Espanso]: An error occurred during rendering, please examine the logs for more information.".to_string(),
-                      ..Default::default()
-                    }),
-                  ));
-
-                    return Event::caused_by(event.source_id, EventType::RenderingError);
-                }
+                        Some(RendererError::NotFound)
+                    ) => {}
+                Err(err) => return handle_render_error(event.source_id, &err, dispatch),
             }
         }
 
         event
+    }
+}
+
+fn handle_render_error(
+    source_id: SourceId,
+    err: &anyhow::Error,
+    dispatch: &mut dyn FnMut(Event),
+) -> Event {
+    if matches!(
+        err.downcast_ref::<RendererError>(),
+        Some(RendererError::Aborted)
+    ) {
+        return Event::caused_by(source_id, EventType::NOOP);
+    }
+    error!("error during rendering: {err:?}");
+
+    dispatch(Event::caused_by(
+        source_id,
+        EventType::TextInject(TextInjectRequest {
+            text: "[Espanso]: An error occurred during rendering, please examine the logs for more information.".to_string(),
+            ..Default::default()
+        }),
+    ));
+
+    Event::caused_by(source_id, EventType::RenderingError)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    struct MockRenderer;
+
+    impl<'a> Renderer<'a> for MockRenderer {
+        fn render(
+            &'a self,
+            match_id: i32,
+            _: Option<&str>,
+            _: HashMap<String, String>,
+        ) -> Result<String> {
+            match match_id {
+                1 => Ok("/tmp/rendered.png".to_string()),
+                _ => Err(RendererError::NotFound.into()),
+            }
+        }
+    }
+
+    fn image_event(match_id: i32) -> Event {
+        Event::caused_by(
+            0,
+            EventType::ImageRequested(ImageRequestedEvent {
+                match_id,
+                image_path: "/tmp/{{file}}".to_string(),
+                trigger: None,
+            }),
+        )
+    }
+
+    fn image_path(event: Event) -> String {
+        match event.etype {
+            EventType::ImageRequested(m_event) => m_event.image_path,
+            other => panic!("unexpected event: {other:?}"),
+        }
+    }
+
+    #[test]
+    fn image_path_is_rendered() {
+        let middleware = RenderMiddleware::new(&MockRenderer);
+        let event = middleware.next(image_event(1), &mut |_| {});
+        assert_eq!(image_path(event), "/tmp/rendered.png");
+    }
+
+    #[test]
+    fn image_path_without_template_is_untouched() {
+        let middleware = RenderMiddleware::new(&MockRenderer);
+        let event = middleware.next(image_event(2), &mut |_| {});
+        assert_eq!(image_path(event), "/tmp/{{file}}");
     }
 }

@@ -122,21 +122,27 @@ fn generate_context<'a>(
 // TODO: move conversion methods to new file?
 
 fn convert_to_template(m: &Match) -> Option<Template> {
-    if let MatchEffect::Text(text_effect) = &m.effect {
-        let ids = if let MatchCause::Trigger(cause) = &m.cause {
-            cause.triggers.clone()
-        } else {
-            Vec::new()
-        };
+    let (body, vars) = match &m.effect {
+        MatchEffect::Text(text_effect) => (&text_effect.replace, &text_effect.vars),
+        // Image paths are rendered only when they use variables, so that
+        // plain paths are passed to the image injector untouched
+        MatchEffect::Image(image_effect) if !image_effect.vars.is_empty() => {
+            (&image_effect.path, &image_effect.vars)
+        }
+        _ => return None,
+    };
 
-        Some(Template {
-            ids,
-            body: text_effect.replace.clone(),
-            vars: convert_vars(text_effect.vars.clone()),
-        })
+    let ids = if let MatchCause::Trigger(cause) = &m.cause {
+        cause.triggers.clone()
     } else {
-        None
-    }
+        Vec::new()
+    };
+
+    Some(Template {
+        ids,
+        body: body.clone(),
+        vars: convert_vars(vars.clone()),
+    })
 }
 
 fn convert_vars(vars: Vec<espanso_config::matches::Variable>) -> Vec<espanso_render::Variable> {
