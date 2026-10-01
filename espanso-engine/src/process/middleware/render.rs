@@ -93,7 +93,7 @@ impl Middleware for RenderMiddleware<'_> {
             }
         }
 
-        // Image paths containing variables have to be rendered too
+        // Image paths can contain variables too
         if let EventType::ImageRequested(m_event) = &event.etype {
             match self
                 .renderer
@@ -108,12 +108,6 @@ impl Middleware for RenderMiddleware<'_> {
                         }),
                     );
                 }
-                // Image matches without variables have no template
-                Err(err)
-                    if matches!(
-                        err.downcast_ref::<RendererError>(),
-                        Some(RendererError::NotFound)
-                    ) => {}
                 Err(err) => return handle_render_error(event.source_id, &err, dispatch),
             }
         }
@@ -159,42 +153,31 @@ mod tests {
             _: Option<&str>,
             _: HashMap<String, String>,
         ) -> Result<String> {
-            match match_id {
-                1 => Ok("/tmp/rendered.png".to_string()),
-                _ => Err(RendererError::NotFound.into()),
-            }
+            assert_eq!(match_id, 1);
+            Ok("/tmp/rendered.png".to_string())
         }
     }
 
-    fn image_event(match_id: i32) -> Event {
+    fn image_event() -> Event {
         Event::caused_by(
             0,
             EventType::ImageRequested(ImageRequestedEvent {
-                match_id,
+                match_id: 1,
                 image_path: "/tmp/{{file}}".to_string(),
                 trigger: None,
             }),
         )
     }
 
-    fn image_path(event: Event) -> String {
-        match event.etype {
-            EventType::ImageRequested(m_event) => m_event.image_path,
-            other => panic!("unexpected event: {other:?}"),
-        }
-    }
-
     #[test]
     fn image_path_is_rendered() {
         let middleware = RenderMiddleware::new(&MockRenderer);
-        let event = middleware.next(image_event(1), &mut |_| {});
-        assert_eq!(image_path(event), "/tmp/rendered.png");
-    }
-
-    #[test]
-    fn image_path_without_template_is_untouched() {
-        let middleware = RenderMiddleware::new(&MockRenderer);
-        let event = middleware.next(image_event(2), &mut |_| {});
-        assert_eq!(image_path(event), "/tmp/{{file}}");
+        let event = middleware.next(image_event(), &mut |_| {});
+        match event.etype {
+            EventType::ImageRequested(m_event) => {
+                assert_eq!(m_event.image_path, "/tmp/rendered.png");
+            }
+            other => panic!("unexpected event: {other:?}"),
+        }
     }
 }

@@ -124,12 +124,8 @@ fn generate_context<'a>(
 fn convert_to_template(m: &Match) -> Option<Template> {
     let (body, vars) = match &m.effect {
         MatchEffect::Text(text_effect) => (&text_effect.replace, &text_effect.vars),
-        // Image paths are rendered only when they use variables, so that
-        // plain paths are passed to the image injector untouched
-        MatchEffect::Image(image_effect) if !image_effect.vars.is_empty() => {
-            (&image_effect.path, &image_effect.vars)
-        }
-        _ => return None,
+        MatchEffect::Image(image_effect) => (&image_effect.path, &image_effect.vars),
+        MatchEffect::None => return None,
     };
 
     let ids = if let MatchCause::Trigger(cause) = &m.cause {
@@ -319,5 +315,30 @@ fn calculate_casing_style(
         }
     } else {
         CasingStyle::None
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use espanso_config::matches::{ImageEffect, TriggerCause};
+
+    #[test]
+    fn image_match_without_vars_gets_a_template() {
+        let m = Match {
+            cause: MatchCause::Trigger(TriggerCause {
+                triggers: vec![":img".to_string()],
+                ..Default::default()
+            }),
+            effect: MatchEffect::Image(ImageEffect {
+                path: "/tmp/{{global_var}}".to_string(),
+                vars: Vec::new(),
+            }),
+            ..Default::default()
+        };
+        let template = convert_to_template(&m).unwrap();
+        assert_eq!(template.ids, vec![":img".to_string()]);
+        assert_eq!(template.body, "/tmp/{{global_var}}");
+        assert!(template.vars.is_empty());
     }
 }
