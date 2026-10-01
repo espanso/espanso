@@ -122,21 +122,23 @@ fn generate_context<'a>(
 // TODO: move conversion methods to new file?
 
 fn convert_to_template(m: &Match) -> Option<Template> {
-    if let MatchEffect::Text(text_effect) = &m.effect {
-        let ids = if let MatchCause::Trigger(cause) = &m.cause {
-            cause.triggers.clone()
-        } else {
-            Vec::new()
-        };
+    let (body, vars) = match &m.effect {
+        MatchEffect::Text(text_effect) => (&text_effect.replace, &text_effect.vars),
+        MatchEffect::Image(image_effect) => (&image_effect.path, &image_effect.vars),
+        MatchEffect::None => return None,
+    };
 
-        Some(Template {
-            ids,
-            body: text_effect.replace.clone(),
-            vars: convert_vars(text_effect.vars.clone()),
-        })
+    let ids = if let MatchCause::Trigger(cause) = &m.cause {
+        cause.triggers.clone()
     } else {
-        None
-    }
+        Vec::new()
+    };
+
+    Some(Template {
+        ids,
+        body: body.clone(),
+        vars: convert_vars(vars.clone()),
+    })
 }
 
 fn convert_vars(vars: Vec<espanso_config::matches::Variable>) -> Vec<espanso_render::Variable> {
@@ -313,5 +315,30 @@ fn calculate_casing_style(
         }
     } else {
         CasingStyle::None
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use espanso_config::matches::{ImageEffect, TriggerCause};
+
+    #[test]
+    fn image_match_without_vars_gets_a_template() {
+        let m = Match {
+            cause: MatchCause::Trigger(TriggerCause {
+                triggers: vec![":img".to_string()],
+                ..Default::default()
+            }),
+            effect: MatchEffect::Image(ImageEffect {
+                path: "/tmp/{{global_var}}".to_string(),
+                vars: Vec::new(),
+            }),
+            ..Default::default()
+        };
+        let template = convert_to_template(&m).unwrap();
+        assert_eq!(template.ids, vec![":img".to_string()]);
+        assert_eq!(template.body, "/tmp/{{global_var}}");
+        assert!(template.vars.is_empty());
     }
 }
