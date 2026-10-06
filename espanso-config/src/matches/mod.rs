@@ -193,6 +193,7 @@ impl Default for TextEffect {
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Default)]
 pub struct ImageEffect {
     pub path: String,
+    pub vars: Vec<Variable>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
