@@ -53,9 +53,19 @@ impl Middleware for UndoMiddleware<'_> {
         let mut record = self.record.borrow_mut();
 
         if let EventType::TriggerCompensation(m_event) = &event.etype {
+            // The left separator of a word trigger stays on screen when expanding,
+            // so it must not be typed again when reverting (#1081)
+            let trigger = match &m_event.left_separator {
+                Some(separator) => m_event
+                    .trigger
+                    .strip_prefix(separator.as_str())
+                    .unwrap_or(&m_event.trigger)
+                    .to_string(),
+                None => m_event.trigger.clone(),
+            };
             *record = Some(InjectionRecord {
                 id: Some(event.source_id),
-                trigger: Some(m_event.trigger.clone()),
+                trigger: Some(trigger),
                 ..Default::default()
             });
         } else if let EventType::Rendered(m_event) = &event.etype {
@@ -109,4 +119,73 @@ struct InjectionRecord {
     match_id: Option<i32>,
     trigger: Option<String>,
     injected_text: Option<String>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::event::{
+        effect::TriggerCompensationEvent, input::KeyboardEvent, internal::RenderedEvent,
+    };
+
+    struct Enabled;
+    impl UndoEnabledProvider for Enabled {
+        fn is_undo_enabled(&self) -> bool {
+            true
+        }
+    }
+
+    fn undo_after_expansion(left_separator: Option<&str>) -> Option<UndoEvent> {
+        let middleware = UndoMiddleware::new(&Enabled);
+        middleware.next(
+            Event::caused_by(
+                1,
+                EventType::TriggerCompensation(TriggerCompensationEvent {
+                    trigger: format!("{}brb", left_separator.unwrap_or("")),
+                    left_separator: left_separator.map(str::to_string),
+                }),
+            ),
+            &mut |_| {},
+        );
+        middleware.next(
+            Event::caused_by(
+                1,
+                EventType::Rendered(RenderedEvent {
+                    match_id: 7,
+                    body: "be right back".to_string(),
+                    format: TextFormat::Plain,
+                }),
+            ),
+            &mut |_| {},
+        );
+        let backspace = Event::caused_by(
+            2,
+            EventType::Keyboard(KeyboardEvent {
+                key: Key::Backspace,
+                value: None,
+                status: Status::Pressed,
+                variant: None,
+            }),
+        );
+        match middleware.next(backspace, &mut |_| {}).etype {
+            EventType::Undo(undo) => Some(undo),
+            _ => None,
+        }
+    }
+
+    #[test]
+    fn undo_retypes_the_plain_trigger() {
+        let undo = undo_after_expansion(None).expect("undo");
+        assert_eq!(undo.trigger, "brb");
+        assert_eq!(undo.replace, "be right back");
+    }
+
+    #[test]
+    fn undo_does_not_retype_the_left_separator() {
+        // #1081: the separator before a word trigger is still on screen
+        assert_eq!(
+            undo_after_expansion(Some(" ")).expect("undo").trigger,
+            "brb"
+        );
+    }
 }

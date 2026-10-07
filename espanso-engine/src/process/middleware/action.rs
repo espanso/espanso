@@ -17,6 +17,8 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use unicode_segmentation::UnicodeSegmentation;
+
 use super::super::Middleware;
 use crate::event::{
     effect::{
@@ -132,8 +134,10 @@ impl Middleware for ActionMiddleware<'_> {
             }
             EventType::Undo(m_event) => {
                 // We subtract one, because the backspace that triggered the undo feature
-                // already removed the last char
-                let backspace_count = m_event.replace.chars().count() - 1;
+                // already removed the last char. Count graphemes, not code points: an emoji
+                // with a variation selector or a combining accent is deleted with a single
+                // backspace (#1157)
+                let backspace_count = m_event.replace.graphemes(true).count().saturating_sub(1);
 
                 dispatch(Event::caused_by(
                     event.source_id,
