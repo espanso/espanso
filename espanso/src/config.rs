@@ -65,7 +65,11 @@ pub fn populate_default_config(config_dir: &Path) -> Result<()> {
         );
         std::fs::write(default_file, DEFAULT_CONFIG_FILE_CONTENT)?;
     }
-    if !match_file.is_file() && !match_file_yaml.is_file() {
+    // Only seed base.yml into an empty match directory. Users who organize their
+    // matches in other files (or folders) would otherwise get the example matches
+    // back on every start, written straight into their own (possibly synced) folder.
+    if !match_file.is_file() && !match_file_yaml.is_file() && !contains_match_files(&sub_match_dir)
+    {
         info!(
             "populating base.yml file with initial content: {}",
             match_file.display()
@@ -74,6 +78,26 @@ pub fn populate_default_config(config_dir: &Path) -> Result<()> {
     }
 
     Ok(())
+}
+
+/// True if the directory (or a subfolder other than `packages`) contains a .yml/.yaml file.
+fn contains_match_files(dir: &Path) -> bool {
+    fn walk(dir: &Path, depth: usize) -> bool {
+        let Ok(entries) = std::fs::read_dir(dir) else {
+            return false;
+        };
+        entries.flatten().any(|entry| {
+            let path = entry.path();
+            if path.is_dir() {
+                depth < 3 && entry.file_name() != "packages" && walk(&path, depth + 1)
+            } else {
+                path.extension().is_some_and(|ext| {
+                    ext.eq_ignore_ascii_case("yml") || ext.eq_ignore_ascii_case("yaml")
+                })
+            }
+        })
+    }
+    walk(dir, 0)
 }
 
 pub struct ConfigLoadResult {
@@ -108,4 +132,38 @@ pub fn load_config(config_path: &Path) -> Result<ConfigLoadResult> {
         match_store,
         non_fatal_errors,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn base_yml_is_created_in_an_empty_match_dir() {
+        let dir = tempdir::TempDir::new("espanso-config").unwrap();
+        populate_default_config(dir.path()).unwrap();
+        assert!(dir.path().join("match/base.yml").is_file());
+    }
+
+    #[test]
+    fn base_yml_is_not_recreated_when_matches_live_in_other_files() {
+        let dir = tempdir::TempDir::new("espanso-config").unwrap();
+        std::fs::create_dir_all(dir.path().join("match/ct")).unwrap();
+        std::fs::write(dir.path().join("match/ct/thorax.yml"), "matches: []\n").unwrap();
+        populate_default_config(dir.path()).unwrap();
+        assert!(!dir.path().join("match/base.yml").exists());
+    }
+
+    #[test]
+    fn packages_alone_do_not_count_as_own_matches() {
+        let dir = tempdir::TempDir::new("espanso-config").unwrap();
+        std::fs::create_dir_all(dir.path().join("match/packages/x")).unwrap();
+        std::fs::write(
+            dir.path().join("match/packages/x/package.yml"),
+            "matches: []\n",
+        )
+        .unwrap();
+        populate_default_config(dir.path()).unwrap();
+        assert!(dir.path().join("match/base.yml").is_file());
+    }
 }
