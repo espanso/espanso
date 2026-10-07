@@ -140,6 +140,10 @@ pub trait Config: Send + Sync {
     // presses the Backspace key afterwards.
     fn undo_backspace(&self) -> bool;
 
+    // How many quick Backspace presses revert an expansion: 1 (default) or 2.
+    // With 2, a single Backspace deletes just the last character as usual.
+    fn undo_backspace_presses(&self) -> usize;
+
     // If false, disable all notifications
     fn show_notifications(&self) -> bool;
 

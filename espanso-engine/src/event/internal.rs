@@ -105,4 +105,6 @@ pub struct UndoEvent {
     pub match_id: i32,
     pub trigger: String,
     pub replace: String,
+    /// Characters the user already deleted with the Backspace press(es) that triggered the undo
+    pub deleted_chars: usize,
 }
