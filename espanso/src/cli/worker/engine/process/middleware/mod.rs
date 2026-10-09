@@ -19,6 +19,7 @@
 
 pub mod disable;
 pub mod image_resolve;
+pub mod input_method;
 pub mod match_select;
 pub mod matcher;
 pub mod multiplex;

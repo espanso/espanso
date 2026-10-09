@@ -21,7 +21,7 @@ use log::trace;
 
 use super::{
     middleware::{
-        action::{ActionMiddleware, EventSequenceProvider},
+        action::{ActionMiddleware, EventSequenceProvider, InputMethodProvider},
         alt_code_synthesizer::AltCodeSynthesizerMiddleware,
         cause::CauseCompensateMiddleware,
         cursor_hint::CursorHintMiddleware,
@@ -80,6 +80,7 @@ impl<'a> DefaultProcessor<'a> {
         match_resolver: &'a dyn MatchResolver,
         notification_manager: &'a dyn NotificationManager,
         alt_code_synth_enabled_provider: &'a dyn AltCodeSynthEnabledProvider,
+        input_method_provider: &'a dyn InputMethodProvider,
     ) -> Self {
         Self {
             event_queue: VecDeque::new(),
@@ -116,6 +117,7 @@ impl<'a> DefaultProcessor<'a> {
                 Box::new(ActionMiddleware::new(
                     match_info_provider,
                     event_sequence_provider,
+                    input_method_provider,
                 )),
                 Box::new(SearchMiddleware::new(match_provider)),
                 Box::new(MarkdownMiddleware::new()),

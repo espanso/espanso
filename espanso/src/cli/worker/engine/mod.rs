@@ -42,6 +42,7 @@ use crate::{
             },
             process::middleware::{
                 image_resolve::PathProviderAdapter,
+                input_method::InputMethodProviderAdapter,
                 match_select::MatchSelectorAdapter,
                 matcher::{
                     convert::MatchConverter,
@@ -231,6 +232,7 @@ pub fn initialize_and_spawn(
                 process::middleware::disable::extract_disable_options(&*config_manager.default());
 
             let notification_manager = NotificationManager::new(&*ui_remote, default_config);
+            let input_method_provider = InputMethodProviderAdapter;
 
             let mut processor = espanso_engine::process::default(
                 &matchers,
@@ -252,6 +254,7 @@ pub fn initialize_and_spawn(
                 &combined_match_cache,
                 &notification_manager,
                 &config_manager,
+                &input_method_provider,
             );
 
             let event_injector = EventInjectorAdapter::new(&*injector, &config_manager);
