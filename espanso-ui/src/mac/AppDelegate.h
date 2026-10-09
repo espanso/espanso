@@ -27,6 +27,8 @@
   @public
     NSStatusItem *statusItem;
   @public
+    NSImage *iconImages[MAX_ICON_COUNT];
+  @public
     UIOptions options;
   @public
     void *rust_instance;
