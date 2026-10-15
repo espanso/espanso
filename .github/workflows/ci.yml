@@ -142,6 +142,8 @@ jobs:
           cargo build --target x86_64-apple-darwin
       - name: Test
         run: cargo test --workspace
+      - name: Test AppKit shutdown
+        run: bash scripts/test_macos_shutdown.sh
       - name: Clippy
         run: |
           cargo clippy --target=aarch64-apple-darwin -- --deny warnings
