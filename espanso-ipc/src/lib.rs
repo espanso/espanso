@@ -69,18 +69,18 @@ pub fn client<Event: Serialize + DeserializeOwned>(
 #[cfg(target_os = "windows")]
 pub fn server<Event: Send + Sync + DeserializeOwned + Serialize>(
     id: &str,
-    _: &Path,
+    parent_dir: &Path,
 ) -> Result<impl IPCServer<Event>> {
-    let server = windows::WinIPCServer::new(id)?;
+    let server = windows::WinIPCServer::new(id, parent_dir)?;
     Ok(server)
 }
 
 #[cfg(target_os = "windows")]
 pub fn client<Event: Serialize + DeserializeOwned>(
     id: &str,
-    _: &Path,
+    parent_dir: &Path,
 ) -> Result<impl IPCClient<Event>> {
-    let client = windows::WinIPCClient::new(id)?;
+    let client = windows::WinIPCClient::new(id, parent_dir)?;
     Ok(client)
 }
 
