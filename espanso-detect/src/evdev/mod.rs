@@ -29,7 +29,8 @@ mod state;
 mod sync;
 
 use std::cell::RefCell;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
+use std::ffi::CString;
 
 use anyhow::{Context as AnyhowContext, Result};
 use context::Context;
@@ -89,7 +90,9 @@ const KEY_CAPSLOCK: u32 = 58;
 const KEY_NUMLOCK: u32 = 69;
 
 pub struct EVDEVSource {
-    devices: Vec<Device>,
+    // Devices are indexed by their epoll token. A slot becomes `None` once its
+    // device has been disconnected, which closes the file descriptor.
+    devices: RefCell<Vec<Option<Device>>>,
     hotkeys: Vec<HotKey>,
 
     _keyboard_rmlvo: Option<KeyboardConfig>,
@@ -110,7 +113,7 @@ impl EVDEVSource {
         modifiers_map.insert("num_lock".to_string(), KEY_NUMLOCK + EVDEV_OFFSET);
 
         Self {
-            devices: Vec::new(),
+            devices: RefCell::new(Vec::new()),
             hotkeys: options.hotkeys,
             _context: LazyCell::new(),
             _keymap: LazyCell::new(),
@@ -128,7 +131,7 @@ impl Source for EVDEVSource {
             .expect("unable to create xkb keymap");
 
         match get_devices(&keymap) {
-            Ok(devices) => self.devices = devices,
+            Ok(devices) => *self.devices.get_mut() = devices.into_iter().map(Some).collect(),
             Err(error) => {
                 if let Some(device_error) = error.downcast_ref::<DeviceError>() {
                     if matches!(device_error, DeviceError::NoDevicesFound()) {
@@ -151,7 +154,7 @@ impl Source for EVDEVSource {
         {
             debug!("Updating device modifier state: {:?}", modifiers_state);
 
-            for device in &mut self.devices {
+            for device in self.devices.get_mut().iter_mut().flatten() {
                 device.update_modifier_state(modifiers_state, &self._modifiers_map);
             }
         }
@@ -172,7 +175,8 @@ impl Source for EVDEVSource {
     }
 
     fn eventloop(&self, event_callback: SourceCallback) -> Result<()> {
-        if self.devices.is_empty() {
+        let mut devices = self.devices.borrow_mut();
+        if devices.is_empty() {
             error!("can't start eventloop without evdev devices");
             return Err(EVDEVSourceError::NoDevices().into());
         }
@@ -189,7 +193,7 @@ impl Source for EVDEVSource {
 
         // Setup epoll for all input devices
         let errno_ptr = unsafe { __errno_location() };
-        for (i, device) in self.devices.iter().enumerate() {
+        for (i, device) in devices.iter().flatten().enumerate() {
             let mut ev: epoll_event = unsafe { std::mem::zeroed() };
             ev.events = EPOLLIN as u32;
             ev.u64 = i as u64;
@@ -202,6 +206,33 @@ impl Source for EVDEVSource {
                 return Err(EVDEVSourceError::Internal().into());
             }
         }
+
+        // Watch /dev/input to pick up devices plugged in after startup (a
+        // keyboard connected later, a Bluetooth keyboard reconnecting, a
+        // remapper such as keyd recreating its virtual device). Without this,
+        // such devices are never read until espanso is restarted.
+        let inotify_fd = match watch_input_directory() {
+            Ok(fd) => {
+                let mut ev: epoll_event = unsafe { std::mem::zeroed() };
+                ev.events = EPOLLIN as u32;
+                ev.u64 = HOTPLUG_TOKEN;
+                if unsafe { epoll_ctl(*epfd, EPOLL_CTL_ADD, fd, &mut ev) } != 0 {
+                    warn!(
+                        "Could not add /dev/input watcher to epoll, errno {}, hotplug disabled",
+                        unsafe { *errno_ptr }
+                    );
+                }
+                Some(scopeguard::guard(fd, |fd| unsafe {
+                    close(fd);
+                }))
+            }
+            Err(errno) => {
+                warn!("Could not watch /dev/input, errno {errno}, hotplug disabled");
+                None
+            }
+        };
+        let mut open_paths: HashSet<String> =
+            devices.iter().flatten().map(Device::get_path).collect();
 
         let mut hotkey_filter = self._hotkey_filter.borrow_mut();
 
@@ -218,7 +249,18 @@ impl Source for EVDEVSource {
             }
 
             for ev in evs.iter().take(ret as usize) {
-                let device = &self.devices[ev.u64 as usize];
+                if ev.u64 == HOTPLUG_TOKEN {
+                    if let Some(inotify_fd) = &inotify_fd {
+                        self.add_new_devices(**inotify_fd, *epfd, &mut devices, &mut open_paths);
+                    }
+                    continue;
+                }
+
+                let index = ev.u64 as usize;
+                let Some(Some(device)) = devices.get(index) else {
+                    continue;
+                };
+                let mut disconnected = false;
                 match device.read() {
                     Ok(events) if !events.is_empty() => {
                         // Convert raw events to the common format and invoke the callback
@@ -247,6 +289,7 @@ impl Source for EVDEVSource {
                             err.downcast_ref::<DeviceError>()
                         {
                             warn!("Can't read from device {}, this error usually means the device has been disconnected, removing from epoll.", device.get_path());
+                            disconnected = true;
 
                             if unsafe {
                                 epoll_ctl(
@@ -269,9 +312,131 @@ impl Source for EVDEVSource {
                         }
                     }
                 }
+                if disconnected {
+                    // The eventN name will be reused by the next device, so it
+                    // must become openable again. Dropping the device closes
+                    // its file descriptor.
+                    open_paths.remove(&device.get_path());
+                    devices[index] = None;
+                }
             }
         }
     }
+}
+
+const HOTPLUG_TOKEN: u64 = u64::MAX;
+
+// Our own virtual keyboard (espanso-inject) is created after the detection
+// source is initialized: it must not be picked up, or espanso would read back
+// the keys it injects.
+const ESPANSO_VIRTUAL_DEVICE_NAME: &str = "Espanso virtual device";
+
+impl EVDEVSource {
+    fn add_new_devices(
+        &self,
+        inotify_fd: i32,
+        epfd: i32,
+        devices: &mut Vec<Option<Device>>,
+        open_paths: &mut HashSet<String>,
+    ) {
+        let Some(keymap) = self._keymap.borrow() else {
+            return;
+        };
+        for name in read_inotify_names(inotify_fd) {
+            if !name.starts_with("event") {
+                continue;
+            }
+            let path = format!("/dev/input/{name}");
+            if open_paths.contains(&path) {
+                continue;
+            }
+            // Failing here is expected: the node may still be owned by root
+            // (udev applies permissions right after creation, which triggers
+            // IN_ATTRIB and a new attempt), or it may not be a keyboard/mouse.
+            let device = match Device::from(&path, keymap) {
+                Ok(device) => device,
+                Err(error) => {
+                    trace!("skipping new device {path}: {error}");
+                    continue;
+                }
+            };
+            if device_name(device.get_raw_fd()).as_deref() == Some(ESPANSO_VIRTUAL_DEVICE_NAME) {
+                continue;
+            }
+            let mut ev: epoll_event = unsafe { std::mem::zeroed() };
+            ev.events = EPOLLIN as u32;
+            ev.u64 = devices.len() as u64;
+            if unsafe { epoll_ctl(epfd, EPOLL_CTL_ADD, device.get_raw_fd(), &mut ev) } != 0 {
+                warn!("Could not add {path} to epoll, errno {}", unsafe {
+                    *__errno_location()
+                });
+                continue;
+            }
+            info!("detected new input device {path}");
+            open_paths.insert(path);
+            devices.push(Some(device));
+        }
+    }
+}
+
+// IN_ATTRIB in addition to IN_CREATE: a new node is created as root:root 0600
+// and only later gets its group from udev. By then espanso has dropped its
+// capabilities, so the open fails on IN_CREATE and succeeds on IN_ATTRIB.
+// inotify works here because /dev is a devtmpfs (it would not on sysfs).
+fn watch_input_directory() -> Result<i32, i32> {
+    let fd = unsafe { libc::inotify_init1(libc::IN_NONBLOCK | libc::IN_CLOEXEC) };
+    if fd < 0 {
+        return Err(unsafe { *__errno_location() });
+    }
+    let path = CString::new("/dev/input").expect("static path");
+    if unsafe { libc::inotify_add_watch(fd, path.as_ptr(), libc::IN_CREATE | libc::IN_ATTRIB) } < 0
+    {
+        let errno = unsafe { *__errno_location() };
+        unsafe { close(fd) };
+        return Err(errno);
+    }
+    Ok(fd)
+}
+
+fn read_inotify_names(fd: i32) -> Vec<String> {
+    let mut names = Vec::new();
+    let mut buffer = [0u8; 4096];
+    let header_size = std::mem::size_of::<libc::inotify_event>();
+    loop {
+        let read = unsafe { libc::read(fd, buffer.as_mut_ptr().cast(), buffer.len()) };
+        if read <= 0 {
+            break;
+        }
+        let read = read as usize;
+        let mut offset = 0;
+        while offset + header_size <= read {
+            let event: libc::inotify_event =
+                unsafe { std::ptr::read_unaligned(buffer.as_ptr().add(offset).cast()) };
+            let name_start = offset + header_size;
+            let name_end = (name_start + event.len as usize).min(read);
+            let name = buffer[name_start..name_end]
+                .split(|byte| *byte == 0)
+                .next()
+                .unwrap_or_default();
+            names.push(String::from_utf8_lossy(name).into_owned());
+            offset = name_start + event.len as usize;
+        }
+    }
+    names
+}
+
+fn device_name(fd: i32) -> Option<String> {
+    let mut buffer = [0u8; 256];
+    // EVIOCGNAME(len) = _IOC(_IOC_READ, 'E', 0x06, len)
+    let request = (2u64 << 30) | ((buffer.len() as u64) << 16) | (u64::from(b'E') << 8) | 0x06;
+    if unsafe { libc::ioctl(fd, request as _, buffer.as_mut_ptr()) } < 0 {
+        return None;
+    }
+    let end = buffer
+        .iter()
+        .position(|byte| *byte == 0)
+        .unwrap_or(buffer.len());
+    Some(String::from_utf8_lossy(&buffer[..end]).into_owned())
 }
 
 #[derive(Error, Debug)]
@@ -471,5 +636,37 @@ mod tests {
                 button: MouseButton::Right,
             })
         );
+    }
+
+    #[test]
+    fn read_inotify_names_returns_created_entries() {
+        let dir = std::env::temp_dir().join(format!("espanso-inotify-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let fd = unsafe { libc::inotify_init1(libc::IN_NONBLOCK | libc::IN_CLOEXEC) };
+        assert!(fd >= 0);
+        let path = CString::new(dir.to_string_lossy().as_bytes()).unwrap();
+        assert!(unsafe { libc::inotify_add_watch(fd, path.as_ptr(), libc::IN_CREATE) } >= 0);
+
+        std::fs::write(dir.join("event42"), b"").unwrap();
+        std::fs::write(dir.join("mouse0"), b"").unwrap();
+        let names = read_inotify_names(fd);
+
+        unsafe { close(fd) };
+        std::fs::remove_dir_all(&dir).unwrap();
+        assert_eq!(names, vec!["event42".to_string(), "mouse0".to_string()]);
+    }
+
+    #[test]
+    fn read_inotify_names_is_empty_without_events() {
+        let fd = unsafe { libc::inotify_init1(libc::IN_NONBLOCK | libc::IN_CLOEXEC) };
+        assert!(fd >= 0);
+        assert!(read_inotify_names(fd).is_empty());
+        unsafe { close(fd) };
+    }
+
+    #[test]
+    fn device_name_is_none_for_a_regular_file() {
+        let file = std::fs::File::open("/proc/self/stat").unwrap();
+        assert_eq!(device_name(std::os::fd::AsRawFd::as_raw_fd(&file)), None);
     }
 }
