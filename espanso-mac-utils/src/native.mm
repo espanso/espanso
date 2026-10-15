@@ -108,8 +108,21 @@ void mac_utils_start_headless_eventloop() {
 }
 
 void mac_utils_exit_headless_eventloop() {
-  dispatch_async(dispatch_get_main_queue(), ^(void) {
-    [NSApp stop:nil];
-    [NSApp abortModal];
-  });
+    dispatch_async(dispatch_get_main_queue(), ^(void) {
+      @autoreleasepool {
+          [NSApp stop:nil];
+          // Wake run without throwing an Objective-C exception through Rust.
+          [NSApp postEvent:[NSEvent
+                               otherEventWithType:NSEventTypeApplicationDefined
+                                         location:NSZeroPoint
+                                    modifierFlags:0
+                                        timestamp:0
+                                     windowNumber:0
+                                          context:nil
+                                          subtype:0
+                                            data1:0
+                                            data2:0]
+                   atStart:YES];
+      }
+    });
 }
