@@ -179,15 +179,15 @@ void FormFrame::ApplyTheme() {
     bool dark = isSystemDark();
     applyDarkModeToWindow(GetHandle(), dark);
     applyThemeColors(this, dark);
-    this->Refresh();
 }
 
 WXLRESULT FormFrame::MSWWindowProc(WXUINT message, WXWPARAM wParam,
                                    WXLPARAM lParam) {
+    WXLRESULT result = wxFrame::MSWWindowProc(message, wParam, lParam);
     if (isColorSchemeChange(message, lParam)) {
-        ApplyTheme();
+        CallAfter(&FormFrame::ApplyTheme);
     }
-    return wxFrame::MSWWindowProc(message, wParam, lParam);
+    return result;
 }
 #endif
 
