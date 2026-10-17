@@ -86,15 +86,15 @@ void DerivedWelcomeFrame::ApplyTheme() {
     bool dark = isSystemDark();
     applyDarkModeToWindow(GetHandle(), dark);
     applyThemeColors(this, dark);
-    this->Refresh();
 }
 
 WXLRESULT DerivedWelcomeFrame::MSWWindowProc(WXUINT message, WXWPARAM wParam,
                                              WXLPARAM lParam) {
+    WXLRESULT result = WelcomeFrame::MSWWindowProc(message, wParam, lParam);
     if (isColorSchemeChange(message, lParam)) {
-        ApplyTheme();
+        CallAfter(&DerivedWelcomeFrame::ApplyTheme);
     }
-    return WelcomeFrame::MSWWindowProc(message, wParam, lParam);
+    return result;
 }
 #endif
 

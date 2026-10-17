@@ -58,6 +58,7 @@ typedef struct {
     UIOptions options;
     NOTIFYICONDATA nid;
     HICON g_icons[MAX_ICON_COUNT];
+    int32_t current_icon_index;
 
     // Rust interop
     void *rust_instance;
@@ -87,7 +88,7 @@ LRESULT CALLBACK ui_window_procedure(HWND window, unsigned int msg, WPARAM wp,
 
         // Free the tray icons
         for (int i = 0; i < variables->options.icon_paths_count; i++) {
-            DeleteObject(variables->g_icons[i]);
+            DestroyIcon(variables->g_icons[i]);
         }
 
         // Free the window variables
@@ -124,15 +125,99 @@ LRESULT CALLBACK ui_window_procedure(HWND window, unsigned int msg, WPARAM wp,
     case APPWM_UPDATE_TRAY_ICON: // Request to update the tray icon
     {
         int32_t index = (int32_t)lp;
-        if (index >= variables->options.icon_paths_count) {
+        if (index < 0 || index >= variables->options.icon_paths_count) {
             break;
         }
 
+        variables->current_icon_index = index;
         variables->nid.hIcon = variables->g_icons[index];
         if (variables->options.show_icon) {
             Shell_NotifyIcon(NIM_MODIFY, &variables->nid);
         }
 
+        break;
+    }
+    case WM_SETTINGCHANGE: // System theme changed
+    {
+        if (!variables || !lp ||
+            wcscmp((LPCWSTR)lp, L"ImmersiveColorSet") != 0) {
+            break;
+        }
+        // The tray follows the system theme; modulo follows the app theme.
+        HKEY hKey = NULL;
+        DWORD lightTheme = 0;
+        if (RegOpenKeyExW(HKEY_CURRENT_USER,
+                          L"Software\\Microsoft\\Windows\\CurrentVersion\\Theme"
+                          L"s\\Personalize",
+                          0, KEY_READ, &hKey) == ERROR_SUCCESS) {
+            DWORD size = sizeof(DWORD);
+            RegQueryValueExW(hKey, L"SystemUsesLightTheme", nullptr, nullptr,
+                             (LPBYTE)&lightTheme, &size);
+            RegCloseKey(hKey);
+        }
+
+        // Reload the icons from disk
+        for (int i = 0; i < variables->options.icon_paths_count; i++) {
+            std::wstring pathStr(variables->options.icon_paths[i]);
+            // Substitute variants only for the built-in icon filenames.
+            // Keep custom filenames on their configured path.
+            size_t slash = pathStr.find_last_of(L"\\/");
+            if (slash != std::wstring::npos) {
+                std::wstring dir = pathStr.substr(0, slash + 1);
+                std::wstring file = pathStr.substr(slash + 1);
+                std::wstring candidate;
+                if (file == L"normalv2.ico") {
+                    candidate = dir + (lightTheme ? L"normal_light.ico"
+                                                  : L"normal_dark.ico");
+                } else if (file == L"disabledv2.ico") {
+                    candidate = dir + (lightTheme ? L"disabled_light.ico"
+                                                  : L"disabled_dark.ico");
+                }
+                if (!candidate.empty() &&
+                    GetFileAttributesW(candidate.c_str()) !=
+                        INVALID_FILE_ATTRIBUTES) {
+                    HICON newIcon = (HICON)LoadImageW(
+                        NULL, candidate.c_str(), IMAGE_ICON, 0, 0,
+                        LR_DEFAULTCOLOR | LR_DEFAULTSIZE | LR_LOADFROMFILE);
+                    if (newIcon) {
+                        if (i == 0) {
+                            SendMessage(window, WM_SETICON, ICON_BIG,
+                                        (LPARAM)newIcon);
+                            SendMessage(window, WM_SETICON, ICON_SMALL,
+                                        (LPARAM)newIcon);
+                        }
+                        if (variables->g_icons[i]) {
+                            DestroyIcon(variables->g_icons[i]);
+                        }
+                        variables->g_icons[i] = newIcon;
+                        continue;
+                    }
+                }
+            }
+
+            // Fallback: reload the configured path
+            HICON newIcon = (HICON)LoadImageW(
+                NULL, variables->options.icon_paths[i], IMAGE_ICON, 0, 0,
+                LR_DEFAULTCOLOR | LR_DEFAULTSIZE | LR_LOADFROMFILE);
+            if (newIcon) {
+                if (i == 0) {
+                    SendMessage(window, WM_SETICON, ICON_BIG, (LPARAM)newIcon);
+                    SendMessage(window, WM_SETICON, ICON_SMALL, (LPARAM)newIcon);
+                }
+                if (variables->g_icons[i]) {
+                    DestroyIcon(variables->g_icons[i]);
+                }
+                variables->g_icons[i] = newIcon;
+            }
+        }
+
+        int32_t cur = variables->current_icon_index;
+        if (cur >= 0 && cur < variables->options.icon_paths_count) {
+            variables->nid.hIcon = variables->g_icons[cur];
+            if (variables->options.show_icon) {
+                Shell_NotifyIcon(NIM_MODIFY, &variables->nid);
+            }
+        }
         break;
     }
     case APPWM_ICON_CLICK: // Click on the tray icon
@@ -231,7 +316,7 @@ void *ui_initialize(void *_self, UIOptions _options, int32_t *error_code) {
             for (int i = 0; i < variables->options.icon_paths_count; i++) {
                 variables->g_icons[i] = (HICON)LoadImage(
                     NULL, variables->options.icon_paths[i], IMAGE_ICON, 0, 0,
-                    LR_DEFAULTCOLOR | LR_SHARED | LR_DEFAULTSIZE |
+                    LR_DEFAULTCOLOR | LR_DEFAULTSIZE |
                         LR_LOADFROMFILE);
             }
 
