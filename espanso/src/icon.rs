@@ -27,11 +27,30 @@ const LOGO_NO_BACKGROUND_BINARY: &[u8] = include_bytes!("res/logo_no_background.
 #[cfg(target_os = "windows")]
 const WINDOWS_NORMAL_DARK_ICO_BINARY: &[u8] = include_bytes!("res/windows/normal_dark.ico");
 #[cfg(target_os = "windows")]
+const WINDOWS_NORMAL_LIGHT_ICO_BINARY: &[u8] = include_bytes!("res/windows/normal_light.ico");
+#[cfg(target_os = "windows")]
 const WINDOWS_DISABLED_DARK_ICO_BINARY: &[u8] = include_bytes!("res/windows/disabled_dark.ico");
+#[cfg(target_os = "windows")]
+const WINDOWS_DISABLED_LIGHT_ICO_BINARY: &[u8] = include_bytes!("res/windows/disabled_light.ico");
 #[cfg(target_os = "windows")]
 const WINDOWS_LOGO_ICO_BINARY: &[u8] = include_bytes!("res/windows/logo.ico");
 #[cfg(target_os = "windows")]
 const WINDOWS_TRAY_EXPLAIN_IMAGE: &[u8] = include_bytes!("res/windows/tray_explain_image.png");
+
+#[cfg(target_os = "windows")]
+fn is_system_light_theme() -> bool {
+    use winreg::enums::HKEY_CURRENT_USER;
+    use winreg::RegKey;
+    let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+    if let Ok(key) =
+        hkcu.open_subkey(r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize")
+    {
+        if let Ok(val) = key.get_value::<u32, _>("SystemUsesLightTheme") {
+            return val != 0;
+        }
+    }
+    false
+}
 
 #[cfg(target_os = "macos")]
 const MAC_BINARY: &[u8] = include_bytes!("res/macos/icon.png");
@@ -67,6 +86,16 @@ pub struct IconPaths {
 
 #[cfg(target_os = "windows")]
 pub fn load_icon_paths(runtime_dir: &Path) -> Result<IconPaths> {
+    // The native tray window switches between these files on theme changes.
+    for (name, data) in [
+        ("normal_light.ico", WINDOWS_NORMAL_LIGHT_ICO_BINARY),
+        ("normal_dark.ico", WINDOWS_NORMAL_DARK_ICO_BINARY),
+        ("disabled_light.ico", WINDOWS_DISABLED_LIGHT_ICO_BINARY),
+        ("disabled_dark.ico", WINDOWS_DISABLED_DARK_ICO_BINARY),
+    ] {
+        extract_icon(data, &runtime_dir.join(name))?;
+    }
+    let light_theme = is_system_light_theme();
     Ok(IconPaths {
         form_icon: Some(extract_icon(
             WINDOWS_LOGO_ICO_BINARY,
@@ -78,11 +107,19 @@ pub fn load_icon_paths(runtime_dir: &Path) -> Result<IconPaths> {
             &runtime_dir.join("wizardv2.ico"),
         )?),
         tray_icon_normal: Some(extract_icon(
-            WINDOWS_NORMAL_DARK_ICO_BINARY,
+            if light_theme {
+                WINDOWS_NORMAL_LIGHT_ICO_BINARY
+            } else {
+                WINDOWS_NORMAL_DARK_ICO_BINARY
+            },
             &runtime_dir.join("normalv2.ico"),
         )?),
         tray_icon_disabled: Some(extract_icon(
-            WINDOWS_DISABLED_DARK_ICO_BINARY,
+            if light_theme {
+                WINDOWS_DISABLED_LIGHT_ICO_BINARY
+            } else {
+                WINDOWS_DISABLED_DARK_ICO_BINARY
+            },
             &runtime_dir.join("disabledv2.ico"),
         )?),
         logo: Some(extract_icon(ICON_BINARY, &runtime_dir.join("iconv2.png"))?),
@@ -149,14 +186,19 @@ pub fn load_icon_paths(runtime_dir: &Path) -> Result<IconPaths> {
 }
 
 fn extract_icon(data: &[u8], target_file: &Path) -> Result<PathBuf> {
-    if target_file.exists() {
-        debug!(
-            "skipping extraction for '{}', as it's already present",
-            target_file.display()
-        );
-    } else {
+    let needs_write = match std::fs::read(target_file) {
+        Ok(existing) => existing != data,
+        Err(_) => true,
+    };
+
+    if needs_write {
         std::fs::write(target_file, data)?;
         info!("extracted icon to: {}", target_file.display());
+    } else {
+        debug!(
+            "skipping extraction for '{}', as it's already up-to-date",
+            target_file.display()
+        );
     }
 
     Ok(target_file.to_owned())
