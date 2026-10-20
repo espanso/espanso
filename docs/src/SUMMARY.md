@@ -10,6 +10,7 @@
   - [linux](./ch03-03-linux.md)
 - [General documentation](./ch04-00-general-documentation.md)
   - [Creating a PR](./ch04-01-creating-a-pr.md)
+  - [Trigger case sensitivity](./ch04-04-trigger-case.md)
   - [Dev recipes and cookbook](./ch04-02-recipes-and-cookbook.md)
   - [Creating a release](./ch04-03-creating-a-release.md)
 - [Extra](./ch05-00-extra.md)

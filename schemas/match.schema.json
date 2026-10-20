@@ -68,6 +68,10 @@
         "anchor": {
           "$ref": "#/definitions/anchor"
         },
+        "case_sensitive": {
+          "description": "Control case sensitivity for literal trigger and triggers matches independently of replacement case propagation. When omitted, matching is case-insensitive only if propagate_case is true. Does not affect regex matches.",
+          "type": "boolean"
+        },
         "comment": {
           "type": "string"
         },

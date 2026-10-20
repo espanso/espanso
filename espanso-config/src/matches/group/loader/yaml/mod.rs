@@ -187,6 +187,7 @@ pub fn try_convert_into_match(
                 .right_word
                 .or(yaml_match.word)
                 .unwrap_or(TriggerCause::default().right_word),
+            case_sensitive: yaml_match.case_sensitive,
             propagate_case: yaml_match
                 .propagate_case
                 .unwrap_or(TriggerCause::default().propagate_case),
@@ -525,6 +526,29 @@ mod tests {
                 ..Default::default()
             }
         );
+    }
+
+    #[test]
+    fn case_sensitive_maps_independently_of_propagation() {
+        for case_sensitive in [None, Some(false), Some(true)] {
+            for propagate_case in [false, true] {
+                let case_setting = case_sensitive
+                    .map(|value| format!("case_sensitive: {value}\n"))
+                    .unwrap_or_default();
+                let yaml = format!(
+                    "trigger: brb/\nreplace: I'll be right back\n\
+                     {case_setting}propagate_case: {propagate_case}\n"
+                );
+                let cause = create_match(&yaml).unwrap().cause.into_trigger().unwrap();
+                assert_eq!(cause.case_sensitive, case_sensitive);
+                assert_eq!(cause.propagate_case, propagate_case);
+            }
+        }
+    }
+
+    #[test]
+    fn case_sensitive_rejects_non_boolean_values() {
+        assert!(create_match("trigger: brb/\nreplace: text\ncase_sensitive: 'false'").is_err());
     }
 
     #[test]
