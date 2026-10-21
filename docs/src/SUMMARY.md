@@ -12,7 +12,6 @@
   - [Creating a PR](./ch04-01-creating-a-pr.md)
   - [Dev recipes and cookbook](./ch04-02-recipes-and-cookbook.md)
   - [Creating a release](./ch04-03-creating-a-release.md)
-  - [Trigger case sensitivity](./ch04-04-trigger-case.md)
 - [Extra](./ch05-00-extra.md)
   - [Manual testing](./ch05-01-manual-testing.md)
   - [Schemas](./ch05-02-schemas.md)
