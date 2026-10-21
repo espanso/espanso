@@ -134,53 +134,29 @@ impl<'a> MatchConverter<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::{collections::HashMap, fs, sync::Arc};
+    use std::{collections::HashMap, fs};
 
-    use espanso_config::{config::Config, matches::Match};
+    use crate::cli::worker::{config::ConfigManager, match_cache::MatchCache};
     use espanso_engine::{
         event::input::Key,
         process::{Matcher, MatcherEvent, Renderer},
     };
+    use espanso_info::{AppInfo, AppInfoProvider};
 
     use crate::cli::worker::engine::process::middleware::{
         matcher::rolling::{RollingMatcherAdapter, RollingMatcherAdapterOptions},
-        render::{ConfigProvider, MatchProvider, RendererAdapter},
+        render::RendererAdapter,
     };
 
-    struct TestProviders<'a> {
-        config_store: &'a dyn ConfigStore,
-        match_store: &'a dyn MatchStore,
-    }
+    struct NoAppInfo;
 
-    impl<'a> MatchProvider<'a> for TestProviders<'a> {
-        fn matches(&self) -> Vec<&'a Match> {
-            let paths = self.config_store.get_all_match_paths();
-            self.match_store
-                .query(&paths.into_iter().collect::<Vec<_>>())
-                .matches
-        }
-
-        fn get(&self, id: i32) -> Option<&'a Match> {
-            self.matches().into_iter().find(|m| m.id == id)
-        }
-    }
-
-    impl ConfigProvider<'_> for TestProviders<'_> {
-        fn configs(&self) -> Vec<(Arc<dyn Config>, MatchSet<'_>)> {
-            self.config_store
-                .configs()
-                .into_iter()
-                .map(|config| {
-                    let matches = self.match_store.query(config.match_paths());
-                    (config, matches)
-                })
-                .collect()
-        }
-
-        fn active(&self) -> (Arc<dyn Config>, MatchSet<'_>) {
-            let config = self.config_store.default();
-            let matches = self.match_store.query(config.match_paths());
-            (config, matches)
+    impl AppInfoProvider for NoAppInfo {
+        fn get_info(&self) -> AppInfo {
+            AppInfo {
+                title: None,
+                exec: None,
+                class: None,
+            }
         }
     }
 
@@ -201,12 +177,10 @@ mod tests {
                 char_word_separators: config_store.default().word_separators(),
             },
         );
-        let providers = TestProviders {
-            config_store: config_store.as_ref(),
-            match_store: match_store.as_ref(),
-        };
+        let matches = MatchCache::load(config_store.as_ref(), match_store.as_ref());
+        let configs = ConfigManager::new(config_store.as_ref(), match_store.as_ref(), &NoAppInfo);
         let renderer = espanso_render::create(Vec::new());
-        let renderer = RendererAdapter::new(&providers, &providers, &renderer);
+        let renderer = RendererAdapter::new(&matches, &configs, &renderer);
         let mut state = None;
         let mut expansions = Vec::new();
 
