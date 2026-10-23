@@ -21,6 +21,40 @@
 #import <AppKit/AppKit.h>
 #import <Foundation/Foundation.h>
 
+int32_t info_get_frontmost_application_pid()
+{
+  @autoreleasepool {
+    NSRunningApplication *app = [[NSWorkspace sharedWorkspace] frontmostApplication];
+    return app ? [app processIdentifier] : -1;
+  }
+}
+
+int32_t info_activate_application(int32_t pid)
+{
+  if (pid <= 0) {
+    return 0;
+  }
+
+  @autoreleasepool {
+    NSRunningApplication *app = [NSRunningApplication runningApplicationWithProcessIdentifier:pid];
+    if (!app || [app isTerminated]) {
+      return 0;
+    }
+
+    // Activation is asynchronous; the caller retains its existing settling delay.
+    // IgnoringOtherApps has no effect on macOS 14 and later.
+    if (@available(macOS 14.0, *)) {
+      return [app activateWithOptions:0] ? 1 : 0;
+    } else {
+      // Retain the legacy behavior on macOS versions that require this option.
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+      return [app activateWithOptions:NSApplicationActivateIgnoringOtherApps] ? 1 : 0;
+#pragma clang diagnostic pop
+    }
+  }
+}
+
 int32_t info_get_title(char *buffer, int32_t buffer_size)
 {
   @autoreleasepool {
