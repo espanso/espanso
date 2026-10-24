@@ -27,6 +27,32 @@
 // so that we can later skip them in the detect module.
 CGPoint ESPANSO_POINT_MARKER = CGPointMake(-27469, 0);
 
+// Return the Quartz modifier flag associated with a macOS virtual key code.
+// A combination's non-modifier events need explicit flags: relying only on a
+// separately posted modifier key-down is racy and can turn CMD+V into plain V
+// (https://github.com/espanso/espanso/issues/1288).
+static CGEventFlags modifier_flag_for_vkey(int32_t vkey)
+{
+  switch (vkey) {
+    case 0x36: // Right Command
+    case 0x37: // Left Command
+      return kCGEventFlagMaskCommand;
+    case 0x38: // Left Shift
+    case 0x3C: // Right Shift
+      return kCGEventFlagMaskShift;
+    case 0x3A: // Left Option
+    case 0x3D: // Right Option
+      return kCGEventFlagMaskAlternate;
+    case 0x3B: // Left Control
+    case 0x3E: // Right Control
+      return kCGEventFlagMaskControl;
+    case 0x39: // Caps Lock
+      return kCGEventFlagMaskAlphaShift;
+    default:
+      return 0;
+  }
+}
+
 void inject_string(char *string, int32_t default_delay, int32_t delay)
 {
   long udelay = delay * 1000;
@@ -134,11 +160,16 @@ void inject_vkeys_combination(int32_t *_vkey_array, int32_t vkey_count, int32_t 
 
   dispatch_async(dispatch_get_main_queue(), ^(void) {
     @autoreleasepool {
+      CGEventFlags flags = 0;
+
       // First send the presses
       for (int i = 0; i < vkey_count; i++)
       {
+        flags |= modifier_flag_for_vkey(vkey_array[i]);
+
         CGEventRef keydown;
         keydown = CGEventCreateKeyboardEvent(NULL, vkey_array[i], true);
+        CGEventSetFlags(keydown, flags);
         CGEventSetLocation(keydown, ESPANSO_POINT_MARKER);
         CGEventPost(kCGHIDEventTap, keydown);
         CFRelease(keydown);
@@ -149,8 +180,11 @@ void inject_vkeys_combination(int32_t *_vkey_array, int32_t vkey_count, int32_t 
       // Then the releases
       for (int i = (vkey_count - 1); i >= 0; i--)
       {
+        flags &= ~modifier_flag_for_vkey(vkey_array[i]);
+
         CGEventRef keyup;
         keyup = CGEventCreateKeyboardEvent(NULL, vkey_array[i], false);
+        CGEventSetFlags(keyup, flags);
         CGEventSetLocation(keyup, ESPANSO_POINT_MARKER);
         CGEventPost(kCGHIDEventTap, keyup);
         CFRelease(keyup);
