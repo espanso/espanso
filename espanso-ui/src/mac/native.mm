@@ -50,10 +50,37 @@ int32_t ui_eventloop(EventCallback _callback)
 }
 
 void ui_exit() {
-  @autoreleasepool {
-    [NSApp stop:nil];
-    [NSApp abortModal];
-  }
+    void (^stop)(void) = ^{
+      @autoreleasepool {
+          // The engine must keep its event receiver alive until AppKit has
+          // stopped forwarding callbacks. All delegate access belongs on the
+          // main thread.
+          AppDelegate *delegate = (AppDelegate *)[NSApp delegate];
+          delegate->event_callback = nullptr;
+          [NSApp stop:nil];
+
+          // stop: only takes effect after processing an NSEvent. Wake the
+          // normal application loop without abortModal's exception mechanism.
+          [NSApp postEvent:[NSEvent
+                               otherEventWithType:NSEventTypeApplicationDefined
+                                         location:NSZeroPoint
+                                    modifierFlags:0
+                                        timestamp:0
+                                     windowNumber:0
+                                          context:nil
+                                          subtype:0
+                                            data1:0
+                                            data2:0]
+                   atStart:YES];
+      }
+    };
+
+    if ([NSThread isMainThread]) {
+        stop();
+    } else {
+        // Disconnect callbacks before the engine can release its receiver.
+        dispatch_sync(dispatch_get_main_queue(), stop);
+    }
 }
 
 void ui_update_tray_icon(int32_t index)
