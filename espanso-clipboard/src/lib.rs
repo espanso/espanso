@@ -52,6 +52,12 @@ pub trait Clipboard {
 #[derive(Default)]
 pub struct ClipboardOperationOptions {
     pub use_xclip_backend: bool,
+
+    // Wayland-only
+    // Operate on the primary selection instead of the regular clipboard.
+    // Needed because some terminals paste the primary selection on SHIFT+INSERT.
+    // Setting an empty text clears the primary selection.
+    pub primary: bool,
 }
 
 #[allow(dead_code)]

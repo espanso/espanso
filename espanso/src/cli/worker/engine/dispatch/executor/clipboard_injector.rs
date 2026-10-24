@@ -62,12 +62,8 @@ impl<'a> ClipboardInjectorAdapter<'a> {
         }
     }
 
-    fn send_paste_combination(&self) -> anyhow::Result<()> {
+    fn paste_combination(&self) -> Vec<Key> {
         let params = self.params_provider.get();
-
-        std::thread::sleep(std::time::Duration::from_millis(
-            params.pre_paste_delay.try_into().unwrap(),
-        ));
 
         let mut custom_combination = None;
         if let Some(custom_shortcut) = params.paste_shortcut {
@@ -78,7 +74,7 @@ impl<'a> ClipboardInjectorAdapter<'a> {
             }
         }
 
-        let combination = if let Some(custom_combination) = custom_combination {
+        if let Some(custom_combination) = custom_combination {
             custom_combination
         } else if cfg!(target_os = "macos") {
             vec![Key::Meta, Key::V]
@@ -89,10 +85,18 @@ impl<'a> ClipboardInjectorAdapter<'a> {
             vec![Key::Shift, Key::Insert]
         } else {
             vec![Key::Control, Key::V]
-        };
+        }
+    }
+
+    fn send_paste_combination(&self, combination: &[Key]) -> anyhow::Result<()> {
+        let params = self.params_provider.get();
+
+        std::thread::sleep(std::time::Duration::from_millis(
+            params.pre_paste_delay.try_into().unwrap(),
+        ));
 
         self.injector.send_key_combination(
-            &combination,
+            combination,
             InjectionOptions {
                 delay: params.paste_shortcut_event_delay as i32,
                 disable_fast_inject: params.disable_x11_fast_inject,
@@ -104,7 +108,7 @@ impl<'a> ClipboardInjectorAdapter<'a> {
         Ok(())
     }
 
-    fn restore_clipboard_guard(&self) -> Option<ClipboardRestoreGuard<'a>> {
+    fn restore_clipboard_guard(&self, include_primary: bool) -> Option<ClipboardRestoreGuard<'a>> {
         let params = self.params_provider.get();
 
         if params.restore_clipboard {
@@ -112,6 +116,7 @@ impl<'a> ClipboardInjectorAdapter<'a> {
                 self.clipboard,
                 params.restore_clipboard_delay.try_into().unwrap(),
                 self.get_operation_options(),
+                include_primary,
             ))
         } else {
             None
@@ -122,6 +127,23 @@ impl<'a> ClipboardInjectorAdapter<'a> {
         let params = self.params_provider.get();
         ClipboardOperationOptions {
             use_xclip_backend: params.x11_use_xclip_backend,
+            primary: false,
+        }
+    }
+
+    // Mirror the injected text into the primary selection.
+    // This is best-effort: apps pasting from the clipboard still work if it fails
+    // (e.g. on compositors without primary selection support). In that case the
+    // primary selection is also left alone when restoring.
+    fn set_primary_text(&self, text: &str, guard: &mut Option<ClipboardRestoreGuard>) {
+        if let Err(error) = self
+            .clipboard
+            .set_text(text, &primary_options(&self.get_operation_options()))
+        {
+            error!("unable to set primary selection: {error}");
+            if let Some(guard) = guard {
+                guard.skip_primary_restore();
+            }
         }
     }
 }
@@ -132,12 +154,17 @@ impl TextInjector for ClipboardInjectorAdapter<'_> {
     }
 
     fn inject_text(&self, text: &str) -> anyhow::Result<()> {
-        let _guard = self.restore_clipboard_guard();
+        let combination = self.paste_combination();
+        let use_primary = uses_primary_selection(&combination);
+        let mut guard = self.restore_clipboard_guard(use_primary);
 
         self.clipboard
             .set_text(text, &self.get_operation_options())?;
+        if use_primary {
+            self.set_primary_text(text, &mut guard);
+        }
 
-        self.send_paste_combination()?;
+        self.send_paste_combination(&combination)?;
 
         Ok(())
     }
@@ -145,12 +172,17 @@ impl TextInjector for ClipboardInjectorAdapter<'_> {
 
 impl HtmlInjector for ClipboardInjectorAdapter<'_> {
     fn inject_html(&self, html: &str, fallback_text: &str) -> anyhow::Result<()> {
-        let _guard = self.restore_clipboard_guard();
+        let combination = self.paste_combination();
+        let use_primary = uses_primary_selection(&combination);
+        let mut guard = self.restore_clipboard_guard(use_primary);
 
         self.clipboard
             .set_html(html, Some(fallback_text), &self.get_operation_options())?;
+        if use_primary {
+            self.set_primary_text(fallback_text, &mut guard);
+        }
 
-        self.send_paste_combination()?;
+        self.send_paste_combination(&combination)?;
 
         Ok(())
     }
@@ -167,12 +199,13 @@ impl ImageInjector for ClipboardInjectorAdapter<'_> {
             .into());
         }
 
-        let _guard = self.restore_clipboard_guard();
+        let combination = self.paste_combination();
+        let _guard = self.restore_clipboard_guard(false);
 
         self.clipboard
             .set_image(&path, &self.get_operation_options())?;
 
-        self.send_paste_combination()?;
+        self.send_paste_combination(&combination)?;
 
         Ok(())
     }
@@ -181,6 +214,9 @@ impl ImageInjector for ClipboardInjectorAdapter<'_> {
 struct ClipboardRestoreGuard<'a> {
     clipboard: &'a dyn Clipboard,
     content: Option<String>,
+    // None if the primary selection is not involved in the paste.
+    // An empty string means the primary selection was empty.
+    primary_content: Option<String>,
     restore_delay: u64,
     clipboard_operation_options: ClipboardOperationOptions,
 }
@@ -190,30 +226,62 @@ impl<'a> ClipboardRestoreGuard<'a> {
         clipboard: &'a dyn Clipboard,
         restore_delay: u64,
         clipboard_operation_options: ClipboardOperationOptions,
+        include_primary: bool,
     ) -> Self {
         let clipboard_content = clipboard.get_text(&clipboard_operation_options);
+        let primary_content = if include_primary {
+            // Reading also fails if the primary selection is empty, so any read error
+            // is treated as empty and the primary selection gets cleared on restore
+            Some(
+                clipboard
+                    .get_text(&primary_options(&clipboard_operation_options))
+                    .unwrap_or_default(),
+            )
+        } else {
+            None
+        };
 
         Self {
             clipboard,
             content: clipboard_content,
+            primary_content,
             restore_delay,
             clipboard_operation_options,
         }
+    }
+
+    fn skip_primary_restore(&mut self) {
+        self.primary_content = None;
     }
 }
 
 impl Drop for ClipboardRestoreGuard<'_> {
     fn drop(&mut self) {
-        if let Some(content) = self.content.take() {
-            // Sometimes an expansion gets overwritten before pasting by the previous content
-            // A delay is needed to mitigate the problem
-            std::thread::sleep(std::time::Duration::from_millis(self.restore_delay));
+        let content = self.content.take();
+        let primary_content = self.primary_content.take();
+        if content.is_none() && primary_content.is_none() {
+            return;
+        }
 
+        // Sometimes an expansion gets overwritten before pasting by the previous content
+        // A delay is needed to mitigate the problem
+        std::thread::sleep(std::time::Duration::from_millis(self.restore_delay));
+
+        if let Some(content) = content {
             if let Err(error) = self
                 .clipboard
                 .set_text(&content, &self.clipboard_operation_options)
             {
                 error!("unable to restore clipboard content after expansion: {error}");
+            }
+        }
+
+        if let Some(primary_content) = primary_content {
+            if let Err(error) = self.clipboard.set_text(
+                &primary_content,
+                &primary_options(&self.clipboard_operation_options),
+            ) {
+                error!("unable to restore primary selection after expansion: {error}");
             }
         }
     }
@@ -227,4 +295,18 @@ fn parse_combination(combination: &str) -> Option<Vec<Key>> {
     }
 
     Some(keys)
+}
+
+// Some terminals (e.g. VTE based ones) paste the primary selection instead of the
+// clipboard on SHIFT+INSERT, so on Wayland the primary selection needs to be handled too.
+fn uses_primary_selection(combination: &[Key]) -> bool {
+    cfg!(all(target_os = "linux", feature = "wayland"))
+        && matches!(combination, [Key::Shift, Key::Insert])
+}
+
+fn primary_options(options: &ClipboardOperationOptions) -> ClipboardOperationOptions {
+    ClipboardOperationOptions {
+        primary: true,
+        ..*options
+    }
 }
