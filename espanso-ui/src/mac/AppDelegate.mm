@@ -28,6 +28,12 @@ void addSubMenu(NSMenu * parent, NSArray * items);
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
 {
   if (options.show_icon) {
+    // Load the icons once and keep them in memory, as the files in the runtime
+    // dir might be deleted while espanso is running (e.g. when macOS purges caches)
+    for (int i = 0; i < options.icon_paths_count; i++) {
+      iconImages[i] = [self loadIconImage: i];
+    }
+
     statusItem = [[[NSStatusBar systemStatusBar] statusItemWithLength:NSSquareStatusItemLength] retain];
     [self setIcon: 0];
   }
@@ -42,15 +48,24 @@ void addSubMenu(NSMenu * parent, NSArray * items);
                                  repeats:YES];
 }
 
+- (NSImage *) loadIconImage: (int32_t)iconIndex {
+  NSString *nsIconPath = [NSString stringWithUTF8String:options.icon_paths[iconIndex]];
+  NSImage *image = [[NSImage alloc] initWithContentsOfFile:nsIconPath];
+  [image setTemplate:YES];
+  return image;
+}
+
 - (void) setIcon: (int32_t)iconIndex {
   if (options.show_icon) {
-    char * iconPath = options.icon_paths[iconIndex];
-    NSString *nsIconPath = [NSString stringWithUTF8String:iconPath];
+    if (iconIndex < 0 || iconIndex >= options.icon_paths_count) {
+      return;
+    }
 
-    NSImage *statusImage = [[NSImage alloc] initWithContentsOfFile:nsIconPath];
-    [statusImage setTemplate:YES];
+    if (iconImages[iconIndex] == nil) {
+      iconImages[iconIndex] = [self loadIconImage: iconIndex];
+    }
 
-    [statusItem.button setImage:statusImage];
+    [statusItem.button setImage:iconImages[iconIndex]];
     [statusItem setHighlightMode:YES];
     [statusItem.button setAction:@selector(statusIconClick:)];
     [statusItem.button setTarget:self];
