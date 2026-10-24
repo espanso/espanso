@@ -97,6 +97,9 @@ pub struct YAMLMatch {
     pub right_word: Option<bool>,
 
     #[serde(default)]
+    pub case_sensitive: Option<bool>,
+
+    #[serde(default)]
     pub propagate_case: Option<bool>,
 
     #[serde(default)]

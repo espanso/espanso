@@ -121,6 +121,8 @@ pub struct TriggerCause {
     pub left_word: bool,
     pub right_word: bool,
 
+    // When omitted, case propagation also determines matching sensitivity.
+    pub case_sensitive: Option<bool>,
     pub propagate_case: bool,
     pub uppercase_style: UpperCasingStyle,
 }
@@ -131,6 +133,7 @@ impl Default for TriggerCause {
             triggers: Vec::new(),
             left_word: false,
             right_word: false,
+            case_sensitive: None,
             propagate_case: false,
             uppercase_style: UpperCasingStyle::Uppercase,
         }
