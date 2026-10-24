@@ -294,6 +294,10 @@ impl Config for ResolvedConfig {
         self.parsed.undo_backspace.unwrap_or(true)
     }
 
+    fn undo_backspace_presses(&self) -> usize {
+        self.parsed.undo_backspace_presses.unwrap_or(1).clamp(1, 2)
+    }
+
     fn show_icon(&self) -> bool {
         self.parsed.show_icon.unwrap_or(true)
     }
@@ -442,6 +446,7 @@ impl ResolvedConfig {
             search_trigger,
             search_shortcut,
             undo_backspace,
+            undo_backspace_presses,
             show_icon,
             show_notifications,
             secure_input_notification,

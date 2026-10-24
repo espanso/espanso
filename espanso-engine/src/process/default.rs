@@ -112,7 +112,10 @@ impl<'a> DefaultProcessor<'a> {
                 Box::new(ImageResolverMiddleware::new(path_provider)),
                 Box::new(CursorHintMiddleware::new()),
                 Box::new(ExitMiddleware::new()),
-                Box::new(UndoMiddleware::new(undo_enabled_provider)),
+                Box::new(UndoMiddleware::new(
+                    undo_enabled_provider,
+                    modifier_state_provider,
+                )),
                 Box::new(ActionMiddleware::new(
                     match_info_provider,
                     event_sequence_provider,

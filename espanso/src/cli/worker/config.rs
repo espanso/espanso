@@ -190,6 +190,10 @@ impl espanso_engine::process::UndoEnabledProvider for ConfigManager<'_> {
 
         self.active().undo_backspace()
     }
+
+    fn undo_backspace_presses(&self) -> usize {
+        self.active().undo_backspace_presses()
+    }
 }
 
 impl espanso_engine::process::EnabledStatusProvider for ConfigManager<'_> {

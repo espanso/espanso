@@ -144,6 +144,12 @@
       "type": "boolean",
       "default": true
     },
+    "undo_backspace_presses": {
+      "description": "How many quick Backspace presses (within 400 ms, key released in between) revert an expansion. With 2, a single Backspace just deletes the last character.",
+      "type": "integer",
+      "enum": [1, 2],
+      "default": 1
+    },
     "apply_patch": {
       "type": "boolean",
       "default": true,
