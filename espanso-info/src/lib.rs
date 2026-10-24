@@ -34,6 +34,9 @@ mod wayland;
 #[cfg(target_os = "macos")]
 mod cocoa;
 
+#[cfg(target_os = "macos")]
+pub use cocoa::{activate_application, get_frontmost_application_pid};
+
 pub trait AppInfoProvider {
     fn get_info(&self) -> AppInfo;
 }
