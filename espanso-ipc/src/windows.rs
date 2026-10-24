@@ -17,12 +17,13 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::util::read_line;
+use crate::util::{pipe_name, read_line};
 use anyhow::Result;
 use log::{error, info};
 use named_pipe::{ConnectingServer, PipeClient, PipeOptions};
 use serde::{de::DeserializeOwned, Serialize};
 use std::io::Write;
+use std::path::Path;
 
 use crate::{EventHandler, EventHandlerResponse, IPCClient, IPCClientError, IPCServer};
 
@@ -33,8 +34,8 @@ pub struct WinIPCServer {
 }
 
 impl WinIPCServer {
-    pub fn new(id: &str) -> Result<Self> {
-        let pipe_name = format!("\\\\.\\pipe\\{id}");
+    pub fn new(id: &str, parent_dir: &Path) -> Result<Self> {
+        let pipe_name = pipe_name(id, parent_dir);
 
         let options = PipeOptions::new(&pipe_name);
         let server = Some(options.single()?);
@@ -104,8 +105,8 @@ pub struct WinIPCClient {
 }
 
 impl WinIPCClient {
-    pub fn new(id: &str) -> Result<Self> {
-        let pipe_name = format!("\\\\.\\pipe\\{id}");
+    pub fn new(id: &str, parent_dir: &Path) -> Result<Self> {
+        let pipe_name = pipe_name(id, parent_dir);
 
         let stream = PipeClient::connect_ms(pipe_name, DEFAULT_CLIENT_TIMEOUT)?;
         Ok(Self { stream })
