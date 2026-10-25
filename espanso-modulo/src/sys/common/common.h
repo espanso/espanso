@@ -33,4 +33,29 @@ void Activate(wxFrame *frame);
 
 void SetupWindowStyle(wxFrame *frame);
 
+// Dark-mode colour palette (shared by all modulo UIs on Windows).
+extern const wxColour DARK_BG;
+extern const wxColour DARK_FG;
+extern const wxColour DARK_BORDER;
+extern const wxColour LIGHT_BORDER;
+
+#ifdef __WXMSW__
+// Recursively theme a window and its children. wx 3.1.5 doesn't auto-darken
+// the client area, so colours are set explicitly (native controls still follow
+// OS immersive dark mode on top).
+void applyThemeColors(wxWindow *win, bool dark);
+
+// wxWidgets 3.1.5 lacks automatic Windows dark-mode support. These helpers
+// apply native themes and read the app-theme preference used by switchers
+// such as PowerToys Light Switch.
+void enableAppDarkMode(); // call once at startup
+void applyDarkModeToWindow(void *hwnd, bool dark);
+void applyWindowTheme(void *hwnd, bool dark);
+bool isSystemDark(); // reads the registry
+
+// True for the "ImmersiveColorSet" WM_SETTINGCHANGE broadcast, i.e. a system
+// light/dark scheme switch (scheduled switchers included).
+bool isColorSchemeChange(WXUINT message, WXLPARAM lParam);
+#endif
+
 #endif
