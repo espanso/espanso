@@ -23,3 +23,12 @@ Take this as a shopping-list, not exhaustive:
 
 In linux:
 - [ ] `espanso service start` doesn't crash
+
+## macOS event loop regression tests
+
+Run `bash scripts/test_macos_shutdown.sh` on macOS to check worker shutdown,
+the Reload config menu action, shutdown requested on the main thread, and the
+launcher's headless event loop. The standalone AppKit tests run in separate
+processes so that each case owns the Cocoa main thread. They check shutdown
+threading, receiver lifetime, late callbacks, and event loop wake-up without
+using `abortModal`.
