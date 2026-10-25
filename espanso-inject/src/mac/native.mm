@@ -124,6 +124,26 @@ void inject_separate_vkeys(int32_t *_vkey_array, int32_t vkey_count, int32_t del
   });
 }
 
+static CGEventFlags modifier_flag_for_vkey(int32_t vkey)
+{
+  switch (vkey) {
+    case 0x37: // Command
+    case 0x36: // Right Command
+      return kCGEventFlagMaskCommand;
+    case 0x38: // Shift
+    case 0x3C: // Right Shift
+      return kCGEventFlagMaskShift;
+    case 0x3A: // Option
+    case 0x3D: // Right Option
+      return kCGEventFlagMaskAlternate;
+    case 0x3B: // Control
+    case 0x3E: // Right Control
+      return kCGEventFlagMaskControl;
+    default:
+      return 0;
+  }
+}
+
 void inject_vkeys_combination(int32_t *_vkey_array, int32_t vkey_count, int32_t delay)
 {
   long udelay = delay * 1000;
@@ -134,11 +154,19 @@ void inject_vkeys_combination(int32_t *_vkey_array, int32_t vkey_count, int32_t 
 
   dispatch_async(dispatch_get_main_queue(), ^(void) {
     @autoreleasepool {
+      // Set the modifier flags explicitly on every event instead of relying
+      // on the system to merge them from the previously posted modifier presses,
+      // otherwise the target app might receive a plain key (e.g. "v" instead of CMD+V)
+      CGEventFlags flags = 0;
+
       // First send the presses
       for (int i = 0; i < vkey_count; i++)
       {
+        flags |= modifier_flag_for_vkey(vkey_array[i]);
+
         CGEventRef keydown;
         keydown = CGEventCreateKeyboardEvent(NULL, vkey_array[i], true);
+        CGEventSetFlags(keydown, flags);
         CGEventSetLocation(keydown, ESPANSO_POINT_MARKER);
         CGEventPost(kCGHIDEventTap, keydown);
         CFRelease(keydown);
@@ -149,8 +177,11 @@ void inject_vkeys_combination(int32_t *_vkey_array, int32_t vkey_count, int32_t 
       // Then the releases
       for (int i = (vkey_count - 1); i >= 0; i--)
       {
+        flags &= ~modifier_flag_for_vkey(vkey_array[i]);
+
         CGEventRef keyup;
         keyup = CGEventCreateKeyboardEvent(NULL, vkey_array[i], false);
+        CGEventSetFlags(keyup, flags);
         CGEventSetLocation(keyup, ESPANSO_POINT_MARKER);
         CGEventPost(kCGHIDEventTap, keyup);
         CFRelease(keyup);
