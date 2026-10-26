@@ -19,7 +19,8 @@
 
 use anyhow::{bail, Result};
 use log::{info, warn};
-use std::process::Command;
+use std::path::PathBuf;
+use std::process::{Command, Stdio};
 use std::{fs::create_dir_all, process::ExitStatus};
 use thiserror::Error;
 
@@ -29,7 +30,7 @@ use crate::error_eprintln;
 #[cfg(target_os = "macos")]
 const SERVICE_PLIST_CONTENT: &str = include_str!("../../res/macos/com.federicoterzi.espanso.plist");
 #[cfg(target_os = "macos")]
-const SERVICE_PLIST_FILE_NAME: &str = "com.federicoterzi.espanso.plist";
+const SERVICE_LABEL: &str = "com.federicoterzi.espanso";
 
 pub fn register() -> Result<()> {
     prevent_running_as_root_on_macos();
@@ -42,16 +43,13 @@ pub fn register() -> Result<()> {
         bail!("macOS activated app-translocation on Espanso");
     }
 
-    let home_dir = dirs::home_dir().expect("could not get user home directory");
-    let library_dir = home_dir.join("Library");
-    let agents_dir = library_dir.join("LaunchAgents");
+    let plist_file = plist_path();
 
     // Make sure agents directory exists
-    if !agents_dir.exists() {
-        create_dir_all(agents_dir.clone())?;
+    if let Some(agents_dir) = plist_file.parent() {
+        create_dir_all(agents_dir)?;
     }
 
-    let plist_file = agents_dir.join(SERVICE_PLIST_FILE_NAME);
     if !plist_file.exists() {
         info!(
             "creating LaunchAgents entry: {}",
@@ -78,26 +76,7 @@ pub fn register() -> Result<()> {
         std::fs::write(plist_file.clone(), plist_content).expect("Unable to write plist file");
     }
 
-    info!("reloading espanso launchctl entry");
-
-    if let Err(err) = Command::new("launchctl")
-        .args(["unload", "-w", plist_file.to_str().unwrap_or_default()])
-        .output()
-    {
-        warn!("unload command failed: {err}");
-    }
-
-    let res = Command::new("launchctl")
-        .args(["load", "-w", plist_file.to_str().unwrap_or_default()])
-        .status();
-
-    if let Ok(status) = res {
-        if status.success() {
-            return Ok(());
-        }
-    }
-
-    Err(RegisterError::LaunchCtlLoadFailed.into())
+    ensure_loaded()
 }
 
 #[derive(Error, Debug)]
@@ -106,17 +85,77 @@ pub enum RegisterError {
     LaunchCtlLoadFailed,
 }
 
+// Avoid `launchctl unload -w` here: when `register` runs from the wizard, it is a
+// child of the launchd job it would unload, so it gets killed before the matching
+// `load -w`, leaving the job disabled. See https://github.com/espanso/espanso/issues/2844
+fn ensure_loaded() -> Result<()> {
+    info!("enabling espanso launchctl entry");
+
+    match Command::new("launchctl")
+        .args(["enable", &service_target()])
+        .status()
+    {
+        Ok(status) if status.success() => {}
+        Ok(status) => warn!("enable command exited with {status}"),
+        Err(err) => warn!("enable command failed: {err}"),
+    }
+
+    if is_loaded() {
+        return Ok(());
+    }
+
+    info!("loading espanso launchctl entry");
+
+    let loaded = Command::new("launchctl")
+        .args([
+            "bootstrap",
+            &domain_target(),
+            plist_path().to_str().unwrap_or_default(),
+        ])
+        .status()
+        .is_ok_and(|status| status.success());
+
+    if loaded {
+        Ok(())
+    } else {
+        Err(RegisterError::LaunchCtlLoadFailed.into())
+    }
+}
+
+fn is_loaded() -> bool {
+    Command::new("launchctl")
+        .args(["print", &service_target()])
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .status()
+        .is_ok_and(|status| status.success())
+}
+
+fn domain_target() -> String {
+    // SAFETY: getuid has no preconditions and always succeeds
+    let uid = unsafe { libc::getuid() };
+    format!("gui/{uid}")
+}
+
+fn service_target() -> String {
+    format!("{}/{SERVICE_LABEL}", domain_target())
+}
+
+fn plist_path() -> PathBuf {
+    let home_dir = dirs::home_dir().expect("could not get user home directory");
+    home_dir
+        .join("Library")
+        .join("LaunchAgents")
+        .join(format!("{SERVICE_LABEL}.plist"))
+}
+
 pub fn unregister() -> Result<()> {
     prevent_running_as_root_on_macos();
 
-    let home_dir = dirs::home_dir().expect("could not get user home directory");
-    let library_dir = home_dir.join("Library");
-    let agents_dir = library_dir.join("LaunchAgents");
-
-    let plist_file = agents_dir.join(SERVICE_PLIST_FILE_NAME);
+    let plist_file = plist_path();
     if plist_file.exists() {
         let _res = Command::new("launchctl")
-            .args(["unload", "-w", plist_file.to_str().unwrap_or_default()])
+            .args(["bootout", &service_target()])
             .output();
 
         std::fs::remove_file(&plist_file)?;
@@ -134,11 +173,7 @@ pub enum UnregisterError {
 }
 
 pub fn is_registered() -> bool {
-    let home_dir = dirs::home_dir().expect("could not get user home directory");
-    let library_dir = home_dir.join("Library");
-    let agents_dir = library_dir.join("LaunchAgents");
-    let plist_file = agents_dir.join(SERVICE_PLIST_FILE_NAME);
-    plist_file.is_file()
+    plist_path().is_file()
 }
 
 pub fn start_service() -> Result<()> {
@@ -153,8 +188,12 @@ pub fn start_service() -> Result<()> {
         return Err(StartError::NotRegistered.into());
     }
 
+    // The job might have been disabled or unloaded in the meantime, in which
+    // case `launchctl start` would fail with exit code 3.
+    ensure_loaded()?;
+
     let res = Command::new("launchctl")
-        .args(["start", "com.federicoterzi.espanso"])
+        .args(["kickstart", &service_target()])
         .status();
 
     if let Ok(status) = res {
