@@ -35,6 +35,8 @@ mod macos;
 use crate::path::Paths;
 use clap::ArgMatches;
 #[cfg(target_os = "macos")]
+pub use macos::is_registered;
+#[cfg(target_os = "macos")]
 use macos::*;
 
 #[cfg(not(target_os = "windows"))]

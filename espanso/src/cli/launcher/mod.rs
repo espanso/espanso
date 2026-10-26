@@ -68,6 +68,23 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
     let preferences =
         crate::preferences::get_default(&paths.runtime).expect("unable to initialize preferences");
 
+    // The preferences live in the runtime dir (~/Library/Caches/espanso), which macOS
+    // may purge, e.g. during system updates. If all of them are gone but the service
+    // is registered, the wizard was completed before, so don't block the daemon behind
+    // it again. Re-registering heals a job left disabled by older versions.
+    // See https://github.com/espanso/espanso/issues/2844
+    #[cfg(target_os = "macos")]
+    if !preferences.has_completed_wizard()
+        && !preferences.has_selected_auto_start_option()
+        && crate::cli::service::is_registered()
+    {
+        if let Err(err) = util::configure_auto_start(true) {
+            error!("unable to re-register the service: {err:?}");
+        }
+        preferences.set_has_selected_auto_start_option(true);
+        preferences.set_completed_wizard(true);
+    }
+
     let is_welcome_page_enabled = !preferences.has_completed_wizard();
 
     let is_move_bundle_page_enabled = crate::cli::util::is_subject_to_app_translocation_on_macos();
