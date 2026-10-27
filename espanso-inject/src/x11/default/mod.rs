@@ -18,7 +18,7 @@
  */
 
 use std::{
-    collections::{HashMap, HashSet},
+    collections::{hash_map::Entry, HashMap, HashSet},
     ffi::{CStr, CString},
     os::raw::c_char,
     slice,
@@ -47,6 +47,11 @@ use crate::x11::ffi::{
 // keycode set (where ESC is 9).
 const EVDEV_OFFSET: u32 = 8;
 
+// Modifier masks (Control, Mod1/Alt, Mod4/Super) that turn a key press into a
+// shortcut. A char must only be mapped through them when it is unreachable
+// otherwise (e.g. "\n" via Ctrl+J).
+const SHORTCUT_MODIFIERS: u32 = 0x4 | 0x8 | 0x40;
+
 #[derive(Clone, Copy, Debug)]
 struct KeyPair {
     // Keycode
@@ -63,6 +68,13 @@ struct KeyRecord {
     // Under some keyboard layouts (de, es), a deadkey
     // press might be needed to generate the right char
     preceding_dead_key: Option<KeyPair>,
+}
+
+impl KeyRecord {
+    fn uses_shortcut_modifiers(&self) -> bool {
+        let dead_key_state = self.preceding_dead_key.map_or(0, |key| key.state);
+        (self.main.state | dead_key_state) & SHORTCUT_MODIFIERS != 0
+    }
 }
 
 type CharMap = HashMap<String, KeyRecord>;
@@ -224,7 +236,7 @@ impl X11DefaultInjector {
                     if result > 0 {
                         let raw_string = unsafe { CStr::from_ptr(buffer.as_ptr()) };
                         let string = raw_string.to_string_lossy().to_string();
-                        char_map.entry(string).or_insert(key_record);
+                        Self::insert_char_record(&mut char_map, string, key_record);
                     }
 
                     // We need to reset the context state to prevent
@@ -240,6 +252,22 @@ impl X11DefaultInjector {
         debug!("Detected {} dead key combinations", deadkeys.len());
 
         Ok((char_map, sym_map))
+    }
+
+    // Keep the first record found for a char, unless it relies on shortcut
+    // modifiers and a plain one is available. Otherwise, layouts with several
+    // groups map e.g. ":" to Ctrl+Shift+<key>, which apps discard.
+    fn insert_char_record(char_map: &mut CharMap, string: String, record: KeyRecord) {
+        match char_map.entry(string) {
+            Entry::Vacant(entry) => {
+                entry.insert(record);
+            }
+            Entry::Occupied(mut entry) => {
+                if entry.get().uses_shortcut_modifiers() && !record.uses_shortcut_modifiers() {
+                    entry.insert(record);
+                }
+            }
+        }
     }
 
     fn find_deadkeys(display: *mut Display, input_context: &XIC) -> Result<Vec<Option<KeyPair>>> {
@@ -592,4 +620,54 @@ pub enum X11InjectorError {
 
     #[error("missing record mapping for sym `{0}`")]
     SymMapping(u64),
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn record(code: u32, state: u32) -> KeyRecord {
+        KeyRecord {
+            main: KeyPair { code, state },
+            preceding_dead_key: None,
+        }
+    }
+
+    fn insert_all(records: &[KeyRecord]) -> KeyRecord {
+        let mut char_map = CharMap::new();
+        for record in records {
+            X11DefaultInjector::insert_char_record(&mut char_map, ":".to_string(), *record);
+        }
+        char_map[":"]
+    }
+
+    #[test]
+    fn plain_record_replaces_shortcut_record() {
+        // Multi-group layouts (e.g. br,us): lower keycode reachable only through Ctrl+Shift
+        let result = insert_all(&[record(47, 0x5), record(61, 0x1)]);
+        assert_eq!((result.main.code, result.main.state), (61, 0x1));
+    }
+
+    #[test]
+    fn first_plain_record_is_kept() {
+        let result = insert_all(&[record(47, 0x1), record(61, 0x1)]);
+        assert_eq!(result.main.code, 47);
+    }
+
+    #[test]
+    fn shortcut_record_is_used_when_nothing_else_exists() {
+        let result = insert_all(&[record(44, 0x4)]);
+        assert_eq!((result.main.code, result.main.state), (44, 0x4));
+    }
+
+    #[test]
+    fn dead_key_shortcut_modifiers_count() {
+        let mut with_dead_key = record(30, 0);
+        with_dead_key.preceding_dead_key = Some(KeyPair {
+            code: 48,
+            state: 0x8,
+        });
+        let result = insert_all(&[with_dead_key, record(61, 0x1)]);
+        assert_eq!(result.main.code, 61);
+    }
 }
