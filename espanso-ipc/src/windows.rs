@@ -22,12 +22,20 @@ use anyhow::Result;
 use log::{error, info};
 use named_pipe::{ConnectingServer, PipeClient, PipeOptions};
 use serde::{de::DeserializeOwned, Serialize};
-use std::io::Write;
+use std::io::{ErrorKind, Write};
 use std::path::Path;
+use std::time::{Duration, Instant};
 
 use crate::{EventHandler, EventHandlerResponse, IPCClient, IPCClientError, IPCServer};
 
 const DEFAULT_CLIENT_TIMEOUT: u32 = 2000;
+
+// The pipe of a process that is shutting down (for example the old worker
+// during a restart) only goes away once that process has fully exited.
+// Until then, creating the first instance of a pipe with the same name fails
+// with ERROR_ACCESS_DENIED, so keep retrying for a while.
+const PIPE_IN_USE_TIMEOUT: Duration = Duration::from_secs(5);
+const PIPE_IN_USE_RETRY_INTERVAL: Duration = Duration::from_millis(100);
 
 pub struct WinIPCServer {
     server: Option<ConnectingServer>,
@@ -38,11 +46,25 @@ impl WinIPCServer {
         let pipe_name = pipe_name(id, parent_dir);
 
         let options = PipeOptions::new(&pipe_name);
-        let server = Some(options.single()?);
+        let start = Instant::now();
+        let server = loop {
+            match options.single() {
+                Ok(server) => break server,
+                Err(err)
+                    if err.kind() == ErrorKind::PermissionDenied
+                        && start.elapsed() < PIPE_IN_USE_TIMEOUT =>
+                {
+                    std::thread::sleep(PIPE_IN_USE_RETRY_INTERVAL);
+                }
+                Err(err) => return Err(err.into()),
+            }
+        };
 
         info!("binded to named pipe: {}", pipe_name);
 
-        Ok(Self { server })
+        Ok(Self {
+            server: Some(server),
+        })
     }
 }
 
@@ -141,5 +163,36 @@ impl<Event: Serialize + DeserializeOwned> IPCClient<Event> for WinIPCClient {
         self.stream.flush()?;
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::sync::mpsc;
+
+    #[test]
+    fn server_waits_for_a_pipe_that_is_being_released() {
+        // When the daemon restarts the worker, the old worker's pipe instance only
+        // goes away once that process has fully exited, which can be after the new
+        // worker tries to create a pipe with the same name.
+        let parent_dir =
+            std::env::temp_dir().join(format!("espanso-ipc-test-{}", std::process::id()));
+        let (ready_tx, ready_rx) = mpsc::channel();
+        let old_server = std::thread::spawn({
+            let parent_dir = parent_dir.clone();
+            move || {
+                let server = WinIPCServer::new("espansotestv2", &parent_dir).unwrap();
+                ready_tx.send(()).unwrap();
+                std::thread::sleep(Duration::from_millis(500));
+                drop(server);
+            }
+        });
+        ready_rx.recv().unwrap();
+
+        let new_server = WinIPCServer::new("espansotestv2", &parent_dir);
+        old_server.join().unwrap();
+
+        assert!(new_server.is_ok(), "{:?}", new_server.err());
     }
 }
