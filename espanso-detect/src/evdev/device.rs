@@ -8,6 +8,7 @@ use scopeguard::ScopeGuard;
 use std::collections::HashMap;
 use std::os::raw::c_char;
 use std::os::unix::io::AsRawFd;
+use std::path::Path;
 use std::{
     ffi::{c_void, CStr},
     fs::OpenOptions,
@@ -280,14 +281,31 @@ impl Drop for Device {
     }
 }
 
+pub const INPUT_DIR: &str = "/dev/input";
+pub const SYS_CLASS_INPUT_DIR: &str = "/sys/class/input";
+
+pub fn is_event_node(name: &str) -> bool {
+    name.starts_with("event")
+}
+
+// Virtual devices (created through uinput, such as espanso's own injector
+// device or ydotoold) are located under /devices/virtual/ in sysfs.
+// Picking them up would make espanso detect its own injected keystrokes.
+pub fn is_virtual_device(sys_class_input_dir: &Path, name: &str) -> bool {
+    match std::fs::canonicalize(sys_class_input_dir.join(name)) {
+        Ok(path) => path.to_string_lossy().contains("/virtual/"),
+        Err(_) => false,
+    }
+}
+
 pub fn get_devices(keymap: &Keymap) -> Result<Vec<Device>> {
     let mut keyboards = Vec::new();
-    let dirs = std::fs::read_dir("/dev/input/")?;
+    let dirs = std::fs::read_dir(INPUT_DIR)?;
     for entry in dirs {
         match entry {
             Ok(device) => {
                 // Skip non-eventX devices
-                if !device.file_name().to_string_lossy().starts_with("event") {
+                if !is_event_node(&device.file_name().to_string_lossy()) {
                     continue;
                 }
 
@@ -331,4 +349,41 @@ pub enum DeviceError {
 
     #[error("read operation failed: ENODEV No such device")]
     FailedReadNoSuchDevice,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::os::unix::fs::symlink;
+    use tempdir::TempDir;
+
+    #[test]
+    fn is_event_node_works_correctly() {
+        assert!(is_event_node("event0"));
+        assert!(is_event_node("event19"));
+        assert!(!is_event_node("mouse0"));
+        assert!(!is_event_node("mice"));
+        assert!(!is_event_node("by-id"));
+    }
+
+    #[test]
+    fn is_virtual_device_works_correctly() {
+        // Mimic the sysfs layout, where /sys/class/input/eventX are symlinks
+        // into the /sys/devices tree
+        let root = TempDir::new("espanso-evdev").unwrap();
+        let physical = root
+            .path()
+            .join("devices/pci0000:00/usb1/1-2/input/input18/event19");
+        let virt = root.path().join("devices/virtual/input/input30/event20");
+        std::fs::create_dir_all(&physical).unwrap();
+        std::fs::create_dir_all(&virt).unwrap();
+        let class_dir = root.path().join("class/input");
+        std::fs::create_dir_all(&class_dir).unwrap();
+        symlink(&physical, class_dir.join("event19")).unwrap();
+        symlink(&virt, class_dir.join("event20")).unwrap();
+
+        assert!(!is_virtual_device(&class_dir, "event19"));
+        assert!(is_virtual_device(&class_dir, "event20"));
+        assert!(!is_virtual_device(&class_dir, "event99"));
+    }
 }

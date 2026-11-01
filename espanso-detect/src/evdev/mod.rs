@@ -30,15 +30,20 @@ mod sync;
 
 use std::cell::RefCell;
 use std::collections::HashMap;
+use std::ffi::{c_void, CString};
+use std::path::Path;
 
 use anyhow::{Context as AnyhowContext, Result};
 use context::Context;
-use device::{get_devices, Device};
+use device::{
+    get_devices, is_event_node, is_virtual_device, Device, INPUT_DIR, SYS_CLASS_INPUT_DIR,
+};
 use keymap::Keymap;
 use lazycell::LazyCell;
 use libc::{
-    __errno_location, close, epoll_ctl, epoll_event, epoll_wait, EINTR, EPOLLIN, EPOLL_CTL_ADD,
-    EPOLL_CTL_DEL,
+    __errno_location, close, epoll_ctl, epoll_event, epoll_wait, inotify_add_watch, inotify_event,
+    inotify_init1, EINTR, EPOLLIN, EPOLL_CTL_ADD, EPOLL_CTL_DEL, IN_ATTRIB, IN_CLOEXEC, IN_CREATE,
+    IN_NONBLOCK,
 };
 use log::{debug, error, info, trace, warn};
 use thiserror::Error;
@@ -69,6 +74,9 @@ use self::{
     state::State,
 };
 
+// Epoll token reserved for the inotify watch on /dev/input
+const INOTIFY_TOKEN: u64 = u64::MAX;
+
 const BTN_LEFT: u16 = 0x110;
 const BTN_RIGHT: u16 = 0x111;
 const BTN_MIDDLE: u16 = 0x112;
@@ -89,7 +97,7 @@ const KEY_CAPSLOCK: u32 = 58;
 const KEY_NUMLOCK: u32 = 69;
 
 pub struct EVDEVSource {
-    devices: Vec<Device>,
+    devices: RefCell<Vec<Device>>,
     hotkeys: Vec<HotKey>,
 
     _keyboard_rmlvo: Option<KeyboardConfig>,
@@ -110,7 +118,7 @@ impl EVDEVSource {
         modifiers_map.insert("num_lock".to_string(), KEY_NUMLOCK + EVDEV_OFFSET);
 
         Self {
-            devices: Vec::new(),
+            devices: RefCell::new(Vec::new()),
             hotkeys: options.hotkeys,
             _context: LazyCell::new(),
             _keymap: LazyCell::new(),
@@ -128,7 +136,7 @@ impl Source for EVDEVSource {
             .expect("unable to create xkb keymap");
 
         match get_devices(&keymap) {
-            Ok(devices) => self.devices = devices,
+            Ok(devices) => *self.devices.borrow_mut() = devices,
             Err(error) => {
                 if let Some(device_error) = error.downcast_ref::<DeviceError>() {
                     if matches!(device_error, DeviceError::NoDevicesFound()) {
@@ -151,7 +159,7 @@ impl Source for EVDEVSource {
         {
             debug!("Updating device modifier state: {:?}", modifiers_state);
 
-            for device in &mut self.devices {
+            for device in self.devices.borrow_mut().iter_mut() {
                 device.update_modifier_state(modifiers_state, &self._modifiers_map);
             }
         }
@@ -172,10 +180,16 @@ impl Source for EVDEVSource {
     }
 
     fn eventloop(&self, event_callback: SourceCallback) -> Result<()> {
-        if self.devices.is_empty() {
+        let initial_devices = std::mem::take(&mut *self.devices.borrow_mut());
+        if initial_devices.is_empty() {
             error!("can't start eventloop without evdev devices");
             return Err(EVDEVSourceError::NoDevices().into());
         }
+
+        let keymap = self
+            ._keymap
+            .borrow()
+            .ok_or(EVDEVSourceError::InitFailure())?;
 
         let raw_epfd = unsafe { libc::epoll_create1(0) };
         let epfd = scopeguard::guard(raw_epfd, |raw_epfd| unsafe {
@@ -189,19 +203,37 @@ impl Source for EVDEVSource {
 
         // Setup epoll for all input devices
         let errno_ptr = unsafe { __errno_location() };
-        for (i, device) in self.devices.iter().enumerate() {
-            let mut ev: epoll_event = unsafe { std::mem::zeroed() };
-            ev.events = EPOLLIN as u32;
-            ev.u64 = i as u64;
-            if unsafe { epoll_ctl(*epfd, EPOLL_CTL_ADD, device.get_raw_fd(), &mut ev) } != 0 {
+        let mut devices: HashMap<u64, Device> = HashMap::new();
+        let mut next_token: u64 = 0;
+        for device in initial_devices {
+            let token = next_token;
+            next_token += 1;
+            if let Err(err) = add_to_epoll(*epfd, &device, token) {
                 error!(
                     "Could not add {} to epoll, errno {}",
                     device.get_path(),
-                    unsafe { *errno_ptr }
+                    err
                 );
                 return Err(EVDEVSourceError::Internal().into());
             }
+            devices.insert(token, device);
         }
+
+        // Watch for devices that appear later on (hotplug, KVM switches, wireless
+        // receivers waking up, ...). Without this, a disconnected keyboard would
+        // never be picked up again until espanso is restarted.
+        let inotify_fd = match setup_inotify(*epfd) {
+            Ok(fd) => Some(scopeguard::guard(fd, |fd| unsafe {
+                close(fd);
+            })),
+            Err(err) => {
+                warn!(
+                    "unable to watch {} for new input devices, hotplug will not work: {}",
+                    INPUT_DIR, err
+                );
+                None
+            }
+        };
 
         let mut hotkey_filter = self._hotkey_filter.borrow_mut();
 
@@ -218,7 +250,47 @@ impl Source for EVDEVSource {
             }
 
             for ev in evs.iter().take(ret as usize) {
-                let device = &self.devices[ev.u64 as usize];
+                let token = ev.u64;
+
+                if token == INOTIFY_TOKEN {
+                    if let Some(inotify_fd) = &inotify_fd {
+                        for name in read_inotify_names(**inotify_fd) {
+                            if !is_event_node(&name) {
+                                continue;
+                            }
+                            let path = format!("{INPUT_DIR}/{name}");
+                            if devices.values().any(|device| device.get_path() == path) {
+                                continue;
+                            }
+                            if is_virtual_device(Path::new(SYS_CLASS_INPUT_DIR), &name) {
+                                trace!("ignoring virtual input device {}", path);
+                                continue;
+                            }
+
+                            match Device::from(&path, keymap) {
+                                Ok(device) => {
+                                    let token = next_token;
+                                    next_token += 1;
+                                    if let Err(errno) = add_to_epoll(*epfd, &device, token) {
+                                        error!("Could not add {} to epoll, errno {}", path, errno);
+                                        continue;
+                                    }
+                                    info!("input device attached: {}", path);
+                                    devices.insert(token, device);
+                                }
+                                // Not a keyboard/mouse, or not accessible yet (udev applies
+                                // permissions after creating the node, a later IN_ATTRIB
+                                // event retries).
+                                Err(err) => debug!("ignoring input device {}: {}", path, err),
+                            }
+                        }
+                    }
+                    continue;
+                }
+
+                let Some(device) = devices.get(&token) else {
+                    continue;
+                };
                 match device.read() {
                     Ok(events) if !events.is_empty() => {
                         // Convert raw events to the common format and invoke the callback
@@ -264,6 +336,9 @@ impl Source for EVDEVSource {
                                 );
                                 return Err(EVDEVSourceError::Internal().into());
                             }
+
+                            // Drop the device, closing its fd and freeing its xkb state
+                            devices.remove(&token);
                         } else {
                             error!("Can't read from device {}: {}", device.get_path(), err);
                         }
@@ -272,6 +347,79 @@ impl Source for EVDEVSource {
             }
         }
     }
+}
+
+fn add_to_epoll(epfd: i32, device: &Device, token: u64) -> std::result::Result<(), i32> {
+    add_fd_to_epoll(epfd, device.get_raw_fd(), token)
+}
+
+fn add_fd_to_epoll(epfd: i32, fd: i32, token: u64) -> std::result::Result<(), i32> {
+    let mut ev: epoll_event = unsafe { std::mem::zeroed() };
+    ev.events = EPOLLIN as u32;
+    ev.u64 = token;
+    if unsafe { epoll_ctl(epfd, EPOLL_CTL_ADD, fd, &mut ev) } != 0 {
+        return Err(unsafe { *__errno_location() });
+    }
+    Ok(())
+}
+
+fn setup_inotify(epfd: i32) -> Result<i32> {
+    let fd = unsafe { inotify_init1(IN_NONBLOCK | IN_CLOEXEC) };
+    if fd < 0 {
+        return Err(std::io::Error::last_os_error().into());
+    }
+    let fd = scopeguard::guard(fd, |fd| unsafe {
+        close(fd);
+    });
+
+    let dir = CString::new(INPUT_DIR)?;
+    // IN_ATTRIB: udev changes permissions/ownership after creating the node
+    if unsafe { inotify_add_watch(*fd, dir.as_ptr(), IN_CREATE | IN_ATTRIB) } < 0 {
+        return Err(std::io::Error::last_os_error().into());
+    }
+
+    if let Err(errno) = add_fd_to_epoll(epfd, *fd, INOTIFY_TOKEN) {
+        return Err(std::io::Error::from_raw_os_error(errno).into());
+    }
+
+    Ok(scopeguard::ScopeGuard::into_inner(fd))
+}
+
+/// Drain the inotify fd and return the file names of all reported events.
+fn read_inotify_names(fd: i32) -> Vec<String> {
+    let mut names = Vec::new();
+    let mut buffer = [0u8; 4096];
+    let header_size = std::mem::size_of::<inotify_event>();
+    loop {
+        let len = unsafe { libc::read(fd, buffer.as_mut_ptr() as *mut c_void, buffer.len()) };
+        if len <= 0 {
+            break;
+        }
+        names.extend(parse_inotify_names(&buffer[..len as usize], header_size));
+    }
+    names
+}
+
+fn parse_inotify_names(buffer: &[u8], header_size: usize) -> Vec<String> {
+    let mut names = Vec::new();
+    let mut offset = 0;
+    while offset + header_size <= buffer.len() {
+        // The name length is the last u32 of the header (struct inotify_event)
+        let len_bytes: [u8; 4] = buffer[offset + header_size - 4..offset + header_size]
+            .try_into()
+            .expect("slice has 4 bytes");
+        let name_len = u32::from_ne_bytes(len_bytes) as usize;
+        let name_start = offset + header_size;
+        let name_end = (name_start + name_len).min(buffer.len());
+        let raw_name = &buffer[name_start..name_end];
+        // Names are NUL-padded
+        let raw_name = raw_name.split(|b| *b == 0).next().unwrap_or(&[]);
+        if !raw_name.is_empty() {
+            names.push(String::from_utf8_lossy(raw_name).to_string());
+        }
+        offset = name_start + name_len;
+    }
+    names
 }
 
 #[derive(Error, Debug)]
@@ -471,5 +619,26 @@ mod tests {
                 button: MouseButton::Right,
             })
         );
+    }
+
+    #[test]
+    fn parse_inotify_names_works_correctly() {
+        let header_size = std::mem::size_of::<inotify_event>();
+        let mut buffer = Vec::new();
+        for name in ["event19", "mouse0"] {
+            let padded_len = 16u32;
+            let mut header = vec![0u8; header_size];
+            header[header_size - 4..].copy_from_slice(&padded_len.to_ne_bytes());
+            buffer.extend(header);
+            let mut raw = name.as_bytes().to_vec();
+            raw.resize(padded_len as usize, 0);
+            buffer.extend(raw);
+        }
+
+        assert_eq!(
+            parse_inotify_names(&buffer, header_size),
+            vec!["event19".to_string(), "mouse0".to_string()]
+        );
+        assert!(parse_inotify_names(&buffer[..header_size - 1], header_size).is_empty());
     }
 }

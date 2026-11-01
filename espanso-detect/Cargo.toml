@@ -21,6 +21,7 @@ regex.workspace = true
 
 [dev-dependencies]
 enum-as-inner.workspace = true
+tempdir.workspace = true
 
 [lints]
 workspace = true
