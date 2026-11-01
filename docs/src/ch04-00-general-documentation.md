@@ -125,6 +125,11 @@ The module started as a port of this `xkbcommon` example
 
 https://github.com/xkbcommon/libxkbcommon/blob/master/tools/interactive-evdev.c
 
+Devices that appear after startup (KVM switches, wireless receivers, docks) are picked up
+by watching `/dev/input` with `inotify`. Virtual devices (the ones under `/devices/virtual/`
+in sysfs, such as espanso's own injector device) are ignored, to avoid detecting our own
+injected keystrokes. Devices that report `ENODEV` are dropped from the event loop.
+
 ## espanso-clipboard
 
 ### Notes on Wayland and clipboard support (`../../espanso-clipboard/src/wayland/`)

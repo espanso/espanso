@@ -1018,6 +1018,7 @@ dependencies = [
  "regex",
  "scopeguard",
  "smithay-client-toolkit",
+ "tempdir",
  "thiserror 1.0.56",
  "wayland-client",
  "widestring",
