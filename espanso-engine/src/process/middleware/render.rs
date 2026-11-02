@@ -95,10 +95,11 @@ impl Middleware for RenderMiddleware<'_> {
 
         // Image paths can contain variables too
         if let EventType::ImageRequested(m_event) = &event.etype {
-            match self
-                .renderer
-                .render(m_event.match_id, m_event.trigger.as_deref(), HashMap::new())
-            {
+            match self.renderer.render(
+                m_event.match_id,
+                m_event.trigger.as_deref(),
+                m_event.trigger_args.clone(),
+            ) {
                 Ok(image_path) => {
                     return Event::caused_by(
                         event.source_id,
@@ -151,9 +152,10 @@ mod tests {
             &'a self,
             match_id: i32,
             _: Option<&str>,
-            _: HashMap<String, String>,
+            trigger_args: HashMap<String, String>,
         ) -> Result<String> {
             assert_eq!(match_id, 1);
+            assert_eq!(trigger_args["file"], "rendered.png");
             Ok("/tmp/rendered.png".to_string())
         }
     }
@@ -165,6 +167,7 @@ mod tests {
                 match_id: 1,
                 image_path: "/tmp/{{file}}".to_string(),
                 trigger: None,
+                trigger_args: HashMap::from([("file".to_string(), "rendered.png".to_string())]),
             }),
         )
     }
