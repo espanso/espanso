@@ -54,20 +54,32 @@ class TextFieldWrapper {
 
 class ChoiceFieldWrapper {
     wxChoice *control;
+    const char *const *ids;
+    int idCount;
 
   public:
-    explicit ChoiceFieldWrapper(wxChoice *control) : control(control) {}
+    explicit ChoiceFieldWrapper(wxChoice *control, const char *const *ids, int idCount)
+        : control(control), ids(ids), idCount(idCount) {}
 
-    virtual wxString getValue() { return control->GetStringSelection(); }
+    virtual wxString getValue() {
+        int sel = control->GetSelection();
+        if (ids && sel >= 0 && sel < idCount) {
+            return wxString::FromUTF8(ids[sel]);
+        }
+        return control->GetStringSelection();
+    }
 };
 
 class ListFieldWrapper {
     wxListBox *control;
     wxString separator;
+    const char *const *ids;
+    int idCount;
 
   public:
-    explicit ListFieldWrapper(wxListBox *control, wxString separator)
-        : control(control), separator(separator) {}
+    explicit ListFieldWrapper(wxListBox *control, wxString separator,
+                              const char *const *ids, int idCount)
+        : control(control), separator(separator), ids(ids), idCount(idCount) {}
 
     virtual wxString getValue() {
       wxArrayInt selections;
@@ -76,7 +88,12 @@ class ListFieldWrapper {
       wxString value = "";
       for (unsigned int i = 0; i < selections.size(); i++) {
         if (i > 0) value.Append(separator);
-        value.Append(control->GetString(selections[i]));
+        int sel = selections[i];
+        if (ids && sel >= 0 && sel < idCount) {
+            value.Append(wxString::FromUTF8(ids[sel]));
+        } else {
+            value.Append(control->GetString(sel));
+        }
       }
 
       return value;
@@ -215,7 +232,8 @@ void FormFrame::AddComponent(wxPanel *parent, wxBoxSizer *sizer,
         for (int i = 0; i < choiceMeta->valueSize; i++) {
             choices.Add(wxString::FromUTF8(choiceMeta->values[i]));
 
-            if (strcmp(choiceMeta->values[i], choiceMeta->defaultValue) == 0) {
+            if (strcmp(choiceMeta->values[i], choiceMeta->defaultValue) == 0 ||
+                (choiceMeta->ids && strcmp(choiceMeta->ids[i], choiceMeta->defaultValue) == 0)) {
                 selectedItem = i;
             }
         }
@@ -236,7 +254,9 @@ void FormFrame::AddComponent(wxPanel *parent, wxBoxSizer *sizer,
 
             // Create the field wrapper
             std::unique_ptr<FieldWrapper> field(
-                (FieldWrapper *)new ChoiceFieldWrapper((wxChoice *)choice));
+                (FieldWrapper *)new ChoiceFieldWrapper((wxChoice *)choice,
+                                                       choiceMeta->ids,
+                                                       choiceMeta->valueSize));
             idMap[meta.id] = std::move(field);
         } else {
             choice = (void *)new wxListBox(parent, wxID_ANY, wxDefaultPosition,
@@ -261,7 +281,9 @@ void FormFrame::AddComponent(wxPanel *parent, wxBoxSizer *sizer,
             // Create the field wrapper
             std::unique_ptr<FieldWrapper> field(
                 (FieldWrapper *)new ListFieldWrapper((wxListBox *)choice,
-                                                     separator));
+                                                     separator,
+                                                     choiceMeta->ids,
+                                                     choiceMeta->valueSize));
             idMap[meta.id] = std::move(field);
         }
 

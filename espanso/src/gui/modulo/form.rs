@@ -99,6 +99,19 @@ struct ModuloFormConfig<'a> {
     max_form_height: usize,
 }
 
+fn choice_items_to_json(values: &[crate::gui::ChoiceItem]) -> Vec<Value> {
+    values
+        .iter()
+        .map(|item| {
+            if item.id == item.label {
+                json!(item.label)
+            } else {
+                json!({"id": item.id, "label": item.label})
+            }
+        })
+        .collect()
+}
+
 fn convert_fields_into_object(fields: &HashMap<String, FormField>) -> Map<String, Value> {
     let mut obj = Map::new();
     for (name, field) in fields {
@@ -108,21 +121,25 @@ fn convert_fields_into_object(fields: &HashMap<String, FormField>) -> Map<String
               "default": default,
               "multiline": multiline,
             }),
-            FormField::Choice { default, values } => json!({
-              "type": "choice",
-              "default": default,
-              "values": values,
-            }),
+            FormField::Choice { default, values } => {
+                json!({
+                  "type": "choice",
+                  "default": default,
+                  "values": choice_items_to_json(values),
+                })
+            }
             FormField::List {
                 default,
                 values,
                 separator,
-            } => json!({
-              "type": "list",
-              "default": default,
-              "values": values,
-              "separator": separator,
-            }),
+            } => {
+                json!({
+                  "type": "list",
+                  "default": default,
+                  "values": choice_items_to_json(values),
+                  "separator": separator,
+                })
+            }
         };
         obj.insert(name.clone(), value);
     }
