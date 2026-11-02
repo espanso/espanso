@@ -68,6 +68,7 @@ impl Multiplexer for MultiplexAdapter<'_> {
                         match_id: detected_match.id,
                         image_path: effect.path.clone(),
                         trigger: detected_match.trigger,
+                        trigger_args: detected_match.args,
                     }))
                 }
                 MatchEffect::None => None,

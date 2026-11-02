@@ -224,14 +224,11 @@ pub fn try_convert_into_match(
             unreachable!();
         };
 
-        let mut vars: Vec<Variable> = Vec::new();
-        for yaml_var in yaml_match.vars.unwrap_or_default() {
-            let (var, var_warnings) =
-                try_convert_into_variable(yaml_var.clone(), use_compatibility_mode)
-                    .with_context(|| format!("failed to load variable: {yaml_var:?}"))?;
-            warnings.extend(var_warnings);
-            vars.push(var);
-        }
+        let vars = try_convert_into_variables(
+            yaml_match.vars.unwrap_or_default(),
+            use_compatibility_mode,
+            &mut warnings,
+        )?;
 
         MatchEffect::Text(TextEffect {
             replace,
@@ -299,7 +296,15 @@ pub fn try_convert_into_match(
             force_mode,
         })
     } else if let Some(image_path) = yaml_match.image_path {
-        MatchEffect::Image(ImageEffect { path: image_path })
+        let vars = try_convert_into_variables(
+            yaml_match.vars.unwrap_or_default(),
+            use_compatibility_mode,
+            &mut warnings,
+        )?;
+        MatchEffect::Image(ImageEffect {
+            path: image_path,
+            vars,
+        })
     } else {
         MatchEffect::None
     };
@@ -321,6 +326,22 @@ pub fn try_convert_into_match(
         },
         warnings,
     ))
+}
+
+fn try_convert_into_variables(
+    yaml_vars: Vec<YAMLVariable>,
+    use_compatibility_mode: bool,
+    warnings: &mut Vec<Warning>,
+) -> Result<Vec<Variable>> {
+    let mut vars = Vec::new();
+    for yaml_var in yaml_vars {
+        let (var, var_warnings) =
+            try_convert_into_variable(yaml_var.clone(), use_compatibility_mode)
+                .with_context(|| format!("failed to load variable: {yaml_var:?}"))?;
+        warnings.extend(var_warnings);
+        vars.push(var);
+    }
+    Ok(vars)
 }
 
 pub fn try_convert_into_variable(
@@ -358,8 +379,10 @@ mod tests {
 
         // Reset the IDs to correctly compare them
         m.id = 0;
-        if let MatchEffect::Text(e) = &mut m.effect {
-            e.vars.iter_mut().for_each(|v| v.id = 0);
+        match &mut m.effect {
+            MatchEffect::Text(e) => e.vars.iter_mut().for_each(|v| v.id = 0),
+            MatchEffect::Image(e) => e.vars.iter_mut().for_each(|v| v.id = 0),
+            MatchEffect::None => {}
         }
 
         Ok((m, warnings))
@@ -759,6 +782,42 @@ mod tests {
                     replace: "world".to_string(),
                     vars,
                     ..Default::default()
+                }),
+                ..Default::default()
+            }
+        );
+    }
+
+    #[test]
+    fn image_path_vars_maps_correctly() {
+        let mut params = Params::new();
+        params.insert("cmd".to_string(), Value::String("echo a.png".to_string()));
+        assert_eq!(
+            create_match(
+                r#"
+        trigger: "Hello"
+        image_path: "/tmp/{{file}}"
+        vars:
+          - name: file
+            type: shell
+            params:
+              cmd: "echo a.png"
+        "#
+            )
+            .unwrap(),
+            Match {
+                cause: MatchCause::Trigger(TriggerCause {
+                    triggers: vec!["Hello".to_string()],
+                    ..Default::default()
+                }),
+                effect: MatchEffect::Image(ImageEffect {
+                    path: "/tmp/{{file}}".to_string(),
+                    vars: vec![Variable {
+                        name: "file".to_string(),
+                        var_type: "shell".to_string(),
+                        params,
+                        ..Default::default()
+                    }],
                 }),
                 ..Default::default()
             }

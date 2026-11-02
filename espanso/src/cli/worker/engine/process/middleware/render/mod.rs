@@ -102,6 +102,10 @@ fn generate_context<'a>(
     let mut global_vars = Vec::new();
 
     for m in &match_set.matches {
+        // Image paths must not be picked up by `match` variables
+        if matches!(m.effect, MatchEffect::Image(_)) {
+            continue;
+        }
         if let Some(Some(template)) = template_map.get(&m.id) {
             templates.push(template);
         }
@@ -122,21 +126,23 @@ fn generate_context<'a>(
 // TODO: move conversion methods to new file?
 
 fn convert_to_template(m: &Match) -> Option<Template> {
-    if let MatchEffect::Text(text_effect) = &m.effect {
-        let ids = if let MatchCause::Trigger(cause) = &m.cause {
-            cause.triggers.clone()
-        } else {
-            Vec::new()
-        };
+    let (body, vars) = match &m.effect {
+        MatchEffect::Text(text_effect) => (&text_effect.replace, &text_effect.vars),
+        MatchEffect::Image(image_effect) => (&image_effect.path, &image_effect.vars),
+        MatchEffect::None => return None,
+    };
 
-        Some(Template {
-            ids,
-            body: text_effect.replace.clone(),
-            vars: convert_vars(text_effect.vars.clone()),
-        })
+    let ids = if let MatchCause::Trigger(cause) = &m.cause {
+        cause.triggers.clone()
     } else {
-        None
-    }
+        Vec::new()
+    };
+
+    Some(Template {
+        ids,
+        body: body.clone(),
+        vars: convert_vars(vars.clone()),
+    })
 }
 
 fn convert_vars(vars: Vec<espanso_config::matches::Variable>) -> Vec<espanso_render::Variable> {
@@ -262,6 +268,10 @@ fn extract_uppercasing_style(m: &Match) -> Option<UpperCasingStyle> {
 }
 
 fn is_propagate_case(m: &Match) -> bool {
+    // Changing the casing of an image path would break it
+    if matches!(m.effect, MatchEffect::Image(_)) {
+        return false;
+    }
     if let MatchCause::Trigger(cause) = &m.cause {
         cause.propagate_case
     } else {
@@ -313,5 +323,42 @@ fn calculate_casing_style(
         }
     } else {
         CasingStyle::None
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use espanso_config::matches::{ImageEffect, TriggerCause};
+
+    #[test]
+    fn image_match_gets_a_template_without_casing() {
+        let m = Match {
+            cause: MatchCause::Trigger(TriggerCause {
+                triggers: vec![":img".to_string()],
+                propagate_case: true,
+                ..Default::default()
+            }),
+            effect: MatchEffect::Image(ImageEffect {
+                path: "/tmp/{{global_var}}".to_string(),
+                vars: Vec::new(),
+            }),
+            ..Default::default()
+        };
+        assert!(!is_propagate_case(&m));
+        let template = convert_to_template(&m).unwrap();
+        assert_eq!(template.ids, vec![":img".to_string()]);
+        assert_eq!(template.body, "/tmp/{{global_var}}");
+        assert!(template.vars.is_empty());
+
+        // Rendered on its own, but not a target for `match` variables
+        let template_map = HashMap::from([(m.id, Some(template))]);
+        let match_set = MatchSet {
+            matches: vec![&m],
+            global_vars: Vec::new(),
+        };
+        let global_vars_map = HashMap::new();
+        let context = generate_context(&match_set, &template_map, &global_vars_map);
+        assert!(context.templates.is_empty());
     }
 }

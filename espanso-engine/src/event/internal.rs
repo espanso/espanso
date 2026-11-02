@@ -66,6 +66,7 @@ pub struct ImageRequestedEvent {
     pub match_id: i32,
     pub image_path: String,
     pub trigger: Option<String>,
+    pub trigger_args: HashMap<String, String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
