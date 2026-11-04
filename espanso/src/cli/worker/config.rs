@@ -151,6 +151,7 @@ impl ClipboardOperationOptionsProvider for ConfigManager<'_> {
         let active = self.active();
         espanso_clipboard::ClipboardOperationOptions {
             use_xclip_backend: active.x11_use_xclip_backend(),
+            primary: false,
         }
     }
 }

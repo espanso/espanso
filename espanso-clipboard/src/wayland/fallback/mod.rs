@@ -26,7 +26,7 @@ use std::{
 
 use crate::{Clipboard, ClipboardOperationOptions, ClipboardOptions};
 use anyhow::Result;
-use log::{error, warn};
+use log::{debug, error, warn};
 use std::process::Command;
 use thiserror::Error;
 use wait_timeout::ChildExt;
@@ -76,13 +76,14 @@ impl WaylandFallbackClipboard {
 }
 
 impl Clipboard for WaylandFallbackClipboard {
-    fn get_text(&self, _: &ClipboardOperationOptions) -> Option<String> {
+    fn get_text(&self, options: &ClipboardOperationOptions) -> Option<String> {
         let timeout = std::time::Duration::from_millis(self.command_timeout);
-        match Command::new("wl-paste")
-            .arg("--no-newline")
-            .stdout(Stdio::piped())
-            .spawn()
-        {
+        let mut command = Command::new("wl-paste");
+        command.arg("--no-newline");
+        if options.primary {
+            command.arg("--primary");
+        }
+        match command.stdout(Stdio::piped()).spawn() {
             Ok(mut child) => match child.wait_timeout(timeout) {
                 Ok(status_code) => {
                     if let Some(status) = status_code {
@@ -94,6 +95,10 @@ impl Clipboard for WaylandFallbackClipboard {
                             } else {
                                 None
                             }
+                        } else if options.primary {
+                            // wl-paste also fails if the primary selection is empty, which is common
+                            debug!("wl-paste exited with non-zero exit code, primary selection is probably empty");
+                            None
                         } else {
                             error!("error, wl-paste exited with non-zero exit code");
                             None
@@ -118,8 +123,16 @@ impl Clipboard for WaylandFallbackClipboard {
         }
     }
 
-    fn set_text(&self, text: &str, _: &ClipboardOperationOptions) -> anyhow::Result<()> {
-        self.invoke_command_with_timeout(&mut Command::new("wl-copy"), text.as_bytes(), "wl-copy")
+    fn set_text(&self, text: &str, options: &ClipboardOperationOptions) -> anyhow::Result<()> {
+        let mut command = Command::new("wl-copy");
+        if options.primary {
+            command.arg("--primary");
+            // Copying an empty text would set an empty string, not clear the selection
+            if text.is_empty() {
+                command.arg("--clear");
+            }
+        }
+        self.invoke_command_with_timeout(&mut command, text.as_bytes(), "wl-copy")
     }
 
     fn set_image(
