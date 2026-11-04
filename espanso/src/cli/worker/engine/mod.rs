@@ -208,6 +208,8 @@ pub fn initialize_and_spawn(
             );
             let shell_extension =
                 espanso_render::extension::shell::ShellExtension::new(&paths.config);
+            let regex_transform_extension =
+                espanso_render::extension::regex_transform::RegexTransformExtension::new();
             let form_adapter = FormProviderAdapter::new(&modulo_form_ui);
             let form_extension = espanso_render::extension::form::FormExtension::new(&form_adapter);
             let choice_adapter = ChoiceSelectorAdapter::new(&modulo_search_ui);
@@ -220,6 +222,7 @@ pub fn initialize_and_spawn(
                 &random_extension,
                 &script_extension,
                 &shell_extension,
+                &regex_transform_extension,
                 &form_extension,
                 &choice_extension,
             ]);
