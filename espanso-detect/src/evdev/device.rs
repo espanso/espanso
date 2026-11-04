@@ -15,7 +15,6 @@ use std::{
 use std::{fs::File, os::unix::fs::OpenOptionsExt};
 use thiserror::Error;
 
-use super::sync::ModifiersState;
 use super::{
     ffi::{
         is_keyboard_or_mouse, xkb_key_direction, xkb_keycode_t, xkb_keymap_key_repeats, xkb_state,
@@ -24,6 +23,47 @@ use super::{
     },
     keymap::Keymap,
 };
+
+// Read the currently-held keys / lock LEDs straight from an evdev device.
+// These expand to `_IOR('E', 0x18/0x19, len)`, i.e. EVIOCGKEY / EVIOCGLED.
+nix::ioctl_read_buf!(eviocgkey, b'E', 0x18, u8);
+nix::ioctl_read_buf!(eviocgled, b'E', 0x19, u8);
+
+// Momentary modifier keys we seed as "held" at startup, as raw evdev keycodes
+// (no xkb offset). The order is significant: each entry maps to one bit of
+// `ModifiersState::held`. Left and right are tracked separately so that the
+// user's later key-release event (which carries the same code) clears exactly
+// the key we pressed, instead of leaving a stand-in modifier stuck down.
+const MODIFIER_KEYS: [u32; 8] = [
+    29,  // KEY_LEFTCTRL
+    97,  // KEY_RIGHTCTRL
+    42,  // KEY_LEFTSHIFT
+    54,  // KEY_RIGHTSHIFT
+    56,  // KEY_LEFTALT
+    100, // KEY_RIGHTALT
+    125, // KEY_LEFTMETA
+    126, // KEY_RIGHTMETA
+];
+
+#[derive(Debug, Clone, Copy)]
+pub struct ModifiersState {
+    // Bitmask over `MODIFIER_KEYS`: bit `i` set means that key is currently held.
+    held: u8,
+    // Lock states, read from the device LEDs rather than held keys.
+    caps_lock: bool,
+    num_lock: bool,
+}
+
+impl ModifiersState {
+    // OR-combine the readings from several devices (parent module folds over these).
+    pub(super) fn merge(self, o: Self) -> Self {
+        Self {
+            held: self.held | o.held,
+            caps_lock: self.caps_lock || o.caps_lock,
+            num_lock: self.num_lock || o.num_lock,
+        }
+    }
+}
 
 const EVDEV_OFFSET: i32 = 8;
 pub const KEY_STATE_RELEASE: i32 = 0;
@@ -95,6 +135,33 @@ impl Device {
 
     pub fn get_path(&self) -> String {
         self.path.clone()
+    }
+
+    // Seed the currently-held modifiers at worker startup. evdev only streams
+    // future events, so we query the live key/LED state of the already-open fd
+    // via ioctl rather than mapping a (focus-stealing, formerly rainbow) window.
+    pub fn get_modifiers(&self) -> ModifiersState {
+        let fd = self.file.as_raw_fd();
+        // Best-effort: non-keyboard devices may reject these ioctls; treat as "nothing held".
+        let mut keys = [0u8; 96]; // KEY_CNT / 8 = 768 / 8
+        let mut leds = [0u8; 2]; // LED_CNT / 8
+        let _ = unsafe { eviocgkey(fd, &mut keys) };
+        let _ = unsafe { eviocgled(fd, &mut leds) };
+
+        let is_set = |buf: &[u8], code: usize| buf[code / 8] & (1u8 << (code % 8)) != 0;
+
+        let mut held = 0u8;
+        for (i, &code) in MODIFIER_KEYS.iter().enumerate() {
+            if is_set(&keys, code as usize) {
+                held |= 1u8 << i;
+            }
+        }
+
+        ModifiersState {
+            held,
+            caps_lock: is_set(&leds, 1), // LED_CAPSL
+            num_lock: is_set(&leds, 0),  // LED_NUML
+        }
     }
 
     pub fn read(&self) -> Result<Vec<RawInputEvent>> {
@@ -209,65 +276,30 @@ impl Device {
         modifiers_state: ModifiersState,
         modifiers_map: &HashMap<String, u32>,
     ) {
-        if modifiers_state.alt {
-            self.update_key(
-                *modifiers_map
-                    .get("alt")
-                    .expect("unable to find modifiers key in map"),
-                true,
-            );
+        // Press each physically-held modifier by its own keycode (offset into the
+        // xkb keymap). Seeding the exact key that is down means the user's later
+        // release event clears it, instead of leaving a stand-in modifier stuck.
+        for (i, &code) in MODIFIER_KEYS.iter().enumerate() {
+            if modifiers_state.held & (1u8 << i) != 0 {
+                self.update_key(code + EVDEV_OFFSET as u32, true);
+            }
         }
-        if modifiers_state.ctrl {
-            self.update_key(
-                *modifiers_map
-                    .get("ctrl")
-                    .expect("unable to find modifiers key in map"),
-                true,
-            );
-        }
-        if modifiers_state.meta {
-            self.update_key(
-                *modifiers_map
-                    .get("meta")
-                    .expect("unable to find modifiers key in map"),
-                true,
-            );
-        }
+
+        // Caps/Num lock are lock states (from the LEDs), not held keys: toggle
+        // them with a press+release so xkb latches the lock.
         if modifiers_state.num_lock {
-            self.update_key(
-                *modifiers_map
-                    .get("num_lock")
-                    .expect("unable to find modifiers key in map"),
-                true,
-            );
-            self.update_key(
-                *modifiers_map
-                    .get("num_lock")
-                    .expect("unable to find modifiers key in map"),
-                false,
-            );
-        }
-        if modifiers_state.shift {
-            self.update_key(
-                *modifiers_map
-                    .get("shift")
-                    .expect("unable to find modifiers key in map"),
-                true,
-            );
+            let key = *modifiers_map
+                .get("num_lock")
+                .expect("unable to find modifiers key in map");
+            self.update_key(key, true);
+            self.update_key(key, false);
         }
         if modifiers_state.caps_lock {
-            self.update_key(
-                *modifiers_map
-                    .get("caps_lock")
-                    .expect("unable to find modifiers key in map"),
-                true,
-            );
-            self.update_key(
-                *modifiers_map
-                    .get("caps_lock")
-                    .expect("unable to find modifiers key in map"),
-                false,
-            );
+            let key = *modifiers_map
+                .get("caps_lock")
+                .expect("unable to find modifiers key in map");
+            self.update_key(key, true);
+            self.update_key(key, false);
         }
     }
 }
