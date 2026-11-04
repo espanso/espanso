@@ -117,14 +117,20 @@ impl<State> Middleware for MatcherMiddleware<'_, State> {
                     return event;
                 }
 
-                // We need to filter out some keyboard events if they are generated
-                // while some modifier keys are pressed, otherwise we could have
-                // wrong matches being detected.
+                // Keyboard events generated while some modifier keys are pressed are
+                // shortcuts, not typed text, so they must not end up in the buffer.
                 // See: https://github.com/espanso/espanso/issues/725
+                //
+                // A shortcut can also change the text without espanso seeing it (a
+                // Cmd+V/Super+V paste, for example), so the buffer can no longer be
+                // trusted and has to be invalidated as well. Otherwise a match could
+                // span the shortcut and its replacement would delete the wrong text.
+                // See: https://github.com/espanso/espanso/issues/1851
                 if should_skip_key_event_due_to_modifier_press(
                     &self.modifier_status_provider.get_modifier_state(),
                 ) {
-                    trace!("skipping keyboard event because incompatible modifiers are pressed");
+                    trace!("incompatible modifiers are pressed, clearing matching state");
+                    matcher_states.clear();
                     return event;
                 }
             }
@@ -247,5 +253,119 @@ fn should_skip_key_event_due_to_modifier_press(modifier_state: &ModifierState) -
         modifier_state.is_alt_down || modifier_state.is_meta_down
     } else {
         unreachable!()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::event::input::KeyboardEvent;
+    use std::cell::Cell;
+
+    // Mimics a regex matcher: the state is the typed buffer, and it matches
+    // whenever the buffer ends with two spaces.
+    struct DoubleSpaceMatcher;
+
+    impl<'a> Matcher<'a, String> for DoubleSpaceMatcher {
+        fn process(
+            &'a self,
+            prev_state: Option<&String>,
+            event: &MatcherEvent,
+        ) -> (String, Vec<MatchResult>) {
+            let mut buffer = prev_state.cloned().unwrap_or_default();
+            if let MatcherEvent::Key {
+                chars: Some(chars), ..
+            } = event
+            {
+                buffer.push_str(chars);
+            }
+
+            let results = if buffer.ends_with("  ") {
+                vec![MatchResult {
+                    id: 1,
+                    trigger: buffer.clone(),
+                    left_separator: None,
+                    right_separator: None,
+                    args: HashMap::new(),
+                }]
+            } else {
+                vec![]
+            };
+
+            (buffer, results)
+        }
+    }
+
+    struct MockConfig;
+
+    impl MatcherMiddlewareConfigProvider for MockConfig {
+        fn max_history_size(&self) -> usize {
+            3
+        }
+    }
+
+    #[derive(Default)]
+    struct MockModifiers {
+        is_meta_down: Cell<bool>,
+    }
+
+    impl ModifierStateProvider for MockModifiers {
+        fn get_modifier_state(&self) -> ModifierState {
+            ModifierState {
+                is_ctrl_down: false,
+                is_alt_down: false,
+                is_meta_down: self.is_meta_down.get(),
+            }
+        }
+    }
+
+    fn key_press(key: Key, value: &str) -> Event {
+        Event::caused_by(
+            0,
+            EventType::Keyboard(KeyboardEvent {
+                key,
+                value: Some(value.to_string()),
+                status: Status::Pressed,
+                variant: None,
+            }),
+        )
+    }
+
+    fn detects_match(middleware: &MatcherMiddleware<String>, event: Event) -> bool {
+        let result = middleware.next(event, &mut |_| {});
+        matches!(result.etype, EventType::MatchesDetected(_))
+    }
+
+    #[test]
+    fn test_typed_trigger_is_detected() {
+        let matcher = DoubleSpaceMatcher;
+        let matchers: [&dyn Matcher<String>; 1] = [&matcher];
+        let modifiers = MockModifiers::default();
+        let middleware = MatcherMiddleware::new(&matchers, &MockConfig, &modifiers);
+
+        assert!(!detects_match(&middleware, key_press(Key::Other(30), "a")));
+        assert!(!detects_match(&middleware, key_press(Key::Space, " ")));
+        assert!(detects_match(&middleware, key_press(Key::Space, " ")));
+    }
+
+    #[test]
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
+    fn test_modifier_shortcut_invalidates_the_buffer() {
+        let matcher = DoubleSpaceMatcher;
+        let matchers: [&dyn Matcher<String>; 1] = [&matcher];
+        let modifiers = MockModifiers::default();
+        let middleware = MatcherMiddleware::new(&matchers, &MockConfig, &modifiers);
+
+        assert!(!detects_match(&middleware, key_press(Key::Other(30), "a")));
+        assert!(!detects_match(&middleware, key_press(Key::Space, " ")));
+
+        // Meta+V pastes text that espanso never sees
+        modifiers.is_meta_down.set(true);
+        assert!(!detects_match(&middleware, key_press(Key::Other(47), "v")));
+        modifiers.is_meta_down.set(false);
+
+        // The space typed after the paste must not complete a match with the
+        // space typed before it
+        assert!(!detects_match(&middleware, key_press(Key::Space, " ")));
     }
 }
