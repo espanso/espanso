@@ -17,7 +17,10 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::{path::Path, time::Duration};
+use std::{
+    path::{Path, PathBuf},
+    time::Duration,
+};
 
 use notify::{DebouncedEvent, RecommendedWatcher, RecursiveMode, Watcher};
 
@@ -60,6 +63,16 @@ fn watcher_main(config_dir: &Path, debounce_tx: Sender<()>) {
         .expect("unable to start file watcher");
 
     info!("watching for changes in path: {}", config_dir.display());
+
+    // notify (FSEvents on macOS) does not follow symlinks below the watched root, so
+    // `match` or `config` linked into e.g. a git repository were never reloaded
+    // automatically (#2249, #923). Watch the link targets as well.
+    for target in symlink_targets(config_dir) {
+        match watcher.watch(&target, RecursiveMode::Recursive) {
+            Ok(()) => info!("watching for changes in linked path: {}", target.display()),
+            Err(err) => warn!("unable to watch linked path {}: {err:?}", target.display()),
+        }
+    }
 
     loop {
         let should_reload = match rx.recv() {
@@ -125,6 +138,39 @@ fn debouncer_main(debounce_rx: crossbeam::channel::Receiver<()>, watcher_notify:
     }
 }
 
+/// Targets of symlinks in the config dir, in `match/` and in `config/` that point outside of it.
+fn symlink_targets(config_dir: &Path) -> Vec<PathBuf> {
+    let root = std::fs::canonicalize(config_dir).unwrap_or_else(|_| config_dir.to_path_buf());
+    let mut candidates = Vec::new();
+    for dir in [
+        config_dir.to_path_buf(),
+        config_dir.join("match"),
+        config_dir.join("config"),
+    ] {
+        if let Ok(entries) = std::fs::read_dir(&dir) {
+            candidates.extend(entries.flatten().map(|entry| entry.path()));
+        }
+    }
+
+    let mut targets: Vec<PathBuf> = Vec::new();
+    for path in candidates {
+        let is_symlink =
+            std::fs::symlink_metadata(&path).is_ok_and(|meta| meta.file_type().is_symlink());
+        if !is_symlink {
+            continue;
+        }
+        let Ok(target) = std::fs::canonicalize(&path) else {
+            continue;
+        };
+        if target.starts_with(&root) || targets.iter().any(|known| target.starts_with(known)) {
+            continue;
+        }
+        targets.retain(|known| !known.starts_with(&target));
+        targets.push(target);
+    }
+    targets
+}
+
 fn is_file_hidden(path: &Path) -> bool {
     let starts_with_dot = path
         .file_name()
@@ -150,4 +196,40 @@ fn has_hidden_attribute(path: &Path) -> bool {
 #[cfg(not(windows))]
 fn has_hidden_attribute(_: &Path) -> bool {
     false
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    #[cfg(unix)]
+    fn finds_linked_match_and_config_dirs_outside_the_config_dir() {
+        let base = tempdir::TempDir::new("espanso-watch").unwrap();
+        let repo = base.path().join("repo");
+        let config_dir = base.path().join("espanso");
+        std::fs::create_dir_all(repo.join("match")).unwrap();
+        std::fs::create_dir_all(repo.join("config")).unwrap();
+        std::fs::create_dir_all(config_dir.join("inside")).unwrap();
+        std::os::unix::fs::symlink(repo.join("match"), config_dir.join("match")).unwrap();
+        std::os::unix::fs::symlink(repo.join("config"), config_dir.join("config")).unwrap();
+        // a link pointing inside the config dir needs no extra watch
+        std::os::unix::fs::symlink(config_dir.join("inside"), config_dir.join("alias")).unwrap();
+
+        let mut targets = symlink_targets(&config_dir);
+        targets.sort();
+        let mut expected = vec![
+            std::fs::canonicalize(repo.join("config")).unwrap(),
+            std::fs::canonicalize(repo.join("match")).unwrap(),
+        ];
+        expected.sort();
+        assert_eq!(targets, expected);
+    }
+
+    #[test]
+    fn no_links_no_extra_watches() {
+        let base = tempdir::TempDir::new("espanso-watch").unwrap();
+        std::fs::create_dir_all(base.path().join("match")).unwrap();
+        assert!(symlink_targets(base.path()).is_empty());
+    }
 }
