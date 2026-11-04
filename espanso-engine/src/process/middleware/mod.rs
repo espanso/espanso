@@ -26,6 +26,7 @@ pub mod delay_modifiers;
 pub mod disable;
 pub mod discard;
 pub mod exit;
+mod hangul;
 pub mod hotkey;
 pub mod icon_status;
 pub mod image_resolve;

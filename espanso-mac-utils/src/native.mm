@@ -113,3 +113,42 @@ void mac_utils_exit_headless_eventloop() {
     [NSApp abortModal];
   });
 }
+// Input sources that compose Hangul with the standard 2-set (Dubeolsik) layout
+static NSArray *DUBEOLSIK_INPUT_SOURCE_IDS = @[
+  @"com.apple.inputmethod.Korean.2SetKorean",
+  @"org.youknowone.inputmethod.Gureum.han2",
+];
+
+int32_t mac_utils_is_hangul_dubeolsik_active() {
+  __block int32_t result = 0;
+  dispatch_semaphore_t done = dispatch_semaphore_create(0);
+
+  // The Text Input Source APIs must be called on the main thread
+  dispatch_block_t check = ^(void) {
+    @autoreleasepool {
+      TISInputSourceRef source = TISCopyCurrentKeyboardInputSource();
+      if (source) {
+        NSString *sourceId = (NSString *) TISGetInputSourceProperty(source, kTISPropertyInputSourceID);
+        if (sourceId && [DUBEOLSIK_INPUT_SOURCE_IDS containsObject:sourceId]) {
+          result = 1;
+        }
+        CFRelease(source);
+      }
+    }
+    dispatch_semaphore_signal(done);
+  };
+
+  if ([NSThread isMainThread]) {
+    check();
+  } else {
+    dispatch_async(dispatch_get_main_queue(), check);
+  }
+
+  // Avoid blocking the caller if the main thread is busy
+  int32_t active = 0;
+  if (dispatch_semaphore_wait(done, dispatch_time(DISPATCH_TIME_NOW, 200 * NSEC_PER_MSEC)) == 0) {
+    active = result;
+  }
+  dispatch_release(done);
+  return active;
+}

@@ -17,7 +17,7 @@
  * along with espanso.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use super::super::Middleware;
+use super::{super::Middleware, hangul::dubeolsik_backspace_count};
 use crate::event::{
     effect::{
         HtmlInjectRequest, ImageInjectRequest, KeySequenceInjectRequest, MarkdownInjectRequest,
@@ -36,19 +36,36 @@ pub trait EventSequenceProvider {
     fn get_next_id(&self) -> u32;
 }
 
+pub trait InputMethodProvider {
+    /// Return true if the active input method composes Korean Hangul
+    /// with the standard 2-set (Dubeolsik) layout
+    fn is_hangul_dubeolsik_active(&self) -> bool;
+}
+
 pub struct ActionMiddleware<'a> {
     match_info_provider: &'a dyn MatchInfoProvider,
     event_sequence_provider: &'a dyn EventSequenceProvider,
+    input_method_provider: &'a dyn InputMethodProvider,
 }
 
 impl<'a> ActionMiddleware<'a> {
     pub fn new(
         match_info_provider: &'a dyn MatchInfoProvider,
         event_sequence_provider: &'a dyn EventSequenceProvider,
+        input_method_provider: &'a dyn InputMethodProvider,
     ) -> Self {
         Self {
             match_info_provider,
             event_sequence_provider,
+            input_method_provider,
+        }
+    }
+
+    fn trigger_backspace_count(&self, trigger: &str) -> usize {
+        if self.input_method_provider.is_hangul_dubeolsik_active() {
+            dubeolsik_backspace_count(trigger)
+        } else {
+            trigger.chars().count()
         }
     }
 }
@@ -116,11 +133,12 @@ impl Middleware for ActionMiddleware<'_> {
                 )
             }
             EventType::TriggerCompensation(m_event) => {
-                let mut backspace_count = m_event.trigger.chars().count();
+                let mut backspace_count = self.trigger_backspace_count(&m_event.trigger);
 
                 // We want to preserve the left separator if present
                 if let Some(left_separator) = &m_event.left_separator {
-                    backspace_count -= left_separator.chars().count();
+                    backspace_count = backspace_count
+                        .saturating_sub(self.trigger_backspace_count(left_separator));
                 }
 
                 Event::caused_by(

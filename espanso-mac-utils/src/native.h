@@ -49,4 +49,8 @@ extern "C" void mac_utils_transition_to_background_app();
 extern "C" void mac_utils_start_headless_eventloop();
 extern "C" void mac_utils_exit_headless_eventloop();
 
+// Return 1 if the active keyboard input source composes Korean Hangul with the
+// 2-set (Dubeolsik) layout (macOS Korean or Gureum), 0 otherwise
+extern "C" int32_t mac_utils_is_hangul_dubeolsik_active();
+
 #endif // ESPANSO_MAC_UTILS_H
