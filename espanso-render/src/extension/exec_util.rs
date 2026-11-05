@@ -38,7 +38,10 @@ pub fn determine_path_env_variable_override(explicit_shell: Option<MacShell>) ->
             "bash",
             &["--login", "-c", "source ~/.bashrc; echo $PATH"],
         ),
-        MacShell::Fish => launch_command_and_get_output("fish", &["--login", "-c", "echo $PATH"]),
+        // Fish's PATH is a list: `echo $PATH` would separate entries with spaces instead of colons
+        MacShell::Fish => {
+            launch_command_and_get_output("fish", &["--login", "-c", "string join : $PATH"])
+        }
         MacShell::Nu => launch_command_and_get_output("nu", &["--login", "-c", "$env.PATH"]),
         MacShell::Pwsh => launch_command_and_get_output(
             "pwsh",
@@ -109,4 +112,25 @@ fn launch_command_and_get_output(command: &str, args: &[&str]) -> Option<String>
 
     let output_str = String::from_utf8_lossy(&output.stdout);
     Some(output_str.to_string())
+}
+
+#[cfg(all(test, target_os = "macos"))]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn fish_path_is_colon_separated() {
+        if std::process::Command::new("fish")
+            .arg("--version")
+            .output()
+            .is_err()
+        {
+            return; // fish not installed
+        }
+        let path = determine_path_env_variable_override(Some(MacShell::Fish))
+            .expect("unable to get fish PATH");
+        let path = path.trim();
+        assert!(path.contains(':'));
+        assert!(path.split(':').all(|entry| entry.starts_with('/')));
+    }
 }
