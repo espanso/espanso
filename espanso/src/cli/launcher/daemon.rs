@@ -37,14 +37,14 @@ pub fn launch_daemon(paths_overrides: &PathsOverrides) -> Result<()> {
     if result.success() {
         Ok(())
     } else {
-        Err(DaemonError::NonZeroExitCode.into())
+        Err(DaemonError::NonZeroExitCode(result.code()).into())
     }
 }
 
 #[derive(Error, Debug)]
 pub enum DaemonError {
-    #[error("unexpected error, 'espanso daemon' returned a non-zero exit code.")]
-    NonZeroExitCode,
+    #[error("unexpected error, 'espanso daemon' returned a non-zero exit code: {0:?}.")]
+    NonZeroExitCode(Option<i32>),
 }
 
 #[cfg(not(target_os = "macos"))]
@@ -75,4 +75,19 @@ fn spawn_and_wait(mut command: Command) -> Result<ExitStatus> {
 
     let thread_result = result.join().expect("unable to join daemon-monitor-thread");
     Ok(thread_result?)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::DaemonError;
+
+    #[test]
+    fn non_zero_exit_code_reports_the_daemon_status() {
+        let error = DaemonError::NonZeroExitCode(Some(101));
+        assert_eq!(
+            error.to_string(),
+            "unexpected error, 'espanso daemon' returned a non-zero exit \
+             code: Some(101)."
+        );
+    }
 }
