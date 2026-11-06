@@ -133,7 +133,7 @@ pub fn initialize_and_spawn(
 
             // TODO: pass all the options
             let (detect_source, modifier_state_store, sequencer, key_state_store) =
-                super::engine::funnel::init_and_spawn(SourceCreationOptions {
+                match super::engine::funnel::init_and_spawn(SourceCreationOptions {
                     use_evdev: use_evdev_backend,
                     evdev_keyboard_rmlvo: keyboard_layout_util::generate_detect_rmlvo(
                         &*config_manager.default(),
@@ -142,8 +142,16 @@ pub fn initialize_and_spawn(
                     win32_exclude_orphan_events: default_config.win32_exclude_orphan_events(),
                     win32_keyboard_layout_cache_interval: default_config
                         .win32_keyboard_layout_cache_interval(),
-                })
-                .expect("failed to initialize detector module");
+                }) {
+                    Ok(sources) => sources,
+                    Err(err) => {
+                        error!("failed to initialize detector module: {err:?}");
+                        error!("hint: on Wayland, build with the `wayland` feature (or set USE_EVDEV=true with an X11 build)");
+                        error!("hint: on X11, verify $DISPLAY is set and the XRecord extension is available");
+                        ui_remote.exit();
+                        return ExitMode::Exit;
+                    }
+                };
             let exit_source = super::engine::funnel::exit::ExitSource::new(exit_signal, &sequencer);
             let ipc_event_source =
                 super::engine::funnel::ipc::IpcEventSource::new(ipc_event_receiver, &sequencer);
