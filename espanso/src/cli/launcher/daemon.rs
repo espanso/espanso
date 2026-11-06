@@ -89,5 +89,13 @@ mod tests {
             "unexpected error, 'espanso daemon' returned a non-zero exit \
              code: Some(101)."
         );
+
+        // Killed by signal: no status code, still reported without panicking.
+        let error = DaemonError::NonZeroExitCode(None);
+        assert_eq!(
+            error.to_string(),
+            "unexpected error, 'espanso daemon' returned a non-zero exit \
+             code: None."
+        );
     }
 }
