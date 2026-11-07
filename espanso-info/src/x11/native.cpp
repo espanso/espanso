@@ -114,14 +114,19 @@ int32_t info_get_title(char *buffer, int32_t buffer_size) {
 
     int result = 1;
     if (!focused) {
-        fprintf(stderr, "get_active_window reported an error\n");
+        // No focused window (lock screen, no focus, Wayland without XWayland):
+        // not an error worth spamming stderr for, the Rust side maps this to None.
         result = -2;
     } else {
         char *title = xwm_get_win_title(display, focused);
 
-        snprintf(buffer, buffer_size, "%s", title);
+        if (!title) {
+            result = -3;
+        } else {
+            snprintf(buffer, buffer_size, "%s", title);
 
-        XFree(title);
+            XFree(title);
+        }
     }
 
     XCloseDisplay(display);
@@ -140,7 +145,6 @@ int32_t info_get_exec(char *buffer, int32_t buffer_size) {
 
     int result = 1;
     if (!focused) {
-        fprintf(stderr, "get_active_window reported an error\n");
         result = -2;
     } else {
         // Get the window process PID
@@ -156,7 +160,16 @@ int32_t info_get_exec(char *buffer, int32_t buffer_size) {
             char proc_path[250];
             snprintf(proc_path, 250, "/proc/%d/exe", pid);
 
-            readlink(proc_path, buffer, buffer_size);
+            // readlink never NUL-terminates: honour its return value and
+            // terminate within bounds. An over-long path (or a failed
+            // readlink) reports failure instead of handing Rust an
+            // unterminated buffer.
+            ssize_t len = readlink(proc_path, buffer, buffer_size);
+            if (len < 0 || len >= buffer_size) {
+                result = -4;
+            } else {
+                buffer[len] = '\0';
+            }
 
             XFree(pid_raw);
         }
@@ -178,15 +191,24 @@ int32_t info_get_class(char *buffer, int32_t buffer_size) {
 
     int result = 1;
     if (!focused) {
-        fprintf(stderr, "get_active_window reported an error\n");
         result = -2;
     } else {
         XClassHint hint;
 
         if (XGetClassHint(display, focused, &hint)) {
-            snprintf(buffer, buffer_size, "%s", hint.res_class);
-            XFree(hint.res_name);
-            XFree(hint.res_class);
+            if (hint.res_class) {
+                snprintf(buffer, buffer_size, "%s", hint.res_class);
+            } else {
+                result = -3;
+            }
+            if (hint.res_name) {
+                XFree(hint.res_name);
+            }
+            if (hint.res_class) {
+                XFree(hint.res_class);
+            }
+        } else {
+            result = -3;
         }
     }
 
