@@ -597,7 +597,7 @@ mod tests {
             .lock()
             .unwrap()
             .iter()
-            .any(|(thread, level)| thread == &me && *level >= min_level)
+            .any(|(thread, level)| thread == &me && *level <= min_level)
     }
 
     #[test]
