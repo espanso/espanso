@@ -20,7 +20,8 @@
 use crate::preferences::Preferences;
 use crate::{
     exit_code::{
-        LAUNCHER_ALREADY_RUNNING, LAUNCHER_CONFIG_DIR_POPULATION_FAILURE, LAUNCHER_SUCCESS,
+        LAUNCHER_ALREADY_RUNNING, LAUNCHER_CONFIG_DIR_POPULATION_FAILURE, LAUNCHER_DAEMON_ERROR,
+        LAUNCHER_SUCCESS,
     },
     lock::acquire_daemon_lock,
 };
@@ -193,7 +194,10 @@ fn launcher_main(args: CliModuleArgs) -> i32 {
             espanso_mac_utils::convert_to_background_app();
         }
 
-        daemon::launch_daemon(&paths_overrides).expect("failed to launch daemon");
+        if let Err(err) = daemon::launch_daemon(&paths_overrides) {
+            error!("failed to launch daemon: {err:?}");
+            return LAUNCHER_DAEMON_ERROR;
+        }
     }
 
     LAUNCHER_SUCCESS
