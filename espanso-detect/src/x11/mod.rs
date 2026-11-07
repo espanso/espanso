@@ -244,7 +244,7 @@ impl Source for X11Source {
 impl Drop for X11Source {
     fn drop(&mut self) {
         if self.handle.is_null() {
-            error!("X11Source destruction cannot be performed, handle is null");
+            debug!("X11Source destruction skipped, handle is null (initialization failed or was never attempted)");
             return;
         }
 
@@ -303,14 +303,38 @@ fn convert_raw_input_event_to_input_event(
         // Keyboard events
         INPUT_EVENT_TYPE_KEYBOARD => {
             let (key, variant) = key_sym_to_key(raw.key_sym);
-            let value = if raw.buffer_len > 0 {
+            // XLookupString maps Ctrl/Alt combos to C0 control characters
+            // (NUL for Ctrl+Space, \x16 for Ctrl+V). A lone NUL is handled in
+            // the Err arm below; other controls arrive here as Ok and must
+            // not enter the match buffer — they corrupt downstream shell
+            // extensions (e.g. awk rejecting '\026'). Only Tab/CR/LF carry
+            // meaning, so discard the rest silently.
+            let value = if raw.buffer_len > 0 && raw.buffer_len < raw.buffer.len() as i32 {
                 let raw_string_result =
                     CStr::from_bytes_with_nul(&raw.buffer[..((raw.buffer_len + 1) as usize)]);
                 match raw_string_result {
                     Ok(c_string) => {
                         let string_result = c_string.to_str();
                         match string_result {
-                            Ok(value) => Some(value.to_string()),
+                            Ok(value) => {
+                                if value.is_empty()
+                                    || value.chars().any(|c| {
+                                        c == '\0'
+                                            || (c.is_control() && !matches!(c, '\t' | '\n' | '\r'))
+                                    })
+                                {
+                                    // Expected when a modifier combo yields no
+                                    // printable text (e.g. Ctrl held): stay
+                                    // silent to avoid log spam.
+                                    trace!(
+                                        "discarding non-printable X11 key value (key_sym: {})",
+                                        raw.key_sym
+                                    );
+                                    None
+                                } else {
+                                    Some(value.to_string())
+                                }
+                            }
                             Err(err) => {
                                 warn!("char conversion error: {}", err);
                                 None
@@ -586,8 +610,10 @@ mod tests {
         logger.records.lock().unwrap().clear();
     }
 
-    /// True if the calling thread logged at `min_level` or above since
-    /// the last `capture_thread_logs` call.
+    /// True if the calling thread logged at `min_level` or above (in
+    /// severity) since the last `capture_thread_logs` call. Note `log`
+    /// derives `Ord` on discriminants (`Error = 1` is the most severe),
+    /// so severity-at-or-above is `<=`, not `>=`.
     fn thread_logged_at_or_above(min_level: Level) -> bool {
         let me = std::thread::current().id();
         LOGGER
@@ -597,7 +623,7 @@ mod tests {
             .lock()
             .unwrap()
             .iter()
-            .any(|(thread, level)| thread == &me && *level >= min_level)
+            .any(|(thread, level)| thread == &me && *level <= min_level)
     }
 
     #[test]
@@ -636,6 +662,57 @@ mod tests {
             convert_raw_input_event_to_input_event(raw, &HashMap::new(), 0);
         assert!(result.unwrap().into_keyboard().unwrap().value.is_none());
         assert!(thread_logged_at_or_above(Level::Warn));
+    }
+
+    #[test]
+    fn ctrl_key_produces_no_value() {
+        // Ctrl+V: XLookupString returns a C0 control char (\x16), which
+        // must not enter the match buffer (it corrupts shell extensions).
+        let mut buffer = [0; 24];
+        buffer[0] = 0x16;
+        let mut raw = default_raw_input_event();
+        raw.buffer = buffer;
+        raw.buffer_len = 1;
+        raw.key_sym = 0x56;
+        raw.key_code = 55;
+
+        let result: Option<InputEvent> =
+            convert_raw_input_event_to_input_event(raw, &HashMap::new(), 0);
+        assert!(result.unwrap().into_keyboard().unwrap().value.is_none());
+    }
+
+    #[test]
+    fn corrupt_buffer_len_is_discarded() {
+        // Defensive: buffer_len past the buffer end must not panic the
+        // slicing below, just yield no value.
+        let mut raw = default_raw_input_event();
+        raw.buffer = [b'k'; 24];
+        raw.buffer_len = 24;
+        raw.key_sym = 0x4B;
+        raw.key_code = 1;
+
+        let result: Option<InputEvent> =
+            convert_raw_input_event_to_input_event(raw, &HashMap::new(), 0);
+        assert!(result.unwrap().into_keyboard().unwrap().value.is_none());
+    }
+
+    #[test]
+    fn tab_key_keeps_value() {
+        // Tab/CR/LF are the only control chars that carry meaning.
+        let mut buffer = [0; 24];
+        buffer[0] = b'\t';
+        let mut raw = default_raw_input_event();
+        raw.buffer = buffer;
+        raw.buffer_len = 1;
+        raw.key_sym = 0xFF09;
+        raw.key_code = 23;
+
+        let result: Option<InputEvent> =
+            convert_raw_input_event_to_input_event(raw, &HashMap::new(), 0);
+        assert_eq!(
+            result.unwrap().into_keyboard().unwrap().value,
+            Some("\t".to_string())
+        );
     }
 
     #[test]
