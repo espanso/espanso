@@ -160,7 +160,16 @@ int32_t info_get_exec(char *buffer, int32_t buffer_size) {
             char proc_path[250];
             snprintf(proc_path, 250, "/proc/%d/exe", pid);
 
-            readlink(proc_path, buffer, buffer_size);
+            // readlink never NUL-terminates: honour its return value and
+            // terminate within bounds. An over-long path (or a failed
+            // readlink) reports failure instead of handing Rust an
+            // unterminated buffer.
+            ssize_t len = readlink(proc_path, buffer, buffer_size);
+            if (len < 0 || len >= buffer_size) {
+                result = -4;
+            } else {
+                buffer[len] = '\0';
+            }
 
             XFree(pid_raw);
         }
