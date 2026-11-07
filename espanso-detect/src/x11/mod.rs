@@ -317,11 +317,12 @@ fn convert_raw_input_event_to_input_event(
                         let string_result = c_string.to_str();
                         match string_result {
                             Ok(value) => {
-                                if value.is_empty()
-                                    || value.chars().any(|c| {
-                                        c == '\0'
-                                            || (c.is_control() && !matches!(c, '\t' | '\n' | '\r'))
-                                    })
+                                // CStr content cannot be empty here (buffer_len
+                                // >= 1) and cannot contain NUL (rejected in the
+                                // Err arm), so only the control check matters.
+                                if value
+                                    .chars()
+                                    .any(|c| c.is_control() && !matches!(c, '\t' | '\n' | '\r'))
                                 {
                                     // Expected when a modifier combo yields no
                                     // printable text (e.g. Ctrl held): stay
