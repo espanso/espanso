@@ -398,7 +398,10 @@ void detect_event_callback(XPointer p, XRecordInterceptData *hook) {
     // Extract the corresponding chars.
     int res = XLookupString(&raw_event, event.buffer, sizeof(event.buffer) - 1,
                             NULL, NULL);
-    if (res > 0) {
+    // Clamp the result: XLookupString writes at most sizeof-1 bytes, and the
+    // Rust side only accepts buffer_len in (0, sizeof(buffer)).
+    if (res > 0 && res < (int)sizeof(event.buffer)) {
+        event.buffer[res] = '\0';
         event.buffer_len = res;
     } else {
         memset(event.buffer, 0, sizeof(event.buffer));
