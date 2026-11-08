@@ -166,6 +166,35 @@ mod interop {
         }
     }
 
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        fn base_form(max_form_width: i32, max_form_height: i32) -> types::Form {
+            types::Form {
+                title: "Test".to_string(),
+                icon: None,
+                fields: Vec::new(),
+                max_form_width,
+                max_form_height,
+            }
+        }
+
+        #[test]
+        fn max_form_dimensions_are_forwarded_to_interop() {
+            let owned: OwnedForm = base_form(640, 480).into();
+            assert_eq!(owned.interop.maxWindowWidth, 640);
+            assert_eq!(owned.interop.maxWindowHeight, 480);
+        }
+
+        #[test]
+        fn max_form_dimensions_default_to_zero() {
+            let owned: OwnedForm = base_form(0, 0).into();
+            assert_eq!(owned.interop.maxWindowWidth, 0);
+            assert_eq!(owned.interop.maxWindowHeight, 0);
+        }
+    }
+
     struct OwnedField {
         id: Option<CString>,
         field_type: FieldType,
