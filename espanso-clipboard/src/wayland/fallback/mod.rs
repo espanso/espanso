@@ -77,49 +77,33 @@ impl WaylandFallbackClipboard {
 
 impl Clipboard for WaylandFallbackClipboard {
     fn get_text(&self, _: &ClipboardOperationOptions) -> Option<String> {
-        let timeout = std::time::Duration::from_millis(self.command_timeout);
-        match Command::new("wl-paste")
-            .arg("--no-newline")
-            .stdout(Stdio::piped())
-            .spawn()
-        {
-            Ok(mut child) => match child.wait_timeout(timeout) {
-                Ok(status_code) => {
-                    if let Some(status) = status_code {
-                        if status.success() {
-                            if let Some(mut io) = child.stdout {
-                                let mut output = Vec::new();
-                                io.read_to_end(&mut output).ok()?;
-                                Some(String::from_utf8_lossy(&output).to_string())
-                            } else {
-                                None
-                            }
-                        } else {
-                            error!("error, wl-paste exited with non-zero exit code");
-                            None
-                        }
-                    } else {
-                        error!("error, wl-paste has timed-out, killing the process");
-                        if child.kill().is_err() {
-                            error!("unable to kill wl-paste");
-                        }
-                        None
-                    }
-                }
-                Err(err) => {
-                    error!("error while executing 'wl-paste': {}", err);
-                    None
-                }
-            },
-            Err(err) => {
-                error!("could not invoke 'wl-paste': {}", err);
-                None
-            }
-        }
+        let mut command = Command::new("wl-paste");
+        command.arg("--no-newline");
+
+        let mut output = String::new();
+
+        self.invoke_command_with_timeout(
+            command,
+            None,
+            Some(&mut output),
+            ClipboardAction::Get,
+        )
+        .map(|_| output)
+        .ok()
     }
 
     fn set_text(&self, text: &str, _: &ClipboardOperationOptions) -> anyhow::Result<()> {
-        self.invoke_command_with_timeout(&mut Command::new("wl-copy"), text.as_bytes(), "wl-copy")
+        // NOTE: Without explicit MIME type, wl-copy's auto-detection can give unexpected results
+        // making the text not paste-able in some programs.
+        let mut command = Command::new("wl-copy");
+        command.arg("--type").arg("text/plain;charset=utf-8");
+
+        self.invoke_command_with_timeout(
+            command,
+            Some(text.as_bytes()),
+            None,
+            ClipboardAction::Set,
+        )
     }
 
     fn set_image(
@@ -138,10 +122,14 @@ impl Clipboard for WaylandFallbackClipboard {
         let mut data = Vec::new();
         file.read_to_end(&mut data)?;
 
+        let mut command = Command::new("wl-copy");
+        command.arg("--type").arg("image/png");
+
         self.invoke_command_with_timeout(
-            Command::new("wl-copy").arg("--type").arg("image/png"),
-            &data,
-            "wl-copy",
+            command,
+            Some(&data),
+            None,
+            ClipboardAction::Set,
         )
     }
 
@@ -151,10 +139,14 @@ impl Clipboard for WaylandFallbackClipboard {
         _fallback_text: Option<&str>,
         _: &ClipboardOperationOptions,
     ) -> anyhow::Result<()> {
+        let mut command = Command::new("wl-copy");
+        command.arg("--type").arg("text/html");
+
         self.invoke_command_with_timeout(
-            Command::new("wl-copy").arg("--type").arg("text/html"),
-            html.as_bytes(),
-            "wl-copy",
+            command,
+            Some(html.as_bytes()),
+            None,
+            ClipboardAction::Set,
         )
     }
 }
@@ -162,43 +154,89 @@ impl Clipboard for WaylandFallbackClipboard {
 impl WaylandFallbackClipboard {
     fn invoke_command_with_timeout(
         &self,
-        command: &mut Command,
-        data: &[u8],
-        name: &str,
+        mut command: Command,
+        input_data: Option<&[u8]>,
+        output_buffer: Option<&mut String>,
+        action: ClipboardAction,
     ) -> Result<()> {
         let timeout = std::time::Duration::from_millis(self.command_timeout);
-        match command.stdin(Stdio::piped()).spawn() {
-            Ok(mut child) => {
-                if let Some(stdin) = child.stdin.as_mut() {
-                    stdin.write_all(data)?;
+
+        if input_data.is_some() {
+            command.stdin(Stdio::piped());
+        }
+
+        if output_buffer.is_some() {
+            command.stdout(Stdio::piped());
+        }
+
+        let name = command.get_program().to_string_lossy().into_owned();
+
+        // Spawn the command upfront so we can stream input or capture output as needed
+        let mut child = command.spawn().map_err(|err| {
+            error!("could not invoke '{name}': {err}");
+            action.into_error()
+        })?;
+
+        // Provide stdin payload if any
+        if let Some(data) = input_data {
+            let stdin = child
+                .stdin
+                .as_mut()
+                .ok_or_else(|| anyhow::anyhow!("Unable to open stdin"))?;
+            stdin.write_all(data)?;
+        }
+
+        // Monitor the child with a timeout
+        match child.wait_timeout(timeout) {
+            Ok(Some(status)) if status.success() => {}
+            Ok(Some(_)) => {
+                error!("error, {name} exited with non-zero exit code");
+                let _ = child.wait();
+                return Err(action.into_error().into());
+            }
+            Ok(None) => {
+                error!("error, {name} has timed-out, killing the process");
+                if child.kill().is_err() {
+                    error!("unable to kill {name}");
                 }
-                match child.wait_timeout(timeout) {
-                    Ok(status_code) => {
-                        if let Some(status) = status_code {
-                            if status.success() {
-                                Ok(())
-                            } else {
-                                error!("error, {} exited with non-zero exit code", name);
-                                Err(WaylandFallbackClipboardError::SetOperationFailed().into())
-                            }
-                        } else {
-                            error!("error, {} has timed-out, killing the process", name);
-                            if child.kill().is_err() {
-                                error!("unable to kill {}", name);
-                            }
-                            Err(WaylandFallbackClipboardError::SetOperationFailed().into())
-                        }
-                    }
-                    Err(err) => {
-                        error!("error while executing '{}': {}", name, err);
-                        Err(WaylandFallbackClipboardError::SetOperationFailed().into())
-                    }
-                }
+                let _ = child.wait();
+                return Err(action.into_error().into());
             }
             Err(err) => {
-                error!("could not invoke '{}': {}", name, err);
-                Err(WaylandFallbackClipboardError::SetOperationFailed().into())
+                error!("error while executing '{name}': {err}");
+                if child.kill().is_err() {
+                    error!("unable to kill {name}");
+                }
+                let _ = child.wait();
+                return Err(action.into_error().into());
             }
+        }
+
+        // Command exited successfully, collect stdout if needed
+        if let Some(buffer) = output_buffer {
+            let mut stdout = child.stdout.take().ok_or_else(|| {
+                error!("stdout not available for '{name}'");
+                action.into_error()
+            })?;
+            buffer.clear();
+            stdout.read_to_string(buffer)?;
+        }
+
+        Ok(())
+    }
+}
+
+#[derive(Copy, Clone, Eq, PartialEq)]
+enum ClipboardAction {
+    Get,
+    Set,
+}
+
+impl ClipboardAction {
+    fn into_error(self) -> WaylandFallbackClipboardError {
+        match self {
+            ClipboardAction::Get => WaylandFallbackClipboardError::GetOperationFailed(),
+            ClipboardAction::Set => WaylandFallbackClipboardError::SetOperationFailed(),
         }
     }
 }
@@ -216,6 +254,9 @@ pub(crate) enum WaylandFallbackClipboardError {
 
     #[error("clipboard set operation failed")]
     SetOperationFailed(),
+
+    #[error("clipboard get operation failed")]
+    GetOperationFailed(),
 
     #[error("image not found: `{0}`")]
     ImageNotFound(PathBuf),
