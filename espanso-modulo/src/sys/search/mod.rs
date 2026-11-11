@@ -156,7 +156,8 @@ mod interop {
             };
 
             let preview = item.preview.as_ref().map(|preview| {
-                CString::new(preview.clone()).expect("unable to convert item preview to CString")
+                let preview = crate::search::preview::format_preview(preview);
+                CString::new(preview).expect("unable to convert item preview to CString")
             });
 
             Self {

@@ -146,14 +146,8 @@ wxString ResultListBox::OnGetItem(size_t n) const {
     // from being interpreted as HTML tags (fixes issue #974)
     wxString escapedLabel = EscapeHtml(wxItems[n]);
     wxString escapedTrigger = EscapeHtml(wxTriggers[n]);
-    wxString preview = wxPreviews[n];
-    // Keep previews compact and on one line, even for multiline replacements.
-    preview.Replace("\r", " ");
-    preview.Replace("\n", " ");
-    if (preview.length() > 80) {
-        preview = preview.Left(77) + wxT("...");
-    }
-    wxString escapedPreview = EscapeHtml(preview);
+    // The Rust UI boundary has already flattened and grapheme-truncated previews.
+    wxString escapedPreview = EscapeHtml(wxPreviews[n]);
 
     wxString previewColumn;
     if (!escapedPreview.IsEmpty()) {

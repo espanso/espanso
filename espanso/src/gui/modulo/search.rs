@@ -99,25 +99,6 @@ struct ModuloSearchItemConfig<'a> {
     is_builtin: bool,
 }
 
-const MAX_PREVIEW_CHARS: usize = 80;
-
-fn format_preview(preview: Option<&str>) -> Option<String> {
-    preview.map(|preview| {
-        let mut chars = preview.chars().map(|character| match character {
-            '\r' | '\n' => ' ',
-            character => character,
-        });
-        let mut preview: String = chars.by_ref().take(MAX_PREVIEW_CHARS + 1).collect();
-
-        if preview.chars().count() > MAX_PREVIEW_CHARS {
-            preview = preview.chars().take(MAX_PREVIEW_CHARS - 3).collect();
-            preview.push_str("...");
-        }
-
-        preview
-    })
-}
-
 fn convert_items(items: &'_ [SearchItem]) -> Vec<ModuloSearchItemConfig<'_>> {
     items
         .iter()
@@ -125,7 +106,10 @@ fn convert_items(items: &'_ [SearchItem]) -> Vec<ModuloSearchItemConfig<'_>> {
             id: &item.id,
             label: &item.label,
             trigger: item.tag.as_deref(),
-            preview: format_preview(item.preview.as_deref()),
+            preview: item
+                .preview
+                .as_deref()
+                .map(espanso_modulo::search::preview::format_preview),
             search_terms: if item.additional_search_terms.is_empty() {
                 vec![]
             } else {
@@ -141,7 +125,8 @@ fn convert_items(items: &'_ [SearchItem]) -> Vec<ModuloSearchItemConfig<'_>> {
 
 #[cfg(test)]
 mod tests {
-    use super::{convert_items, ModuloSearchConfig, MAX_PREVIEW_CHARS};
+    use super::{convert_items, ModuloSearchConfig};
+    use espanso_modulo::search::preview::MAX_PREVIEW_GRAPHEMES;
     use crate::gui::SearchItem;
 
     #[test]
@@ -169,7 +154,7 @@ mod tests {
 
         assert_eq!(json["items"][0]["preview"], "first second");
         let long_preview = json["items"][1]["preview"].as_str().unwrap();
-        assert_eq!(long_preview.chars().count(), MAX_PREVIEW_CHARS);
+        assert_eq!(long_preview.chars().count(), MAX_PREVIEW_GRAPHEMES);
         assert!(long_preview.ends_with("..."));
         assert_eq!(
             long_preview.chars().take(77).collect::<String>(),
