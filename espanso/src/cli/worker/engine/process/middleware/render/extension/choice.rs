@@ -48,6 +48,7 @@ fn convert_items(choices: &[espanso_render::extension::choice::Choice]) -> Vec<S
         .map(|choice| SearchItem {
             id: choice.id.to_string(),
             label: choice.label.to_string(),
+            preview: None,
             tag: None,
             additional_search_terms: vec![],
             is_builtin: false,

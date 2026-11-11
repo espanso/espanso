@@ -26,6 +26,7 @@ pub mod types {
         pub id: String,
         pub label: String,
         pub trigger: Option<String>,
+        pub preview: Option<String>,
         pub search_terms: Vec<String>,
         pub is_builtin: bool,
     }
@@ -124,6 +125,7 @@ mod interop {
         id: CString,
         label: CString,
         trigger: CString,
+        preview: Option<CString>,
     }
 
     impl OwnedSearchItem {
@@ -132,6 +134,10 @@ mod interop {
                 id: self.id.as_ptr(),
                 label: self.label.as_ptr(),
                 trigger: self.trigger.as_ptr(),
+                preview: self
+                    .preview
+                    .as_ref()
+                    .map_or(std::ptr::null(), |preview| preview.as_ptr()),
             }
         }
     }
@@ -149,7 +155,17 @@ mod interop {
                 CString::new(String::new()).expect("unable to convert item trigger to CString")
             };
 
-            Self { id, label, trigger }
+            let preview = item.preview.as_ref().map(|preview| {
+                let preview = crate::search::preview::format_preview(preview);
+                CString::new(preview).expect("unable to convert item preview to CString")
+            });
+
+            Self {
+                id,
+                label,
+                trigger,
+                preview,
+            }
         }
     }
 }

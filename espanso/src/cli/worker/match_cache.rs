@@ -130,6 +130,12 @@ impl<'a> super::engine::process::middleware::match_select::MatchProvider<'a>
                 MatchVariant::User(m) => MatchSummary {
                     id: m.id,
                     label: m.description(),
+                    preview: match &m.effect {
+                        MatchEffect::Text(text) if text.vars.is_empty() => {
+                            Some(text.replace.as_str())
+                        }
+                        _ => None,
+                    },
                     tag: m.cause_description(),
                     additional_search_terms: m.search_terms(),
                     is_builtin: false,
@@ -137,6 +143,7 @@ impl<'a> super::engine::process::middleware::match_select::MatchProvider<'a>
                 MatchVariant::Builtin(m) => MatchSummary {
                     id: m.id,
                     label: m.label,
+                    preview: None,
                     tag: m.triggers.first().map(String::as_ref),
                     additional_search_terms: vec![],
                     is_builtin: true,

@@ -94,6 +94,7 @@ pub struct SearchItem {
     pub id: *const ::std::os::raw::c_char,
     pub label: *const ::std::os::raw::c_char,
     pub trigger: *const ::std::os::raw::c_char,
+    pub preview: *const ::std::os::raw::c_char,
 }
 
 #[repr(C)]

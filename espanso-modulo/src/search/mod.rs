@@ -20,5 +20,6 @@
 pub mod algorithm;
 pub mod config;
 pub mod generator;
+pub mod preview;
 
 pub use crate::sys::search::show;

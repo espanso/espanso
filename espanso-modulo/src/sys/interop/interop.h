@@ -80,6 +80,7 @@ typedef struct SearchItem {
     const char *id;
     const char *label;
     const char *trigger;
+    const char *preview;
 } SearchItem;
 
 typedef struct SearchResults {

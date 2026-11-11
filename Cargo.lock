@@ -1114,6 +1114,7 @@ dependencies = [
  "regex",
  "serde",
  "thiserror 1.0.56",
+ "unicode-segmentation",
  "winres",
  "zip",
 ]
