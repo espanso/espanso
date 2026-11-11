@@ -71,6 +71,7 @@ void *data = nullptr;
 void *resultData = nullptr;
 wxArrayString wxItems;
 wxArrayString wxTriggers;
+wxArrayString wxPreviews;
 wxArrayString wxIds;
 
 // App Code
@@ -145,12 +146,27 @@ wxString ResultListBox::OnGetItem(size_t n) const {
     // from being interpreted as HTML tags (fixes issue #974)
     wxString escapedLabel = EscapeHtml(wxItems[n]);
     wxString escapedTrigger = EscapeHtml(wxTriggers[n]);
+    wxString preview = wxPreviews[n];
+    // Keep previews compact and on one line, even for multiline replacements.
+    preview.Replace("\r", " ");
+    preview.Replace("\n", " ");
+    if (preview.length() > 80) {
+        preview = preview.Left(77) + wxT("...");
+    }
+    wxString escapedPreview = EscapeHtml(preview);
+
+    wxString previewColumn;
+    if (!escapedPreview.IsEmpty()) {
+        previewColumn = wxString::Format(
+            wxT("<td width='30%%'><font color='#636e72'>%s</font></td>"),
+            escapedPreview);
+    }
 
     wxString result = wxString::Format(
-        wxT("<font color='%s'><table width='100%%'><tr><td>%s</td><td "
+        wxT("<font color='%s'><table width='100%%'><tr>%s<td>%s</td><td "
             "align='right'><b>%s</b> <font color='#636e72'> "
             "%s</font></td></tr></table></font>"),
-        textColor, escapedLabel, escapedTrigger, shortcut);
+        textColor, previewColumn, escapedLabel, escapedTrigger, shortcut);
 
     return result;
 }
@@ -408,6 +424,7 @@ void SearchFrame::SetItems(SearchItem *items, int itemSize) {
     wxItems.Clear();
     wxIds.Clear();
     wxTriggers.Clear();
+    wxPreviews.Clear();
 
     for (int i = 0; i < itemSize; i++) {
         wxString item = wxString::FromUTF8(items[i].label);
@@ -418,6 +435,12 @@ void SearchFrame::SetItems(SearchItem *items, int itemSize) {
 
         wxString trigger = wxString::FromUTF8(items[i].trigger);
         wxTriggers.Add(trigger);
+
+        wxString preview;
+        if (items[i].preview != nullptr) {
+            preview = wxString::FromUTF8(items[i].preview);
+        }
+        wxPreviews.Add(preview);
     }
 
     resultBox->SetItemCount(itemSize);

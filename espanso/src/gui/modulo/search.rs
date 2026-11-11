@@ -93,6 +93,8 @@ struct ModuloSearchItemConfig<'a> {
     id: &'a str,
     label: &'a str,
     trigger: Option<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    preview: Option<&'a str>,
     search_terms: Vec<&'a str>,
     is_builtin: bool,
 }
@@ -104,6 +106,7 @@ fn convert_items(items: &'_ [SearchItem]) -> Vec<ModuloSearchItemConfig<'_>> {
             id: &item.id,
             label: &item.label,
             trigger: item.tag.as_deref(),
+            preview: item.preview.as_deref(),
             search_terms: if item.additional_search_terms.is_empty() {
                 vec![]
             } else {

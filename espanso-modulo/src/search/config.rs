@@ -58,8 +58,37 @@ pub struct SearchItem {
     pub id: String,
     pub label: String,
     pub trigger: Option<String>,
+
+    #[serde(default)]
+    pub preview: Option<String>,
+
     pub search_terms: Vec<String>,
 
     #[serde(default)]
     pub is_builtin: bool,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::SearchItem;
+
+    #[test]
+    fn preview_is_optional_for_existing_search_configs() {
+        let item: SearchItem = serde_json::from_str(
+            r#"{"id":"1","label":"Universal quantifier","trigger":";forall","search_terms":[]}"#,
+        )
+        .unwrap();
+
+        assert_eq!(item.preview, None);
+    }
+
+    #[test]
+    fn preview_can_be_provided_for_search_items() {
+        let item: SearchItem = serde_json::from_str(
+            r#"{"id":"1","label":"Universal quantifier","trigger":";forall","preview":"∀","search_terms":[]}"#,
+        )
+        .unwrap();
+
+        assert_eq!(item.preview.as_deref(), Some("∀"));
+    }
 }
