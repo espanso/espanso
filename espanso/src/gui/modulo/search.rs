@@ -99,6 +99,16 @@ struct ModuloSearchItemConfig<'a> {
     is_builtin: bool,
 }
 
+#[cfg(feature = "modulo")]
+fn format_preview(preview: Option<&str>) -> Option<String> {
+    preview.map(espanso_modulo::search::preview::format_preview)
+}
+
+#[cfg(not(feature = "modulo"))]
+fn format_preview(preview: Option<&str>) -> Option<String> {
+    preview.map(|preview| preview.to_owned())
+}
+
 fn convert_items(items: &'_ [SearchItem]) -> Vec<ModuloSearchItemConfig<'_>> {
     items
         .iter()
@@ -106,10 +116,7 @@ fn convert_items(items: &'_ [SearchItem]) -> Vec<ModuloSearchItemConfig<'_>> {
             id: &item.id,
             label: &item.label,
             trigger: item.tag.as_deref(),
-            preview: item
-                .preview
-                .as_deref()
-                .map(espanso_modulo::search::preview::format_preview),
+            preview: format_preview(item.preview.as_deref()),
             search_terms: if item.additional_search_terms.is_empty() {
                 vec![]
             } else {
@@ -123,10 +130,9 @@ fn convert_items(items: &'_ [SearchItem]) -> Vec<ModuloSearchItemConfig<'_>> {
         .collect()
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "modulo"))]
 mod tests {
     use super::{convert_items, ModuloSearchConfig};
-    use espanso_modulo::search::preview::MAX_PREVIEW_GRAPHEMES;
     use crate::gui::SearchItem;
 
     #[test]
@@ -154,11 +160,17 @@ mod tests {
 
         assert_eq!(json["items"][0]["preview"], "first second");
         let long_preview = json["items"][1]["preview"].as_str().unwrap();
-        assert_eq!(long_preview.chars().count(), MAX_PREVIEW_GRAPHEMES);
-        assert!(long_preview.ends_with("..."));
+        assert_eq!(long_preview, format!("{}...", "🙂".repeat(77)));
+    }
+}
+
+#[cfg(all(test, not(feature = "modulo")))]
+mod no_modulo_tests {
+    #[test]
+    fn preview_conversion_does_not_require_modulo_dependency() {
         assert_eq!(
-            long_preview.chars().take(77).collect::<String>(),
-            "🙂".repeat(77)
+            super::format_preview(Some("preview")),
+            Some("preview".to_owned())
         );
     }
 }
