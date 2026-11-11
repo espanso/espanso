@@ -31,6 +31,7 @@ pub trait SearchUI {
 pub struct SearchItem {
     pub id: String,
     pub label: String,
+    pub preview: Option<String>,
     pub tag: Option<String>,
     pub additional_search_terms: Vec<String>,
     pub is_builtin: bool,

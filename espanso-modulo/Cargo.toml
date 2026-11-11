@@ -10,6 +10,7 @@ serde.workspace = true
 anyhow.workspace = true
 thiserror.workspace = true
 regex.workspace = true
+unicode-segmentation = "1.9.0"
 
 [build-dependencies]
 cc.workspace = true

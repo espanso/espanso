@@ -31,6 +31,7 @@ pub trait MatchProvider<'a> {
 pub struct MatchSummary<'a> {
     pub id: i32,
     pub label: &'a str,
+    pub preview: Option<&'a str>,
     pub tag: Option<&'a str>,
     pub additional_search_terms: Vec<&'a str>,
     pub is_builtin: bool,
@@ -65,6 +66,7 @@ impl MatchSelector for MatchSelectorAdapter<'_> {
                 SearchItem {
                     id: m.id.to_string(),
                     label: clipped_label,
+                    preview: m.preview.map(String::from),
                     tag: m.tag.map(String::from),
                     additional_search_terms: m
                         .additional_search_terms

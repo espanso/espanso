@@ -93,8 +93,20 @@ struct ModuloSearchItemConfig<'a> {
     id: &'a str,
     label: &'a str,
     trigger: Option<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    preview: Option<String>,
     search_terms: Vec<&'a str>,
     is_builtin: bool,
+}
+
+#[cfg(feature = "modulo")]
+fn format_preview(preview: Option<&str>) -> Option<String> {
+    preview.map(espanso_modulo::search::preview::format_preview)
+}
+
+#[cfg(not(feature = "modulo"))]
+fn format_preview(preview: Option<&str>) -> Option<String> {
+    preview.map(|preview| preview.to_owned())
 }
 
 fn convert_items(items: &'_ [SearchItem]) -> Vec<ModuloSearchItemConfig<'_>> {
@@ -104,6 +116,7 @@ fn convert_items(items: &'_ [SearchItem]) -> Vec<ModuloSearchItemConfig<'_>> {
             id: &item.id,
             label: &item.label,
             trigger: item.tag.as_deref(),
+            preview: format_preview(item.preview.as_deref()),
             search_terms: if item.additional_search_terms.is_empty() {
                 vec![]
             } else {
@@ -115,4 +128,49 @@ fn convert_items(items: &'_ [SearchItem]) -> Vec<ModuloSearchItemConfig<'_>> {
             is_builtin: item.is_builtin,
         })
         .collect()
+}
+
+#[cfg(all(test, feature = "modulo"))]
+mod tests {
+    use super::{convert_items, ModuloSearchConfig};
+    use crate::gui::SearchItem;
+
+    #[test]
+    fn serialized_previews_are_flattened_and_bounded() {
+        let make_item = |id: &str, preview: &str| SearchItem {
+            id: id.to_owned(),
+            label: "label".to_owned(),
+            preview: Some(preview.to_owned()),
+            tag: None,
+            additional_search_terms: vec![],
+            is_builtin: false,
+        };
+        let long_preview = format!("{}tail", "🙂".repeat(78));
+        let items = [
+            make_item("multiline", "first\nsecond"),
+            make_item("long", &long_preview),
+        ];
+
+        let json = serde_json::to_value(ModuloSearchConfig {
+            title: "espanso",
+            hint: None,
+            items: convert_items(&items),
+        })
+        .unwrap();
+
+        assert_eq!(json["items"][0]["preview"], "first second");
+        let long_preview = json["items"][1]["preview"].as_str().unwrap();
+        assert_eq!(long_preview, format!("{}...", "🙂".repeat(77)));
+    }
+}
+
+#[cfg(all(test, not(feature = "modulo")))]
+mod no_modulo_tests {
+    #[test]
+    fn preview_conversion_does_not_require_modulo_dependency() {
+        assert_eq!(
+            super::format_preview(Some("preview")),
+            Some("preview".to_owned())
+        );
+    }
 }
