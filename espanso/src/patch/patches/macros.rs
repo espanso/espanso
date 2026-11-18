@@ -83,6 +83,10 @@ macro_rules! generate_patchable_config {
           self.base.search_shortcut()
         }
 
+        fn support_virtual_keyboard(&self) -> bool {
+          self.base.support_virtual_keyboard()
+        }
+
         fn show_icon(&self) -> bool {
           self.base.show_icon()
         }
