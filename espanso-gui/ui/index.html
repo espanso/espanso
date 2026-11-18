@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Espanso Match Studio</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <div class="grain"></div>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <header class="brand">
+          <div class="brand-icon">✦</div>
+          <div>
+            <h1>Match Studio</h1>
+            <p>Espanso desktop editor</p>
+          </div>
+        </header>
+
+        <section class="path-section panel">
+          <label for="filePath">Match file</label>
+          <div class="path-stack">
+            <input id="filePath" type="text" spellcheck="false" />
+            <button id="useDefaultBtn" class="ghost">Use default</button>
+            <button id="reloadBtn">Load matches</button>
+          </div>
+          <p class="hint">
+            Tip: set <code>ESPANSO_CONFIG_DIR</code> to target a custom profile.
+          </p>
+        </section>
+
+        <section class="stats panel">
+          <p class="eyebrow">Current file</p>
+          <h2 id="statsFile">—</h2>
+          <p class="eyebrow">Total matches</p>
+          <h3 id="statsCount">0</h3>
+        </section>
+      </aside>
+
+      <main class="main">
+        <section class="toolbar">
+          <div class="toolbar-title">
+            <h2>Matches</h2>
+            <span id="selectionBadge">Creating new</span>
+          </div>
+          <div class="toolbar-actions">
+            <button id="newBtn" class="ghost">New match</button>
+            <button id="saveBtn" class="primary">Add match</button>
+            <button id="deleteBtn" class="danger" disabled>Delete</button>
+          </div>
+        </section>
+
+        <section class="editor-grid">
+          <article class="editor panel">
+            <h3>Match editor</h3>
+            <div class="form-grid">
+              <label for="triggerInput">Trigger</label>
+              <input id="triggerInput" type="text" placeholder=":hello" />
+
+              <label for="replaceInput">Replace</label>
+              <textarea id="replaceInput" rows="6" placeholder="Hello there!"></textarea>
+
+              <label for="labelInput">Label (optional)</label>
+              <input id="labelInput" type="text" placeholder="Greeting snippet" />
+            </div>
+            <p class="hint">
+              Editing an existing row updates it in-place. Multi-trigger entries are normalized to a single trigger when updated.
+            </p>
+          </article>
+
+          <article class="list panel">
+            <h3>All matches</h3>
+            <ul id="matchList" class="match-list"></ul>
+          </article>
+        </section>
+      </main>
+    </div>
+
+    <div id="toast" class="toast" aria-live="polite"></div>
+    <script src="./app.js"></script>
+  </body>
+</html>

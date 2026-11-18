@@ -1,0 +1,40 @@
+{
+  "$schema": "https://schema.tauri.app/config/1",
+  "build": {
+    "beforeBuildCommand": "",
+    "beforeDevCommand": "",
+    "withGlobalTauri": true,
+    "devPath": "ui",
+    "distDir": "ui"
+  },
+  "package": {
+    "productName": "Espanso Match Studio",
+    "version": "0.1.0"
+  },
+  "tauri": {
+    "allowlist": {
+      "all": false,
+      "dialog": {
+        "all": true
+      },
+      "path": {
+        "all": true
+      }
+    },
+    "bundle": {
+      "active": true,
+      "identifier": "org.espanso.matchstudio",
+      "targets": "all"
+    },
+    "windows": [
+      {
+        "title": "Espanso Match Studio",
+        "width": 1300,
+        "height": 880,
+        "resizable": true,
+        "minWidth": 1024,
+        "minHeight": 700
+      }
+    ]
+  }
+}
