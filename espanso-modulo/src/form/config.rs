@@ -78,6 +78,7 @@ pub enum FieldTypeConfig {
     Text(TextFieldConfig),
     Choice(ChoiceFieldConfig),
     List(ListFieldConfig),
+    Checkbox(CheckboxFieldConfig),
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -97,6 +98,24 @@ pub struct ListFieldConfig {
     pub values: Vec<String>,
     pub default: String,
     pub separator: String,
+}
+
+fn default_checkbox_separator() -> String {
+    "\n".to_owned()
+}
+
+fn default_checkbox_prefix() -> String {
+    "- ".to_owned()
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct CheckboxFieldConfig {
+    pub values: Vec<String>,
+    pub default: Option<Vec<String>>,
+    #[serde(default = "default_checkbox_separator")]
+    pub separator: String,
+    #[serde(default = "default_checkbox_prefix")]
+    pub prefix: String,
 }
 
 impl<'de> serde::Deserialize<'de> for FieldConfig {
@@ -145,9 +164,18 @@ impl<'a> From<&'a AutoFieldConfig> for FieldConfig {
                     config.default.clone_from(default);
                 }
 
-                config.separator.clone_from(&other.separator);
+                config.separator = other.separator.clone().unwrap_or_else(|| ", ".to_owned());
 
                 FieldTypeConfig::List(config)
+            }
+            "checkbox" => {
+                let config = CheckboxFieldConfig {
+                    values: other.values.clone(),
+                    default: other.defaults.clone(),
+                    separator: other.separator.clone().unwrap_or_else(default_checkbox_separator),
+                    prefix: other.prefix.clone().unwrap_or_else(default_checkbox_prefix),
+                };
+                FieldTypeConfig::Checkbox(config)
             }
             _ => {
                 panic!("invalid field type: {}", other.field_type);
@@ -174,8 +202,16 @@ fn default_values() -> Vec<String> {
     Vec::new()
 }
 
-fn default_separator() -> String {
-    ", ".to_owned()
+fn default_separator() -> Option<String> {
+    None
+}
+
+fn default_prefix() -> Option<String> {
+    None
+}
+
+fn default_defaults() -> Option<Vec<String>> {
+    None
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -193,5 +229,11 @@ pub struct AutoFieldConfig {
     pub values: Vec<String>,
 
     #[serde(default = "default_separator")]
-    pub separator: String,
+    pub separator: Option<String>,
+
+    #[serde(default = "default_prefix")]
+    pub prefix: Option<String>,
+
+    #[serde(default = "default_defaults")]
+    pub defaults: Option<Vec<String>>,
 }

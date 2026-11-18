@@ -55,6 +55,7 @@ pub mod types {
         Label(LabelMetadata),
         Text(TextMetadata),
         Choice(ChoiceMetadata),
+        Checkbox(CheckboxMetadata),
     }
 
     #[derive(Debug)]
@@ -86,6 +87,14 @@ pub mod types {
         pub default_value: String,
         pub separator: String,
     }
+
+    #[derive(Debug)]
+    pub struct CheckboxMetadata {
+        pub values: Vec<String>,
+        pub defaults: Vec<String>,
+        pub separator: String,
+        pub prefix: String,
+    }
 }
 
 // Form interop
@@ -95,9 +104,10 @@ mod interop {
     use crate::sys;
 
     use super::super::interop::{
-        ChoiceMetadata, ChoiceType_DROPDOWN, ChoiceType_LIST, FieldMetadata, FieldType,
-        FieldType_CHOICE, FieldType_LABEL, FieldType_ROW, FieldType_TEXT, FormMetadata,
-        Interoperable, LabelMetadata, RowMetadata, TextMetadata,
+        CheckboxMetadata as InteropCheckboxMetadata, ChoiceMetadata, ChoiceType_DROPDOWN,
+        ChoiceType_LIST, FieldMetadata, FieldType, FieldType_CHECKBOX, FieldType_CHOICE,
+        FieldType_LABEL, FieldType_ROW, FieldType_TEXT, FormMetadata, Interoperable,
+        LabelMetadata, RowMetadata, TextMetadata,
     };
     use super::types;
     use std::ffi::{c_void, CString};
@@ -183,6 +193,7 @@ mod interop {
                 types::FieldType::Label(_) => FieldType_LABEL,
                 types::FieldType::Text(_) => FieldType_TEXT,
                 types::FieldType::Choice(_) => FieldType_CHOICE,
+                types::FieldType::Checkbox(_) => FieldType_CHECKBOX,
                 types::FieldType::Unknown => panic!("unknown field type"),
             };
 
@@ -202,6 +213,10 @@ mod interop {
                 }
                 types::FieldType::Choice(metadata) => {
                     let owned_metadata: OwnedChoiceMetadata = metadata.into();
+                    Box::new(owned_metadata)
+                }
+                types::FieldType::Checkbox(metadata) => {
+                    let owned_metadata: OwnedCheckboxMetadata = metadata.into();
                     Box::new(owned_metadata)
                 }
                 types::FieldType::Unknown => panic!("unknown field type"),
@@ -327,6 +342,68 @@ mod interop {
                 values_ptr_array,
                 default_value,
                 separator,
+                interop,
+            }
+        }
+    }
+
+    struct OwnedCheckboxMetadata {
+        values: Vec<CString>,
+        values_ptr_array: Vec<*const c_char>,
+        defaults: Vec<CString>,
+        defaults_ptr_array: Vec<*const c_char>,
+        separator: CString,
+        prefix: CString,
+        interop: Box<InteropCheckboxMetadata>,
+    }
+
+    impl Interoperable for OwnedCheckboxMetadata {
+        fn as_ptr(&self) -> *const c_void {
+            std::ptr::from_ref::<InteropCheckboxMetadata>(&(*self.interop)) as *const c_void
+        }
+    }
+
+    fn sanitize(s: String) -> CString {
+        CString::new(s.replace('\0', "")).expect("NUL-free after replace")
+    }
+
+    impl From<types::CheckboxMetadata> for OwnedCheckboxMetadata {
+        fn from(metadata: types::CheckboxMetadata) -> Self {
+            let values: Vec<CString> = metadata
+                .values
+                .into_iter()
+                .map(sanitize)
+                .collect();
+            let values_ptr_array: Vec<*const c_char> =
+                values.iter().map(|v| v.as_ptr()).collect();
+
+            let defaults: Vec<CString> = metadata
+                .defaults
+                .into_iter()
+                .map(sanitize)
+                .collect();
+            let defaults_ptr_array: Vec<*const c_char> =
+                defaults.iter().map(|v| v.as_ptr()).collect();
+
+            let separator = sanitize(metadata.separator);
+            let prefix = sanitize(metadata.prefix);
+
+            let interop = Box::new(InteropCheckboxMetadata {
+                values: values_ptr_array.as_ptr(),
+                valueSize: values.len() as c_int,
+                defaults: defaults_ptr_array.as_ptr(),
+                defaultSize: defaults.len() as c_int,
+                separator: separator.as_ptr(),
+                prefix: prefix.as_ptr(),
+            });
+
+            Self {
+                values,
+                values_ptr_array,
+                defaults,
+                defaults_ptr_array,
+                separator,
+                prefix,
                 interop,
             }
         }

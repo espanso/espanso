@@ -60,6 +60,15 @@ typedef struct RowMetadata {
     const int fieldSize;
 } RowMetadata;
 
+typedef struct CheckboxMetadata {
+    const char *const *values;
+    const int valueSize;
+    const char *const *defaults;
+    const int defaultSize;
+    const char *separator;
+    const char *prefix;
+} CheckboxMetadata;
+
 typedef struct FormMetadata {
     const char *windowTitle;
     const char *iconPath;
