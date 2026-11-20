@@ -68,6 +68,14 @@ pub struct ModifierState {
     pub is_meta_down: bool,
 }
 
+impl ModifierState {
+    /// Option/Ctrl+Backspace delete a whole word and Cmd+Backspace a whole line, so a Backspace
+    /// with one of these held removes more than the single character the engine can account for.
+    pub fn is_word_or_line_delete(&self) -> bool {
+        self.is_alt_down || self.is_ctrl_down || self.is_meta_down
+    }
+}
+
 pub struct MatcherMiddleware<'a, State> {
     matchers: &'a [&'a dyn Matcher<'a, State>],
 
@@ -118,7 +126,7 @@ impl<State> Middleware for MatcherMiddleware<'_, State> {
                 if keyboard_event.key == Key::Backspace {
                     let after_injection = self.after_injection.replace(false);
                     let modifiers = self.modifier_status_provider.get_modifier_state();
-                    if modifiers.is_alt_down || modifiers.is_ctrl_down || modifiers.is_meta_down {
+                    if modifiers.is_word_or_line_delete() {
                         // Option/Ctrl+Backspace delete a whole word, Cmd+Backspace a line: the
                         // buffer no longer reflects the text, popping one state would be wrong
                         trace!("backspace with modifier, clearing matching state");
