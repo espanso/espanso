@@ -41,6 +41,11 @@ class DerivedWelcomeFrame : public WelcomeFrame {
     void on_dont_show_change(wxCommandEvent &event);
     void on_complete(wxCommandEvent &event);
 
+#ifdef __WXMSW__
+    WXLRESULT MSWWindowProc(WXUINT message, WXWPARAM wParam, WXLPARAM lParam);
+    void ApplyTheme();
+#endif
+
   public:
     DerivedWelcomeFrame(wxWindow *parent);
 };
@@ -67,7 +72,29 @@ DerivedWelcomeFrame::DerivedWelcomeFrame(wxWindow *parent)
     if (welcome_metadata->already_running) {
         this->title_label->SetLabel("Espanso is already running!");
     }
+
+#ifdef __WXMSW__
+    applyDarkModeToWindow(GetHandle(), isSystemDark());
+    applyThemeColors(this, isSystemDark());
+#endif
 }
+
+#ifdef __WXMSW__
+void DerivedWelcomeFrame::ApplyTheme() {
+    bool dark = isSystemDark();
+    applyDarkModeToWindow(GetHandle(), dark);
+    applyThemeColors(this, dark);
+}
+
+WXLRESULT DerivedWelcomeFrame::MSWWindowProc(WXUINT message, WXWPARAM wParam,
+                                             WXLPARAM lParam) {
+    WXLRESULT result = WelcomeFrame::MSWWindowProc(message, wParam, lParam);
+    if (isColorSchemeChange(message, lParam)) {
+        CallAfter(&DerivedWelcomeFrame::ApplyTheme);
+    }
+    return result;
+}
+#endif
 
 void DerivedWelcomeFrame::on_dont_show_change(wxCommandEvent &event) {
     if (welcome_metadata->dont_show_again_changed) {
@@ -79,6 +106,9 @@ void DerivedWelcomeFrame::on_dont_show_change(wxCommandEvent &event) {
 void DerivedWelcomeFrame::on_complete(wxCommandEvent &event) { Close(true); }
 
 bool WelcomeApp::OnInit() {
+#ifdef __WXMSW__
+    enableAppDarkMode();
+#endif
     wxInitAllImageHandlers();
     DerivedWelcomeFrame *frame = new DerivedWelcomeFrame(NULL);
 

@@ -109,10 +109,18 @@ class FormFrame : public wxFrame {
     void UpdateHelpText();
     void HandleNormalFocus(wxFocusEvent &event);
     void HandleMultilineFocus(wxFocusEvent &event);
+
+#ifdef __WXMSW__
+    WXLRESULT MSWWindowProc(WXUINT message, WXWPARAM wParam, WXLPARAM lParam);
+    void ApplyTheme();
+#endif
 };
 enum { ID_Submit = 20000 };
 
 bool FormApp::OnInit() {
+#ifdef __WXMSW__
+    enableAppDarkMode();
+#endif
     const wxSize &maxFormSize =
         wxSize(formMetadata->maxWindowWidth, formMetadata->maxWindowHeight);
     FormFrame *frame =
@@ -156,7 +164,29 @@ FormFrame::FormFrame(const wxString &title, const wxPoint &pos,
 
     this->SetClientSize(panel->GetBestSize());
     this->CentreOnScreen();
+
+#ifdef __WXMSW__
+    applyDarkModeToWindow(GetHandle(), isSystemDark());
+    applyThemeColors(this, isSystemDark());
+#endif
 }
+
+#ifdef __WXMSW__
+void FormFrame::ApplyTheme() {
+    bool dark = isSystemDark();
+    applyDarkModeToWindow(GetHandle(), dark);
+    applyThemeColors(this, dark);
+}
+
+WXLRESULT FormFrame::MSWWindowProc(WXUINT message, WXWPARAM wParam,
+                                   WXLPARAM lParam) {
+    WXLRESULT result = wxFrame::MSWWindowProc(message, wParam, lParam);
+    if (isColorSchemeChange(message, lParam)) {
+        CallAfter(&FormFrame::ApplyTheme);
+    }
+    return result;
+}
+#endif
 
 void FormFrame::AddComponent(wxPanel *parent, wxBoxSizer *sizer,
                              FieldMetadata meta) {

@@ -19,8 +19,27 @@
 
 #include "common.h"
 
+// Dark-mode palette
+const wxColour DARK_BG(32, 32, 32);
+const wxColour DARK_FG(235, 235, 235);
+const wxColour DARK_BORDER(60, 60, 60);
+const wxColour LIGHT_BORDER(218, 220, 224);
+
 #ifdef __WXMSW__
+#include <dwmapi.h>
+#include <wchar.h>
 #include <windows.h>
+#pragma comment(lib, "dwmapi.lib")
+
+#ifndef DWMWA_USE_IMMERSIVE_DARK_MODE
+#define DWMWA_USE_IMMERSIVE_DARK_MODE 20
+#endif
+#ifndef DWMWA_BORDER_COLOR
+#define DWMWA_BORDER_COLOR 34
+#endif
+#ifndef DWMWA_CAPTION_COLOR
+#define DWMWA_CAPTION_COLOR 35
+#endif
 #endif
 #ifdef __WXOSX__
 #include "mac.h"
@@ -80,3 +99,111 @@ void SetupWindowStyle(wxFrame *frame) {
     SetWindowStyles((NSWindow *)frame->MacGetTopLevelWindowRef());
 #endif
 }
+
+#ifdef __WXMSW__
+typedef BOOL(WINAPI *SetPreferredAppModeFn)(DWORD);
+
+void enableAppDarkMode() {
+    // Ordinal 135 (SetPreferredAppMode) requires Windows 10 1903 (build 18362)+.
+    typedef LONG(WINAPI *RtlGetVersionFn)(OSVERSIONINFOW *);
+    HMODULE ntdll = GetModuleHandleW(L"ntdll.dll");
+    RtlGetVersionFn getVersion = ntdll
+        ? (RtlGetVersionFn)GetProcAddress(ntdll, "RtlGetVersion")
+        : nullptr;
+    OSVERSIONINFOW version = {};
+    version.dwOSVersionInfoSize = sizeof(version);
+    if (!getVersion || getVersion(&version) != 0 ||
+        version.dwMajorVersion < 10 || version.dwBuildNumber < 18362) {
+        return;
+    }
+    HMODULE hUxTheme = LoadLibraryW(L"uxtheme.dll");
+    if (hUxTheme) {
+        SetPreferredAppModeFn fn =
+            (SetPreferredAppModeFn)GetProcAddress(hUxTheme, (LPCSTR)135);
+        if (fn) {
+            fn(1); // 1 = AllowDark
+        }
+        FreeLibrary(hUxTheme);
+    }
+}
+
+void applyDarkModeToWindow(void *hwnd, bool dark) {
+    HWND h = (HWND)hwnd;
+    if (!h) {
+        return;
+    }
+    BOOL value = dark ? TRUE : FALSE;
+    DwmSetWindowAttribute(h, DWMWA_USE_IMMERSIVE_DARK_MODE, &value,
+                          sizeof(value));
+
+    COLORREF borderColor =
+        dark ? RGB(60, 60, 60) : 0xFFFFFFFF; // DWMWA_COLOR_DEFAULT
+    DwmSetWindowAttribute(h, DWMWA_BORDER_COLOR, &borderColor,
+                          sizeof(borderColor));
+
+    COLORREF captionColor = dark ? RGB(32, 32, 32) : 0xFFFFFFFF;
+    DwmSetWindowAttribute(h, DWMWA_CAPTION_COLOR, &captionColor,
+                          sizeof(captionColor));
+}
+
+typedef HRESULT(WINAPI *SetWindowThemeFn)(HWND, LPCWSTR, LPCWSTR);
+
+void applyWindowTheme(void *hwnd, bool dark) {
+    HWND h = (HWND)hwnd;
+    if (!h) {
+        return;
+    }
+    HMODULE hUxTheme = LoadLibraryW(L"uxtheme.dll");
+    if (hUxTheme) {
+        SetWindowThemeFn fn =
+            (SetWindowThemeFn)GetProcAddress(hUxTheme, "SetWindowTheme");
+        if (fn) {
+            fn(h, dark ? L"DarkMode_Explorer" : nullptr, nullptr);
+        }
+        FreeLibrary(hUxTheme);
+    }
+}
+
+bool isSystemDark() {
+    HKEY hKey = NULL;
+    DWORD value = 1;
+    if (RegOpenKeyExW(HKEY_CURRENT_USER,
+                      L"Software\\Microsoft\\Windows\\CurrentVersion\\"
+                      L"Themes\\Personalize",
+                      0, KEY_READ, &hKey) == ERROR_SUCCESS) {
+        DWORD size = sizeof(DWORD);
+        RegQueryValueExW(hKey, L"AppsUseLightTheme", nullptr, nullptr,
+                         (LPBYTE)&value, &size);
+        RegCloseKey(hKey);
+    }
+    return value == 0;
+}
+
+void applyThemeColors(wxWindow *win, bool dark) {
+    if (win == nullptr) {
+        return;
+    }
+    wxColour bg =
+        dark ? DARK_BG : wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW);
+    wxColour fg =
+        dark ? DARK_FG : wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOWTEXT);
+    win->SetBackgroundColour(bg);
+    win->SetForegroundColour(fg);
+
+    if (win->GetHandle()) {
+        applyWindowTheme(win->GetHandle(), dark);
+    }
+
+    const wxWindowList &children = win->GetChildren();
+    for (wxWindowList::const_iterator it = children.begin();
+         it != children.end(); ++it) {
+        applyThemeColors(*it, dark);
+    }
+    win->Refresh();
+}
+
+bool isColorSchemeChange(WXUINT message, WXLPARAM lParam) {
+    return message == WM_SETTINGCHANGE && lParam != 0 &&
+           wcscmp((LPCWSTR)lParam, L"ImmersiveColorSet") == 0;
+}
+#endif

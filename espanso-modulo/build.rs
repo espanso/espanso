@@ -157,6 +157,10 @@ fn build_native() {
         "cargo:rustc-link-search=native={}",
         wx_lib_dir.to_string_lossy()
     );
+    println!("cargo:rerun-if-changed=src/sys");
+    println!("cargo:rerun-if-changed=res/win.manifest");
+    println!("cargo:rerun-if-changed=vendor/{WX_WIDGETS_ARCHIVE_NAME}");
+    println!("cargo:rerun-if-env-changed={WX_WIDGETS_BUILD_OUT_DIR_ENV_NAME}");
 }
 
 #[cfg(target_os = "macos")]

@@ -33,4 +33,21 @@ void Activate(wxFrame *frame);
 
 void SetupWindowStyle(wxFrame *frame);
 
+// Dark-mode palette
+extern const wxColour DARK_BG;
+extern const wxColour DARK_FG;
+extern const wxColour DARK_BORDER;
+extern const wxColour LIGHT_BORDER;
+
+#ifdef __WXMSW__
+// Recursively theme a window and its children.
+void applyThemeColors(wxWindow *win, bool dark);
+
+void enableAppDarkMode();
+void applyDarkModeToWindow(void *hwnd, bool dark);
+void applyWindowTheme(void *hwnd, bool dark);
+bool isSystemDark();
+bool isColorSchemeChange(WXUINT message, WXLPARAM lParam);
+#endif
+
 #endif
