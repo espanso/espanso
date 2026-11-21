@@ -144,15 +144,12 @@ wxString EscapeHtml(const wxString &str) {
 
 wxString ResultListBox::OnGetItem(size_t n) const {
     wxString textColor = isDark ? "white" : "";
-    // Match HTML cell backgrounds to the row palette so they do not cover the
-    // selection highlight or expose a light background during repainting.
     wxColour bg =
         isDark ? DARK_BG : wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW);
     if (IsSelected(n)) {
         bg = isDark ? SELECTION_DARK_BG : SELECTION_LIGHT_BG;
     }
     wxString bgColor = bg.GetAsString(wxC2S_HTML_SYNTAX);
-    // Use a lighter shortcut hint against dark backgrounds.
     wxString shortcutColor = isDark ? "#9aa6ad" : "#636e72";
     wxString shortcut =
         (n < 8) ? wxString::Format(wxT("Alt+%i"), (int)n + 1) : " ";
@@ -191,15 +188,11 @@ class SearchFrame : public wxFrame {
     void OnItemClickEvent(wxCommandEvent &event);
     void OnActivate(wxActivateEvent &event);
 
-    // Use the current palette when erasing the frame and child backgrounds.
     void OnEraseBackground(wxEraseEvent &event);
     void OnContainerPaint(wxPaintEvent &event);
-
-    // Hide before destruction to avoid exposing intermediate native repaints.
     void OnClose(wxCloseEvent &event);
 
 #ifdef __WXMSW__
-    // Re-theme live when the system colour scheme changes.
     WXLRESULT MSWWindowProc(WXUINT message, WXWPARAM wParam, WXLPARAM lParam);
     void ApplyTheme();
 #endif
@@ -213,7 +206,6 @@ class SearchFrame : public wxFrame {
     void OnMouseLDown(wxMouseEvent &event);
     wxPoint mLastPt;
 
-    // Current theme; used by OnEraseBackground to avoid a white flash.
     bool m_dark = false;
 
     // Selection
@@ -224,7 +216,6 @@ class SearchFrame : public wxFrame {
 
 bool SearchApp::OnInit() {
 #ifdef __WXMSW__
-    // Opt into Windows immersive dark mode before any window is created.
     enableAppDarkMode();
 #endif
 
@@ -232,7 +223,7 @@ bool SearchApp::OnInit() {
         new SearchFrame(wxString::FromUTF8(searchMetadata->windowTitle),
                         wxPoint(50, 50), wxSize(450, 340));
     frame->Show(true);
-    // Process pending paint requests immediately to reduce startup flicker.
+    // Flush paint events to reduce initial flicker.
     frame->Update();
     SetupWindowStyle(frame);
     Activate(frame);
@@ -244,7 +235,6 @@ SearchFrame::SearchFrame(const wxString &title, const wxPoint &pos,
     wxInitAllImageHandlers();
 
 #ifdef __WXMSW__
-    // Follow the app-theme preference, independently of the taskbar theme.
     bool isDark = isSystemDark();
 #elif wxCHECK_VERSION(3, 1, 3)
     bool isDark = wxSystemSettings::GetAppearance().IsDark();
@@ -330,8 +320,6 @@ SearchFrame::SearchFrame(const wxString &title, const wxPoint &pos,
     Bind(wxEVT_LISTBOX_DCLICK, &SearchFrame::OnItemClickEvent, this, resultId);
     Bind(wxEVT_ACTIVATE, &SearchFrame::OnActivate, this, wxID_ANY);
 
-    // Erase events are handled on their target window, so bind the palette
-    // handler to the frame, panel and list drawing target.
     Bind(wxEVT_ERASE_BACKGROUND, &SearchFrame::OnEraseBackground, this);
     panel->Bind(wxEVT_ERASE_BACKGROUND, &SearchFrame::OnEraseBackground, this);
     resultBox->Bind(wxEVT_ERASE_BACKGROUND, &SearchFrame::OnEraseBackground,
@@ -341,7 +329,6 @@ SearchFrame::SearchFrame(const wxString &title, const wxPoint &pos,
                        this);
     }
 
-    // Hide before destruction to avoid exposing intermediate native repaints.
     Bind(wxEVT_CLOSE_WINDOW, &SearchFrame::OnClose, this);
 
     if (searchContainer) {
@@ -350,7 +337,6 @@ SearchFrame::SearchFrame(const wxString &title, const wxPoint &pos,
     }
 
 #ifdef __WXMSW__
-    // Apply dark mode up-front; live changes handled in MSWWindowProc.
     applyDarkModeToWindow(GetHandle(), isDark);
     SetTheme(isDark);
 #endif
@@ -446,10 +432,6 @@ void SearchFrame::OnActivate(wxActivateEvent &event) {
 }
 
 void SearchFrame::SetTheme(bool dark) {
-    // wxWidgets 3.1.5 does not auto-darken the Windows client area, so we set the
-    // colours explicitly on the frame and every child control. The result
-    // list box additionally needs its internal isDark flag (it draws its own
-    // HTML text + selection colours).
     m_dark = dark;
 #ifdef __WXMSW__
     applyThemeColors(this, dark);
@@ -464,15 +446,13 @@ void SearchFrame::ApplyTheme() {
     bool dark = isSystemDark();
     applyDarkModeToWindow(GetHandle(), dark);
     SetTheme(dark);
-    // Repaint margins, static controls and the input border as well as results.
     RedrawWindow((HWND)GetHandle(), nullptr, nullptr,
                  RDW_INVALIDATE | RDW_ERASE | RDW_FRAME | RDW_ALLCHILDREN);
 }
 #endif
 
 void SearchFrame::OnEraseBackground(wxEraseEvent &event) {
-    // Use the frame's palette for every drawing target. Do not skip the event:
-    // the default erase handler could paint a light background during a repaint.
+    // Avoid default erase to prevent white flashes during repaint.
     wxDC *dc = event.GetDC();
     if (dc != nullptr) {
         wxColour bg =
@@ -495,7 +475,6 @@ void SearchFrame::OnContainerPaint(wxPaintEvent &event) {
     dc.SetPen(*wxTRANSPARENT_PEN);
     dc.DrawRectangle(0, 0, sz.x, sz.y);
 
-    // Keep three neutral edges in dark mode; a white input outline is too bright.
     wxColour borderCol = m_dark ? DARK_BORDER : LIGHT_BORDER;
     wxPen borderPen(borderCol, 1);
     dc.SetPen(borderPen);
@@ -503,7 +482,6 @@ void SearchFrame::OnContainerPaint(wxPaintEvent &event) {
     dc.DrawLine(0, 0, 0, sz.y);               // Left
     dc.DrawLine(sz.x - 1, 0, sz.x - 1, sz.y); // Right
 
-    // Keep the blue accent on the bottom edge in both themes.
     wxColour bottomCol(0, 120, 215);
     wxPen bottomPen(bottomCol, 2);
     dc.SetPen(bottomPen);
@@ -511,8 +489,6 @@ void SearchFrame::OnContainerPaint(wxPaintEvent &event) {
 }
 
 void SearchFrame::OnClose(wxCloseEvent &event) {
-    // Hide before native child controls are torn down so intermediate repaint
-    // colors are not visible while closing the window.
     Hide();
     event.Skip();
 }
@@ -522,8 +498,6 @@ WXLRESULT SearchFrame::MSWWindowProc(WXUINT message, WXWPARAM wParam,
                                      WXLPARAM lParam) {
     WXLRESULT result = wxFrame::MSWWindowProc(message, wParam, lParam);
     if (isColorSchemeChange(message, lParam)) {
-        // wxWidgets processes system colour changes on child windows too.
-        // Apply our palette after that processing has finished.
         CallAfter(&SearchFrame::ApplyTheme);
     }
     return result;

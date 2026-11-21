@@ -42,7 +42,6 @@ class DerivedWelcomeFrame : public WelcomeFrame {
     void on_complete(wxCommandEvent &event);
 
 #ifdef __WXMSW__
-    // Re-theme live when the system colour scheme changes.
     WXLRESULT MSWWindowProc(WXUINT message, WXWPARAM wParam, WXLPARAM lParam);
     void ApplyTheme();
 #endif
@@ -75,7 +74,6 @@ DerivedWelcomeFrame::DerivedWelcomeFrame(wxWindow *parent)
     }
 
 #ifdef __WXMSW__
-    // Apply dark mode up-front; live changes handled in MSWWindowProc.
     applyDarkModeToWindow(GetHandle(), isSystemDark());
     applyThemeColors(this, isSystemDark());
 #endif
@@ -109,7 +107,6 @@ void DerivedWelcomeFrame::on_complete(wxCommandEvent &event) { Close(true); }
 
 bool WelcomeApp::OnInit() {
 #ifdef __WXMSW__
-    // Opt into Windows immersive dark mode before any window is created.
     enableAppDarkMode();
 #endif
     wxInitAllImageHandlers();

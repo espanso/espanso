@@ -137,13 +137,12 @@ LRESULT CALLBACK ui_window_procedure(HWND window, unsigned int msg, WPARAM wp,
 
         break;
     }
-    case WM_SETTINGCHANGE: // System theme changed
+    case WM_SETTINGCHANGE:
     {
         if (!variables || !lp ||
             wcscmp((LPCWSTR)lp, L"ImmersiveColorSet") != 0) {
             break;
         }
-        // The tray follows the system theme; modulo follows the app theme.
         HKEY hKey = NULL;
         DWORD lightTheme = 0;
         if (RegOpenKeyExW(HKEY_CURRENT_USER,
@@ -159,8 +158,7 @@ LRESULT CALLBACK ui_window_procedure(HWND window, unsigned int msg, WPARAM wp,
         // Reload the icons from disk
         for (int i = 0; i < variables->options.icon_paths_count; i++) {
             std::wstring pathStr(variables->options.icon_paths[i]);
-            // Substitute variants only for the built-in icon filenames.
-            // Keep custom filenames on their configured path.
+            // Switch theme variants for default icons; preserve custom icon paths.
             size_t slash = pathStr.find_last_of(L"\\/");
             if (slash != std::wstring::npos) {
                 std::wstring dir = pathStr.substr(0, slash + 1);

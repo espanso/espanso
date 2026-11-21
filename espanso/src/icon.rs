@@ -86,7 +86,6 @@ pub struct IconPaths {
 
 #[cfg(target_os = "windows")]
 pub fn load_icon_paths(runtime_dir: &Path) -> Result<IconPaths> {
-    // The native tray window switches between these files on theme changes.
     for (name, data) in [
         ("normal_light.ico", WINDOWS_NORMAL_LIGHT_ICO_BINARY),
         ("normal_dark.ico", WINDOWS_NORMAL_DARK_ICO_BINARY),

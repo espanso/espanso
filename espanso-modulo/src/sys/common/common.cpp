@@ -19,7 +19,7 @@
 
 #include "common.h"
 
-// Dark-mode palette (always defined so client code can reference it anywhere).
+// Dark-mode palette
 const wxColour DARK_BG(32, 32, 32);
 const wxColour DARK_FG(235, 235, 235);
 const wxColour DARK_BORDER(60, 60, 60);
@@ -101,13 +101,10 @@ void SetupWindowStyle(wxFrame *frame) {
 }
 
 #ifdef __WXMSW__
-// SetPreferredAppMode is an undocumented uxtheme export; ordinal 135 is only
-// used after checking the Windows version because its signature changed.
 typedef BOOL(WINAPI *SetPreferredAppModeFn)(DWORD);
 
 void enableAppDarkMode() {
-    // Ordinal 135 had a different signature before Windows 10 1903.
-    // Never call it based on its presence alone.
+    // Ordinal 135 (SetPreferredAppMode) requires Windows 10 1903 (build 18362)+.
     typedef LONG(WINAPI *RtlGetVersionFn)(OSVERSIONINFOW *);
     HMODULE ntdll = GetModuleHandleW(L"ntdll.dll");
     RtlGetVersionFn getVersion = ntdll
@@ -139,11 +136,8 @@ void applyDarkModeToWindow(void *hwnd, bool dark) {
     DwmSetWindowAttribute(h, DWMWA_USE_IMMERSIVE_DARK_MODE, &value,
                           sizeof(value));
 
-    // Windows 11 allows explicitly customizing the window frame border color.
-    // In dark mode, set it to dark gray (#3C3C3C) so it doesn't show bright
-    // white edges.
     COLORREF borderColor =
-        dark ? RGB(60, 60, 60) : 0xFFFFFFFF; // 0xFFFFFFFF = DWMWA_COLOR_DEFAULT
+        dark ? RGB(60, 60, 60) : 0xFFFFFFFF; // DWMWA_COLOR_DEFAULT
     DwmSetWindowAttribute(h, DWMWA_BORDER_COLOR, &borderColor,
                           sizeof(borderColor));
 
@@ -172,7 +166,7 @@ void applyWindowTheme(void *hwnd, bool dark) {
 
 bool isSystemDark() {
     HKEY hKey = NULL;
-    DWORD value = 1; // default: light (AppsUseLightTheme = 1)
+    DWORD value = 1;
     if (RegOpenKeyExW(HKEY_CURRENT_USER,
                       L"Software\\Microsoft\\Windows\\CurrentVersion\\"
                       L"Themes\\Personalize",
@@ -182,7 +176,6 @@ bool isSystemDark() {
                          (LPBYTE)&value, &size);
         RegCloseKey(hKey);
     }
-    // AppsUseLightTheme: 1 = light, 0 = dark
     return value == 0;
 }
 
@@ -206,7 +199,6 @@ void applyThemeColors(wxWindow *win, bool dark) {
          it != children.end(); ++it) {
         applyThemeColors(*it, dark);
     }
-    // Updating colours alone does not invalidate every native child control.
     win->Refresh();
 }
 
