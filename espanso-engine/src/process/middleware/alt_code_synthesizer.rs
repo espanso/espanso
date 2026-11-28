@@ -52,49 +52,52 @@ impl Middleware for AltCodeSynthesizerMiddleware<'_> {
     }
 
     fn next(&self, event: Event, dispatch: &mut dyn FnMut(Event)) -> Event {
-        match &event.etype {
-            EventType::Keyboard(keyboard_event)
-                if self
-                    .enabled_state_provider
-                    .is_alt_code_synthesizer_enabled() =>
-            {
-                let mut code_buffer = self.code_buffer.borrow_mut();
+        let EventType::Keyboard(keyboard_event) = &event.etype else {
+            return event;
+        };
+        let starts_sequence =
+            keyboard_event.status == Status::Pressed && keyboard_event.key == Key::Alt;
+        let mut code_buffer = self.code_buffer.borrow_mut();
 
-                if keyboard_event.status == Status::Pressed {
-                    if matches!(&keyboard_event.key, Key::Alt) {
-                        *code_buffer = Some(String::new());
-                    } else if let Some(buffer) = &mut *code_buffer {
-                        match keyboard_event.key {
-                            Key::Numpad0 => buffer.push('0'),
-                            Key::Numpad1 => buffer.push('1'),
-                            Key::Numpad2 => buffer.push('2'),
-                            Key::Numpad3 => buffer.push('3'),
-                            Key::Numpad4 => buffer.push('4'),
-                            Key::Numpad5 => buffer.push('5'),
-                            Key::Numpad6 => buffer.push('6'),
-                            Key::Numpad7 => buffer.push('7'),
-                            Key::Numpad8 => buffer.push('8'),
-                            Key::Numpad9 => buffer.push('9'),
-                            _ => {}
-                        }
-                    }
-                } else if keyboard_event.key == Key::Alt {
-                    if let Some(codes) = &*code_buffer {
-                        if let Some(target_char) = convert_buffer_into_char(codes) {
-                            dispatch(Event::caused_by(
-                                event.source_id,
-                                EventType::TextInject(TextInjectRequest {
-                                    text: target_char,
-                                    ..Default::default()
-                                }),
-                            ));
-                        }
-                    }
+        // Resolving the active config can query the compositor. Unrelated keys
+        // do not need the setting unless an Alt-code sequence is in progress.
+        if (!starts_sequence && code_buffer.is_none())
+            || !self
+                .enabled_state_provider
+                .is_alt_code_synthesizer_enabled()
+        {
+            return event;
+        }
 
-                    *code_buffer = None;
+        if starts_sequence {
+            *code_buffer = Some(String::new());
+        } else if keyboard_event.status == Status::Pressed {
+            if let Some(buffer) = code_buffer.as_mut() {
+                match keyboard_event.key {
+                    Key::Numpad0 => buffer.push('0'),
+                    Key::Numpad1 => buffer.push('1'),
+                    Key::Numpad2 => buffer.push('2'),
+                    Key::Numpad3 => buffer.push('3'),
+                    Key::Numpad4 => buffer.push('4'),
+                    Key::Numpad5 => buffer.push('5'),
+                    Key::Numpad6 => buffer.push('6'),
+                    Key::Numpad7 => buffer.push('7'),
+                    Key::Numpad8 => buffer.push('8'),
+                    Key::Numpad9 => buffer.push('9'),
+                    _ => {}
                 }
             }
-            _ => {}
+        } else if keyboard_event.key == Key::Alt {
+            if let Some(target_char) = code_buffer.as_deref().and_then(convert_buffer_into_char) {
+                dispatch(Event::caused_by(
+                    event.source_id,
+                    EventType::TextInject(TextInjectRequest {
+                        text: target_char,
+                        ..Default::default()
+                    }),
+                ));
+            }
+            *code_buffer = None;
         }
 
         event
