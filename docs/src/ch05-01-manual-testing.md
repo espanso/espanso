@@ -23,3 +23,6 @@ Take this as a shopping-list, not exhaustive:
 
 In linux:
 - [ ] `espanso service start` doesn't crash
+- [ ] On KDE Wayland with `kdotool` available, ordinary typing reaches a
+      focused app without stalling when no match is triggered. If
+      `emulate_alt_codes` is enabled, an Alt-numpad sequence still expands.
